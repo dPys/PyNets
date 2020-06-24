@@ -9,6 +9,7 @@ import os
 import numpy as np
 import indexed_gzip
 import nibabel as nib
+from nipype.utils.filemanip import fname_presuffix
 import warnings
 warnings.filterwarnings("ignore")
 try:
@@ -166,7 +167,7 @@ def applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6):
     return
 
 
-def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False):
+def apply_warp(ref, inp, out, warp=None, xfm=None, mask=None, interp=None, sup=False):
     """
     Applies a warp to a Nifti1Image which transforms the image to the reference space used in generating the warp.
 
@@ -181,7 +182,7 @@ def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False)
         warp : str
             File path to input Nifti1Image output for the nonlinear warp following alignment.
         xfm : str
-            File path for the transformation matrix output in .xfm.
+            File path for the transformation matrix input in .xfm.
         mask : str
             Optional file path to a mask in reference image space.
         interp : str
@@ -189,9 +190,11 @@ def apply_warp(ref, inp, out, warp, xfm=None, mask=None, interp=None, sup=False)
         sup : bool
             Intermediary supersampling of output. Default is False.
     """
-    cmd = f"applywarp --ref={ref} --in={inp} --out={out} --warp={warp}"
+    cmd = f"applywarp --ref={ref} --in={inp} --out={out}"
     if xfm is not None:
         cmd += f" --premat={xfm}"
+    if warp is not None:
+        cmd += f" --warp={warp}"
     if mask is not None:
         cmd += f" --mask={mask}"
     if interp is not None:
@@ -335,6 +338,26 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     #                         "%s%s%s%s" % (working_dir, "/transformed_axial_", run_uuid, ".png"))
 
     return mapping, affine_map, warped_fa
+
+
+def median(in_file):
+    """Average a 4D dataset across the last dimension using median."""
+    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=True)
+
+    img = nib.load(in_file)
+    if img.dataobj.ndim == 3:
+        return in_file
+    if img.shape[-1] == 1:
+        nib.squeeze_image(img).to_filename(out_file)
+        return out_file
+
+    median_data = np.median(img.get_fdata(dtype="float32"), axis=-1)
+
+    hdr = img.header.copy()
+    hdr.set_xyzt_units("mm")
+    hdr.set_data_dtype(np.float32)
+    nib.Nifti1Image(median_data, img.affine, hdr).to_filename(out_file)
+    return out_file
 
 
 def check_orient_and_dims(infile, outdir, vox_size, bvecs=None, overwrite=True):

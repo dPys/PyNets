@@ -29,8 +29,6 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("anat_file", [f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz",
-                                       None])
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
     [
         pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
@@ -79,7 +77,7 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atlas, multi_atlas, network, thr, max_thr,
-                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch, anat_file):
+                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch):
     """
     Test functional connectometry
     """
@@ -92,11 +90,12 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    ID = '0025427_1'
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    ID = '25659_1'
     ref_txt = None
     nthreads = cpu_count()
     procmem = [int(nthreads), int(float(nthreads) * 2)]
@@ -209,7 +208,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
                      'ward', None),
     ]
 )
-@pytest.mark.parametrize("mask", [f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz",
+@pytest.mark.parametrize("mask", [f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz",
                                   None])
 @pytest.mark.parametrize("roi", [f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz", None])
 @pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
@@ -245,10 +244,10 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    conf = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_desc-confounds_regressors.tsv"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
-    ID = '0025427_1'
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    ID = '25659_1'
     parc = parc
     ref_txt = None
     nthreads = cpu_count()
@@ -338,8 +337,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
 @pytest.mark.parametrize("directget", ['prob', ['det', 'boot']])
 @pytest.mark.parametrize("min_length", [0, 5, [0, 5]])
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_"
-f"space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"])
+@pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"])
 @pytest.mark.parametrize("track_type,tiss_class,conn_model,conn_model_list",
     [
         pytest.param('local', 'wb', 'csd', None),
@@ -409,12 +407,12 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bval.bval"
-    fbval = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_bvec.bvec"
-    fbvec = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-0025427/ses-1/anat/sub-0025427_desc-preproc_T1w.nii.gz"
+    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
+    fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bvec.bvec"
+    fbvec = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
     roi = None
-    ID = '0025427_1'
+    ID = '25659_1'
     ref_txt = None
     nthreads = cpu_count()
     procmem = [int(nthreads), int(float(nthreads) * 2)]

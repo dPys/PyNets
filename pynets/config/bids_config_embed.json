@@ -2,13 +2,9 @@
     "dwi": {
             "dg": "['clos']",
             "ml": "['0']",
-            "mod": "['csa']",
-            "s": 10000,
-            "tc": "['bin']",
-            "tt": "['local']"
+            "mod": "['csa']"
         },
     "func": {
-            "cc": "['tcorr']",
             "ct": "None",
             "hp": "['0']",
             "k": "None",
@@ -26,13 +22,12 @@
             "min_thr":  0.50,
             "mplx":  2,
             "mst":  "True",
-            "n":  "['Default']",
-            "names":  "True",
+            "n":  "None",
             "norm": "['6']",
-            "ns":  "None",
+            "ns":  "['6']",
             "p":  "['3']",
             "plt":  "True",
-            "spheres":  "False",
+            "spheres":  "True",
             "step_thr":  0.05,
             "thr":  1.0,
             "vox":  "'2mm'"

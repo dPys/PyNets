@@ -4,7 +4,7 @@ Sphinx>=1.4.8
 sphinx-argparse>=0.2.5
 sphinx-rtd-theme>=0.4.3
 psutil>=5.6.1
-scipy>=1.0.0
+scipy==1.4.1
 numpy>=1.16.0
 setuptools>=41.0.0
 click>=6.7
@@ -30,9 +30,10 @@ sqlalchemy>=1.3.1
 python-dateutil==2.8.0
 docutils==0.14.0
 duecredit>=0.8.0
+templateflow>=0.6.2
 git+https://github.com/dPys/nilearn.git@enh/parc_conn
 git+https://github.com/dPys/deepbrain.git@master
-# git+https://github.com/nkoub/multinetx.git@master
+git+https://github.com/nkoub/multinetx.git@master
 # fury>=0.2.0
 # skggm>=0.2.7
 # nltk>=3.4

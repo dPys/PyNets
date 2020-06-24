@@ -415,42 +415,6 @@ class TimeseriesExtraction(object):
 
         return
 
-    def extract_ts_coords(self):
-        """
-        API for employing Nilearn's NiftiSpheresMasker to extract fMRI time-series data from spherical ROI's based on a
-        given list of seed coordinates. The resulting time-series can then optionally be resampled using circular-block
-        bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
-        """
-        from nilearn import input_data
-        from pynets.fmri.estimation import fill_confound_nans
-
-        print(f"{'Using node radius: '}{self.node_size}{' mm'}")
-        self._spheres_masker = input_data.NiftiSpheresMasker(seeds=self.coords, radius=float(self.node_size),
-                                                             allow_overlap=True, standardize=True,
-                                                             smoothing_fwhm=float(self.smooth),
-                                                             high_pass=self.hpass, detrend=self._detrending,
-                                                             t_r=self._t_r, verbose=2, dtype='auto')
-        if self.conf is not None:
-            import pandas as pd
-            confounds = pd.read_csv(self.conf, sep='\t')
-            if confounds.isnull().values.any():
-                conf_corr = fill_confound_nans(confounds, self.dir_path)
-                self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img, confounds=conf_corr)
-            else:
-                self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img, confounds=self.conf)
-        else:
-            self.ts_within_nodes = self._spheres_masker.fit_transform(self._func_img)
-
-        self._func_img.uncache()
-
-        if self.ts_within_nodes is None:
-            raise RuntimeError('\nERROR: Time-series extraction failed!')
-        else:
-            print(f"\nTime series has {self.ts_within_nodes.shape[0]} samples mean extracted from {len(self.coords)} "
-                  f"coordinate ROI\'s")
-
-        return
-
     def extract_ts_parc(self):
         """
         API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a

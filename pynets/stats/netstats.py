@@ -1464,7 +1464,10 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
       Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
       https://doi.org/10.1016/C2012-0-06036-X
-
+    .. [2] Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, “Exploring network structure,
+      dynamics, and function using NetworkX”, in Proceedings of the 7th Python in Science Conference
+      (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA),
+      pp. 11–15, Aug 2008
     """
     import time
     import gc

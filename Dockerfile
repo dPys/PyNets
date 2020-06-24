@@ -101,7 +101,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && pip install --upgrade pip \
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && pip install numpy requests psutil sqlalchemy \
+    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 \
     # Install pynets
     && git clone -b development https://github.com/dPys/PyNets /home/dpisner/PyNets && \
     cd /home/dpisner/PyNets && \

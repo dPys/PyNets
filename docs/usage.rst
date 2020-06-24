@@ -6,92 +6,11 @@ Usage
 
 The exact command to run ``PyNets`` depends on several factors:
 
-:(1): The Installation_ method (i.e. pip, docker, singularity, AWS), along with the environment resources available for computing;
+:(1): The Installation_ method (i.e. pip, docker, singularity, git), along with the environment resources available for computing;
 
 :(2): The types and modalities of available data inputs;
 
-:(3): The execution objective (e.g. ensemble connectome sampling, unitary connectome sampling, plotting, graph-analysis, embedding, optimization, or other, derivative applications).
-
-****************
-Data Assumptions
-****************
-
-`PyNets` is a post-processing workflow which means that input files should already be preprocessed. That is, for both dMRI and fMRI modalities of images, both dMRI and fMRI should be:
-
-(1) Pre-scrubbed for common sources of noise (mandatory, albeit a noise confound regressor file can optionally be supplied via the `-conf` flag).
-
-(2) **All** input image data should be skull-stripped, *except* in the case that a binary brain mask image is also supplied via the `-m` flag.
-
-(3) Image space matters:
-
-    :fMRI: Inputs should be normalized to Montreal Neurological Institute (MNI) space. In functional BOLD imaging, normalization helps to stabilize the underlying connectivity time-series and thereby morphologically standardize functional connectome estimates for optimal discriminability of individual differences.
-
-    :dMRI: Inputs should be left in native diffusion/scanner space and **not** normalized using a T1w image or template. This is because tractography, upon which structural connectome estimates are based is most reliably performed in native space -- with limited resampling or geometric distortion of spatial information beyond that which is minimally needed in preprocessing (e.g. to correct for head motion or eddy currents). To nevertheless ensure comparability across individuals, PyNets will still perform normalization, but at a later stage in the connectome estimation process. That is, after reconstructio with tractography, resulting streamlines will be directly mapped into MNI-space via a rigid transformation of streamline points.
-
-    :T1w: Should be in native anatomical space, as it will be segmented (a native-space operation) and subsequently re-normalized to MNI-space automatically.
-
-
-***********
-File Inputs
-***********
-
-Primary File Inputs
-===================
-
-In the case of a single subject, several combinations of input files can be used:
-
-:fMRI: `-func` (required); `-conf`, `-m`, `-anat` (optional)
-
-:dMRI: `-dwi`, `-bval`, `-bvec` (required); `-m`, `-anat` (optional)
-
-:dMRI + fMRI: all of the above flags still apply, but should be used simultaneoously. `-m`, `-anat` only need to be specified once.
-
-:Raw Graph: `-g`
-
-.. note::
-    All formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), except for a raw graph which can be in .txt, .npy, .csv, .tsv, or .ssv.
-
-.. note::
-    T1w input images need not be skull-stripped. If brain masking has been applied already, `PyNets` will attempt to detect this, else apply `deepbrain` extraction to the image automatically. T1w image should *not*, however, be normalized to an MNI template yet.
-
-Secondary File Inputs
-=====================
-
-:`-way`: (*dMRI*) A binarized mask used to constrain tractography such that streamlines are retained only if they pass within the vicinity of the mask.
-
-:`-roi`: (*fMRI + dMRI*) A binarized mask used to constrain connectome node-making to restricted brain regions of interest (ROI's).
-
-:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
-
-:`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Automated node labeling via AAL can alternatively be used by including the `-names` flag. Otherwise, sequential numeric labels will be used by default.
-
-.. note::
-    All general image inputs are assumed to be normalized to MNI space. Image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runtime.config default or possible override with the `-vox` flag.
-
-BIDS Derivatives
-================
-
-PyNets now includes an API for running single-subject and group workflows on BIDS derivatives (e.g. produced using popular BIDS apps like fmriprep/cpac and dmriprep/qsiprep).
-In this case, the input dataset should be in `BIDS (Brain Imaging Data Structure)` format, and it must include at least one fMRI image or dMRI image.
-
-The `runconfig.yml` file in the base directory includes parameter presets, but all file input options that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
-
-The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
-Example: ::
-
-    pynets_bids 's3://hnu/HNU' '~/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz'
-
-Docker and AWS
-==============
-
-PyNets now includes an API for running pynets_bids in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
-Docker Example: ::
-
-    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest 's3://hnu/HNU' '/outputs' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -plug 'MultiProc' -pm '8,12' -work '/working'
-
-AWS Batch Example: ::
-
-    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
+:(3): The execution objective (e.g. ensemble connectome sampling, unitary connectome sampling, plotting, graph-theory, embedding, optimization/benchmarking).
 
 *****************
 Parametric Inputs
@@ -102,20 +21,174 @@ Required
 
 :(A): An alphanumeric subject identifier must be specified with the `-id` flag. It can be a pre-existing label or an arbitrarily selected one, but it will be used by PyNets for naming of output directories.
 
-:(B): A supported connectivity model specified with the `-mod` flag. See `pynets --help` for supported fMRI and dMRI connectivity models. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
+:(B): A supported connectivity model specified with the `-mod` flag. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
 
-:(C): If a parcellation file is not specified with the `-ua` flag, then the `-a` flag must be included, followed by one or more supported atlases. See `pynets --help` to view a list of available atlases.
+:(C): If a parcellation file is not specified with the `-ua` flag, then the `-a` flag must be included, followed by one or more supported atlases.
 
+:(D): A set of brain image files. `PyNets` is a post-processing workflow which means that input files should already be preprocessed. Minimally, all DWI, BOLD, and T1W image inputs should be **motion-corrected** (and ideally also susceptibility-corrected + denoised).
+
+    :File Inputs:
+        `anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
+        `func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
+        `dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+        `-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
+    .. note::
+        Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the runconfig.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
+    .. note::
+        If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`.
+    .. note::
+        Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or possible override with the `-vox` flag.
+    .. note::
+        All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix).
+
+
+Custom File Inputs
+==================
+
+:`-m`: (*fMRI + dMRI*) A binarized brain mask of the T1w image in its native anatomical space. Input images need not be skull-stripped. If brain masking has been applied already, `PyNets` will attempt to detect this, else it will attempt to extract automatically using a deep-learning classifier. See [deepbrain]<https://github.com/iitzco/deepbrain> for more information.
+
+:`-roi`: (*fMRI + dMRI*) A binarized ROI mask used to constrain connectome node-making to restricted brain regions of the parcellation being used.
+
+:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image (in MNI template space) used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
+
+:`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Otherwise, PyNets will attempt to perform automated node labeling via AAL, else sequential numeric labels will be used.
+
+:`-way`: (*dMRI*) A binarized white-matter ROI mask (in MNI template space) used to constrain tractography in native diffusion space such that streamlines are retained only if they pass within the vicinity of the mask.
+
+:`-cm`: (*fMRI*) A binarized ROI mask used to spatially-constrained clustering during parcellation-making. Note that if this flag is used, `-k` and `-ct` must also be included.
+
+:`-conf`: (*fMRI*) An additional noise confound regressor file for extracting a cleaner time-series.
+
+
+Permitted Combinations of File Inputs
+=====================================
+
+In the case of running pynets on a single subject, several combinations of input files can be used:
+
+:fMRI Connectometry: `-func`, `-anat`, (`-conf`), (`-roi`), (`-m`), (`-cm`)
+
+:dMRI Connectometry: `-dwi`, `-bval`, `-bvec`, `-anat`, (`-roi`), (`-m`), (`-way`)
+
+:dMRI + fMRI Multiplex Connectometry: All of the above required flags should be included simultaneously. Note that in this case, `-anat` only needs to be specified once.
+
+:Raw Graph Connectometry (i.e. for graph analysis/embedding only): `-g`
 
 **********************
 Command-Line Arguments
 **********************
+PyNets BIDS CLI:
+.. argparse::
+   :ref: pynets.cli.pynets_bids.get_parser
+   :prog: pynets_bids
+   :nodefault:
+   :nodefaultconst:
+
+PyNets Manual Execution CLI:
 .. argparse::
    :ref: pynets.cli.pynets_run.get_parser
    :prog: pynets
    :nodefault:
    :nodefaultconst:
 
+**********
+Quickstart
+**********
+
+Execution on BIDS derivative datasets using the `pynets_bids` CLI
+=================================================================
+
+PyNets now includes an API for running single-subject and group workflows on BIDS derivatives (e.g. produced using popular BIDS apps like fmriprep/cpac and dmriprep/qsiprep).
+In this scenarioo, the input dataset should follow the derivatives specification of the `BIDS (Brain Imaging Data Structure)` format (<https://bids-specification.readthedocs.io/en/derivatives/05-derivatives/01-introduction.html>), which must include at least one subject's fMRI image or dMRI image (in T1w space), along with a T1w anatomical image.
+
+The `runconfig.yml` file in the base directory includes parameter presets, but all file input options that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
+
+The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
+Example: ::
+
+    pynets_bids '/hnu/fMRIprep/fmriprep' '~/outputs' func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
+
+
+
+A similar CLI, `pynets_cloud` has also been made available using AWS Batch and S3, which require a AWS credentials and configuration of job queues and definitions using cloud_config.json: ::
+
+    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
+
+
+Manual Execution Using the `pynets` CLI
+=======================================
+
+You have a preprocessed EPI bold dataset from the first session for subject 002, and you wish to analyze a whole-brain network using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
+
+    pynets -id '002_1' '/Users/dPys/outputs' \
+    -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -a 'coords_dosenbach_2010' \ # A spherical atlas.
+    -mod 'partcorr' \ # The connectivity model.
+    -spheres # Node-making specification.
+    -thr 0.20 \ # A single proportional threshold to apply post-hoc.
+
+Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but based on the 95-node atlas parcellation scheme from Desikan-Klein 2012 called 'DesikanKlein2012' and the Brainnetome Atlas from Fan 2016 called 'BrainnetomeAtlasFan2016', you wish to threshold the graph to achieve a target density of 0.3, and you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
+
+    pynets -id '002_1' '/Users/dPys/outputs' \
+    -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -a 'DesikanKlein2012' 'BrainnetomeAtlasFan2016' # Multiple spherical atlases.
+    -mod 'partcorr' 'sps' \ # The connectivity models.
+    -dt -thr 0.3 \ # The thresholding settings.
+    -n 'Default' \ # The resting-state network definition to restrict node-making from each of the input atlas.
+    -plt # Activate plotting.
+
+Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
+
+    pynets -id '002_1' '/Users/dPys/outputs' \
+    -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -ua '/Users/dPys/PyNets/pynets/atlases/MyCustomAtlas.nii.gz' \ # A user-supplied atlas parcellation.
+    -mod 'partcorr' \ # The connectivity model.
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
+    -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
+
+.. note::
+    In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
+
+Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
+
+    pynets -id '002_1' '/Users/dPys/outputs' \
+    -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -mod 'partcorr' 'sps' \ # The connectivity models.
+    -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
+    -plt # Activate plotting.
+
+You wish to generate a structural connectome, using deterministic and probabilistic ensemble tractography, based on both constrained-spherical deconvolution (csd) and tensor models. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, iterate over a range of graph densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
+
+    pynets -id '002_1' '/Users/dPys/outputs' \
+    -dwi '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/DWI_PREPROCESSED_NATIVE.nii.gz' \ # The dMRI diffusion-weighted image data.
+    -bval '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVAL.bval' \ # The b-values.
+    -bvec '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVEC.bvec' \ # The b-vectors.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -ua '~/.atlases/DesikanKlein2012.nii.gz' '~/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
+    -mod 'csd' 'tensor' \ # The connectivity model.
+    -dg 'prob' 'det'  \ # The tractography settings.
+    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
+    -n 'Default' # The resting-state network definition to restrict node-making from each of the input atlases.
+
+.. note::
+    Spherical nodes can be used by triggering the `-spheres` flag, and for some coordinate-based atlases like coords_power_2011 or coords_dosenbach_2010, only spheres are possible, but in general parcel volumes should be used as the default.
+
+.. note::
+    Iterable sampling parameters specified at runtime should always be space-delimited.
+
+There are many other runtime options than these examples demonstrate. To explore all of the possible hyper-parameter combinations that pynets has to offer, see `pynets -h`. A full set of tutorials and python notebooks are coming soon.
+
+Docker and AWS
+==============
+
+PyNets includes an API for running `pynets_bids` or `pynets` in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
+Docker Example: ::
+
+    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest 's3://hnu/HNU' '/outputs' func --participant_label 0025427 --session_label 1 -plug 'MultiProc' -pm '8,12' -work '/working' -config pynets/config/bids_config.json
 
 *********
 Debugging
@@ -151,78 +224,6 @@ Not running on a local machine? - Data transfer
 If you intend to run ``pynets`` on a remote system, you will need to make your data available within that system first.
 
 Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad.org/>`_ will handle data transfers with the appropriate settings and commands. Datalad also performs version control over your data.
-
-
-**********
-Quickstart
-**********
-
-Examples
-========
-
-
-You have a preprocessed (minimally -- normalized and skull stripped) functional fMRI dataset called "002.nii.gz" where you assign an arbitrary subject id of 002, you wish to analyze a whole-brain network, using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
-
-    pynets -id '002' '/Users/dPys/outputs' \
-    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
-    -a 'coords_dosenbach_2010' \ # A spherical atlas.
-    -mod 'partcorr' \ # The connectivity model.
-    -spheres # Node-making specification.
-    -thr 0.20 \ # A single proportional threshold to apply post-hoc.
-    -m '/Users/dPys/PyNets/tests/examples/002/fmri/002_mask.nii.gz' # A brain mask for the fMRI BOLD image data.
-
-Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but now also using the 264-node atlas parcellation scheme from Power et al. 2011 called 'coords_power_2011', you wish to threshold the graph to achieve a target density of 0.3, and you define your nodes based on spheres with radii at two resolutions (2 and 4 mm), you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
-
-    pynets -id '002' '/Users/dPys/outputs' \
-    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
-    -a 'coords_dosenbach_2010' 'coords_power_2011' # Multiple spherical atlases.
-    -mod 'partcorr' 'sps' \ # The connectivity models.
-    -ns 2 4 -spheres \ # Node-making specification.
-    -dt -thr 0.3 \ # The thresholding settings.
-    -n 'Default' \ # The resting-state network definition to restrict node-making from each of the input atlas.
-    -plt # Activate plotting.
-
-Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
-
-    pynets -id '002' '/Users/dPys/outputs' \
-    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
-    -ua '/Users/dPys/PyNets/pynets/atlases/DesikanKlein2012.nii.gz' \ # A user-supplied atlas parcellation.
-    -mod 'partcorr' \ # The connectivity model.
-    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
-    -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
-
-.. note::
-    In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
-
-Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
-
-    pynets -id '002' '/Users/dPys/outputs' \
-    -func '/Users/dPys/PyNets/tests/examples/002/fmri/002.nii.gz' \ # The fMRI BOLD image data.
-    -mod 'partcorr' 'sps' \ # The connectivity models.
-    -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
-    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
-    -plt -names # Activate plotting with automated node labeling by coordinate reference.
-
-You wish to generate a structural connectome, using probabilistic ensemble tractography with 1,000,000 streamlines, based on both constrained-spherical deconvolution (csd) and tensor models, bootstrapped tracking, and direct normalization of streamlines. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, and iterate over a range of densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
-
-    pynets -id '0021001' '/Users/dPys/outputs' \
-    -dwi '/Users/dPys/PyNets/tests/examples/002/dmri/iso_eddy_corrected_data_denoised.nii.gz' \ # The dMRI diffusion-weighted image data.
-    -bval '/Users/dPys/PyNets/tests/examples/002/dmri/bval.bval' \ # The b-values.
-    -bvec '/Users/dPys/PyNets/tests/examples/002/dmri/bvec.bvec' \ # The b-vectors.
-    -ua '~/.atlases/DesikanKlein2012.nii.gz' '~/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
-    -mod 'csd' \ # The connectivity model.
-    -dg 'prob' 'det' 'tensor' -s 1000000  \ # The tractography settings.
-    -anat '/Users/dPys/PyNets/tests/examples/002/anat/s002_anat_brain.nii.gz' \ # The T1w anatomical image.
-    -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
-    -n 'Default' # The resting-state network definition to restrict node-making from each of the input atlases.
-
-.. note::
-    Spherical nodes can be used by triggering the `-spheres` flag, but this approach is **not** recommended for dMRI connectometry.
-
-.. note::
-    Iterable sampling parameters specified at runtime should always be space-delimited and, to be safe, contained within single quotes.
-
-There are many other runtime options than these examples demonstrate. To explore all of the possible hyper-parameter combinations that pynets has to offer, see `pynets -h`. A full set of tutorials and python notebooks are coming soon.
 
 
 ********************

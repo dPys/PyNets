@@ -2,13 +2,9 @@
     "dwi": {
             "dg": "['clos']",
             "ml": "['0']",
-            "mod": "['csa']",
-            "s": 1000,
-            "tc": "['bin']",
-            "tt": "['local']"
+            "mod": "['csa']"
         },
     "func": {
-            "cc": "['tcorr']",
             "ct": "None",
             "hp": "['0']",
             "k": "None",
@@ -27,7 +23,6 @@
             "mplx":  0,
             "mst":  "True",
             "n":  "['Default']",
-            "names":  "True",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",

@@ -346,3 +346,12 @@ def test_check_orient_and_dims():
     assert anat_RAStoRAS_success is True
     assert dmri_LAStoRAS_success is True
     assert dmri_RAStoRAS_success is True
+
+
+def test_make_median_b0():
+
+    base_dir = str(Path(__file__).parent/"examples")
+    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    mean_file_out = reg_utils.median(dwi_file)
+
+    assert os.path.isfile(mean_file_out)

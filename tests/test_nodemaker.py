@@ -38,10 +38,11 @@ def test_nodemaker_tools_parlistfile_RSN():
     """
     Test nodemaker_tools_parlistfile_RSN functionality
     """
+    import pkg_resources
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     network = 'Default'
     parc = True
@@ -57,7 +58,7 @@ def test_nodemaker_tools_parlistfile_RSN():
 
     parcel_list = nodemaker.gen_img_list(parlistfile)
 
-    [net_coords, net_parcel_list, net_labels, network] = nodemaker.get_node_membership(network, func_file, coords,
+    [net_coords, net_parcel_list, net_labels, network] = nodemaker.get_node_membership(network, template, coords,
                                                                                        labels, parc, parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -85,8 +86,8 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     Test nodemaker_tools_nilearn_coords_RSN functionality
     """
     # Set example inputs
-    base_dir = str(Path(__file__).parent/"examples")
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    import pkg_resources
+    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     network = 'Default'
     parc = False
     parcel_list = None
@@ -95,7 +96,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     print("%s%s%s" % ('fetch_nilearn_atlas_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(network, func_file, coords, labels, parc,
+    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(network, template, coords, labels, parc,
                                                                          parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -111,9 +112,10 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     Test nodemaker_tools_masking_parlistfile_RSN functionality
     """
     # Set example inputs
+    import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
@@ -130,9 +132,8 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     start_time = time.time()
     parcel_list = nodemaker.gen_img_list(parlistfile)
-    [net_coords, net_parcel_list, net_labels, network] = nodemaker.get_node_membership(network, func_file, coords,
-                                                                                            labels, parc,
-                                                                                            parcel_list)
+    [net_coords, net_parcel_list, net_labels, network] = nodemaker.get_node_membership(network, template, coords,
+                                                                                       labels, parc, parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
@@ -169,9 +170,10 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     Test nodemaker_tools_masking_coords_RSN functionality
     """
+    import pkg_resources
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
     parc = False
@@ -183,7 +185,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(network, func_file, coords, labels, parc,
+    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(network, template, coords, labels, parc,
                                                                          parcel_list)
     print("%s%s%s" % ('get_node_membership (Masking RSN version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
@@ -250,7 +252,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
@@ -266,27 +268,31 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1) != 0].tolist()
 
     start_time = time.time()
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_labels, dir_path,
-                                                            ID, perc_overlap)
-    print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
 
-    start_time = time.time()
-    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list_masked)
-    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
+    parcels_map_nifti_image = nib.load(parlistfile)
+    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
-     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas, parlistfile)
+     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
+                                          parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
+    np.round(time.time() - start_time, 1), 's'))
+
+    start_time = time.time()
+    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list)
+    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
      _, _, _] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
                                            parlistfile)
+
+    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords_masked, WB_parcel_list, WB_labels_masked,
+                                                            dir_path, ID, perc_overlap)
+    print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
+    np.round(time.time() - start_time, 1), 's'))
 
     print("%s%s%s" % ('node_gen_masking (Masking whole-brain version) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
@@ -338,8 +344,8 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
 #     """
 #     # Set example inputs
 #     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 #     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     use_AAL_naming = True
@@ -368,8 +374,8 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
 #     """
 #     # Set example inputs
 #     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 #     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ref_txt = None
@@ -396,8 +402,8 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
 #     """
 #     # Set example inputs
 #     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 #     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ref_txt = None
@@ -426,8 +432,8 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
 #     """
 #     # Set example inputs
 #     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
+#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 #     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ref_txt = None
@@ -466,7 +472,7 @@ def test_get_sphere():
     Test get_sphere functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    img_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz"
+    img_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
     img = nib.load(img_file)
     r = 4
     vox_dims = (2.0, 2.0, 2.0)
@@ -485,8 +491,8 @@ def test_mask_roi():
     import pkg_resources
     mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/func"
-    func_file = f"{base_dir}/BIDS/sub-0025427/ses-1/func/sub-0025427_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-smoothAROMAnonaggr_bold.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     roi_masked = nodemaker.mask_roi(dir_path, roi, mask, func_file)
     assert roi_masked is not None

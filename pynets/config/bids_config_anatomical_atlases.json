@@ -3,12 +3,8 @@
             "dg": "['det', 'prob', 'clos']",
             "ml": "['0', '20', '40']",
             "mod": "['csd', 'csa', 'tensor', 'sfm']",
-            "s": 50000,
-            "tc": "['cmc']",
-            "tt": "['particle']"
         },
     "func": {
-            "cc": "['allcorr']",
             "ct": "None",
             "hp": "['0', '0.028', '0.080']",
             "k": "None",
@@ -27,7 +23,6 @@
             "mplx":  0,
             "mst":  "True",
             "n":  "None",
-            "names":  "True",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",

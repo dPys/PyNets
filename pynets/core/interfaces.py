@@ -168,8 +168,7 @@ class FetchNodesLabels(SimpleInterface):
 
         # Labels prep
         if atlas and not labels:
-            if (self.inputs.ref_txt is not None) and (op.exists(self.inputs.ref_txt)) and (self.inputs.use_AAL_naming
-                                                                                           is False):
+            if (self.inputs.ref_txt is not None) and (op.exists(self.inputs.ref_txt)):
                 labels = pd.read_csv(self.inputs.ref_txt, sep=" ",
                                      header=None, names=["Index", "Region"])['Region'].tolist()
             else:
@@ -177,14 +176,11 @@ class FetchNodesLabels(SimpleInterface):
                     ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
                 else:
                     ref_txt = self.inputs.ref_txt
-                try:
-                    if op.exists(ref_txt) and (self.inputs.use_AAL_naming is False):
-                        try:
-                            labels = pd.read_csv(ref_txt,
-                                                 sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
-                        except:
-                            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                    else:
+                if op.exists(ref_txt):
+                    try:
+                        labels = pd.read_csv(ref_txt,
+                                             sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
+                    except:
                         if self.inputs.use_AAL_naming is True:
                             try:
                                 labels = nodemaker.AAL_naming(coords)
@@ -194,9 +190,8 @@ class FetchNodesLabels(SimpleInterface):
                         else:
                             print('Using generic index labels...')
                             labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-                except:
+                else:
                     if self.inputs.use_AAL_naming is True:
-                        print("Label reference file not found. Attempting AAL naming...")
                         try:
                             labels = nodemaker.AAL_naming(coords)
                         except:
@@ -205,9 +200,6 @@ class FetchNodesLabels(SimpleInterface):
                     else:
                         print('Using generic index labels...')
                         labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
-        else:
-            print('Using generic index labels...')
-            labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
         print(f"Labels:\n{labels}")
         dir_path = utils.do_dir_path(atlas, self.inputs.outdir)
@@ -215,6 +207,8 @@ class FetchNodesLabels(SimpleInterface):
         if len(coords) != len(labels):
             print('Length of coordinates is not equal to length of label names! Replacing with nan\'s instead...')
             labels = len(coords) * [np.nan]
+
+        assert len(coords) == len(labels)
 
         self._results['labels'] = labels
         self._results['coords'] = coords
@@ -489,16 +483,8 @@ class ExtractTimeseries(SimpleInterface):
                                              extract_strategy=self.inputs.extract_strategy)
 
         te.prepare_inputs()
-        if self.inputs.parc is False:
-            if len(self.inputs.coords) > 0:
-                te.extract_ts_coords()
-            else:
-                raise RuntimeError(
-                    '\nERROR: Cannot extract time-series from an empty list of coordinates. \nThis usually means '
-                    'that no nodes were generated based on the specified conditions at runtime (e.g. atlas was '
-                    'overly restricted by an RSN or some user-defined mask.')
-        else:
-            te.extract_ts_parc()
+
+        te.extract_ts_parc()
 
         te.save_and_cleanup()
 
@@ -659,9 +645,9 @@ class _RegisterDWIInputSpec(BaseInterfaceInputSpec):
     anat_file = File(exists=True, mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
+    in_dir = traits.Any()
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
-    waymask = traits.Any(mandatory=False)
     mask = traits.Any(mandatory=False)
     simple = traits.Bool(False, usedefault=True)
     overwrite = traits.Bool(True, usedefault=True)
@@ -678,9 +664,9 @@ class _RegisterDWIOutputSpec(TraitedSpec):
     ap_path = File(exists=True, mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
-    waymask_in_dwi = traits.Any(mandatory=False)
     basedir_path = Directory(exists=True, mandatory=True)
     t1w2dwi = File(exists=True, mandatory=True)
+    t1w_brain_mask_in_dwi = traits.Any(mandatory=False)
 
 
 class RegisterDWI(SimpleInterface):
@@ -690,15 +676,10 @@ class RegisterDWI(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import glob
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-
-        if self.inputs.overwrite is True:
-            anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-            copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
-        else:
-            anat_file_tmp_path = self.inputs.anat_file
 
         fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False)
@@ -709,12 +690,40 @@ class RegisterDWI(SimpleInterface):
         B0_mask_tmp_path = fname_presuffix(self.inputs.B0_mask, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False)
 
+        anat_mask_existing = [i for i in glob.glob(self.inputs.in_dir + '/*_desc-brain_mask.nii.gz') if
+                              'MNI' not in i]
+        if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+            mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
+            copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
+        else:
+            # Apply T1w mask, if provided
+            if self.inputs.mask:
+                mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+                copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+            else:
+                mask_tmp_path = None
+
+        gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
+        if len(gm_mask_existing) > 0:
+            copyfile(gm_mask_existing[0], fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
+
+        wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
+        if len(wm_mask_existing) > 0:
+            copyfile(wm_mask_existing[0], fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
+
+        csf_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-CSF_probseg.nii.gz')
+        if len(csf_mask_existing) > 0:
+            copyfile(csf_mask_existing[0], fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
+
         reg = register.DmriReg(basedir_path=runtime.cwd,
                                fa_path=fa_tmp_path,
                                ap_path=ap_tmp_path,
                                B0_mask=B0_mask_tmp_path,
-                               anat_file=anat_file_tmp_path,
-                               mask=self.inputs.mask,
+                               anat_file=self.inputs.anat_file,
+                               mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
@@ -724,6 +733,10 @@ class RegisterDWI(SimpleInterface):
             # Perform anatomical segmentation
             reg.gen_tissue()
 
+        if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
+            # Align t1w to mni
+            reg.t1w2mni_align()
+
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
             # Align t1w to dwi
             reg.t1w2dwi_align()
@@ -731,13 +744,6 @@ class RegisterDWI(SimpleInterface):
         if (self.inputs.overwrite is True) or (op.isfile(reg.wm_gm_int_in_dwi) is False):
             # Align tissue
             reg.tissue2dwi_align()
-
-        if self.inputs.waymask is not None:
-            if (self.inputs.overwrite is True) or (op.isfile(reg.waymask_in_dwi) is False):
-                # Align waymask
-                reg.waymask2dwi_align(self.inputs.waymask)
-        else:
-            reg.waymask_in_dwi = None
 
         self._results['wm_in_dwi'] = reg.wm_in_dwi
         self._results['gm_in_dwi'] = reg.gm_in_dwi
@@ -749,8 +755,8 @@ class RegisterDWI(SimpleInterface):
         self._results['ap_path'] = self.inputs.ap_path
         self._results['gtab_file'] = self.inputs.gtab_file
         self._results['dwi_file'] = self.inputs.dwi_file
-        self._results['waymask_in_dwi'] = reg.waymask_in_dwi
         self._results['basedir_path'] = runtime.cwd
+        self._results['t1w_brain_mask_in_dwi'] = reg.t1w_brain_mask_in_dwi
 
         gc.collect()
 
@@ -777,6 +783,7 @@ class _RegisterAtlasDWIInputSpec(BaseInterfaceInputSpec):
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
     mask = traits.Any(mandatory=False)
+    waymask = traits.Any(mandatory=False)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
@@ -800,6 +807,7 @@ class _RegisterAtlasDWIOutputSpec(TraitedSpec):
     ap_path = File(exists=True, mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
+    waymask_in_dwi = traits.Any(mandatory=False)
 
 
 class RegisterAtlasDWI(SimpleInterface):
@@ -812,6 +820,7 @@ class RegisterAtlasDWI(SimpleInterface):
         import gc
         import os
         from pynets.registration import register
+        from pynets.core.utils import missing_elements
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
@@ -835,27 +844,31 @@ class RegisterAtlasDWI(SimpleInterface):
         B0_mask_tmp_path = fname_presuffix(self.inputs.B0_mask, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False)
 
-        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
         if self.inputs.mask:
             mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
         else:
             mask_tmp_path = None
 
-        if self.inputs.network:
-            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
-            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
-            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+        if self.inputs.network or self.inputs.waymask:
+            if self.inputs.waymask:
+                atlas_name = f"{self.inputs.atlas}_{self.inputs.waymask}"
+            else:
+                atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
         else:
-            atlas_name = self.inputs.atlas
-            base_dir_tmp = self.inputs.basedir_path
+            atlas_name = f"{self.inputs.atlas}"
+
+        base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
+        shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        # base_dir_tmp = f"{self.inputs.basedir_path}/atlas_{atlas_name}"
+        # os.makedirs(base_dir_tmp, exist_ok=True)
 
         reg = register.DmriReg(basedir_path=base_dir_tmp,
                                fa_path=fa_tmp_path,
                                ap_path=ap_tmp_path,
                                B0_mask=B0_mask_tmp_path,
-                               anat_file=anat_file_tmp_path,
+                               anat_file=self.inputs.anat_file,
                                mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
@@ -867,6 +880,26 @@ class RegisterAtlasDWI(SimpleInterface):
         # Apply warps/coregister atlas to dwi
         [dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas,
          aligned_atlas_t1mni] = reg.atlas2t1w2dwi_align(uatlas_tmp_path, uatlas_parcels_tmp_path, atlas_name)
+
+        # Correct coords and labels
+        bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(dwi_aligned_atlas).dataobj).astype('int'))))
+        bad_idxs = [i-1 for i in bad_idxs]
+        if len(bad_idxs) > 0:
+            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            for j in bad_idxs:
+                del self.inputs.labels[j], self.inputs.coords[j]
+
+        assert len(self.inputs.coords) == len(self.inputs.labels) == len(np.unique(np.asarray(nib.load(
+            dwi_aligned_atlas).dataobj))[1:])
+
+        if self.inputs.waymask:
+            waymask_tmp_path = fname_presuffix(self.inputs.waymask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.waymask, waymask_tmp_path, copy=True, use_hardlink=False)
+
+            # Align waymask
+            waymask_in_dwi = reg.waymask2dwi_align(waymask_tmp_path)
+        else:
+            waymask_in_dwi = None
 
         if self.inputs.uatlas is None:
             uatlas_out = self.inputs.uatlas_parcels
@@ -883,9 +916,10 @@ class RegisterAtlasDWI(SimpleInterface):
             if os.path.isfile(i):
                 copyfile(i, f"{reg_dir}/{os.path.basename(i)}_{self.inputs.atlas}", copy=True, use_hardlink=False)
 
-        reg_tmp = [anat_file_tmp_path, B0_mask_tmp_path, ap_tmp_path, fa_tmp_path]
+        reg_tmp = [B0_mask_tmp_path, ap_tmp_path, fa_tmp_path, uatlas_parcels_tmp_path, uatlas_tmp_path]
         for j in reg_tmp:
-            os.remove(j)
+            if j is not None:
+                os.remove(j)
 
         self._results['dwi_aligned_atlas_wmgm_int'] = dwi_aligned_atlas_wmgm_int
         self._results['dwi_aligned_atlas'] = dwi_aligned_atlas
@@ -903,6 +937,81 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results['ap_path'] = self.inputs.ap_path
         self._results['gtab_file'] = self.inputs.gtab_file
         self._results['dwi_file'] = self.inputs.dwi_file
+        self._results['waymask_in_dwi'] = waymask_in_dwi
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterROIDWIInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterROIDWI"""
+    dwi_file = File(exists=True, mandatory=True)
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    roi = traits.Any(mandatory=False)
+    fa_path = File(exists=True, mandatory=True)
+    ap_path = File(exists=True, mandatory=True)
+    B0_mask = File(exists=True, mandatory=True)
+    coords = traits.Any(mandatory=True)
+    labels = traits.Any(mandatory=True)
+    gm_in_dwi = File(exists=True, mandatory=True)
+    vent_csf_in_dwi = File(exists=True, mandatory=True)
+    wm_in_dwi = File(exists=True, mandatory=True)
+    gtab_file = File(exists=True, mandatory=True)
+    simple = traits.Bool(False, usedefault=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+
+
+class _RegisterROIDWIOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterROIDWI"""
+    roi = traits.Any(mandatory=False)
+
+
+class RegisterROIDWI(SimpleInterface):
+    """Interface wrapper for RegisterROIDWI."""
+    input_spec = _RegisterROIDWIInputSpec
+    output_spec = _RegisterROIDWIOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import shutil
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        ap_tmp_path = fname_presuffix(self.inputs.ap_path, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False)
+
+        roi_file_tmp_path = fname_presuffix(self.inputs.roi, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.roi, roi_file_tmp_path, copy=True, use_hardlink=False)
+
+        base_dir_tmp = f"{runtime.cwd}/{self.inputs.roi}"
+        shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        # base_dir_tmp = f"{self.inputs.basedir_path}/atlas_{self.inputs.roi}"
+        # os.makedirs(base_dir_tmp, exist_ok=True)
+
+        reg = register.DmriReg(basedir_path=base_dir_tmp,
+                               fa_path=self.inputs.fa_path,
+                               ap_path=ap_tmp_path,
+                               B0_mask=self.inputs.B0_mask,
+                               anat_file=self.inputs.anat_file,
+                               mask=None,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+        if self.inputs.roi:
+            # Align roi
+            roi_in_dwi = reg.roi2dwi_align(roi_file_tmp_path)
+        else:
+            roi_in_dwi = None
+
+        reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
+        if not os.path.isdir(reg_dir):
+            os.mkdir(reg_dir)
+
+        self._results['roi'] = roi_in_dwi
 
         gc.collect()
 
@@ -913,6 +1022,7 @@ class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterFunc"""
     anat_file = File(exists=True, mandatory=True)
     mask = traits.Any(mandatory=False)
+    in_dir = traits.Any()
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
@@ -923,6 +1033,8 @@ class _RegisterFuncOutputSpec(TraitedSpec):
     """Output interface wrapper for RegisterFunc"""
     reg_fmri_complete = traits.Bool()
     basedir_path = Directory(exists=True, mandatory=True)
+    t1w_brain_mask = traits.Any(mandatory=False)
+    epi_brain_path = traits.Any()
 
 
 class RegisterFunc(SimpleInterface):
@@ -932,20 +1044,41 @@ class RegisterFunc(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import glob
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
-        if self.inputs.mask:
-            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+        anat_mask_existing = [i for i in glob.glob(self.inputs.in_dir + '/*_desc-brain_mask.nii.gz') if
+                              'MNI' not in i]
+        if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+            mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
+            copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
         else:
-            mask_tmp_path = None
+            # Apply T1w mask, if provided
+            if self.inputs.mask:
+                mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+                copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+            else:
+                mask_tmp_path = None
+
+        gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
+        if len(gm_mask_existing) > 0:
+            copyfile(gm_mask_existing[0], fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
+
+        wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
+        if len(wm_mask_existing) > 0:
+            copyfile(wm_mask_existing[0], fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
+
+        csf_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-CSF_probseg.nii.gz')
+        if len(csf_mask_existing) > 0:
+            copyfile(csf_mask_existing[0], fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd), copy=True,
+                     use_hardlink=False)
 
         reg = register.FmriReg(basedir_path=runtime.cwd,
-                               anat_file=anat_file_tmp_path,
+                               anat_file=self.inputs.anat_file,
                                mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
@@ -956,11 +1089,12 @@ class RegisterFunc(SimpleInterface):
             reg.gen_tissue()
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
-            # Align t1w to dwi
+            # Align t1w to mni
             reg.t1w2mni_align()
 
         self._results['reg_fmri_complete'] = True
         self._results['basedir_path'] = runtime.cwd
+        self._results['t1w_brain_mask'] = reg.t1w_brain_mask
 
         gc.collect()
 
@@ -977,8 +1111,10 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     anat_file = File(exists=True, mandatory=True)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
+    node_size = traits.Any()
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
+    roi = traits.Any(mandatory=False)
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
@@ -986,9 +1122,11 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
 
 class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     """Output interface wrapper for RegisterAtlasFunc"""
-    aligned_atlas_t1mni_gm = File(exists=True, mandatory=True)
+    aligned_atlas_gm = File(exists=True, mandatory=True)
+    roi_in_epi = traits.Any(mandatory=False)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
+    node_size = traits.Any()
 
 
 class RegisterAtlasFunc(SimpleInterface):
@@ -1001,6 +1139,7 @@ class RegisterAtlasFunc(SimpleInterface):
         import shutil
         import os
         from pynets.registration import register
+        from pynets.core.utils import missing_elements
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
@@ -1015,47 +1154,118 @@ class RegisterAtlasFunc(SimpleInterface):
             uatlas_parcels_tmp_path = fname_presuffix(self.inputs.uatlas_parcels, suffix='_tmp', newpath=runtime.cwd)
             copyfile(self.inputs.uatlas_parcels, uatlas_parcels_tmp_path, copy=True, use_hardlink=False)
 
-        anat_file_tmp_path = fname_presuffix(self.inputs.anat_file, suffix='_tmp', newpath=runtime.cwd)
-        copyfile(self.inputs.anat_file, anat_file_tmp_path, copy=True, use_hardlink=False)
-        if self.inputs.mask:
-            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
-        else:
-            mask_tmp_path = None
-
-        if self.inputs.network:
+        if self.inputs.network or self.inputs.roi:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
-            base_dir_tmp = f"{runtime.cwd}/atlas_{self.inputs.network}"
-            shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
         else:
-            atlas_name = self.inputs.atlas
-            base_dir_tmp = self.inputs.basedir_path
+            atlas_name = f"{self.inputs.atlas}"
+        base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
+        shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        # base_dir_tmp = f"{self.inputs.basedir_path}/atlas_{atlas_name}"
+        # os.makedirs(base_dir_tmp, exist_ok=True)
 
         reg = register.FmriReg(basedir_path=base_dir_tmp,
-                               anat_file=anat_file_tmp_path,
-                               mask=mask_tmp_path,
+                               anat_file=self.inputs.anat_file,
+                               mask=self.inputs.mask,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
-        aligned_atlas_t1mni_gm = reg.atlas2t1wmni_align(uatlas_tmp_path, uatlas_parcels_tmp_path, atlas_name)
+        if self.inputs.node_size is not None:
+            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+        aligned_atlas_gm, aligned_atlas_skull = reg.atlas2t1w_align(uatlas_tmp_path, uatlas_parcels_tmp_path,
+                                                                    atlas_name)
+
+        # Correct coords and labels
+        bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(aligned_atlas_skull).dataobj).astype('int'))))
+        bad_idxs = [i-1 for i in bad_idxs]
+        if len(bad_idxs) > 0:
+            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            for j in bad_idxs:
+                del self.inputs.labels[j], self.inputs.coords[j]
+
+        assert len(self.inputs.coords) == len(self.inputs.labels) == len(np.unique(np.asarray(nib.load(
+            aligned_atlas_skull).dataobj))[1:])
 
         reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
         if not os.path.isdir(reg_dir):
             os.mkdir(reg_dir)
 
-        reg_persist = [aligned_atlas_t1mni_gm, reg.t1_aligned_mni, reg.gm_mask_thr]
+        reg_persist = [aligned_atlas_gm, reg.t1_aligned_mni, reg.gm_mask_thr]
         for i in reg_persist:
             if os.path.isfile(i):
                 copyfile(i, f"{reg_dir}/{os.path.basename(i)}_{self.inputs.atlas}", copy=True, use_hardlink=False)
 
-        reg_tmp = [anat_file_tmp_path]
+        reg_tmp = [uatlas_parcels_tmp_path, uatlas_tmp_path]
         for j in reg_tmp:
-            os.remove(j)
+            if j is not None:
+                os.remove(j)
 
-        self._results['aligned_atlas_t1mni_gm'] = aligned_atlas_t1mni_gm
+        self._results['aligned_atlas_gm'] = aligned_atlas_gm
         self._results['coords'] = self.inputs.coords
         self._results['labels'] = self.inputs.labels
+        self._results['node_size'] = self.inputs.node_size
+
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterROIFEPIInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterROIEPI"""
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
+    roi = traits.Any(mandatory=False)
+    template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterROIEPIOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterROIEPI"""
+    roi = traits.Any(mandatory=False)
+
+
+class RegisterROIEPI(SimpleInterface):
+    """Interface wrapper for RegisterROIEPI."""
+    input_spec = _RegisterROIFEPIInputSpec
+    output_spec = _RegisterROIEPIOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import shutil
+        import os
+        from pynets.registration import register
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        roi_file_tmp_path = fname_presuffix(self.inputs.roi, suffix='_tmp', newpath=runtime.cwd)
+        copyfile(self.inputs.roi, roi_file_tmp_path, copy=True, use_hardlink=False)
+
+        base_dir_tmp = f"{runtime.cwd}/{self.inputs.roi}"
+        shutil.copytree(self.inputs.basedir_path, base_dir_tmp)
+
+        # base_dir_tmp = f"{self.inputs.basedir_path}/atlas_{self.inputs.roi}"
+        # os.makedirs(base_dir_tmp, exist_ok=True)
+
+        reg = register.FmriReg(basedir_path=base_dir_tmp,
+                               anat_file=self.inputs.anat_file,
+                               mask=None,
+                               vox_size=self.inputs.vox_size,
+                               template_name=self.inputs.template_name,
+                               simple=self.inputs.simple)
+
+        if self.inputs.roi:
+            # Align roi
+            roi_in_t1w = reg.roi2t1w_align(roi_file_tmp_path)
+        else:
+            roi_in_t1w = None
+
+        reg_dir = f"{os.path.dirname(self.inputs.anat_file)}/reg"
+        if not os.path.isdir(reg_dir):
+            os.mkdir(reg_dir)
+
+        self._results['roi'] = roi_in_t1w
 
         gc.collect()
 
@@ -1153,7 +1363,7 @@ class Tracking(SimpleInterface):
         from pynets.dmri.track import prep_tissues, reconstruction, create_density_map, track_ensemble
         from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
         from dipy.io.streamline import save_tractogram
-        from nipype.utils.filemanip import fname_presuffix, copyfile
+        from nipype.utils.filemanip import copyfile
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
@@ -1305,7 +1515,8 @@ class MakeGtabBmask(SimpleInterface):
         from dipy.io import read_bvals_bvecs
         from dipy.core.gradients import gradient_table
         from dipy.segment.mask import median_otsu
-        from pynets.dmri.dmri_utils import median, normalize_gradients, extract_b0
+        from pynets.registration.reg_utils import median
+        from pynets.dmri.dmri_utils import normalize_gradients, extract_b0
 
         B0_bet = f"{runtime.cwd}/mean_B0_bet.nii.gz"
         B0_mask = f"{runtime.cwd}/mean_B0_bet_mask.nii.gz"

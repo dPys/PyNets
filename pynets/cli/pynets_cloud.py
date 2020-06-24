@@ -380,11 +380,11 @@ def main():
                              'clustering. If specifying a list of paths to multiple cluster masks, separate '
                              'them by space.\n')
     parser.add_argument('-roi',
-                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image',
+                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a binarized ROI mask and retain only those nodes '
-                             'of a parcellation contained within that mask for connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask in template MNI space and retain only those '
+                             'nodes of a parcellation contained within that mask for connectome estimation.\n')
     parser.add_argument('-ref',
                         metavar='Atlas reference file path',
                         default=None,
@@ -394,8 +394,8 @@ def main():
                         metavar='Path to binarized Nifti1Image to constrain tractography',
                         default=None,
                         nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
+                        help='Optionally specify a binarized ROI mask in template MNI-space to constrain'
+                             'tractography in the case of dmri connectome estimation.\n')
 
     # Debug/Runtime settings
     parser.add_argument("--jobdir",

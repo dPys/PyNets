@@ -28,8 +28,8 @@ def test_create_density_map():
     from dipy.tracking._utils import _mapping_to_voxel
 
     base_dir = str(Path(__file__).parent/"examples")
-    dir_path = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi"
-    dwi_file = f"{base_dir}/BIDS/sub-0025427/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi"
+    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
     dwi_img = nib.load(dwi_file)
 
     # Load output from test_filter_streamlines: dictionary of streamline info

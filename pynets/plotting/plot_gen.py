@@ -18,7 +18,8 @@ warnings.filterwarnings("ignore")
 matplotlib.use('agg')
 
 
-def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels):
+def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, comm='nodes',
+                      color_scheme='interpolateBlues', prune=False):
     """
     Plot a connectogram for a given connectivity matrix.
 
@@ -40,6 +41,12 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
+    comm : str, optional default: 'nodes'
+        Communitity setting, either 'nodes' or 'links'
+    color_scheme : str, optional, default: 'interpolateBlues'
+        Color scheme in json.
+    prune : bool
+        Indicates whether to prune final graph of disconnected nodes/isolates.
     """
     import json
     from pathlib import Path
@@ -49,22 +56,9 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     # from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
 
-    # Advanced Settings
-    comm = 'nodes'
-    pruned = False
-    #color_scheme = 'interpolateCool'
-    #color_scheme = 'interpolateGnBu'
-    #color_scheme = 'interpolateOrRd'
-    #color_scheme = 'interpolatePuRd'
-    #color_scheme = 'interpolateYlOrRd'
-    #color_scheme = 'interpolateReds'
-    #color_scheme = 'interpolateGreens'
-    color_scheme = 'interpolateBlues'
-    # Advanced Settings
-
     conn_matrix = normalize(conn_matrix)
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
-    if pruned is True:
+    if prune is True:
         [G, pruned_nodes] = most_important(G)
         conn_matrix = nx.to_numpy_array(G)
 
@@ -83,7 +77,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     elif comm == 'links' and len(conn_matrix) > 40:
         from pynets.stats.netstats import link_communities
         # Plot link communities
-        link_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')
+        link_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')[0]
         print(f"{'Found '}{str(len(link_comm_aff_mat))}{' communities...'}")
         clust_levels = len(link_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
@@ -290,7 +284,7 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
     figsize : Tuple of integers
         The figure size; it is a pair of float, default (8, 8).
     node_size: int
-        Default 200.
+        Default 50.
     plot_overlaps : bool
         Flag to control if multiple algorithms memberships are plotted. Default is False.
     plot_labels : bool
@@ -318,28 +312,29 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
     partition = [getIndexPositions(communities.tolist(), i) for i in set(communities.tolist())]
 
     n_communities = min(len(partition), len(COLOR))
-    plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize)
     plt.axis('off')
 
     position = nx.fruchterman_reingold_layout(graph)
 
-    fig = nx.draw_networkx_nodes(graph, position, node_size=node_size, node_color='w')
-    fig.set_edgecolor('k')
+    nx.draw_networkx_nodes(graph, position, node_size=node_size, node_color='w', edgecolors='k')
     nx.draw_networkx_edges(graph, position, alpha=.5)
+
     for i in range(n_communities):
         if len(partition[i]) > 0:
             if plot_overlaps:
                 size = (n_communities - i) * node_size
             else:
                 size = node_size
-            fig = nx.draw_networkx_nodes(graph, position, node_size=size,
-                                         nodelist=partition[i], node_color=COLOR[i])
-            fig.set_edgecolor('k')
+
+            nx.draw_networkx_nodes(graph, position, node_size=size, nodelist=partition[i],
+                                   node_color=COLOR[i], edgecolors='k')
+
     if plot_labels:
         nx.draw_networkx_labels(graph, position, labels={node: str(node) for node in graph.nodes()})
 
-    fig.savefig(out_path)
-    fig.close('all')
+    plt.savefig(out_path)
+    plt.close('all')
 
     return
 
@@ -551,7 +546,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         labels = list(labels)
 
     if len(coords) > 0:
-        if '\'b' in atlas:
+        if isinstance(atlas, bytes):
             atlas = atlas.decode('utf-8')
 
         namer_dir = dir_path + '/figures'
@@ -741,10 +736,10 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         labels = list(labels)
 
     if len(coords) > 0:
-        if '\'b' in atlas:
+        if isinstance(atlas, bytes):
             atlas = atlas.decode('utf-8')
 
-        namer_dir = dir_path + '/figures'
+        namer_dir = f"{dir_path}/figures"
         if not os.path.isdir(namer_dir):
             os.makedirs(namer_dir, exist_ok=True)
 
@@ -887,8 +882,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             sys.exit(0)
     stream.close()
 
-    [struct_mat_path, func_mat_path] = modality_paths
-    struct_mat, func_mat = [np.load(struct_mat_path), np.load(func_mat_path)]
+    [struct_mat, func_mat] = [np.load(modality_paths[0]), np.load(modality_paths[1])]
 
     if adjacency is True:
         # Multiplex adjacency
@@ -920,7 +914,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 edge_intensities.append(0)
 
         node_centralities = list(nx.algorithms.eigenvector_centrality(mG, weight='weight').values())
-        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=False,
+        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=True,
                          edge_color=edge_intensities,
                          node_color=node_centralities,
                          edge_vmin=z_min, edge_vmax=z_max, dim=3, font_size=6, widths=3, alpha=0.7,
@@ -993,7 +987,7 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
         Pandas dataframe of concatenated graph measures across ensemble.
     measures : list
         List of string names for graph measures whose order corresponds to headers/values in df_concat.
-    net_pick_file : st
+    net_pick_file : str
         File path to .pkl file of network measures used to generate df_concat.
     """
     import os

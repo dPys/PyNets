@@ -2,13 +2,9 @@
     "dwi": {
             "dg": "['clos']",
             "ml": "['0']",
-            "mod": "['csa']",
-            "s": 1000,
-            "tc": "['bin']",
-            "tt": "['local']"
+            "mod": "['csa']"
         },
     "func": {
-            "cc": "['tcorr']",
             "ct": "None",
             "hp": "['0']",
             "k": "None",
@@ -27,7 +23,6 @@
             "mplx":  2,
             "mst":  "True",
             "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']",
-            "names":  "True",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",
