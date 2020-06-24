@@ -92,7 +92,7 @@ PyNets Manual Execution CLI:
 
 .. argparse::
     :module: pynets.cli.pynets_run
-    :func: get_bids_parser
+    :func: get_parser
     :prog: pynets
 
 **********
