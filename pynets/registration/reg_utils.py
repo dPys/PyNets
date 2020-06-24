@@ -80,6 +80,7 @@ def align(inp, ref, xfm=None, out=None, dof=12, searchrad=True, bins=256, interp
             Optional file path to white-matter segmentation Nifti1Image for boundary-based registration (BBR).
         init : str
             File path to a transformation matrix in .xfm format to use as an initial guess for the alignment.
+
     """
     cmd = f"flirt -in {inp} -ref {ref}"
     if xfm is not None:
@@ -129,6 +130,7 @@ def align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, confi
             Optional file path to a mask in input image space.
         config : str
             Optional file path to config file specifying command line arguments.
+
     """
     cmd = f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} --cout={warp} --warpres=8,8,8"
     if ref_mask is not None:
@@ -160,6 +162,7 @@ def applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6):
             Interpolation method to use. Default is trilinear.
         dof : int
             Number of degrees of freedom to use in the alignment.
+
     """
     cmd = f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp {interp} -dof {dof} -applyxfm"
     print(cmd)
@@ -189,6 +192,7 @@ def apply_warp(ref, inp, out, warp=None, xfm=None, mask=None, interp=None, sup=F
             Interpolation method to use.
         sup : bool
             Intermediary supersampling of output. Default is False.
+
     """
     cmd = f"applywarp --ref={ref} --in={inp} --out={out}"
     if xfm is not None:
@@ -219,6 +223,7 @@ def inverse_warp(ref, out, warp):
             File path to input Nifti1Image output following registration alignment.
         warp : str
             File path to input Nifti1Image output for the nonlinear warp following alignment.
+
     """
     cmd = f"invwarp --warp={warp} --out={out} --ref={ref}"
     print(cmd)
@@ -238,6 +243,7 @@ def combine_xfms(xfm1, xfm2, xfmout):
             File path to the second transformation.
         xfmout : str
             File path to the output transformation.
+
     """
     cmd = f"convert_xfm -omat {xfmout} -concat {xfm1} {xfm2}"
     print(cmd)
@@ -261,6 +267,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
             File path to the AP moving image.
         working_dir : str
             Path to the working directory to perform SyN and save outputs.
+
     """
     import uuid
     from time import strftime
@@ -383,6 +390,7 @@ def check_orient_and_dims(infile, outdir, vox_size, bvecs=None, overwrite=True):
         File path to the reoriented and/or resample Nifti1Image.
     bvecs : str
         File path to corresponding reoriented bvecs file if outfile is a dwi.
+
     """
     from pynets.registration.reg_utils import reorient_dwi, reorient_img, match_target_vox_res
 
@@ -482,6 +490,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
         File path to the reoriented dwi Nifti1Image.
     out_bvec_fname : str
         File path to corresponding reoriented bvecs file.
+
     """
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
@@ -544,6 +553,7 @@ def reorient_img(img, out_dir, overwrite=True):
     -------
     out_name : str
         File path to reoriented Nifti1Image.
+
     """
     from pynets.registration.reg_utils import normalize_xform
 
@@ -588,6 +598,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     -------
     img_file : str
         File path to resampled Nifti1Image.
+
     """
     import os
     from dipy.align.reslice import reslice

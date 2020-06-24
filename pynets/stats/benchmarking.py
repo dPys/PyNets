@@ -76,28 +76,28 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
 def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdfs=True):
     """
     Computes the discriminability statistic.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
         Input data. If dissimilarity=='precomputed', the input should be the dissimilarity matrix.
     Y : 1d-array, shape (n_samples)
         Input labels.
-    dissimilarity : str, {"euclidean" (default), "precomputed"}
-        Dissimilarity measure to use:
-        - 'euclidean':
-            Pairwise Euclidean distances between points in the dataset.
-        - 'precomputed':
-            Pre-computed dissimilarities.
+    dissimilarity : str, {"euclidean" (default), "precomputed"} Dissimilarity measure can be
+        'euclidean' (pairwise Euclidean distances between points in the dataset) or 'precomputed'
+        (pre-computed dissimilarities).
     remove_isolates : bool, optional, default=True
         Whether to remove data that have single label.
     return_rdfs : bool, optional, default=False
         Whether to return rdf for all data points.
+
     Returns
     -------
     stat : float
         Discriminability statistic.
     rdfs : array, shape (n_samples, max{len(id)})
         Rdfs for each sample. Only returned if ``return_rdfs==True``.
+
     """
     check_X_y(X, Y, accept_sparse=True)
 
@@ -141,6 +141,7 @@ def discr_stat(X, Y, dissimilarity="euclidean", remove_isolates=True, return_rdf
 def _discr_rdf(dissimilarities, labels):
     """
     A function for computing the reliability density function of a dataset.
+
     Parameters
     ----------
     dissimilarities : array, shape (n_samples, n_features) or (n_samples, n_samples)
@@ -148,10 +149,12 @@ def _discr_rdf(dissimilarities, labels):
         dissimilarity matrix.
     labels : 1d-array, shape (n_samples)
         Input labels.
+
     Returns
     -------
     out : array, shape (n_samples, max{len(id)})
         Rdfs for each sample. Only returned if ``return_rdfs==True``.
+
     """
     check_X_y(dissimilarities, labels, accept_sparse=True)
     rdfs = []

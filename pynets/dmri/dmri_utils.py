@@ -37,6 +37,7 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
         Unit-normed b-vectors array.
     bvals : 1d int array
         Vector amplitude square normed b-values array.
+
     """
     from dipy.core.gradients import round_bvals
     bvals = np.array(bvals, dtype='float32')
@@ -69,13 +70,16 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
 def generate_sl(streamlines):
     """
     Helper function that takes a sequence and returns a generator
+
     Parameters
     ----------
     streamlines : sequence
         Usually, this would be a list of 2D arrays, representing streamlines
+
     Returns
     -------
     generator
+
     """
     for sl in streamlines:
         yield sl
@@ -98,6 +102,7 @@ def extract_b0(in_file, b0_ixs, out_path=None):
     -------
     out_path : str
        4D NIfTI file consisting of B0's.
+
     """
     if out_path is None:
         out_path = fname_presuffix(

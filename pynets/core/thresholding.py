@@ -218,10 +218,6 @@ def est_density(in_mat):
     """
     Calculates the density of a given undirected graph.
 
-    .. math::
-
-       d = \frac{2m}{n(n-1)},
-
     Parameters
     ----------
     in_mat : NxN np.ndarray
@@ -231,6 +227,7 @@ def est_density(in_mat):
     -------
     density : float
         Density of the graph.
+
     """
     return nx.density(nx.from_numpy_matrix(in_mat))
 
@@ -580,6 +577,7 @@ def weight_to_distance(G):
     -------
     G : Object
         Inverted NetworkX graph equivalent to the distance measure.
+
     """
     edge_list = [v[2]['weight'] for v in G.edges(data=True)]
     # maximum edge value
@@ -605,6 +603,7 @@ def knn(conn_matrix, k):
     -------
     gra : Obj
         KNN Weighted NetworkX graph.
+
     """
     gra = nx.Graph()
     nodes = list(range(len(conn_matrix[0])))

@@ -54,6 +54,7 @@ def do_dir_path(atlas, outdir):
     -------
     dir_path : str
         Path to directory containing subject derivative data for given run.
+
     """
     if atlas:
         if os.path.isfile(atlas):
@@ -86,6 +87,7 @@ def as_directory(dir_, remove=False, return_as_path=False):
     -------
     str
         Directory string.
+
     """
     import shutil
     from pathlib import Path
@@ -143,6 +145,7 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     -------
     est_path : str
         File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
+
     """
     import os
     if (node_size is None) and (parc is True):
@@ -223,6 +226,7 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
     -------
     est_path : str
         File path to .npy file containing graph with thresholding applied.
+
     """
     import os
     if (node_size is None) and (parc is True):
@@ -287,6 +291,7 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     -------
     est_path : str
         File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
+
     """
     import os
     if (node_size is None) and (parc is True):
@@ -364,6 +369,7 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
     -------
     est_path : str
         File path to .npy file containing graph with thresholding applied.
+
     """
     import os
     if (node_size is None) and (parc is True):
@@ -408,6 +414,7 @@ def create_csv_path(dir_path, est_path):
     -------
     out_path : str
         File path to .csv with graph metrics.
+
     """
     import os
     from pathlib import Path
@@ -474,7 +481,7 @@ def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, mi
 
 def save_mat(conn_matrix, est_path, fmt='npy'):
     """
-   Save an adjacency matrix using any of a variety of methods.
+    Save an adjacency matrix using any of a variety of methods.
 
     Parameters
     ----------
@@ -484,6 +491,7 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
         File path to .npy file containing graph.
     fmt : str
         Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
+
     """
     import numpy as np
     import networkx as nx
@@ -576,6 +584,7 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
         List of booleans indicating whether omnibus embedding of graph population was performed.
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data have been specified.
+
     """
 
     return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
@@ -635,6 +644,7 @@ def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, bina
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
+
     """
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
@@ -739,6 +749,7 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, 
         List of booleans indicating whether omnibus embedding of graph population was performed.
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data have been specified.
+
     """
     est_path_iterlist = [est_path_func, est_path_struct]
     conn_model_iterlist = [conn_model_func, conn_model_struct]
@@ -777,6 +788,7 @@ def collectpandasjoin(net_mets_csv):
     -------
     net_mets_csv_out : str
         File path to csv pandas dataframe as itself.
+
     """
     net_mets_csv_out = net_mets_csv
     return net_mets_csv_out
@@ -836,7 +848,8 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     Returns
     -------
     combination_complete : bool
-        If True, then collect_pandas_df completed successfully
+        If True, then collect_pandas_df completed successfully.
+
     """
     import yaml
     import pkg_resources
@@ -909,6 +922,7 @@ def check_est_path_existence(est_path_list):
         List of existing file paths to .npy file containing graph with thresholding applied.
     bad_ixs : int
         List of indices in est_path_list with non-existent and/or corrupt files.
+
     """
     est_path_list_ex = []
     bad_ixs = []
@@ -948,6 +962,7 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         Path to pickled coordinates list.
     labels_path : str
         Path to pickled labels list.
+
     """
     try:
         import cPickle as pickle
@@ -1020,6 +1035,7 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     net_parcels_nii_path : str
         File path to Nifti1Image consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
+
     """
     import os
 
@@ -1067,6 +1083,7 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
     -------
     out_path_ts : str
         Path to .npy file containing array of fMRI time-series extracted from nodes.
+
     """
     import os
     namer_dir = f'{dir_path}/timeseries'

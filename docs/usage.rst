@@ -32,12 +32,16 @@ Required
         `func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
         `dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
         `-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
+
     .. note::
         Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the runconfig.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
+
     .. note::
         If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`.
+
     .. note::
         Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or possible override with the `-vox` flag.
+
     .. note::
         All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix).
 
@@ -76,19 +80,20 @@ In the case of running pynets on a single subject, several combinations of input
 **********************
 Command-Line Arguments
 **********************
+
 PyNets BIDS CLI:
+
 .. argparse::
-   :ref: pynets.cli.pynets_bids.get_parser
-   :prog: pynets_bids
-   :nodefault:
-   :nodefaultconst:
+    :module: pynets.cli.pynets_bids
+    :func: get_bids_parser
+    :prog: pynets
 
 PyNets Manual Execution CLI:
+
 .. argparse::
-   :ref: pynets.cli.pynets_run.get_parser
-   :prog: pynets
-   :nodefault:
-   :nodefaultconst:
+    :module: pynets.cli.pynets_run
+    :func: get_bids_parser
+    :prog: pynets
 
 **********
 Quickstart
@@ -106,8 +111,6 @@ The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-A
 Example: ::
 
     pynets_bids '/hnu/fMRIprep/fmriprep' '~/outputs' func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
-
-
 
 A similar CLI, `pynets_cloud` has also been made available using AWS Batch and S3, which require a AWS credentials and configuration of job queues and definitions using cloud_config.json: ::
 
