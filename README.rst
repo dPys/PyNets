@@ -15,6 +15,4 @@ Citing
 ------
 A manuscript is in preparation, but for now, please cite all uses with the following entry:
 
-Pisner, D., Hammonds R. (2020) PyNets: A Reproducible Workflow for Structural and Functional Connectome
-    Ensemble Learning. Poster session presented at the 26th Annual Meeting of the Organization for
-    Human Brain Mapping. https://github.com/dPys/PyNets.
+Pisner, D., Hammonds R. (2020) PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning. Poster session presented at the 26th Annual Meeting of the Organization for Human Brain Mapping. https://github.com/dPys/PyNets.
