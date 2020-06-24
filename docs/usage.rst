@@ -232,4 +232,7 @@ Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad
 ********************
 Interpreting outputs
 ********************
+
+.. image:: _static/yeo7_mosaic.png
+
 (IN CONSTRUCTION)
