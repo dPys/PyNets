@@ -199,7 +199,7 @@ def get_bids_parser():
                         help="""The directory to store pynets derivatives locally.""")
     parser.add_argument("analysis_level",
                         choices=['participant', 'group'],
-                        help='Possible choices: participant, group.')
+                        help='Whether to instantiate an individual or group workflow')
     parser.add_argument("modality",
                         nargs='+',
                         choices=['dwi', 'func'],
@@ -207,8 +207,8 @@ def get_bids_parser():
     parser.add_argument("--participant_label",
                         help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to 
                             sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this 
-                            parameter is not provided all subjects should be analyzed. Multiple participants can be 
-                            specified with a space separated list.""",
+                            parameter is not provided all subjects found in `bids_dir` will be analyzed. 
+                            Multiple participants can be specified with a space separated list.""",
                         nargs="+",
                         default=None)
     parser.add_argument("--session_label",
