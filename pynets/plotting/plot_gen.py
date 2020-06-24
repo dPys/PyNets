@@ -47,6 +47,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         Color scheme in json.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
+
     """
     import json
     from pathlib import Path
@@ -247,6 +248,7 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
         Name of atlas parcellation used.
     labels : list
         List of string labels corresponding to ROI nodes.
+
     """
     import matplotlib
     matplotlib.use('agg')
@@ -289,6 +291,7 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
         Flag to control if multiple algorithms memberships are plotted. Default is False.
     plot_labels : bool
         Flag to control if node labels are plotted. Default is False.
+
     """
 
     COLOR = ['r', 'b', 'g', 'c', 'm', 'y', 'k',
@@ -360,6 +363,7 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
         size(s) of the nodes in points^2.
     node_cmap: colormap
         colormap used for representing the community assignment of the nodes.
+
     """
     import random
     import seaborn as sns
@@ -499,6 +503,7 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         The name of a valid function used to reduce the time-series region extraction.
     edge_color_override : bool
         Switch that enables random sequential colormap selection for edges.
+
     """
     import os
     import yaml
@@ -696,6 +701,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+
     """
     import matplotlib
     matplotlib.use('agg')
@@ -850,6 +856,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
        A tuple of filepath strings to the raw structural and raw functional connectome graph files (.npy).
     metadata : dict
         Dictionary coontaining coords and labels shared by each layer of the multilayer graph.
+
     """
     import numpy as np
     import multinetx as mx
@@ -989,6 +996,7 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
         List of string names for graph measures whose order corresponds to headers/values in df_concat.
     net_pick_file : str
         File path to .pkl file of network measures used to generate df_concat.
+
     """
     import os
     import matplotlib

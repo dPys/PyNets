@@ -8,8 +8,8 @@ Installation
 ------------
 
 There are many ways to use pynets: in a `Docker Container`_,
-in a `Singularity Container`_, using `AWS Batch`_, or in a `Manually
-Prepared Environment (Python 3.6+)`_.
+in a `Singularity Container`_, using AWS Batch, or in a Manually
+Prepared Environment (Python 3.6+).
 Using a local container method is highly recommended.
 Once you are ready to run pynets, see Usage_ for details.
 
@@ -176,7 +176,6 @@ On a functional Python 3.5 (or above) environment with ``pip`` installed,
 PyNets can be installed using the habitual command: ::
 
     pip install pynets
-
 
 External Dependencies
 ---------------------

@@ -241,6 +241,7 @@ def build_asetomes(est_path_iterlist, ID):
         List of file paths to .npy files, each containing a graph.
     ID : str
         A subject id or other unique identifier.
+
     """
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
@@ -276,7 +277,7 @@ def build_masetome(est_path_iterlist, ID):
     References
     ----------
     .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi, J.,
-    … Sporns, O. (2018). Mapping higher-order relations between brain structure
+      Sporns, O. (2018). Mapping higher-order relations between brain structure
       and function with embedded vector representations of connectomes.
       Nature Communications. https://doi.org/10.1038/s41467-018-04614-w
 
