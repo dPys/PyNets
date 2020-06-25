@@ -504,8 +504,14 @@ def build_multigraphs(est_path_iterlist, ID):
     est_path_iterlist_func = list(set([i for i in raw_est_path_iterlist if i.split('est-')[1].split('_')[0] in
                                        func_models]))
 
-    func_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_func]))
-    dwi_subnets = list(set([i.split('_est')[0].split('/')[-1] for i in est_path_iterlist_dwi]))
+    if '_rsn' in ';'.join(est_path_iterlist_func):
+        func_subnets = list(set([i.split('_rsn-')[0].split('/')[-1] for i in est_path_iterlist_func]))
+    else:
+        func_subnets = []
+    if '_rsn' in ';'.join(est_path_iterlist_dwi):
+        dwi_subnets = list(set([i.split('_rsn-')[0].split('/')[-1] for i in est_path_iterlist_dwi]))
+    else:
+        dwi_subnets = []
 
     dir_path = str(Path(os.path.dirname(est_path_iterlist_dwi[0])).parent.parent.parent)
     namer_dir = f"{dir_path}/graphs_multilayer"

@@ -1553,13 +1553,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         except FileNotFoundError:
             print('Failed to parse global_graph_measures.yaml')
 
-    with open(pkg_resources.resource_filename("pynets", "stats/nodal_graph_measures.yaml"), 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "stats/local_graph_measures.yaml"), 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
             print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
         except FileNotFoundError:
-            print('Failed to parse nodal_graph_measures.yaml')
+            print('Failed to parse local_graph_measures.yaml')
 
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
     # we are exploiting it intentionally to facilitate uninterrupted, automated graph analysis even when algorithms are

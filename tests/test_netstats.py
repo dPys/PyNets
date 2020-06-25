@@ -465,5 +465,4 @@ def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary
                                                            nc_collect=nc_collect, create_summary=create_summary,
                                                            sql_out=sql_out)
 
-
     assert combination_complete is True
