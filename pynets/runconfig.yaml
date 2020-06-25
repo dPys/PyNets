@@ -21,6 +21,8 @@ tracking_samples: # Indicates the number of cumulative streamline samples for tr
     - 1000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
+DSN:
+    - False
 hub_detection_method: # Valid inputs are coreness, richclub, and eigenvector centrality
     - 'richclub'
 nilearn_parc_atlases:
@@ -70,8 +72,6 @@ available_models:
       - 'csd'
 template: # `MNI152_T1` is the default and is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
     - 'MNI152_T1'
-DSN:
-    - True
 bids_defaults:
     space:
         - 'T1w'
