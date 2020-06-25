@@ -8,15 +8,15 @@ scipy==1.4.1
 numpy>=1.16.0
 setuptools>=41.0.0
 click>=6.7
-six>=1.12.0
+six==1.12.0
 numpydoc>=0.8.0
 nibabel>=3.0.1
-indexed_gzip>=0.8.8
+indexed_gzip==1.2.0
 seaborn>=0.7.1
 matplotlib>=2.2.0
 pytest>=3.3.1
-networkx>=2.0
-nipype==1.2.0
+networkx==2.3
+nipype==1.5.0
 scikit_learn>=0.22.0
 dipy>=1.1.0
 pyyaml>=4.2b1
@@ -34,8 +34,8 @@ templateflow>=0.6.2
 git+https://github.com/dPys/nilearn.git@enh/parc_conn
 git+https://github.com/dPys/deepbrain.git@master
 git+https://github.com/nkoub/multinetx.git@master
-pybind11>=2.5.0
-cpalgorithm>=0.0.14
+pybind11==2.5.0
+cpalgorithm==0.0.14
 # fury>=0.2.0
 # skggm>=0.2.7
 # nltk>=3.4
