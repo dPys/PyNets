@@ -23,10 +23,10 @@ except KeyError:
 def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, target_samples, conn_model, network,
                            node_size, dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas,
                            labels_im_file, uatlas, labels, coords, norm, binary, atlas_mni, basedir_path,
-                           curv_thr_list, step_list, directget, min_length, error_margin):
+                           curv_thr_list, step_list, directget, min_length, t1_aligned_mni, error_margin):
     """
-    A Function to perform normalization of streamlines tracked in native diffusion space to an
-    FA template in MNI space.
+    A Function to perform normalization of streamlines tracked in native diffusion space
+    to an MNI-space template.
 
     Parameters
     ----------
@@ -96,6 +96,8 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+    t1_aligned_mni : str
+        File path to the T1w Nifti1Image in template MNI space.
     error_margin : int
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center
@@ -175,196 +177,208 @@ def direct_streamline_norm(streams, fa_path, ap_path, dir_path, track_type, targ
 
     """
     import gc
-    from dipy.tracking import utils
-    from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
+    from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import reg_utils as regutils
-    from dipy.tracking._utils import _mapping_to_voxel
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
-    from dipy.io.streamline import save_tractogram
     # from pynets.plotting import plot_gen
     import pkg_resources
     import yaml
     import os.path as op
+    from pynets.registration.reg_utils import vdc
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
+    from dipy.tracking import utils
+    from dipy.tracking._utils import _mapping_to_voxel
+    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+    from dipy.io.streamline import save_tractogram
     # from pynets.core.utils import missing_elements
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         try:
             hardcoded_params = yaml.load(stream)
-            template_name = hardcoded_params['template'][0]
+            run_dsn = hardcoded_params['DSN'][0]
         except FileNotFoundError:
             print('Failed to parse runconfig.yaml')
     stream.close()
 
-    dsn_dir = f"{basedir_path}/dmri_reg/DSN"
-    if not op.isdir(dsn_dir):
-        os.mkdir(dsn_dir)
+    if run_dsn is True:
+        dsn_dir = f"{basedir_path}/dmri_reg/DSN"
+        if not op.isdir(dsn_dir):
+            os.mkdir(dsn_dir)
 
-    namer_dir = f"{dir_path}/tractography"
-    if not op.isdir(namer_dir):
-        os.mkdir(namer_dir)
+        namer_dir = f"{dir_path}/tractography"
+        if not op.isdir(namer_dir):
+            os.mkdir(namer_dir)
 
-    atlas_img = nib.load(labels_im_file)
+        atlas_img = nib.load(labels_im_file)
 
-    # Run SyN and normalize streamlines
-    fa_img = nib.load(fa_path)
-    vox_size = fa_img.header.get_zooms()[0]
-    template_path = pkg_resources.resource_filename("pynets", f"templates/FA_{int(vox_size)}mm.nii.gz")
-    template_anat_path = pkg_resources.resource_filename("pynets",
-                                                         f"templates/{template_name}_brain_{int(vox_size)}mm.nii.gz")
-    template_img = nib.load(template_path)
-    brain_mask = np.asarray(template_img.dataobj).astype('bool')
-    template_img.uncache()
+        # Run SyN and normalize streamlines
+        fa_img = nib.load(fa_path)
+        vox_size = fa_img.header.get_zooms()[0]
+        template_path = pkg_resources.resource_filename("pynets", f"templates/FA_{int(vox_size)}mm.nii.gz")
+        uatlas_mni_img = nib.load(atlas_mni)
+        t1_aligned_mni_img = nib.load(t1_aligned_mni)
+        brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype('bool')
 
-    uatlas_mni_img = nib.load(uatlas)
+        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
+                                                                  '%s' % (network + '_' if network is not
+                                                                                           None else ''),
+                                                                  '%s' % (op.basename(roi).split('.')[0] + '_'
+                                                                          if roi is not None else ''),
+                                                                  conn_model, '_', target_samples,
+                                                                  '%s' % ("%s%s" % ('_' +
+                                                                                    str(node_size), 'mm_') if
+                                                                          ((node_size != 'parc') and
+                                                                           (node_size is not None)) else '_'),
+                                                                  'curv', str(curv_thr_list).replace(', ', '_'),
+                                                                  'step', str(step_list).replace(', ', '_'),
+                                                                  'tt-', track_type, '_dg-', directget, '_ml-',
+                                                                  min_length, '.trk')
 
-    streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/streamlines_mni_',
-                                                              '%s' % (network + '_' if network is not
-                                                                                       None else ''),
-                                                              '%s' % (op.basename(roi).split('.')[0] + '_'
-                                                                      if roi is not None else ''),
-                                                              conn_model, '_', target_samples,
-                                                              '%s' % ("%s%s" % ('_' +
-                                                                                str(node_size), 'mm_') if
-                                                                      ((node_size != 'parc') and
-                                                                       (node_size is not None)) else '_'),
-                                                              'curv', str(curv_thr_list).replace(', ', '_'),
-                                                              'step', str(step_list).replace(', ', '_'),
-                                                              'tt-', track_type, '_dg-', directget, '_ml-',
-                                                              min_length, '.trk')
+        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
+                                                                  '%s' % (network + '_' if network is not None else ''),
+                                                                  '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                                          roi is not None else ''),
+                                                                  conn_model, '_', target_samples,
+                                                                  '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
+                                                                          ((node_size != 'parc') and (node_size is not
+                                                                                                      None)) else '_'),
+                                                                  'curv', str(curv_thr_list).replace(', ', '_'),
+                                                                  'step', str(step_list).replace(', ', '_'), 'tt-',
+                                                                  track_type,
+                                                                  '_dg-', directget, '_ml-', min_length, '.nii.gz')
 
-    density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_mni_',
-                                                              '%s' % (network + '_' if network is not None else ''),
-                                                              '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                                      roi is not None else ''),
-                                                              conn_model, '_', target_samples,
-                                                              '%s' % ("%s%s" % ('_' + str(node_size), 'mm_') if
-                                                                      ((node_size != 'parc') and (node_size is not
-                                                                                                  None)) else '_'),
-                                                              'curv', str(curv_thr_list).replace(', ', '_'),
-                                                              'step', str(step_list).replace(', ', '_'), 'tt-',
-                                                              track_type,
-                                                              '_dg-', directget, '_ml-', min_length, '.nii.gz')
+        # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
+        #                                                                '%s' % (network + '_' if network is not
+        #                                                                                         None else ''),
+        #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
+        #                                                                        roi is not None else ''),
+        #                                                                conn_model, '_', target_samples,
+        #                                                                '%s' % ("%s%s" %
+        #                                                                        ('_' + str(node_size),
+        #                                                                         'mm_') if ((node_size != 'parc') and
+        #                                                                                    (node_size is not None)) else
+        #                                                                        '_'),
+        #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
+        #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
+        #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
+        #                                                                '.png')
 
-    # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
-    #                                                                '%s' % (network + '_' if network is not
-    #                                                                                         None else ''),
-    #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
-    #                                                                        roi is not None else ''),
-    #                                                                conn_model, '_', target_samples,
-    #                                                                '%s' % ("%s%s" %
-    #                                                                        ('_' + str(node_size),
-    #                                                                         'mm_') if ((node_size != 'parc') and
-    #                                                                                    (node_size is not None)) else
-    #                                                                        '_'),
-    #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
-    #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
-    #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
-    #                                                                '.png')
+        # SyN FA->Template
+        [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, t1_aligned_mni, ap_path, dsn_dir)
 
-    # SyN FA->Template
-    [mapping, affine_map, warped_fa] = regutils.wm_syn(template_path, fa_path, template_anat_path, ap_path, dsn_dir)
+        tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, to_origin=Origin.NIFTI,
+                                     bbox_valid_check=False)
 
-    tractogram = load_tractogram(streams, fa_img, to_space=Space.RASMM, to_origin=Origin.TRACKVIS,
-                                 bbox_valid_check=False)
-    fa_img.uncache()
-    streamlines = tractogram.streamlines
-    warped_fa_img = nib.load(warped_fa)
-    warped_fa_affine = warped_fa_img.affine
-    warped_fa_shape = warped_fa_img.shape
+        fa_img.uncache()
+        streamlines = tractogram.streamlines
+        warped_fa_img = nib.load(warped_fa)
+        warped_fa_affine = warped_fa_img.affine
+        warped_fa_shape = warped_fa_img.shape
 
-    streams_in_curr_grid = transform_streamlines(streamlines, warped_fa_affine)
+        streams_in_curr_grid = transform_streamlines(streamlines, warped_fa_affine)
 
-    ref_grid_aff = vox_size*np.eye(4)
-    ref_grid_aff[3][3] = 1
+        # Create isocenter mapping where we anchor the origin transformation affine
+        # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
+        # van der Corput sequence with a base value equal to the voxel resolution
+        [x_mul, y_mul, z_mul] = [vdc(i, vox_size) for i in range(1, 4)]
 
-    # Create isocenter mapping where we anchor the origin transformation affine
-    # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
-    # van der Corput sequence with a base value equal to the voxel resolution
-    def vdc(n, base=vox_size):
-        vdc, denom = 0, 1
-        while n:
-            denom *= base
-            n, remainder = divmod(n, base)
-            vdc += remainder / denom
-        return vdc
+        ref_grid_aff = vox_size * np.eye(4)
+        ref_grid_aff[3][3] = 1
 
-    [x_mul, y_mul, z_mul] = [vdc(i) for i in range(1, 4)]
+        # streams_final_filt = []
+        # i = 0
+        # combs = [(-x_mul, -y_mul, -z_mul), (x_mul, y_mul, z_mul), (1, y_mul, -z_mul), (-1, y_mul, -z_mul),
+        #          (1, -y_mul, -z_mul), (1, 1, -z_mul), (1, 1, z_mul), (-x_mul, 1, 1), (x_mul, 1, 1), (1, -y_mul, 1),
+        #          (1, y_mul, 1)]
+        # while len(streams_final_filt)/len(streams_in_curr_grid) < 0.90:
+        #     print(f"Warping streamlines to MNI space. Attempt {i}...")
+        #     print(len(streams_final_filt)/len(streams_in_curr_grid))
+        #     adjusted_affine = affine_map.affine.copy()
+        #     if i > len(combs) - 1:
+        #         raise ValueError('DSN failed. Header orientation information may be corrupted...')
+        #     adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
+        #     adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
+        #     adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
+        #
+        #     streams_final_filt = regutils.warp_streamlines(adjusted_affine, ref_grid_aff, mapping, warped_fa_img,
+        #                                                    streams_in_curr_grid, brain_mask)
+        #
+        #     i += 1
 
-    adjusted_affine = affine_map.affine.copy()
-    adjusted_affine[0][3] = -adjusted_affine[0][3]*x_mul
-    adjusted_affine[1][3] = -adjusted_affine[1][3]*y_mul
-    adjusted_affine[2][3] = -adjusted_affine[2][3]*z_mul
+        adjusted_affine = affine_map.affine.copy()
+        adjusted_affine[0][3] = -adjusted_affine[0][3] * x_mul
+        adjusted_affine[1][3] = -adjusted_affine[1][3] * y_mul
+        adjusted_affine[2][3] = -adjusted_affine[2][3] * z_mul
 
-    # Deform streamlines, isocenter, and remove streamlines outside brain
-    streams_in_brain = [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(), streams_in_curr_grid,
-                                                                     ref_grid_aff), streams_in_curr_grid)]
-    streams_final_filt = Streamlines(utils.target_line_based(
-        transform_streamlines(transform_streamlines(streams_in_brain,
-                                                    np.linalg.inv(adjusted_affine)),
-                              np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
+        streams_final_filt = regutils.warp_streamlines(adjusted_affine, ref_grid_aff, mapping, warped_fa_img,
+                                                       streams_in_curr_grid, brain_mask)
 
-    # Remove streamlines with negative voxel indices
-    lin_T, offset = _mapping_to_voxel(np.eye(4))
-    streams_final_filt_final = []
-    for sl in streams_final_filt:
-        inds = np.dot(sl, lin_T)
-        inds += offset
-        if not inds.min().round(decimals=6) < 0:
-            streams_final_filt_final.append(sl)
+        # Remove streamlines with negative voxel indices
+        lin_T, offset = _mapping_to_voxel(np.eye(4))
+        streams_final_filt_final = []
+        for sl in streams_final_filt:
+            inds = np.dot(sl, lin_T)
+            inds += offset
+            if not inds.min().round(decimals=6) < 0:
+                streams_final_filt_final.append(sl)
 
-    # Save streamlines
-    stf = StatefulTractogram(streams_final_filt_final, reference=uatlas_mni_img, space=Space.RASMM,
-                             origin=Origin.TRACKVIS)
-    stf.remove_invalid_streamlines()
-    streams_final_filt_final = stf.streamlines
-    save_tractogram(stf, streams_mni, bbox_valid_check=True)
-    warped_fa_img.uncache()
+        # Save streamlines
+        stf = StatefulTractogram(streams_final_filt_final, reference=uatlas_mni_img, space=Space.RASMM,
+                                 origin=Origin.NIFTI)
+        stf.remove_invalid_streamlines()
+        streams_final_filt_final = stf.streamlines
+        save_tractogram(stf, streams_mni, bbox_valid_check=True)
+        warped_fa_img.uncache()
 
-    # DSN QC plotting
-    # plot_gen.show_template_bundles(streams_final_filt_final, template_path, streams_warp_png)
+        # DSN QC plotting
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
+        # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
 
-    # Create and save MNI density map
-    nib.save(nib.Nifti1Image(utils.density_map(streams_final_filt_final, affine=np.eye(4),
-                                               vol_dims=warped_fa_shape), warped_fa_affine), density_mni)
+        # Create and save MNI density map
+        nib.save(nib.Nifti1Image(utils.density_map(streams_final_filt_final, affine=np.eye(4),
+                                                   vol_dims=warped_fa_shape), warped_fa_affine), density_mni)
 
-    # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
-    # with original mni-space uatlas
+        # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
+        # with original mni-space uatlas
+        warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int'),
+                                                                       interpolation='nearestneighbour'),
+                                                     interp='nearest')
+        atlas_img.uncache()
+        warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas,
+                                                                                affine=warped_fa_affine),
+                                                                uatlas_mni_img, interpolation='nearest',
+                                                                clip=False).dataobj)
+        uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
+        uatlas_mni_img.uncache()
+        overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
+        os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
+        atlas_mni = f"{dir_path}/parcellations/{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
 
-    warped_uatlas = affine_map.transform_inverse(mapping.transform(np.asarray(atlas_img.dataobj).astype('int'),
-                                                                   interpolation='nearestneighbour'),
-                                                 interp='nearest')
-    atlas_img.uncache()
-    warped_uatlas_img_res_data = np.asarray(resample_to_img(nib.Nifti1Image(warped_uatlas,
-                                                                            affine=warped_fa_affine),
-                                                            uatlas_mni_img, interpolation='nearest',
-                                                            clip=False).dataobj)
-    uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
-    uatlas_mni_img.uncache()
-    overlap_mask = np.invert(warped_uatlas_img_res_data.astype('bool') * uatlas_mni_data.astype('bool'))
-    os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
-    atlas_mni = f"{dir_path}/parcellations/{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
+        nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
+                                 uatlas_mni_data * overlap_mask.astype('int') +
+                                 np.invert(overlap_mask).astype('int') *
+                                 warped_uatlas_img_res_data.astype('int'), affine=uatlas_mni_img.affine), atlas_mni)
 
-    nib.save(nib.Nifti1Image(warped_uatlas_img_res_data * overlap_mask.astype('int') +
-                             uatlas_mni_data * overlap_mask.astype('int') +
-                             np.invert(overlap_mask).astype('int') *
-                             warped_uatlas_img_res_data.astype('int'), affine=uatlas_mni_img.affine), atlas_mni)
+        del (tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf,
+             streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask)
 
-    del (tractogram, streamlines, warped_uatlas_img_res_data, uatlas_mni_data, overlap_mask, stf,
-         streams_final_filt_final, streams_final_filt, streams_in_curr_grid, brain_mask, streams_in_brain)
+        gc.collect()
 
-    gc.collect()
+        assert len(coords) == len(labels)
 
-    assert len(coords) == len(labels)
-
-    # # Correct coords and labels
-    # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
-    # bad_idxs = [i-1 for i in bad_idxs]
-    # if len(bad_idxs) > 0:
-    #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-    #     for j in bad_idxs:
-    #         del labels[j], coords[j]
+        # # Correct coords and labels
+        # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
+        # bad_idxs = [i-1 for i in bad_idxs]
+        # if len(bad_idxs) > 0:
+        #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+        #     for j in bad_idxs:
+        #         del labels[j], coords[j]
+    else:
+        print('Skipping Direct Streamline Normalization (DSN). Will proceed to define fiber connectivity '
+              'in native diffusion space...')
+        streams_mni = streams
+        warped_fa = fa_path
+        atlas_mni = labels_im_file
 
     return (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
             min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,

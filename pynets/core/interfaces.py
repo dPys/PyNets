@@ -667,6 +667,7 @@ class _RegisterDWIOutputSpec(TraitedSpec):
     basedir_path = Directory(exists=True, mandatory=True)
     t1w2dwi = File(exists=True, mandatory=True)
     t1w_brain_mask_in_dwi = traits.Any(mandatory=False)
+    t1_aligned_mni = traits.Any(mandatory=False)
 
 
 class RegisterDWI(SimpleInterface):
@@ -757,7 +758,7 @@ class RegisterDWI(SimpleInterface):
         self._results['dwi_file'] = self.inputs.dwi_file
         self._results['basedir_path'] = runtime.cwd
         self._results['t1w_brain_mask_in_dwi'] = reg.t1w_brain_mask_in_dwi
-
+        self._results['t1_aligned_mni'] = reg.t1_aligned_mni
         gc.collect()
 
         return runtime
@@ -1368,6 +1369,9 @@ class Tracking(SimpleInterface):
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
 
+        # Load FA data
+        fa_img = nib.load(self.inputs.fa_path)
+
         # Fit diffusion model
         model, mod = reconstruction(self.inputs.conn_model, load_pickle(self.inputs.gtab_file),
                                     np.asarray(dwi_img.dataobj), self.inputs.B0_mask)
@@ -1440,8 +1444,8 @@ class Tracking(SimpleInterface):
                                                             '_dg-', self.inputs.directget,
                                                             '_ml-', self.inputs.min_length, '.trk')
 
-        save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
-                        streams, bbox_valid_check=False)
+        save_tractogram(StatefulTractogram(streamlines, reference=fa_img, space=Space.RASMM, origin=Origin.NIFTI),
+                        streams, bbox_valid_check=True)
 
         copyfile(streams, f"{namer_dir}/{op.basename(streams)}", copy=True, use_hardlink=False)
 

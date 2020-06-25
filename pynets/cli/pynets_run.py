@@ -297,14 +297,15 @@ def get_parser():
                              'Spanning Tree approach. -thr values in this case correspond to a target density (if the '
                              '-dt flag is also included), otherwise a target proportional threshold.\n')
     parser.add_argument('-p',
-                        metavar='Pruning strategy',
+                        metavar='Pruning Strategy',
                         default=1,
                         nargs=1,
                         choices=['0', '1', '2', '3'],
-                        help='Include this flag to prune the resulting graph of (1) any isolated + fully '
-                             'disconnected nodes, (2) any isolated + fully disconnected + non-important nodes, or (3) '
-                             'the larged connected component subgraph Default pruning=1. '
-                             'Include -p 0 to disable pruning.\n')
+                        help='Include this flag to (1) prune the graph of any isolated + fully '
+                             'disconnected nodes (i.e. anti-fragmentation), (2) prune the graph of all but hubs as '
+                             'defined by any of a variety of definitions (see ruconfig.yaml), or '
+                             '(3) retain only the largest connected component subgraph. '
+                             'Default is 1. Include `-p 0` to disable fragmentation-protection.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
@@ -2064,10 +2065,6 @@ def build_workflow(args, retval):
                     except:
                         continue
 
-    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
-        from shutil import rmtree
-        rmtree(retval['workflow'].basedir, ignore_errors=True)
-
     print('\n\n------------FINISHED-----------')
     print('Subject: ', ID)
     print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
@@ -2106,7 +2103,6 @@ def main():
         pynets_wf = retval.get('workflow', None)
         work_dir = retval.get('work_dir')
         plugin_settings = retval.get('plugin_settings', None)
-        plugin_settings = retval.get('plugin_settings', None)
         execution_dict = retval.get('execution_dict', None)
         run_uuid = retval.get('run_uuid', None)
 
@@ -2118,6 +2114,10 @@ def main():
         gc.collect()
 
     mgr.shutdown()
+
+    if args.clean is True and work_dir:
+        from shutil import rmtree
+        rmtree(work_dir, ignore_errors=True)
 
     sys.exit(0)
 

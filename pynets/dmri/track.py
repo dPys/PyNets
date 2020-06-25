@@ -190,7 +190,7 @@ def create_density_map(dwi_img, dir_path, streamlines, conn_model, target_sample
     dm = utils.density_map(streamlines, affine=np.eye(4), vol_dims=dwi_img.shape)
 
     # Save density map
-    dm_img = nib.Nifti1Image(dm.astype('int'), dwi_img.affine)
+    dm_img = nib.Nifti1Image(dm.astype('float32'), dwi_img.affine)
 
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/density_map_',
                                                         '%s' % (network + '_' if network is not None else ''),

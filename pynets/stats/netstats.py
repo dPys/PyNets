@@ -792,15 +792,20 @@ def prune_disconnected(G):
     return G, pruned_nodes
 
 
-def most_important(G):
+def most_important(G, method='coreness', sd=1):
     """
-    Returns a copy of G with isolates and low-importance nodes pruned
-    such that only hubs remain.
+    Returns a copy of G with hubs as defined by centrality,
+    core topology, or rich-club topology.
 
     Parameters
     ----------
     G : Obj
         NetworkX graph.
+    method : str
+        Determines method for defining hubs. Valid inputs are coreness, richclub, and
+        eigenvector centrality. Default is coreness.
+    sd : int
+        Number of standard errors as cutoff for low-importance pruning.
 
     Returns
     -------
@@ -818,15 +823,25 @@ def most_important(G):
 
     """
 
-    print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
-    ranking = nx.betweenness_centrality(G, weight='weight').items()
+    print(f"Detecting hubs using {method} with SE: {sd}...")
+    if method == 'coreness':
+        import cpalgorithm as cp
+        algorithm = cp.KM_config()
+        algorithm.detect(G)
+        ranking = algorithm.get_coreness()
+    elif method == 'eigenvector':
+        ranking = nx.eigenvector_centrality(G, weight='weight').items()
+    elif method == 'richclub':
+        ranking = nx.algorithms.rich_club_coefficient(G).items()
+    else:
+        ranking = nx.betweenness_centrality(G, weight='weight').items()
+
     # print(ranking)
     r = [x[1] for x in ranking]
-    m = sum(r) / len(r) - 3 * np.std(r)
+    m = sum(r) / len(r) - sd * np.std(r)
     Gt = G.copy()
     pruned_nodes = []
     i = 0
-    # Remove near-zero isolates
     for k, v in ranking:
         if v < m:
             Gt.remove_node(k)
@@ -840,7 +855,7 @@ def most_important(G):
 
     isolates = [n for (n, d) in Gt.degree() if d == 0]
 
-    # Remove disconnected nodes
+    # Remove any lingering isolates
     s = 0
     for node in list(Gt.nodes()):
         if node not in components_connected or node in isolates:
@@ -1041,8 +1056,17 @@ class CleanGraphs(object):
                 print('Graph fragmentation detected...\n')
             [self.G, _] = prune_disconnected(self.G)
         elif int(self.prune) == 2:
-            print('Pruning by node centrality...')
-            [self.G, _] = most_important(self.G)
+            print('Filtering for hubs...')
+            import pkg_resources
+            import yaml
+            with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+                try:
+                    hardcoded_params = yaml.load(stream)
+                    hub_detection_method = hardcoded_params['hub_detection_method'][0]
+                except FileNotFoundError:
+                    print('Failed to parse runconfig.yaml')
+            stream.close()
+            [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
             print('Pruning all but the largest connected component subgraph...')
             self.G = self.G.subgraph(get_lcc(self.G))

@@ -967,6 +967,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 
     return
 
+
 # def show_template_bundles(final_streamlines, template_path, fname):
 #     import nibabel as nib
 #     from fury import actor, window
@@ -980,8 +981,6 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 #     renderer.add(lines_actor)
 #     window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
 #     return
-#
-#
 
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):

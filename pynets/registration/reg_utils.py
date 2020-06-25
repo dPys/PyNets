@@ -251,6 +251,31 @@ def combine_xfms(xfm1, xfm2, xfmout):
     return
 
 
+def vdc(n, vox_size):
+    vdc, denom = 0, 1
+    while n:
+        denom *= vox_size
+        n, remainder = divmod(n, vox_size)
+        vdc += remainder / denom
+    return vdc
+
+
+def warp_streamlines(adjusted_affine, ref_grid_aff, mapping, warped_fa_img, streams_in_curr_grid, brain_mask):
+    from dipy.tracking import utils
+    from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
+
+    # Deform streamlines, isocenter, and remove streamlines outside brain
+    streams_in_brain = [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(),
+                                                                     streams_in_curr_grid,
+                                                                     ref_grid_aff), streams_in_curr_grid)]
+    streams_final_filt = Streamlines(utils.target_line_based(
+        transform_streamlines(transform_streamlines(streams_in_brain,
+                                                    np.linalg.inv(adjusted_affine)),
+                              np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
+
+    return streams_final_filt
+
+
 def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     """
     A function to perform SyN registration
@@ -275,15 +300,15 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
     from dipy.align.imwarp import SymmetricDiffeomorphicRegistration
     from dipy.align.metrics import CCMetric
-    # from dipy.viz import regtools
+    from dipy.viz import regtools
+    from nilearn.image import resample_to_img
 
-    fa_img = nib.load(fa_path)
-    template_img = nib.load(template_path)
-
-    static = np.asarray(template_img.dataobj)
-    static_affine = template_img.affine
-    moving = np.asarray(fa_img.dataobj).astype(np.float32)
-    moving_affine = fa_img.affine
+    ap_img = nib.load(ap_path)
+    template_anat_img = nib.load(template_anat_path)
+    static = np.asarray(template_anat_img.dataobj)
+    static_affine = template_anat_img.affine
+    moving = np.asarray(ap_img.dataobj).astype(np.float32)
+    moving_affine = ap_img.affine
 
     affine_map = transform_origins(static, static_affine, moving, moving_affine)
 
@@ -318,12 +343,14 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     metric = CCMetric(3)
     level_iters = [10, 10, 5]
 
-    ap_img = nib.load(ap_path)
-    template_anat_img = nib.load(template_anat_path)
-    static = np.asarray(template_anat_img.dataobj)
-    static_affine = template_anat_img.affine
-    moving = np.asarray(ap_img.dataobj).astype(np.float32)
-    moving_affine = ap_img.affine
+    # Refine fit using FA template
+    fa_img = nib.load(fa_path)
+    template_img = nib.load(template_path)
+    template_img_res = resample_to_img(template_img, template_anat_img)
+    static = np.asarray(template_img_res.dataobj)
+    static_affine = template_img_res.affine
+    moving = np.asarray(fa_img.dataobj).astype(np.float32)
+    moving_affine = fa_img.affine
 
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
@@ -334,7 +361,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     # Save warped FA image
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     warped_fa = f"{working_dir}/warped_fa_{run_uuid}.nii.gz"
-    nib.save(nib.Nifti1Image(warped_moving, affine=template_img.affine), warped_fa)
+    nib.save(nib.Nifti1Image(warped_moving, affine=template_img_res.affine), warped_fa)
 
     # # We show the registration result with:
     # regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",

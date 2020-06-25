@@ -20,8 +20,8 @@ env:
     - FSLDIR=/usr/share/fsl/5.0
   matrix:
     - MOD=func
-#    - MOD=dwi
-#    - MOD="func dwi"
+    - MOD=dwi
+    - MOD="func dwi"
 
 before_install:
   - pwd

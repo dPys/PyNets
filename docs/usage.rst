@@ -28,10 +28,13 @@ Required
 :(D): A set of brain image files. `PyNets` is a post-processing workflow which means that input files should already be preprocessed. Minimally, all DWI, BOLD, and T1W image inputs should be **motion-corrected** (and ideally also susceptibility-corrected + denoised).
 
     :File Inputs:
-        `anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
-        `func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
-        `dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
-        `-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
+        :`anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
+
+        :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
+
+        :`dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+
+        :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
 
     .. note::
         Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the runconfig.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
@@ -64,8 +67,8 @@ Custom File Inputs
 :`-conf`: (*fMRI*) An additional noise confound regressor file for extracting a cleaner time-series.
 
 
-Permitted Combinations of File Inputs
-=====================================
+Multimodal Workflow Variations
+==============================
 
 In the case of running pynets on a single subject, several combinations of input files can be used:
 
