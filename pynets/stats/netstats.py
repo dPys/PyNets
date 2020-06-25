@@ -828,10 +828,10 @@ def most_important(G, method='coreness', sd=1):
         import cpalgorithm as cp
         algorithm = cp.KM_config()
         algorithm.detect(G)
-        ranking = algorithm.get_coreness()
+        ranking = algorithm.get_coreness().items()
     elif method == 'eigenvector':
         ranking = nx.eigenvector_centrality(G, weight='weight').items()
-    elif method == 'richclub':
+    elif method == 'richclub' and len(G.nodes()) > 4:
         ranking = nx.algorithms.rich_club_coefficient(G).items()
     else:
         ranking = nx.betweenness_centrality(G, weight='weight').items()
