@@ -921,6 +921,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
                                                            'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
+    node_gen_node._n_procs = runtime_dict['node_gen_node'][0]
+    node_gen_node._mem_gb = runtime_dict['node_gen_node'][1]
 
     gtab_node = pe.Node(MakeGtabBmask(), name="gtab_node")
 
@@ -1037,6 +1039,8 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                               function=estimation.streams2graph,
                                               imports=import_list), name="streams2graph_node")
     streams2graph_node.synchronize = True
+    streams2graph_node._n_procs = runtime_dict['streams2graph_node'][0]
+    streams2graph_node._mem_gb = runtime_dict['streams2graph_node'][1]
 
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(niu.IdentityInterface(fields=['est_path', 'thr', 'network', 'prune', 'ID', 'roi',
@@ -1136,6 +1140,9 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
                                                                       'network'],
                                                         function=nodemaker.get_node_membership, imports=import_list),
                                            name="get_node_membership_node")
+        get_node_membership_node._n_procs = runtime_dict['get_node_membership_node'][0]
+        get_node_membership_node._mem_gb = runtime_dict['get_node_membership_node'][1]
+
         save_coords_and_labels_node = pe.Node(niu.Function(input_names=['coords', 'labels', 'dir_path', 'network'],
                                                            function=utils.save_RSN_coords_and_labels_to_pickle,
                                                            imports=import_list), name="save_coords_and_labels_node")
@@ -2215,6 +2222,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                              output_names=['net_parcels_map_nifti', 'coords', 'labels',
                                                            'atlas', 'uatlas', 'dir_path'],
                                              function=nodemaker.node_gen, imports=import_list), name="node_gen_node")
+    node_gen_node._n_procs = runtime_dict['node_gen_node'][0]
+    node_gen_node._mem_gb = runtime_dict['node_gen_node'][1]
 
     # Extract time-series from nodes
     extract_ts_info_iters = []
@@ -2373,6 +2382,9 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
                                                                       'network'],
                                                         function=nodemaker.get_node_membership, imports=import_list),
                                            name="get_node_membership_node")
+        get_node_membership_node._n_procs = runtime_dict['get_node_membership_node'][0]
+        get_node_membership_node._mem_gb = runtime_dict['get_node_membership_node'][1]
+
         save_coords_and_labels_node = pe.Node(niu.Function(input_names=['coords', 'labels', 'dir_path', 'network'],
                                                            function=utils.save_RSN_coords_and_labels_to_pickle,
                                                            imports=import_list), name="save_coords_and_labels_node")

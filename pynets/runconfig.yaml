@@ -18,7 +18,7 @@ tracking_method: # a tracking algorithm for dmri connectome estimation. Options 
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and bin (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
     - 'bin'
 tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
-    - 1000
+    - 10000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
 DSN:
@@ -70,6 +70,7 @@ available_models:
     struct_models:
       - 'csa'
       - 'csd'
+      - 'tensor'
 template: # `MNI152_T1` is the default and is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
     - 'MNI152_T1'
 bids_defaults:
@@ -125,7 +126,7 @@ resource_dict: # Nipype workflow resource settings
       - 'node_gen_node':
         - (2, 4)
       - get_node_membership_node:
-        - (1, 4)
+        - (1, 6)
       - 'check_orient_and_dims_dwi_node':
         - (2, 2)
       - 'get_anisopwr_node':

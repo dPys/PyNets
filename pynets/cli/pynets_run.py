@@ -773,8 +773,9 @@ def build_workflow(args, retval):
     # Check required inputs for existence, and configure run
     if (func_file is None) and (dwi_file is None) and (graph is None) and \
         (multi_graph is None) and (multi_subject_graph is None) and (multi_subject_multigraph is None):
-        print("\nError: You must include a file path to either an MNI152-normalized space functional image "
-              "in .nii or .nii.gz format with the -func flag.")
+        print("\nError: You must include a file path to either a 4d BOLD EPI image in T1w space"
+              "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image series in native diffusion"
+              "space using the `-dwi` flag.")
         retval['return_code'] = 1
         return retval
     if func_file:
@@ -794,9 +795,8 @@ def build_workflow(args, retval):
     else:
         func_file_list = None
 
-    if dwi_file and (not anat_file and not fbval and not fbvec):
-        print('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
-              '(-fbvec) must be specified for dmri_connectometry.')
+    if not anat_file and not graph and not multi_graph:
+        print('ERROR: An anatomical image must be specified for fmri and dmri_connectometry using the `-anat` flag.')
         retval['return_code'] = 1
         return retval
     if dwi_file:

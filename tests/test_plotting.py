@@ -185,10 +185,10 @@ def test_plot_connectogram(comm, network, plotting_data):
     ID = '002'
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
-    prune = True
+    prune = 2
 
     conn_matrix = plotting_data['conn_matrix']
-    labels = plotting_data['labels']
+    labels = np.arange(conn_matrix.shape[0] + 1)[np.arange(conn_matrix.shape[0] + 1) != 0].tolist()
 
     # Force an isolate in the matrix
     conn_matrix[:, 0] = 0
@@ -200,7 +200,7 @@ def test_plot_connectogram(comm, network, plotting_data):
     print("%s%s%s" % ('plot_connectogram --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     if comm:
-        assert os.path.isfile(dir_path + '/index.html')
+        assert os.path.isfile(f"{dir_path}/index.html")
 
     temp_dir.cleanup()
 
