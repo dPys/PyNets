@@ -21,7 +21,7 @@ tracking_samples: # Indicates the number of cumulative streamline samples for tr
     - 10000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
-DSN:
+DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
     - False
 hub_detection_method: # Valid inputs are coreness, richclub, and eigenvector centrality
     - 'coreness'
