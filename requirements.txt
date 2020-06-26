@@ -33,11 +33,12 @@ duecredit>=0.8.0
 kiwisolver==1.1.0
 pyparsing==2.4.2
 templateflow>=0.6.2
-git+https://github.com/dPys/nilearn.git@enh/parc_conn
-git+https://github.com/dPys/deepbrain.git@master
-git+https://github.com/nkoub/multinetx.git@master
 pybind11==2.5.0
 cpalgorithm==0.0.14
+grpcio>=1.24.3
+git+https://github.com/dPys/nilearn.git@enh/parc_conn
+git+https://github.com/dPys/deepbrain.git@master
+# git+https://github.com/nkoub/multinetx.git@master
 # fury>=0.2.0
 # skggm>=0.2.7
 # nltk>=3.4
