@@ -20,7 +20,7 @@ Dockerhub (preferred):
 docker pull dpys/pynets:latest
 ```
 
-Manual (Requires a local dependency install of FSL version >=5.0.9):
+Manual (Requires a local dependency install of FSL version >=5.0.9 and Nilearn version >=0.7.0a):
 ```
 pip install pynets
 ```
