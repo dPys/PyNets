@@ -1561,10 +1561,11 @@ class MakeGtabBmask(SimpleInterface):
         print("Extracting b0's...")
         all_b0s_file = extract_b0(self.inputs.dwi_file, b0_thr_ixs, all_b0s_file)
         med_b0_file = median(all_b0s_file)
-        med_b0_img = nib.load(med_b0_file)
-        med_b0_data = np.asarray(med_b0_img.dataobj)
 
         # TODO replace with bet and median_otsu with deep-learning classifier.
+
+        # med_b0_img = nib.load(med_b0_file)
+        # med_b0_data = np.asarray(med_b0_img.dataobj)
         # # Create mean b0 brain mask
         # b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2, numpass=1)
         #
@@ -1575,9 +1576,9 @@ class MakeGtabBmask(SimpleInterface):
         # nib.Nifti1Image(mask_data, med_b0_img.affine, hdr).to_filename(B0_mask)
 
         # Get mean B0 brain mask
-        cmd = f"bet {med_b0_data} {B0_bet} -m -f 0.2"
+        cmd = f"bet {med_b0_file} {B0_bet} -m -f 0.2"
         os.system(cmd)
-        time.sleep(2)
+        time.sleep(1)
 
         self._results['gtab_file'] = gtab_file
         self._results['B0_bet'] = B0_bet

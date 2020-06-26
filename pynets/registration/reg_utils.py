@@ -376,7 +376,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
 
 def median(in_file):
     """Average a 4D dataset across the last dimension using median."""
-    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=True)
+    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=False)
 
     img = nib.load(in_file)
     if img.dataobj.ndim == 3:
