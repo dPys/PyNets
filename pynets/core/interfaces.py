@@ -1515,10 +1515,12 @@ class MakeGtabBmask(SimpleInterface):
     output_spec = _MakeGtabBmaskOutputSpec
 
     def _run_interface(self, runtime):
+        import os
+        import time
         from dipy.io import save_pickle
         from dipy.io import read_bvals_bvecs
         from dipy.core.gradients import gradient_table
-        from dipy.segment.mask import median_otsu
+        # from dipy.segment.mask import median_otsu
         from pynets.registration.reg_utils import median
         from pynets.dmri.dmri_utils import normalize_gradients, extract_b0
 
@@ -1562,14 +1564,20 @@ class MakeGtabBmask(SimpleInterface):
         med_b0_img = nib.load(med_b0_file)
         med_b0_data = np.asarray(med_b0_img.dataobj)
 
-        # Create mean b0 brain mask
-        b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2, numpass=1)
+        # TODO replace with bet and median_otsu with deep-learning classifier.
+        # # Create mean b0 brain mask
+        # b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2, numpass=1)
+        #
+        # hdr = med_b0_img.header.copy()
+        # hdr.set_xyzt_units("mm")
+        # hdr.set_data_dtype(np.float32)
+        # nib.Nifti1Image(b0_mask_data, med_b0_img.affine, hdr).to_filename(B0_bet)
+        # nib.Nifti1Image(mask_data, med_b0_img.affine, hdr).to_filename(B0_mask)
 
-        hdr = med_b0_img.header.copy()
-        hdr.set_xyzt_units("mm")
-        hdr.set_data_dtype(np.float32)
-        nib.Nifti1Image(b0_mask_data, med_b0_img.affine, hdr).to_filename(B0_bet)
-        nib.Nifti1Image(mask_data, med_b0_img.affine, hdr).to_filename(B0_mask)
+        # Get mean B0 brain mask
+        cmd = f"bet {med_b0_data} {B0_bet} -m -f 0.2"
+        os.system(cmd)
+        time.sleep(2)
 
         self._results['gtab_file'] = gtab_file
         self._results['B0_bet'] = B0_bet

@@ -519,9 +519,15 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
         File path to corresponding reoriented bvecs file.
 
     """
+    import os
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
     bvec_fname = bvecs
+
+    out_dir = f"{out_dir}/reg"
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
     out_bvec_fname = f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
 
     input_img = nib.load(fname)
@@ -631,6 +637,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
+    orig_img = img_file
+
     img = nib.load(img_file)
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
@@ -663,4 +671,6 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
 
     img.uncache()
     del img
+    os.remove(orig_img)
+
     return img_file
