@@ -505,11 +505,11 @@ def build_multigraphs(est_path_iterlist, ID):
                                        func_models]))
 
     if '_rsn' in ';'.join(est_path_iterlist_func):
-        func_subnets = list(set([i.split('_rsn-')[0].split('/')[-1] for i in est_path_iterlist_func]))
+        func_subnets = list(set([i.split('_rsn-')[1].split('_')[0] for i in est_path_iterlist_func]))
     else:
         func_subnets = []
     if '_rsn' in ';'.join(est_path_iterlist_dwi):
-        dwi_subnets = list(set([i.split('_rsn-')[0].split('/')[-1] for i in est_path_iterlist_dwi]))
+        dwi_subnets = list(set([i.split('_rsn-')[1].split('_')[0] for i in est_path_iterlist_dwi]))
     else:
         dwi_subnets = []
 
@@ -560,13 +560,10 @@ def build_multigraphs(est_path_iterlist, ID):
         # of vertices
         if len(dwi_subnets) >= 1 and len(func_subnets) >= 1:
             parcel_dict[atlas] = {}
-            dwi_subnets.sort(key=lambda x: x.split('_rsn-')[1])
-            func_subnets.sort(key=lambda x: x.split('_rsn-')[1])
-
-            for sub_net_dwi, sub_net_func in list(zip(dwi_subnets, func_subnets)):
-                rsn = sub_net_dwi.split('_rsn-')[1]
-                parcel_dict[atlas][rsn] = list(set(itertools.product(parcel_dict_dwi[atlas][sub_net_dwi],
-                                                                     parcel_dict_func[atlas][sub_net_func])))
+            rsns = np.intersect1d(dwi_subnets, func_subnets).tolist()
+            for rsn in rsns:
+                parcel_dict[atlas][rsn] = list(set(itertools.product(parcel_dict_dwi[atlas][rsn],
+                                                                     parcel_dict_func[atlas][rsn])))
                 for paths in list(parcel_dict[atlas][rsn]):
                     [name_list,
                      metadata_list,

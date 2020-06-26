@@ -825,7 +825,10 @@ def most_important(G, method='coreness', sd=1):
 
     print(f"Detecting hubs using {method} with SE: {sd}...")
     if method == 'coreness':
-        import cpalgorithm as cp
+        try:
+            import cpalgorithm as cp
+        except ImportError:
+            print('Cannot run coreness detection. cpalgorithm not installed!')
         algorithm = cp.KM_config()
         algorithm.detect(G)
         ranking = algorithm.get_coreness().items()

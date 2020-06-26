@@ -535,6 +535,8 @@ class DmriReg(object):
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
             if perc_nonzero > 0.25:
                 import tensorflow as tf
+                if tf.__version__ > '2.0.0':
+                    import tensorflow.compat.v1 as tf
                 import logging
                 from deepbrain import Extractor
                 logger = tf.get_logger()
@@ -993,6 +995,8 @@ class FmriReg(object):
             # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
             if perc_nonzero > 0.25:
                 import tensorflow as tf
+                if tf.__version__ > '2.0.0':
+                    import tensorflow.compat.v1 as tf
                 import logging
                 from deepbrain import Extractor
                 logger = tf.get_logger()
