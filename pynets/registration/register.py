@@ -550,8 +550,8 @@ class DmriReg(object):
                 img.uncache()
             else:
                 nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
-        else:
-            anat_mask_existing = self.mask
+
+        anat_mask_existing = self.mask
 
         try:
             os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
@@ -1010,8 +1010,7 @@ class FmriReg(object):
                 img.uncache()
             else:
                 nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
-        else:
-            anat_mask_existing = self.mask
+        anat_mask_existing = self.mask
 
         try:
             os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")

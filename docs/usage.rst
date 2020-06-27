@@ -25,7 +25,7 @@ Required
 
 :(C): If an atlas is not specified with the `-a` flag must be included, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
 
-    .. list-table::
+    :Atlas Library:
         - 'atlas_harvard_oxford'
         - 'atlas_aal'
         - 'atlas_destrieux_2009'
