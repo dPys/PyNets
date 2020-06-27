@@ -12,9 +12,9 @@ The exact command to run ``PyNets`` depends on several factors:
 
 :(3): The execution objective (e.g. ensemble connectome sampling, unitary connectome sampling, plotting, graph-theory, embedding, optimization/benchmarking).
 
-*****************
-Parametric Inputs
-*****************
+***************
+Required Inputs
+***************
 
 Required
 ========
@@ -23,18 +23,47 @@ Required
 
 :(B): A supported connectivity model specified with the `-mod` flag. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
 
-:(C): If a parcellation file is not specified with the `-ua` flag, then the `-a` flag must be included, followed by one or more supported atlases.
+:(C): If an atlas is not specified with the `-a` flag must be included, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
+
+    .. list-table::
+        - 'atlas_harvard_oxford'
+        - 'atlas_aal'
+        - 'atlas_destrieux_2009'
+        - 'atlas_talairach_gyrus'
+        - 'atlas_talairach_ba'
+        - 'atlas_talairach_lobe'
+        - 'coords_power_2011' (only valid when using the `-spheres` flag)
+        - 'coords_dosenbach_2010' (only valid when using the `-spheres` flag)
+        - 'atlas_msdl'
+        - 'atlas_pauli_2017'
+        - 'destrieux2009_rois'
+        - 'BrainnetomeAtlasFan2016'
+        - 'VoxelwiseParcellationt0515kLeadDBS'
+        - 'Juelichgmthr252mmEickhoff2005'
+        - 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014'
+        - 'AICHAreorderedJoliot2015'
+        - 'HarvardOxfordThr252mmWholeBrainMakris2006'
+        - 'VoxelwiseParcellationt058kLeadDBS'
+        - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
+        - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
+        - 'AALTzourioMazoyer2002'
+        - 'DesikanKlein2012'
+        - 'AAL2zourioMazoyer2002'
+        - 'VoxelwiseParcellationt0435kLeadDBS'
+        - 'AICHAJoliot2015'
+        - 'whole_brain_cluster_labels_PCA100'
+        - 'whole_brain_cluster_labels_PCA200'
+        - 'RandomParcellationsc05meanalll43Craddock2011'
 
 :(D): A set of brain image files. `PyNets` is a post-processing workflow which means that input files should already be preprocessed. Minimally, all DWI, BOLD, and T1W image inputs should be **motion-corrected** (and ideally also susceptibility-corrected + denoised).
 
-    :File Inputs:
-        :`anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
+    :`anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
 
-        :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
+    :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
 
-        :`dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+    :`dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
 
-        :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
+    :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
 
     .. note::
         Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the runconfig.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
@@ -46,7 +75,7 @@ Required
         Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or possible override with the `-vox` flag.
 
     .. note::
-        All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix).
+        All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), and **absolute** file paths should always be specified to the CLI's.
 
 
 Custom File Inputs
