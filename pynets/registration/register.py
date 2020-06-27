@@ -12,7 +12,6 @@ import indexed_gzip
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import math_img
-from nilearn.masking import intersect_masks
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ['FSLDIR']
@@ -481,11 +480,12 @@ class DmriReg(object):
             if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
+    def gen_mask(self):
+        import os.path as op
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
 
-    def gen_mask(self):
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
                                                                   self.mask)
         return
@@ -641,95 +641,6 @@ class DmriReg(object):
 
         return
 
-    def atlas2t1w2dwi_align(self, uatlas, uatlas_parcels, atlas):
-        """
-        A function to perform atlas alignment atlas --> T1 --> dwi.
-        Tries nonlinear registration first, and if that fails, does a linear registration instead. For this to succeed,
-        must first have called t1w2dwi_align.
-        """
-        from nilearn.image import resample_to_img
-        from pynets.core.utils import checkConsecutive
-
-        aligned_atlas_t1mni = f"{self.anat_path}{'/'}{atlas}{'_t1w_mni.nii.gz'}"
-        aligned_atlas_skull = f"{self.anat_path}{'/'}{atlas}{'_t1w_skull.nii.gz'}"
-        dwi_aligned_atlas = f"{self.reg_path_img}{'/'}{atlas}{'_dwi_track.nii.gz'}"
-        dwi_aligned_atlas_wmgm_int = f"{self.reg_path_img}{'/'}{atlas}{'_dwi_track_wmgm_int.nii.gz'}"
-
-        template_img = nib.load(self.t1_aligned_mni)
-        if uatlas_parcels:
-            uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='nearest')
-        else:
-            uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='nearest')
-        uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
-        uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
-
-        uatlas_res_template = nib.Nifti1Image(uatlas_res_template_data.astype('int32'),
-                                              affine=uatlas_res_template.affine, header=uatlas_res_template.header)
-        nib.save(uatlas_res_template, aligned_atlas_t1mni)
-
-        if self.simple is False:
-            try:
-                regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
-                                    warp=self.mni2t1w_warp, interp='nn', sup=True, mask=self.t1w_brain_mask)
-
-                # Apply linear transformation from template to dwi space
-                regutils.align(aligned_atlas_skull, self.ap_path, init=self.t1w2dwi_bbr_xfm,
-                               out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
-                               cost='mutualinfo')
-
-            except:
-                print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
-                      "registration.")
-
-                regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
-                               out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
-                               cost='mutualinfo')
-
-                regutils.align(aligned_atlas_skull, self.ap_path, init=self.t1w2dwi_bbr_xfm,
-                               out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
-                               cost='mutualinfo')
-
-        else:
-            regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
-                           out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
-                           cost='mutualinfo')
-
-            regutils.align(aligned_atlas_skull, self.ap_path, init=self.t1w2dwi_xfm,
-                           out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
-                           cost='mutualinfo')
-
-        atlas_img = nib.load(dwi_aligned_atlas)
-        wm_gm_img = nib.load(self.wm_gm_int_in_dwi)
-        wm_gm_mask_img = math_img('img > 0', img=wm_gm_img)
-        atlas_mask_img = math_img('img > 0', img=atlas_img)
-
-        uatlas_res_template_data = np.asarray(atlas_img.dataobj)
-        uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
-
-        atlas_img_corr = nib.Nifti1Image(uatlas_res_template_data.astype('uint32'),
-                                         affine=atlas_img.affine, header=atlas_img.header)
-
-        dwi_aligned_atlas_wmgm_int_img = intersect_masks([wm_gm_mask_img, atlas_mask_img], threshold=0,
-                                                         connected=False)
-
-        nib.save(atlas_img_corr, dwi_aligned_atlas)
-        nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
-
-        final_dat = atlas_img_corr.get_fdata()
-        unique_a = list(set(np.array(final_dat.flatten().tolist())))
-        unique_a.sort()
-
-        if not checkConsecutive(unique_a):
-            print('Warning! Non-consecutive integers found in parcellation...')
-
-        atlas_img.uncache()
-        atlas_img_corr.uncache()
-        atlas_mask_img.uncache()
-        wm_gm_img.uncache()
-        wm_gm_mask_img.uncache()
-
-        return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
-
     def tissue2dwi_align(self):
         """
         A function to perform alignment of ventricle ROI's from MNI space --> dwi and CSF from T1w space --> dwi.
@@ -810,42 +721,6 @@ class DmriReg(object):
 
         return
 
-    def waymask2dwi_align(self, waymask):
-        """
-        A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
-        """
-        waymask_in_t1w = f"{self.reg_path_img}/waymask-{os.path.basename(waymask).split('.nii')[0]}_in_t1w.nii.gz"
-        waymask_in_dwi = f"{self.reg_path_img}/waymask-{os.path.basename(waymask).split('.nii')[0]}_in_dwi.nii.gz"
-
-        # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
-        if self.simple is False:
-            regutils.apply_warp(self.t1w_brain, waymask, waymask_in_t1w, warp=self.mni2t1w_warp)
-        else:
-            regutils.applyxfm(self.t1w_brain, waymask, self.mni2t1_xfm, waymask_in_t1w)
-
-        # Apply transform from t1w to native dwi space
-        regutils.applyxfm(self.ap_path, waymask_in_t1w, self.t1wtissue2dwi_xfm, waymask_in_dwi)
-
-        return waymask_in_dwi
-
-    def roi2dwi_align(self, roi):
-        """
-        A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
-        """
-        roi_in_t1w = f"{self.reg_path_img}/waymask-{os.path.basename(roi).split('.nii')[0]}_in_t1w.nii.gz"
-        roi_in_dwi = f"{self.reg_path_img}/waymask-{os.path.basename(roi).split('.nii')[0]}_in_dwi.nii.gz"
-
-        # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
-        if self.simple is False:
-            regutils.apply_warp(self.t1w_brain, roi, roi_in_t1w, warp=self.mni2t1w_warp)
-        else:
-            regutils.applyxfm(self.t1w_brain, roi, self.mni2t1_xfm, roi_in_t1w)
-
-        # Apply transform from t1w to native dwi space
-        regutils.applyxfm(self.ap_path, roi_in_t1w, self.t1wtissue2dwi_xfm, roi_in_dwi)
-
-        return roi_in_dwi
-
 
 class FmriReg(object):
     """
@@ -907,11 +782,11 @@ class FmriReg(object):
             if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
+    def gen_mask(self):
+        import os.path as op
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
-
-    def gen_mask(self):
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
                                                                   self.mask)
         return
@@ -1015,78 +890,3 @@ class FmriReg(object):
             # Get mat from MNI -> T1w
             os.system(f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null")
         return
-
-    def roi2t1w_align(self, roi):
-        """
-        A function to perform alignment of a roi from MNI space --> T1w.
-        """
-
-        roi_in_t1w = f"{self.reg_path_img}/roi-{os.path.basename(roi).split('.nii')[0]}_in_t1w.nii.gz"
-
-        # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
-        if self.simple is False:
-            regutils.apply_warp(self.t1w_brain, roi, roi_in_t1w, warp=self.mni2t1w_warp)
-        else:
-            regutils.applyxfm(self.t1w_brain, roi, self.mni2t1_xfm, roi_in_t1w)
-
-        return roi_in_t1w
-
-    def atlas2t1w_align(self, uatlas, uatlas_parcels, atlas):
-        """
-        A function to perform atlas alignment from atlas --> T1w.
-        """
-        from nilearn.image import resample_to_img
-        from pynets.core.utils import checkConsecutive
-
-        aligned_atlas_t1mni = f"{self.reg_path_img}{'/'}{atlas}{'_t1w_mni.nii.gz'}"
-        aligned_atlas_skull = f"{self.reg_path_img}{'/'}{atlas}{'_t1w_skull.nii.gz'}"
-        aligned_atlas_gm = f"{self.reg_path_img}{'/'}{atlas}{'_gm.nii.gz'}"
-
-        template_img = nib.load(self.t1_aligned_mni)
-        if uatlas_parcels:
-            uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='nearest')
-        else:
-            uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='nearest')
-        uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
-        uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
-
-        uatlas_res_template = nib.Nifti1Image(uatlas_res_template_data.astype('uint16'),
-                                              affine=uatlas_res_template.affine, header=uatlas_res_template.header)
-        nib.save(uatlas_res_template, aligned_atlas_t1mni)
-
-        if self.simple is False:
-            try:
-                regutils.apply_warp(self.t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
-                                    warp=self.mni2t1w_warp, interp='nn', sup=True, mask=self.t1w_brain_mask)
-
-            except:
-                print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
-                      "registration.")
-
-                regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
-                               out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
-                               cost='mutualinfo')
-
-        else:
-            regutils.align(aligned_atlas_t1mni, self.t1w_brain, init=self.mni2t1_xfm,
-                           out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
-                           cost='mutualinfo')
-
-        os.system(f"fslmaths {aligned_atlas_skull} -mas {self.gm_mask} {aligned_atlas_gm} 2>/dev/null")
-        atlas_img = nib.load(aligned_atlas_gm)
-
-        uatlas_res_template_data = np.asarray(atlas_img.dataobj)
-        uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
-        atlas_img_corr = nib.Nifti1Image(uatlas_res_template_data.astype('uint32'),
-                                         affine=atlas_img.affine, header=atlas_img.header)
-        nib.save(atlas_img_corr, aligned_atlas_gm)
-        final_dat = nib.load(aligned_atlas_gm).get_fdata()
-        unique_a = list(set(np.array(final_dat.flatten().tolist())))
-        unique_a.sort()
-
-        if not checkConsecutive(unique_a):
-            print('Warning! Non-consecutive integers found in parcellation...')
-
-        template_img.uncache()
-
-        return aligned_atlas_gm, aligned_atlas_skull

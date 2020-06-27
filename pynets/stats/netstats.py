@@ -1366,7 +1366,7 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
         try:
             bc_arr[j, 1] = bc_vals[j]
         except:
-            print(f"{'Betweeness centrality is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'betweenness centrality is undefined for node '}{str(j)}{' of G'}")
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = 'average_betweenness_centrality'
