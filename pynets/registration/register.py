@@ -564,6 +564,8 @@ class DmriReg(object):
             except ValueError:
                 print('Cannot coerce mask to shape of T1w anatomical.')
 
+        self.t1w_brain_mask = anat_mask_existing
+
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
                 print('Existing segmentations detected...')
@@ -590,17 +592,10 @@ class DmriReg(object):
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
 
-        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_name)
-
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
         mask = math_img('img > 0.20', img=t_img)
         mask.to_filename(self.wm_mask_thr)
-
-        # Threshold T1w brain to binary in anat space
-        t_img = nib.load(self.t1w_brain)
-        mask = math_img('img > 0.0', img=t_img)
-        mask.to_filename(self.t1w_brain_mask)
 
         # Extract wm edge
         os.system(f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge} 2>/dev/null")
@@ -1024,6 +1019,8 @@ class FmriReg(object):
             except ValueError:
                 print('Cannot coerce mask to shape of T1w anatomical.')
 
+        self.t1w_brain_mask = anat_mask_existing
+
         if wm_mask_existing and gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
                 print('Existing segmentations detected...')
@@ -1045,11 +1042,6 @@ class FmriReg(object):
                 wm_mask = maps['wm_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-
-        # Threshold T1w brain to binary in anat space
-        t_img = nib.load(self.t1w_brain)
-        mask = math_img('img > 0.0', img=t_img)
-        mask.to_filename(self.t1w_brain_mask)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
