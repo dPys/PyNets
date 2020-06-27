@@ -1048,7 +1048,7 @@ class FmriReg(object):
         # Threshold T1w brain to binary in anat space
         t_img = nib.load(self.t1w_brain)
         mask = math_img('img > 0.0', img=t_img)
-        mask.to_filename()
+        mask.to_filename(self.t1w_brain)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
