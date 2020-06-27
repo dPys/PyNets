@@ -827,11 +827,11 @@ def most_important(G, method='coreness', sd=1):
     if method == 'coreness':
         try:
             import cpalgorithm as cp
+            algorithm = cp.KM_config()
+            algorithm.detect(G)
+            ranking = algorithm.get_coreness().items()
         except ImportError:
             print('Cannot run coreness detection. cpalgorithm not installed!')
-        algorithm = cp.KM_config()
-        algorithm.detect(G)
-        ranking = algorithm.get_coreness().items()
     elif method == 'eigenvector':
         ranking = nx.eigenvector_centrality(G, weight='weight').items()
     elif method == 'richclub' and len(G.nodes()) > 4:

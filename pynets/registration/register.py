@@ -497,12 +497,12 @@ class DmriReg(object):
         print(self.basedir_path)
 
         # Apply brain mask if detected as a separate file
-        anat_mask_existing = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
-        if len(anat_mask_existing) > 0:
-            anat_mask_existing = anat_mask_existing[0]
-            print(f"Using {anat_mask_existing}...")
+        self.t1w_brain_mask = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
+        if len(self.t1w_brain_mask) > 0:
+            self.t1w_brain_mask = self.t1w_brain_mask[0]
+            print(f"Using {self.t1w_brain_mask}...")
         else:
-            anat_mask_existing = None
+            self.t1w_brain_mask = None
 
         # Segment the t1w brain into probability maps
         # WM
@@ -527,7 +527,7 @@ class DmriReg(object):
         else:
             csf_mask_existing = None
 
-        if not self.mask and not anat_mask_existing:
+        if not self.mask and not self.t1w_brain_mask:
             # Check if already skull-stripped. If not, strip it.
             img = nib.load(self.t1w_head)
             t1w_data = img.get_fdata()
@@ -551,16 +551,16 @@ class DmriReg(object):
             else:
                 nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
 
-        anat_mask_existing = self.mask
+        self.t1w_brain_mask = self.mask
 
         try:
-            os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
         except:
             try:
                 from nilearn.image import resample_to_img
-                nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                         anat_mask_existing)
-                os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+                nib.save(resample_to_img(nib.load(self.t1w_brain_mask), nib.load(self.t1w_brain)),
+                         self.t1w_brain_mask)
+                os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
             except ValueError:
                 print('Cannot coerce mask to shape of T1w anatomical.')
 
@@ -965,12 +965,12 @@ class FmriReg(object):
 
         # Apply brain mask if detected as a separate file
         print(self.basedir_path)
-        anat_mask_existing = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
-        if len(anat_mask_existing) > 0:
-            anat_mask_existing = anat_mask_existing[0]
-            print(f"Using {anat_mask_existing}...")
+        self.t1w_brain_mask = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
+        if len(self.t1w_brain_mask) > 0:
+            self.t1w_brain_mask = self.t1w_brain_mask[0]
+            print(f"Using {self.t1w_brain_mask}...")
         else:
-            anat_mask_existing = None
+            self.t1w_brain_mask = None
 
         # Segment the t1w brain into probability maps
         # WM
@@ -987,7 +987,7 @@ class FmriReg(object):
         else:
             gm_mask_existing = None
 
-        if not self.mask and not anat_mask_existing:
+        if not self.mask and not self.t1w_brain_mask:
             # Check if already skull-stripped. If not, strip it.
             img = nib.load(self.t1w_head)
             t1w_data = img.get_fdata()
@@ -1010,16 +1010,16 @@ class FmriReg(object):
                 img.uncache()
             else:
                 nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
-        anat_mask_existing = self.mask
+        self.t1w_brain_mask = self.mask
 
         try:
-            os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+            os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
         except:
             try:
                 from nilearn.image import resample_to_img
-                nib.save(resample_to_img(nib.load(anat_mask_existing), nib.load(self.t1w_brain)),
-                         anat_mask_existing)
-                os.system(f"fslmaths {self.t1w_head} -mas {anat_mask_existing} {self.t1w_brain} 2>/dev/null")
+                nib.save(resample_to_img(nib.load(self.t1w_brain_mask), nib.load(self.t1w_brain)),
+                         self.t1w_brain_mask)
+                os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
             except ValueError:
                 print('Cannot coerce mask to shape of T1w anatomical.')
 
