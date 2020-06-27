@@ -488,11 +488,10 @@ class DmriReg(object):
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.t1w_head, self.t1w_brain, mask)
         return
 
-    def gen_tissue(self, wm_mask_existing, gm_mask_existing, csf_mask_existing, overwrite=True):
+    def gen_tissue(self, wm_mask_existing, gm_mask_existing, csf_mask_existing, overwrite):
         """
         A function to segment and threshold tissue types from T1w.
         """
-        # from pynets.plotting.plot_gen import qa_fast_png
         import shutil
 
         # Segment the t1w brain into probability maps
@@ -751,7 +750,7 @@ class FmriReg(object):
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.t1w_head, self.t1w_brain, mask)
         return
 
-    def gen_tissue(self, wm_mask_existing, gm_mask_existing, overwrite=False):
+    def gen_tissue(self, wm_mask_existing, gm_mask_existing, overwrite):
         """
         A function to segment and threshold tissue types from T1w.
         """

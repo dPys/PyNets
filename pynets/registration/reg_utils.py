@@ -58,7 +58,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     mask.to_filename(t1w_brain_mask)
 
     try:
-        os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
+        os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain}")
     except ValueError:
         print('Cannot coerce mask to shape of T1w anatomical.')
 

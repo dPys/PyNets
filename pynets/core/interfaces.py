@@ -697,6 +697,7 @@ class RegisterDWI(SimpleInterface):
         import glob
         import os.path as op
         from pynets.registration import register
+        from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         fa_tmp_path = fname_presuffix(self.inputs.fa_path, suffix='_tmp', newpath=runtime.cwd)
@@ -719,6 +720,8 @@ class RegisterDWI(SimpleInterface):
             if len(anat_mask_existing) > 0 and self.inputs.mask is None:
                 mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
                 copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
+                mask_tmp_path = regutils.check_orient_and_dims(mask_tmp_path, self.inputs.basedir_path,
+                                                               self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 
@@ -758,9 +761,8 @@ class RegisterDWI(SimpleInterface):
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
 
-        if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
-            # Align t1w to mni
-            reg.t1w2mni_align()
+        # Align t1w to mni
+        reg.t1w2mni_align()
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
             # Align t1w to dwi
@@ -1120,8 +1122,8 @@ class RegisterFunc(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import glob
-        import os.path as op
         from pynets.registration import register
+        from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         anat_mask_existing = [i for i in glob.glob(self.inputs.in_dir + '/*_desc-brain_mask.nii.gz') if
@@ -1135,6 +1137,8 @@ class RegisterFunc(SimpleInterface):
             if len(anat_mask_existing) > 0 and self.inputs.mask is None:
                 mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
                 copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
+                mask_tmp_path = regutils.check_orient_and_dims(mask_tmp_path, self.inputs.basedir_path,
+                                                               self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 
@@ -1164,9 +1168,8 @@ class RegisterFunc(SimpleInterface):
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
 
-        if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
-            # Align t1w to mni
-            reg.t1w2mni_align()
+        # Align t1w to mni
+        reg.t1w2mni_align()
 
         self._results['reg_fmri_complete'] = True
         self._results['basedir_path'] = runtime.cwd
