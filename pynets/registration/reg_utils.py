@@ -72,6 +72,9 @@ def gen_mask(basedir_path, t1w_head, t1w_brain, mask):
     except ValueError:
         print('Cannot coerce mask to shape of T1w anatomical.')
 
+    assert op.isfile(t1w_brain)
+    assert op.isfile(t1w_brain_mask)
+
     return t1w_brain, t1w_brain_mask
 
 

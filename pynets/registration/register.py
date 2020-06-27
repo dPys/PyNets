@@ -494,27 +494,18 @@ class DmriReg(object):
         A function to segment and threshold tissue types from T1w.
         """
         # from pynets.plotting.plot_gen import qa_fast_png
-        import os.path as op
         import shutil
 
         # Segment the t1w brain into probability maps
-        if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
-            if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
-                print('Existing segmentations detected...')
-                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path,
-                                                         self.vox_size, overwrite=False)
-                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path,
-                                                         self.vox_size, overwrite=False)
-                csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.basedir_path,
-                                                          self.vox_size, overwrite=False)
-            else:
-                try:
-                    maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                    wm_mask = maps['wm_prob']
-                    gm_mask = maps['gm_prob']
-                    csf_mask = maps['csf_prob']
-                except RuntimeError:
-                    print('Segmentation failed. Does the input anatomical image still contained skull?')
+        if wm_mask_existing is not None and gm_mask_existing is not None and csf_mask_existing is not None and \
+            overwrite is False:
+            print('Existing segmentations detected...')
+            wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path,
+                                                     self.vox_size, overwrite=False)
+            gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path,
+                                                     self.vox_size, overwrite=False)
+            csf_mask = regutils.check_orient_and_dims(csf_mask_existing, self.basedir_path,
+                                                      self.vox_size, overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -523,8 +514,6 @@ class DmriReg(object):
                 csf_mask = maps['csf_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-
-        # qa_fast_png(self.csf_mask, self.gm_mask, self.wm_mask, self.map_name)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -768,23 +757,14 @@ class FmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
-        import os.path as op
 
         # Segment the t1w brain into probability maps
-        if wm_mask_existing and gm_mask_existing:
-            if op.isfile(gm_mask_existing) and overwrite is False:
-                print('Existing segmentations detected...')
-                gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path, self.vox_size,
-                                                         overwrite=False)
-                wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path, self.vox_size,
-                                                         overwrite=False)
-            else:
-                try:
-                    maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                    gm_mask = maps['gm_prob']
-                    wm_mask = maps['wm_prob']
-                except RuntimeError:
-                    print('Segmentation failed. Does the input anatomical image still contained skull?')
+        if wm_mask_existing is not None and gm_mask_existing is not None and overwrite is False:
+            print('Existing segmentations detected...')
+            gm_mask = regutils.check_orient_and_dims(gm_mask_existing, self.basedir_path, self.vox_size,
+                                                     overwrite=False)
+            wm_mask = regutils.check_orient_and_dims(wm_mask_existing, self.basedir_path, self.vox_size,
+                                                     overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)

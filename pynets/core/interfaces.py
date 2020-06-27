@@ -723,18 +723,24 @@ class RegisterDWI(SimpleInterface):
 
         gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
         if len(gm_mask_existing) > 0:
-            copyfile(gm_mask_existing[0], fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
+            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
+            copyfile(gm_mask_existing[0], gm_mask)
+        else:
+            gm_mask = None
 
         wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
         if len(wm_mask_existing) > 0:
-            copyfile(wm_mask_existing[0], fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
+            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
+            copyfile(wm_mask_existing[0], wm_mask)
+        else:
+            wm_mask = None
 
         csf_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-CSF_probseg.nii.gz')
         if len(csf_mask_existing) > 0:
-            copyfile(csf_mask_existing[0], fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
+            csf_mask = fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
+            copyfile(csf_mask_existing[0], csf_mask)
+        else:
+            csf_mask = None
 
         reg = register.DmriReg(basedir_path=runtime.cwd,
                                fa_path=fa_tmp_path,
@@ -751,7 +757,7 @@ class RegisterDWI(SimpleInterface):
         if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
                                                (op.isfile(reg.wm_edge) is False)):
             # Perform anatomical segmentation
-            reg.gen_tissue(wm_mask_existing, gm_mask_existing, csf_mask_existing)
+            reg.gen_tissue(wm_mask, gm_mask, csf_mask)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni
@@ -1137,13 +1143,17 @@ class RegisterFunc(SimpleInterface):
 
         gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
         if len(gm_mask_existing) > 0:
-            copyfile(gm_mask_existing[0], fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
+            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
+            copyfile(gm_mask_existing[0], gm_mask)
+        else:
+            gm_mask = None
 
         wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
         if len(wm_mask_existing) > 0:
-            copyfile(wm_mask_existing[0], fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
+            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
+            copyfile(wm_mask_existing[0], wm_mask)
+        else:
+            wm_mask = None
 
         reg = register.FmriReg(basedir_path=runtime.cwd,
                                anat_file=self.inputs.anat_file,
@@ -1156,7 +1166,7 @@ class RegisterFunc(SimpleInterface):
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):
             # Perform anatomical segmentation
-            reg.gen_tissue(wm_mask_existing, gm_mask_existing)
+            reg.gen_tissue(wm_mask, gm_mask)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni
