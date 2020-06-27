@@ -2088,7 +2088,8 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
              [('outfile', 'roi')]),
             (check_orient_and_dims_anat_node, register_clust_mask_node, [('outfile', 'anat_file')]),
             (inputnode, register_clust_mask_node, [('vox_size', 'vox_size'), ('template_name', 'template_name')]),
-            (register_node, register_clust_mask_node, [('basedir_path', 'basedir_path')]),
+            (register_node, register_clust_mask_node, [('basedir_path', 'basedir_path'), ('t1w_brain', 't1w_brain'),
+                                                       ('mni2t1w_warp', 'mni2t1w_warp'), ('mni2t1_xfm', 'mni2t1_xfm')]),
         ])
 
         fmri_connectometry_wf.connect([(inputnode, clustering_node, [('ID', 'ID'), ('conf', 'conf'),

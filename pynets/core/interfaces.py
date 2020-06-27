@@ -659,7 +659,7 @@ class _RegisterDWIInputSpec(BaseInterfaceInputSpec):
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
     simple = traits.Bool(False, usedefault=True)
-    overwrite = traits.Bool(True, usedefault=True)
+    overwrite = traits.Bool(False, usedefault=True)
 
 
 class _RegisterDWIOutputSpec(TraitedSpec):
@@ -710,14 +710,15 @@ class RegisterDWI(SimpleInterface):
 
         anat_mask_existing = [i for i in glob.glob(self.inputs.in_dir + '/*_desc-brain_mask.nii.gz') if
                               'MNI' not in i]
-        if len(anat_mask_existing) > 0 and self.inputs.mask is None:
-            mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
-            copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
+
+        # Copy T1w mask, if provided, else use existing, if detected, else compute a fresh one
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
         else:
-            # Copy T1w mask, if provided
-            if self.inputs.mask:
-                mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-                copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+            if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+                mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
+                copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
             else:
                 mask_tmp_path = None
 
@@ -754,10 +755,8 @@ class RegisterDWI(SimpleInterface):
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
 
-        if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
-                                               (op.isfile(reg.wm_edge) is False)):
-            # Perform anatomical segmentation
-            reg.gen_tissue(wm_mask, gm_mask, csf_mask)
+        # Perform anatomical segmentation
+        reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni
@@ -1065,11 +1064,8 @@ class RegisterROIDWI(SimpleInterface):
         mni2t1_xfm_tmp_path = fname_presuffix(self.inputs.mni2t1_xfm, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.mni2t1_xfm, mni2t1_xfm_tmp_path, copy=True, use_hardlink=False)
 
-        base_dir_tmp = f"{runtime.cwd}/{self.inputs.roi}"
-        os.makedirs(base_dir_tmp, exist_ok=True)
-
-        roi_in_t1w = f"{base_dir_tmp}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
-        roi_in_dwi = f"{base_dir_tmp}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_dwi.nii.gz"
+        roi_in_t1w = f"{runtime.cwd}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
+        roi_in_dwi = f"{runtime.cwd}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_dwi.nii.gz"
 
         if self.inputs.roi:
             # Align roi
@@ -1100,7 +1096,7 @@ class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
-    overwrite = traits.Bool(True, usedefault=True)
+    overwrite = traits.Bool(False, usedefault=True)
 
 
 class _RegisterFuncOutputSpec(TraitedSpec):
@@ -1130,14 +1126,15 @@ class RegisterFunc(SimpleInterface):
 
         anat_mask_existing = [i for i in glob.glob(self.inputs.in_dir + '/*_desc-brain_mask.nii.gz') if
                               'MNI' not in i]
-        if len(anat_mask_existing) > 0 and self.inputs.mask is None:
-            mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
-            copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
+
+        # Copy T1w mask, if provided, else use existing, if detected, else compute a fresh one
+        if self.inputs.mask:
+            mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
+            copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
         else:
-            # Apply T1w mask, if provided
-            if self.inputs.mask:
-                mask_tmp_path = fname_presuffix(self.inputs.mask, suffix='_tmp', newpath=runtime.cwd)
-                copyfile(self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False)
+            if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+                mask_tmp_path = fname_presuffix(anat_mask_existing[0], suffix='_tmp', newpath=runtime.cwd)
+                copyfile(anat_mask_existing[0], mask_tmp_path, copy=True, use_hardlink=False)
             else:
                 mask_tmp_path = None
 
@@ -1164,9 +1161,8 @@ class RegisterFunc(SimpleInterface):
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
 
-        if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):
-            # Perform anatomical segmentation
-            reg.gen_tissue(wm_mask, gm_mask)
+        # Perform anatomical segmentation
+        reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni
@@ -1343,10 +1339,7 @@ class RegisterROIEPI(SimpleInterface):
         roi_file_tmp_path = fname_presuffix(self.inputs.roi, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.roi, roi_file_tmp_path, copy=True, use_hardlink=False)
 
-        base_dir_tmp = f"{runtime.cwd}/{self.inputs.roi}"
-        os.makedirs(base_dir_tmp, exist_ok=True)
-
-        roi_in_t1w = f"{base_dir_tmp}/roi-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
+        roi_in_t1w = f"{runtime.cwd}/roi-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
 
         t1w_brain_tmp_path = fname_presuffix(self.inputs.t1w_brain, suffix='_tmp', newpath=runtime.cwd)
         copyfile(self.inputs.t1w_brain, t1w_brain_tmp_path, copy=True, use_hardlink=False)

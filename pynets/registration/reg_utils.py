@@ -18,49 +18,39 @@ except KeyError:
     print('FSLDIR environment variable not set!')
 
 
-def gen_mask(basedir_path, t1w_head, t1w_brain, mask):
+def gen_mask(t1w_head, t1w_brain, mask):
     import os.path as op
-    import glob
     from nilearn.image import math_img
 
-    # Apply brain mask if detected as a separate file
-    t1w_brain_mask = glob.glob(basedir_path + '/*_desc-brain_mask.nii.gz')
-    if len(t1w_brain_mask) > 0:
+    if mask is not None:
         from nilearn.image import resample_to_img
-        t1w_brain_mask = t1w_brain_mask[0]
+        t1w_brain_mask = mask
         print(f"Using {t1w_brain_mask}...")
         nib.save(resample_to_img(nib.load(t1w_brain_mask), nib.load(t1w_head)),
                  t1w_brain_mask)
     else:
-        t1w_brain_mask = None
-
-    if mask is None and t1w_brain_mask is None:
-        if t1w_brain_mask:
-            # Check if already skull-stripped. If not, strip it.
-            img = nib.load(t1w_head)
-            t1w_data = img.get_fdata()
-            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
-            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
-            if perc_nonzero > 0.25:
-                import tensorflow as tf
-                if tf.__version__ > '2.0.0':
-                    import tensorflow.compat.v1 as tf
-                import logging
-                from deepbrain import Extractor
-                logger = tf.get_logger()
-                logger.setLevel(logging.ERROR)
-                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-                ext = Extractor()
-                prob = ext.run(t1w_data)
-                mask = prob > 0.5
-                t1w_brain_mask = f"{op.dirname(t1w_head)}/deep_brain_mask.nii.gz"
-                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), t1w_brain_mask)
-                img.uncache()
-            else:
-                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header),
-                         t1w_brain_mask)
-    else:
-        t1w_brain_mask = mask
+        t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
+        # Check if already skull-stripped. If not, strip it.
+        img = nib.load(t1w_head)
+        t1w_data = img.get_fdata()
+        perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
+        # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
+        if perc_nonzero > 0.25:
+            import tensorflow as tf
+            if tf.__version__ > '2.0.0':
+                import tensorflow.compat.v1 as tf
+            import logging
+            from deepbrain import Extractor
+            logger = tf.get_logger()
+            logger.setLevel(logging.ERROR)
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+            ext = Extractor()
+            prob = ext.run(t1w_data)
+            mask = prob > 0.5
+            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), t1w_brain_mask)
+            img.uncache()
+        else:
+            nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), t1w_brain_mask)
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
@@ -560,7 +550,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
     from dipy.align.imwarp import SymmetricDiffeomorphicRegistration
     from dipy.align.metrics import CCMetric
-    from dipy.viz import regtools
+    # from dipy.viz import regtools
     from nilearn.image import resample_to_img
 
     ap_img = nib.load(ap_path)
@@ -931,6 +921,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
 
     img.uncache()
     del img
-    os.remove(orig_img)
+    if os.path.isfile(orig_img):
+        os.remove(orig_img)
 
     return img_file
