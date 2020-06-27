@@ -24,7 +24,7 @@ aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas
 DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
     - False
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweeness centrality, coreness (requires installation of cpalgoorithm)
-    - 'eigenvector'
+    - 'betweeness'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
