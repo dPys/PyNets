@@ -485,6 +485,11 @@ class DmriReg(object):
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
 
+    def gen_mask(self):
+        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
+                                                                  self.mask)
+        return
+
     def gen_tissue(self, overwrite=True):
         """
         A function to segment and threshold tissue types from T1w.
@@ -495,14 +500,6 @@ class DmriReg(object):
         import shutil
 
         print(self.basedir_path)
-
-        # Apply brain mask if detected as a separate file
-        self.t1w_brain_mask = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
-        if len(self.t1w_brain_mask) > 0:
-            self.t1w_brain_mask = self.t1w_brain_mask[0]
-            print(f"Using {self.t1w_brain_mask}...")
-        else:
-            self.t1w_brain_mask = None
 
         # Segment the t1w brain into probability maps
         # WM
@@ -526,43 +523,6 @@ class DmriReg(object):
             print(f"Using {csf_mask_existing}...")
         else:
             csf_mask_existing = None
-
-        if not self.mask and not self.t1w_brain_mask:
-            # Check if already skull-stripped. If not, strip it.
-            img = nib.load(self.t1w_head)
-            t1w_data = img.get_fdata()
-            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
-            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
-            if perc_nonzero > 0.25:
-                import tensorflow as tf
-                if tf.__version__ > '2.0.0':
-                    import tensorflow.compat.v1 as tf
-                import logging
-                from deepbrain import Extractor
-                logger = tf.get_logger()
-                logger.setLevel(logging.ERROR)
-                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-                ext = Extractor()
-                prob = ext.run(t1w_data)
-                mask = prob > 0.5
-                self.mask = f"{op.dirname(self.t1w_head)}/deep_brain_mask.nii.gz"
-                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), self.mask)
-                img.uncache()
-            else:
-                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
-
-        self.t1w_brain_mask = self.mask
-
-        try:
-            os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
-        except:
-            try:
-                from nilearn.image import resample_to_img
-                nib.save(resample_to_img(nib.load(self.t1w_brain_mask), nib.load(self.t1w_brain)),
-                         self.t1w_brain_mask)
-                os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
-            except ValueError:
-                print('Cannot coerce mask to shape of T1w anatomical.')
 
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
@@ -596,11 +556,6 @@ class DmriReg(object):
         t_img = nib.load(wm_mask)
         mask = math_img('img > 0.20', img=t_img)
         mask.to_filename(self.wm_mask_thr)
-
-        # Threshold T1w brain to binary in anat space
-        t_img = nib.load(self.t1w_brain)
-        mask = math_img('img > 0.0', img=t_img)
-        mask.to_filename(self.t1w_brain_mask)
 
         # Extract wm edge
         os.system(f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge} 2>/dev/null")
@@ -956,21 +911,17 @@ class FmriReg(object):
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
 
+    def gen_mask(self):
+        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
+                                                                  self.mask)
+        return
+
     def gen_tissue(self, overwrite=False):
         """
         A function to segment and threshold tissue types from T1w.
         """
         import glob
         import os.path as op
-
-        # Apply brain mask if detected as a separate file
-        print(self.basedir_path)
-        self.t1w_brain_mask = glob.glob(self.basedir_path + '/*_desc-brain_mask.nii.gz')
-        if len(self.t1w_brain_mask) > 0:
-            self.t1w_brain_mask = self.t1w_brain_mask[0]
-            print(f"Using {self.t1w_brain_mask}...")
-        else:
-            self.t1w_brain_mask = None
 
         # Segment the t1w brain into probability maps
         # WM
@@ -986,42 +937,6 @@ class FmriReg(object):
             gm_mask_existing = gm_mask_existing[0]
         else:
             gm_mask_existing = None
-
-        if not self.mask and not self.t1w_brain_mask:
-            # Check if already skull-stripped. If not, strip it.
-            img = nib.load(self.t1w_head)
-            t1w_data = img.get_fdata()
-            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
-            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
-            if perc_nonzero > 0.25:
-                import tensorflow as tf
-                if tf.__version__ > '2.0.0':
-                    import tensorflow.compat.v1 as tf
-                import logging
-                from deepbrain import Extractor
-                logger = tf.get_logger()
-                logger.setLevel(logging.ERROR)
-                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-                ext = Extractor()
-                prob = ext.run(t1w_data)
-                mask = prob > 0.5
-                self.mask = f"{op.dirname(self.t1w_head)}/deep_brain_mask.nii.gz"
-                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), self.mask)
-                img.uncache()
-            else:
-                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), self.mask)
-        self.t1w_brain_mask = self.mask
-
-        try:
-            os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
-        except:
-            try:
-                from nilearn.image import resample_to_img
-                nib.save(resample_to_img(nib.load(self.t1w_brain_mask), nib.load(self.t1w_brain)),
-                         self.t1w_brain_mask)
-                os.system(f"fslmaths {self.t1w_head} -mas {self.t1w_brain_mask} {self.t1w_brain} 2>/dev/null")
-            except ValueError:
-                print('Cannot coerce mask to shape of T1w anatomical.')
 
         if wm_mask_existing and gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
@@ -1044,11 +959,6 @@ class FmriReg(object):
                 wm_mask = maps['wm_prob']
             except RuntimeError:
                 print('Segmentation failed. Does the input anatomical image still contained skull?')
-
-        # Threshold T1w brain to binary in anat space
-        t_img = nib.load(self.t1w_brain)
-        mask = math_img('img > 0.0', img=t_img)
-        mask.to_filename(self.t1w_brain)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)

@@ -18,6 +18,62 @@ except KeyError:
     print('FSLDIR environment variable not set!')
 
 
+def gen_mask(basedir_path, t1w_head, t1w_brain, mask):
+    import os.path as op
+    import glob
+    from nilearn.image import math_img
+
+    # Apply brain mask if detected as a separate file
+    t1w_brain_mask = glob.glob(basedir_path + '/*_desc-brain_mask.nii.gz')
+    if len(t1w_brain_mask) > 0:
+        from nilearn.image import resample_to_img
+        t1w_brain_mask = t1w_brain_mask[0]
+        print(f"Using {t1w_brain_mask}...")
+        nib.save(resample_to_img(nib.load(t1w_brain_mask), nib.load(t1w_head)),
+                 t1w_brain_mask)
+    else:
+        t1w_brain_mask = None
+
+    if not mask:
+        if t1w_brain_mask:
+            # Check if already skull-stripped. If not, strip it.
+            img = nib.load(t1w_head)
+            t1w_data = img.get_fdata()
+            perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
+            # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
+            if perc_nonzero > 0.25:
+                import tensorflow as tf
+                if tf.__version__ > '2.0.0':
+                    import tensorflow.compat.v1 as tf
+                import logging
+                from deepbrain import Extractor
+                logger = tf.get_logger()
+                logger.setLevel(logging.ERROR)
+                os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+                ext = Extractor()
+                prob = ext.run(t1w_data)
+                mask = prob > 0.5
+                t1w_brain_mask = f"{op.dirname(t1w_head)}/deep_brain_mask.nii.gz"
+                nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), t1w_brain_mask)
+                img.uncache()
+            else:
+                nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header),
+                         t1w_brain_mask)
+    else:
+        t1w_brain_mask = mask
+
+    # Threshold T1w brain to binary in anat space
+    t_img = nib.load(t1w_brain_mask)
+    mask = math_img('img > 0.0', img=t_img)
+    mask.to_filename(t1w_brain_mask)
+
+    try:
+        os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
+    except ValueError:
+        print('Cannot coerce mask to shape of T1w anatomical.')
+    return t1w_brain, t1w_brain_mask
+
+
 def segment_t1w(t1w, basename, opts=''):
     """
     A function to use FSL's FAST to segment an anatomical

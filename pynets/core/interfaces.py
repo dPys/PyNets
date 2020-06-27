@@ -729,6 +729,9 @@ class RegisterDWI(SimpleInterface):
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
+        # Generate T1w brain mask
+        reg.gen_mask()
+        
         if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
                                                (op.isfile(reg.wm_edge) is False)):
             # Perform anatomical segmentation
@@ -1084,6 +1087,9 @@ class RegisterFunc(SimpleInterface):
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
+
+        # Generate T1w brain mask
+        reg.gen_mask()
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):
             # Perform anatomical segmentation
