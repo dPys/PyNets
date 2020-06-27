@@ -1127,7 +1127,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
         register_roi_node = pe.Node(RegisterROIDWI(), name='register_roi_node')
         dmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_roi_node,
-             [('roi', 'infile')]),
+             [('roi', 'infile'), ('outdir', 'outdir'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_roi_node, register_roi_node,
              [('outfile', 'roi')]),
         ])
@@ -2083,7 +2083,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         fmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_clust_mask_node,
-             [('clust_mask', 'infile')]),
+             [('clust_mask', 'infile'), ('vox_size', 'vox_size'), ('outdir', 'outdir')]),
             (check_orient_and_dims_clust_mask_node, register_clust_mask_node,
              [('outfile', 'roi')]),
             (check_orient_and_dims_anat_node, register_clust_mask_node, [('outfile', 'anat_file')]),
@@ -2382,7 +2382,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
 
         fmri_connectometry_wf.connect([
             (inputnode, check_orient_and_dims_roi_node,
-             [('roi', 'infile')]),
+             [('roi', 'infile'), ('outdir', 'outdir'), ('vox_size', 'vox_size')]),
             (check_orient_and_dims_roi_node, register_roi_node,
              [('outfile', 'roi')]),
         ])

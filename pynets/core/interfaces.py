@@ -723,22 +723,22 @@ class RegisterDWI(SimpleInterface):
 
         gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
         if len(gm_mask_existing) > 0:
-            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
-            copyfile(gm_mask_existing[0], gm_mask)
+            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
+            copyfile(gm_mask_existing[0], gm_mask, copy=True, use_hardlink=False)
         else:
             gm_mask = None
 
         wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
         if len(wm_mask_existing) > 0:
-            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
-            copyfile(wm_mask_existing[0], wm_mask)
+            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
+            copyfile(wm_mask_existing[0], wm_mask, copy=True, use_hardlink=False)
         else:
             wm_mask = None
 
         csf_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-CSF_probseg.nii.gz')
         if len(csf_mask_existing) > 0:
-            csf_mask = fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
-            copyfile(csf_mask_existing[0], csf_mask)
+            csf_mask = fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd)
+            copyfile(csf_mask_existing[0], csf_mask, copy=True, use_hardlink=False)
         else:
             csf_mask = None
 
@@ -1143,15 +1143,15 @@ class RegisterFunc(SimpleInterface):
 
         gm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-GM_probseg.nii.gz')
         if len(gm_mask_existing) > 0:
-            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
-            copyfile(gm_mask_existing[0], gm_mask)
+            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
+            copyfile(gm_mask_existing[0], gm_mask, copy=True, use_hardlink=False)
         else:
             gm_mask = None
 
         wm_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-WM_probseg.nii.gz')
         if len(wm_mask_existing) > 0:
-            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd, copy=True, use_hardlink=False)
-            copyfile(wm_mask_existing[0], wm_mask)
+            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
+            copyfile(wm_mask_existing[0], wm_mask, copy=True, use_hardlink=False)
         else:
             wm_mask = None
 
