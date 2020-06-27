@@ -741,18 +741,17 @@ class RegisterDWI(SimpleInterface):
                                ap_path=ap_tmp_path,
                                B0_mask=B0_mask_tmp_path,
                                anat_file=self.inputs.anat_file,
-                               mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
         # Generate T1w brain mask
-        reg.gen_mask()
+        reg.gen_mask(mask_tmp_path)
 
         if (self.inputs.overwrite is True) or ((op.isfile(reg.wm_mask_thr) is False) and
                                                (op.isfile(reg.wm_edge) is False)):
             # Perform anatomical segmentation
-            reg.gen_tissue()
+            reg.gen_tissue(wm_mask_existing, gm_mask_existing, csf_mask_existing)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni
@@ -1146,24 +1145,18 @@ class RegisterFunc(SimpleInterface):
             copyfile(wm_mask_existing[0], fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd), copy=True,
                      use_hardlink=False)
 
-        csf_mask_existing = glob.glob(self.inputs.in_dir + '/*_label-CSF_probseg.nii.gz')
-        if len(csf_mask_existing) > 0:
-            copyfile(csf_mask_existing[0], fname_presuffix(csf_mask_existing[0], newpath=runtime.cwd), copy=True,
-                     use_hardlink=False)
-
         reg = register.FmriReg(basedir_path=runtime.cwd,
                                anat_file=self.inputs.anat_file,
-                               mask=mask_tmp_path,
                                vox_size=self.inputs.vox_size,
                                template_name=self.inputs.template_name,
                                simple=self.inputs.simple)
 
         # Generate T1w brain mask
-        reg.gen_mask()
+        reg.gen_mask(mask_tmp_path)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.gm_mask_thr) is False):
             # Perform anatomical segmentation
-            reg.gen_tissue()
+            reg.gen_tissue(wm_mask_existing, gm_mask_existing)
 
         if (self.inputs.overwrite is True) or (op.isfile(reg.t1_aligned_mni) is False):
             # Align t1w to mni

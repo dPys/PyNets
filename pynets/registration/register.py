@@ -402,7 +402,7 @@ class DmriReg(object):
 
     """
 
-    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, mask, vox_size, template_name, simple):
+    def __init__(self, basedir_path, fa_path, ap_path, B0_mask, anat_file, vox_size, template_name, simple):
         import pkg_resources
         import os.path as op
         self.simple = simple
@@ -410,7 +410,6 @@ class DmriReg(object):
         self.fa_path = fa_path
         self.B0_mask = B0_mask
         self.t1w = anat_file
-        self.mask = mask
         self.vox_size = vox_size
         self.template_name = template_name
         self.t1w_name = 't1w'
@@ -480,50 +479,25 @@ class DmriReg(object):
             if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
-    def gen_mask(self):
+    def gen_mask(self, mask):
         import os.path as op
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
 
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
-                                                                  self.mask)
+                                                                  mask)
         return
 
-    def gen_tissue(self, overwrite=True):
+    def gen_tissue(self, wm_mask_existing, gm_mask_existing, csf_mask_existing, overwrite=True):
         """
         A function to segment and threshold tissue types from T1w.
         """
         # from pynets.plotting.plot_gen import qa_fast_png
         import os.path as op
-        import glob
         import shutil
 
-        print(self.basedir_path)
-
         # Segment the t1w brain into probability maps
-        # WM
-        wm_mask_existing = glob.glob(self.basedir_path + '/*_label-WM_probseg.nii.gz')
-        if len(wm_mask_existing) > 0:
-            wm_mask_existing = wm_mask_existing[0]
-        else:
-            wm_mask_existing = None
-
-        # GM
-        gm_mask_existing = glob.glob(self.basedir_path + '/*_label-GM_probseg.nii.gz')
-        if len(gm_mask_existing) > 0:
-            gm_mask_existing = gm_mask_existing[0]
-        else:
-            gm_mask_existing = None
-
-        # CSF
-        csf_mask_existing = glob.glob(self.basedir_path + '/*_label-CSF_probseg.nii.gz')
-        if len(csf_mask_existing) > 0:
-            csf_mask_existing = csf_mask_existing[0]
-            print(f"Using {csf_mask_existing}...")
-        else:
-            csf_mask_existing = None
-
         if wm_mask_existing and gm_mask_existing and csf_mask_existing and overwrite is False:
             if op.isfile(wm_mask_existing) and op.isfile(gm_mask_existing) and op.isfile(csf_mask_existing):
                 print('Existing segmentations detected...')
@@ -674,8 +648,8 @@ class DmriReg(object):
             regutils.applyxfm(self.corpuscallosum, self.t1w_brain, self.mni2t1_xfm, self.corpuscallosum_mask_t1w)
 
         # Applyxfm tissue maps to dwi space
-        if self.mask is not None:
-            regutils.applyxfm(self.ap_path, self.mask, self.t1wtissue2dwi_xfm, self.t1w_brain_mask_in_dwi)
+        if self.t1w_brain_mask is not None:
+            regutils.applyxfm(self.ap_path, self.t1w_brain_mask, self.t1wtissue2dwi_xfm, self.t1w_brain_mask_in_dwi)
         regutils.applyxfm(self.ap_path, self.vent_mask_t1w, self.t1wtissue2dwi_xfm, self.vent_mask_dwi)
         regutils.applyxfm(self.ap_path, self.csf_mask, self.t1wtissue2dwi_xfm, self.csf_mask_dwi)
         regutils.applyxfm(self.ap_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi)
@@ -737,11 +711,10 @@ class FmriReg(object):
 
     """
 
-    def __init__(self, basedir_path, anat_file, mask, vox_size, template_name, simple):
+    def __init__(self, basedir_path, anat_file, vox_size, template_name, simple):
         import os.path as op
         import pkg_resources
         self.t1w = anat_file
-        self.mask = mask
         self.vox_size = vox_size
         self.template_name = template_name
         self.t1w_name = 't1w'
@@ -782,37 +755,22 @@ class FmriReg(object):
             if not op.isdir(reg_dirs[i]):
                 os.mkdir(reg_dirs[i])
 
-    def gen_mask(self):
+    def gen_mask(self, mask):
         import os.path as op
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
         [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
-                                                                  self.mask)
+                                                                  mask)
         return
 
-    def gen_tissue(self, overwrite=False):
+    def gen_tissue(self, wm_mask_existing, gm_mask_existing, overwrite=False):
         """
         A function to segment and threshold tissue types from T1w.
         """
-        import glob
         import os.path as op
 
         # Segment the t1w brain into probability maps
-        # WM
-        wm_mask_existing = glob.glob(self.basedir_path + '/*_label-WM_probseg.nii.gz')
-        if len(wm_mask_existing) > 0:
-            wm_mask_existing = wm_mask_existing[0]
-        else:
-            wm_mask_existing = None
-
-        # GM
-        gm_mask_existing = glob.glob(self.basedir_path + '/*_label-GM_probseg.nii.gz')
-        if len(gm_mask_existing) > 0:
-            gm_mask_existing = gm_mask_existing[0]
-        else:
-            gm_mask_existing = None
-
         if wm_mask_existing and gm_mask_existing:
             if op.isfile(gm_mask_existing) and overwrite is False:
                 print('Existing segmentations detected...')

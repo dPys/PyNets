@@ -34,7 +34,7 @@ def gen_mask(basedir_path, t1w_head, t1w_brain, mask):
     else:
         t1w_brain_mask = None
 
-    if not mask:
+    if mask is None and t1w_brain_mask is None:
         if t1w_brain_mask:
             # Check if already skull-stripped. If not, strip it.
             img = nib.load(t1w_head)
@@ -71,6 +71,7 @@ def gen_mask(basedir_path, t1w_head, t1w_brain, mask):
         os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
     except ValueError:
         print('Cannot coerce mask to shape of T1w anatomical.')
+
     return t1w_brain, t1w_brain_mask
 
 
