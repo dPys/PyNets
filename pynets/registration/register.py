@@ -485,8 +485,7 @@ class DmriReg(object):
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
 
-        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
-                                                                  mask)
+        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.t1w_head, self.t1w_brain, mask)
         return
 
     def gen_tissue(self, wm_mask_existing, gm_mask_existing, csf_mask_existing, overwrite=True):
@@ -749,8 +748,7 @@ class FmriReg(object):
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
-        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.basedir_path, self.t1w_head, self.t1w_brain,
-                                                                  mask)
+        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(self.t1w_head, self.t1w_brain, mask)
         return
 
     def gen_tissue(self, wm_mask_existing, gm_mask_existing, overwrite=False):
