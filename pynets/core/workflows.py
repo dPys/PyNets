@@ -1865,7 +1865,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     # print("%s%s" % ('local_corr: ', local_corr))
     # print('\n\n\n\n\n')
 
-    if atlas is None and uatlas is None:
+    if atlas is None and uatlas is None and multi_atlas is None and user_atlas_list is None:
         all_clustering = True
     else:
         all_clustering = False

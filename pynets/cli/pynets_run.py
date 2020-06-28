@@ -1196,7 +1196,7 @@ def build_workflow(args, retval):
             return retval
 
         if multi_atlas is not None:
-            print('\nIterating across multiple predefined atlases...')
+            print('\nIterating functional connectometry across multiple predefined atlases...')
             if func_file_list:
                 for _func_file in func_file_list:
                     for _atlas in multi_atlas:
@@ -1254,7 +1254,7 @@ def build_workflow(args, retval):
                     atlas_par = _uatlas.split('/')[-1].split('.')[0]
                     print(atlas_par)
         if multi_atlas:
-            print('\nIterating across multiple predefined atlases...')
+            print('\nIterating structural connectometry across multiple predefined atlases...')
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
                     for _atlas in multi_atlas:
