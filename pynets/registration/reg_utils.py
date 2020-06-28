@@ -60,8 +60,9 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
-    mask = math_img('img > 0.0', img=t_img)
-    mask.to_filename(t1w_brain_mask)
+    img = math_img('img > 0.0', img=t_img)
+    img.to_filename(t1w_brain_mask)
+    t_img.uncache()
 
     os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
 

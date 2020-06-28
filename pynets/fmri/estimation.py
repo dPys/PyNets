@@ -265,11 +265,10 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     if conn_matrix.shape < (2, 2):
         raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. '
                            'Check time-series for errors or try using a different atlas')
-
-    assert len(coords) == len(labels) == conn_matrix.shape[0]
-
     coords = np.array(coords)
     labels = np.array(labels)
+
+    # assert coords.shape[0] == labels.shape[0] == conn_matrix.shape[0]
 
     del time_series
 

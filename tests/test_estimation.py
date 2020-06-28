@@ -143,9 +143,9 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
     roi, labels, atlas, uatlas = [None]*4
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                              conf=conf, func_file=func_file, coords=coords, roi=roi,
-                              dir_path=dir_path, ID=ID, network=network, smooth=smooth, atlas=atlas,
-                              uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              conf=conf, func_file=func_file, roi=roi,
+                              dir_path=dir_path, ID=ID, network=network, smooth=smooth,
+                              hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
@@ -217,9 +217,9 @@ def test_timseries_extraction_extract(conf):
     roi, labels, atlas, uatlas = [None]*4
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                              conf=conf, func_file=func_file.name, coords=coords,
+                              conf=conf, func_file=func_file.name,
                               roi=roi, dir_path=dir_path, ID=ID, network=network, smooth=smooth,
-                              atlas=atlas, uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
