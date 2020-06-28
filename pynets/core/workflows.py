@@ -1325,7 +1325,7 @@ def dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, 
     else:
         if not multi_nets:
             # Minimal case of no iterables
-            print('\nNo structural connectometry iterables...\n')
+            print('\nNo structural connectometry iterables...')
         join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
         dmri_connectometry_wf.connect([(streams2graph_node, join_iters_node,
                                         [x for x in map_connects if x != ('thr', 'thr')]),
@@ -2564,7 +2564,7 @@ def fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatla
     else:
         if not multi_nets:
             # Minimal case of no iterables
-            print('\nNo functional connectometry iterables...\n')
+            print('\nNo functional connectometry iterables...')
         join_iters_node = pe.Node(niu.IdentityInterface(fields=map_fields), name='join_iters_node')
         fmri_connectometry_wf.connect([(get_conn_matrix_node, join_iters_node,
                                         [x for x in map_connects if x != ('thr', 'thr')]),
