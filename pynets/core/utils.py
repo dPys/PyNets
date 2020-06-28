@@ -939,9 +939,9 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
+def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     """
-    Save RSN coordinates and labels to pickle files.
+    Save coordinates and labels to pickle files.
 
     Parameters
     ----------
@@ -974,13 +974,18 @@ def save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
+    if network is not None:
+        coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
+        labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
+    else:
+        coord_path = f"{namer_dir}/_coords.pkl"
+        labels_path = f"{namer_dir}/_labels.pkl"
+
     # Save coords to pickle
-    coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
     with open(coord_path, 'wb') as f:
         pickle.dump(coords, f, protocol=2)
 
     # Save labels to pickle
-    labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
     with open(labels_path, 'wb') as f:
         pickle.dump(labels, f, protocol=2)
 

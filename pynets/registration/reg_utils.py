@@ -245,6 +245,8 @@ def atlas2t1w_align(uatlas, uatlas_parcels, atlas, t1w_brain, t1w_brain_mask, t1
                        cost='mutualinfo')
 
     os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
+
+    #os.system(f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null")
     atlas_img = nib.load(aligned_atlas_gm)
 
     uatlas_res_template_data = np.asarray(atlas_img.dataobj)

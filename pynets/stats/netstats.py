@@ -792,7 +792,7 @@ def prune_disconnected(G):
     return G, pruned_nodes
 
 
-def most_important(G, method='coreness', sd=1):
+def most_important(G, method='betweenness', sd=1):
     """
     Returns a copy of G with hubs as defined by centrality,
     core topology, or rich-club topology.
@@ -827,11 +827,11 @@ def most_important(G, method='coreness', sd=1):
     if method == 'coreness':
         try:
             import cpalgorithm as cp
-            algorithm = cp.KM_config()
-            algorithm.detect(G)
-            ranking = algorithm.get_coreness().items()
         except ImportError:
             print('Cannot run coreness detection. cpalgorithm not installed!')
+        algorithm = cp.KM_config()
+        algorithm.detect(G)
+        ranking = algorithm.get_coreness().items()
     elif method == 'eigenvector':
         ranking = nx.eigenvector_centrality(G, weight='weight').items()
     elif method == 'richclub' and len(G.nodes()) > 4:
@@ -1366,7 +1366,7 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
         try:
             bc_arr[j, 1] = bc_vals[j]
         except:
-            print(f"{'betweenness centrality is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'betweennesss centrality is undefined for node '}{str(j)}{' of G'}")
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = 'average_betweenness_centrality'

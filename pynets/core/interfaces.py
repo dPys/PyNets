@@ -16,10 +16,11 @@ warnings.filterwarnings("ignore")
 
 class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for FetchNodesLabels"""
-    atlas = traits.Any()
-    uatlas = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=True)
     ref_txt = traits.Any()
-    parc = traits.Bool()
+    in_file = traits.Any(mandatory=True)
+    parc = traits.Bool(mandatory=True)
     use_AAL_naming = traits.Bool(False, usedefault=True)
     outdir = traits.Str(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
@@ -175,7 +176,7 @@ class FetchNodesLabels(SimpleInterface):
                     ref_txt = f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
                 else:
                     ref_txt = self.inputs.ref_txt
-                if op.exists(ref_txt):
+                if ref_txt is not None:
                     try:
                         labels = pd.read_csv(ref_txt,
                                              sep=" ", header=None, names=["Index", "Region"])['Region'].tolist()
@@ -331,6 +332,7 @@ class _IndividualClusteringOutputSpec(TraitedSpec):
     clust_mask = File(exists=True, mandatory=True)
     k = traits.Any(mandatory=True)
     clust_type = traits.Str(mandatory=True)
+    func_file = File(exists=True, mandatory=True)
 
 
 class IndividualClustering(SimpleInterface):
@@ -411,6 +413,8 @@ class IndividualClustering(SimpleInterface):
         self._results['k'] = self.inputs.k
         self._results['clust_type'] = self.inputs.clust_type
         self._results['clustering'] = True
+        self._results['func_file'] = self.inputs.func_file
+
         return runtime
 
 
@@ -484,15 +488,11 @@ class ExtractTimeseries(SimpleInterface):
                                              node_size=self.inputs.node_size,
                                              conf=out_name_conf,
                                              func_file=out_name_func_file,
-                                             coords=self.inputs.coords,
                                              roi=self.inputs.roi,
                                              dir_path=self.inputs.dir_path,
                                              ID=self.inputs.ID,
                                              network=self.inputs.network,
                                              smooth=self.inputs.smooth,
-                                             atlas=self.inputs.atlas,
-                                             uatlas=self.inputs.uatlas,
-                                             labels=self.inputs.labels,
                                              hpass=self.inputs.hpass,
                                              mask=out_name_mask,
                                              extract_strategy=self.inputs.extract_strategy)
@@ -503,15 +503,17 @@ class ExtractTimeseries(SimpleInterface):
 
         te.save_and_cleanup()
 
+        assert len(self.inputs.coords) == len(self.inputs.labels) == te.ts_within_nodes.shape[1]
+
         self._results['ts_within_nodes'] = te.ts_within_nodes
         self._results['node_size'] = te.node_size
         self._results['smooth'] = te.smooth
         self._results['extract_strategy'] = te.extract_strategy
         self._results['dir_path'] = te.dir_path
-        self._results['atlas'] = te.atlas
-        self._results['uatlas'] = te.uatlas
-        self._results['labels'] = te.labels
-        self._results['coords'] = te.coords
+        self._results['atlas'] = self.inputs.atlas
+        self._results['uatlas'] = self.inputs.uatlas
+        self._results['labels'] = self.inputs.labels
+        self._results['coords'] = self.inputs.coords
         self._results['hpass'] = te.hpass
         self._results['roi'] = self.inputs.roi
 
@@ -525,24 +527,24 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotStruct"""
     conn_matrix = traits.Array(mandatory=True)
     conn_model = traits.Str(mandatory=True)
-    atlas = traits.Any()
+    atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
-    network = traits.Any()
+    network = traits.Any(mandatory=True)
     labels = traits.Array(mandatory=True)
-    roi = traits.Any()
+    roi = traits.Any(mandatory=True)
     coords = traits.Array(mandatory=True)
-    thr = traits.Any()
-    node_size = traits.Any()
-    edge_threshold = traits.Any()
-    prune = traits.Any()
-    uatlas = traits.Any()
-    target_samples = traits.Any()
-    norm = traits.Any()
-    binary = traits.Bool()
-    track_type = traits.Any()
-    directget = traits.Any()
-    min_length = traits.Any()
+    thr = traits.Any(mandatory=True)
+    node_size = traits.Any(mandatory=True)
+    edge_threshold = traits.Any(mandatory=True)
+    prune = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=True)
+    target_samples = traits.Any(mandatory=True)
+    norm = traits.Any(mandatory=True)
+    binary = traits.Bool(mandatory=True)
+    track_type = traits.Any(mandatory=True)
+    directget = traits.Any(mandatory=True)
+    min_length = traits.Any(mandatory=True)
 
 
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
@@ -557,6 +559,8 @@ class PlotStruct(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        assert len(self.inputs.coords) == len(self.inputs.labels) == self.inputs.conn_matrix.shape[0]
         if self.inputs.coords.ndim == 1:
             print('Only 1 node detected. Plotting is not applicable...')
         else:
@@ -590,24 +594,24 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotFunc"""
     conn_matrix = traits.Array(mandatory=True)
     conn_model = traits.Str(mandatory=True)
-    atlas = traits.Any()
+    atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
-    network = traits.Any()
+    network = traits.Any(mandatory=True)
     labels = traits.Array(mandatory=True)
-    roi = traits.Any()
+    roi = traits.Any(mandatory=True)
     coords = traits.Array(mandatory=True)
-    thr = traits.Any()
-    node_size = traits.Any()
-    edge_threshold = traits.Any()
-    smooth = traits.Any()
-    prune = traits.Any()
-    uatlas = traits.Any()
-    norm = traits.Any()
-    binary = traits.Bool()
-    hpass = traits.Any()
-    extract_strategy = traits.Any()
-    edge_color_override = traits.Bool()
+    thr = traits.Any(mandatory=True)
+    node_size = traits.Any(mandatory=True)
+    edge_threshold = traits.Any(mandatory=True)
+    smooth = traits.Any(mandatory=True)
+    prune = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=True)
+    norm = traits.Any(mandatory=True)
+    binary = traits.Bool(mandatory=True)
+    hpass = traits.Any(mandatory=True)
+    extract_strategy = traits.Any(mandatory=True)
+    edge_color_override = traits.Bool(mandatory=True)
 
 
 class _PlotFuncOutputSpec(BaseInterfaceInputSpec):
@@ -622,6 +626,8 @@ class PlotFunc(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        assert len(self.inputs.coords) == len(self.inputs.labels) == self.inputs.conn_matrix.shape[0]
 
         if self.inputs.coords.ndim == 1:
             print('Only 1 node detected. Plotting not applicable...')
@@ -807,12 +813,12 @@ class RegisterDWI(SimpleInterface):
 
 class _RegisterAtlasDWIInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterAtlasDWI"""
-    atlas = traits.Any()
-    network = traits.Any()
-    uatlas_parcels = traits.Any()
-    uatlas = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=True)
+    uatlas_parcels = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=True)
     basedir_path = Directory(exists=True, mandatory=True)
-    node_size = traits.Any()
+    node_size = traits.Any(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     ap_path = File(exists=True, mandatory=True)
     B0_mask = File(exists=True, mandatory=True)
@@ -845,7 +851,7 @@ class _RegisterAtlasDWIOutputSpec(TraitedSpec):
     dwi_aligned_atlas_wmgm_int = File(exists=True, mandatory=True)
     dwi_aligned_atlas = File(exists=True, mandatory=True)
     aligned_atlas_t1mni = File(exists=True, mandatory=True)
-    node_size = traits.Any()
+    node_size = traits.Any(mandatory=True)
     atlas = traits.Any(mandatory=True)
     uatlas_parcels = traits.Any(mandatory=False)
     uatlas = traits.Any(mandatory=False)
@@ -1100,7 +1106,7 @@ class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterFunc"""
     anat_file = File(exists=True, mandatory=True)
     mask = traits.Any(mandatory=False)
-    in_dir = traits.Any()
+    in_dir = traits.Any(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
@@ -1193,10 +1199,10 @@ class RegisterFunc(SimpleInterface):
 
 class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterAtlasFunc"""
-    atlas = traits.Any()
-    network = traits.Any()
-    uatlas_parcels = traits.Any()
-    uatlas = traits.Any()
+    atlas = traits.Any(mandatory=True)
+    network = traits.Any(mandatory=True)
+    uatlas_parcels = traits.Any(mandatory=True)
+    uatlas = traits.Any(mandatory=True)
     basedir_path = Directory(exists=True, mandatory=True)
     anat_file = File(exists=True, mandatory=True)
     t1w_brain = File(exists=True, mandatory=True)
@@ -1207,7 +1213,7 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     gm_mask = File(exists=True, mandatory=True)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
-    node_size = traits.Any()
+    node_size = traits.Any(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str('MNI152_T1', mandatory=True, usedefault=True)
@@ -1398,19 +1404,19 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
     network = traits.Any(mandatory=False)
-    node_size = traits.Any()
-    dens_thresh = traits.Bool()
+    node_size = traits.Any(mandatory=True)
+    dens_thresh = traits.Bool(mandatory=True)
     ID = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=False)
-    min_span_tree = traits.Bool()
-    disp_filt = traits.Bool()
-    parc = traits.Bool()
-    prune = traits.Any()
+    min_span_tree = traits.Bool(mandatory=True)
+    disp_filt = traits.Bool(mandatory=True)
+    parc = traits.Bool(mandatory=True)
+    prune = traits.Any(mandatory=True)
     atlas = traits.Any(mandatory=True)
     uatlas = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
     coords = traits.Any(mandatory=True)
-    norm = traits.Any()
+    norm = traits.Any(mandatory=True)
     binary = traits.Bool(False, usedefault=True)
     atlas_mni = File(exists=True, mandatory=True)
     fa_path = File(exists=True, mandatory=True)

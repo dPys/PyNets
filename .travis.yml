@@ -51,5 +51,5 @@ before_install:
 #  - docker ps
 script:
   - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
-  - pynets_bids /home/travis/build/dPys/input /home/travis/build/dPys/output participant $MOD --participant_label 25659 --session_label 1 -plug 'Linear' -clean
+  - travis-wait-enhanced --interval=1m --timeout=720m -- pynets_bids /home/travis/build/dPys/input /home/travis/build/dPys/output participant $MOD --participant_label 25659 --session_label 1 -plug 'Linear' -clean -v -work '/home/travis/build/dPys/output/work'
 #  - travis-wait-enhanced --interval=1m --timeout=720m -- docker run --rm --privileged -w /home/travis/build/dPys/PyNets -v /home/travis/build/dPys/input:/inputs -v /home/travis/build/dPys/output:/outputs dpys/pynets:latest pynets_bids /inputs /outputs participant $MOD --participant_label 25659 --session_label 1 -plug 'Linear' -clean

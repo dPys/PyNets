@@ -949,16 +949,6 @@ def node_gen_masking(roi, coords, parcel_list, labels, dir_path, ID, parc, atlas
                                                                    dir_path, ID, perc_overlap)
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list_masked)
 
-    # Save coords to pickle
-    coords_path = f"{dir_path}/atlas_coords_{op.basename(roi).split('.')[0]}.pkl"
-    with open(coords_path, 'wb') as f:
-        pickle.dump(coords, f, protocol=2)
-
-    # Save labels to pickle
-    labels_path = f"{dir_path}/atlas_labelnames_{op.basename(roi).split('.')[0]}.pkl"
-    with open(labels_path, 'wb') as f:
-        pickle.dump(labels, f, protocol=2)
-
     assert len(coords) == len(labels) == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
@@ -1013,21 +1003,10 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     except ImportError:
         import _pickle as pickle
     from pynets.core import nodemaker
-    pick_dump = False
 
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
 
     coords = list(tuple(x) for x in coords)
-    if pick_dump is True:
-        # Save coords to pickle
-        coords_path = f"{dir_path}/atlas_coords_wb.pkl"
-        with open(coords_path, 'wb') as f:
-            pickle.dump(coords, f, protocol=2)
-
-        # Save labels to pickle
-        labels_path = f"{dir_path}/atlas_labelnames_wb.pkl"
-        with open(labels_path, 'wb') as f:
-            pickle.dump(labels, f, protocol=2)
 
     assert len(coords) == len(labels) == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
 

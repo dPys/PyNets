@@ -76,7 +76,7 @@ def test_conn_mat_operations(cp, thr):
         for idx, val in enumerate(x):
             coords.append(idx)
             labels.append('ROI_' + str(idx))
-        
+
         # Disconnect graph for edge case.
         x_undir = nx.from_numpy_matrix(x).to_undirected()
         for i in range(1, 10):
@@ -86,7 +86,7 @@ def test_conn_mat_operations(cp, thr):
         conn_matrix_thr = thresholding.local_thresholding_prop(x, thr)
         assert conn_matrix_thr is not None
         conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, thr)
-        assert conn_matrix_thr_undir is not None    
+        assert conn_matrix_thr_undir is not None
 
     def test_knn(x, thr):
         k = int(thr * 10)
@@ -95,15 +95,15 @@ def test_conn_mat_operations(cp, thr):
     def test_disparity_filter(x, thr):
         G_undir = nx.from_numpy_matrix(x)
         G_dir = G_undir.to_directed()
-        
+
         # Test edge case where {in,out}_degree are 0.
         for e in [0, 2, 3, 4, 5, 6, 7, 8, 9]:
-            G_dir.remove_edge(0, e)    
+            G_dir.remove_edge(0, e)
         for e in range(1, 10):
             G_dir.remove_edge(e, 1)
         for e in range(1, 10):
             G_undir.remove_edge(0, e)
-    
+
         N = thresholding.disparity_filter(G_dir, weight='weight')
         assert N is not None
         N = thresholding.disparity_filter(G_undir, weight='weight')
@@ -114,7 +114,7 @@ def test_conn_mat_operations(cp, thr):
         G_dir = G_undir.to_directed()
         G_dir.add_edge(0, 1, alpha_in=0.1, alpha_out=0.1)
         G_undir.add_edge(0, 1, alpha=0.1, weight=0.5)
-        
+
         for mode in ['or', 'and']:
             N = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight', cut_mode = mode)
             assert N is not None
@@ -138,73 +138,73 @@ def test_conn_mat_operations(cp, thr):
 
     base_dir = str(Path(__file__).parent/"examples")
     W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_est-cov_raw_mat.npy")
-        
+
     x_orig = W.copy()
     x_rand = x = np.random.rand(10, 10)
     test_binarize(x_orig, thr, cp)
     test_binarize(x_rand, thr, cp)
-    
+
     x_orig = W.copy()
     x_rand = np.random.rand(10, 10)
     test_normalize(x_orig, thr, cp)
     test_normalize(x_rand, thr, cp)
-    
+
     x_orig = W.copy()
     x_rand = np.random.rand(10, 10)
     test_threshold_absolute(x_orig, thr, cp)
     test_threshold_absolute(x_rand, thr, cp)
-    
+
     x_orig = W.copy()
     x_rand = np.random.rand(10, 10)
     test_invert(x_orig, thr, cp)
     test_invert(x, thr, cp)
-    
+
     x_orig = W.copy()
     x_rand = np.random.rand(10, 10)
     test_autofix(x_orig, thr, cp)
     test_autofix(x, thr, cp)
-    
+
     # Prevent redundant testing.
-    if cp == True: 
-        x_orig = W.copy() 
+    if cp == True:
+        x_orig = W.copy()
         x_rand = np.random.rand(10, 10)
-        test_density(x_orig, thr) 
         test_density(x_orig, thr)
-    
+        test_density(x_orig, thr)
+
         x_orig = W.copy()
         x_rand = np.random.rand(10, 10)
         test_thr2prob(x_orig, thr)
         test_thr2prob(x_rand, thr)
-    
+
         x_orig = W.copy()
         x_rand = np.random.rand(10,10)
         test_local_thresholding_prop(x_rand, thr)
         test_knn(x_rand, thr)
         test_disparity_filter(x_rand, thr)
-    
+
     if thr == 0.2 and cp == True:
         test_disparity_filter_alpha_cut(x_rand)
         test_weight_to_distance(x_rand)
         test_standardize(x_rand)
-    
+
     if thr == 0.2:
         test_weight_conversion(x_rand, cp)
 
 
-@pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])    
+@pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 def test_edge_cases(thr):
     # local_thresholding_prop: nng.number_of_edges() == 0 and number_before >= maximum_edges
     x = np.zeros((10,10))
     x = nx.to_numpy_array(nx.from_numpy_matrix(x).to_directed())
     coords = [idx for idx, val in enumerate(x)]
     labels = ['ROI_' + str(idx) for idx, val in enumerate(x)]
-        
+
     for idx, i in enumerate(range(0, 10)):
         if idx < 9:
             x[i][idx+1] = 1
         if idx < 10 and idx > 0:
             x[i][idx-1] = 1
-            
+
     conn_mat_edge_one = thresholding.local_thresholding_prop(x, thr)
     assert conn_mat_edge_one is not None
 
@@ -233,7 +233,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
             conn_matrix[i][0] = 0
     else:
         conn_matrix = np.random.rand(10, 10)
-    
+
     ID = '002'
     network = 'Default'
     conn_model = 'sps'
@@ -243,25 +243,26 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     roi = f"{dir_path}/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz"
     coord_file_path = f"{dir_path}/Default_func_coords_wb.pkl"
     coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)    
+    coords = pickle.load(coord_file)
     labels_file_path = f"{dir_path}/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     # The arguments below arr never used in the thresholding.tresh_func, but are returned.
-    prune = True 
+    prune = True
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = None
     norm = 1
     binary = False
     hpass = False
     extract_strategy = 'mean'
-                                               
+
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
         prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
-        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, 
-                                 roi, node_size, min_span_tree, smooth, disp_filt, parc, prune, 
-                                 atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
-                                 
+        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path,
+                                 roi, node_size, min_span_tree, smooth, disp_filt, parc, prune,
+                                 atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy,
+                                 check_consistency=False)
+
     assert conn_matrix_thr is not None
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
         assert edge_threshold is None # edge_threshold will be none in one case
@@ -288,7 +289,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     # Additional arguments for thresh_struc
     if all_zero == True and type == 'struct':
         conn_matrix = np.zeros((10, 10))
-        
+
     target_samples = 2
     track_type = 'local'
     atlas_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
@@ -306,8 +307,8 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
                                                                                coords, norm, binary,
                                                                                target_samples, track_type,
                                                                                atlas_mni, streams, directget,
-                                                                               max_length)
-                                 
+                                                                               max_length, check_consistency=False)
+
     assert dens_thresh is not None
     assert thr is not None
     assert conn_matrix is not None
