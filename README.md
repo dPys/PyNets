@@ -11,7 +11,7 @@ PyNets™
 
 About
 -----
-PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a variety of methodological choices known to impact node and/or edge definition, and then sample the prescribed connectome estimates, in a massively parallel framework, conducive to grid-search. PyNets is a post-processing workflow, which means that it can be run on virtually any preprocessed fMRI or dMRI data. It draws from Dipy, Nilearn, GrasPy, and Networkx libraries, but is powered primarily through the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives. 
+PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a variety of methodological choices known to impact node and/or edge definition, and then sample the prescribed connectome estimates, in a massively parallel framework, conducive to grid-search. PyNets is a post-processing workflow, which means that it can be run on virtually any preprocessed fMRI or dMRI data. It draws from Dipy, Nilearn, GrasPy, and Networkx libraries, but is powered primarily through the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives.
 
 Install
 -------
@@ -22,12 +22,13 @@ docker pull dpys/pynets:latest
 
 Manual (Requires a local dependency install of FSL version >=5.0.9 and Nilearn version >=0.7.0a):
 ```
-pip install pynets
+pip install pynets --user
 ```
-or 
+or
 ```
 git clone https://github.com/dpys/pynets
 cd PyNets
+pip install -r requirements.txt --user
 python setup.py install
 ```
 

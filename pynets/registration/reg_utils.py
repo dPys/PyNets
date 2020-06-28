@@ -18,6 +18,261 @@ except KeyError:
     print('FSLDIR environment variable not set!')
 
 
+def gen_mask(t1w_head, t1w_brain, mask):
+    import os.path as op
+    from nilearn.image import math_img
+
+    t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
+
+    if mask is not None:
+        from nilearn.image import resample_to_img
+        print(f"Using {mask}...")
+        nib.save(resample_to_img(nib.load(mask), nib.load(t1w_head)), t1w_brain_mask)
+    else:
+        # Check if already skull-stripped. If not, strip it.
+        img = nib.load(t1w_head)
+        t1w_data = img.get_fdata()
+        perc_nonzero = np.count_nonzero(t1w_data) / np.count_nonzero(t1w_data == 0)
+        # TODO find a better heuristic for determining whether a t1w image has already been skull-stripped
+        if perc_nonzero > 0.25:
+            import tensorflow as tf
+            if tf.__version__ > '2.0.0':
+                import tensorflow.compat.v1 as tf
+            import logging
+            from deepbrain import Extractor
+            logger = tf.get_logger()
+            logger.setLevel(logging.ERROR)
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+            ext = Extractor()
+            prob = ext.run(t1w_data)
+            mask = prob > 0.5
+            nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), t1w_brain_mask)
+            img.uncache()
+        else:
+            # Fallback to FSL's BET
+            import time
+            t1w_brain = f"{op.dirname(t1w_head)}/t1w_brain_bet.nii.gz"
+            t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_bet_mask.nii.gz"
+            # Get mean B0 brain mask
+            cmd = f"bet {t1w_head} {t1w_brain} -m -f 0.2"
+            os.system(cmd)
+            time.sleep(1)
+
+    # Threshold T1w brain to binary in anat space
+    t_img = nib.load(t1w_brain_mask)
+    img = math_img('img > 0.0', img=t_img)
+    img.to_filename(t1w_brain_mask)
+    t_img.uncache()
+
+    os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
+
+    assert op.isfile(t1w_brain)
+    assert op.isfile(t1w_brain_mask)
+
+    return t1w_brain, t1w_brain_mask
+
+
+def atlas2t1w2dwi_align(uatlas, uatlas_parcels, atlas, t1w_brain, t1w_brain_mask, mni2t1w_warp,
+                        t1_aligned_mni, ap_path, t1w2dwi_bbr_xfm, mni2t1_xfm, t1w2dwi_xfm, wm_gm_int_in_dwi,
+                        aligned_atlas_t1mni, aligned_atlas_skull, dwi_aligned_atlas, dwi_aligned_atlas_wmgm_int,
+                        simple):
+    """
+    A function to perform atlas alignment atlas --> T1 --> dwi.
+    Tries nonlinear registration first, and if that fails, does a linear registration instead. For this to succeed,
+    must first have called t1w2dwi_align.
+    """
+    from nilearn.image import resample_to_img
+    from pynets.core.utils import checkConsecutive
+    from pynets.registration import reg_utils as regutils
+    from nilearn.image import math_img
+    from nilearn.masking import intersect_masks
+
+    template_img = nib.load(t1_aligned_mni)
+    if uatlas_parcels:
+        uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='nearest')
+    else:
+        uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='nearest')
+    uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
+    uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
+
+    uatlas_res_template = nib.Nifti1Image(uatlas_res_template_data.astype('int32'),
+                                          affine=uatlas_res_template.affine, header=uatlas_res_template.header)
+    nib.save(uatlas_res_template, aligned_atlas_t1mni)
+
+    if simple is False:
+        try:
+            regutils.apply_warp(t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
+                                warp=mni2t1w_warp, interp='nn', sup=True, mask=t1w_brain_mask)
+
+            # Apply linear transformation from template to dwi space
+            regutils.align(aligned_atlas_skull, ap_path, init=t1w2dwi_bbr_xfm,
+                           out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
+                           cost='mutualinfo')
+
+        except:
+            print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
+                  "registration.")
+
+            regutils.align(aligned_atlas_t1mni, t1w_brain, init=mni2t1_xfm,
+                           out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                           cost='mutualinfo')
+
+            regutils.align(aligned_atlas_skull, ap_path, init=t1w2dwi_bbr_xfm,
+                           out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
+                           cost='mutualinfo')
+
+    else:
+        regutils.align(aligned_atlas_t1mni, t1w_brain, init=mni2t1_xfm,
+                       out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                       cost='mutualinfo')
+
+        regutils.align(aligned_atlas_skull, ap_path, init=t1w2dwi_xfm,
+                       out=dwi_aligned_atlas, dof=6, searchrad=True, interp="nearestneighbour",
+                       cost='mutualinfo')
+
+    atlas_img = nib.load(dwi_aligned_atlas)
+    wm_gm_img = nib.load(wm_gm_int_in_dwi)
+    wm_gm_mask_img = math_img('img > 0', img=wm_gm_img)
+    atlas_mask_img = math_img('img > 0', img=atlas_img)
+
+    uatlas_res_template_data = np.asarray(atlas_img.dataobj)
+    uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
+
+    atlas_img_corr = nib.Nifti1Image(uatlas_res_template_data.astype('uint32'),
+                                     affine=atlas_img.affine, header=atlas_img.header)
+
+    dwi_aligned_atlas_wmgm_int_img = intersect_masks([wm_gm_mask_img, atlas_mask_img], threshold=0,
+                                                     connected=False)
+
+    nib.save(atlas_img_corr, dwi_aligned_atlas)
+    nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
+
+    final_dat = atlas_img_corr.get_fdata()
+    unique_a = list(set(np.array(final_dat.flatten().tolist())))
+    unique_a.sort()
+
+    if not checkConsecutive(unique_a):
+        print('Warning! Non-consecutive integers found in parcellation...')
+
+    atlas_img.uncache()
+    atlas_img_corr.uncache()
+    atlas_mask_img.uncache()
+    wm_gm_img.uncache()
+    wm_gm_mask_img.uncache()
+
+    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
+
+
+def roi2dwi_align(roi, t1w_brain, roi_in_t1w, roi_in_dwi, ap_path, mni2t1w_warp, t1wtissue2dwi_xfm, mni2t1_xfm, simple):
+    """
+    A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
+    """
+    from pynets.registration import reg_utils as regutils
+    # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
+    if simple is False:
+        regutils.apply_warp(t1w_brain, roi, roi_in_t1w, warp=mni2t1w_warp)
+    else:
+        regutils.applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
+
+    # Apply transform from t1w to native dwi space
+    regutils.applyxfm(ap_path, roi_in_t1w, t1wtissue2dwi_xfm, roi_in_dwi)
+
+    return roi_in_dwi
+
+
+def waymask2dwi_align(waymask, t1w_brain, ap_path, mni2t1w_warp, mni2t1_xfm, t1wtissue2dwi_xfm, waymask_in_t1w,
+                      waymask_in_dwi, simple):
+    """
+    A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
+    """
+    from pynets.registration import reg_utils as regutils
+    # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
+    if simple is False:
+        regutils.apply_warp(t1w_brain, waymask, waymask_in_t1w, warp=mni2t1w_warp)
+    else:
+        regutils.applyxfm(t1w_brain, waymask, mni2t1_xfm, waymask_in_t1w)
+
+    # Apply transform from t1w to native dwi space
+    regutils.applyxfm(ap_path, waymask_in_t1w, t1wtissue2dwi_xfm, waymask_in_dwi)
+
+    return waymask_in_dwi
+
+
+def roi2t1w_align(roi, t1w_brain, mni2t1_xfm, mni2t1w_warp, roi_in_t1w, simple):
+    """
+    A function to perform alignment of a roi from MNI space --> T1w.
+    """
+    from pynets.registration import reg_utils as regutils
+
+    # Apply warp or transformer resulting from the inverse MNI->T1w created earlier
+    if simple is False:
+        regutils.apply_warp(t1w_brain, roi, roi_in_t1w, warp=mni2t1w_warp)
+    else:
+        regutils.applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
+
+    return roi_in_t1w
+
+
+def atlas2t1w_align(uatlas, uatlas_parcels, atlas, t1w_brain, t1w_brain_mask, t1_aligned_mni, mni2t1w_warp, mni2t1_xfm,
+                    gm_mask, aligned_atlas_t1mni, aligned_atlas_skull, aligned_atlas_gm, simple):
+    """
+    A function to perform atlas alignment from atlas --> T1w.
+    """
+    from pynets.registration import reg_utils as regutils
+    from nilearn.image import resample_to_img
+    from pynets.core.utils import checkConsecutive
+
+    template_img = nib.load(t1_aligned_mni)
+    if uatlas_parcels:
+        uatlas_res_template = resample_to_img(nib.load(uatlas_parcels), template_img, interpolation='nearest')
+    else:
+        uatlas_res_template = resample_to_img(nib.load(uatlas), template_img, interpolation='nearest')
+    uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
+    uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
+
+    uatlas_res_template = nib.Nifti1Image(uatlas_res_template_data.astype('uint16'),
+                                          affine=uatlas_res_template.affine, header=uatlas_res_template.header)
+    nib.save(uatlas_res_template, aligned_atlas_t1mni)
+
+    if simple is False:
+        try:
+            regutils.apply_warp(t1w_brain, aligned_atlas_t1mni, aligned_atlas_skull,
+                                warp=mni2t1w_warp, interp='nn', sup=True, mask=t1w_brain_mask)
+
+        except:
+            print("Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
+                  "registration.")
+
+            regutils.align(aligned_atlas_t1mni, t1w_brain, init=mni2t1_xfm,
+                           out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                           cost='mutualinfo')
+
+    else:
+        regutils.align(aligned_atlas_t1mni, t1w_brain, init=mni2t1_xfm,
+                       out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
+                       cost='mutualinfo')
+
+    #os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
+    os.system(f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null")
+    atlas_img = nib.load(aligned_atlas_gm)
+
+    uatlas_res_template_data = np.asarray(atlas_img.dataobj)
+    uatlas_res_template_data[uatlas_res_template_data != uatlas_res_template_data.astype(int)] = 0
+    atlas_img_corr = nib.Nifti1Image(uatlas_res_template_data.astype('uint32'),
+                                     affine=atlas_img.affine, header=atlas_img.header)
+    nib.save(atlas_img_corr, aligned_atlas_gm)
+    final_dat = nib.load(aligned_atlas_gm).get_fdata()
+    unique_a = list(set(np.array(final_dat.flatten().tolist())))
+    unique_a.sort()
+
+    if not checkConsecutive(unique_a):
+        print('Warning! Non-consecutive integers found in parcellation...')
+
+    template_img.uncache()
+
+    return aligned_atlas_gm, aligned_atlas_skull
+
+
 def segment_t1w(t1w, basename, opts=''):
     """
     A function to use FSL's FAST to segment an anatomical
@@ -251,6 +506,31 @@ def combine_xfms(xfm1, xfm2, xfmout):
     return
 
 
+def vdc(n, vox_size):
+    vdc, denom = 0, 1
+    while n:
+        denom *= vox_size
+        n, remainder = divmod(n, vox_size)
+        vdc += remainder / denom
+    return vdc
+
+
+def warp_streamlines(adjusted_affine, ref_grid_aff, mapping, warped_fa_img, streams_in_curr_grid, brain_mask):
+    from dipy.tracking import utils
+    from dipy.tracking.streamline import values_from_volume, transform_streamlines, Streamlines
+
+    # Deform streamlines, isocenter, and remove streamlines outside brain
+    streams_in_brain = [sum(d, s) for d, s in zip(values_from_volume(mapping.get_forward_field(),
+                                                                     streams_in_curr_grid,
+                                                                     ref_grid_aff), streams_in_curr_grid)]
+    streams_final_filt = Streamlines(utils.target_line_based(
+        transform_streamlines(transform_streamlines(streams_in_brain,
+                                                    np.linalg.inv(adjusted_affine)),
+                              np.linalg.inv(warped_fa_img.affine)), np.eye(4), brain_mask, include=True))
+
+    return streams_final_filt
+
+
 def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     """
     A function to perform SyN registration
@@ -276,14 +556,14 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     from dipy.align.imwarp import SymmetricDiffeomorphicRegistration
     from dipy.align.metrics import CCMetric
     # from dipy.viz import regtools
+    from nilearn.image import resample_to_img
 
-    fa_img = nib.load(fa_path)
-    template_img = nib.load(template_path)
-
-    static = np.asarray(template_img.dataobj)
-    static_affine = template_img.affine
-    moving = np.asarray(fa_img.dataobj).astype(np.float32)
-    moving_affine = fa_img.affine
+    ap_img = nib.load(ap_path)
+    template_anat_img = nib.load(template_anat_path)
+    static = np.asarray(template_anat_img.dataobj)
+    static_affine = template_anat_img.affine
+    moving = np.asarray(ap_img.dataobj).astype(np.float32)
+    moving_affine = ap_img.affine
 
     affine_map = transform_origins(static, static_affine, moving, moving_affine)
 
@@ -318,12 +598,14 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     metric = CCMetric(3)
     level_iters = [10, 10, 5]
 
-    ap_img = nib.load(ap_path)
-    template_anat_img = nib.load(template_anat_path)
-    static = np.asarray(template_anat_img.dataobj)
-    static_affine = template_anat_img.affine
-    moving = np.asarray(ap_img.dataobj).astype(np.float32)
-    moving_affine = ap_img.affine
+    # Refine fit using FA template
+    fa_img = nib.load(fa_path)
+    template_img = nib.load(template_path)
+    template_img_res = resample_to_img(template_img, template_anat_img)
+    static = np.asarray(template_img_res.dataobj)
+    static_affine = template_img_res.affine
+    moving = np.asarray(fa_img.dataobj).astype(np.float32)
+    moving_affine = fa_img.affine
 
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
@@ -334,7 +616,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     # Save warped FA image
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     warped_fa = f"{working_dir}/warped_fa_{run_uuid}.nii.gz"
-    nib.save(nib.Nifti1Image(warped_moving, affine=template_img.affine), warped_fa)
+    nib.save(nib.Nifti1Image(warped_moving, affine=template_img_res.affine), warped_fa)
 
     # # We show the registration result with:
     # regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
@@ -349,7 +631,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
 
 def median(in_file):
     """Average a 4D dataset across the last dimension using median."""
-    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=True)
+    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=False)
 
     img = nib.load(in_file)
     if img.dataobj.ndim == 3:
@@ -492,9 +774,15 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
         File path to corresponding reoriented bvecs file.
 
     """
+    import os
     from pynets.registration.reg_utils import normalize_xform
     fname = dwi_prep
     bvec_fname = bvecs
+
+    out_dir = f"{out_dir}/reg"
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
     out_bvec_fname = f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
 
     input_img = nib.load(fname)
@@ -604,6 +892,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
+    orig_img = img_file
+
     img = nib.load(img_file)
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
@@ -636,4 +926,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
 
     img.uncache()
     del img
+    if os.path.isfile(orig_img):
+        os.remove(orig_img)
+
     return img_file

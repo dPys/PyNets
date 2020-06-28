@@ -143,9 +143,9 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
     roi, labels, atlas, uatlas = [None]*4
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                              conf=conf, func_file=func_file, coords=coords, roi=roi,
-                              dir_path=dir_path, ID=ID, network=network, smooth=smooth, atlas=atlas,
-                              uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              conf=conf, func_file=func_file, roi=roi,
+                              dir_path=dir_path, ID=ID, network=network, smooth=smooth,
+                              hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
@@ -217,9 +217,9 @@ def test_timseries_extraction_extract(conf):
     roi, labels, atlas, uatlas = [None]*4
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                              conf=conf, func_file=func_file.name, coords=coords,
+                              conf=conf, func_file=func_file.name,
                               roi=roi, dir_path=dir_path, ID=ID, network=network, smooth=smooth,
-                              atlas=atlas, uatlas=uatlas, labels=labels, hpass=hpass, mask=mask,
+                              hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
@@ -400,6 +400,7 @@ def test_streams2graph(fa_wei, dsn):
     dens_thresh = False
     atlas = 'whole_brain_cluster_labels_PCA200'
     uatlas = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    t1_aligned_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
     streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_" \
         f"dg-prob_ml-10.trk"
@@ -420,26 +421,33 @@ def test_streams2graph(fa_wei, dsn):
     coords = nodemaker.get_names_and_coords_of_parcels(uatlas)[0]
     labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
-    if dsn is True:
-        os.makedirs(f"{dir_path}/dmri_reg/DSN", exist_ok=True)
-        (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
-         min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
-         warped_fa, min_length, error_margin) = register.direct_streamline_norm(streams, fa_path, fa_path, dir_path,
-                                                                                track_type, target_samples, conn_model,
-                                                                                network, node_size, dens_thresh, ID,
-                                                                                roi, min_span_tree, disp_filt, parc,
-                                                                                prune, atlas, atlas_dwi, uatlas,
-                                                                                labels, coords, norm, binary, uatlas,
-                                                                                dir_path, [0.1, 0.2], [40, 30],
-                                                                                directget, min_length, error_margin)
+    # if dsn is True:
+    #     os.makedirs(f"{dir_path}/dmri_reg/DSN", exist_ok=True)
+    #     (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
+    #      min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
+    #      warped_fa, min_length, error_margin) = register.direct_streamline_norm(streams, fa_path, fa_path, dir_path,
+    #                                                                             track_type, target_samples, conn_model,
+    #                                                                             network, node_size, dens_thresh, ID,
+    #                                                                             roi, min_span_tree, disp_filt, parc,
+    #                                                                             prune, atlas, atlas_dwi, uatlas,
+    #                                                                             labels, coords, norm, binary, uatlas,
+    #                                                                             dir_path, [0.1, 0.2], [40, 30],
+    #                                                                             directget, min_length, t1_aligned_mni,
+    #                                                                             error_margin)
+    #
+    #     conn_matrix = streams2graph(atlas_mni, streams_mni, overlap_thr, dir_path, track_type, target_samples,
+    #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+    #                                 disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+    #                                 directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    # else:
+    #     conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
+    #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+    #                                 disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
+    #                                 directget, fa_path, error_margin, min_length, fa_wei)[2]
 
-        conn_matrix = streams2graph(atlas_mni, streams_mni, overlap_thr, dir_path, track_type, target_samples,
-                                    conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-                                    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                                    directget, warped_fa, error_margin, min_length, fa_wei)[2]
-    else:
-        conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
-                                    conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-                                    disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
-                                    directget, fa_path, error_margin, min_length, fa_wei)[2]
+    conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
+                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+                                disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
+                                directget, fa_path, error_margin, min_length, fa_wei)[2]
+
     assert conn_matrix is not None

@@ -780,7 +780,7 @@ def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
 
 def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                 smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                hpass, extract_strategy):
+                hpass, extract_strategy, check_consistency=True):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
 
@@ -922,13 +922,16 @@ def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
+    if check_consistency is True:
+        assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
+
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
             dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
 
 
 def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
                   disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                  target_samples, track_type, atlas_mni, streams, directget, min_length):
+                  target_samples, track_type, atlas_mni, streams, directget, min_length, check_consistency=True):
     """
     Threshold a structural connectivity matrix using any of a variety of methods.
 
@@ -1084,6 +1087,9 @@ def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_pa
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
+
+    if check_consistency is True:
+        assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
     return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path,
             atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget,

@@ -297,14 +297,15 @@ def get_parser():
                              'Spanning Tree approach. -thr values in this case correspond to a target density (if the '
                              '-dt flag is also included), otherwise a target proportional threshold.\n')
     parser.add_argument('-p',
-                        metavar='Pruning strategy',
+                        metavar='Pruning Strategy',
                         default=1,
                         nargs=1,
                         choices=['0', '1', '2', '3'],
-                        help='Include this flag to prune the resulting graph of (1) any isolated + fully '
-                             'disconnected nodes, (2) any isolated + fully disconnected + non-important nodes, or (3) '
-                             'the larged connected component subgraph Default pruning=1. '
-                             'Include -p 0 to disable pruning.\n')
+                        help='Include this flag to (1) prune the graph of any isolated + fully '
+                             'disconnected nodes (i.e. anti-fragmentation), (2) prune the graph of all but hubs as '
+                             'defined by any of a variety of definitions (see ruconfig.yaml), or '
+                             '(3) retain only the largest connected component subgraph. '
+                             'Default is 1. Include `-p 0` to disable fragmentation-protection.\n')
     parser.add_argument('-df',
                         default=False,
                         action='store_true',
@@ -772,8 +773,9 @@ def build_workflow(args, retval):
     # Check required inputs for existence, and configure run
     if (func_file is None) and (dwi_file is None) and (graph is None) and \
         (multi_graph is None) and (multi_subject_graph is None) and (multi_subject_multigraph is None):
-        print("\nError: You must include a file path to either an MNI152-normalized space functional image "
-              "in .nii or .nii.gz format with the -func flag.")
+        print("\nError: You must include a file path to either a 4d BOLD EPI image in T1w space"
+              "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image series in native diffusion"
+              "space using the `-dwi` flag.")
         retval['return_code'] = 1
         return retval
     if func_file:
@@ -793,9 +795,8 @@ def build_workflow(args, retval):
     else:
         func_file_list = None
 
-    if dwi_file and (not anat_file and not fbval and not fbvec):
-        print('ERROR: Anatomical image(s) (-anat), b-values file(s) (-fbval), and b-vectors file(s) '
-              '(-fbvec) must be specified for dmri_connectometry.')
+    if not anat_file and not graph and not multi_graph:
+        print('ERROR: An anatomical image must be specified for fmri and dmri_connectometry using the `-anat` flag.')
         retval['return_code'] = 1
         return retval
     if dwi_file:
@@ -2064,10 +2065,6 @@ def build_workflow(args, retval):
                     except:
                         continue
 
-    if args.clean is True and os.path.isdir(retval['workflow'].basedir):
-        from shutil import rmtree
-        rmtree(retval['workflow'].basedir, ignore_errors=True)
-
     print('\n\n------------FINISHED-----------')
     print('Subject: ', ID)
     print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
@@ -2106,7 +2103,6 @@ def main():
         pynets_wf = retval.get('workflow', None)
         work_dir = retval.get('work_dir')
         plugin_settings = retval.get('plugin_settings', None)
-        plugin_settings = retval.get('plugin_settings', None)
         execution_dict = retval.get('execution_dict', None)
         run_uuid = retval.get('run_uuid', None)
 
@@ -2118,6 +2114,10 @@ def main():
         gc.collect()
 
     mgr.shutdown()
+
+    if args.clean is True and work_dir:
+        from shutil import rmtree
+        rmtree(work_dir, ignore_errors=True)
 
     sys.exit(0)
 

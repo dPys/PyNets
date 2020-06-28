@@ -69,7 +69,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str 
+    extract_strategy : str
         The name of a valid function used to reduce the time-series region extraction.
 
     Returns
@@ -122,7 +122,7 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str 
+    extract_strategy : str
         The name of a valid function used to reduce the time-series region extraction.
 
     References
@@ -265,9 +265,10 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     if conn_matrix.shape < (2, 2):
         raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. '
                            'Check time-series for errors or try using a different atlas')
-
     coords = np.array(coords)
     labels = np.array(labels)
+
+    # assert coords.shape[0] == labels.shape[0] == conn_matrix.shape[0]
 
     del time_series
 
@@ -333,21 +334,17 @@ class TimeseriesExtraction(object):
     """
     Class for implementing various time-series extracting routines.
     """
-    def __init__(self, net_parcels_nii_path, node_size, conf, func_file, coords, roi, dir_path, ID, network, smooth,
-                 atlas, uatlas, labels, hpass, mask, extract_strategy):
+    def __init__(self, net_parcels_nii_path, node_size, conf, func_file, roi, dir_path, ID, network, smooth,
+                 hpass, mask, extract_strategy):
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
         self.func_file = func_file
-        self.coords = coords
         self.roi = roi
         self.dir_path = dir_path
         self.ID = ID
         self.network = network
         self.smooth = smooth
-        self.atlas = atlas
-        self.uatlas = uatlas
-        self.labels = labels
         self.mask = mask
         self.hpass = hpass
         self.extract_strategy = extract_strategy
@@ -359,7 +356,6 @@ class TimeseriesExtraction(object):
         self._detrending = True
         self._net_parcels_nii_temp_path = None
         self._net_parcels_map_nifti = None
-        self._spheres_masker = None
         self._parcel_masker = None
 
     def prepare_inputs(self):
@@ -402,7 +398,7 @@ class TimeseriesExtraction(object):
         if self.mask is not None:
             # Ensure mask is binary
             self._mask_img = math_img('img > 0', img=nib.load(self.mask))
-            self._mask_img.set_data_dtype(np.uint8)
+            self._mask_img.set_data_dtype(np.uint16)
         else:
             self._mask_img = None
 
@@ -426,7 +422,7 @@ class TimeseriesExtraction(object):
         from pynets.fmri.estimation import fill_confound_nans
 
         self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
-        self._net_parcels_map_nifti.set_data_dtype(np.uint8)
+        self._net_parcels_map_nifti.set_data_dtype(np.uint16)
         self._parcel_masker = input_data.NiftiLabelsMasker(labels_img=self._net_parcels_map_nifti, background_label=0,
                                                            standardize=True, smoothing_fwhm=float(self.smooth),
                                                            high_pass=self.hpass, detrend=self._detrending,
@@ -464,9 +460,6 @@ class TimeseriesExtraction(object):
 
         if self._mask_path is not None:
             self._mask_img.uncache()
-
-        if self._spheres_masker is not None:
-            del self._spheres_masker
 
         if self._parcel_masker is not None:
             del self._parcel_masker

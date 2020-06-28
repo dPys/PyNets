@@ -792,15 +792,20 @@ def prune_disconnected(G):
     return G, pruned_nodes
 
 
-def most_important(G):
+def most_important(G, method='betweenness', sd=1):
     """
-    Returns a copy of G with isolates and low-importance nodes pruned
-    such that only hubs remain.
+    Returns a copy of G with hubs as defined by centrality,
+    core topology, or rich-club topology.
 
     Parameters
     ----------
     G : Obj
         NetworkX graph.
+    method : str
+        Determines method for defining hubs. Valid inputs are coreness, richclub, and
+        eigenvector centrality. Default is coreness.
+    sd : int
+        Number of standard errors as cutoff for low-importance pruning.
 
     Returns
     -------
@@ -818,15 +823,28 @@ def most_important(G):
 
     """
 
-    print('Pruning fully disconnected and low importance nodes (3 SD < M)...')
-    ranking = nx.betweenness_centrality(G, weight='weight').items()
+    print(f"Detecting hubs using {method} with SE: {sd}...")
+    if method == 'coreness':
+        try:
+            import cpalgorithm as cp
+        except ImportError:
+            print('Cannot run coreness detection. cpalgorithm not installed!')
+        algorithm = cp.KM_config()
+        algorithm.detect(G)
+        ranking = algorithm.get_coreness().items()
+    elif method == 'eigenvector':
+        ranking = nx.eigenvector_centrality(G, weight='weight').items()
+    elif method == 'richclub' and len(G.nodes()) > 4:
+        ranking = nx.algorithms.rich_club_coefficient(G).items()
+    else:
+        ranking = nx.betweenness_centrality(G, weight='weight').items()
+
     # print(ranking)
     r = [x[1] for x in ranking]
-    m = sum(r) / len(r) - 3 * np.std(r)
+    m = sum(r) / len(r) - sd * np.std(r)
     Gt = G.copy()
     pruned_nodes = []
     i = 0
-    # Remove near-zero isolates
     for k, v in ranking:
         if v < m:
             Gt.remove_node(k)
@@ -840,7 +858,7 @@ def most_important(G):
 
     isolates = [n for (n, d) in Gt.degree() if d == 0]
 
-    # Remove disconnected nodes
+    # Remove any lingering isolates
     s = 0
     for node in list(Gt.nodes()):
         if node not in components_connected or node in isolates:
@@ -1041,8 +1059,17 @@ class CleanGraphs(object):
                 print('Graph fragmentation detected...\n')
             [self.G, _] = prune_disconnected(self.G)
         elif int(self.prune) == 2:
-            print('Pruning by node centrality...')
-            [self.G, _] = most_important(self.G)
+            print('Filtering for hubs...')
+            import pkg_resources
+            import yaml
+            with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+                try:
+                    hardcoded_params = yaml.load(stream)
+                    hub_detection_method = hardcoded_params['hub_detection_method'][0]
+                except FileNotFoundError:
+                    print('Failed to parse runconfig.yaml')
+            stream.close()
+            [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
             print('Pruning all but the largest connected component subgraph...')
             self.G = self.G.subgraph(get_lcc(self.G))
@@ -1339,7 +1366,7 @@ def get_betweenness_centrality(G_len, metric_list_names, net_met_val_list_final)
         try:
             bc_arr[j, 1] = bc_vals[j]
         except:
-            print(f"{'Betweeness centrality is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'betweennesss centrality is undefined for node '}{str(j)}{' of G'}")
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = 'average_betweenness_centrality'
@@ -1529,13 +1556,13 @@ def extractnetstats(ID, network, thr, conn_model, est_path, roi, prune, norm, bi
         except FileNotFoundError:
             print('Failed to parse global_graph_measures.yaml')
 
-    with open(pkg_resources.resource_filename("pynets", "stats/nodal_graph_measures.yaml"), 'r') as stream:
+    with open(pkg_resources.resource_filename("pynets", "stats/local_graph_measures.yaml"), 'r') as stream:
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal['metric_list_nodal']
             print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
         except FileNotFoundError:
-            print('Failed to parse nodal_graph_measures.yaml')
+            print('Failed to parse local_graph_measures.yaml')
 
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
     # we are exploiting it intentionally to facilitate uninterrupted, automated graph analysis even when algorithms are

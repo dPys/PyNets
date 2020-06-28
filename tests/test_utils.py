@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_save_RSN_coords_and_labels_to_pickle():
+def test_save_coords_and_labels_to_pickle():
     """
     Test save_RSN_coords_and_labels_to_pickle functionality
     """
@@ -39,7 +39,7 @@ def test_save_RSN_coords_and_labels_to_pickle():
     labels = pickle.load(labels_file)
     network = None
 
-    [coord_path, labels_path] = utils.save_RSN_coords_and_labels_to_pickle(coords, labels, dir_path, network)
+    [coord_path, labels_path] = utils.save_coords_and_labels_to_pickle(coords, labels, dir_path, network)
 
     assert os.path.isfile(coord_path) is True
     assert os.path.isfile(labels_path) is True
