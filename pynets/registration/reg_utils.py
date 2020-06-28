@@ -49,7 +49,14 @@ def gen_mask(t1w_head, t1w_brain, mask):
             nib.save(nib.Nifti1Image(mask, affine=img.affine, header=img.header), t1w_brain_mask)
             img.uncache()
         else:
-            nib.save(nib.Nifti1Image(t1w_data.astype('bool'), affine=img.affine, header=img.header), t1w_brain_mask)
+            # Fallback to FSL's BET
+            import time
+            t1w_brain = f"{op.dirname(t1w_head)}/t1w_brain_bet.nii.gz"
+            t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_bet_mask.nii.gz"
+            # Get mean B0 brain mask
+            cmd = f"bet {t1w_head} {t1w_brain} -m -f 0.2"
+            os.system(cmd)
+            time.sleep(1)
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
@@ -244,9 +251,8 @@ def atlas2t1w_align(uatlas, uatlas_parcels, atlas, t1w_brain, t1w_brain_mask, t1
                        out=aligned_atlas_skull, dof=6, searchrad=True, interp="nearestneighbour",
                        cost='mutualinfo')
 
-    os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
-
-    #os.system(f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null")
+    #os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
+    os.system(f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null")
     atlas_img = nib.load(aligned_atlas_gm)
 
     uatlas_res_template_data = np.asarray(atlas_img.dataobj)
