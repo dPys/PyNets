@@ -56,4 +56,4 @@ script:
 
 cache:
   directories:
-  - /home/travis/build/dPys/output/work
+  - /home/travis/build/dPys
