@@ -11,10 +11,13 @@ import indexed_gzip
 import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix
+
 warnings.filterwarnings("ignore")
 
 
-def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True):
+def normalize_gradients(
+    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True
+):
     """
     Normalize b-vectors and b-values.
 
@@ -40,8 +43,9 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
 
     """
     from dipy.core.gradients import round_bvals
-    bvals = np.array(bvals, dtype='float32')
-    bvecs = np.array(bvecs, dtype='float32')
+
+    bvals = np.array(bvals, dtype="float32")
+    bvecs = np.array(bvecs, dtype="float32")
 
     b0s = bvals < b0_threshold
     b0_vecs = np.linalg.norm(bvecs, axis=1) < bvec_norm_epsilon
@@ -49,8 +53,9 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
     # Check for bval-bvec discrepancy.
     if not np.all(b0s == b0_vecs):
         raise ValueError(
-            'Inconsistent bvals and bvecs (%d, %d low-b, respectively).' %
-            (b0s.sum(), b0_vecs.sum()))
+            "Inconsistent bvals and bvecs (%d, %d low-b, respectively)."
+            % (b0s.sum(), b0_vecs.sum())
+        )
 
     # Rescale b-vals if requested
     if b_scale:
@@ -62,9 +67,10 @@ def normalize_gradients(bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_sca
     # Round bvals
     bvals = round_bvals(bvals)
 
-    # Rescale b-vecs, skipping b0's, on the appropriate axis to unit-norm length.
+    # Rescale b-vecs, skipping b0's, on the appropriate axis to unit-norm
+    # length.
     bvecs[~b0s] /= np.linalg.norm(bvecs[~b0s], axis=1)[..., np.newaxis]
-    return bvecs, bvals.astype('uint16')
+    return bvecs, bvals.astype("uint16")
 
 
 def generate_sl(streamlines):
@@ -105,15 +111,18 @@ def extract_b0(in_file, b0_ixs, out_path=None):
 
     """
     if out_path is None:
-        out_path = fname_presuffix(
-            in_file, suffix='_b0', use_ext=True)
+        out_path = fname_presuffix(in_file, suffix="_b0", use_ext=True)
 
     img = nib.load(in_file)
 
-    b0 = np.asarray(img.dataobj).astype('float32')[..., b0_ixs]
+    b0 = np.asarray(img.dataobj).astype("float32")[..., b0_ixs]
 
     hdr = img.header.copy()
     hdr.set_data_shape(b0.shape)
-    hdr.set_xyzt_units('mm')
-    nib.Nifti1Image(b0.astype(hdr.get_data_dtype()), img.affine, hdr).to_filename(out_path)
+    hdr.set_xyzt_units("mm")
+    nib.Nifti1Image(
+        b0.astype(
+            hdr.get_data_dtype()),
+        img.affine,
+        hdr).to_filename(out_path)
     return out_path

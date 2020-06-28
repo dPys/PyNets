@@ -25,35 +25,35 @@ Required
 
 :(C): If an atlas is not specified with the `-a` flag must be included, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
 
-    :Atlas Library:
-        - 'atlas_harvard_oxford'
-        - 'atlas_aal'
-        - 'atlas_destrieux_2009'
-        - 'atlas_talairach_gyrus'
-        - 'atlas_talairach_ba'
-        - 'atlas_talairach_lobe'
-        - 'coords_power_2011' (only valid when using the `-spheres` flag)
-        - 'coords_dosenbach_2010' (only valid when using the `-spheres` flag)
-        - 'atlas_msdl'
-        - 'atlas_pauli_2017'
-        - 'destrieux2009_rois'
-        - 'BrainnetomeAtlasFan2016'
-        - 'VoxelwiseParcellationt0515kLeadDBS'
-        - 'Juelichgmthr252mmEickhoff2005'
-        - 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014'
-        - 'AICHAreorderedJoliot2015'
-        - 'HarvardOxfordThr252mmWholeBrainMakris2006'
-        - 'VoxelwiseParcellationt058kLeadDBS'
-        - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
-        - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
-        - 'AALTzourioMazoyer2002'
-        - 'DesikanKlein2012'
-        - 'AAL2zourioMazoyer2002'
-        - 'VoxelwiseParcellationt0435kLeadDBS'
-        - 'AICHAJoliot2015'
-        - 'whole_brain_cluster_labels_PCA100'
-        - 'whole_brain_cluster_labels_PCA200'
-        - 'RandomParcellationsc05meanalll43Craddock2011'
+:Atlas Library:
+    - 'atlas_harvard_oxford'
+    - 'atlas_aal'
+    - 'atlas_destrieux_2009'
+    - 'atlas_talairach_gyrus'
+    - 'atlas_talairach_ba'
+    - 'atlas_talairach_lobe'
+    - 'coords_power_2011' (only valid when using the `-spheres` flag)
+    - 'coords_dosenbach_2010' (only valid when using the `-spheres` flag)
+    - 'atlas_msdl'
+    - 'atlas_pauli_2017'
+    - 'destrieux2009_rois'
+    - 'BrainnetomeAtlasFan2016'
+    - 'VoxelwiseParcellationt0515kLeadDBS'
+    - 'Juelichgmthr252mmEickhoff2005'
+    - 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014'
+    - 'AICHAreorderedJoliot2015'
+    - 'HarvardOxfordThr252mmWholeBrainMakris2006'
+    - 'VoxelwiseParcellationt058kLeadDBS'
+    - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
+    - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
+    - 'AALTzourioMazoyer2002'
+    - 'DesikanKlein2012'
+    - 'AAL2zourioMazoyer2002'
+    - 'VoxelwiseParcellationt0435kLeadDBS'
+    - 'AICHAJoliot2015'
+    - 'whole_brain_cluster_labels_PCA100'
+    - 'whole_brain_cluster_labels_PCA200'
+    - 'RandomParcellationsc05meanalll43Craddock2011'
 
 :(D): A set of brain image files. `PyNets` is a post-processing workflow which means that input files should already be preprocessed. Minimally, all DWI, BOLD, and T1W image inputs should be **motion-corrected** (and ideally also susceptibility-corrected + denoised).
 

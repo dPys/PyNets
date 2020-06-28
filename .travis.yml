@@ -5,32 +5,32 @@ language: python
 python:
   - 3.7
 
-#services:
-#  - docker
+services:
+  - docker
 
-#addons:
-#  apt:
-#    packages:
-#      - docker-ce
-#    sources:
-#      - docker-xenial
+addons:
+  apt:
+    packages:
+      - docker-ce
+    sources:
+      - docker-xenial
 env:
   global:
     - FSLDIR=/usr/share/fsl/5.0
-  matrix:
-    - MOD=func
-    - MOD=dwi
-    - MOD="func dwi"
+#  matrix:
+#    - MOD=func
+#    - MOD=dwi
+#    - MOD="func dwi"
 
 before_install:
-  - pwd
-  - mkdir -m 777 /home/travis/build/dPys/input /home/travis/build/dPys/output
+#  - pwd
+#  - mkdir -m 777 /home/travis/build/dPys/input /home/travis/build/dPys/output
   - sudo bash -c "echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99force-ipv4"
-  - wget -qO- "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.2.0/travis-wait-enhanced_1.2.0_linux_x86_64.tar.gz" | tar -zxvf - travis-wait-enhanced
-  - mv travis-wait-enhanced /home/travis/bin/
-  - travis-wait-enhanced --version
-  - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
-  - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS/ /home/travis/build/dPys/input
+#  - wget -qO- "https://github.com/crazy-max/travis-wait-enhanced/releases/download/v1.2.0/travis-wait-enhanced_1.2.0_linux_x86_64.tar.gz" | tar -zxvf - travis-wait-enhanced
+#  - mv travis-wait-enhanced /home/travis/bin/
+#  - travis-wait-enhanced --version
+#  - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
+#  - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS/ /home/travis/build/dPys/input
 # Local case
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - sudo apt-get update -qq
@@ -41,14 +41,14 @@ before_install:
   - python setup.py install
 
 # Docker case
-#  - docker version
-#  - docker pull dpys/pynets:latest
-#  - docker images
-#  - cd pynets
-#  - docker run -t -d -e MPLCONFIGDIR=/tmp/matplotlib -v /home/travis/build/dPys/PyNets:/pynets -v /home/travis/build/dPys/input:/input -v /home/travis/build/dPys/output:/output --entrypoint /bin/bash dpys/pynets:latest
-#  - docker ps
-script:
-  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
-  - travis-wait-enhanced --interval=1m --timeout=720m -- pynets_bids /home/travis/build/dPys/input /home/travis/build/dPys/output participant $MOD --participant_label 25659 --session_label 1 -plug 'MultiProc' -pm '2,6' -v -work '/home/travis/build/dPys/output/work'
+  - docker version
+  - docker pull dpys/pynets:latest
+  - docker images
+  - cd pynets
+  - docker run -t -d -e MPLCONFIGDIR=/tmp/matplotlib -v /home/travis/build/dPys/PyNets:/pynets -v /home/travis/build/dPys/input:/input -v /home/travis/build/dPys/output:/output --entrypoint /bin/bash dpys/pynets:latest
+  - docker ps
+#script:
+#  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
+#  - travis-wait-enhanced --interval=1m --timeout=720m -- pynets_bids /home/travis/build/dPys/input /home/travis/build/dPys/output participant $MOD --participant_label 25659 --session_label 1 -plug 'MultiProc' -pm '2,6' -v -work '/home/travis/build/dPys/output/work'
 #  - travis-wait-enhanced --interval=1m --timeout=720m -- docker run --rm --privileged -w /home/travis/build/dPys/PyNets -v /home/travis/build/dPys/input:/inputs -v /home/travis/build/dPys/output:/outputs dpys/pynets:latest pynets_bids /inputs /outputs participant $MOD --participant_label 25659 --session_label 1 -plug 'Linear' -clean
 #   - cat /home/travis/build/dPys/output/work/*/crash*.txt

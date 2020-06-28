@@ -32,7 +32,7 @@ def get_credentials():
             config.get("default", "aws_access_key_id"),
             config.get("default", "aws_secret_access_key"),
         )
-    except:
+    except BaseException:
         ACCESS = os.getenv("AWS_ACCESS_KEY_ID")
         SECRET = os.getenv("AWS_SECRET_ACCESS_KEY")
     if not ACCESS and SECRET:
@@ -59,7 +59,10 @@ def s3_client(service="s3"):
         ACCESS, SECRET = get_credentials()
     except AttributeError:
         return boto3.client(service)
-    return boto3.client(service, aws_access_key_id=ACCESS, aws_secret_access_key=SECRET)
+    return boto3.client(
+        service,
+        aws_access_key_id=ACCESS,
+        aws_secret_access_key=SECRET)
 
 
 def parse_path(s3_datapath):
@@ -132,18 +135,20 @@ def get_matching_s3_objects(bucket, prefix="", suffix=""):
 
 
 def s3_fetch(client, bucket, remote, local, bpath, mod):
-    # go through all folders inside of remote directory and download relevant files
+    # go through all folders inside of remote directory and download relevant
+    # files
     for obj in bpath:
         bdir, data = os.path.split(obj)
         localpath = os.path.join(local, bdir.replace(f"{remote}/", ""))
-        if (mod in localpath) or ('anat' in localpath):
+        if (mod in localpath) or ("anat" in localpath):
             # Make directory for data if it doesn't exist
             if not os.path.exists(localpath):
                 os.makedirs(localpath)
             if not os.path.exists(f"{localpath}/{data}"):
                 print(f"Downloading {bdir}/{data} from {bucket} s3 bucket...")
                 # Download file
-                client.download_file(bucket, f"{bdir}/{data}", f"{localpath}/{data}")
+                client.download_file(
+                    bucket, f"{bdir}/{data}", f"{localpath}/{data}")
                 if os.path.exists(f"{localpath}/{data}"):
                     print("Success!")
                 else:
@@ -177,7 +182,9 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
     # check that bucket exists
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
-        raise ValueError("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
+        raise ValueError(
+            "Error: could not locate bucket. Available buckets: " +
+            ", ".join(bkts))
 
     if info is not None:
         if info == "sub-":
@@ -185,23 +192,32 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
         else:
             if os.path.exists(os.path.join(local, info)) and not force:
                 if os.listdir(os.path.join(local, info)):
-                    print(f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
-                          f"contents to re-download data.")
+                    print(
+                        f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
+                        f"contents to re-download data.")
                     return
-            run_str = info.split('/')
+            run_str = info.split("/")
 
         if len(modality) > 1:
             for mod in modality:
                 if len(run_str) == 1:
-                    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
+                    bpath = get_matching_s3_objects(
+                        bucket, f"{remote}/{'/'.join(run_str[:-1])}/"
+                    )
                 else:
-                    bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str)}/")
+                    bpath = get_matching_s3_objects(
+                        bucket, f"{remote}/{'/'.join(run_str)}/"
+                    )
                 s3_fetch(client, bucket, remote, local, bpath, mod)
         else:
             if len(run_str) == 1:
-                bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str[:-1])}/")
+                bpath = get_matching_s3_objects(
+                    bucket, f"{remote}/{'/'.join(run_str[:-1])}/"
+                )
             else:
-                bpath = get_matching_s3_objects(bucket, f"{remote}/{'/'.join(run_str)}/")
+                bpath = get_matching_s3_objects(
+                    bucket, f"{remote}/{'/'.join(run_str)}/"
+                )
             s3_fetch(client, bucket, remote, local, bpath, modality[0])
     else:
         if len(modality) > 1:
@@ -214,7 +230,9 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
     return
 
 
-def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, creds=True):
+def s3_push_data(
+    bucket, remote, outDir, modality, subject=None, session=None, creds=True
+):
     """Pushes data to a specified S3 bucket
 
     Parameters
@@ -242,14 +260,13 @@ def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, c
 
     session = Session(
         aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key
-    )
+        aws_secret_access_key=secret_key)
 
-    s3 = session.resource('s3')
+    s3 = session.resource("s3")
 
     # Shortcut to MD5
     def get_md5(filename):
-        f = open(filename, 'rb')
+        f = open(filename, "rb")
         m = hashlib.md5()
         while True:
             data = f.read(10240)
@@ -267,7 +284,9 @@ def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, c
     # check that bucket exists
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
-        sys.exit("Error: could not locate bucket. Available buckets: " + ", ".join(bkts))
+        sys.exit(
+            "Error: could not locate bucket. Available buckets: " +
+            ", ".join(bkts))
 
     # List all files and upload
     bucket_boto = s3.Bucket(bucket)
@@ -286,9 +305,9 @@ def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, c
                 md5 = get_md5(os.path.join(root, file_))
                 try:
                     s3_resp = client.head_object(Bucket=bucket, Key=uri)
-                except:
+                except BaseException:
                     continue
-                etag = s3_resp['ETag'].strip('"')
+                etag = s3_resp["ETag"].strip('"')
                 if etag != md5:
                     print(file_ + ": " + md5 + " != " + etag)
                     files_to_upload.append(os.path.join(root, file_))
@@ -296,5 +315,9 @@ def s3_push_data(bucket, remote, outDir, modality, subject=None, session=None, c
             print(f"Uploading: {files_to_upload}")
             for file_ in files_to_upload:
                 uri = to_uri(outDir, os.path.join(root, file_))
-                client.upload_file(f"{file_}/{modality[0]}", bucket, uri,
-                                   ExtraArgs={"ACL": "public-read"})
+                client.upload_file(
+                    f"{file_}/{modality[0]}",
+                    bucket,
+                    uri,
+                    ExtraArgs={"ACL": "public-read"},
+                )

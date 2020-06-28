@@ -3,8 +3,8 @@
 """Top-level package for PyNets."""
 
 __author__ = """Derek Pisner"""
-__email__ = 'dpisner@utexas.edu'
+__email__ = "dpisner@utexas.edu"
 
 import warnings
-warnings.filterwarnings("ignore")
 
+warnings.filterwarnings("ignore")

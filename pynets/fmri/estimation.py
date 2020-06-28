@@ -8,12 +8,33 @@ Copyright (C) 2017
 import warnings
 import numpy as np
 import indexed_gzip
+
 warnings.filterwarnings("ignore")
 
 
-def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-                    disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-                    hpass, extract_strategy):
+def get_conn_matrix(
+    time_series,
+    conn_model,
+    dir_path,
+    node_size,
+    smooth,
+    dens_thresh,
+    network,
+    ID,
+    roi,
+    min_span_tree,
+    disp_filt,
+    parc,
+    prune,
+    atlas,
+    uatlas,
+    labels,
+    coords,
+    norm,
+    binary,
+    hpass,
+    extract_strategy,
+):
     """
     Computes a functional connectivity matrix based on a node-extracted time-series array.
     Includes a library of routines across Nilearn, scikit-learn, and skggm packages, among others.
@@ -137,28 +158,45 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
     from sklearn.covariance import GraphicalLassoCV
 
     conn_matrix = None
-    if conn_model == 'corr' or conn_model == 'cor' or conn_model == 'correlation':
+    if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
         # credit: nilearn
-        print('\nComputing correlation matrix...\n')
-        conn_measure = ConnectivityMeasure(kind='correlation')
+        print("\nComputing correlation matrix...\n")
+        conn_measure = ConnectivityMeasure(kind="correlation")
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'partcorr' or conn_model == 'parcorr' or conn_model == 'partialcorrelation':
+    elif (
+        conn_model == "partcorr"
+        or conn_model == "parcorr"
+        or conn_model == "partialcorrelation"
+    ):
         # credit: nilearn
-        print('\nComputing partial correlation matrix...\n')
-        conn_measure = ConnectivityMeasure(kind='partial correlation')
+        print("\nComputing partial correlation matrix...\n")
+        conn_measure = ConnectivityMeasure(kind="partial correlation")
         conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar' or conn_model == 'sps' or \
-        conn_model == 'sparse' or conn_model == 'precision':
+    elif (
+        conn_model == "cov"
+        or conn_model == "covariance"
+        or conn_model == "covar"
+        or conn_model == "sps"
+        or conn_model == "sparse"
+        or conn_model == "precision"
+    ):
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
         estimator = GraphicalLassoCV(cv=5)
         try:
-            print('\nComputing covariance...\n')
+            print("\nComputing covariance...\n")
             estimator.fit(time_series)
-        except:
-            print('Unstable Lasso estimation--Attempting to re-run by first applying shrinkage...')
+        except BaseException:
+            print(
+                "Unstable Lasso estimation--Attempting to re-run by first applying shrinkage..."
+            )
             try:
-                from sklearn.covariance import GraphicalLasso, empirical_covariance, shrunk_covariance
+                from sklearn.covariance import (
+                    GraphicalLasso,
+                    empirical_covariance,
+                    shrunk_covariance,
+                )
+
                 emp_cov = empirical_covariance(time_series)
                 for i in np.arange(0.8, 0.99, 0.01):
                     shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
@@ -167,104 +205,108 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
                         try:
                             estimator_shrunk = GraphicalLasso(alpha)
                             estimator_shrunk.fit(shrunk_cov)
-                            print(f"Retrying covariance matrix estimate with alpha={alpha}")
+                            print(
+                                f"Retrying covariance matrix estimate with alpha={alpha}"
+                            )
                             if estimator_shrunk is None:
                                 pass
                             else:
                                 break
-                        except:
-                            print(f"Covariance estimation failed with shrinkage at alpha={alpha}")
+                        except BaseException:
+                            print(
+                                f"Covariance estimation failed with shrinkage at alpha={alpha}"
+                            )
                             continue
             except ValueError:
-                print('Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed.')
+                print(
+                    "Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed."
+                )
         if estimator is None and estimator_shrunk is None:
-            raise RuntimeError('\nERROR: Covariance estimation failed.')
-        if conn_model == 'sps' or conn_model == 'sparse' or conn_model == 'precision':
+            raise RuntimeError("\nERROR: Covariance estimation failed.")
+        if conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
             if estimator_shrunk is None:
-                print('\nFetching precision matrix from covariance estimator...\n')
+                print("\nFetching precision matrix from covariance estimator...\n")
                 conn_matrix = -estimator.precision_
             else:
-                print('\nFetching shrunk precision matrix from covariance estimator...\n')
+                print(
+                    "\nFetching shrunk precision matrix from covariance estimator...\n"
+                )
                 conn_matrix = -estimator_shrunk.precision_
-        elif conn_model == 'cov' or conn_model == 'covariance' or conn_model == 'covar':
+        elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
             if estimator_shrunk is None:
-                print('\nFetching covariance matrix from covariance estimator...\n')
+                print("\nFetching covariance matrix from covariance estimator...\n")
                 conn_matrix = estimator.covariance_
             else:
                 conn_matrix = estimator_shrunk.covariance_
-    elif conn_model == 'QuicGraphicalLasso':
+    elif conn_model == "QuicGraphicalLasso":
 
         try:
             from inverse_covariance import QuicGraphicalLasso
         except ImportError:
-            print('Cannot run QuicGraphLasso. Skggm not installed!')
+            print("Cannot run QuicGraphLasso. Skggm not installed!")
 
         # Compute the sparse inverse covariance via QuicGraphLasso
         # credit: skggm
         model = QuicGraphicalLasso(
-            init_method='cov',
-            lam=0.5,
-            mode='default',
-            verbose=1)
-        print('\nCalculating QuicGraphLasso precision matrix using skggm...\n')
+            init_method="cov", lam=0.5, mode="default", verbose=1
+        )
+        print("\nCalculating QuicGraphLasso precision matrix using skggm...\n")
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'QuicGraphicalLassoCV':
+    elif conn_model == "QuicGraphicalLassoCV":
         try:
             from inverse_covariance import QuicGraphicalLassoCV
         except ImportError:
-            print('Cannot run QuicGraphLassoCV. Skggm not installed!')
+            print("Cannot run QuicGraphLassoCV. Skggm not installed!")
 
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
-        model = QuicGraphicalLassoCV(
-            init_method='cov',
-            verbose=1)
-        print('\nCalculating QuicGraphLassoCV precision matrix using skggm...\n')
+        model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
+        print("\nCalculating QuicGraphLassoCV precision matrix using skggm...\n")
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'QuicGraphicalLassoEBIC':
+    elif conn_model == "QuicGraphicalLassoEBIC":
         try:
             from inverse_covariance import QuicGraphicalLassoEBIC
         except ImportError:
-            print('Cannot run QuicGraphLassoEBIC. Skggm not installed!')
+            print("Cannot run QuicGraphLassoEBIC. Skggm not installed!")
 
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
-        model = QuicGraphicalLassoEBIC(
-            init_method='cov',
-            verbose=1)
-        print('\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n')
+        model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
+        print("\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n")
         model.fit(time_series)
         conn_matrix = -model.precision_
-    elif conn_model == 'AdaptiveQuicGraphicalLasso':
+    elif conn_model == "AdaptiveQuicGraphicalLasso":
         try:
-            from inverse_covariance import AdaptiveQuicGraphicalLasso, QuicGraphicalLassoEBIC
+            from inverse_covariance import (
+                AdaptiveQuicGraphicalLasso,
+                QuicGraphicalLassoEBIC,
+            )
         except ImportError:
-            print('Cannot run AdaptiveGraphLasso. Skggm not installed!')
+            print("Cannot run AdaptiveGraphLasso. Skggm not installed!")
 
         # Compute the sparse inverse covariance via
         # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
         # credit: skggm
         model = AdaptiveQuicGraphicalLasso(
             estimator=QuicGraphicalLassoEBIC(
-                init_method='cov',
-            ),
-            method='binary',
-        )
-        print('\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n')
+                init_method="cov",), method="binary", )
+        print("\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n")
         model.fit(time_series)
         conn_matrix = -model.estimator_.precision_
     else:
-        raise ValueError('\nERROR! No connectivity model specified at runtime. Select a valid estimator using the '
-                         '-mod flag.')
+        raise ValueError(
+            "\nERROR! No connectivity model specified at runtime. Select a valid estimator using the "
+            "-mod flag.")
 
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix, conn_matrix.T)
 
     if conn_matrix.shape < (2, 2):
-        raise RuntimeError('\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. '
-                           'Check time-series for errors or try using a different atlas')
+        raise RuntimeError(
+            "\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. "
+            "Check time-series for errors or try using a different atlas")
     coords = np.array(coords)
     labels = np.array(labels)
 
@@ -272,8 +314,29 @@ def get_conn_matrix(time_series, conn_model, dir_path, node_size, smooth, dens_t
 
     del time_series
 
-    return (conn_matrix, conn_model, dir_path, node_size, smooth, dens_thresh, network, ID, roi, min_span_tree,
-            disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
+    return (
+        conn_matrix,
+        conn_model,
+        dir_path,
+        node_size,
+        smooth,
+        dens_thresh,
+        network,
+        ID,
+        roi,
+        min_span_tree,
+        disp_filt,
+        parc,
+        prune,
+        atlas,
+        uatlas,
+        labels,
+        coords,
+        norm,
+        binary,
+        hpass,
+        extract_strategy,
+    )
 
 
 def timeseries_bootstrap(tseries, block_size):
@@ -309,10 +372,10 @@ def timeseries_bootstrap(tseries, block_size):
     blocks = np.dot(np.arange(0, block_size)[:, np.newaxis], np.ones([1, k]))
 
     block_offsets = np.dot(np.ones([block_size, 1]), r_ind)
-    block_mask = (blocks + block_offsets).flatten('F')[:tseries.shape[0]]
+    block_mask = (blocks + block_offsets).flatten("F")[: tseries.shape[0]]
     block_mask = np.mod(block_mask, tseries.shape[0])
 
-    return tseries[block_mask.astype('uint8'), :], block_mask.astype('uint8')
+    return tseries[block_mask.astype("uint8"), :], block_mask.astype("uint8")
 
 
 def fill_confound_nans(confounds, dir_path):
@@ -320,13 +383,17 @@ def fill_confound_nans(confounds, dir_path):
     import uuid
     import os
     from time import strftime
+
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    print('Warning: NaN\'s detected in confound regressor file. Filling these with mean values, but the '
-          'regressor file should be checked manually.')
+    print(
+        "Warning: NaN's detected in confound regressor file. Filling these with mean values, but the "
+        "regressor file should be checked manually.")
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
     os.makedirs(f"{dir_path}{'/confounds_tmp'}", exist_ok=True)
-    conf_corr = f"{dir_path}{'/confounds_tmp/confounds_mean_corrected_'}{run_uuid}{'.tsv'}"
-    confounds_nonan.to_csv(conf_corr, sep='\t')
+    conf_corr = (
+        f"{dir_path}{'/confounds_tmp/confounds_mean_corrected_'}{run_uuid}{'.tsv'}"
+    )
+    confounds_nonan.to_csv(conf_corr, sep="\t")
     return conf_corr
 
 
@@ -334,8 +401,22 @@ class TimeseriesExtraction(object):
     """
     Class for implementing various time-series extracting routines.
     """
-    def __init__(self, net_parcels_nii_path, node_size, conf, func_file, roi, dir_path, ID, network, smooth,
-                 hpass, mask, extract_strategy):
+
+    def __init__(
+        self,
+        net_parcels_nii_path,
+        node_size,
+        conf,
+        func_file,
+        roi,
+        dir_path,
+        ID,
+        network,
+        smooth,
+        hpass,
+        mask,
+        extract_strategy,
+    ):
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
@@ -363,14 +444,17 @@ class TimeseriesExtraction(object):
         import os.path as op
         import nibabel as nib
         from nilearn.image import math_img
+
         if not op.isfile(self.func_file):
-            raise ValueError('\nERROR: Functional data input not found! Check that the file(s) specified with the -i '
-                             'flag exist(s)')
+            raise ValueError(
+                "\nERROR: Functional data input not found! Check that the file(s) specified with the -i "
+                "flag exist(s)")
 
         if self.conf:
             if not op.isfile(self.conf):
-                raise ValueError('\nERROR: Confound regressor file not found! Check that the file(s) specified with '
-                                 'the -conf flag exist(s)')
+                raise ValueError(
+                    "\nERROR: Confound regressor file not found! Check that the file(s) specified with "
+                    "the -conf flag exist(s)")
 
         self._func_img = nib.load(self.func_file)
         self._func_img.set_data_dtype(np.float32)
@@ -397,7 +481,7 @@ class TimeseriesExtraction(object):
 
         if self.mask is not None:
             # Ensure mask is binary
-            self._mask_img = math_img('img > 0', img=nib.load(self.mask))
+            self._mask_img = math_img("img > 0", img=nib.load(self.mask))
             self._mask_img.set_data_dtype(np.uint16)
         else:
             self._mask_img = None
@@ -423,29 +507,43 @@ class TimeseriesExtraction(object):
 
         self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
         self._net_parcels_map_nifti.set_data_dtype(np.uint16)
-        self._parcel_masker = input_data.NiftiLabelsMasker(labels_img=self._net_parcels_map_nifti, background_label=0,
-                                                           standardize=True, smoothing_fwhm=float(self.smooth),
-                                                           high_pass=self.hpass, detrend=self._detrending,
-                                                           t_r=self._t_r, verbose=2, resampling_target='data',
-                                                           dtype='auto', mask_img=self._mask_img,
-                                                           strategy=self.extract_strategy)
+        self._parcel_masker = input_data.NiftiLabelsMasker(
+            labels_img=self._net_parcels_map_nifti,
+            background_label=0,
+            standardize=True,
+            smoothing_fwhm=float(self.smooth),
+            high_pass=self.hpass,
+            detrend=self._detrending,
+            t_r=self._t_r,
+            verbose=2,
+            resampling_target="data",
+            dtype="auto",
+            mask_img=self._mask_img,
+            strategy=self.extract_strategy,
+        )
         if self.conf is not None:
             import pandas as pd
-            confounds = pd.read_csv(self.conf, sep='\t')
+
+            confounds = pd.read_csv(self.conf, sep="\t")
             if confounds.isnull().values.any():
                 conf_corr = fill_confound_nans(confounds, self.dir_path)
-                self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img, confounds=conf_corr)
+                self.ts_within_nodes = self._parcel_masker.fit_transform(
+                    self._func_img, confounds=conf_corr
+                )
             else:
-                self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img, confounds=self.conf)
+                self.ts_within_nodes = self._parcel_masker.fit_transform(
+                    self._func_img, confounds=self.conf
+                )
         else:
-            self.ts_within_nodes = self._parcel_masker.fit_transform(self._func_img)
+            self.ts_within_nodes = self._parcel_masker.fit_transform(
+                self._func_img)
 
         self._func_img.uncache()
 
         if self.ts_within_nodes is None:
-            raise RuntimeError('\nERROR: Time-series extraction failed!')
+            raise RuntimeError("\nERROR: Time-series extraction failed!")
         else:
-            self.node_size = 'parc'
+            self.node_size = "parc"
 
         return
 
@@ -455,8 +553,17 @@ class TimeseriesExtraction(object):
         from pynets.core import utils
 
         # Save time series as file
-        utils.save_ts_to_file(self.roi, self.network, self.ID, self.dir_path, self.ts_within_nodes,
-                              self.smooth, self.hpass, self.node_size, self.extract_strategy)
+        utils.save_ts_to_file(
+            self.roi,
+            self.network,
+            self.ID,
+            self.dir_path,
+            self.ts_within_nodes,
+            self.smooth,
+            self.hpass,
+            self.node_size,
+            self.extract_strategy,
+        )
 
         if self._mask_path is not None:
             self._mask_img.uncache()

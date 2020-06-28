@@ -9,8 +9,9 @@ import warnings
 import numpy as np
 import tkinter
 import matplotlib
+
 warnings.filterwarnings("ignore")
-matplotlib.use('agg')
+matplotlib.use("agg")
 
 
 def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
@@ -27,7 +28,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
         File path to save the connectivity matrix image as a .png figure.
     """
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
@@ -37,17 +39,32 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
     try:
-        plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=np.abs(np.max(conn_matrix_plt)),
-                    vmin=-np.abs(np.max(conn_matrix_plt)),
-                    reorder='average', auto_fit=True, grid=False, colorbar=False, cmap=cmap)
+        plot_matrix(
+            conn_matrix_plt,
+            figure=(10, 10),
+            labels=labels,
+            vmax=np.abs(np.max(conn_matrix_plt)),
+            vmin=-np.abs(np.max(conn_matrix_plt)),
+            reorder="average",
+            auto_fit=True,
+            grid=False,
+            colorbar=False,
+            cmap=cmap,
+        )
     except RuntimeWarning:
-        print('Connectivity matrix too sparse for plotting...')
+        print("Connectivity matrix too sparse for plotting...")
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
 
 
-def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_aff, cmap, dpi_resolution=300):
+def plot_community_conn_mat(
+        conn_matrix,
+        labels,
+        out_path_fig_comm,
+        community_aff,
+        cmap,
+        dpi_resolution=300):
     """
     Plot a community-parcellated connectivity matrix.
 
@@ -65,8 +82,9 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
-    matplotlib.use('agg')
-    #from pynets import thresholding
+
+    matplotlib.use("agg")
+    # from pynets import thresholding
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
@@ -74,37 +92,57 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
-    sorting_array = sorted(range(len(community_aff)), key=lambda k: community_aff[k])
+    sorting_array = sorted(
+        range(
+            len(community_aff)),
+        key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
     rois_num = sorted_conn_matrix.shape[0]
     if rois_num < 100:
         try:
-            plot_matrix(conn_matrix_plt, figure=(10, 10), labels=labels, vmax=np.abs(np.max(conn_matrix_plt)),
-                        vmin=-np.abs(np.max(conn_matrix_plt)),
-                        reorder=False, auto_fit=True, grid=False, colorbar=False, cmap=cmap)
+            plot_matrix(
+                conn_matrix_plt,
+                figure=(10, 10),
+                labels=labels,
+                vmax=np.abs(np.max(conn_matrix_plt)),
+                vmin=-np.abs(np.max(conn_matrix_plt)),
+                reorder=False,
+                auto_fit=True,
+                grid=False,
+                colorbar=False,
+                cmap=cmap,
+            )
         except RuntimeWarning:
-            print('Connectivity matrix too sparse for plotting...')
+            print("Connectivity matrix too sparse for plotting...")
     else:
         try:
-            plot_matrix(conn_matrix_plt, figure=(10, 10), vmax=np.abs(np.max(conn_matrix_plt)),
-                        vmin=-np.abs(np.max(conn_matrix_plt)), auto_fit=True,
-                        grid=False, colorbar=False, cmap=cmap)
+            plot_matrix(
+                conn_matrix_plt,
+                figure=(10, 10),
+                vmax=np.abs(np.max(conn_matrix_plt)),
+                vmin=-np.abs(np.max(conn_matrix_plt)),
+                auto_fit=True,
+                grid=False,
+                colorbar=False,
+                cmap=cmap,
+            )
         except RuntimeWarning:
-            print('Connectivity matrix too sparse for plotting...')
+            print("Connectivity matrix too sparse for plotting...")
 
     ax = plt.gca()
     total_size = 0
     for community in np.unique(community_aff):
         size = sum(sorted(community_aff) == community)
-        ax.add_patch(patches.Rectangle(
+        ax.add_patch(
+            patches.Rectangle(
                 (total_size, total_size),
                 size,
                 size,
                 fill=False,
-                edgecolor='black',
+                edgecolor="black",
                 alpha=None,
-                linewidth=1
+                linewidth=1,
             )
         )
         total_size += size
@@ -114,8 +152,21 @@ def plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, community_af
     return
 
 
-def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size, smooth,
-                       hpass, extract_strategy):
+def plot_conn_mat_func(
+    conn_matrix,
+    conn_model,
+    atlas,
+    dir_path,
+    ID,
+    network,
+    labels,
+    roi,
+    thr,
+    node_size,
+    smooth,
+    hpass,
+    extract_strategy,
+):
     """
     API for selecting among various functional connectivity matrix plotting approaches.
 
@@ -160,74 +211,126 @@ def plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path, ID, network, la
     import os.path as op
     from pynets.plotting import plot_graphs
 
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
-                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                 network is not None else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-',
-                                                                             op.basename(roi).split('.')[0],
-                                                                             '_') if roi is not None else ''),
-                                                         'est-', conn_model, '_',
-                                                         '%s' % (
-                                                             "%s%s%s" % ('nodetype-spheres-',
-                                                                         node_size, 'mm_') if
-                                                             ((node_size != 'parc') and (node_size is not
-                                                                                         None))
-                                                             else 'nodetype-parc_'),
-                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                 float(smooth) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                 hpass is not None else ''),
-                                                         "%s" % ("%s%s%s" %
-                                                                 ('extract-', extract_strategy, '_') if
-                                                                 extract_strategy is not None else ''),
-                                                         '_thr-', thr, '_adj_mat.png')
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+                                                         "/",
+                                                         ID,
+                                                         "_modality-func_",
+                                                         "%s" % ("%s%s%s" % ("rsn-",
+                                                                             network,
+                                                                             "_") if network is not None else ""),
+                                                         "%s" % ("%s%s%s" % ("roi-",
+                                                                             op.basename(roi).split(".")[0],
+                                                                             "_") if roi is not None else ""),
+                                                         "est-",
+                                                         conn_model,
+                                                         "_",
+                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                             node_size,
+                                                                             "mm_") if (
+                                                             (node_size != "parc") and (
+                                                                 node_size is not None)) else "nodetype-parc_"),
+                                                         "%s" % ("%s%s%s" % ("smooth-",
+                                                                             smooth,
+                                                                             "fwhm_") if float(smooth) > 0 else ""),
+                                                         "%s" % ("%s%s%s" % ("hpass-",
+                                                                             hpass,
+                                                                             "Hz_") if hpass is not None else ""),
+                                                         "%s" % ("%s%s%s" % ("extract-",
+                                                                             extract_strategy,
+                                                                             "_") if extract_strategy is not None else ""),
+                                                         "_thr-",
+                                                         thr,
+                                                         "_adj_mat.png",
+                                                         )
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params['plotting']['functional']['adjacency']['color_theme'][0]
+            cmap_name = hardcoded_params["plotting"]["functional"]["adjacency"][
+                "color_theme"
+            ][0]
         except KeyError:
-            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            print(
+                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+            )
             sys.exit(0)
     stream.close()
 
-    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name))
+    plot_graphs.plot_conn_mat(
+        conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
+    )
 
     # Plot community adj. matrix
     try:
         from pynets.stats.netstats import community_resolution_selection
+
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-func_',
-                                                                  '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                          network is not None else ''),
-                                                                  '%s' % ("%s%s%s" % ('roi-',
-                                                                                      op.basename(roi).split('.')[0],
-                                                                                      '_') if roi is not None else ''),
-                                                                  'est-', conn_model, '_',
-                                                                  '%s' % ("%s%s%s" % ('nodetype-spheres-',
-                                                                                      node_size, 'mm_') if
-                                                                          ((node_size != 'parc') and (node_size is not
-                                                                                                      None))
-                                                                          else 'nodetype-parc_'),
-                                                                  "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                          float(smooth) > 0 else ''),
-                                                                  "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                          hpass is not None else ''),
-                                                                  "%s" % ("%s%s%s" %
-                                                                          ('extract-', extract_strategy, '_') if
-                                                                          extract_strategy is not None else ''),
-                                                                  '_thr-', thr, '_adj_mat_comm.png')
-        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat,
-                                            cmap=plt.get_cmap(cmap_name))
-    except:
-        print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
+            G)
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+                                                                  "/",
+                                                                  ID,
+                                                                  "_modality-func_",
+                                                                  "%s" % ("%s%s%s" % ("rsn-",
+                                                                                      network,
+                                                                                      "_") if network is not None else ""),
+                                                                  "%s" % ("%s%s%s" % ("roi-",
+                                                                                      op.basename(roi).split(".")[0],
+                                                                                      "_") if roi is not None else ""),
+                                                                  "est-",
+                                                                  conn_model,
+                                                                  "_",
+                                                                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                      node_size,
+                                                                                      "mm_") if (
+                                                                      (node_size != "parc") and (
+                                                                          node_size is not None)) else "nodetype-parc_"),
+                                                                  "%s" % ("%s%s%s" % ("smooth-",
+                                                                                      smooth,
+                                                                                      "fwhm_") if float(smooth) > 0 else ""),
+                                                                  "%s" % ("%s%s%s" % ("hpass-",
+                                                                                      hpass,
+                                                                                      "Hz_") if hpass is not None else ""),
+                                                                  "%s" % ("%s%s%s" % ("extract-",
+                                                                                      extract_strategy,
+                                                                                      "_") if extract_strategy is not None else ""),
+                                                                  "_thr-",
+                                                                  thr,
+                                                                  "_adj_mat_comm.png",
+                                                                  )
+        plot_graphs.plot_community_conn_mat(
+            conn_matrix,
+            labels,
+            out_path_fig_comm,
+            node_comm_aff_mat,
+            cmap=plt.get_cmap(cmap_name),
+        )
+    except BaseException:
+        print(
+            "\nWARNING: Louvain community detection failed. Cannot plot community matrix..."
+        )
 
     return
 
 
-def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr, node_size,
-                         target_samples, track_type, directget, min_length):
+def plot_conn_mat_struct(
+    conn_matrix,
+    conn_model,
+    atlas,
+    dir_path,
+    ID,
+    network,
+    labels,
+    roi,
+    thr,
+    node_size,
+    target_samples,
+    track_type,
+    directget,
+    min_length,
+):
     """
     API for selecting among various structural connectivity matrix plotting approaches.
 
@@ -274,67 +377,106 @@ def plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, 
     from pynets.plotting import plot_graphs
     import networkx as nx
     import os.path as op
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-dwi_',
-                                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                         network is not None else ''),
-                                                                 '%s' % ("%s%s%s" % ('roi-',
-                                                                                   op.basename(roi).split(
-                                                                                       '.')[0], '_') if
-                                                                         roi is not None else ''),
-                                                                 'est-', conn_model, '_', '%s' % (
-                                                                   "%s%s%s" % ('nodetype-spheres-',
-                                                                               node_size, 'mm_')
-                                                                   if ((node_size != 'parc') and
-                                                                       (node_size is not None))
-                                                                   else 'nodetype-parc_'),
-                                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples),
-                                                                                     'streams_')
-                                                                         if float(target_samples) > 0 else '_'),
-                                                                 'tt-', track_type, '_dg-', directget,
-                                                                 '_ml-', min_length,
-                                                                 '_thr-', thr, '_adj_mat.png')
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+                                                                 "/",
+                                                                 ID,
+                                                                 "_modality-dwi_",
+                                                                 "%s" % ("%s%s%s" % ("rsn-",
+                                                                                     network,
+                                                                                     "_") if network is not None else ""),
+                                                                 "%s" % ("%s%s%s" % ("roi-",
+                                                                                     op.basename(roi).split(".")[0],
+                                                                                     "_") if roi is not None else ""),
+                                                                 "est-",
+                                                                 conn_model,
+                                                                 "_",
+                                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                     node_size,
+                                                                                     "mm_") if (
+                                                                     (node_size != "parc") and (
+                                                                         node_size is not None)) else "nodetype-parc_"),
+                                                                 "%s" % ("%s%s%s" % ("samples-",
+                                                                                     int(target_samples),
+                                                                                     "streams_") if float(target_samples) > 0 else "_"),
+                                                                 "tt-",
+                                                                 track_type,
+                                                                 "_dg-",
+                                                                 directget,
+                                                                 "_ml-",
+                                                                 min_length,
+                                                                 "_thr-",
+                                                                 thr,
+                                                                 "_adj_mat.png",
+                                                                 )
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params['plotting']['structural']['adjacency']['color_theme'][0]
+            cmap_name = hardcoded_params["plotting"]["structural"]["adjacency"][
+                "color_theme"
+            ][0]
         except KeyError:
-            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            print(
+                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+            )
             sys.exit(0)
     stream.close()
 
-    plot_graphs.plot_conn_mat(conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name))
+    plot_graphs.plot_conn_mat(
+        conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
+    )
 
     # Plot community adj. matrix
     try:
         from pynets.stats.netstats import community_resolution_selection
+
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path, '/', ID, '_modality-dwi_',
-                                                                          '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                                  network is not None else ''),
-                                                                          '%s' % ("%s%s%s" % ('roi-',
-                                                                                             op.basename(roi).split(
-                                                                                                 '.')[0],
-                                                                                              '_') if roi is not
-                                                                                                      None else ''),
-                                                                          'est-', conn_model, '_', '%s' % (
-                                                                              "%s%s%s" % ('nodetype-spheres-',
-                                                                                          node_size, 'mm_')
-                                                                              if ((node_size != 'parc') and
-                                                                                  (node_size is not None))
-                                                                              else 'nodetype-parc_'),
-                                                                          "%s" % ("%s%s%s" % ('samples-',
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
+            G)
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+                                                                          "/",
+                                                                          ID,
+                                                                          "_modality-dwi_",
+                                                                          "%s" % ("%s%s%s" % ("rsn-",
+                                                                                              network,
+                                                                                              "_") if network is not None else ""),
+                                                                          "%s" % ("%s%s%s" % ("roi-",
+                                                                                              op.basename(roi).split(".")[0],
+                                                                                              "_") if roi is not None else ""),
+                                                                          "est-",
+                                                                          conn_model,
+                                                                          "_",
+                                                                          "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                              node_size,
+                                                                                              "mm_") if (
+                                                                              (node_size != "parc") and (
+                                                                                  node_size is not None)) else "nodetype-parc_"),
+                                                                          "%s" % ("%s%s%s" % ("samples-",
                                                                                               int(target_samples),
-                                                                                              'streams_')
-                                                                                  if float(target_samples) > 0
-                                                                                  else '_'),
-                                                                          'tt-', track_type, '_dg-', directget,
-                                                                          '_ml-', min_length,
-                                                                          '_thr-', thr, '_adj_mat_comm.png')
-        plot_graphs.plot_community_conn_mat(conn_matrix, labels, out_path_fig_comm, node_comm_aff_mat,
-                                            cmap=plt.get_cmap(cmap_name))
-    except:
-        print('\nWARNING: Louvain community detection failed. Cannot plot community matrix...')
+                                                                                              "streams_") if float(target_samples) > 0 else "_"),
+                                                                          "tt-",
+                                                                          track_type,
+                                                                          "_dg-",
+                                                                          directget,
+                                                                          "_ml-",
+                                                                          min_length,
+                                                                          "_thr-",
+                                                                          thr,
+                                                                          "_adj_mat_comm.png",
+                                                                          )
+        plot_graphs.plot_community_conn_mat(
+            conn_matrix,
+            labels,
+            out_path_fig_comm,
+            node_comm_aff_mat,
+            cmap=plt.get_cmap(cmap_name),
+        )
+    except BaseException:
+        print(
+            "\nWARNING: Louvain community detection failed. Cannot plot community matrix..."
+        )
 
     return

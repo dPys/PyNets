@@ -6,6 +6,7 @@ Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -14,381 +15,544 @@ def get_parser():
     import argparse
     from pathlib import Path
     from pynets.__about__ import __version__
-    verstr = f'PyNets v{__version__}'
+
+    verstr = f"PyNets v{__version__}"
 
     # Parse args
-    parser = argparse.ArgumentParser(description='PyNets: A Reproducible Workflow for Structural and Functional '
-                                                 'Connectome Ensemble Learning')
-    parser.add_argument("output_dir",
-                        default=str(Path.home()),
-                        help='The directory to store pynets derivatives.')
-    parser.add_argument('-id',
-                        metavar='A subject id or other unique identifier',
-                        default=None,
-                        nargs='+',
-                        required=True,
-                        help='An subject identifier OR list of subject identifiers, separated by space and of '
-                             'equivalent length to the list of input files indicated with the -func flag. This '
-                             'parameter must be an alphanumeric string and can be arbitrarily chosen. If functional '
-                             'and dmri connectomes are being generated simultaneously, then space-separated id\'s '
-                             'need to be repeated to match the total input file count.\n')
+    parser = argparse.ArgumentParser(
+        description="PyNets: A Reproducible Workflow for Structural and Functional "
+        "Connectome Ensemble Learning")
+    parser.add_argument(
+        "output_dir",
+        default=str(Path.home()),
+        help="The directory to store pynets derivatives.",
+    )
+    parser.add_argument(
+        "-id",
+        metavar="A subject id or other unique identifier",
+        default=None,
+        nargs="+",
+        required=True,
+        help="An subject identifier OR list of subject identifiers, separated by space and of "
+        "equivalent length to the list of input files indicated with the -func flag. This "
+        "parameter must be an alphanumeric string and can be arbitrarily chosen. If functional "
+        "and dmri connectomes are being generated simultaneously, then space-separated id's "
+        "need to be repeated to match the total input file count.\n",
+    )
     # Primary file inputs
-    parser.add_argument('-func',
-                        metavar='Path to input functional file (required for functional connectomes)',
-                        default=None,
-                        nargs='+',
-                        help='Specify either a path to a preprocessed functional Nifti1Image in '
-                             'MNI152 space OR multiple space-separated paths to multiple preprocessed functional '
-                             'Nifti1Image files in MNI152 space and in .nii or .nii.gz format, '
-                             'OR the path to a text file containing a list of paths '
-                             'to subject files.\n')
-    parser.add_argument('-dwi',
-                        metavar='Path to diffusion-weighted imaging data file (required for dmri connectomes)',
-                        default=None,
-                        nargs='+',
-                        help='Specify either a path to a preprocessed dmri diffusion Nifti1Image in native diffusion '
-                             'space and in .nii or .nii.gz format OR multiple space-separated paths to multiple '
-                             'preprocessed dmri diffusion Nifti1Image files in native diffusion space and in .nii or '
-                             '.nii.gz format.\n')
-    parser.add_argument('-bval',
-                        metavar='Path to b-values file (required for dmri connectomes)',
-                        default=None,
-                        nargs='+',
-                        help='Specify either a path to a b-values text file containing gradient shell values per '
-                             'diffusion direction OR multiple space-separated paths to multiple b-values text files in '
-                             'the order of accompanying b-vectors and dwi files.\n')
-    parser.add_argument('-bvec',
-                        metavar='Path to b-vectors file (required for dmri connectomes)',
-                        default=None,
-                        nargs='+',
-                        help='Specify either a path to a b-vectors text file containing gradient directions (x,y,z) '
-                             'per diffusion direction OR multiple space-separated paths to multiple b-vectors text '
-                             'files in the order of accompanying b-values and dwi files.\n')
+    parser.add_argument(
+        "-func",
+        metavar="Path to input functional file (required for functional connectomes)",
+        default=None,
+        nargs="+",
+        help="Specify either a path to a preprocessed functional Nifti1Image in "
+        "MNI152 space OR multiple space-separated paths to multiple preprocessed functional "
+        "Nifti1Image files in MNI152 space and in .nii or .nii.gz format, "
+        "OR the path to a text file containing a list of paths "
+        "to subject files.\n",
+    )
+    parser.add_argument(
+        "-dwi",
+        metavar="Path to diffusion-weighted imaging data file (required for dmri connectomes)",
+        default=None,
+        nargs="+",
+        help="Specify either a path to a preprocessed dmri diffusion Nifti1Image in native diffusion "
+        "space and in .nii or .nii.gz format OR multiple space-separated paths to multiple "
+        "preprocessed dmri diffusion Nifti1Image files in native diffusion space and in .nii or "
+        ".nii.gz format.\n",
+    )
+    parser.add_argument(
+        "-bval",
+        metavar="Path to b-values file (required for dmri connectomes)",
+        default=None,
+        nargs="+",
+        help="Specify either a path to a b-values text file containing gradient shell values per "
+        "diffusion direction OR multiple space-separated paths to multiple b-values text files in "
+        "the order of accompanying b-vectors and dwi files.\n",
+    )
+    parser.add_argument(
+        "-bvec",
+        metavar="Path to b-vectors file (required for dmri connectomes)",
+        default=None,
+        nargs="+",
+        help="Specify either a path to a b-vectors text file containing gradient directions (x,y,z) "
+        "per diffusion direction OR multiple space-separated paths to multiple b-vectors text "
+        "files in the order of accompanying b-values and dwi files.\n",
+    )
 
     # Secondary file inputs
-    parser.add_argument('-anat',
-                        metavar='Path to a skull-stripped anatomical Nifti1Image',
-                        default=None,
-                        nargs='+',
-                        help='Required for dmri and/or functional connectomes. Multiple paths to multiple '
-                             'anatomical files should be specified by space in the order of accompanying functional '
-                             'and/or dmri files. If functional and dmri connectomes are both being generated '
-                             'simultaneously, then anatomical Nifti1Image file paths need to be repeated, '
-                             'but separated by comma.\n')
-    parser.add_argument('-m',
-                        metavar='Path to a T1w brain mask image (if available) in native anatomical space',
-                        default=None,
-                        nargs='+',
-                        help='File path to a T1w brain mask Nifti image (if available) in native anatomical space'
-                             'OR multiple file paths to multiple T1w brain mask Nifti images in the case of running '
-                             'multiple participants, in which case paths should be separated by a space. If no brain '
-                             'mask is supplied, the template mask will be used (see runconfig.yaml).\n')
-    parser.add_argument('-conf',
-                        metavar='Confound regressor file (.tsv/.csv format)',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a path to a confound regressor file to reduce noise in the '
-                             'time-series estimation for the graph. This can also be a list of paths in the case of '
-                             'running multiple subjects, which requires separation by space and of equivalent length '
-                             'to the list of input files indicated with the -func flag.\n')
-    parser.add_argument('-g',
-                        metavar='Path to graph file input.',
-                        default=None,
-                        nargs='+',
-                        help='In either .txt, .npy, .graphml, .csv, .ssv, .tsv, or .gpickle format. '
-                             'This skips fMRI and dMRI graph estimation workflows and '
-                             'begins at the thresholding and graph analysis stage. '
-                             'Multiple graph files corresponding to multiple subject ID\'s should be '
-                             'separated by space, and multiple graph files corresponding to the same subject ID '
-                             'should be separated by comma. If the `-g` flag is used, then the `-id` flag '
-                             'must also be used. Consider also including `-thr` flag to activate thresholding only '
-                             'or the `-p` and `-norm` flags if graph defragementation or normalization is desired. '
-                             'The `-mod` flag can be used for additional provenance/file-naming.\n')
-    parser.add_argument('-roi',
-                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space.',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask and retain only those nodes '
-                             'of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-ref',
-                        metavar='Atlas reference file path',
-                        default=None,
-                        help='Specify the path to the atlas reference .txt file that maps labels to '
-                             'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
-    parser.add_argument('-way',
-                        metavar='Path to binarized Nifti1Image to constrain tractography',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the '
-                             'case of dmri connectome estimation.\n')
-    parser.add_argument('-ua',
-                        metavar='Path to custom parcellation file',
-                        default=None,
-                        nargs='+',
-                        help='(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in '
-                             'MNI space. Labels should be spatially distinct across hemispheres and ordered with '
-                             'consecutive integers with a value of 0 as the background label. If specifying a list of '
-                             'paths to multiple user atlases, separate them by space.\n')
+    parser.add_argument(
+        "-anat",
+        metavar="Path to a skull-stripped anatomical Nifti1Image",
+        default=None,
+        nargs="+",
+        help="Required for dmri and/or functional connectomes. Multiple paths to multiple "
+        "anatomical files should be specified by space in the order of accompanying functional "
+        "and/or dmri files. If functional and dmri connectomes are both being generated "
+        "simultaneously, then anatomical Nifti1Image file paths need to be repeated, "
+        "but separated by comma.\n",
+    )
+    parser.add_argument(
+        "-m",
+        metavar="Path to a T1w brain mask image (if available) in native anatomical space",
+        default=None,
+        nargs="+",
+        help="File path to a T1w brain mask Nifti image (if available) in native anatomical space"
+        "OR multiple file paths to multiple T1w brain mask Nifti images in the case of running "
+        "multiple participants, in which case paths should be separated by a space. If no brain "
+        "mask is supplied, the template mask will be used (see runconfig.yaml).\n",
+    )
+    parser.add_argument(
+        "-conf",
+        metavar="Confound regressor file (.tsv/.csv format)",
+        default=None,
+        nargs="+",
+        help="Optionally specify a path to a confound regressor file to reduce noise in the "
+        "time-series estimation for the graph. This can also be a list of paths in the case of "
+        "running multiple subjects, which requires separation by space and of equivalent length "
+        "to the list of input files indicated with the -func flag.\n",
+    )
+    parser.add_argument(
+        "-g",
+        metavar="Path to graph file input.",
+        default=None,
+        nargs="+",
+        help="In either .txt, .npy, .graphml, .csv, .ssv, .tsv, or .gpickle format. "
+        "This skips fMRI and dMRI graph estimation workflows and "
+        "begins at the thresholding and graph analysis stage. "
+        "Multiple graph files corresponding to multiple subject ID's should be "
+        "separated by space, and multiple graph files corresponding to the same subject ID "
+        "should be separated by comma. If the `-g` flag is used, then the `-id` flag "
+        "must also be used. Consider also including `-thr` flag to activate thresholding only "
+        "or the `-p` and `-norm` flags if graph defragementation or normalization is desired. "
+        "The `-mod` flag can be used for additional provenance/file-naming.\n",
+    )
+    parser.add_argument(
+        "-roi",
+        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space.",
+        default=None,
+        nargs="+",
+        help="Optionally specify a binarized ROI mask and retain only those nodes "
+        "of a parcellation contained within that mask for connectome estimation.\n",
+    )
+    parser.add_argument(
+        "-ref",
+        metavar="Atlas reference file path",
+        default=None,
+        help="Specify the path to the atlas reference .txt file that maps labels to "
+        "intensities corresponding to the atlas parcellation file specified with the -ua flag.\n",
+    )
+    parser.add_argument(
+        "-way",
+        metavar="Path to binarized Nifti1Image to constrain tractography",
+        default=None,
+        nargs="+",
+        help="Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the "
+        "case of dmri connectome estimation.\n",
+    )
+    parser.add_argument(
+        "-ua",
+        metavar="Path to custom parcellation file",
+        default=None,
+        nargs="+",
+        help="(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in "
+        "MNI space. Labels should be spatially distinct across hemispheres and ordered with "
+        "consecutive integers with a value of 0 as the background label. If specifying a list of "
+        "paths to multiple user atlases, separate them by space.\n",
+    )
 
     # Modality-independent hyperparameters
-    parser.add_argument('-mod',
-                        metavar='Connectivity estimation/reconstruction method',
-                        default='?',
-                        nargs='+',
-                        choices=['corr', 'sps', 'cov', 'partcorr', 'QuicGraphicalLasso', 'QuicGraphicalLassoCV',
-                                 'QuicGraphicalLassoEBIC', 'AdaptiveQuicGraphicalLasso', 'csa', 'csd', 'ten', 'sfm'],
-                        help='(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models '
-                             'include: corr for correlation, cov for covariance, sps for precision covariance, '
-                             'partcorr for partial correlation. sps type is used by default. '
-                             'If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, '
-                             'QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. '
-                             'Default is partcorr for fMRI. For dMRI, models include csa and csd.\n')
-    parser.add_argument('-a',
-                        metavar='Atlas',
-                        default=None,
-                        nargs='+',
-                        choices=['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
-                                 'atlas_harvard_oxford', 'atlas_destrieux_2009', 'atlas_msdl', 'coords_dosenbach_2010',
-                                 'coords_power_2011', 'atlas_pauli_2017', 'destrieux2009_rois',
-                                 'BrainnetomeAtlasFan2016', 'VoxelwiseParcellationt0515kLeadDBS',
-                                 'Juelichgmthr252mmEickhoff2005',
-                                 'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014',
-                                 'whole_brain_cluster_labels_PCA100', 'AICHAreorderedJoliot2015',
-                                 'HarvardOxfordThr252mmWholeBrainMakris2006', 'VoxelwiseParcellationt058kLeadDBS',
-                                 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics',
-                                 'Hammers_mithAtlasn30r83Hammers2003Gousias2008', 'AALTzourioMazoyer2002',
-                                 'DesikanKlein2012', 'AAL2zourioMazoyer2002', 'VoxelwiseParcellationt0435kLeadDBS',
-                                 'AICHAJoliot2015', 'whole_brain_cluster_labels_PCA200',
-                                 'RandomParcellationsc05meanalll43Craddock2011'],
-                        help='(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. '
-                             'If you wish to iterate your pynets run over multiple '
-                             'atlases, separate them by space. Available nilearn atlases are:'
-                             '\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n'
-                             'atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n'
-                             'coords_power_2011\natlas_pauli_2017.\n\nAvailable local atlases are:'
-                             '\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016\nVoxelwiseParcellationt0515kLeadDBS\n'
-                             'Juelichgmthr252mmEickhoff2005\n'
-                             'CorticalAreaParcellationfromRestingStateCorrelationsGordon2014\n'
-                             'whole_brain_cluster_labels_PCA100\nAICHAreorderedJoliot2015\n'
-                             'HarvardOxfordThr252mmWholeBrainMakris2006\nVoxelwiseParcellationt058kLeadDBS\n'
-                             'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics\n'
-                             'Hammers_mithAtlasn30r83Hammers2003Gousias2008\nAALTzourioMazoyer2002\nDesikanKlein2012\n'
-                             'AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS\nAICHAJoliot2015\n'
-                             'whole_brain_cluster_labels_PCA200\nRandomParcellationsc05meanalll43Craddock2011')
-    parser.add_argument('-ns',
-                        metavar='Spherical centroid node size',
-                        default=4,
-                        nargs='+',
-                        help='(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 '
-                             'mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple '
-                             'node sizes, separate the list by space (e.g. 2 4 6).\n')
-    parser.add_argument('-thr',
-                        metavar='Graph threshold',
-                        default=1.00,
-                        help='Optionally specify a threshold indicating a proportion of weights to preserve in the '
-                             'graph. Default is proportional thresholding. If omitted, no thresholding will be applied.'
-                             '\n')
-    parser.add_argument('-min_thr',
-                        metavar='Multi-thresholding minimum threshold',
-                        default=None,
-                        help='(Hyperparameter): Minimum threshold for multi-thresholding.\n')
-    parser.add_argument('-max_thr',
-                        metavar='Multi-thresholding maximum threshold',
-                        default=None,
-                        help='(Hyperparameter): Maximum threshold for multi-thresholding.')
-    parser.add_argument('-step_thr',
-                        metavar='Multi-thresholding step size',
-                        default=None,
-                        help='(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n')
+    parser.add_argument(
+        "-mod",
+        metavar="Connectivity estimation/reconstruction method",
+        default="?",
+        nargs="+",
+        choices=[
+            "corr",
+            "sps",
+            "cov",
+            "partcorr",
+            "QuicGraphicalLasso",
+            "QuicGraphicalLassoCV",
+            "QuicGraphicalLassoEBIC",
+            "AdaptiveQuicGraphicalLasso",
+            "csa",
+            "csd",
+            "ten",
+            "sfm",
+        ],
+        help="(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models "
+        "include: corr for correlation, cov for covariance, sps for precision covariance, "
+        "partcorr for partial correlation. sps type is used by default. "
+        "If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, "
+        "QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. "
+        "Default is partcorr for fMRI. For dMRI, models include csa and csd.\n",
+    )
+    parser.add_argument(
+        "-a",
+        metavar="Atlas",
+        default=None,
+        nargs="+",
+        choices=[
+            "atlas_aal",
+            "atlas_talairach_gyrus",
+            "atlas_talairach_ba",
+            "atlas_talairach_lobe",
+            "atlas_harvard_oxford",
+            "atlas_destrieux_2009",
+            "atlas_msdl",
+            "coords_dosenbach_2010",
+            "coords_power_2011",
+            "atlas_pauli_2017",
+            "destrieux2009_rois",
+            "BrainnetomeAtlasFan2016",
+            "VoxelwiseParcellationt0515kLeadDBS",
+            "Juelichgmthr252mmEickhoff2005",
+            "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014",
+            "whole_brain_cluster_labels_PCA100",
+            "AICHAreorderedJoliot2015",
+            "HarvardOxfordThr252mmWholeBrainMakris2006",
+            "VoxelwiseParcellationt058kLeadDBS",
+            "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
+            "Hammers_mithAtlasn30r83Hammers2003Gousias2008",
+            "AALTzourioMazoyer2002",
+            "DesikanKlein2012",
+            "AAL2zourioMazoyer2002",
+            "VoxelwiseParcellationt0435kLeadDBS",
+            "AICHAJoliot2015",
+            "whole_brain_cluster_labels_PCA200",
+            "RandomParcellationsc05meanalll43Craddock2011",
+        ],
+        help="(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. "
+        "If you wish to iterate your pynets run over multiple "
+        "atlases, separate them by space. Available nilearn atlases are:"
+        "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n"
+        "atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n"
+        "coords_power_2011\natlas_pauli_2017.\n\nAvailable local atlases are:"
+        "\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016\nVoxelwiseParcellationt0515kLeadDBS\n"
+        "Juelichgmthr252mmEickhoff2005\n"
+        "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014\n"
+        "whole_brain_cluster_labels_PCA100\nAICHAreorderedJoliot2015\n"
+        "HarvardOxfordThr252mmWholeBrainMakris2006\nVoxelwiseParcellationt058kLeadDBS\n"
+        "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics\n"
+        "Hammers_mithAtlasn30r83Hammers2003Gousias2008\nAALTzourioMazoyer2002\nDesikanKlein2012\n"
+        "AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS\nAICHAJoliot2015\n"
+        "whole_brain_cluster_labels_PCA200\nRandomParcellationsc05meanalll43Craddock2011",
+    )
+    parser.add_argument(
+        "-ns",
+        metavar="Spherical centroid node size",
+        default=4,
+        nargs="+",
+        help="(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 "
+        "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple "
+        "node sizes, separate the list by space (e.g. 2 4 6).\n",
+    )
+    parser.add_argument(
+        "-thr",
+        metavar="Graph threshold",
+        default=1.00,
+        help="Optionally specify a threshold indicating a proportion of weights to preserve in the "
+        "graph. Default is proportional thresholding. If omitted, no thresholding will be applied."
+        "\n",
+    )
+    parser.add_argument(
+        "-min_thr",
+        metavar="Multi-thresholding minimum threshold",
+        default=None,
+        help="(Hyperparameter): Minimum threshold for multi-thresholding.\n",
+    )
+    parser.add_argument(
+        "-max_thr",
+        metavar="Multi-thresholding maximum threshold",
+        default=None,
+        help="(Hyperparameter): Maximum threshold for multi-thresholding.",
+    )
+    parser.add_argument(
+        "-step_thr",
+        metavar="Multi-thresholding step size",
+        default=None,
+        help="(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n",
+    )
 
     # fMRI hyperparameters
-    parser.add_argument('-sm',
-                        metavar='Smoothing value (mm fwhm)',
-                        default=0,
-                        nargs='+',
-                        help='(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. '
-                             'If you wish to iterate the pipeline across multiple smoothing '
-                             'separate the list by space (e.g. 2 4 6).\n')
-    parser.add_argument('-hp',
-                        metavar='High-pass filter (Hz)',
-                        default=None,
-                        nargs='+',
-                        help='(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted '
-                             'time-series for fMRI. Default is None. If you wish to iterate the pipeline across '
-                             'multiple high-pass filter thresholds, values, separate the list by space '
-                             '(e.g. 0.008 0.01).\n')
-    parser.add_argument('-es',
-                        metavar='Node extraction strategy',
-                        default='mean',
-                        nargs='+',
-                        choices=['sum', 'mean', 'median', 'mininum', 'maximum', 'variance', 'standard_deviation'],
-                        help='Include this flag if you are running functional connectometry using parcel labels and '
-                             'wish to specify the name of a specific function (i.e. other than the mean) to reduce the '
-                             'region\'s time-series. Options are: `sum`, `mean`, `median`, `mininum`, `maximum`, '
-                             '`variance`, `standard_deviation`.\n')
-    parser.add_argument('-k',
-                        metavar='Number of k clusters',
-                        default=None,
-                        nargs='+',
-                        help='(Hyperparameter): Specify a number of clusters to produce. If you wish to iterate the '
-                             'pipeline across multiple values of k, separate the list by space (e.g. 100 150 200).\n')
-    parser.add_argument('-ct',
-                        metavar='Clustering type',
-                        default='ward',
-                        nargs='+',
-                        choices=['ward', 'rena', 'kmeans', 'complete', 'average', 'single'],
-                        help='(Hyperparameter): Specify the types of clustering to use. Recommended options are: '
-                             'ward, rena or kmeans. Note that imposing spatial constraints with a mask consisting of '
-                             'disconnected components will leading to clustering instability in the case of complete, '
-                             'average, or single clustering. If specifying a list of '
-                             'clustering types, separate them by space.\n')
-    parser.add_argument('-cm',
-                        metavar='Cluster mask',
-                        default=None,
-                        nargs='+',
-                        help='(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional '
-                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
-                             'them by space.\n')
+    parser.add_argument(
+        "-sm",
+        metavar="Smoothing value (mm fwhm)",
+        default=0,
+        nargs="+",
+        help="(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. "
+        "If you wish to iterate the pipeline across multiple smoothing "
+        "separate the list by space (e.g. 2 4 6).\n",
+    )
+    parser.add_argument(
+        "-hp",
+        metavar="High-pass filter (Hz)",
+        default=None,
+        nargs="+",
+        help="(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted "
+        "time-series for fMRI. Default is None. If you wish to iterate the pipeline across "
+        "multiple high-pass filter thresholds, values, separate the list by space "
+        "(e.g. 0.008 0.01).\n",
+    )
+    parser.add_argument(
+        "-es",
+        metavar="Node extraction strategy",
+        default="mean",
+        nargs="+",
+        choices=[
+            "sum",
+            "mean",
+            "median",
+            "mininum",
+            "maximum",
+            "variance",
+            "standard_deviation",
+        ],
+        help="Include this flag if you are running functional connectometry using parcel labels and "
+        "wish to specify the name of a specific function (i.e. other than the mean) to reduce the "
+        "region's time-series. Options are: `sum`, `mean`, `median`, `mininum`, `maximum`, "
+        "`variance`, `standard_deviation`.\n",
+    )
+    parser.add_argument(
+        "-k",
+        metavar="Number of k clusters",
+        default=None,
+        nargs="+",
+        help="(Hyperparameter): Specify a number of clusters to produce. If you wish to iterate the "
+        "pipeline across multiple values of k, separate the list by space (e.g. 100 150 200).\n",
+    )
+    parser.add_argument(
+        "-ct",
+        metavar="Clustering type",
+        default="ward",
+        nargs="+",
+        choices=["ward", "rena", "kmeans", "complete", "average", "single"],
+        help="(Hyperparameter): Specify the types of clustering to use. Recommended options are: "
+        "ward, rena or kmeans. Note that imposing spatial constraints with a mask consisting of "
+        "disconnected components will leading to clustering instability in the case of complete, "
+        "average, or single clustering. If specifying a list of "
+        "clustering types, separate them by space.\n",
+    )
+    parser.add_argument(
+        "-cm",
+        metavar="Cluster mask",
+        default=None,
+        nargs="+",
+        help="(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional "
+        "clustering. If specifying a list of paths to multiple cluster masks, separate "
+        "them by space.\n",
+    )
 
     # dMRI hyperparameters
-    parser.add_argument('-ml',
-                        metavar='Minimum fiber length for tracking',
-                        default=20,
-                        nargs='+',
-                        help='(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for '
-                             'dmri connectome tracking. Default is 20. If you wish to iterate the pipeline across '
-                             'multiple minimums, separate the list by space (e.g. 10 30 50).\n')
-    parser.add_argument('-dg',
-                        metavar='Direction getter',
-                        default='det',
-                        nargs='+',
-                        choices=['det', 'prob', 'clos'],
-                        help='(Hyperparameter): Include this flag to manually specify the statistical approach to '
-                             'tracking for dmri connectome estimation. Options are: det (deterministic), '
-                             'closest (clos), and prob (probabilistic). '
-                             'Default is det. If you wish to iterate the pipeline across multiple '
-                             'direction-getting methods, separate the list by space (e.g. \'det\', \'prob\', '
-                             '\'clos\').\n')
+    parser.add_argument(
+        "-ml",
+        metavar="Minimum fiber length for tracking",
+        default=20,
+        nargs="+",
+        help="(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for "
+        "dmri connectome tracking. Default is 20. If you wish to iterate the pipeline across "
+        "multiple minimums, separate the list by space (e.g. 10 30 50).\n",
+    )
+    parser.add_argument(
+        "-dg",
+        metavar="Direction getter",
+        default="det",
+        nargs="+",
+        choices=["det", "prob", "clos"],
+        help="(Hyperparameter): Include this flag to manually specify the statistical approach to "
+        "tracking for dmri connectome estimation. Options are: det (deterministic), "
+        "closest (clos), and prob (probabilistic). "
+        "Default is det. If you wish to iterate the pipeline across multiple "
+        "direction-getting methods, separate the list by space (e.g. 'det', 'prob', "
+        "'clos').\n",
+    )
     # General settings
-    parser.add_argument('-norm',
-                        metavar='Normalization strategy for resulting graph(s)',
-                        default=0,
-                        nargs=1,
-                        choices=['0', '1', '2', '3', '4', '5', '6'],
-                        help='Include this flag to normalize the resulting graph by (1) maximum edge weight; '
-                             '(2) using log10; (3) using pass-to-ranks for all non-zero edges; '
-                             '(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) '
-                             'using pass-to-ranks with zero-edge boost; and (6) which standardizes the matrix to '
-                             'values [0, 1]. Default is (0) which is no normalization.\n')
-    parser.add_argument('-bin',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to binarize the resulting graph such that edges are boolean and not '
-                             'weighted.\n')
-    parser.add_argument('-dt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to threshold to achieve a given density or '
-                             'densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n')
-    parser.add_argument('-mst',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the Minimum '
-                             'Spanning Tree approach. -thr values in this case correspond to a target density (if the '
-                             '-dt flag is also included), otherwise a target proportional threshold.\n')
-    parser.add_argument('-p',
-                        metavar='Pruning Strategy',
-                        default=1,
-                        nargs=1,
-                        choices=['0', '1', '2', '3'],
-                        help='Include this flag to (1) prune the graph of any isolated + fully '
-                             'disconnected nodes (i.e. anti-fragmentation), (2) prune the graph of all but hubs as '
-                             'defined by any of a variety of definitions (see ruconfig.yaml), or '
-                             '(3) retain only the largest connected component subgraph. '
-                             'Default is 1. Include `-p 0` to disable fragmentation-protection.\n')
-    parser.add_argument('-df',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to apply local thresholding via the disparity '
-                             'filter approach. -thr values in this case correspond to α.\n')
-    parser.add_argument('-mplx',
-                        metavar='Perform various levels of multiplex graph analysis (only) if both structural and '
-                                'diffusion connectometry is run simultaneously.',
-                        default=0,
-                        nargs=1,
-                        choices=['0', '1', '2'],
-                        help='Include this flag to perform multiplex graph analysis across structural-functional '
-                             'connectome modalities. Options include level (1) Create multiplex graphs '
-                             'using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph '
-                             'embedding and analysis.'
-                             'Default is (0) which is no multiplex analysis.\n')
-    parser.add_argument('-embed',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to embed the ensemble(s) produced into '
-                             'feature vector(s).\n')
-    parser.add_argument('-spheres',
-                        default=False,
-                        action='store_true',
-                        help='Include this flag to use spheres instead of parcels as nodes.\n')
-    parser.add_argument('-n',
-                        metavar='Resting-state network',
-                        default=None,
-                        nargs='+',
-                        choices=['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default', 'VisCent',
-                                 'VisPeri', 'SomMotA', 'SomMotB', 'DorsAttnA', 'DorsAttnB', 'SalVentAttnA',
-                                 'SalVentAttnB', 'LimbicOFC', 'LimbicTempPole', 'ContA', 'ContB', 'ContC', 'DefaultA',
-                                 'DefaultB', 'DefaultC', 'TempPar'],
-                        help='Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or '
-                             '17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, '
-                             'VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, '
-                             'LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing '
-                             'multiple RSNs, separate them by space. (e.g. -n \'Default\' \'Cont\' \'SalVentAttn\')\'.'
-                             '\n')
-    parser.add_argument('-vox',
-                        default='2mm',
-                        nargs=1,
-                        choices=['1mm', '2mm'],
-                        help='Optionally use this flag if you wish to change the resolution of the images in the '
-                             'workflow. Default is 2mm.\n')
-    parser.add_argument('-plt',
-                        default=False,
-                        action='store_true',
-                        help='Optionally use this flag if you wish to activate plotting of adjacency matrices, '
-                             'connectomes, and time-series.\n')
+    parser.add_argument(
+        "-norm",
+        metavar="Normalization strategy for resulting graph(s)",
+        default=0,
+        nargs=1,
+        choices=["0", "1", "2", "3", "4", "5", "6"],
+        help="Include this flag to normalize the resulting graph by (1) maximum edge weight; "
+        "(2) using log10; (3) using pass-to-ranks for all non-zero edges; "
+        "(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) "
+        "using pass-to-ranks with zero-edge boost; and (6) which standardizes the matrix to "
+        "values [0, 1]. Default is (0) which is no normalization.\n",
+    )
+    parser.add_argument(
+        "-bin",
+        default=False,
+        action="store_true",
+        help="Include this flag to binarize the resulting graph such that edges are boolean and not "
+        "weighted.\n",
+    )
+    parser.add_argument(
+        "-dt",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to threshold to achieve a given density or "
+        "densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n",
+    )
+    parser.add_argument(
+        "-mst",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to apply local thresholding via the Minimum "
+        "Spanning Tree approach. -thr values in this case correspond to a target density (if the "
+        "-dt flag is also included), otherwise a target proportional threshold.\n",
+    )
+    parser.add_argument(
+        "-p",
+        metavar="Pruning Strategy",
+        default=1,
+        nargs=1,
+        choices=["0", "1", "2", "3"],
+        help="Include this flag to (1) prune the graph of any isolated + fully "
+        "disconnected nodes (i.e. anti-fragmentation), (2) prune the graph of all but hubs as "
+        "defined by any of a variety of definitions (see ruconfig.yaml), or "
+        "(3) retain only the largest connected component subgraph. "
+        "Default is 1. Include `-p 0` to disable fragmentation-protection.\n",
+    )
+    parser.add_argument(
+        "-df",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to apply local thresholding via the disparity "
+        "filter approach. -thr values in this case correspond to α.\n",
+    )
+    parser.add_argument(
+        "-mplx",
+        metavar="Perform various levels of multiplex graph analysis (only) if both structural and "
+        "diffusion connectometry is run simultaneously.",
+        default=0,
+        nargs=1,
+        choices=["0", "1", "2"],
+        help="Include this flag to perform multiplex graph analysis across structural-functional "
+        "connectome modalities. Options include level (1) Create multiplex graphs "
+        "using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph "
+        "embedding and analysis."
+        "Default is (0) which is no multiplex analysis.\n",
+    )
+    parser.add_argument(
+        "-embed",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to embed the ensemble(s) produced into "
+        "feature vector(s).\n",
+    )
+    parser.add_argument(
+        "-spheres",
+        default=False,
+        action="store_true",
+        help="Include this flag to use spheres instead of parcels as nodes.\n",
+    )
+    parser.add_argument(
+        "-n",
+        metavar="Resting-state network",
+        default=None,
+        nargs="+",
+        choices=[
+            "Vis",
+            "SomMot",
+            "DorsAttn",
+            "SalVentAttn",
+            "Limbic",
+            "Cont",
+            "Default",
+            "VisCent",
+            "VisPeri",
+            "SomMotA",
+            "SomMotB",
+            "DorsAttnA",
+            "DorsAttnB",
+            "SalVentAttnA",
+            "SalVentAttnB",
+            "LimbicOFC",
+            "LimbicTempPole",
+            "ContA",
+            "ContB",
+            "ContC",
+            "DefaultA",
+            "DefaultB",
+            "DefaultC",
+            "TempPar",
+        ],
+        help="Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or "
+        "17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, "
+        "VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
+        "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing "
+        "multiple RSNs, separate them by space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'."
+        "\n",
+    )
+    parser.add_argument(
+        "-vox",
+        default="2mm",
+        nargs=1,
+        choices=[
+            "1mm",
+            "2mm"],
+        help="Optionally use this flag if you wish to change the resolution of the images in the "
+        "workflow. Default is 2mm.\n",
+    )
+    parser.add_argument(
+        "-plt",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to activate plotting of adjacency matrices, "
+        "connectomes, and time-series.\n",
+    )
 
     # Debug/Runtime settings
-    parser.add_argument('-pm',
-                        metavar='Cores,memory',
-                        default='auto',
-                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
-                             'detected on the current compute node.\n')
-    parser.add_argument('-plug',
-                        metavar='Scheduler type',
-                        default='MultiProc',
-                        nargs=1,
-                        choices=['Linear', 'MultiProc', 'SGE', 'PBS', 'SLURM', 'SGEgraph', 'SLURMgraph',
-                                 'LegacyMultiProc'],
-                        help='Include this flag to specify a workflow plugin other than the default MultiProc.\n')
-    parser.add_argument('-v',
-                        default=False,
-                        action='store_true',
-                        help='Verbose print for debugging.\n')
-    parser.add_argument('-clean',
-                        default=False,
-                        action='store_true',
-                        help='Clean up temporary runtime directory after workflow termination.\n')
-    parser.add_argument('-work',
-                        metavar='Working directory',
-                        default='/tmp/work',
-                        help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
-    parser.add_argument('--version', action='version', version=verstr)
+    parser.add_argument(
+        "-pm",
+        metavar="Cores,memory",
+        default="auto",
+        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
+        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
+        "detected on the current compute node.\n",
+    )
+    parser.add_argument(
+        "-plug",
+        metavar="Scheduler type",
+        default="MultiProc",
+        nargs=1,
+        choices=[
+            "Linear",
+            "MultiProc",
+            "SGE",
+            "PBS",
+            "SLURM",
+            "SGEgraph",
+            "SLURMgraph",
+            "LegacyMultiProc",
+        ],
+        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+    )
+    parser.add_argument(
+        "-v",
+        default=False,
+        action="store_true",
+        help="Verbose print for debugging.\n")
+    parser.add_argument(
+        "-clean",
+        default=False,
+        action="store_true",
+        help="Clean up temporary runtime directory after workflow termination.\n",
+    )
+    parser.add_argument(
+        "-work",
+        metavar="Working directory",
+        default="/tmp/work",
+        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+    )
+    parser.add_argument("--version", action="version", version=verstr)
     return parser
 
 
 def build_workflow(args, retval):
     import warnings
+
     warnings.filterwarnings("ignore")
     import os
     import glob
@@ -401,11 +565,15 @@ def build_workflow(args, retval):
     import pkg_resources
     import yaml
     import datetime
+
     try:
         import pynets
+
         print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
-        print('PyNets not installed! Ensure that you are using the correct python version.')
+        print(
+            "PyNets not installed! Ensure that you are using the correct python version."
+        )
 
     # Start timer
     now = datetime.datetime.now()
@@ -428,8 +596,8 @@ def build_workflow(args, retval):
             multi_subject_graph = graph
             multi_subject_multigraph = []
             for g in multi_subject_graph:
-                if ',' in g:
-                    multi_graph = g.split(',')
+                if "," in g:
+                    multi_graph = g.split(",")
                     multi_subject_multigraph.append(multi_graph)
                 else:
                     multi_graph = None
@@ -439,15 +607,15 @@ def build_workflow(args, retval):
                 multi_subject_graph = None
             graph = None
             multi_graph = None
-        elif graph == ['None']:
+        elif graph == ["None"]:
             graph = None
             multi_graph = None
             multi_subject_graph = None
             multi_subject_multigraph = None
         else:
             graph = graph[0]
-            if ',' in graph:
-                multi_graph = graph.split(',')
+            if "," in graph:
+                multi_graph = graph.split(",")
             else:
                 multi_graph = None
             multi_subject_graph = None
@@ -457,29 +625,44 @@ def build_workflow(args, retval):
         multi_subject_graph = None
         multi_subject_multigraph = None
 
-    if (ID is None) and (graph is None and multi_graph is None and multi_subject_graph is None and
-                         multi_subject_multigraph is None):
-        raise ValueError("\nError: You must include a subject ID in your command line call.")
+    if (ID is None) and (
+        graph is None
+        and multi_graph is None
+        and multi_subject_graph is None
+        and multi_subject_multigraph is None
+    ):
+        raise ValueError(
+            "\nError: You must include a subject ID in your command line call."
+        )
 
-    if (multi_subject_graph or multi_subject_multigraph or graph or multi_graph) and isinstance(ID, list):
+    if (
+        multi_subject_graph or multi_subject_multigraph or graph or multi_graph
+    ) and isinstance(ID, list):
         if multi_subject_graph:
             if len(ID) != len(multi_subject_graph):
-                print("Error: Length of ID list does not correspond to length of input graph file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of ID list does not correspond to length of input graph file list."
+                )
+                retval["return_code"] = 1
                 return retval
         if multi_subject_multigraph:
             if len(ID) != len(multi_subject_multigraph):
-                print("Error: Length of ID list does not correspond to length of input graph file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of ID list does not correspond to length of input graph file list."
+                )
+                retval["return_code"] = 1
                 return retval
         if len(ID) > 1 and not multi_subject_graph and not multi_subject_multigraph:
-            print("Error: Length of ID list does not correspond to length of input graph file list.")
-            retval['return_code'] = 1
+            print(
+                "Error: Length of ID list does not correspond to length of input graph file list."
+            )
+            retval["return_code"] = 1
             return retval
 
     resources = args.pm
-    if resources == 'auto':
+    if resources == "auto":
         from multiprocessing import cpu_count
+
         nthreads = cpu_count()
         procmem = [int(nthreads), int(float(nthreads) * 2)]
     else:
@@ -487,13 +670,13 @@ def build_workflow(args, retval):
     thr = float(args.thr)
     node_size = args.ns
     if node_size:
-        if (type(node_size) is list) and (len(node_size) > 1):
+        if (isinstance(node_size, list)) and (len(node_size) > 1):
             node_size_list = node_size
             node_size = None
-        elif node_size == ['None']:
+        elif node_size == ["None"]:
             node_size = None
             node_size_list = None
-        elif type(node_size) is list:
+        elif isinstance(node_size, list):
             node_size = node_size[0]
             node_size_list = None
         else:
@@ -503,13 +686,13 @@ def build_workflow(args, retval):
         node_size_list = None
     smooth = args.sm
     if smooth:
-        if (type(smooth) is list) and (len(smooth) > 1):
+        if (isinstance(smooth, list)) and (len(smooth) > 1):
             smooth_list = smooth
             smooth = 0
-        elif smooth == ['None']:
+        elif smooth == ["None"]:
             smooth = 0
             smooth_list = None
-        elif type(smooth) is list:
+        elif isinstance(smooth, list):
             smooth = smooth[0]
             smooth_list = None
         else:
@@ -519,13 +702,13 @@ def build_workflow(args, retval):
         smooth_list = None
     hpass = args.hp
     if hpass:
-        if (type(hpass) is list) and (len(hpass) > 1):
+        if (isinstance(hpass, list)) and (len(hpass) > 1):
             hpass_list = hpass
             hpass = None
-        elif hpass == ['None']:
+        elif hpass == ["None"]:
             hpass = None
             hpass_list = None
-        elif type(hpass) is list:
+        elif isinstance(hpass, list):
             hpass = hpass[0]
             hpass_list = None
         else:
@@ -535,28 +718,29 @@ def build_workflow(args, retval):
         hpass_list = None
     extract_strategy = args.es
     if extract_strategy:
-        if (type(extract_strategy) is list) and (len(extract_strategy) > 1):
+        if (isinstance(extract_strategy, list)) and (
+                len(extract_strategy) > 1):
             extract_strategy_list = extract_strategy
-            extract_strategy = 'mean'
-        elif extract_strategy == ['None']:
-            extract_strategy = 'mean'
+            extract_strategy = "mean"
+        elif extract_strategy == ["None"]:
+            extract_strategy = "mean"
             extract_strategy_list = None
-        elif type(extract_strategy) is list:
+        elif isinstance(extract_strategy, list):
             extract_strategy = extract_strategy[0]
             extract_strategy_list = None
         else:
-            extract_strategy = 'mean'
+            extract_strategy = "mean"
             extract_strategy_list = None
     else:
         extract_strategy_list = None
     roi = args.roi
     conn_model = args.mod
     if conn_model:
-        if (type(conn_model) is list) and (len(conn_model) > 1):
+        if (isinstance(conn_model, list)) and (len(conn_model) > 1):
             conn_model_list = conn_model
-        elif conn_model == ['None']:
+        elif conn_model == ["None"]:
             conn_model_list = None
-        elif type(conn_model) is list:
+        elif isinstance(conn_model, list):
             conn_model = conn_model[0]
             conn_model_list = None
         else:
@@ -569,13 +753,13 @@ def build_workflow(args, retval):
     disp_filt = args.df
     clust_type = args.ct
     if clust_type:
-        if (type(clust_type) is list) and len(clust_type) > 1:
+        if (isinstance(clust_type, list)) and len(clust_type) > 1:
             clust_type_list = clust_type
             clust_type = None
-        elif clust_type == ['None']:
+        elif clust_type == ["None"]:
             clust_type = None
             clust_type_list = None
-        elif type(clust_type) is list:
+        elif isinstance(clust_type, list):
             clust_type = clust_type[0]
             clust_type_list = None
         else:
@@ -607,10 +791,10 @@ def build_workflow(args, retval):
     ref_txt = args.ref
     k = args.k
     if k:
-        if (type(k) is list) and (len(k) > 1):
+        if (isinstance(k, list)) and (len(k) > 1):
             k_list = [int(i) for i in k]
             k = None
-        elif type(k) is list:
+        elif isinstance(k, list):
             k = k[0]
             k_list = None
         else:
@@ -618,14 +802,14 @@ def build_workflow(args, retval):
     else:
         k_list = None
     prune = args.p
-    if type(prune) is list:
+    if isinstance(prune, list):
         prune = prune[0]
     norm = args.norm
-    if type(norm) is list:
+    if isinstance(norm, list):
         norm = norm[0]
     binary = args.bin
     plugin_type = args.plug
-    if type(plugin_type) is list:
+    if isinstance(plugin_type, list):
         plugin_type = plugin_type[0]
     verbose = args.v
     clust_mask = args.cm
@@ -633,7 +817,7 @@ def build_workflow(args, retval):
         if len(clust_mask) > 1:
             clust_mask_list = clust_mask
             clust_mask = None
-        elif clust_mask == ['None']:
+        elif clust_mask == ["None"]:
             clust_mask = None
             clust_mask_list = None
         else:
@@ -646,13 +830,13 @@ def build_workflow(args, retval):
         waymask = waymask[0]
     network = args.n
     if network:
-        if (type(network) is list) and (len(network) > 1):
+        if (isinstance(network, list)) and (len(network) > 1):
             multi_nets = network
             network = None
-        elif network == ['None']:
+        elif network == ["None"]:
             network = None
             multi_nets = None
-        elif type(network) is list:
+        elif isinstance(network, list):
             network = network[0]
             multi_nets = None
         else:
@@ -665,7 +849,7 @@ def build_workflow(args, retval):
         if len(uatlas) > 1:
             user_atlas_list = uatlas
             uatlas = None
-        elif uatlas == ['None']:
+        elif uatlas == ["None"]:
             uatlas = None
             user_atlas_list = None
         else:
@@ -675,13 +859,13 @@ def build_workflow(args, retval):
         user_atlas_list = None
     atlas = args.a
     if atlas:
-        if (type(atlas) is list) and (len(atlas) > 1):
+        if (isinstance(atlas, list)) and (len(atlas) > 1):
             multi_atlas = atlas
             atlas = None
-        elif atlas == ['None']:
+        elif atlas == ["None"]:
             multi_atlas = None
             atlas = None
-        elif type(atlas) is list:
+        elif isinstance(atlas, list):
             atlas = atlas[0]
             multi_atlas = None
         else:
@@ -691,12 +875,12 @@ def build_workflow(args, retval):
         multi_atlas = None
     min_length = args.ml
     if min_length:
-        if (type(min_length) is list) and (len(min_length) > 1):
+        if (isinstance(min_length, list)) and (len(min_length) > 1):
             min_length_list = min_length
             min_length = None
-        elif min_length == ['None']:
+        elif min_length == ["None"]:
             min_length_list = None
-        elif type(min_length) is list:
+        elif isinstance(min_length, list):
             min_length = min_length[0]
             min_length_list = None
         else:
@@ -705,12 +889,12 @@ def build_workflow(args, retval):
         min_length_list = None
     directget = args.dg
     if directget:
-        if (type(directget) is list) and (len(directget) > 1):
+        if (isinstance(directget, list)) and (len(directget) > 1):
             multi_directget = directget
             directget = None
-        elif directget == ['None']:
+        elif directget == ["None"]:
             multi_directget = None
-        elif type(directget) is list:
+        elif isinstance(directget, list):
             directget = directget[0]
             multi_directget = None
         else:
@@ -719,64 +903,80 @@ def build_workflow(args, retval):
         multi_directget = None
     embed = args.embed
     multiplex = args.mplx
-    if type(multiplex) is list:
+    if isinstance(multiplex, list):
         multiplex = multiplex[0]
     vox_size = args.vox
     work_dir = args.work
     os.makedirs(work_dir, exist_ok=True)
 
-    print('\n\n\n------------------------------------------------------------------------\n')
+    print(
+        "\n\n\n------------------------------------------------------------------------\n"
+    )
 
     # Hard-coded:
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         try:
             hardcoded_params = yaml.load(stream)
-            maxcrossing = hardcoded_params['maxcrossing'][0]
-            overlap_thr = hardcoded_params['overlap_thr'][0]
-            local_corr = hardcoded_params['clustering_local_conn'][0]
-            track_type = hardcoded_params['tracking_method'][0]
-            tiss_class = hardcoded_params['tissue_classifier'][0]
-            target_samples = hardcoded_params['tracking_samples'][0]
-            use_AAL_naming = hardcoded_params['aal_names'][0]
-            step_list = hardcoded_params['step_list']
-            curv_thr_list = hardcoded_params['curv_thr_list']
-            nilearn_parc_atlases = hardcoded_params['nilearn_parc_atlases']
-            nilearn_coord_atlases = hardcoded_params['nilearn_coord_atlases']
-            nilearn_prob_atlases = hardcoded_params['nilearn_prob_atlases']
-            local_atlases = hardcoded_params['local_atlases']
+            maxcrossing = hardcoded_params["maxcrossing"][0]
+            overlap_thr = hardcoded_params["overlap_thr"][0]
+            local_corr = hardcoded_params["clustering_local_conn"][0]
+            track_type = hardcoded_params["tracking_method"][0]
+            tiss_class = hardcoded_params["tissue_classifier"][0]
+            target_samples = hardcoded_params["tracking_samples"][0]
+            use_AAL_naming = hardcoded_params["aal_names"][0]
+            step_list = hardcoded_params["step_list"]
+            curv_thr_list = hardcoded_params["curv_thr_list"]
+            nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
+            nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
+            nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
+            local_atlases = hardcoded_params["local_atlases"]
 
-            if track_type == 'particle':
-                tiss_class = 'cmc'
+            if track_type == "particle":
+                tiss_class = "cmc"
 
             # Set paths to templates
             runtime_dict = {}
             execution_dict = {}
-            for i in range(len(hardcoded_params['resource_dict'])):
-                runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
-                    hardcoded_params['resource_dict'][i].values())[0][0])
-            for i in range(len(hardcoded_params['execution_dict'])):
-                execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
-                    hardcoded_params['execution_dict'][i].values())[0][0]
+            for i in range(len(hardcoded_params["resource_dict"])):
+                runtime_dict[
+                    list(hardcoded_params["resource_dict"][i].keys())[0]
+                ] = ast.literal_eval(
+                    list(hardcoded_params["resource_dict"][i].values())[0][0]
+                )
+            for i in range(len(hardcoded_params["execution_dict"])):
+                execution_dict[
+                    list(hardcoded_params["execution_dict"][i].keys())[0]
+                ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
         except FileNotFoundError:
-            print('Failed to parse runconfig.yaml')
+            print("Failed to parse runconfig.yaml")
     stream.close()
 
-    if (min_thr is not None) and (max_thr is not None) and (step_thr is not None):
+    if (min_thr is not None) and (
+            max_thr is not None) and (step_thr is not None):
         multi_thr = True
     elif (min_thr is not None) or (max_thr is not None) or (step_thr is not None):
-        print('Error: Missing either min_thr, max_thr, or step_thr flags!')
-        retval['return_code'] = 1
+        print("Error: Missing either min_thr, max_thr, or step_thr flags!")
+        retval["return_code"] = 1
         return retval
     else:
         multi_thr = False
 
     # Check required inputs for existence, and configure run
-    if (func_file is None) and (dwi_file is None) and (graph is None) and \
-        (multi_graph is None) and (multi_subject_graph is None) and (multi_subject_multigraph is None):
-        print("\nError: You must include a file path to either a 4d BOLD EPI image in T1w space"
-              "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image series in native diffusion"
-              "space using the `-dwi` flag.")
-        retval['return_code'] = 1
+    if (
+        (func_file is None)
+        and (dwi_file is None)
+        and (graph is None)
+        and (multi_graph is None)
+        and (multi_subject_graph is None)
+        and (multi_subject_multigraph is None)
+    ):
+        print(
+            "\nError: You must include a file path to either a 4d BOLD EPI image in T1w space"
+            "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image series in native diffusion"
+            "space using the `-dwi` flag.")
+        retval["return_code"] = 1
         return retval
     if func_file:
         if isinstance(func_file, list) and len(func_file) > 1:
@@ -785,7 +985,7 @@ def build_workflow(args, retval):
         elif isinstance(func_file, list):
             func_file = func_file[0]
             func_file_list = None
-        elif func_file.endswith('.txt'):
+        elif func_file.endswith(".txt"):
             with open(func_file) as f:
                 func_file_list = f.read().splitlines()
             func_file = None
@@ -796,8 +996,10 @@ def build_workflow(args, retval):
         func_file_list = None
 
     if not anat_file and not graph and not multi_graph:
-        print('ERROR: An anatomical image must be specified for fmri and dmri_connectometry using the `-anat` flag.')
-        retval['return_code'] = 1
+        print(
+            "ERROR: An anatomical image must be specified for fmri and dmri_connectometry using the `-anat` flag."
+        )
+        retval["return_code"] = 1
         return retval
     if dwi_file:
         if isinstance(dwi_file, list) and len(dwi_file) > 1:
@@ -806,7 +1008,7 @@ def build_workflow(args, retval):
         elif isinstance(dwi_file, list):
             dwi_file = dwi_file[0]
             dwi_file_list = None
-        elif dwi_file.endswith('.txt'):
+        elif dwi_file.endswith(".txt"):
             with open(dwi_file) as f:
                 dwi_file_list = f.read().splitlines()
             dwi_file = None
@@ -820,12 +1022,16 @@ def build_workflow(args, retval):
         directget = None
 
     if (ID is None) and (func_file_list is None):
-        raise ValueError("\nError: You must include a subject ID in your command line call.")
+        raise ValueError(
+            "\nError: You must include a subject ID in your command line call."
+        )
 
     if func_file_list and isinstance(ID, list):
         if len(ID) != len(func_file_list):
-            print("Error: Length of ID list does not correspond to length of input func file list.")
-            retval['return_code'] = 1
+            print(
+                "Error: Length of ID list does not correspond to length of input func file list."
+            )
+            retval["return_code"] = 1
             return retval
 
     if isinstance(ID, list) and len(ID) == 1:
@@ -834,8 +1040,10 @@ def build_workflow(args, retval):
     if conf:
         if isinstance(conf, list) and func_file_list:
             if len(conf) != len(func_file_list):
-                print("Error: Length of confound regressor list does not correspond to length of input file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of confound regressor list does not correspond to length of input file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 conf_list = conf
@@ -843,7 +1051,7 @@ def build_workflow(args, retval):
         elif isinstance(conf, list):
             conf = conf[0]
             conf_list = None
-        elif conf.endswith('.txt'):
+        elif conf.endswith(".txt"):
             with open(conf) as f:
                 conf_list = f.read().splitlines()
             conf = None
@@ -855,14 +1063,18 @@ def build_workflow(args, retval):
 
     if dwi_file_list and isinstance(ID, list):
         if len(ID) != len(dwi_file_list):
-            print("Error: Length of ID list does not correspond to length of input dwi file list.")
-            retval['return_code'] = 1
+            print(
+                "Error: Length of ID list does not correspond to length of input dwi file list."
+            )
+            retval["return_code"] = 1
             return retval
     if fbval:
         if isinstance(fbval, list) and dwi_file_list:
             if len(fbval) != len(dwi_file_list):
-                print("Error: Length of fbval list does not correspond to length of input dwi file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of fbval list does not correspond to length of input dwi file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 fbval_list = fbval
@@ -870,7 +1082,7 @@ def build_workflow(args, retval):
         elif isinstance(fbval, list):
             fbval = fbval[0]
             fbval_list = None
-        elif fbval.endswith('.txt'):
+        elif fbval.endswith(".txt"):
             with open(fbval) as f:
                 fbval_list = f.read().splitlines()
             fbval = None
@@ -883,8 +1095,10 @@ def build_workflow(args, retval):
     if fbvec:
         if isinstance(fbvec, list) and dwi_file_list:
             if len(fbvec) != len(dwi_file_list):
-                print("Error: Length of fbvec list does not correspond to length of input dwi file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of fbvec list does not correspond to length of input dwi file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 fbvec_list = fbvec
@@ -892,7 +1106,7 @@ def build_workflow(args, retval):
         elif isinstance(fbvec, list):
             fbvec = fbvec[0]
             fbvec_list = None
-        elif fbvec.endswith('.txt'):
+        elif fbvec.endswith(".txt"):
             with open(fbvec) as f:
                 fbvec_list = f.read().splitlines()
             fbvec = None
@@ -904,25 +1118,33 @@ def build_workflow(args, retval):
 
     if anat_file:
         if isinstance(anat_file, list) and dwi_file_list and func_file_list:
-            if len(anat_file) != len(dwi_file_list) and len(anat_file) != len(dwi_file_list):
-                print("Error: Length of anat list does not correspond to length of input dwi and func file lists.")
-                retval['return_code'] = 1
+            if len(anat_file) != len(dwi_file_list) and len(anat_file) != len(
+                dwi_file_list
+            ):
+                print(
+                    "Error: Length of anat list does not correspond to length of input dwi and func file lists."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 anat_file_list = anat_file
                 anat_file = None
         elif isinstance(anat_file, list) and dwi_file_list:
             if len(anat_file) != len(dwi_file_list):
-                print("Error: Length of anat list does not correspond to length of input dwi file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of anat list does not correspond to length of input dwi file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 anat_file_list = anat_file
                 anat_file = None
         elif isinstance(anat_file, list) and func_file_list:
             if len(anat_file) != len(func_file_list):
-                print("Error: Length of anat list does not correspond to length of input func file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of anat list does not correspond to length of input func file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 anat_file_list = anat_file
@@ -938,26 +1160,32 @@ def build_workflow(args, retval):
 
     if mask:
         if isinstance(mask, list) and func_file_list and dwi_file_list:
-            if len(mask) != len(func_file_list) and len(mask) != len(dwi_file_list):
-                print("Error: Length of brain mask list does not correspond to length of input func "
-                      "and dwi file lists.")
-                retval['return_code'] = 1
+            if len(mask) != len(func_file_list) and len(
+                    mask) != len(dwi_file_list):
+                print(
+                    "Error: Length of brain mask list does not correspond to length of input func "
+                    "and dwi file lists.")
+                retval["return_code"] = 1
                 return retval
             else:
                 mask_list = mask
                 mask = None
         elif isinstance(mask, list) and func_file_list:
             if len(mask) != len(func_file_list):
-                print("Error: Length of brain mask list does not correspond to length of input func file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of brain mask list does not correspond to length of input func file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 mask_list = mask
                 mask = None
         elif isinstance(mask, list) and dwi_file_list:
             if len(mask) != len(dwi_file_list):
-                print("Error: Length of brain mask list does not correspond to length of input dwi file list.")
-                retval['return_code'] = 1
+                print(
+                    "Error: Length of brain mask list does not correspond to length of input dwi file list."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 mask_list = mask
@@ -978,44 +1206,98 @@ def build_workflow(args, retval):
         max_thr = None
         step_thr = None
 
-    if (k_list is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is not None):
+    if (
+        (k_list is not None)
+        and (k is None)
+        and (clust_mask_list is not None)
+        and (clust_type_list is not None)
+    ):
         k_clustering = 8
-    elif (k is not None) and (k_list is None) and (clust_mask_list is not None) and (clust_type_list is not None):
+    elif (
+        (k is not None)
+        and (k_list is None)
+        and (clust_mask_list is not None)
+        and (clust_type_list is not None)
+    ):
         k_clustering = 7
-    elif (k_list is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is not None):
+    elif (
+        (k_list is not None)
+        and (k is None)
+        and (clust_mask_list is None)
+        and (clust_type_list is not None)
+    ):
         k_clustering = 6
-    elif (k is not None) and (k_list is None) and (clust_mask_list is None) and (clust_type_list is not None):
+    elif (
+        (k is not None)
+        and (k_list is None)
+        and (clust_mask_list is None)
+        and (clust_type_list is not None)
+    ):
         k_clustering = 5
-    elif (k_list is not None) and (k is None) and (clust_mask_list is not None) and (clust_type_list is None):
+    elif (
+        (k_list is not None)
+        and (k is None)
+        and (clust_mask_list is not None)
+        and (clust_type_list is None)
+    ):
         k_clustering = 4
-    elif (k is not None) and (k_list is None) and (clust_mask_list is not None) and (clust_type_list is None):
+    elif (
+        (k is not None)
+        and (k_list is None)
+        and (clust_mask_list is not None)
+        and (clust_type_list is None)
+    ):
         k_clustering = 3
-    elif (k_list is not None) and (k is None) and (clust_mask_list is None) and (clust_type_list is None):
+    elif (
+        (k_list is not None)
+        and (k is None)
+        and (clust_mask_list is None)
+        and (clust_type_list is None)
+    ):
         k_clustering = 2
-    elif (k is not None) and (k_list is None) and (clust_mask_list is None) and (clust_type_list is None):
+    elif (
+        (k is not None)
+        and (k_list is None)
+        and (clust_mask_list is None)
+        and (clust_type_list is None)
+    ):
         k_clustering = 1
     else:
         k_clustering = 0
 
-    if func_file_list or dwi_file_list or multi_subject_graph or multi_subject_multigraph:
-        print('Running workflow of workflows across multiple subjects:')
+    if (
+        func_file_list
+        or dwi_file_list
+        or multi_subject_graph
+        or multi_subject_multigraph
+    ):
+        print("Running workflow of workflows across multiple subjects:")
     elif func_file_list is None and dwi_file_list is None:
-        print('Running workflow for single subject:')
+        print("Running workflow for single subject:")
     print(str(ID))
 
-    if graph is None and multi_graph is None and multi_subject_graph is None and multi_subject_multigraph is None:
+    if (
+        graph is None
+        and multi_graph is None
+        and multi_subject_graph is None
+        and multi_subject_multigraph is None
+    ):
         if network is not None:
             print(f"\nRunning pipeline for 1 RSN: {network}")
         elif multi_nets is not None:
             network = None
-            print(f"\nIterating pipeline across {len(multi_nets)} RSN\'s: "
-                  f"{str(', '.join(str(n) for n in multi_nets))}...")
+            print(
+                f"\nIterating pipeline across {len(multi_nets)} RSN's: "
+                f"{str(', '.join(str(n) for n in multi_nets))}..."
+            )
         else:
             print("\nUsing whole-brain pipeline...")
 
         if node_size_list:
-            print(f"\nGrowing spherical nodes across multiple radius sizes: "
-                  f"{str(', '.join(str(n) for n in node_size_list))}...")
+            print(
+                f"\nGrowing spherical nodes across multiple radius sizes: "
+                f"{str(', '.join(str(n) for n in node_size_list))}..."
+            )
             node_size = None
         elif parc is True:
             print("\nUsing parcels as nodes...")
@@ -1026,64 +1308,74 @@ def build_workflow(args, retval):
 
         if func_file or func_file_list:
             if smooth_list:
-                print(f"\nApplying smoothing to node signal at multiple FWHM mm values: "
-                      f"{str(', '.join(str(n) for n in smooth_list))}...")
+                print(
+                    f"\nApplying smoothing to node signal at multiple FWHM mm values: "
+                    f"{str(', '.join(str(n) for n in smooth_list))}...")
             elif float(smooth) > 0:
-                print(f"\nApplying smoothing to node signal at: {smooth}FWHM mm...")
+                print(
+                    f"\nApplying smoothing to node signal at: {smooth}FWHM mm...")
             else:
                 smooth = 0
 
             if hpass_list:
-                print(f"\nApplying high-pass filter to node signal at multiple Hz values: "
-                      f"{str(', '.join(str(n) for n in hpass_list))}...")
+                print(
+                    f"\nApplying high-pass filter to node signal at multiple Hz values: "
+                    f"{str(', '.join(str(n) for n in hpass_list))}...")
             elif hpass is not None:
-                print(f"\nApplying high-pass filter to node signal at: {hpass}Hz...")
+                print(
+                    f"\nApplying high-pass filter to node signal at: {hpass}Hz...")
             else:
                 hpass = None
 
             if extract_strategy_list:
-                print(f"\nExtracting node signal using multiple strategies: "
-                      f"{str(', '.join(str(n) for n in extract_strategy_list))}...")
+                print(
+                    f"\nExtracting node signal using multiple strategies: "
+                    f"{str(', '.join(str(n) for n in extract_strategy_list))}...")
             else:
-                print(f"\nExtracting node signal using a {extract_strategy} strategy...")
+                print(
+                    f"\nExtracting node signal using a {extract_strategy} strategy..."
+                )
 
         if conn_model_list:
-            print(f"\nIterating graph estimation across multiple connectivity models: "
-                  f"{str(', '.join(str(n) for n in conn_model_list))}...")
+            print(
+                f"\nIterating graph estimation across multiple connectivity models: "
+                f"{str(', '.join(str(n) for n in conn_model_list))}...")
             conn_model = None
         else:
             print(f"\nUsing connectivity model: {conn_model}")
 
     elif graph or multi_graph or multi_subject_graph or multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
-        network = 'custom_graph'
-        roi = 'None'
+
+        network = "custom_graph"
+        roi = "None"
         k_clustering = 0
-        node_size = 'None'
-        hpass = 'None'
+        node_size = "None"
+        hpass = "None"
         if not conn_model:
-            conn_model = 'None'
+            conn_model = "None"
 
     if func_file or func_file_list:
-        if (uatlas is not None) and (k_clustering == 0) and (user_atlas_list is None):
-            atlas_par = uatlas.split('/')[-1].split('.')[0]
+        if (uatlas is not None) and (
+                k_clustering == 0) and (user_atlas_list is None):
+            atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"\nUser atlas: {atlas_par}")
         elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
-            atlas_par = uatlas.split('/')[-1].split('.')[0]
+            atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"\nUser atlas: {atlas_par}")
         elif user_atlas_list is not None:
-            print('\nIterating across multiple user atlases...')
+            print("\nIterating across multiple user atlases...")
             if func_file_list:
                 for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split('/')[-1].split('.')[0]
+                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
                     print(atlas_par)
             else:
                 for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split('/')[-1].split('.')[0]
+                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
                     print(atlas_par)
 
         if k_clustering == 1:
-            cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+            cl_mask_name = op.basename(clust_mask).split(".nii")[0]
             atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
             print(f"\nCluster atlas: {atlas_clust}")
             print("\nClustering within mask at a single resolution...")
@@ -1091,12 +1383,12 @@ def build_workflow(args, retval):
             print("\nClustering within mask at multiple resolutions...")
             if func_file_list:
                 for _k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+                    cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                     print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _k in k_list:
-                    cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+                    cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                     print(f"Cluster atlas: {atlas_clust}")
             k = None
@@ -1104,12 +1396,12 @@ def build_workflow(args, retval):
             print("\nClustering within multiple masks at a single resolution...")
             if func_file_list:
                 for _clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                    cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
                     print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_mask in clust_mask_list:
-                    cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                    cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
                     print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
@@ -1118,164 +1410,220 @@ def build_workflow(args, retval):
             if func_file_list:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(
+                            _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(
+                            _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             k = None
         elif k_clustering == 5:
             for _clust_type in clust_type_list:
-                cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+                cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                 atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
                 print(f"\nCluster atlas: {atlas_clust}")
-                print("\nClustering within mask at a single resolution using multiple clustering methods...")
+                print(
+                    "\nClustering within mask at a single resolution using multiple clustering methods..."
+                )
             clust_type = None
         elif k_clustering == 6:
-            print("\nClustering within mask at multiple resolutions using multiple clustering methods...")
+            print(
+                "\nClustering within mask at multiple resolutions using multiple clustering methods..."
+            )
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             clust_type = None
             k = None
         elif k_clustering == 7:
-            print("\nClustering within multiple masks at a single resolution using multiple clustering methods...")
+            print(
+                "\nClustering within multiple masks at a single resolution using multiple clustering methods..."
+            )
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(
+                            _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
                         print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                        cl_mask_name = op.basename(
+                            _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
                         print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             clust_type = None
         elif k_clustering == 8:
-            print("\nClustering within multiple masks at multiple resolutions using multiple clustering methods...")
+            print(
+                "\nClustering within multiple masks at multiple resolutions using multiple clustering methods..."
+            )
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
-                            cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                            cl_mask_name = op.basename(
+                                _clust_mask).split(".nii")[0]
                             atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
                             print(f"Cluster atlas: {atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         for _k in k_list:
-                            cl_mask_name = op.basename(_clust_mask).split('.nii')[0]
+                            cl_mask_name = op.basename(
+                                _clust_mask).split(".nii")[0]
                             atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
                             print(f"Cluster atlas: {atlas_clust}")
             clust_mask = None
             clust_type = None
             k = None
-        elif (user_atlas_list is not None or uatlas is not None) and (k_clustering == 4 or
-                                                                      k_clustering == 3 or
-                                                                      k_clustering == 2 or
-                                                                      k_clustering == 1) and (atlas is None):
-            print('Error: the -ua flag cannot be used alone with the clustering option. Use the `-cm` flag instead.')
-            retval['return_code'] = 1
+        elif (
+            (user_atlas_list is not None or uatlas is not None)
+            and (
+                k_clustering == 4
+                or k_clustering == 3
+                or k_clustering == 2
+                or k_clustering == 1
+            )
+            and (atlas is None)
+        ):
+            print(
+                "Error: the -ua flag cannot be used alone with the clustering option. Use the `-cm` flag instead."
+            )
+            retval["return_code"] = 1
             return retval
 
         if multi_atlas is not None:
-            print('\nIterating functional connectometry across multiple predefined atlases...')
+            print(
+                "\nIterating functional connectometry across multiple predefined atlases..."
+            )
             if func_file_list:
                 for _func_file in func_file_list:
                     for _atlas in multi_atlas:
-                        if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
-                                               nilearn_prob_atlases):
-                            print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
-                            retval['return_code'] = 1
+                        if (parc is True) and (
+                            _atlas in nilearn_coord_atlases
+                            or _atlas in nilearn_prob_atlases
+                        ):
+                            print(
+                                f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                            )
+                            retval["return_code"] = 1
                             return retval
                         else:
                             print(_atlas)
             else:
                 for _atlas in multi_atlas:
-                    if (parc is True) and (_atlas in nilearn_coord_atlases or _atlas in
-                                           nilearn_prob_atlases):
-                        print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
-                        retval['return_code'] = 1
+                    if (parc is True) and (
+                        _atlas in nilearn_coord_atlases
+                        or _atlas in nilearn_prob_atlases
+                    ):
+                        print(
+                            f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                        )
+                        retval["return_code"] = 1
                         return retval
                     else:
                         print(_atlas)
         elif atlas is not None:
-            if (parc is True) and (atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases):
-                print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag.")
-                retval['return_code'] = 1
+            if (parc is True) and (
+                atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases
+            ):
+                print(
+                    f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                )
+                retval["return_code"] = 1
                 return retval
         else:
-            if (uatlas is None) and (k == 0) and (user_atlas_list is None) and (k_list is None) and \
-                    (atlas is None) and (multi_atlas is None):
-                print('\nERROR: No atlas specified!')
-                retval['return_code'] = 1
+            if (
+                (uatlas is None)
+                and (k == 0)
+                and (user_atlas_list is None)
+                and (k_list is None)
+                and (atlas is None)
+                and (multi_atlas is None)
+            ):
+                print("\nERROR: No atlas specified!")
+                retval["return_code"] = 1
                 return retval
             else:
                 pass
 
     if dwi_file or dwi_file_list:
-        if (conn_model == 'tensor') and (directget == 'prob'):
-            print('Cannot perform probabilistic tracking with tensor model estimation...')
-            retval['return_code'] = 1
+        if (conn_model == "tensor") and (directget == "prob"):
+            print(
+                "Cannot perform probabilistic tracking with tensor model estimation..."
+            )
+            retval["return_code"] = 1
             return retval
 
-        if (track_type == 'particle') and (conn_model == 'tensor' or tiss_class != 'cmc'):
-            print('Can only perform particle tracking with the `cmc` tissue classsifier and diffusion models '
-                  'other than tensor...')
-            retval['return_code'] = 1
+        if (track_type == "particle") and (
+            conn_model == "tensor" or tiss_class != "cmc"
+        ):
+            print(
+                "Can only perform particle tracking with the `cmc` tissue classsifier and diffusion models "
+                "other than tensor...")
+            retval["return_code"] = 1
             return retval
 
         if user_atlas_list:
-            print('\nIterating across multiple user atlases...')
+            print("\nIterating across multiple user atlases...")
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
                     for _uatlas in user_atlas_list:
-                        atlas_par = _uatlas.split('/')[-1].split('.')[0]
+                        atlas_par = _uatlas.split("/")[-1].split(".")[0]
                         print(atlas_par)
             else:
                 for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split('/')[-1].split('.')[0]
+                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
                     print(atlas_par)
         if multi_atlas:
-            print('\nIterating structural connectometry across multiple predefined atlases...')
+            print(
+                "\nIterating structural connectometry across multiple predefined atlases..."
+            )
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
                     for _atlas in multi_atlas:
-                        if (parc is True) and (_atlas in nilearn_coord_atlases):
-                            print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag.")
-                            retval['return_code'] = 1
+                        if (parc is True) and (
+                                _atlas in nilearn_coord_atlases):
+                            print(
+                                f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag."
+                            )
+                            retval["return_code"] = 1
                             return retval
                         else:
                             print(_atlas)
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
-                        print(f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag.")
-                        retval['return_code'] = 1
+                        print(
+                            f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag."
+                        )
+                        retval["return_code"] = 1
                         return retval
                     else:
                         print(_atlas)
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
-                print(f"\nERROR: {atlas} is a coordinate atlas and must be used with the -spheres flag.")
-                retval['return_code'] = 1
+                print(
+                    f"\nERROR: {atlas} is a coordinate atlas and must be used with the -spheres flag."
+                )
+                retval["return_code"] = 1
                 return retval
             else:
                 print(f"\nUsing curated atlas: {atlas}")
@@ -1286,10 +1634,11 @@ def build_workflow(args, retval):
             print(f"\nUsing {min_length}mm minimum streamline length...")
 
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
-        print('\nRunning dmri connectometry only...')
+        print("\nRunning dmri connectometry only...")
         if dwi_file_list:
-            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
-                                                                    anat_file_list)):
+            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
+                zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
+            ):
                 print(f"Diffusion-Weighted Image:\n {_dwi_file}")
                 print(f"B-Values:\n {_fbval}")
                 print(f"B-Vectors:\n {_fbvec}")
@@ -1315,7 +1664,7 @@ def build_workflow(args, retval):
         clust_type_list = None
         multimodal = False
     elif (func_file or func_file_list) and not (dwi_file or dwi_file_list):
-        print('\nRunning fmri connectometry only...')
+        print("\nRunning fmri connectometry only...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"BOLD Image: {_func_file}")
@@ -1331,7 +1680,7 @@ def build_workflow(args, retval):
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
-        print('\nRunning joint fMRI-dMRI connectometry...')
+        print("\nRunning joint fMRI-dMRI connectometry...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"BOLD Image: {_func_file}")
@@ -1345,8 +1694,9 @@ def build_workflow(args, retval):
             print(f"BOLD Confound Regressors: {conf}")
 
         if dwi_file_list:
-            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(zip(dwi_file_list, fbval_list, fbvec_list,
-                                                                    anat_file_list)):
+            for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
+                zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
+            ):
                 print(f"Diffusion-Weighted Image:\n {_dwi_file}")
                 print(f"B-Values:\n {_fbval}")
                 print(f"B-Vectors:\n {_fbvec}")
@@ -1372,68 +1722,70 @@ def build_workflow(args, retval):
                 print(f"Brain Mask Image:\n{mask}")
         else:
             print(f"Brain Mask Image:\n{mask}")
-    print('\n-------------------------------------------------------------------------\n\n')
+    print(
+        "\n-------------------------------------------------------------------------\n\n"
+    )
 
     # Variable tracking
-    retval['ID'] = ID
-    retval['outdir'] = outdir
-    retval['atlas'] = atlas
-    retval['network'] = network
-    retval['node_size'] = node_size
-    retval['node_size_list'] = node_size_list
-    retval['smooth'] = smooth
-    retval['smooth_list'] = smooth_list
-    retval['hpass'] = hpass
-    retval['hpass_list'] = hpass_list
-    retval['extract_strategy'] = extract_strategy
-    retval['extract_strategy_list'] = extract_strategy_list
-    retval['roi'] = roi
-    retval['thr'] = thr
-    retval['uatlas'] = uatlas
-    retval['conn_model'] = conn_model
-    retval['dens_thresh'] = dens_thresh
-    retval['conf'] = conf
-    retval['plot_switch'] = plot_switch
-    retval['multi_thr'] = multi_thr
-    retval['multi_atlas'] = multi_atlas
-    retval['min_thr'] = min_thr
-    retval['max_thr'] = max_thr
-    retval['step_thr'] = step_thr
-    retval['spheres'] = spheres
-    retval['ref_txt'] = ref_txt
-    retval['procmem'] = procmem
-    retval['waymask'] = waymask
-    retval['k'] = k
-    retval['clust_mask'] = clust_mask
-    retval['k_list'] = k_list
-    retval['k_clustering'] = k_clustering
-    retval['user_atlas_list'] = user_atlas_list
-    retval['clust_mask_list'] = clust_mask_list
-    retval['clust_type'] = clust_type
-    retval['local_corr'] = local_corr
-    retval['clust_type_list'] = clust_type_list
-    retval['prune'] = prune
-    retval['mask'] = mask
-    retval['norm'] = norm
-    retval['binary'] = binary
-    retval['embed'] = embed
-    retval['multiplex'] = multiplex
-    retval['track_type'] = track_type
-    retval['tiss_class'] = tiss_class
-    retval['directget'] = directget
-    retval['multi_directget'] = multi_directget
-    retval['func_file'] = func_file
-    retval['dwi_file'] = dwi_file
-    retval['fbval'] = fbval
-    retval['fbvec'] = fbvec
-    retval['anat_file'] = anat_file
-    retval['func_file_list'] = func_file_list
-    retval['dwi_file_list'] = dwi_file_list
-    retval['mask_list'] = mask_list
-    retval['fbvec_list'] = fbvec_list
-    retval['fbval_list'] = fbval_list
-    retval['conf_list'] = conf_list
-    retval['anat_file_list'] = anat_file_list
+    retval["ID"] = ID
+    retval["outdir"] = outdir
+    retval["atlas"] = atlas
+    retval["network"] = network
+    retval["node_size"] = node_size
+    retval["node_size_list"] = node_size_list
+    retval["smooth"] = smooth
+    retval["smooth_list"] = smooth_list
+    retval["hpass"] = hpass
+    retval["hpass_list"] = hpass_list
+    retval["extract_strategy"] = extract_strategy
+    retval["extract_strategy_list"] = extract_strategy_list
+    retval["roi"] = roi
+    retval["thr"] = thr
+    retval["uatlas"] = uatlas
+    retval["conn_model"] = conn_model
+    retval["dens_thresh"] = dens_thresh
+    retval["conf"] = conf
+    retval["plot_switch"] = plot_switch
+    retval["multi_thr"] = multi_thr
+    retval["multi_atlas"] = multi_atlas
+    retval["min_thr"] = min_thr
+    retval["max_thr"] = max_thr
+    retval["step_thr"] = step_thr
+    retval["spheres"] = spheres
+    retval["ref_txt"] = ref_txt
+    retval["procmem"] = procmem
+    retval["waymask"] = waymask
+    retval["k"] = k
+    retval["clust_mask"] = clust_mask
+    retval["k_list"] = k_list
+    retval["k_clustering"] = k_clustering
+    retval["user_atlas_list"] = user_atlas_list
+    retval["clust_mask_list"] = clust_mask_list
+    retval["clust_type"] = clust_type
+    retval["local_corr"] = local_corr
+    retval["clust_type_list"] = clust_type_list
+    retval["prune"] = prune
+    retval["mask"] = mask
+    retval["norm"] = norm
+    retval["binary"] = binary
+    retval["embed"] = embed
+    retval["multiplex"] = multiplex
+    retval["track_type"] = track_type
+    retval["tiss_class"] = tiss_class
+    retval["directget"] = directget
+    retval["multi_directget"] = multi_directget
+    retval["func_file"] = func_file
+    retval["dwi_file"] = dwi_file
+    retval["fbval"] = fbval
+    retval["fbvec"] = fbvec
+    retval["anat_file"] = anat_file
+    retval["func_file_list"] = func_file_list
+    retval["dwi_file_list"] = dwi_file_list
+    retval["mask_list"] = mask_list
+    retval["fbvec_list"] = fbvec_list
+    retval["fbval_list"] = fbval_list
+    retval["conf_list"] = conf_list
+    retval["anat_file_list"] = anat_file_list
 
     # print('\n\n\n\n\n')
     # print("%s%s" % ('ID: ', ID))
@@ -1501,6 +1853,7 @@ def build_workflow(args, retval):
 
     # Import wf core and interfaces
     import warnings
+
     warnings.filterwarnings("ignore")
     from pynets.core.utils import collectpandasjoin
     from pynets.core.interfaces import CombineOutputs, NetworkAnalysis
@@ -1508,48 +1861,156 @@ def build_workflow(args, retval):
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector
 
-    def init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
-                               multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
-                               multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt, procmem, k,
-                               clust_mask, k_list, k_clustering, user_atlas_list, clust_mask_list, prune,
-                               node_size_list, graph, conn_model_list, min_span_tree, verbose,
-                               plugin_type, use_AAL_naming, multi_graph, smooth, smooth_list, disp_filt, clust_type,
-                               clust_type_list, mask, norm, binary, fbval, fbvec, target_samples,
-                               curv_thr_list, step_list, overlap_thr, track_type, min_length, maxcrossing, directget,
-                               tiss_class, runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                               hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
-                               extract_strategy_list, outdir):
+    def init_wf_single_subject(
+        ID,
+        func_file,
+        atlas,
+        network,
+        node_size,
+        roi,
+        thr,
+        uatlas,
+        multi_nets,
+        conn_model,
+        dens_thresh,
+        conf,
+        plot_switch,
+        dwi_file,
+        multi_thr,
+        multi_atlas,
+        min_thr,
+        max_thr,
+        step_thr,
+        anat_file,
+        parc,
+        ref_txt,
+        procmem,
+        k,
+        clust_mask,
+        k_list,
+        k_clustering,
+        user_atlas_list,
+        clust_mask_list,
+        prune,
+        node_size_list,
+        graph,
+        conn_model_list,
+        min_span_tree,
+        verbose,
+        plugin_type,
+        use_AAL_naming,
+        multi_graph,
+        smooth,
+        smooth_list,
+        disp_filt,
+        clust_type,
+        clust_type_list,
+        mask,
+        norm,
+        binary,
+        fbval,
+        fbvec,
+        target_samples,
+        curv_thr_list,
+        step_list,
+        overlap_thr,
+        track_type,
+        min_length,
+        maxcrossing,
+        directget,
+        tiss_class,
+        runtime_dict,
+        execution_dict,
+        embed,
+        multi_directget,
+        multimodal,
+        hpass,
+        hpass_list,
+        vox_size,
+        multiplex,
+        waymask,
+        local_corr,
+        min_length_list,
+        extract_strategy,
+        extract_strategy_list,
+        outdir,
+    ):
         """A function interface for generating a single-subject workflow"""
         import warnings
+
         warnings.filterwarnings("ignore")
         from time import strftime
 
         if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(name=f"wf_single_sub_{ID}_fmri_{strftime('%Y%m%d_%H%M%S')}")
+            wf = pe.Workflow(
+                name=f"wf_single_sub_{ID}_fmri_{strftime('%Y%m%d_%H%M%S')}"
+            )
         elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(name=f"wf_single_sub_{ID}_dmri_{strftime('%Y%m%d_%H%M%S')}")
+            wf = pe.Workflow(
+                name=f"wf_single_sub_{ID}_dmri_{strftime('%Y%m%d_%H%M%S')}"
+            )
         else:
-            wf = pe.Workflow(name=f"wf_single_sub_{ID}_{strftime('%Y%m%d_%H%M%S')}")
-        import_list = ["import sys", "import os", "import numpy as np", "import networkx as nx", "import indexed_gzip",
-                       "import nibabel as nib", "import warnings", "warnings.filterwarnings(\"ignore\")",
-                       "np.warnings.filterwarnings(\"ignore\")", "warnings.simplefilter(\"ignore\")",
-                       "from pathlib import Path", "import yaml"]
-        inputnode = pe.Node(niu.IdentityInterface(fields=['ID', 'network', 'thr', 'node_size', 'roi', 'multi_nets',
-                                                          'conn_model', 'plot_switch', 'graph', 'prune',
-                                                          'norm', 'binary', 'multimodal']),
-                            name='inputnode', imports=import_list)
+            wf = pe.Workflow(
+                name=f"wf_single_sub_{ID}_{strftime('%Y%m%d_%H%M%S')}")
+        import_list = [
+            "import sys",
+            "import os",
+            "import numpy as np",
+            "import networkx as nx",
+            "import indexed_gzip",
+            "import nibabel as nib",
+            "import warnings",
+            'warnings.filterwarnings("ignore")',
+            'np.warnings.filterwarnings("ignore")',
+            'warnings.simplefilter("ignore")',
+            "from pathlib import Path",
+            "import yaml",
+        ]
+        inputnode = pe.Node(
+            niu.IdentityInterface(
+                fields=[
+                    "ID",
+                    "network",
+                    "thr",
+                    "node_size",
+                    "roi",
+                    "multi_nets",
+                    "conn_model",
+                    "plot_switch",
+                    "graph",
+                    "prune",
+                    "norm",
+                    "binary",
+                    "multimodal",
+                ]
+            ),
+            name="inputnode",
+            imports=import_list,
+        )
         if verbose is True:
             from nipype import config, logging
-            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'log_to_file': True,
-                                  'interface_level': 'DEBUG', 'filemanip_level': 'DEBUG'},
-                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True})
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "DEBUG",
+                    "utils_level": "DEBUG",
+                    "log_to_file": True,
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                },
+                monitoring={
+                    "enabled": True,
+                    "sample_frequency": "0.1",
+                    "summary_append": True,
+                },
+            )
             logging.update_logging(config)
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
-        execution_dict['crashdump_dir'] = str(wf.base_dir)
-        execution_dict['plugin'] = str(plugin_type)
+        execution_dict["crashdump_dir"] = str(wf.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
         cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
@@ -1570,18 +2031,78 @@ def build_workflow(args, retval):
         inputnode.inputs.multimodal = multimodal
 
         if func_file or dwi_file:
-            meta_wf = workflow_selector(func_file, ID, atlas, network, node_size, roi, thr, uatlas,
-                                        multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
-                                        anat_file, parc, ref_txt, procmem, multi_thr, multi_atlas, max_thr, min_thr,
-                                        step_thr, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                        clust_mask_list, prune, node_size_list, conn_model_list,
-                                        min_span_tree, verbose, plugin_type, use_AAL_naming, smooth, smooth_list,
-                                        disp_filt, clust_type, clust_type_list, mask, norm, binary,
-                                        fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                                        track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
-                                        execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                        vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
-                                        extract_strategy_list, outdir)
+            meta_wf = workflow_selector(
+                func_file,
+                ID,
+                atlas,
+                network,
+                node_size,
+                roi,
+                thr,
+                uatlas,
+                multi_nets,
+                conn_model,
+                dens_thresh,
+                conf,
+                plot_switch,
+                dwi_file,
+                anat_file,
+                parc,
+                ref_txt,
+                procmem,
+                multi_thr,
+                multi_atlas,
+                max_thr,
+                min_thr,
+                step_thr,
+                k,
+                clust_mask,
+                k_list,
+                k_clustering,
+                user_atlas_list,
+                clust_mask_list,
+                prune,
+                node_size_list,
+                conn_model_list,
+                min_span_tree,
+                verbose,
+                plugin_type,
+                use_AAL_naming,
+                smooth,
+                smooth_list,
+                disp_filt,
+                clust_type,
+                clust_type_list,
+                mask,
+                norm,
+                binary,
+                fbval,
+                fbvec,
+                target_samples,
+                curv_thr_list,
+                step_list,
+                overlap_thr,
+                track_type,
+                min_length,
+                maxcrossing,
+                directget,
+                tiss_class,
+                runtime_dict,
+                execution_dict,
+                embed,
+                multi_directget,
+                multimodal,
+                hpass,
+                hpass_list,
+                vox_size,
+                multiplex,
+                waymask,
+                local_corr,
+                min_length_list,
+                extract_strategy,
+                extract_strategy_list,
+                outdir,
+            )
             meta_wf._n_procs = procmem[0]
             meta_wf._mem_gb = procmem[1]
             meta_wf.n_procs = procmem[0]
@@ -1591,118 +2112,267 @@ def build_workflow(args, retval):
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
             wf_selected = f"fmri_connectometry_{ID}"
-            for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
+            for node_name in (wf.get_node(meta_wf.name).get_node(
+                    wf_selected).list_node_names()):
                 if node_name in runtime_dict:
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
-                        runtime_dict[node_name][0]
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
-                        runtime_dict[node_name][1]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                        node_name
+                    )._n_procs = runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                        node_name
+                    )._mem_gb = runtime_dict[node_name][1]
 
         if dwi_file:
             wf_selected = f"dmri_connectometry_{ID}"
-            for node_name in wf.get_node(meta_wf.name).get_node(wf_selected).list_node_names():
+            for node_name in (wf.get_node(meta_wf.name).get_node(
+                    wf_selected).list_node_names()):
                 if node_name in runtime_dict:
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._n_procs = \
-                        runtime_dict[node_name][0]
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(node_name)._mem_gb = \
-                        runtime_dict[node_name][1]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                        node_name
+                    )._n_procs = runtime_dict[node_name][0]
+                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                        node_name
+                    )._mem_gb = runtime_dict[node_name][1]
 
         if func_file or dwi_file:
             wf.get_node(meta_wf.name)._n_procs = procmem[0]
             wf.get_node(meta_wf.name)._mem_gb = procmem[1]
             wf.get_node(meta_wf.name).n_procs = procmem[0]
             wf.get_node(meta_wf.name).mem_gb = procmem[1]
-            wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[0]
-            wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
-            wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(
+                wf_selected)._n_procs = procmem[0]
+            wf.get_node(meta_wf.name).get_node(
+                wf_selected)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(
+                wf_selected).n_procs = procmem[0]
             wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
-        net_mets_node = pe.MapNode(interface=NetworkAnalysis(), name="NetworkAnalysis",
-                                   iterfield=['ID', 'network', 'thr', 'conn_model', 'est_path',
-                                              'roi', 'prune', 'norm', 'binary'], nested=True,
-                                   imports=import_list)
+        net_mets_node = pe.MapNode(
+            interface=NetworkAnalysis(),
+            name="NetworkAnalysis",
+            iterfield=[
+                "ID",
+                "network",
+                "thr",
+                "conn_model",
+                "est_path",
+                "roi",
+                "prune",
+                "norm",
+                "binary",
+            ],
+            nested=True,
+            imports=import_list,
+        )
         net_mets_node.synchronize = True
         net_mets_node._n_procs = 1
         net_mets_node._mem_gb = 4
 
-        collect_pd_list_net_csv_node = pe.Node(niu.Function(input_names=['net_mets_csv'],
-                                                            output_names=['net_mets_csv_out'],
-                                                            function=collectpandasjoin),
-                                               name="AggregateOutputs",
-                                               imports=import_list)
+        collect_pd_list_net_csv_node = pe.Node(
+            niu.Function(
+                input_names=["net_mets_csv"],
+                output_names=["net_mets_csv_out"],
+                function=collectpandasjoin,
+            ),
+            name="AggregateOutputs",
+            imports=import_list,
+        )
         collect_pd_list_net_csv_node._mem_gb = 2
 
         # Combine dataframes across models
-        combine_pandas_dfs_node = pe.Node(interface=CombineOutputs(), name="CombineOutputs", imports=import_list)
+        combine_pandas_dfs_node = pe.Node(
+            interface=CombineOutputs(),
+            name="CombineOutputs",
+            imports=import_list)
         combine_pandas_dfs_node._n_procs = 1
         combine_pandas_dfs_node._mem_gb = 2
 
-        final_outputnode = pe.Node(niu.IdentityInterface(fields=['combination_complete']), name='final_outputnode')
+        final_outputnode = pe.Node(
+            niu.IdentityInterface(fields=["combination_complete"]),
+            name="final_outputnode",
+        )
 
         # Raw graph case
         if graph or multi_graph:
             from pynets.core.workflows import raw_graph_workflow
+
             if multi_graph:
-                print('\nUsing multiple custom input graphs...')
+                print("\nUsing multiple custom input graphs...")
                 conn_model_list = []
                 i = 1
                 for graph in multi_graph:
                     conn_model_list.append(str(i))
-                    graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
+                    graph_name = op.basename(graph).split(
+                        op.splitext(graph)[1])[0]
                     print(graph_name)
                     atlas = f"{graph_name}_{ID}"
                     do_dir_path(atlas, outdir)
                     i = i + 1
             else:
                 graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
-                print('\nUsing single custom graph input...')
+                print("\nUsing single custom graph input...")
                 print(graph_name)
                 atlas = f"{graph_name}_{ID}"
                 do_dir_path(atlas, outdir)
-            wf = raw_graph_workflow(multi_thr, thr, multi_graph, graph, ID, network, conn_model, roi, prune, norm,
-                                    binary, min_span_tree, dens_thresh, disp_filt, min_thr, max_thr, step_thr, wf,
-                                    net_mets_node)
+            wf = raw_graph_workflow(
+                multi_thr,
+                thr,
+                multi_graph,
+                graph,
+                ID,
+                network,
+                conn_model,
+                roi,
+                prune,
+                norm,
+                binary,
+                min_span_tree,
+                dens_thresh,
+                disp_filt,
+                min_thr,
+                max_thr,
+                step_thr,
+                wf,
+                net_mets_node,
+            )
         else:
-            wf.connect([
-                (meta_wf.get_node('pass_meta_outs_node'), net_mets_node, [('est_path_iterlist', 'est_path'),
-                                                                          ('network_iterlist', 'network'),
-                                                                          ('thr_iterlist', 'thr'),
-                                                                          ('ID_iterlist', 'ID'),
-                                                                          ('conn_model_iterlist', 'conn_model'),
-                                                                          ('roi_iterlist', 'roi'),
-                                                                          ('prune_iterlist', 'prune'),
-                                                                          ('norm_iterlist', 'norm'),
-                                                                          ('binary_iterlist', 'binary')])
-            ])
+            wf.connect(
+                [
+                    (
+                        meta_wf.get_node("pass_meta_outs_node"),
+                        net_mets_node,
+                        [
+                            ("est_path_iterlist", "est_path"),
+                            ("network_iterlist", "network"),
+                            ("thr_iterlist", "thr"),
+                            ("ID_iterlist", "ID"),
+                            ("conn_model_iterlist", "conn_model"),
+                            ("roi_iterlist", "roi"),
+                            ("prune_iterlist", "prune"),
+                            ("norm_iterlist", "norm"),
+                            ("binary_iterlist", "binary"),
+                        ],
+                    )
+                ]
+            )
 
-        wf.connect([
-            (inputnode, combine_pandas_dfs_node, [('network', 'network'),
-                                                  ('ID', 'ID'),
-                                                  ('plot_switch', 'plot_switch'),
-                                                  ('multi_nets', 'multi_nets'),
-                                                  ('multimodal', 'multimodal')]),
-            (net_mets_node, collect_pd_list_net_csv_node, [('out_path_neat', 'net_mets_csv')]),
-            (collect_pd_list_net_csv_node, combine_pandas_dfs_node, [('net_mets_csv_out', 'net_mets_csv_list')]),
-            (combine_pandas_dfs_node, final_outputnode, [('combination_complete', 'combination_complete')])
-        ])
+        wf.connect(
+            [
+                (
+                    inputnode,
+                    combine_pandas_dfs_node,
+                    [
+                        ("network", "network"),
+                        ("ID", "ID"),
+                        ("plot_switch", "plot_switch"),
+                        ("multi_nets", "multi_nets"),
+                        ("multimodal", "multimodal"),
+                    ],
+                ),
+                (
+                    net_mets_node,
+                    collect_pd_list_net_csv_node,
+                    [("out_path_neat", "net_mets_csv")],
+                ),
+                (
+                    collect_pd_list_net_csv_node,
+                    combine_pandas_dfs_node,
+                    [("net_mets_csv_out", "net_mets_csv_list")],
+                ),
+                (
+                    combine_pandas_dfs_node,
+                    final_outputnode,
+                    [("combination_complete", "combination_complete")],
+                ),
+            ]
+        )
         return wf
 
     # Multi-subject pipeline
-    def wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list, conf_list,
-                         anat_file_list, atlas, network, node_size, roi, thr, uatlas, multi_nets, conn_model,
-                         dens_thresh, conf, plot_switch, dwi_file, multi_thr, multi_atlas, min_thr,
-                         max_thr, step_thr, anat_file, parc, ref_txt, procmem, k, clust_mask, k_list,
-                         k_clustering, user_atlas_list, clust_mask_list, prune, node_size_list,
-                         conn_model_list, min_span_tree, verbose, plugin_type, use_AAL_naming,
-                         multi_subject_graph, multi_subject_multigraph,
-                         smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
-                         binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr, track_type,
-                         min_length, maxcrossing, directget, tiss_class, runtime_dict, execution_dict, embed,
-                         multi_directget, multimodal, hpass, hpass_list, vox_size, multiplex, waymask, local_corr,
-                         min_length_list, extract_strategy, extract_strategy_list, outdir):
+    def wf_multi_subject(
+        ID,
+        func_file_list,
+        dwi_file_list,
+        mask_list,
+        fbvec_list,
+        fbval_list,
+        conf_list,
+        anat_file_list,
+        atlas,
+        network,
+        node_size,
+        roi,
+        thr,
+        uatlas,
+        multi_nets,
+        conn_model,
+        dens_thresh,
+        conf,
+        plot_switch,
+        dwi_file,
+        multi_thr,
+        multi_atlas,
+        min_thr,
+        max_thr,
+        step_thr,
+        anat_file,
+        parc,
+        ref_txt,
+        procmem,
+        k,
+        clust_mask,
+        k_list,
+        k_clustering,
+        user_atlas_list,
+        clust_mask_list,
+        prune,
+        node_size_list,
+        conn_model_list,
+        min_span_tree,
+        verbose,
+        plugin_type,
+        use_AAL_naming,
+        multi_subject_graph,
+        multi_subject_multigraph,
+        smooth,
+        smooth_list,
+        disp_filt,
+        clust_type,
+        clust_type_list,
+        mask,
+        norm,
+        binary,
+        fbval,
+        fbvec,
+        target_samples,
+        curv_thr_list,
+        step_list,
+        overlap_thr,
+        track_type,
+        min_length,
+        maxcrossing,
+        directget,
+        tiss_class,
+        runtime_dict,
+        execution_dict,
+        embed,
+        multi_directget,
+        multimodal,
+        hpass,
+        hpass_list,
+        vox_size,
+        multiplex,
+        waymask,
+        local_corr,
+        min_length_list,
+        extract_strategy,
+        extract_strategy_list,
+        outdir,
+    ):
         """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
+
         warnings.filterwarnings("ignore")
         from time import strftime
 
@@ -1743,36 +2413,88 @@ def build_workflow(args, retval):
                     anat_file = None
 
                 try:
-                    subj_dir = f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
-                except:
+                    subj_dir = (
+                        f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
+                    )
+                except BaseException:
                     subj_dir = f"{outdir}/{ID[i]}"
                 os.makedirs(subj_dir, exist_ok=True)
                 dir_list.append(subj_dir)
 
                 wf_single_subject = init_wf_single_subject(
-                    ID=ID[i], func_file=func_file, atlas=atlas,
-                    network=network, node_size=node_size, roi=roi, thr=thr, uatlas=uatlas,
-                    multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
-                    plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
-                    multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
-                    parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
-                    k_clustering=k_clustering, user_atlas_list=user_atlas_list,
-                    clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
-                    graph=None, conn_model_list=conn_model_list,
-                    min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type,
+                    ID=ID[i],
+                    func_file=func_file,
+                    atlas=atlas,
+                    network=network,
+                    node_size=node_size,
+                    roi=roi,
+                    thr=thr,
+                    uatlas=uatlas,
+                    multi_nets=multi_nets,
+                    conn_model=conn_model,
+                    dens_thresh=dens_thresh,
+                    conf=conf_sub,
+                    plot_switch=plot_switch,
+                    dwi_file=dwi_file,
+                    multi_thr=multi_thr,
+                    multi_atlas=multi_atlas,
+                    min_thr=min_thr,
+                    max_thr=max_thr,
+                    step_thr=step_thr,
+                    anat_file=anat_file,
+                    parc=parc,
+                    ref_txt=ref_txt,
+                    procmem=procmem,
+                    k=k,
+                    clust_mask=clust_mask,
+                    k_list=k_list,
+                    k_clustering=k_clustering,
+                    user_atlas_list=user_atlas_list,
+                    clust_mask_list=clust_mask_list,
+                    prune=prune,
+                    node_size_list=node_size_list,
+                    graph=None,
+                    conn_model_list=conn_model_list,
+                    min_span_tree=min_span_tree,
+                    verbose=verbose,
+                    plugin_type=plugin_type,
                     use_AAL_naming=use_AAL_naming,
-                    multi_graph=None, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                    clust_type=clust_type, clust_type_list=clust_type_list,
-                    mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
-                    target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
-                    overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
-                    directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict,
+                    multi_graph=None,
+                    smooth=smooth,
+                    smooth_list=smooth_list,
+                    disp_filt=disp_filt,
+                    clust_type=clust_type,
+                    clust_type_list=clust_type_list,
+                    mask=mask_sub,
+                    norm=norm,
+                    binary=binary,
+                    fbval=fbval_sub,
+                    fbvec=fbvec_sub,
+                    target_samples=target_samples,
+                    curv_thr_list=curv_thr_list,
+                    step_list=step_list,
+                    overlap_thr=overlap_thr,
+                    track_type=track_type,
+                    min_length=min_length,
+                    maxcrossing=maxcrossing,
+                    directget=directget,
+                    tiss_class=tiss_class,
+                    runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
-                    embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass,
+                    embed=embed,
+                    multi_directget=multi_directget,
+                    multimodal=multimodal,
+                    hpass=hpass,
                     hpass_list=hpass_list,
-                    vox_size=vox_size, multiplex=multiplex, waymask=waymask, local_corr=local_corr,
-                    min_length_list=min_length_list, extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list, outdir=subj_dir)
+                    vox_size=vox_size,
+                    multiplex=multiplex,
+                    waymask=waymask,
+                    local_corr=local_corr,
+                    min_length_list=min_length_list,
+                    extract_strategy=extract_strategy,
+                    extract_strategy_list=extract_strategy_list,
+                    outdir=subj_dir,
+                )
                 wf_single_subject._n_procs = procmem[0]
                 wf_single_subject._mem_gb = procmem[1]
                 wf_single_subject.n_procs = procmem[0]
@@ -1808,36 +2530,88 @@ def build_workflow(args, retval):
                     multi_graph = None
 
                 try:
-                    subj_dir = f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
-                except:
+                    subj_dir = (
+                        f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
+                    )
+                except BaseException:
                     subj_dir = f"{outdir}/{ID[i]}"
                 os.makedirs(subj_dir, exist_ok=True)
                 dir_list.append(subj_dir)
 
                 wf_single_subject = init_wf_single_subject(
-                    ID=ID[i], func_file=func_file, atlas=atlas,
-                    network=network, node_size=node_size, roi=roi, thr=thr, uatlas=uatlas,
-                    multi_nets=multi_nets, conn_model=conn_model, dens_thresh=dens_thresh, conf=conf_sub,
-                    plot_switch=plot_switch, dwi_file=dwi_file, multi_thr=multi_thr,
-                    multi_atlas=multi_atlas, min_thr=min_thr, max_thr=max_thr, step_thr=step_thr, anat_file=anat_file,
-                    parc=parc, ref_txt=ref_txt, procmem=procmem, k=k, clust_mask=clust_mask, k_list=k_list,
-                    k_clustering=k_clustering, user_atlas_list=user_atlas_list,
-                    clust_mask_list=clust_mask_list, prune=prune, node_size_list=node_size_list,
-                    graph=graph, conn_model_list=conn_model_list,
-                    min_span_tree=min_span_tree, verbose=verbose, plugin_type=plugin_type,
+                    ID=ID[i],
+                    func_file=func_file,
+                    atlas=atlas,
+                    network=network,
+                    node_size=node_size,
+                    roi=roi,
+                    thr=thr,
+                    uatlas=uatlas,
+                    multi_nets=multi_nets,
+                    conn_model=conn_model,
+                    dens_thresh=dens_thresh,
+                    conf=conf_sub,
+                    plot_switch=plot_switch,
+                    dwi_file=dwi_file,
+                    multi_thr=multi_thr,
+                    multi_atlas=multi_atlas,
+                    min_thr=min_thr,
+                    max_thr=max_thr,
+                    step_thr=step_thr,
+                    anat_file=anat_file,
+                    parc=parc,
+                    ref_txt=ref_txt,
+                    procmem=procmem,
+                    k=k,
+                    clust_mask=clust_mask,
+                    k_list=k_list,
+                    k_clustering=k_clustering,
+                    user_atlas_list=user_atlas_list,
+                    clust_mask_list=clust_mask_list,
+                    prune=prune,
+                    node_size_list=node_size_list,
+                    graph=graph,
+                    conn_model_list=conn_model_list,
+                    min_span_tree=min_span_tree,
+                    verbose=verbose,
+                    plugin_type=plugin_type,
                     use_AAL_naming=use_AAL_naming,
-                    multi_graph=multi_graph, smooth=smooth, smooth_list=smooth_list, disp_filt=disp_filt,
-                    clust_type=clust_type, clust_type_list=clust_type_list,
-                    mask=mask_sub, norm=norm, binary=binary, fbval=fbval_sub, fbvec=fbvec_sub,
-                    target_samples=target_samples, curv_thr_list=curv_thr_list, step_list=step_list,
-                    overlap_thr=overlap_thr, track_type=track_type, min_length=min_length, maxcrossing=maxcrossing,
-                    directget=directget, tiss_class=tiss_class, runtime_dict=runtime_dict,
+                    multi_graph=multi_graph,
+                    smooth=smooth,
+                    smooth_list=smooth_list,
+                    disp_filt=disp_filt,
+                    clust_type=clust_type,
+                    clust_type_list=clust_type_list,
+                    mask=mask_sub,
+                    norm=norm,
+                    binary=binary,
+                    fbval=fbval_sub,
+                    fbvec=fbvec_sub,
+                    target_samples=target_samples,
+                    curv_thr_list=curv_thr_list,
+                    step_list=step_list,
+                    overlap_thr=overlap_thr,
+                    track_type=track_type,
+                    min_length=min_length,
+                    maxcrossing=maxcrossing,
+                    directget=directget,
+                    tiss_class=tiss_class,
+                    runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
-                    embed=embed, multi_directget=multi_directget, multimodal=multimodal, hpass=hpass,
+                    embed=embed,
+                    multi_directget=multi_directget,
+                    multimodal=multimodal,
+                    hpass=hpass,
                     hpass_list=hpass_list,
-                    vox_size=vox_size, multiplex=multiplex, waymask=waymask, local_corr=local_corr,
-                    min_length_list=min_length_list, extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list, outdir=subj_dir)
+                    vox_size=vox_size,
+                    multiplex=multiplex,
+                    waymask=waymask,
+                    local_corr=local_corr,
+                    min_length_list=min_length_list,
+                    extract_strategy=extract_strategy,
+                    extract_strategy_list=extract_strategy_list,
+                    outdir=subj_dir,
+                )
                 wf_single_subject._n_procs = procmem[0]
                 wf_single_subject._mem_gb = procmem[1]
                 wf_single_subject.n_procs = procmem[0]
@@ -1849,140 +2623,309 @@ def build_workflow(args, retval):
                 wf_multi.get_node(wf_single_subject.name).mem_gb = procmem[1]
                 i = i + 1
 
-            # Restrict nested meta-meta wf resources at the level of the group wf
-            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("NetworkAnalysis")._mem_gb = 4
-            wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._n_procs = 1
-            wf_multi.get_node(wf_single_subject.name).get_node("CombineOutputs")._mem_gb = 2
+            # Restrict nested meta-meta wf resources at the level of the group
+            # wf
+            wf_multi.get_node(wf_single_subject.name).get_node(
+                "NetworkAnalysis"
+            )._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node(
+                "NetworkAnalysis"
+            )._mem_gb = 4
+            wf_multi.get_node(wf_single_subject.name).get_node(
+                "CombineOutputs"
+            )._n_procs = 1
+            wf_multi.get_node(wf_single_subject.name).get_node(
+                "CombineOutputs"
+            )._mem_gb = 2
 
         return wf_multi, dir_list
 
     # Workflow generation
     # Multi-subject workflow generator
-    if (func_file_list or dwi_file_list) or (func_file_list and dwi_file_list) or multi_subject_graph or \
-        multi_subject_multigraph:
-        wf_multi, dir_list = wf_multi_subject(ID, func_file_list, dwi_file_list, mask_list, fbvec_list, fbval_list,
-                                              conf_list, anat_file_list, atlas, network, node_size, roi,
-                                              thr, uatlas, multi_nets, conn_model, dens_thresh,
-                                              conf, plot_switch, dwi_file, multi_thr,
-                                              multi_atlas, min_thr, max_thr, step_thr, anat_file, parc,
-                                              ref_txt, procmem, k, clust_mask, k_list,
-                                              k_clustering, user_atlas_list, clust_mask_list, prune,
-                                              node_size_list, conn_model_list,
-                                              min_span_tree, verbose, plugin_type, use_AAL_naming, multi_subject_graph,
-                                              multi_subject_multigraph,
-                                              smooth, smooth_list, disp_filt, clust_type, clust_type_list, mask, norm,
-                                              binary, fbval, fbvec, target_samples, curv_thr_list, step_list,
-                                              overlap_thr, track_type, min_length, maxcrossing, directget, tiss_class,
-                                              runtime_dict, execution_dict, embed, multi_directget, multimodal, hpass,
-                                              hpass_list, vox_size, multiplex, waymask, local_corr, min_length_list,
-                                              extract_strategy, extract_strategy_list, outdir)
+    if (
+        (func_file_list or dwi_file_list)
+        or (func_file_list and dwi_file_list)
+        or multi_subject_graph
+        or multi_subject_multigraph
+    ):
+        wf_multi, dir_list = wf_multi_subject(
+            ID,
+            func_file_list,
+            dwi_file_list,
+            mask_list,
+            fbvec_list,
+            fbval_list,
+            conf_list,
+            anat_file_list,
+            atlas,
+            network,
+            node_size,
+            roi,
+            thr,
+            uatlas,
+            multi_nets,
+            conn_model,
+            dens_thresh,
+            conf,
+            plot_switch,
+            dwi_file,
+            multi_thr,
+            multi_atlas,
+            min_thr,
+            max_thr,
+            step_thr,
+            anat_file,
+            parc,
+            ref_txt,
+            procmem,
+            k,
+            clust_mask,
+            k_list,
+            k_clustering,
+            user_atlas_list,
+            clust_mask_list,
+            prune,
+            node_size_list,
+            conn_model_list,
+            min_span_tree,
+            verbose,
+            plugin_type,
+            use_AAL_naming,
+            multi_subject_graph,
+            multi_subject_multigraph,
+            smooth,
+            smooth_list,
+            disp_filt,
+            clust_type,
+            clust_type_list,
+            mask,
+            norm,
+            binary,
+            fbval,
+            fbvec,
+            target_samples,
+            curv_thr_list,
+            step_list,
+            overlap_thr,
+            track_type,
+            min_length,
+            maxcrossing,
+            directget,
+            tiss_class,
+            runtime_dict,
+            execution_dict,
+            embed,
+            multi_directget,
+            multimodal,
+            hpass,
+            hpass_list,
+            vox_size,
+            multiplex,
+            waymask,
+            local_corr,
+            min_length_list,
+            extract_strategy,
+            extract_strategy_list,
+            outdir,
+        )
         import warnings
+
         warnings.filterwarnings("ignore")
         import shutil
 
-        os.makedirs(f"{work_dir}/wf_multi_subject_{'_'.join(ID)}", exist_ok=True)
+        os.makedirs(
+            f"{work_dir}/wf_multi_subject_{'_'.join(ID)}",
+            exist_ok=True)
         wf_multi.base_dir = f"{work_dir}/wf_multi_subject_{'_'.join(ID)}"
-        retval['run_uuid'] = None
+        retval["run_uuid"] = None
 
         if verbose is True:
             from nipype import config, logging
-            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
-                                  'filemanip_level': 'DEBUG', 'log_directory': str(wf_multi.base_dir),
-                                  'log_to_file': True},
-                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
-                                     'summary_file': str(wf_multi.base_dir)})
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "DEBUG",
+                    "utils_level": "DEBUG",
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                    "log_directory": str(wf_multi.base_dir),
+                    "log_to_file": True,
+                },
+                monitoring={
+                    "enabled": True,
+                    "sample_frequency": "0.1",
+                    "summary_append": True,
+                    "summary_file": str(wf_multi.base_dir),
+                },
+            )
             logging.update_logging(config)
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
             import logging
+
             callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
-            logger = logging.getLogger('callback')
+            logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        execution_dict['crashdump_dir'] = str(wf_multi.base_dir)
-        execution_dict['plugin'] = str(plugin_type)
+        execution_dict["crashdump_dir"] = str(wf_multi.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
         cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf_multi.config[key][setting] = value
         try:
-            wf_multi.write_graph(graph2use="colored", format='png')
-        except:
+            wf_multi.write_graph(graph2use="colored", format="png")
+        except BaseException:
             pass
         if verbose is True:
             from nipype.utils.profiler import log_nodes_cb
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                           'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
+
+            plugin_args = {
+                "n_procs": int(procmem[0]),
+                "memory_gb": int(procmem[1]),
+                "status_callback": log_nodes_cb,
+                "scheduler": "mem_thread",
+            }
         else:
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
+            plugin_args = {
+                "n_procs": int(procmem[0]),
+                "memory_gb": int(procmem[1]),
+                "scheduler": "mem_thread",
+            }
         print(f"\nRunning with {str(plugin_args)}\n")
-        retval['execution_dict'] = execution_dict
-        retval['plugin_settings'] = plugin_args
-        retval['workflow'] = wf_multi
+        retval["execution_dict"] = execution_dict
+        retval["plugin_settings"] = plugin_args
+        retval["workflow"] = wf_multi
         wf_multi.run(plugin=plugin_type, plugin_args=plugin_args)
-        retval['return_code'] = 0
+        retval["return_code"] = 0
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
-            print('Plotting resource profile from run...')
+
+            print("Plotting resource profile from run...")
             generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
             handler.close()
             logger.removeHandler(handler)
 
         # Clean up temporary directories
-        print('Cleaning up...')
+        print("Cleaning up...")
         for dir in dir_list:
-            if 'func' in dir:
+            if "func" in dir:
                 for cnfnd_tmp_dir in glob.glob(f"{dir}/*/confounds_tmp"):
                     shutil.rmtree(cnfnd_tmp_dir)
                 shutil.rmtree(f"{dir}/reg_fmri", ignore_errors=True)
-                for file_ in [i for i in glob.glob(f"{dir}/*/*") if os.path.isfile(i)]:
-                    if ('reor-RAS' in file_) or ('res-' in file_):
+                for file_ in [i for i in glob.glob(
+                        f"{dir}/*/*") if os.path.isfile(i)]:
+                    if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
-                        except:
+                        except BaseException:
                             continue
-            if 'dwi' in dir:
+            if "dwi" in dir:
                 shutil.rmtree(f"{dir}/dmri_tmp", ignore_errors=True)
                 shutil.rmtree(f"{dir}/reg_dmri", ignore_errors=True)
-                for file_ in [i for i in glob.glob(f"{dir}/*/*") if os.path.isfile(i)]:
-                    if ('reor-RAS' in file_) or ('res-' in file_):
+                for file_ in [i for i in glob.glob(
+                        f"{dir}/*/*") if os.path.isfile(i)]:
+                    if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
-                        except:
+                        except BaseException:
                             continue
 
     # Single-subject workflow generator
     else:
         try:
             subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
-        except:
+        except BaseException:
             subj_dir = f"{outdir}/{ID}"
         os.makedirs(subj_dir, exist_ok=True)
 
         # Single-subject pipeline
-        wf = init_wf_single_subject(ID, func_file, atlas, network, node_size, roi, thr, uatlas,
-                                    multi_nets, conn_model, dens_thresh, conf, plot_switch, dwi_file,
-                                    multi_thr, multi_atlas, min_thr, max_thr, step_thr, anat_file, parc, ref_txt,
-                                    procmem, k, clust_mask, k_list, k_clustering, user_atlas_list,
-                                    clust_mask_list, prune, node_size_list, graph, conn_model_list,
-                                    min_span_tree, verbose, plugin_type, use_AAL_naming, multi_graph, smooth,
-                                    smooth_list, disp_filt, clust_type, clust_type_list, mask,
-                                    norm, binary, fbval, fbvec, target_samples, curv_thr_list, step_list, overlap_thr,
-                                    track_type, min_length, maxcrossing, directget, tiss_class, runtime_dict,
-                                    execution_dict, embed, multi_directget, multimodal, hpass, hpass_list,
-                                    vox_size, multiplex, waymask, local_corr, min_length_list, extract_strategy,
-                                    extract_strategy_list, subj_dir)
+        wf = init_wf_single_subject(
+            ID,
+            func_file,
+            atlas,
+            network,
+            node_size,
+            roi,
+            thr,
+            uatlas,
+            multi_nets,
+            conn_model,
+            dens_thresh,
+            conf,
+            plot_switch,
+            dwi_file,
+            multi_thr,
+            multi_atlas,
+            min_thr,
+            max_thr,
+            step_thr,
+            anat_file,
+            parc,
+            ref_txt,
+            procmem,
+            k,
+            clust_mask,
+            k_list,
+            k_clustering,
+            user_atlas_list,
+            clust_mask_list,
+            prune,
+            node_size_list,
+            graph,
+            conn_model_list,
+            min_span_tree,
+            verbose,
+            plugin_type,
+            use_AAL_naming,
+            multi_graph,
+            smooth,
+            smooth_list,
+            disp_filt,
+            clust_type,
+            clust_type_list,
+            mask,
+            norm,
+            binary,
+            fbval,
+            fbvec,
+            target_samples,
+            curv_thr_list,
+            step_list,
+            overlap_thr,
+            track_type,
+            min_length,
+            maxcrossing,
+            directget,
+            tiss_class,
+            runtime_dict,
+            execution_dict,
+            embed,
+            multi_directget,
+            multimodal,
+            hpass,
+            hpass_list,
+            vox_size,
+            multiplex,
+            waymask,
+            local_corr,
+            min_length_list,
+            extract_strategy,
+            extract_strategy_list,
+            subj_dir,
+        )
         import warnings
+
         warnings.filterwarnings("ignore")
         import shutil
         import os
         import uuid
         from time import strftime
+
         if (func_file is not None) and (dwi_file is None):
             base_dirname = f"wf_single_subject_fmri_{str(ID)}"
         elif (dwi_file is not None) and (func_file is None):
@@ -1991,84 +2934,115 @@ def build_workflow(args, retval):
             base_dirname = f"wf_single_subject_{str(ID)}"
 
         run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-        retval['run_uuid'] = run_uuid
+        retval["run_uuid"] = run_uuid
 
-        os.makedirs(f"{work_dir}/{ID}_{run_uuid}_{base_dirname}", exist_ok=True)
+        os.makedirs(
+            f"{work_dir}/{ID}_{run_uuid}_{base_dirname}",
+            exist_ok=True)
         wf.base_dir = f"{work_dir}/{ID}_{run_uuid}_{base_dirname}"
 
         if verbose is True:
             from nipype import config, logging
-            cfg_v = dict(logging={'workflow_level': 'DEBUG', 'utils_level': 'DEBUG', 'interface_level': 'DEBUG',
-                                  'filemanip_level': 'DEBUG', 'log_directory': str(wf.base_dir), 'log_to_file': True},
-                         monitoring={'enabled': True, 'sample_frequency': '0.1', 'summary_append': True,
-                                     'summary_file': str(wf.base_dir)})
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "DEBUG",
+                    "utils_level": "DEBUG",
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                    "log_directory": str(wf.base_dir),
+                    "log_to_file": True,
+                },
+                monitoring={
+                    "enabled": True,
+                    "sample_frequency": "0.1",
+                    "summary_append": True,
+                    "summary_file": str(wf.base_dir),
+                },
+            )
             logging.update_logging(config)
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
 
             import logging
+
             callback_log_path = f"{wf.base_dir}/run_stats.log"
-            logger = logging.getLogger('callback')
+            logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
 
-        execution_dict['crashdump_dir'] = str(wf.base_dir)
-        execution_dict['plugin'] = str(plugin_type)
+        execution_dict["crashdump_dir"] = str(wf.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
         cfg = dict(execution=execution_dict)
         for key in cfg.keys():
             for setting, value in cfg[key].items():
                 wf.config[key][setting] = value
         try:
-            wf.write_graph(graph2use="colored", format='png')
-        except:
+            wf.write_graph(graph2use="colored", format="png")
+        except BaseException:
             pass
         if verbose is True:
             from nipype.utils.profiler import log_nodes_cb
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]),
-                           'status_callback': log_nodes_cb, 'scheduler': 'mem_thread'}
+
+            plugin_args = {
+                "n_procs": int(procmem[0]),
+                "memory_gb": int(procmem[1]),
+                "status_callback": log_nodes_cb,
+                "scheduler": "mem_thread",
+            }
         else:
-            plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
+            plugin_args = {
+                "n_procs": int(procmem[0]),
+                "memory_gb": int(procmem[1]),
+                "scheduler": "mem_thread",
+            }
         print(f"\nRunning with {str(plugin_args)}\n")
-        retval['execution_dict'] = execution_dict
-        retval['plugin_settings'] = plugin_args
-        retval['workflow'] = wf
+        retval["execution_dict"] = execution_dict
+        retval["plugin_settings"] = plugin_args
+        retval["workflow"] = wf
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        retval['return_code'] = 0
+        retval["return_code"] = 0
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
-            print('Plotting resource profile from run...')
+
+            print("Plotting resource profile from run...")
             generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
             handler.close()
             logger.removeHandler(handler)
 
         # Clean up temporary directories
-        print('Cleaning up...')
+        print("Cleaning up...")
         if func_file:
             for cnfnd_tmp_dir in glob.glob(f"{subj_dir}/*/confounds_tmp"):
                 shutil.rmtree(cnfnd_tmp_dir)
             shutil.rmtree(f"{subj_dir}/reg_fmri", ignore_errors=True)
-            for file_ in [i for i in glob.glob(f"{subj_dir}/*/*") if os.path.isfile(i)]:
-                if ('reor-RAS' in file_) or ('res-' in file_):
+            for file_ in [i for i in glob.glob(
+                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
-                    except:
+                    except BaseException:
                         continue
         if dwi_file:
             shutil.rmtree(f"{subj_dir}/dmri_tmp", ignore_errors=True)
             shutil.rmtree(f"{subj_dir}/reg_dmri", ignore_errors=True)
-            for file_ in [i for i in glob.glob(f"{subj_dir}/*/*") if os.path.isfile(i)]:
-                if ('reor-RAS' in file_) or ('res-' in file_):
+            for file_ in [i for i in glob.glob(
+                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
-                    except:
+                    except BaseException:
                         continue
 
-    print('\n\n------------FINISHED-----------')
-    print('Subject: ', ID)
-    print('Execution Time: ', str(timedelta(seconds=timeit.default_timer() - start_time)))
-    print('-------------------------------')
+    print("\n\n------------FINISHED-----------")
+    print("Subject: ", ID)
+    print(
+        "Execution Time: ", str(
+            timedelta(
+                seconds=timeit.default_timer() - start_time)))
+    print("-------------------------------")
     return retval
 
 
@@ -2078,10 +3052,13 @@ def main():
     import os
     import sys
     import multiprocessing as mp
+
     try:
         import pynets
     except ImportError:
-        print('PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+')
+        print(
+            "PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+"
+        )
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
@@ -2089,7 +3066,7 @@ def main():
 
     args = get_parser().parse_args()
 
-    mp.set_start_method('forkserver')
+    mp.set_start_method("forkserver")
     with mp.Manager() as mgr:
         retval = mgr.dict()
         p = mp.Process(target=build_workflow, args=(args, retval))
@@ -2098,33 +3075,35 @@ def main():
         if p.is_alive():
             p.terminate()
 
-        retcode = p.exitcode or retval.get('return_code', 0)
+        retcode = p.exitcode or retval.get("return_code", 0)
 
-        pynets_wf = retval.get('workflow', None)
-        work_dir = retval.get('work_dir')
-        plugin_settings = retval.get('plugin_settings', None)
-        execution_dict = retval.get('execution_dict', None)
-        run_uuid = retval.get('run_uuid', None)
+        pynets_wf = retval.get("workflow", None)
+        work_dir = retval.get("work_dir")
+        plugin_settings = retval.get("plugin_settings", None)
+        execution_dict = retval.get("execution_dict", None)
+        run_uuid = retval.get("run_uuid", None)
 
         retcode = retcode or int(pynets_wf is None)
         if retcode != 0:
             sys.exit(retcode)
 
-        # Clean up master process before running workflow, which may create forks
+        # Clean up master process before running workflow, which may create
+        # forks
         gc.collect()
 
     mgr.shutdown()
 
     if args.clean is True and work_dir:
         from shutil import rmtree
+
         rmtree(work_dir, ignore_errors=True)
 
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import warnings
+
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()
-

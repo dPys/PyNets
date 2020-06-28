@@ -14,12 +14,23 @@ import os.path as op
 import tkinter
 import matplotlib
 import matplotlib.pyplot as plt
+
 warnings.filterwarnings("ignore")
-matplotlib.use('agg')
+matplotlib.use("agg")
 
 
-def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, comm='nodes',
-                      color_scheme='interpolateBlues', prune=False):
+def plot_connectogram(
+    conn_matrix,
+    conn_model,
+    atlas,
+    dir_path,
+    ID,
+    network,
+    labels,
+    comm="nodes",
+    color_scheme="interpolateBlues",
+    prune=False,
+):
     """
     Plot a connectogram for a given connectivity matrix.
 
@@ -54,6 +65,7 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     from networkx.readwrite import json_graph
     from pynets.core.thresholding import normalize
     from pynets.stats.netstats import most_important
+
     # from scipy.cluster.hierarchy import linkage, fcluster
     from nipype.utils.filemanip import save_json
 
@@ -67,23 +79,43 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
         for j in pruned_nodes:
             del labels[labels.index(labels[j])]
 
-    if comm == 'nodes' and len(conn_matrix) > 40:
+    if comm == "nodes" and len(conn_matrix) > 40:
         from pynets.stats.netstats import community_resolution_selection
+
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
+        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
+            G)
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
-        mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype('int'))
-        label_arr = node_comm_aff_mat * np.expand_dims(np.arange(1, clust_levels+1), axis=1) + mask_mat
-    elif comm == 'links' and len(conn_matrix) > 40:
+        mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype("int"))
+        label_arr = (
+            node_comm_aff_mat *
+            np.expand_dims(
+                np.arange(
+                    1,
+                    clust_levels +
+                    1),
+                axis=1) +
+            mask_mat)
+    elif comm == "links" and len(conn_matrix) > 40:
         from pynets.stats.netstats import link_communities
+
         # Plot link communities
-        link_comm_aff_mat = link_communities(conn_matrix, type_clustering='single')[0]
+        link_comm_aff_mat = link_communities(
+            conn_matrix, type_clustering="single")[0]
         print(f"{'Found '}{str(len(link_comm_aff_mat))}{' communities...'}")
         clust_levels = len(link_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
-        mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype('int'))
-        label_arr = link_comm_aff_mat * np.expand_dims(np.arange(1, clust_levels+1), axis=1) + mask_mat
+        mask_mat = np.squeeze(np.array([link_comm_aff_mat == 0]).astype("int"))
+        label_arr = (
+            link_comm_aff_mat *
+            np.expand_dims(
+                np.arange(
+                    1,
+                    clust_levels +
+                    1),
+                axis=1) +
+            mask_mat)
     else:
         return
 
@@ -120,20 +152,23 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
                 for r in roman.keys():
                     x, y = divmod(num, r)
                     yield roman[r] * x
-                    num -= (r * x)
+                    num -= r * x
                     if num > 0:
                         roman_num(num)
                     else:
                         break
+
             return "".join([a for a in roman_num(num)])
+
         rn_list = []
         node_idx = node_idx - 1
         node_labels = labels[:, node_idx]
         for k in [int(l) for i, l in enumerate(node_labels)]:
             rn_list.append(json.dumps(_write_roman(k)))
         abet = rn_list
-        node_lab_alph = ".".join(["{}{}".format(abet[i], int(l)) for i, l in enumerate(node_labels)]) + ".{}".format(
-            labels[node_idx])
+        node_lab_alph = ".".join(
+            ["{}{}".format(abet[i], int(l)) for i, l in enumerate(node_labels)]
+        ) + ".{}".format(labels[node_idx])
         return node_lab_alph
 
     output = []
@@ -147,79 +182,103 @@ def plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, lab
     for node_idx, connections in adj_dict.items():
         weight_vec = []
         for i in connections:
-            wei = G.get_edge_data(node_idx,int(i))['weight']
+            wei = G.get_edge_data(node_idx, int(i))["weight"]
             weight_vec.append(wei)
         entry = {}
         nodes_label = _get_node_label(node_idx, label_arr, clust_levels_tmp)
         entry["name"] = nodes_label
         entry["size"] = len(connections)
-        entry["imports"] = [_get_node_label(int(d)-1, label_arr, clust_levels_tmp) for d in connections]
+        entry["imports"] = [
+            _get_node_label(int(d) - 1, label_arr, clust_levels_tmp)
+            for d in connections
+        ]
         entry["weights"] = weight_vec
         output.append(entry)
 
     if network:
-        json_file_name = f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.json'}"
-        json_fdg_file_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.json'}"
+        json_file_name = (
+            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.json'}"
+        )
+        json_fdg_file_name = (
+            f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.json'}"
+        )
         connectogram_plot = f"{dir_path}{'/'}{json_file_name}"
         fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
         fdg_js_sub_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
-        connectogram_js_sub = f"{dir_path}/{str(ID)}_{network}_connectogram_{conn_model}_network.js"
-        connectogram_js_name = f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.js'}"
+        connectogram_js_sub = (
+            f"{dir_path}/{str(ID)}_{network}_connectogram_{conn_model}_network.js"
+        )
+        connectogram_js_name = (
+            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.js'}"
+        )
     else:
         json_file_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.json'}"
         json_fdg_file_name = f"{str(ID)}{'_fdg_'}{conn_model}{'.json'}"
         connectogram_plot = f"{dir_path}{'/'}{json_file_name}"
-        connectogram_js_sub = f"{dir_path}{'/'}{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
+        connectogram_js_sub = (
+            f"{dir_path}{'/'}{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
+        )
         fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
         fdg_js_sub_name = f"{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
         connectogram_js_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
     save_json(connectogram_plot, output)
 
     # Force-directed graphing
-    G = nx.from_numpy_matrix(np.round(np.abs(conn_matrix).astype('float64'), 6))
+    G = nx.from_numpy_matrix(
+        np.round(
+            np.abs(conn_matrix).astype("float64"),
+            6))
     data = json_graph.node_link_data(G)
-    data.pop('directed', None)
-    data.pop('graph', None)
-    data.pop('multigraph', None)
-    for k in range(len(data['links'])):
-        data['links'][k]['value'] = data['links'][k].pop('weight')
-    for k in range(len(data['nodes'])):
-        data['nodes'][k]['id'] = str(data['nodes'][k]['id'])
-    for k in range(len(data['links'])):
-        data['links'][k]['source'] = str(data['links'][k]['source'])
-        data['links'][k]['target'] = str(data['links'][k]['target'])
+    data.pop("directed", None)
+    data.pop("graph", None)
+    data.pop("multigraph", None)
+    for k in range(len(data["links"])):
+        data["links"][k]["value"] = data["links"][k].pop("weight")
+    for k in range(len(data["nodes"])):
+        data["nodes"][k]["id"] = str(data["nodes"][k]["id"])
+    for k in range(len(data["links"])):
+        data["links"][k]["source"] = str(data["links"][k]["source"])
+        data["links"][k]["target"] = str(data["links"][k]["target"])
 
     # Add community structure
-    for k in range(len(data['nodes'])):
-        data['nodes'][k]['group'] = str(label_arr[0][k])
+    for k in range(len(data["nodes"])):
+        data["nodes"][k]["group"] = str(label_arr[0][k])
 
     # Add node labels
-    for k in range(len(data['nodes'])):
-        data['nodes'][k]['name'] = str(labels[k])
+    for k in range(len(data["nodes"])):
+        data["nodes"][k]["name"] = str(labels[k])
 
     out_file = f"{dir_path}{'/'}{str(json_fdg_file_name)}"
     save_json(out_file, data)
 
     # Copy index.html and json to dir_path
-    conn_js_path = str(Path(__file__).parent/"connectogram.js")
-    index_html_path = str(Path(__file__).parent/"index.html")
+    conn_js_path = str(Path(__file__).parent / "connectogram.js")
+    index_html_path = str(Path(__file__).parent / "index.html")
     fdg_replacements_js = {"FD_graph.json": str(json_fdg_file_name)}
-    replacements_html = {'connectogram.js': str(connectogram_js_name), 'fdg.js': str(fdg_js_sub_name)}
-    fdg_js_path = str(Path(__file__).parent/"fdg.js")
-    with open(index_html_path) as infile, open(str(dir_path + '/index.html'), 'w') as outfile:
+    replacements_html = {
+        "connectogram.js": str(connectogram_js_name),
+        "fdg.js": str(fdg_js_sub_name),
+    }
+    fdg_js_path = str(Path(__file__).parent / "fdg.js")
+    with open(index_html_path) as infile, open(
+        str(dir_path + "/index.html"), "w"
+    ) as outfile:
         for line in infile:
             for src, target in replacements_html.items():
                 line = line.replace(src, target)
             outfile.write(line)
 
-    replacements_js = {'template.json': str(json_file_name), 'interpolateCool': str(color_scheme)}
-    with open(conn_js_path) as infile, open(connectogram_js_sub, 'w') as outfile:
+    replacements_js = {
+        "template.json": str(json_file_name),
+        "interpolateCool": str(color_scheme),
+    }
+    with open(conn_js_path) as infile, open(connectogram_js_sub, "w") as outfile:
         for line in infile:
             for src, target in replacements_js.items():
                 line = line.replace(src, target)
             outfile.write(line)
 
-    with open(fdg_js_path) as infile, open(fdg_js_sub, 'w') as outfile:
+    with open(fdg_js_path) as infile, open(fdg_js_sub, "w") as outfile:
         for line in infile:
             for src, target in fdg_replacements_js.items():
                 line = line.replace(src, target)
@@ -251,28 +310,36 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
 
     """
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
     from matplotlib import pyplot as plt
 
     for time_serie, label in zip(time_series.T, labels):
         plt.plot(time_serie, label=label)
-    plt.xlabel('Scan Number')
-    plt.ylabel('Normalized Signal')
+    plt.xlabel("Scan Number")
+    plt.ylabel("Normalized Signal")
     plt.legend()
-    #plt.tight_layout()
+    # plt.tight_layout()
     if network:
         plt.title(f"{network}{' Time Series'}")
         out_path_fig = f"{dir_path}{'/'}{ID}{'_'}{network}{'rsn_ts_plot.png'}"
     else:
-        plt.title('Time Series')
+        plt.title("Time Series")
         out_path_fig = f"{dir_path}{'/'}{ID}{'_wb_ts_plot.png'}"
     plt.savefig(out_path_fig)
-    plt.close('all')
+    plt.close("all")
     return
 
 
-def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_size=50, plot_overlaps=False,
-                          plot_labels=False):
+def plot_network_clusters(
+    graph,
+    communities,
+    out_path,
+    figsize=(8, 8),
+    node_size=50,
+    plot_overlaps=False,
+    plot_labels=False,
+):
     """
     Plot a graph with node color coding for communities.
 
@@ -294,12 +361,28 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
 
     """
 
-    COLOR = ['r', 'b', 'g', 'c', 'm', 'y', 'k',
-             '0.8', '0.2', '0.6', '0.4', '0.7', '0.3', '0.9', '0.1', '0.5']
+    COLOR = [
+        "r",
+        "b",
+        "g",
+        "c",
+        "m",
+        "y",
+        "k",
+        "0.8",
+        "0.2",
+        "0.6",
+        "0.4",
+        "0.7",
+        "0.3",
+        "0.9",
+        "0.1",
+        "0.5",
+    ]
 
     def getIndexPositions(listOfElements, element):
-        ''' Returns the indexes of all occurrences of give element in
-        the list- listOfElements '''
+        """ Returns the indexes of all occurrences of give element in
+        the list- listOfElements """
         indexPosList = []
         indexPos = 0
         while True:
@@ -312,16 +395,22 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
 
         return indexPosList
 
-    partition = [getIndexPositions(communities.tolist(), i) for i in set(communities.tolist())]
+    partition = [
+        getIndexPositions(
+            communities.tolist(),
+            i) for i in set(
+            communities.tolist())]
 
     n_communities = min(len(partition), len(COLOR))
     fig = plt.figure(figsize=figsize)
-    plt.axis('off')
+    plt.axis("off")
 
     position = nx.fruchterman_reingold_layout(graph)
 
-    nx.draw_networkx_nodes(graph, position, node_size=node_size, node_color='w', edgecolors='k')
-    nx.draw_networkx_edges(graph, position, alpha=.5)
+    nx.draw_networkx_nodes(
+        graph, position, node_size=node_size, node_color="w", edgecolors="k"
+    )
+    nx.draw_networkx_edges(graph, position, alpha=0.5)
 
     for i in range(n_communities):
         if len(partition[i]) > 0:
@@ -330,19 +419,34 @@ def plot_network_clusters(graph, communities, out_path, figsize=(8, 8), node_siz
             else:
                 size = node_size
 
-            nx.draw_networkx_nodes(graph, position, node_size=size, nodelist=partition[i],
-                                   node_color=COLOR[i], edgecolors='k')
+            nx.draw_networkx_nodes(
+                graph,
+                position,
+                node_size=size,
+                nodelist=partition[i],
+                node_color=COLOR[i],
+                edgecolors="k",
+            )
 
     if plot_labels:
-        nx.draw_networkx_labels(graph, position, labels={node: str(node) for node in graph.nodes()})
+        nx.draw_networkx_labels(
+            graph, position, labels={node: str(node) for node in graph.nodes()}
+        )
 
     plt.savefig(out_path)
-    plt.close('all')
+    plt.close("all")
 
     return
 
 
-def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cmap=None, prune=True):
+def create_gb_palette(
+        mat,
+        edge_cmap,
+        coords,
+        labels,
+        node_size="auto",
+        node_cmap=None,
+        prune=True):
     """
     Create conectome color palatte based on topography.
 
@@ -375,7 +479,8 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
-        [G, pruned_nodes] = prune_disconnected(nx.from_numpy_matrix(np.abs(mat)))
+        [G, pruned_nodes] = prune_disconnected(
+            nx.from_numpy_matrix(np.abs(mat)))
         pruned_nodes.sort(reverse=True)
         coords_pre = list(coords)
         labels_pre = list(labels)
@@ -386,20 +491,26 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
             labels = labels_pre
             coords = coords_pre
         else:
-            print('No nodes to prune for plotting...')
+            print("No nodes to prune for plotting...")
     else:
         G = nx.from_numpy_matrix(np.abs(mat))
 
     # Node centralities
     try:
-        node_centralities = list(nx.algorithms.eigenvector_centrality_numpy(G, weight='weight').values())
-    except:
+        node_centralities = list(
+            nx.algorithms.eigenvector_centrality_numpy(
+                G, weight="weight").values())
+    except BaseException:
         node_centralities = len(coords) * [1]
-    max_node_size = (1 / mat.shape[0] * 1e3 if node_size == 'auto' else node_size)
-    node_sizes = np.array(minmax_scale(node_centralities, feature_range=(1, max_node_size)))
+    max_node_size = 1 / mat.shape[0] * \
+        1e3 if node_size == "auto" else node_size
+    node_sizes = np.array(
+        minmax_scale(node_centralities, feature_range=(1, max_node_size))
+    )
 
     # Node communities
-    _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(G)
+    _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
+        G)
 
     # Path lengths
     edge_lengths = []
@@ -427,31 +538,64 @@ def create_gb_palette(mat, edge_cmap, coords, labels, node_size='auto', node_cma
                 ret.append((r, g, b))
             return ret
 
-        flatui = ['#{:02x}{:02x}{:02x}'.format(i[0], i[1], i[2]) for i in random_color(num_comms)]
+        flatui = [
+            "#{:02x}{:02x}{:02x}".format(i[0], i[1], i[2])
+            for i in random_color(num_comms)
+        ]
 
         try:
-            ls_cmap = colors.LinearSegmentedColormap.from_list(node_comm_aff_mat,
-                                                               sns.color_palette(flatui, n_colors=num_comms))
+            ls_cmap = colors.LinearSegmentedColormap.from_list(
+                node_comm_aff_mat, sns.color_palette(flatui, n_colors=num_comms)
+            )
             matplotlib.cm.register_cmap("community", ls_cmap)
             clust_pal = sns.color_palette("community", n_colors=mat.shape[0])
-        except:
+        except BaseException:
             clust_pal = sns.color_palette("Set2", n_colors=mat.shape[0])
     else:
         clust_pal = sns.color_palette(node_cmap, n_colors=mat.shape[0])
     clust_pal_nodes = colors.to_rgba_array(clust_pal)
 
     # Edges
-    z_min = np.percentile(mat[mat>0], 10)
-    z_max = np.percentile(mat[mat>0], 90)
+    z_min = np.percentile(mat[mat > 0], 10)
+    z_max = np.percentile(mat[mat > 0], 90)
     edge_cmap_pl = sns.color_palette(edge_cmap)
     clust_pal_edges = colors.ListedColormap(edge_cmap_pl.as_hex())
 
-    return mat, clust_pal_edges, clust_pal_nodes, node_sizes, edge_sizes, z_min, z_max, coords, labels
+    return (
+        mat,
+        clust_pal_edges,
+        clust_pal_nodes,
+        node_sizes,
+        edge_sizes,
+        z_min,
+        z_max,
+        coords,
+        labels,
+    )
 
 
-def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
-                  node_size, edge_threshold, smooth, prune, uatlas, norm, binary, hpass, extract_strategy,
-                  edge_color_override=False):
+def plot_all_func(
+    conn_matrix,
+    conn_model,
+    atlas,
+    dir_path,
+    ID,
+    network,
+    labels,
+    roi,
+    coords,
+    thr,
+    node_size,
+    edge_threshold,
+    smooth,
+    prune,
+    uatlas,
+    norm,
+    binary,
+    hpass,
+    extract_strategy,
+    edge_color_override=False,
+):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
@@ -511,36 +655,64 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
     import os.path as op
     import random
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
+
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
 
-    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+    ch2better_loc = pkg_resources.resource_filename(
+        "pynets", "templates/ch2better.nii.gz"
+    )
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
             if edge_color_override is False:
-                color_theme = hardcoded_params['plotting']['functional']['glassbrain']['color_theme'][0]
+                color_theme = hardcoded_params["plotting"]["functional"]["glassbrain"][
+                    "color_theme"
+                ][0]
             else:
-                color_theme = random.choice(['Purples_d', 'Blues_d', 'Greens_d', 'Oranges_d', 'Reds_d', 'YlOrBr_d',
-                                             'YlOrRd_d', 'OrRd_d', 'PuRd_d', 'RdPu_d', 'BuPu_d', 'GnBu_d', 'PuBu_d',
-                                             'YlGnBu_d', 'PuBuGn_d', 'BuGn_d', 'YlGn_d'])
+                color_theme = random.choice(
+                    [
+                        "Purples_d",
+                        "Blues_d",
+                        "Greens_d",
+                        "Oranges_d",
+                        "Reds_d",
+                        "YlOrBr_d",
+                        "YlOrRd_d",
+                        "OrRd_d",
+                        "PuRd_d",
+                        "RdPu_d",
+                        "BuPu_d",
+                        "GnBu_d",
+                        "PuBu_d",
+                        "YlGnBu_d",
+                        "PuBuGn_d",
+                        "BuGn_d",
+                        "YlGn_d",
+                    ]
+                )
 
-            connectogram = hardcoded_params['plotting']['connectogram'][0]
-            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
-            adjacency = hardcoded_params['plotting']['adjacency'][0]
-            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
+            connectogram = hardcoded_params["plotting"]["connectogram"][0]
+            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+            adjacency = hardcoded_params["plotting"]["adjacency"][0]
+            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         except KeyError:
-            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            print(
+                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+            )
             sys.exit(0)
     stream.close()
 
@@ -552,9 +724,9 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):
-            atlas = atlas.decode('utf-8')
+            atlas = atlas.decode("utf-8")
 
-        namer_dir = dir_path + '/figures'
+        namer_dir = dir_path + "/figures"
         if not os.path.isdir(namer_dir):
             os.makedirs(namer_dir, exist_ok=True)
 
@@ -562,93 +734,159 @@ def plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
         if connectogram is True:
             if len(conn_matrix) > 20:
                 try:
-                    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                    plot_gen.plot_connectogram(
+                        conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
                 except RuntimeWarning:
-                    print('\n\n\nWarning: Connectogram plotting failed!')
+                    print("\n\n\nWarning: Connectogram plotting failed!")
             else:
-                print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+                print(
+                    "Warning: Cannot plot connectogram for graphs smaller than 20 x 20!"
+                )
 
         # Plot adj. matrix based on determined inputs
-        if not node_size or node_size == 'None':
-            node_size = 'parc'
+        if not node_size or node_size == "None":
+            node_size = "parc"
 
         if adjacency is True:
-            plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                           node_size, smooth, hpass, extract_strategy)
+            plot_graphs.plot_conn_mat_func(
+                conn_matrix,
+                conn_model,
+                atlas,
+                namer_dir,
+                ID,
+                network,
+                labels,
+                roi,
+                thr,
+                node_size,
+                smooth,
+                hpass,
+                extract_strategy,
+            )
 
         if glassbrain is True:
-            views = ['x', 'y', 'z']
+            views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                         network is not None else ''),
-                                                                 '%s' % ("%s%s%s" %
-                                                                         ('roi-', op.basename(roi).split('.')[0],
-                                                                          '_') if roi is not None else ''),
-                                                                 'est-', conn_model, '_',
-                                                                 '%s' % ("%s%s%s" %
-                                                                     ('nodetype-spheres-', node_size, 'mm_') if
-                                                                     ((node_size != 'parc') and (node_size is not None))
-                                                                     else 'nodetype-parc_'),
-                                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                         float(smooth) > 0 else ''),
-                                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                         hpass is not None else ''),
-                                                                 "%s" % ("%s%s" %
-                                                                         ('extract-', extract_strategy) if
-                                                                         extract_strategy is not None else ''),
-                                                                 '_thr-', thr, '_glass_viz.png')
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                                 "/",
+                                                                 ID,
+                                                                 "_modality-func_",
+                                                                 "%s" % ("%s%s%s" % ("rsn-",
+                                                                                     network,
+                                                                                     "_") if network is not None else ""),
+                                                                 "%s" % ("%s%s%s" % ("roi-",
+                                                                                     op.basename(roi).split(".")[0],
+                                                                                     "_") if roi is not None else ""),
+                                                                 "est-",
+                                                                 conn_model,
+                                                                 "_",
+                                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                     node_size,
+                                                                                     "mm_") if (
+                                                                     (node_size != "parc") and (
+                                                                         node_size is not None)) else "nodetype-parc_"),
+                                                                 "%s" % ("%s%s%s" % ("smooth-",
+                                                                                     smooth,
+                                                                                     "fwhm_") if float(smooth) > 0 else ""),
+                                                                 "%s" % ("%s%s%s" % ("hpass-",
+                                                                                     hpass,
+                                                                                     "Hz_") if hpass is not None else ""),
+                                                                 "%s" % ("%s%s" % ("extract-",
+                                                                                   extract_strategy) if extract_strategy is not None else ""),
+                                                                 "_thr-",
+                                                                 thr,
+                                                                 "_glass_viz.png",
+                                                                 )
 
-            connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+            connectome = niplot.plot_connectome(
+                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+            )
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
-            [conn_matrix, clust_pal_edges, clust_pal_nodes,
-             node_sizes, edge_sizes, z_min, z_max, coords, labels] = create_gb_palette(conn_matrix, color_theme,
-                                                                                       coords, labels)
+            [
+                conn_matrix,
+                clust_pal_edges,
+                clust_pal_nodes,
+                node_sizes,
+                edge_sizes,
+                z_min,
+                z_max,
+                coords,
+                labels,
+            ] = create_gb_palette(conn_matrix, color_theme, coords, labels)
 
             if roi:
                 # Save coords to pickle
                 coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(coord_path, 'wb') as f:
+                with open(coord_path, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
                 labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(labels_path, 'wb') as f:
+                with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
 
             else:
                 # Save coords to pickle
                 coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, 'wb') as f:
+                with open(coord_path, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
                 labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
-                with open(labels_path, 'wb') as f:
+                with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
 
-            connectome.add_graph(conn_matrix, coords, edge_cmap=clust_pal_edges, edge_vmax=float(z_max),
-                                 edge_vmin=float(z_min), node_size=node_sizes,
-                                 node_color=clust_pal_nodes, edge_kwargs={'alpha': 0.45})
+            connectome.add_graph(
+                conn_matrix,
+                coords,
+                edge_cmap=clust_pal_edges,
+                edge_vmax=float(z_max),
+                edge_vmin=float(z_min),
+                node_size=node_sizes,
+                node_color=clust_pal_nodes,
+                edge_kwargs={"alpha": 0.45},
+            )
             for view in views:
                 mod_lines = []
-                for line, edge_size in list(zip(connectome.axes[view].ax.lines, edge_sizes)):
+                for line, edge_size in list(
+                    zip(connectome.axes[view].ax.lines, edge_sizes)
+                ):
                     line.set_lw(edge_size)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
-            raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s '
-                               'internal estimation schemes?')
+            raise RuntimeError(
+                "\nERROR: no coordinates to plot! Are you running plotting outside of pynets's "
+                "internal estimation schemes?")
 
-        plt.close('all')
+        plt.close("all")
 
     return
 
 
-def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
-                    node_size, edge_threshold, prune, uatlas, target_samples, norm, binary, track_type, directget,
-                    min_length):
+def plot_all_struct(
+    conn_matrix,
+    conn_model,
+    atlas,
+    dir_path,
+    ID,
+    network,
+    labels,
+    roi,
+    coords,
+    thr,
+    node_size,
+    edge_threshold,
+    prune,
+    uatlas,
+    target_samples,
+    norm,
+    binary,
+    track_type,
+    directget,
+    min_length,
+):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional connectome.
 
@@ -704,7 +942,8 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
     """
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
     import os
     import yaml
     import sys
@@ -715,23 +954,32 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
     import networkx as nx
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
+
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
 
-    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+    ch2better_loc = pkg_resources.resource_filename(
+        "pynets", "templates/ch2better.nii.gz"
+    )
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme = hardcoded_params['plotting']['structural']['glassbrain']['color_theme'][0]
-            connectogram = hardcoded_params['plotting']['connectogram'][0]
-            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
-            adjacency = hardcoded_params['plotting']['adjacency'][0]
-            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
+            color_theme = hardcoded_params["plotting"]["structural"]["glassbrain"][
+                "color_theme"
+            ][0]
+            connectogram = hardcoded_params["plotting"]["connectogram"][0]
+            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+            adjacency = hardcoded_params["plotting"]["adjacency"][0]
+            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         except KeyError:
-            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            print(
+                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+            )
             sys.exit(0)
     stream.close()
 
@@ -743,7 +991,7 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):
-            atlas = atlas.decode('utf-8')
+            atlas = atlas.decode("utf-8")
 
         namer_dir = f"{dir_path}/figures"
         if not os.path.isdir(namer_dir):
@@ -753,89 +1001,134 @@ def plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, label
         if connectogram is True:
             if len(conn_matrix) > 20:
                 try:
-                    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                    plot_gen.plot_connectogram(
+                        conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
                 except RuntimeWarning:
-                    print('\n\n\nWarning: Connectogram plotting failed!')
+                    print("\n\n\nWarning: Connectogram plotting failed!")
             else:
-                print('Warning: Cannot plot connectogram for graphs smaller than 20 x 20!')
+                print(
+                    "Warning: Cannot plot connectogram for graphs smaller than 20 x 20!"
+                )
 
         # Plot adj. matrix based on determined inputs
-        if not node_size or node_size == 'None':
-            node_size = 'parc'
+        if not node_size or node_size == "None":
+            node_size = "parc"
 
         if adjacency is True:
-            plot_graphs.plot_conn_mat_struct(conn_matrix, conn_model, atlas, namer_dir, ID, network, labels, roi, thr,
-                                             node_size, target_samples, track_type, directget, min_length)
+            plot_graphs.plot_conn_mat_struct(
+                conn_matrix,
+                conn_model,
+                atlas,
+                namer_dir,
+                ID,
+                network,
+                labels,
+                roi,
+                thr,
+                node_size,
+                target_samples,
+                track_type,
+                directget,
+                min_length,
+            )
 
         if glassbrain is True:
-            views = ['x', 'y', 'z']
+            views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                                 network is not None else ''),
-                                                                         '%s' % ("%s%s%s" % ('roi-',
-                                                                                             op.basename(roi).split(
-                                                                                                 '.')[0],
-                                                                                             '_') if roi is not
-                                                                                                     None else ''),
-                                                                         'est-', conn_model, '_',
-                                                                         '%s' % (
-                                                                             "%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                                         'mm_')
-                                                                             if ((node_size != 'parc') and
-                                                                                 (node_size is not None))
-                                                                             else 'nodetype-parc_'),
-                                                                         "%s" % ("%s%s%s" % (
-                                                                             'samples-', int(target_samples),
-                                                                             'streams_')
-                                                                                 if float(target_samples) > 0 else '_'),
-                                                                         'tt-', track_type, '_dg-', directget,
-                                                                         '_ml-', min_length,
-                                                                         '_thr-', thr, '_glass_viz.png')
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                                         "/",
+                                                                         ID,
+                                                                         "_modality-dwi_",
+                                                                         "%s" % ("%s%s%s" % ("rsn-",
+                                                                                             network,
+                                                                                             "_") if network is not None else ""),
+                                                                         "%s" % ("%s%s%s" % ("roi-",
+                                                                                             op.basename(roi).split(".")[0],
+                                                                                             "_") if roi is not None else ""),
+                                                                         "est-",
+                                                                         conn_model,
+                                                                         "_",
+                                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                             node_size,
+                                                                                             "mm_") if (
+                                                                             (node_size != "parc") and (
+                                                                                 node_size is not None)) else "nodetype-parc_"),
+                                                                         "%s" % ("%s%s%s" % ("samples-",
+                                                                                             int(target_samples),
+                                                                                             "streams_") if float(target_samples) > 0 else "_"),
+                                                                         "tt-",
+                                                                         track_type,
+                                                                         "_dg-",
+                                                                         directget,
+                                                                         "_ml-",
+                                                                         min_length,
+                                                                         "_thr-",
+                                                                         thr,
+                                                                         "_glass_viz.png",
+                                                                         )
 
-            connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+            connectome = niplot.plot_connectome(
+                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+            )
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
 
-            [conn_matrix, clust_pal_edges, clust_pal_nodes,
-             node_sizes, edge_sizes, _, _, coords, labels] = create_gb_palette(conn_matrix, color_theme, coords,
-                                                                               labels)
+            [
+                conn_matrix,
+                clust_pal_edges,
+                clust_pal_nodes,
+                node_sizes,
+                edge_sizes,
+                _,
+                _,
+                coords,
+                labels,
+            ] = create_gb_palette(conn_matrix, color_theme, coords, labels)
             if roi:
                 # Save coords to pickle
                 coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(coord_path, 'wb') as f:
+                with open(coord_path, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
                 labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(labels_path, 'wb') as f:
+                with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
             else:
                 # Save coords to pickle
                 coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, 'wb') as f:
+                with open(coord_path, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
                 labels_path = f"{namer_dir}{'/labelnames_plotting.pkl'}"
-                with open(labels_path, 'wb') as f:
+                with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
 
-            connectome.add_graph(conn_matrix, coords,
-                                 edge_cmap=clust_pal_edges,
-                                 edge_vmax=float(1), edge_vmin=float(1), node_size=node_sizes,
-                                 node_color=clust_pal_nodes, edge_kwargs={'alpha': 0.50, "lineStyle": 'dashed'})
+            connectome.add_graph(
+                conn_matrix,
+                coords,
+                edge_cmap=clust_pal_edges,
+                edge_vmax=float(1),
+                edge_vmin=float(1),
+                node_size=node_sizes,
+                node_color=clust_pal_nodes,
+                edge_kwargs={"alpha": 0.50, "lineStyle": "dashed"},
+            )
             for view in views:
                 mod_lines = []
-                for line, edge_size in list(zip(connectome.axes[view].ax.lines, edge_sizes)):
+                for line, edge_size in list(
+                    zip(connectome.axes[view].ax.lines, edge_sizes)
+                ):
                     line.set_lw(edge_size)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
-            raise RuntimeError('\nERROR: no coordinates to plot! Are you running plotting outside of pynets\'s '
-                               'internal estimation schemes?')
+            raise RuntimeError(
+                "\nERROR: no coordinates to plot! Are you running plotting outside of pynets's "
+                "internal estimation schemes?")
 
-        plt.close('all')
+        plt.close("all")
 
     return
 
@@ -861,7 +1154,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     import numpy as np
     import multinetx as mx
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
     import pkg_resources
     import networkx as nx
     import yaml
@@ -871,25 +1165,36 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from pynets.core import thresholding
     from pynets.plotting.plot_gen import create_gb_palette
 
-    coords = metadata['coords']
-    labels = metadata['labels']
+    coords = metadata["coords"]
+    labels = metadata["labels"]
 
-    ch2better_loc = pkg_resources.resource_filename("pynets", "templates/ch2better.nii.gz")
+    ch2better_loc = pkg_resources.resource_filename(
+        "pynets", "templates/ch2better.nii.gz"
+    )
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme_func = hardcoded_params['plotting']['functional']['glassbrain']['color_theme'][0]
-            color_theme_struct = hardcoded_params['plotting']['structural']['glassbrain']['color_theme'][0]
-            glassbrain = hardcoded_params['plotting']['glassbrain'][0]
-            adjacency = hardcoded_params['plotting']['adjacency'][0]
-            dpi_resolution = hardcoded_params['plotting']['dpi'][0]
+            color_theme_func = hardcoded_params["plotting"]["functional"]["glassbrain"][
+                "color_theme"
+            ][0]
+            color_theme_struct = hardcoded_params["plotting"]["structural"][
+                "glassbrain"
+            ]["color_theme"][0]
+            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+            adjacency = hardcoded_params["plotting"]["adjacency"][0]
+            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         except KeyError:
-            print('ERROR: Plotting configuration not successfully extracted from runconfig.yaml')
+            print(
+                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+            )
             sys.exit(0)
     stream.close()
 
-    [struct_mat, func_mat] = [np.load(modality_paths[0]), np.load(modality_paths[1])]
+    [struct_mat, func_mat] = [
+        np.load(modality_paths[0]), np.load(modality_paths[1])]
 
     if adjacency is True:
         # Multiplex adjacency
@@ -897,73 +1202,148 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 
         fig = plt.figure(figsize=(15, 5))
         ax1 = fig.add_subplot(121)
-        adj = thresholding.standardize(mx.adjacency_matrix(mG, weight='weight').todense())
+        adj = thresholding.standardize(
+            mx.adjacency_matrix(mG, weight="weight").todense()
+        )
         [z_min, z_max] = np.abs(adj).min(), np.abs(adj).max()
 
         adj[adj == 0] = np.nan
 
-        ax1.imshow(adj, origin='lower', interpolation='nearest', cmap=plt.cm.RdBu, vmin=0.01, vmax=z_max)
-        ax1.set_title('Supra-Adjacency Matrix')
+        ax1.imshow(
+            adj,
+            origin="lower",
+            interpolation="nearest",
+            cmap=plt.cm.RdBu,
+            vmin=0.01,
+            vmax=z_max,
+        )
+        ax1.set_title("Supra-Adjacency Matrix")
 
         ax2 = fig.add_subplot(122)
-        ax2.axis('off')
+        ax2.axis("off")
         ax2.set_title(f"Functional-Structural Multiplex Connectome")
 
-        pos = mx.get_position(mG, mx.fruchterman_reingold_layout(mG.get_layer(0)),
-                              layer_vertical_shift=1.0,
-                              layer_horizontal_shift=0.0,
-                              proj_angle=7)
+        pos = mx.get_position(
+            mG,
+            mx.fruchterman_reingold_layout(mG.get_layer(0)),
+            layer_vertical_shift=1.0,
+            layer_horizontal_shift=0.0,
+            proj_angle=7,
+        )
         edge_intensities = []
         for a, b, w in mG.edges(data=True):
             if w != {}:
-                edge_intensities.append(w['weight'])
+                edge_intensities.append(w["weight"])
             else:
                 edge_intensities.append(0)
 
-        node_centralities = list(nx.algorithms.eigenvector_centrality(mG, weight='weight').values())
-        mx.draw_networkx(mG, pos=pos, ax=ax2, node_size=100, with_labels=True,
-                         edge_color=edge_intensities,
-                         node_color=node_centralities,
-                         edge_vmin=z_min, edge_vmax=z_max, dim=3, font_size=6, widths=3, alpha=0.7,
-                         cmap=plt.cm.RdBu)
-        plt.savefig(f"{namer_dir}/{name[:200]}supra_adj.png", dpi=dpi_resolution)
+        node_centralities = list(
+            nx.algorithms.eigenvector_centrality(mG, weight="weight").values()
+        )
+        mx.draw_networkx(
+            mG,
+            pos=pos,
+            ax=ax2,
+            node_size=100,
+            with_labels=True,
+            edge_color=edge_intensities,
+            node_color=node_centralities,
+            edge_vmin=z_min,
+            edge_vmax=z_max,
+            dim=3,
+            font_size=6,
+            widths=3,
+            alpha=0.7,
+            cmap=plt.cm.RdBu,
+        )
+        plt.savefig(
+            f"{namer_dir}/{name[:200]}supra_adj.png",
+            dpi=dpi_resolution)
 
     if glassbrain is True:
         # Multiplex glass brain
-        views = ['x', 'y', 'z']
-        connectome = niplot.plot_connectome(np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True)
+        views = ["x", "y", "z"]
+        connectome = niplot.plot_connectome(
+            np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+        )
         connectome.add_overlay(ch2better_loc, alpha=0.50, cmap=plt.cm.gray)
 
-        [struct_mat, _, _, _, edge_sizes_struct, _, _, coords, labels] = create_gb_palette(struct_mat,
-                                                                                           color_theme_struct,
-                                                                                           coords, labels, prune=False)
+        [
+            struct_mat,
+            _,
+            _,
+            _,
+            edge_sizes_struct,
+            _,
+            _,
+            coords,
+            labels,
+        ] = create_gb_palette(
+            struct_mat, color_theme_struct, coords, labels, prune=False
+        )
 
-        connectome.add_graph(struct_mat, coords, edge_threshold='50%', edge_cmap=plt.cm.binary, node_size=1,
-                             edge_kwargs={'alpha': 0.50,  "lineStyle": 'dashed'},
-                             node_kwargs={'alpha': 0.95}, edge_vmax=float(1), edge_vmin=float(1))
+        connectome.add_graph(
+            struct_mat,
+            coords,
+            edge_threshold="50%",
+            edge_cmap=plt.cm.binary,
+            node_size=1,
+            edge_kwargs={"alpha": 0.50, "lineStyle": "dashed"},
+            node_kwargs={"alpha": 0.95},
+            edge_vmax=float(1),
+            edge_vmin=float(1),
+        )
 
         for view in views:
             mod_lines = []
-            for line, edge_size in list(zip(connectome.axes[view].ax.lines, edge_sizes_struct)):
+            for line, edge_size in list(
+                zip(connectome.axes[view].ax.lines, edge_sizes_struct)
+            ):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines = mod_lines
 
-        [func_mat, clust_pal_edges, clust_pal_nodes, node_sizes, edge_sizes_func,
-         z_min, z_max, coords, labels] = create_gb_palette(func_mat, color_theme_func, coords, labels, prune=False)
-        connectome.add_graph(func_mat, coords, edge_threshold='50%', edge_cmap=clust_pal_edges,
-                             edge_kwargs={'alpha': 0.75},
-                             edge_vmax=float(z_max), edge_vmin=float(z_min), node_size=node_sizes,
-                             node_color=clust_pal_nodes)
+        [func_mat,
+         clust_pal_edges,
+         clust_pal_nodes,
+         node_sizes,
+         edge_sizes_func,
+         z_min,
+         z_max,
+         coords,
+         labels,
+         ] = create_gb_palette(func_mat,
+                               color_theme_func,
+                               coords,
+                               labels,
+                               prune=False)
+        connectome.add_graph(
+            func_mat,
+            coords,
+            edge_threshold="50%",
+            edge_cmap=clust_pal_edges,
+            edge_kwargs={"alpha": 0.75},
+            edge_vmax=float(z_max),
+            edge_vmin=float(z_min),
+            node_size=node_sizes,
+            node_color=clust_pal_nodes,
+        )
 
         for view in views:
             mod_lines = []
-            for line, edge_size in list(zip(connectome.axes[view].ax.lines[len(edge_sizes_struct):], edge_sizes_func)):
+            for line, edge_size in list(
+                zip(
+                    connectome.axes[view].ax.lines[len(edge_sizes_struct):],
+                    edge_sizes_func,
+                )
+            ):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines[len(edge_sizes_struct):] = mod_lines
 
-        connectome.savefig(f"{namer_dir}/{name[:200]}glassbrain_mplx.png", dpi=dpi_resolution)
+        connectome.savefig(
+            f"{namer_dir}/{name[:200]}glassbrain_mplx.png", dpi=dpi_resolution
+        )
 
     return
 
@@ -999,11 +1379,13 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
     """
     import os
     import matplotlib
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.preprocessing import scale
-    print('Saving model plots...')
+
+    print("Saving model plots...")
 
     namer_dir = op.dirname(op.dirname(op.dirname(net_pick_file)))
     if not os.path.isdir(namer_dir):
@@ -1015,54 +1397,75 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
             answer += 1
         return int(np.sqrt(answer ** 2))
 
-    global_measures = [meas for meas in measures if not meas.split('_')[0].isdigit() and
-                       meas.endswith('_auc') and not meas.startswith('thr_')]
+    global_measures = [
+        meas
+        for meas in measures
+        if not meas.split("_")[0].isdigit()
+        and meas.endswith("_auc")
+        and not meas.startswith("thr_")
+    ]
 
     if len(df_concat) >= 30:
-        fig, axes = plt.subplots(ncols=nearest_square_root(len(global_measures)),
-                                 nrows=nearest_square_root(len(global_measures)),
-                                 sharex=True, sharey=True, figsize=(10, 10))
+        fig, axes = plt.subplots(
+            ncols=nearest_square_root(len(global_measures)),
+            nrows=nearest_square_root(len(global_measures)),
+            sharex=True,
+            sharey=True,
+            figsize=(10, 10),
+        )
         for i, ax in enumerate(axes.flatten()):
             try:
-                x = np.array(df_concat[global_measures[i]][np.isfinite(df_concat[global_measures[i]])])
-            except:
+                x = np.array(
+                    df_concat[global_measures[i]][
+                        np.isfinite(df_concat[global_measures[i]])
+                    ]
+                )
+            except BaseException:
                 continue
             try:
-                x = np.delete(x, np.argwhere(x == '')).astype('float')
-            except:
+                x = np.delete(x, np.argwhere(x == "")).astype("float")
+            except BaseException:
                 continue
             try:
                 x = scale(x, axis=0, with_mean=True, with_std=True, copy=True)
-            except:
+            except BaseException:
                 continue
             if True in pd.isnull(x):
                 try:
                     x = x[~pd.isnull(x)]
                     if len(x) > 0:
-                        print(f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
-                              f"values. Checking output is recommended...")
-                        ax.hist(x, density=True, bins='auto', alpha=0.8)
+                        print(
+                            f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
+                            f"values. Checking output is recommended...")
+                        ax.hist(x, density=True, bins="auto", alpha=0.8)
                         ax.set_title(global_measures[i])
                     else:
-                        print(f"{'Warning: No numeric data to plot for '}{global_measures[i]}")
+                        print(
+                            f"{'Warning: No numeric data to plot for '}{global_measures[i]}"
+                        )
                         continue
-                except:
+                except BaseException:
                     continue
             else:
                 try:
-                    ax.hist(x, density=True, bins='auto', alpha=0.8)
+                    ax.hist(x, density=True, bins="auto", alpha=0.8)
                     ax.set_title(global_measures[i])
-                except:
-                    print(f"Warning: Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}")
+                except BaseException:
+                    print(
+                        f"Warning: Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}"
+                    )
                     continue
 
         plt.tight_layout()
-        out_path_fig = f"{namer_dir}{'/mean_global_topology_distribution_multiplot.png'}"
+        out_path_fig = (
+            f"{namer_dir}{'/mean_global_topology_distribution_multiplot.png'}"
+        )
         fig.savefig(out_path_fig)
-        plt.close('all')
+        plt.close("all")
     else:
-        print('At least 30 iterations needed to produce multiplot of global graph topology distributions. '
-              'Continuing...')
+        print(
+            "At least 30 iterations needed to produce multiplot of global graph topology distributions. "
+            "Continuing...")
         pass
 
     return

@@ -9,11 +9,12 @@ import warnings
 import numpy as np
 import indexed_gzip
 import nibabel as nib
+
 warnings.filterwarnings("ignore")
 
 
 def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
-    '''
+    """
     Estimate a tensor FA image to use for registrations.
 
     Parameters
@@ -37,7 +38,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
         File path to diffusion weighted Nifti1Image.
     fa_md_path : str
         File path to FA/MD mask Nifti1Image.
-    '''
+    """
     import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -45,22 +46,34 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    print('Generating tensor FA image to use for registrations...')
+    print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask)
-    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype('bool')
+    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype("bool")
     model = TensorModel(gtab)
     mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
     MD = mean_diffusivity(mod.evals)
-    FA_MD = (np.logical_or(FA >= 0.2, (np.logical_and(FA >= 0.08, MD >= 0.0011))))
+    FA_MD = np.logical_or(
+        FA >= 0.2, (np.logical_and(
+            FA >= 0.08, MD >= 0.0011)))
     FA[np.isnan(FA)] = 0
     FA_MD[np.isnan(FA_MD)] = 0
 
     fa_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa.nii.gz'}"
-    nib.save(nib.Nifti1Image(FA.astype(np.float32), nodif_B0_img.affine), fa_path)
+    nib.save(
+        nib.Nifti1Image(
+            FA.astype(
+                np.float32),
+            nodif_B0_img.affine),
+        fa_path)
 
     fa_md_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa_md.nii.gz'}"
-    nib.save(nib.Nifti1Image(FA_MD.astype(np.float32), nodif_B0_img.affine), fa_md_path)
+    nib.save(
+        nib.Nifti1Image(
+            FA_MD.astype(
+                np.float32),
+            nodif_B0_img.affine),
+        fa_md_path)
 
     nodif_B0_img.uncache()
     del FA, FA_MD
@@ -69,7 +82,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
 
 def create_anisopowermap(gtab_file, dwi_file, B0_mask):
-    '''
+    """
     Estimate an anisotropic power map image to use for registrations.
 
     Parameters
@@ -98,7 +111,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
       Zhong, J., & Hodaie, M. (2018). Diffusion Weighted Image Co-registration:
       Investigation of Best Practices. PLoS ONE.
 
-    '''
+    """
     import os
     from dipy.io import load_pickle
     from dipy.reconst.shm import anisotropic_power
@@ -106,7 +119,8 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     from dipy.reconst.shm import sf_to_sh
 
     gtab = load_pickle(gtab_file)
-    gtab_hemisphere = HemiSphere(xyz=gtab.bvecs[np.where(gtab.b0s_mask==False)])
+    gtab_hemisphere = HemiSphere(
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
 
     img = nib.load(dwi_file)
     aff = img.affine
@@ -116,16 +130,21 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     if os.path.isfile(anisopwr_path):
         pass
     else:
-        print('Generating anisotropic power map to use for registrations...')
+        print("Generating anisotropic power map to use for registrations...")
         nodif_B0_img = nib.load(B0_mask)
 
         dwi_data = np.asarray(img.dataobj)
-        for b0 in sorted(list(np.where(gtab.b0s_mask==True)[0]), reverse=True):
+        for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
             dwi_data = np.delete(dwi_data, b0, 3)
 
-        anisomap = anisotropic_power(sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2))
+        anisomap = anisotropic_power(
+            sf_to_sh(
+                dwi_data,
+                gtab_hemisphere,
+                sh_order=2))
         anisomap[np.isnan(anisomap)] = 0
-        masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype('bool')
+        masked_data = anisomap * \
+            np.asarray(nodif_B0_img.dataobj).astype("bool")
         img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
@@ -135,7 +154,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
 
 
 def tens_mod_est(gtab, data, B0_mask):
-    '''
+    """
     Estimate a tensor ODF model from dwi data.
 
     Parameters
@@ -162,13 +181,13 @@ def tens_mod_est(gtab, data, B0_mask):
       orientation of anisotropic tissues from diffusion tensor data:
       application to white matter fiber tract mapping in the human brain.
 
-    '''
+    """
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
 
-    sphere = get_sphere('repulsion724')
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
-    print('Generating tensor model...')
+    sphere = get_sphere("repulsion724")
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    print("Generating tensor model...")
     model = TensorModel(gtab)
     mod = model.fit(data, B0_mask_data)
     mod_odf = mod.odf(sphere)
@@ -177,7 +196,7 @@ def tens_mod_est(gtab, data, B0_mask):
 
 
 def csa_mod_est(gtab, data, B0_mask, sh_order=8):
-    '''
+    """
     Estimate a Constant Solid Angle (CSA) model from dwi data.
 
     Parameters
@@ -203,18 +222,19 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     .. [1] Aganj, I., et al. 2009. ODF Reconstruction in Q-Ball Imaging
       with Solid Angle Consideration.
 
-    '''
+    """
     from dipy.reconst.shm import CsaOdfModel
-    print('Fitting CSA model...')
+
+    print("Fitting CSA model...")
     model = CsaOdfModel(gtab, sh_order=sh_order)
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
     del B0_mask_data
     return csa_mod, model
 
 
 def csd_mod_est(gtab, data, B0_mask, sh_order=8):
-    '''
+    """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
     Parameters
@@ -249,14 +269,28 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     .. [4] Tournier, J.D, et al. Imaging Systems and Technology
       2012. MRtrix: Diffusion Tractography in Crossing Fiber Regions
 
-    '''
-    from dipy.reconst.csdeconv import ConstrainedSphericalDeconvModel, recursive_response
-    print('Fitting CSD model...')
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
-    print('Reconstructing...')
-    response = recursive_response(gtab, data, mask=B0_mask_data, sh_order=sh_order, peak_thr=0.01, init_fa=0.08,
-                                  init_trace=0.0021, iter=8, convergence=0.001, parallel=False)
-    print('CSD Reponse: ' + str(response))
+    """
+    from dipy.reconst.csdeconv import (
+        ConstrainedSphericalDeconvModel,
+        recursive_response,
+    )
+
+    print("Fitting CSD model...")
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    print("Reconstructing...")
+    response = recursive_response(
+        gtab,
+        data,
+        mask=B0_mask_data,
+        sh_order=sh_order,
+        peak_thr=0.01,
+        init_fa=0.08,
+        init_trace=0.0021,
+        iter=8,
+        convergence=0.001,
+        parallel=False,
+    )
+    print("CSD Reponse: " + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     del response, B0_mask_data
@@ -264,7 +298,7 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
 
 
 def sfm_mod_est(gtab, data, B0_mask):
-    '''
+    """
     Estimate a Sparse Fascicle Model (SFM) from dwi data.
 
     Parameters
@@ -293,15 +327,16 @@ def sfm_mod_est(gtab, data, B0_mask):
       Pestilli,  Brian A. Wandell (2014). Evaluating the accuracy of diffusion
       models at multiple b-values with cross-validation. ISMRM 2014.
 
-    '''
+    """
     from dipy.data import get_sphere
     import dipy.reconst.sfm as sfm
 
-    sphere = get_sphere('repulsion724')
-    print('Fitting SF model...')
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype('bool')
-    print('Reconstructing...')
-    model = sfm.SparseFascicleModel(gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
+    sphere = get_sphere("repulsion724")
+    print("Fitting SF model...")
+    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    print("Reconstructing...")
+    model = sfm.SparseFascicleModel(
+        gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
     sf_mod = model.fit(data, mask=B0_mask_data)
     sf_odf = sf_mod.odf(sphere)
 
@@ -309,10 +344,36 @@ def sfm_mod_est(gtab, data, B0_mask):
     return sf_odf, model
 
 
-def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_samples, conn_model, network, node_size,
-                  dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm,
-                  binary, directget, warped_fa, error_margin, min_length, fa_wei=True):
-    '''
+def streams2graph(
+    atlas_mni,
+    streams,
+    overlap_thr,
+    dir_path,
+    track_type,
+    target_samples,
+    conn_model,
+    network,
+    node_size,
+    dens_thresh,
+    ID,
+    roi,
+    min_span_tree,
+    disp_filt,
+    parc,
+    prune,
+    atlas,
+    uatlas,
+    labels,
+    coords,
+    norm,
+    binary,
+    directget,
+    warped_fa,
+    error_margin,
+    min_length,
+    fa_wei=True,
+):
+    """
     Use tracked streamlines as a basis for estimating a structural connectome.
 
     Parameters
@@ -453,11 +514,11 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
       Analysis in Diffusion Tensor Imaging. Brain Connectivity.
       https://doi.org/10.1089/brain.2016.0481
 
-    '''
+    """
     import gc
     import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
-    from dipy.tracking._utils import (_mapping_to_voxel, _to_voxel_coordinates)
+    from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates
     import networkx as nx
     from itertools import combinations
     from collections import defaultdict
@@ -475,32 +536,49 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     roi_shape = roi_img.shape
 
     # Read Streamlines
-    streamlines = [i.astype(np.float32) for i in Streamlines(load_tractogram(streams, roi_img, to_space=Space.RASMM,
-                                                                             to_origin=Origin.TRACKVIS,
-                                                                             bbox_valid_check=False).streamlines)]
+    streamlines = [
+        i.astype(np.float32)
+        for i in Streamlines(
+            load_tractogram(
+                streams,
+                roi_img,
+                to_space=Space.RASMM,
+                to_origin=Origin.TRACKVIS,
+                bbox_valid_check=False,
+            ).streamlines
+        )
+    ]
     roi_img.uncache()
 
     if fa_wei is True:
-        fa_weights = values_from_volume(np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4))
+        fa_weights = values_from_volume(
+            np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4)
+        )
         global_fa_weights = list(utils.flatten(fa_weights))
         min_global_fa_wei = min(i for i in global_fa_weights if i > 0)
         max_global_fa_wei = max(global_fa_weights)
         fa_weights_norm = []
         # Here we normalize by global FA
         for val_list in fa_weights:
-            fa_weights_norm.append(np.nanmean((val_list - min_global_fa_wei) /
-                                              (max_global_fa_wei - min_global_fa_wei)))
+            fa_weights_norm.append(
+                np.nanmean(
+                    (val_list - min_global_fa_wei)
+                    / (max_global_fa_wei - min_global_fa_wei)
+                )
+            )
 
     # Make streamlines into generators to keep memory at a minimum
     sl = [generate_sl(i) for i in streamlines]
     del streamlines
 
-    # Instantiate empty networkX graph object & dictionary and create voxel-affine mapping
+    # Instantiate empty networkX graph object & dictionary and create
+    # voxel-affine mapping
     lin_T, offset = _mapping_to_voxel(np.eye(4))
-    mx = len(np.unique(atlas_data.astype('uint16'))) - 1
+    mx = len(np.unique(atlas_data.astype("uint16"))) - 1
     g = nx.Graph(ecount=0, vcount=mx)
     edge_dict = defaultdict(int)
-    node_dict = dict(zip(np.unique(atlas_data.astype('uint16'))[1:], np.arange(mx) + 1))
+    node_dict = dict(
+        zip(np.unique(atlas_data.astype("uint16"))[1:], np.arange(mx) + 1))
 
     # Add empty vertices
     for node in range(1, mx + 1):
@@ -510,22 +588,27 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     ix = 0
     bad_idxs = []
     for s in sl:
-        # Map the streamlines coordinates to voxel coordinates and get labels for label_volume
+        # Map the streamlines coordinates to voxel coordinates and get labels
+        # for label_volume
         vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
-        lab_coords = [nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape) for coord in vox_coords]
+        lab_coords = [
+            nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape)
+            for coord in vox_coords
+        ]
         [i, j, k] = np.vstack(np.array(lab_coords)).T
 
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
         endlabels = []
-        for ix, lab in enumerate(np.unique(lab_arr).astype('uint32')):
+        for ix, lab in enumerate(np.unique(lab_arr).astype("uint32")):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
-                except:
+                except BaseException:
                     bad_idxs.append(ix)
-                    print(f"Label {lab} missing from parcellation. Check registration and ensure valid input "
-                          f"parcellation file.")
+                    print(
+                        f"Label {lab} missing from parcellation. Check registration and ensure valid input "
+                        f"parcellation file.")
 
         edges = combinations(endlabels, 2)
         for edge in edges:
@@ -560,7 +643,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
             vals = []
             for e2, w2 in edge_att_dict.items():
                 vals.append(float(e2) * float(w2))
-            g.edges[u, v].update({'weight': np.nanmean(vals)})
+            g.edges[u, v].update({"weight": np.nanmean(vals)})
 
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_array(g)
@@ -568,7 +651,7 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
     # Impose symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
-    print('Graph Building Complete:\n', str(time.time() - start))
+    print("Graph Building Complete:\n", str(time.time() - start))
 
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
@@ -580,6 +663,29 @@ def streams2graph(atlas_mni, streams, overlap_thr, dir_path, track_type, target_
 
     assert len(coords) == len(labels) == conn_matrix.shape[0]
 
-    return (atlas_mni, streams, conn_matrix, track_type, target_samples, dir_path, conn_model, network, node_size,
-            dens_thresh, ID, roi, min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-            directget, min_length)
+    return (
+        atlas_mni,
+        streams,
+        conn_matrix,
+        track_type,
+        target_samples,
+        dir_path,
+        conn_model,
+        network,
+        node_size,
+        dens_thresh,
+        ID,
+        roi,
+        min_span_tree,
+        disp_filt,
+        parc,
+        prune,
+        atlas,
+        uatlas,
+        labels,
+        coords,
+        norm,
+        binary,
+        directget,
+        min_length,
+    )
