@@ -158,7 +158,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
         -m '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-brain_mask.nii.gz' \
         -id 'PARTICIPANT_SESSION' -plug 'MultiProc' -work '/tmp'  -pm '24,48'
 
-Manually Prepared Environment (Python 3.5+)
+Manually Prepared Environment (Python 3.6+)
 ===========================================
 
 .. warning::
@@ -172,10 +172,10 @@ system's ``$PATH``.
 A relatively interpretable description of how your environment can be set-up
 is found in the `Dockerfile <https://github.com/dPys/PyNets/blob/master/Dockerfile>`_.
 
-On a functional Python 3.5 (or above) environment with ``pip`` installed,
+On a functional Python 3.6 (or above) environment with ``pip`` installed,
 PyNets can be installed using the habitual command: ::
 
-    pip install pynets
+    pip install pynets --user
 
 External Dependencies
 ---------------------

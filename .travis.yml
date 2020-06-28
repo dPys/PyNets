@@ -1,14 +1,12 @@
 # Config file for automatic testing at travis-ci.org
 # This file will be regenerated if you run travis_pypi_setup.py
 
-dist: xenial
-
 language: python
 python:
   - 3.7
 
-services:
-  - docker
+#services:
+#  - docker
 
 #addons:
 #  apt:

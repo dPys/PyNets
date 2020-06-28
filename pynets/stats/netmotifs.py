@@ -477,6 +477,7 @@ def build_multigraphs(est_path_iterlist, ID):
     import yaml
     import os
     import itertools
+    import numpy as np
     from pathlib import Path
     from pynets.core.utils import flatten
     from pynets.stats.netmotifs import motif_matching
