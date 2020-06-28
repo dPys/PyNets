@@ -22,14 +22,13 @@ def gen_mask(t1w_head, t1w_brain, mask):
     import os.path as op
     from nilearn.image import math_img
 
+    t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
+
     if mask is not None:
         from nilearn.image import resample_to_img
-        t1w_brain_mask = mask
-        print(f"Using {t1w_brain_mask}...")
-        nib.save(resample_to_img(nib.load(t1w_brain_mask), nib.load(t1w_head)),
-                 t1w_brain_mask)
+        print(f"Using {mask}...")
+        nib.save(resample_to_img(nib.load(mask), nib.load(t1w_head)), t1w_brain_mask)
     else:
-        t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
         # Check if already skull-stripped. If not, strip it.
         img = nib.load(t1w_head)
         t1w_data = img.get_fdata()
@@ -57,10 +56,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     mask = math_img('img > 0.0', img=t_img)
     mask.to_filename(t1w_brain_mask)
 
-    try:
-        os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain}")
-    except ValueError:
-        print('Cannot coerce mask to shape of T1w anatomical.')
+    os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)

@@ -20,7 +20,6 @@ class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
     uatlas = traits.Any()
     ref_txt = traits.Any()
     parc = traits.Bool()
-    in_file = File(exists=True, mandatory=True)
     use_AAL_naming = traits.Bool(False, usedefault=True)
     outdir = traits.Str(mandatory=True)
     vox_size = traits.Str('2mm', mandatory=True, usedefault=True)
@@ -339,13 +338,20 @@ class IndividualClustering(SimpleInterface):
     input_spec = _IndividualClusteringInputSpec
     output_spec = _IndividualClusteringOutputSpec
 
-    def _run_interface(self, runtime, c_boot=10):
+    def _run_interface(self, runtime):
         import gc
+        import pkg_resources
+        import yaml
         from nilearn.masking import unmask
         from pynets.fmri.estimation import timeseries_bootstrap
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
+
+        with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+            hardcoded_params = yaml.load(stream)
+            c_boot = hardcoded_params['c_boot'][0]
+        stream.close()
 
         clust_list = ['kmeans', 'ward', 'complete', 'average', 'ncut', 'rena']
 

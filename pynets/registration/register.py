@@ -417,7 +417,6 @@ class DmriReg(object):
         self.basedir_path = basedir_path
         self.tmp_path = f"{basedir_path}{'/dmri_reg'}"
         self.reg_path = f"{basedir_path}{'/dmri_reg/reg'}"
-        self.anat_path = f"{basedir_path}{'/anat_reg'}"
         self.reg_path_mat = f"{self.reg_path}{'/mats'}"
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
         self.reg_path_img = f"{self.reg_path}{'/imgs'}"
@@ -428,10 +427,10 @@ class DmriReg(object):
         self.warp_t1w2mni = f"{self.reg_path_warp}{'/t1w2mni_warp.nii.gz'}"
         self.t1w2dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_in_dwi.nii.gz'}"
         self.t1_aligned_mni = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
-        self.t1w_brain = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
-        self.t1w_head = f"{self.anat_path}{'/'}{self.t1w_name}{'_head.nii.gz'}"
-        self.t1w_brain_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
-        self.t1w_brain_mask_in_dwi = f"{self.anat_path}{'/'}{self.t1w_name}{'_brain_mask_in_dwi.nii.gz'}"
+        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
+        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_head.nii.gz'}"
+        self.t1w_brain_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
+        self.t1w_brain_mask_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask_in_dwi.nii.gz'}"
         self.dwi2t1w_xfm = f"{self.reg_path_mat}{'/dwi2t1w_xfm.mat'}"
         self.t1w2dwi_xfm = f"{self.reg_path_mat}{'/t1w2dwi_xfm.mat'}"
         self.t1w2dwi_bbr_xfm = f"{self.reg_path_mat}{'/t1w2dwi_bbr_xfm.mat'}"
@@ -439,11 +438,11 @@ class DmriReg(object):
         self.t1wtissue2dwi_xfm = f"{self.reg_path_mat}{'/t1wtissue2dwi_xfm.mat'}"
         self.temp2dwi_xfm = f"{self.reg_path_mat}{'/'}{self.dwi_name}{'_xfm_temp2dwi.mat'}"
         self.map_name = f"{self.t1w_name}{'_seg'}"
-        self.wm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_wm.nii.gz'}"
-        self.wm_mask_thr = f"{self.anat_path}{'/'}{self.t1w_name}{'_wm_thr.nii.gz'}"
-        self.wm_edge = f"{self.anat_path}{'/'}{self.t1w_name}{'_wm_edge.nii.gz'}"
-        self.csf_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_csf.nii.gz'}"
-        self.gm_mask = f"{self.anat_path}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
+        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm.nii.gz'}"
+        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_thr.nii.gz'}"
+        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_edge.nii.gz'}"
+        self.csf_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf.nii.gz'}"
+        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
         self.xfm_roi2mni_init = f"{self.reg_path_mat}{'/roi_2_mni.mat'}"
         self.mni_vent_loc = pkg_resources.resource_filename("pynets",
                                                             f"templates/LateralVentricles_{vox_size}.nii.gz")
@@ -473,7 +472,7 @@ class DmriReg(object):
         self.corpuscallosum_dwi = f"{self.reg_path_img}{'/CorpusCallosum_dwi.nii.gz'}"
 
         # Create empty tmp directories that do not yet exist
-        reg_dirs = [self.tmp_path, self.reg_path, self.anat_path, self.reg_path_mat, self.reg_path_warp,
+        reg_dirs = [self.tmp_path, self.reg_path, self.reg_path_mat, self.reg_path_warp,
                     self.reg_path_img]
         for i in range(len(reg_dirs)):
             if not op.isdir(reg_dirs[i]):

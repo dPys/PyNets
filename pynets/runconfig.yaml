@@ -13,6 +13,8 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
     - 30
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr', 'scorr', and 'tcorr'.
     - 'allcorr'
+c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
+    - 10
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and bin (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
