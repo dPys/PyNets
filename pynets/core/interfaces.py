@@ -2188,7 +2188,7 @@ class Tracking(SimpleInterface):
         save_tractogram(
             stf,
             streams,
-            bbox_valid_check=True,
+            bbox_valid_check=False,
         )
 
         copyfile(
