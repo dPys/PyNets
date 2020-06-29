@@ -12,6 +12,7 @@ import os.path as op
 import indexed_gzip
 import nibabel as nib
 import numpy as np
+
 warnings.filterwarnings("ignore")
 
 
@@ -23,18 +24,19 @@ def get_file():
 
 def checkConsecutive(l):
     n = len(l) - 1
-    return (sum(np.diff(sorted(l)) == 1) >= n)
+    return sum(np.diff(sorted(l)) == 1) >= n
 
 
 def prune_suffices(res):
     import re
-    if 'reor-RAS' in str(res):
+
+    if "reor-RAS" in str(res):
         res = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(res))
-    if 'res-' in str(res):
+    if "res-" in str(res):
         res = re.sub(r"_res\-*[0-4]mm", "", str(res))
-    if 'noreor-RAS' in str(res):
+    if "noreor-RAS" in str(res):
         res = re.sub(r"_noreor\-*[A-Z][A-Z][A-Z]", "", str(res))
-    if 'nores-' in str(res):
+    if "nores-" in str(res):
         res = re.sub(r"_nores\-*[0-4]mm", "", str(res))
     return res
 
@@ -60,8 +62,8 @@ def do_dir_path(atlas, outdir):
         if os.path.isfile(atlas):
             atlas = os.path.basename(atlas)
         atlas = prune_suffices(atlas)
-        if atlas.endswith('.nii.gz'):
-           atlas = atlas.replace('.nii.gz', '')
+        if atlas.endswith(".nii.gz"):
+            atlas = atlas.replace(".nii.gz", "")
 
     dir_path = f"{outdir}/{atlas}"
     if not op.exists(dir_path) and atlas is not None:
@@ -105,8 +107,20 @@ def as_directory(dir_, remove=False, return_as_path=False):
     return str(p)
 
 
-def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type, hpass, parc,
-                         extract_strategy):
+def create_est_path_func(
+    ID,
+    network,
+    conn_model,
+    thr,
+    roi,
+    dir_path,
+    node_size,
+    smooth,
+    thr_type,
+    hpass,
+    parc,
+    extract_strategy,
+):
     """
     Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -148,10 +162,11 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     """
     import os
-    if (node_size is None) and (parc is True):
-        node_size = '_parc'
 
-    namer_dir = f'{dir_path}/graphs'
+    if (node_size is None) and (parc is True):
+        node_size = "_parc"
+
+    namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -161,30 +176,58 @@ def create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size,
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                 network is not None else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0],
-                                                                             '_') if roi is not None else ''),
-                                                         'est-', conn_model, '_',
-                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size, 'mm_') if
-                                                                 ((node_size != 'parc') and (node_size is not None))
-                                                                 else 'nodetype-parc_'),
-                                                         "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                                 float(smooth) > 0 else ''),
-                                                         "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                                 hpass is not None else ''),
-                                                         "%s" % ("%s%s%s" %
-                                                                 ('extract-', extract_strategy, '_') if
-                                                                 extract_strategy is not None else ''),
-                                                         'thrtype-', thr_type, '_thr-', thr,
-                                                         '.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                         "/",
+                                                         ID,
+                                                         "_modality-func_",
+                                                         "%s" % ("%s%s%s" % ("rsn-",
+                                                                             network,
+                                                                             "_") if network is not None else ""),
+                                                         "%s" % ("%s%s%s" % ("roi-",
+                                                                             op.basename(roi).split(".")[0],
+                                                                             "_") if roi is not None else ""),
+                                                         "est-",
+                                                         conn_model,
+                                                         "_",
+                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                             node_size,
+                                                                             "mm_") if (
+                                                             (node_size != "parc") and (
+                                                                 node_size is not None)) else "nodetype-parc_"),
+                                                         "%s" % ("%s%s%s" % ("smooth-",
+                                                                             smooth,
+                                                                             "fwhm_") if float(smooth) > 0 else ""),
+                                                         "%s" % ("%s%s%s" % ("hpass-",
+                                                                             hpass,
+                                                                             "Hz_") if hpass is not None else ""),
+                                                         "%s" % ("%s%s%s" % ("extract-",
+                                                                             extract_strategy,
+                                                                             "_") if extract_strategy is not None else ""),
+                                                         "thrtype-",
+                                                         thr_type,
+                                                         "_thr-",
+                                                         thr,
+                                                         ".npy",
+                                                         )
 
     return est_path
 
 
-def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples, track_type, thr_type,
-                         parc, directget, min_length):
+def create_est_path_diff(
+    ID,
+    network,
+    conn_model,
+    thr,
+    roi,
+    dir_path,
+    node_size,
+    target_samples,
+    track_type,
+    thr_type,
+    parc,
+    directget,
+    min_length,
+):
     """
     Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -229,35 +272,62 @@ def create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size,
 
     """
     import os
-    if (node_size is None) and (parc is True):
-        node_size = 'parc'
 
-    namer_dir = f'{dir_path}/graphs'
+    if (node_size is None) and (parc is True):
+        node_size = "parc"
+
+    namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                                         network is not None else ''),
-                                                                 '%s' % ("%s%s%s" % ('roi-',
-                                                                                     op.basename(roi).split('.')[0],
-                                                                                     '_') if roi is not None else ''),
-                                                                 'est-', conn_model, '_',
-                                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                                     'mm_')
-                                                                         if ((node_size != 'parc') and
-                                                                             (node_size is not None))
-                                                                         else 'nodetype-parc_'),
-                                                                 "%s" % ("%s%s%s" % ('samples-', int(target_samples),
-                                                                                     'streams_')
-                                                                         if float(target_samples) > 0 else '_'),
-                                                                 'tt-', track_type, '_dg-', directget,
-                                                                 '_ml-', min_length,
-                                                                 '_thrtype-', thr_type, '_thr-', thr, '.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                                 "/",
+                                                                 ID,
+                                                                 "_modality-dwi_",
+                                                                 "%s" % ("%s%s%s" % ("rsn-",
+                                                                                     network,
+                                                                                     "_") if network is not None else ""),
+                                                                 "%s" % ("%s%s%s" % ("roi-",
+                                                                                     op.basename(roi).split(".")[0],
+                                                                                     "_") if roi is not None else ""),
+                                                                 "est-",
+                                                                 conn_model,
+                                                                 "_",
+                                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                                     node_size,
+                                                                                     "mm_") if (
+                                                                     (node_size != "parc") and (
+                                                                         node_size is not None)) else "nodetype-parc_"),
+                                                                 "%s" % ("%s%s%s" % ("samples-",
+                                                                                     int(target_samples),
+                                                                                     "streams_") if float(target_samples) > 0 else "_"),
+                                                                 "tt-",
+                                                                 track_type,
+                                                                 "_dg-",
+                                                                 directget,
+                                                                 "_ml-",
+                                                                 min_length,
+                                                                 "_thrtype-",
+                                                                 thr_type,
+                                                                 "_thr-",
+                                                                 thr,
+                                                                 ".npy",
+                                                                 )
     return est_path
 
 
-def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth, hpass, parc, extract_strategy):
+def create_raw_path_func(
+    ID,
+    network,
+    conn_model,
+    roi,
+    dir_path,
+    node_size,
+    smooth,
+    hpass,
+    parc,
+    extract_strategy,
+):
     """
     Name the raw functional connectivity matrix file based on relevant graph-generating parameters.
 
@@ -294,10 +364,11 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
 
     """
     import os
-    if (node_size is None) and (parc is True):
-        node_size = 'parc'
 
-    namer_dir = f'{dir_path}/graphs'
+    if (node_size is None) and (parc is True):
+        node_size = "parc"
+
+    namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -307,32 +378,52 @@ def create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smoo
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-func_',
-                                                 '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                         network is not None else ''),
-                                                 '%s' % ("%s%s%s" % ('roi-',
-                                                                     op.basename(roi).split('.')[0],
-                                                                     '_') if roi is not None else ''),
-                                                 'est-', conn_model, '_',
-                                                 '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                     'mm_')
-                                                         if ((node_size != 'parc') and
-                                                             (node_size is not None))
-                                                         else 'nodetype-parc_'),
-                                                 "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                         float(smooth) > 0 else ''),
-                                                 "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                         hpass is not None else ''),
-                                                 "%s" % ("%s%s%s" %
-                                                         ('extract-', extract_strategy, '_') if
-                                                         extract_strategy is not None else ''),
-                                                 'raw.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                 "/",
+                                                 ID,
+                                                 "_modality-func_",
+                                                 "%s" % ("%s%s%s" % ("rsn-",
+                                                                     network,
+                                                                     "_") if network is not None else ""),
+                                                 "%s" % ("%s%s%s" % ("roi-",
+                                                                     op.basename(roi).split(".")[0],
+                                                                     "_") if roi is not None else ""),
+                                                 "est-",
+                                                 conn_model,
+                                                 "_",
+                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                     node_size,
+                                                                     "mm_") if (
+                                                     (node_size != "parc") and (
+                                                         node_size is not None)) else "nodetype-parc_"),
+                                                 "%s" % ("%s%s%s" % ("smooth-",
+                                                                     smooth,
+                                                                     "fwhm_") if float(smooth) > 0 else ""),
+                                                 "%s" % ("%s%s%s" % ("hpass-",
+                                                                     hpass,
+                                                                     "Hz_") if hpass is not None else ""),
+                                                 "%s" % ("%s%s%s" % ("extract-",
+                                                                     extract_strategy,
+                                                                     "_") if extract_strategy is not None else ""),
+                                                 "raw.npy",
+                                                 )
 
     return est_path
 
 
-def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, target_samples, track_type, parc,
-                         directget, min_length):
+def create_raw_path_diff(
+    ID,
+    network,
+    conn_model,
+    roi,
+    dir_path,
+    node_size,
+    target_samples,
+    track_type,
+    parc,
+    directget,
+    min_length,
+):
     """
     Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
 
@@ -372,29 +463,43 @@ def create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size, targ
 
     """
     import os
-    if (node_size is None) and (parc is True):
-        node_size = '_parc'
 
-    namer_dir = f'{dir_path}/graphs'
+    if (node_size is None) and (parc is True):
+        node_size = "_parc"
+
+    namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_modality-dwi_',
-                                                         '%s' % ("%s%s%s" % ('rsn-', network, '_') if
-                                                         network is not None else ''),
-                                                         '%s' % ("%s%s%s" % ('roi-',
-                                                                             op.basename(roi).split('.')[0],
-                                                                             '_') if roi is not None else ''),
-                                                         'est-', conn_model, '_',
-                                                         '%s' % ("%s%s%s" % ('nodetype-spheres-', node_size,
-                                                                             'mm_')
-                                                                 if ((node_size != 'parc') and
-                                                                     (node_size is not None))
-                                                                 else 'nodetype-parc_'),
-                                                         "%s" % ("%s%s%s" % ('samples-', int(target_samples),
-                                                                             'streams_') if float(target_samples) > 0
-                                                                 else ''), 'tt-', track_type, '_dg-', directget,
-                                                         '_ml-', min_length, '_raw.npy')
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                         "/",
+                                                         ID,
+                                                         "_modality-dwi_",
+                                                         "%s" % ("%s%s%s" % ("rsn-",
+                                                                             network,
+                                                                             "_") if network is not None else ""),
+                                                         "%s" % ("%s%s%s" % ("roi-",
+                                                                             op.basename(roi).split(".")[0],
+                                                                             "_") if roi is not None else ""),
+                                                         "est-",
+                                                         conn_model,
+                                                         "_",
+                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                                                             node_size,
+                                                                             "mm_") if (
+                                                             (node_size != "parc") and (
+                                                                 node_size is not None)) else "nodetype-parc_"),
+                                                         "%s" % ("%s%s%s" % ("samples-",
+                                                                             int(target_samples),
+                                                                             "streams_") if float(target_samples) > 0 else ""),
+                                                         "tt-",
+                                                         track_type,
+                                                         "_dg-",
+                                                         directget,
+                                                         "_ml-",
+                                                         min_length,
+                                                         "_raw.npy",
+                                                         )
     return est_path
 
 
@@ -419,7 +524,7 @@ def create_csv_path(dir_path, est_path):
     import os
     from pathlib import Path
 
-    namer_dir = f'{str(Path(dir_path).parent)}/netmetrics'
+    namer_dir = f"{str(Path(dir_path).parent)}/netmetrics"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -443,43 +548,67 @@ def load_mat(est_path):
 
     fmt = op.splitext(est_path)[1]
 
-    if fmt == '.edgelist_csv' or fmt == '.csv':
-        with open(est_path, 'rb') as stream:
+    if fmt == ".edgelist_csv" or fmt == ".csv":
+        with open(est_path, "rb") as stream:
             G = nx.read_weighted_edgelist(stream, delimiter=",")
         stream.close()
-    elif fmt == '.edgelist_ssv' or fmt == '.ssv':
-        with open(est_path, 'rb') as stream:
+    elif fmt == ".edgelist_ssv" or fmt == ".ssv":
+        with open(est_path, "rb") as stream:
             G = nx.read_weighted_edgelist(stream, delimiter=" ")
         stream.close()
-    elif fmt == '.edgelist_tsv' or fmt == '.tsv':
-        with open(est_path, 'rb') as stream:
+    elif fmt == ".edgelist_tsv" or fmt == ".tsv":
+        with open(est_path, "rb") as stream:
             G = nx.read_weighted_edgelist(stream, delimiter="\t")
-    elif fmt == '.gpickle':
+    elif fmt == ".gpickle":
         G = nx.read_gpickle(est_path)
-    elif fmt == '.graphml':
+    elif fmt == ".graphml":
         G = nx.read_graphml(est_path)
-    elif fmt == '.txt':
+    elif fmt == ".txt":
         G = nx.from_numpy_array(np.genfromtxt(est_path))
-    elif fmt == '.npy':
+    elif fmt == ".npy":
         G = nx.from_numpy_array(np.load(est_path))
     else:
-        raise ValueError('\nERROR: File format not supported!')
+        raise ValueError("\nERROR: File format not supported!")
 
-    G.graph['ecount'] = nx.number_of_edges(G)
+    G.graph["ecount"] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
 
-    return nx.to_numpy_matrix(G, weight='weight')
+    return nx.to_numpy_matrix(G, weight="weight")
 
 
-def load_mat_ext(est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, disp_filt):
+def load_mat_ext(
+    est_path,
+    ID,
+    network,
+    conn_model,
+    roi,
+    prune,
+    norm,
+    binary,
+    min_span_tree,
+    dens_thresh,
+    disp_filt,
+):
     from pynets.core.utils import load_mat
 
     conn_matrix = load_mat(est_path)
-    return conn_matrix, est_path, ID, network, conn_model, roi, prune, norm, binary, min_span_tree, dens_thresh, \
-           disp_filt
+    return (
+        conn_matrix,
+        est_path,
+        ID,
+        network,
+        conn_model,
+        roi,
+        prune,
+        norm,
+        binary,
+        min_span_tree,
+        dens_thresh,
+        disp_filt,
+    )
 
 
-def save_mat(conn_matrix, est_path, fmt='npy'):
+def save_mat(conn_matrix, est_path, fmt="npy"):
     """
     Save an adjacency matrix using any of a variety of methods.
 
@@ -497,39 +626,68 @@ def save_mat(conn_matrix, est_path, fmt='npy'):
     import networkx as nx
 
     G = nx.from_numpy_array(conn_matrix)
-    G.graph['ecount'] = nx.number_of_edges(G)
+    G.graph["ecount"] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
-    if fmt == 'edgelist_csv':
-        nx.write_weighted_edgelist(G, f"{est_path.split('.npy')[0]}.csv", encoding='utf-8')
-    elif fmt == 'gpickle':
+    if fmt == "edgelist_csv":
+        nx.write_weighted_edgelist(
+            G, f"{est_path.split('.npy')[0]}.csv", encoding="utf-8"
+        )
+    elif fmt == "gpickle":
         nx.write_gpickle(G, f"{est_path.split('.npy')[0]}.pkl")
-    elif fmt == 'graphml':
+    elif fmt == "graphml":
         nx.write_graphml(G, f"{est_path.split('.npy')[0]}.graphml")
-    elif fmt == 'txt':
-        np.savetxt(f"{est_path.split('.npy')[0]}{'.txt'}", nx.to_numpy_matrix(G))
-    elif fmt == 'npy':
+    elif fmt == "txt":
+        np.savetxt(
+            f"{est_path.split('.npy')[0]}{'.txt'}",
+            nx.to_numpy_matrix(G))
+    elif fmt == "npy":
         np.save(est_path, nx.to_numpy_matrix(G))
-    elif fmt == 'edgelist_ssv':
-        nx.write_weighted_edgelist(G, f"{est_path.split('.npy')[0]}.ssv", delimiter=" ", encoding='utf-8')
+    elif fmt == "edgelist_ssv":
+        nx.write_weighted_edgelist(
+            G,
+            f"{est_path.split('.npy')[0]}.ssv",
+            delimiter=" ",
+            encoding="utf-8")
     else:
-        raise ValueError('\nERROR: File format not supported!')
+        raise ValueError("\nERROR: File format not supported!")
 
     return
 
 
-def save_mat_thresholded(conn_matrix, est_path_orig, thr_type, ID, network, thr, conn_model, roi,
-                         prune, norm, binary):
+def save_mat_thresholded(
+    conn_matrix,
+    est_path_orig,
+    thr_type,
+    ID,
+    network,
+    thr,
+    conn_model,
+    roi,
+    prune,
+    norm,
+    binary,
+):
     from pynets.core.utils import save_mat
     from nipype.utils.filemanip import fname_presuffix
 
-    est_path = fname_presuffix(est_path_orig, suffix=f"_thrtype-{thr_type}_thr-{thr}")
-    save_mat(conn_matrix, est_path, fmt='npy')
+    est_path = fname_presuffix(est_path_orig,
+                               suffix=f"_thrtype-{thr_type}_thr-{thr}")
+    save_mat(conn_matrix, est_path, fmt="npy")
 
     return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
 
 
-def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
-                   prune_iterlist, ID_iterlist, roi_iterlist, norm_iterlist, binary_iterlist):
+def pass_meta_outs(
+    conn_model_iterlist,
+    est_path_iterlist,
+    network_iterlist,
+    thr_iterlist,
+    prune_iterlist,
+    ID_iterlist,
+    roi_iterlist,
+    norm_iterlist,
+    binary_iterlist,
+):
     """
     Passes lists of iterable parameters as metadata.
 
@@ -587,11 +745,29 @@ def pass_meta_outs(conn_model_iterlist, est_path_iterlist, network_iterlist, thr
 
     """
 
-    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
-            roi_iterlist, norm_iterlist, binary_iterlist)
+    return (
+        conn_model_iterlist,
+        est_path_iterlist,
+        network_iterlist,
+        thr_iterlist,
+        prune_iterlist,
+        ID_iterlist,
+        roi_iterlist,
+        norm_iterlist,
+        binary_iterlist,
+    )
 
 
-def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, binary):
+def pass_meta_ins(
+        conn_model,
+        est_path,
+        network,
+        thr,
+        prune,
+        ID,
+        roi,
+        norm,
+        binary):
     """
     Passes parameters as metadata.
 
@@ -666,13 +842,39 @@ def pass_meta_ins(conn_model, est_path, network, thr, prune, ID, roi, norm, bina
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
-            roi_iterlist, norm_iterlist, binary_iterlist)
+    return (
+        conn_model_iterlist,
+        est_path_iterlist,
+        network_iterlist,
+        thr_iterlist,
+        prune_iterlist,
+        ID_iterlist,
+        roi_iterlist,
+        norm_iterlist,
+        binary_iterlist,
+    )
 
 
-def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func,
-                        roi_func, norm_func, binary_func, conn_model_struct, est_path_struct, network_struct,
-                        thr_struct, prune_struct, ID_struct, roi_struct, norm_struct, binary_struct):
+def pass_meta_ins_multi(
+    conn_model_func,
+    est_path_func,
+    network_func,
+    thr_func,
+    prune_func,
+    ID_func,
+    roi_func,
+    norm_func,
+    binary_func,
+    conn_model_struct,
+    est_path_struct,
+    network_struct,
+    thr_struct,
+    prune_struct,
+    ID_struct,
+    roi_struct,
+    norm_struct,
+    binary_struct,
+):
     """
     Passes multimodal iterable parameters as metadata.
 
@@ -771,8 +973,17 @@ def pass_meta_ins_multi(conn_model_func, est_path_func, network_func, thr_func, 
     # print(norm_iterlist)
     # print(binary_iterlist)
     # print('\n\n')
-    return (conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
-            roi_iterlist, norm_iterlist, binary_iterlist)
+    return (
+        conn_model_iterlist,
+        est_path_iterlist,
+        network_iterlist,
+        thr_iterlist,
+        prune_iterlist,
+        ID_iterlist,
+        roi_iterlist,
+        norm_iterlist,
+        binary_iterlist,
+    )
 
 
 def collectpandasjoin(net_mets_csv):
@@ -799,8 +1010,11 @@ def flatten(l):
     Flatten list of lists.
     """
     import collections
+
     for el in l:
-        if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+        if isinstance(
+                el, collections.Iterable) and not isinstance(
+                el, (str, bytes)):
             for ell in flatten(el):
                 yield ell
         else:
@@ -809,12 +1023,14 @@ def flatten(l):
 
 def proportional(k, voxels_list):
     """Hagenbach-Bischoff Quota"""
-    quota = sum(voxels_list) / (1. + k)
+    quota = sum(voxels_list) / (1.0 + k)
     frac = [voxels / quota for voxels in voxels_list]
     res = [int(f) for f in frac]
     n = k - sum(res)
-    if n == 0: return res
-    if n < 0: return [min(x, k) for x in res]
+    if n == 0:
+        return res
+    if n < 0:
+        return [min(x, k) for x in res]
     remainders = [ai - bi for ai, bi in zip(frac, res)]
     limit = sorted(remainders, reverse=True)[n - 1]
     for i, r in enumerate(remainders):
@@ -825,7 +1041,9 @@ def proportional(k, voxels_list):
                 return res
 
 
-def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal):
+def collect_pandas_df(
+    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
+):
     """
     API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
 
@@ -858,52 +1076,103 @@ def collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, m
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            func_models = hardcoded_params['available_models']['func_models']
+            func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
-            print('ERROR: available functional models not sucessfully extracted from runconfig.yaml')
+            print(
+                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+            )
         try:
-            struct_models = hardcoded_params['available_models']['struct_models']
+            struct_models = hardcoded_params["available_models"]["struct_models"]
         except KeyError:
-            print('ERROR: available structural models not sucessfully extracted from runconfig.yaml')
+            print(
+                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+            )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
     if multi_nets is not None:
         net_mets_csv_list_nets = net_mets_csv_list
         for network in multi_nets:
-            net_mets_csv_list = list(set([i for i in net_mets_csv_list_nets if network in i]))
+            net_mets_csv_list = list(
+                set([i for i in net_mets_csv_list_nets if network in i])
+            )
             if multimodal is True:
-                net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                                  in struct_models]))
-                combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
-                net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if
-                                                    i.split('est-')[1].split('_')[0] in func_models]))
-                combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
+                net_mets_csv_list_dwi = list(
+                    set(
+                        [
+                            i
+                            for i in net_mets_csv_list
+                            if i.split("est-")[1].split("_")[0] in struct_models
+                        ]
+                    )
+                )
+                combination_complete_dwi = collect_pandas_df_make(
+                    net_mets_csv_list_dwi, ID, network, plot_switch
+                )
+                net_mets_csv_list_func = list(
+                    set(
+                        [
+                            i
+                            for i in net_mets_csv_list
+                            if i.split("est-")[1].split("_")[0] in func_models
+                        ]
+                    )
+                )
+                combination_complete_func = collect_pandas_df_make(
+                    net_mets_csv_list_func, ID, network, plot_switch
+                )
 
-                if combination_complete_dwi is True and combination_complete_func is True:
+                if (
+                    combination_complete_dwi is True
+                    and combination_complete_func is True
+                ):
                     combination_complete = True
                 else:
                     combination_complete = False
             else:
-                combination_complete = collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
+                combination_complete = collect_pandas_df_make(
+                    net_mets_csv_list, ID, network, plot_switch
+                )
     else:
         if multimodal is True:
-            net_mets_csv_list_dwi = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0] in
-                                              struct_models]))
-            combination_complete_dwi = collect_pandas_df_make(net_mets_csv_list_dwi, ID, network, plot_switch)
-            net_mets_csv_list_func = list(set([i for i in net_mets_csv_list if i.split('est-')[1].split('_')[0]
-                                               in func_models]))
-            combination_complete_func = collect_pandas_df_make(net_mets_csv_list_func, ID, network, plot_switch)
+            net_mets_csv_list_dwi = list(
+                set(
+                    [
+                        i
+                        for i in net_mets_csv_list
+                        if i.split("est-")[1].split("_")[0] in struct_models
+                    ]
+                )
+            )
+            combination_complete_dwi = collect_pandas_df_make(
+                net_mets_csv_list_dwi, ID, network, plot_switch
+            )
+            net_mets_csv_list_func = list(
+                set(
+                    [
+                        i
+                        for i in net_mets_csv_list
+                        if i.split("est-")[1].split("_")[0] in func_models
+                    ]
+                )
+            )
+            combination_complete_func = collect_pandas_df_make(
+                net_mets_csv_list_func, ID, network, plot_switch
+            )
 
             if combination_complete_dwi is True and combination_complete_func is True:
                 combination_complete = True
             else:
                 combination_complete = False
         else:
-            combination_complete = collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch)
+            combination_complete = collect_pandas_df_make(
+                net_mets_csv_list, ID, network, plot_switch
+            )
 
     return combination_complete
 
@@ -970,7 +1239,7 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         import _pickle as pickle
     import os
 
-    namer_dir = f'{dir_path}/nodes'
+    namer_dir = f"{dir_path}/nodes"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -982,11 +1251,11 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         labels_path = f"{namer_dir}/_labels.pkl"
 
     # Save coords to pickle
-    with open(coord_path, 'wb') as f:
+    with open(coord_path, "wb") as f:
         pickle.dump(coords, f, protocol=2)
 
     # Save labels to pickle
-    with open(labels_path, 'wb') as f:
+    with open(labels_path, "wb") as f:
         pickle.dump(labels, f, protocol=2)
 
     return coord_path, labels_path
@@ -1001,19 +1270,36 @@ def get_template_tf(template_name, vox_size):
     from pathlib import Path
     from templateflow.api import get as get_template
 
-    templateflow_home = Path(os.getenv(
-        'TEMPLATEFLOW_HOME',
-        os.path.join(os.getenv('HOME'), '.cache', 'templateflow'))
+    templateflow_home = Path(
+        os.getenv(
+            "TEMPLATEFLOW_HOME",
+            os.path.join(os.getenv("HOME"), ".cache", "templateflow"),
+        )
     )
-    res = int(vox_size.strip('mm'))
+    res = int(vox_size.strip("mm"))
     # str(get_template(
-    #     template_name, resolution=res, desc=None, suffix='T1w', extension=['.nii', '.nii.gz']))
+    # template_name, resolution=res, desc=None, suffix='T1w',
+    # extension=['.nii', '.nii.gz']))
 
-    template = str(get_template(template_name, resolution=res, desc='brain', suffix='T1w',
-                                extension=['.nii', '.nii.gz']))
+    template = str(
+        get_template(
+            template_name,
+            resolution=res,
+            desc="brain",
+            suffix="T1w",
+            extension=[".nii", ".nii.gz"],
+        )
+    )
 
-    template_mask = str(get_template(template_name, resolution=res, desc='brain', suffix='mask',
-                                     extension=['.nii', '.nii.gz']))
+    template_mask = str(
+        get_template(
+            template_name,
+            resolution=res,
+            desc="brain",
+            suffix="mask",
+            extension=[".nii", ".nii.gz"],
+        )
+    )
 
     return template, template_mask, templateflow_home
 
@@ -1044,19 +1330,34 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     """
     import os
 
-    namer_dir = f'{dir_path}/parcellations'
+    namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    net_parcels_nii_path = "%s%s%s%s%s%s" % (namer_dir, '/', str(ID), '_parcels_masked',
-                                             '%s' % ("%s%s" % ('_rsn-', network) if network is not None else ''),
-                                             '.nii.gz')
+    net_parcels_nii_path = "%s%s%s%s%s%s" % (
+        namer_dir,
+        "/",
+        str(ID),
+        "_parcels_masked",
+        "%s" % ("%s%s" % ("_rsn-", network) if network is not None else ""),
+        ".nii.gz",
+    )
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
     return net_parcels_nii_path
 
 
-def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size, extract_strategy):
+def save_ts_to_file(
+    roi,
+    network,
+    ID,
+    dir_path,
+    ts_within_nodes,
+    smooth,
+    hpass,
+    node_size,
+    extract_strategy,
+):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -1091,7 +1392,8 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
 
     """
     import os
-    namer_dir = f'{dir_path}/timeseries'
+
+    namer_dir = f"{dir_path}/timeseries"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
@@ -1102,21 +1404,32 @@ def save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, 
         smooth = 0
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir, '/', ID, '_',
-                                              '%s' % ("%s%s%s" % ('rsn-', network, '_') if network is not None else ''),
-                                              '%s' % ("%s%s%s" % ('roi-', op.basename(roi).split('.')[0], '_') if
-                                                      roi is not None else ''),
-                                              '%s' % ("%s%s%s" % ('spheres-', node_size, 'mm_') if
-                                                      ((node_size != 'parc') and (node_size is not None)) else
-                                                      'parc_'),
-                                              "%s" % ("%s%s%s" % ('smooth-', smooth, 'fwhm_') if
-                                                      float(smooth) > 0 else ''),
-                                              "%s" % ("%s%s%s" % ('hpass-', hpass, 'Hz_') if
-                                                      hpass is not None else ''),
-                                              "%s" % ("%s%s%s" %
-                                                      ('extract-', extract_strategy, '_') if
-                                                      extract_strategy is not None else ''),
-                                              'node_ts.npy')
+    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                              "/",
+                                              ID,
+                                              "_",
+                                              "%s" % ("%s%s%s" % ("rsn-",
+                                                                  network,
+                                                                  "_") if network is not None else ""),
+                                              "%s" % ("%s%s%s" % ("roi-",
+                                                                  op.basename(roi).split(".")[0],
+                                                                  "_") if roi is not None else ""),
+                                              "%s" % ("%s%s%s" % ("spheres-",
+                                                                  node_size,
+                                                                  "mm_") if (
+                                                  (node_size != "parc") and (
+                                                      node_size is not None)) else "parc_"),
+                                              "%s" % ("%s%s%s" % ("smooth-",
+                                                                  smooth,
+                                                                  "fwhm_") if float(smooth) > 0 else ""),
+                                              "%s" % ("%s%s%s" % ("hpass-",
+                                                                  hpass,
+                                                                  "Hz_") if hpass is not None else ""),
+                                              "%s" % ("%s%s%s" % ("extract-",
+                                                                  extract_strategy,
+                                                                  "_") if extract_strategy is not None else ""),
+                                              "node_ts.npy",
+                                              )
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1179,29 +1492,42 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
     A function to build a hyperparameter dictionary by parsing a given net_mets file path.
     """
-    hyperparam_dict['atlas'] = atlas
+    hyperparam_dict["atlas"] = atlas
 
     for hyperparam in hyperparams:
-        if (hyperparam != 'smooth') and (hyperparam != 'hpass') and (hyperparam != 'track_type') and \
-                (hyperparam != 'directget') and (hyperparam != 'min_length'):
-            hyperparam_dict[hyperparam] = file_renamed.split(hyperparam + '-')[1].split('_')[0]
-    if modality == 'func':
-        if 'smooth-' in file_renamed:
-            hyperparam_dict['smooth'] = file_renamed.split('smooth-')[1].split('_')[0].split('fwhm')[0]
-            hyperparams.append('smooth')
-        if 'hpass-' in file_renamed:
-            hyperparam_dict['hpass'] = file_renamed.split('hpass-')[1].split('_')[0].split('Hz')[0]
-            hyperparams.append('hpass')
-    elif modality == 'dwi':
-        if 'tt-' in file_renamed:
-            hyperparam_dict['track_type'] = file_renamed.split('tt-')[1].split('_')[0]
-            hyperparams.append('track_type')
-        if 'dg-' in file_renamed:
-            hyperparam_dict['directget'] = file_renamed.split('dg-')[1].split('_')[0]
-            hyperparams.append('directget')
-        if 'ml-' in file_renamed:
-            hyperparam_dict['min_length'] = file_renamed.split('ml-')[1].split('_')[0]
-            hyperparams.append('min_length')
+        if (
+            (hyperparam != "smooth")
+            and (hyperparam != "hpass")
+            and (hyperparam != "track_type")
+            and (hyperparam != "directget")
+            and (hyperparam != "min_length")
+        ):
+            hyperparam_dict[hyperparam] = file_renamed.split(
+                hyperparam + "-")[1].split("_")[0]
+    if modality == "func":
+        if "smooth-" in file_renamed:
+            hyperparam_dict["smooth"] = (
+                file_renamed.split("smooth-")[1].split("_")[0].split("fwhm")[0]
+            )
+            hyperparams.append("smooth")
+        if "hpass-" in file_renamed:
+            hyperparam_dict["hpass"] = (
+                file_renamed.split("hpass-")[1].split("_")[0].split("Hz")[0]
+            )
+            hyperparams.append("hpass")
+    elif modality == "dwi":
+        if "tt-" in file_renamed:
+            hyperparam_dict["track_type"] = file_renamed.split(
+                "tt-")[1].split("_")[0]
+            hyperparams.append("track_type")
+        if "dg-" in file_renamed:
+            hyperparam_dict["directget"] = file_renamed.split(
+                "dg-")[1].split("_")[0]
+            hyperparams.append("directget")
+        if "ml-" in file_renamed:
+            hyperparam_dict["min_length"] = file_renamed.split(
+                "ml-")[1].split("_")[0]
+            hyperparams.append("min_length")
     return hyperparam_dict, hyperparams
 
 
@@ -1209,36 +1535,60 @@ class build_sql_db(object):
     """
     A SQL exporter for AUC metrics.
     """
+
     def __init__(self, dir_path, ID):
         from sqlalchemy import create_engine
+
         self.ID = ID
-        db_file = dir_path + '/' + self.ID + '_auc_db.sql'
-        self.engine = create_engine('sqlite:///' + db_file, echo=False, encoding='utf-8')
+        db_file = dir_path + "/" + self.ID + "_auc_db.sql"
+        self.engine = create_engine(
+            "sqlite:///" + db_file, echo=False, encoding="utf-8"
+        )
         self.hyperparams = None
         self.modality = None
         return
 
     def create_modality_table(self, modality):
         from sqlalchemy.sql import text
+
         self.modality = modality
-        statement = """CREATE TABLE IF NOT EXISTS """ + self.modality + """(id TEXT);"""
+        statement = """CREATE TABLE IF NOT EXISTS """ + \
+            self.modality + """(id TEXT);"""
         self.engine.execute(text(statement.replace("'", "")))
 
     def add_hp_columns(self, hyperparams):
         from sqlalchemy.sql import text
+
         self.hyperparams = hyperparams
         for hp in self.hyperparams:
             try:
-                statement = """ALTER TABLE """ + self.modality + """ ADD COLUMN """ + hp + """;"""
+                statement = (
+                    """ALTER TABLE """
+                    + self.modality
+                    + """ ADD COLUMN """
+                    + hp
+                    + """;"""
+                )
                 self.engine.execute(text(statement.replace("'", "")))
-            except:
+            except BaseException:
                 continue
         return
 
     def add_row_from_df(self, df_summary_auc, hyperparam_dict):
         import pandas as pd
-        df_summary_auc_ext = pd.concat([pd.DataFrame.from_dict(hyperparam_dict, orient='index').transpose(),
-                                        df_summary_auc], axis=1)
-        df_summary_auc_ext.to_sql(self.modality, con=self.engine, index=False, chunksize=1000, if_exists='replace')
-        return
 
+        df_summary_auc_ext = pd.concat(
+            [
+                pd.DataFrame.from_dict(hyperparam_dict, orient="index").transpose(),
+                df_summary_auc,
+            ],
+            axis=1,
+        )
+        df_summary_auc_ext.to_sql(
+            self.modality,
+            con=self.engine,
+            index=False,
+            chunksize=1000,
+            if_exists="replace",
+        )
+        return

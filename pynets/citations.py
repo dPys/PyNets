@@ -3,10 +3,10 @@ from datetime import datetime
 
 PYNETS = """
 @CONFERENCE{{dPys,
-    title = {{PyNets v{version}: A Reproducible Workflow for Structural and 
+    title = {{PyNets v{version}: A Reproducible Workflow for Structural and
     Functional Connectome Ensemble Learning'}},
     author = {{Pisner, D.}},
-    publisher = {{Poster session presented at: Annual Meeting of the Organization 
+    publisher = {{Poster session presented at: Annual Meeting of the Organization
     for Human Brain Mapping}},
     url = {{https://github.com/dPys/PyNets}},
     note = {{[Online; accessed {datestamp}]}},

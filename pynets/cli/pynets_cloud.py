@@ -37,7 +37,7 @@ def batch_submit(
     working_dir,
     verbose,
     jobdir,
-    credentials
+    credentials,
 ):
     """Searches through an S3 bucket, gets all subject-ids, creates json files for each,
     submits batch jobs, and returns list of job ids to query status upon later."""
@@ -46,9 +46,9 @@ def batch_submit(
     seshs = crawl_bucket(bucket, dataset, jobdir)
 
     for sub, ses in list(seshs.items()):
-        if session_label != ['None'] and session_label != [None]:
+        if session_label != ["None"] and session_label != [None]:
             seshs[sub] = [i for i in seshs[sub] if i in session_label]
-        if participant_label != ['None'] and participant_label != [None]:
+        if participant_label != ["None"] and participant_label != [None]:
             if sub not in participant_label:
                 del seshs[sub]
 
@@ -68,7 +68,7 @@ def batch_submit(
         working_dir,
         verbose,
         jobdir,
-        credentials
+        credentials,
     )
 
     print("Submitting jobs to the queue...")
@@ -167,6 +167,7 @@ def create_json(
 ):
     """Creates the json files for each of the jobs"""
     from pathlib import Path
+
     jobsjson = f"{jobdir}/jobs.json"
 
     # set up infrastructure
@@ -174,8 +175,12 @@ def create_json(
     out = subprocess.check_output(f"mkdir -p {jobdir}/jobs/", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/ids/", shell=True)
 
-    with open("%s%s" % (str(Path(__file__).parent.parent), '/config/cloud_config.json'), 'r') as inf:
-    #with open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json') as inf:
+    with open(
+        "%s%s" % (str(Path(__file__).parent.parent), "/config/cloud_config.json"), "r"
+    ) as inf:
+        # with
+        # open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json')
+        # as inf:
         template = json.load(inf)
 
     co = template["containerOverrides"]
@@ -192,42 +197,42 @@ def create_json(
     # edit non-defaults
     procmem = list(eval(str(resources)))
     jobs = []
-    cmd[cmd.index("<INPUT>")] = f's3://{bucket}/{dataset}'
-    cmd[cmd.index("<PUSH>")] = f's3://{bucket}/{push_dir}'
+    cmd[cmd.index("<INPUT>")] = f"s3://{bucket}/{dataset}"
+    cmd[cmd.index("<PUSH>")] = f"s3://{bucket}/{push_dir}"
     cmd[cmd.index("<MODALITY>")] = modality[0]
     co["vcpus"] = int(procmem[0])
-    co["memory"] = int(1000*float(procmem[1]))
+    co["memory"] = int(1000 * float(procmem[1]))
 
     if user_atlas is not None:
-        cmd.append('-ua')
+        cmd.append("-ua")
         for i in user_atlas:
             cmd.append(i)
     if cluster_mask is not None:
-        cmd.append('-cm')
+        cmd.append("-cm")
         for i in cluster_mask:
             cmd.append(i)
     if roi is not None:
-        cmd.append('-roi')
+        cmd.append("-roi")
         for i in roi:
             cmd.append(i)
     if ref is not None:
-        cmd.append('-ref')
+        cmd.append("-ref")
         for i in ref:
             cmd.append(i)
     if way is not None:
-        cmd.append('-way')
+        cmd.append("-way")
         for i in way:
             cmd.append(i)
     if verbose is True:
-        cmd.append('-v')
+        cmd.append("-v")
     if plugin is not None:
-        cmd.append('-plug')
+        cmd.append("-plug")
         cmd.append(plugin)
     if plugin is not None:
-        cmd.append('-pm')
+        cmd.append("-pm")
         cmd.append(resources)
     if working_dir is not None:
-        cmd.append('-work')
+        cmd.append("-work")
         cmd.append(working_dir)
 
     # edit participant-specific values ()
@@ -291,7 +296,8 @@ def submit_jobs(jobs, jobdir):
             kwargs = json.load(f)
         print(f"Submitting Job: {job}")
         submission = batch.submit_job(**kwargs)
-        print((f'Job Name: {submission["jobName"]}, Job ID: {submission["jobId"]}'))
+        print(
+            (f'Job Name: {submission["jobName"]}, Job ID: {submission["jobId"]}'))
         sub_file = os.path.join(jobdir, "ids", submission["jobName"] + ".json")
         with open(sub_file, "w") as outfile:
             json.dump(submission, outfile)
@@ -331,102 +337,143 @@ def kill_jobs(jobdir, reason='"Killing job"'):
 
 
 def main():
-    parser = ArgumentParser(description='PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible '
-                                        'Ensemble Sampling of Functional and Structural Connectomes')
-    parser.add_argument("--bucket",
-                        help="""The S3 bucket name.""")
-    parser.add_argument("--dataset",
-                        help="""The directory with the input dataset formatted according to the BIDS standard such that
-                        `s3://<bucket>/<dataset>` as the input directory.""")
-    parser.add_argument("modality",
-                        metavar='modality',
-                        nargs='+',
-                        choices=['dwi', 'func'],
-                        help='Specify data modality to process from bids directory. Options are `dwi` and `func`.')
-    parser.add_argument("--participant_label",
-                        help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to 
-                            sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this 
-                            parameter is not provided all subjects should be analyzed. Multiple participants can be 
+    parser = ArgumentParser(
+        description="PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible "
+        "Ensemble Sampling of Functional and Structural Connectomes")
+    parser.add_argument("--bucket", help="""The S3 bucket name.""")
+    parser.add_argument(
+        "--dataset",
+        help="""The directory with the input dataset formatted according to the BIDS standard such that
+                        `s3://<bucket>/<dataset>` as the input directory.""",
+    )
+    parser.add_argument(
+        "modality",
+        metavar="modality",
+        nargs="+",
+        choices=[
+            "dwi",
+            "func"],
+        help="Specify data modality to process from bids directory. Options are `dwi` and `func`.",
+    )
+    parser.add_argument(
+        "--participant_label",
+        help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to
+                            sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this
+                            parameter is not provided all subjects should be analyzed. Multiple participants can be
                             specified with a space separated list.""",
-                        nargs="+",
-                        default=None)
-    parser.add_argument("--session_label",
-                        help="""The label(s) of the session that should be analyzed. The label  corresponds to
-                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter 
-                         is not provided all sessions should be analyzed. Multiple sessions can be specified with a 
+        nargs="+",
+        default=None,
+    )
+    parser.add_argument(
+        "--session_label",
+        help="""The label(s) of the session that should be analyzed. The label  corresponds to
+                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter
+                         is not provided all sessions should be analyzed. Multiple sessions can be specified with a
                          space separated list.""",
-                        nargs="+",
-                        default=None)
-    parser.add_argument("--push_location",
-                        action="store",
-                        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
-                             "created. Format the location as `s3://<bucket>/<path>`",
-                        default=None)
+        nargs="+",
+        default=None,
+    )
+    parser.add_argument(
+        "--push_location",
+        action="store",
+        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
+        "created. Format the location as `s3://<bucket>/<path>`",
+        default=None,
+    )
 
     # Secondary file inputs
-    parser.add_argument('-ua',
-                        metavar='Path to parcellation file in MNI-space',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. '
-                             'Labels should be spatially distinct across hemispheres and ordered with consecutive '
-                             'integers with a value of 0 as the background label. If specifying a list of paths to '
-                             'multiple user atlases, separate them by space.\n')
-    parser.add_argument('-cm',
-                        metavar='Cluster mask',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify the path to a Nifti1Image mask file to constrained functional '
-                             'clustering. If specifying a list of paths to multiple cluster masks, separate '
-                             'them by space.\n')
-    parser.add_argument('-roi',
-                        metavar='Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask in template MNI space and retain only those '
-                             'nodes of a parcellation contained within that mask for connectome estimation.\n')
-    parser.add_argument('-ref',
-                        metavar='Atlas reference file path',
-                        default=None,
-                        help='Specify the path to the atlas reference .txt file that maps labels to '
-                             'intensities corresponding to the atlas parcellation file specified with the -ua flag.\n')
-    parser.add_argument('-way',
-                        metavar='Path to binarized Nifti1Image to constrain tractography',
-                        default=None,
-                        nargs='+',
-                        help='Optionally specify a binarized ROI mask in template MNI-space to constrain'
-                             'tractography in the case of dmri connectome estimation.\n')
+    parser.add_argument(
+        "-ua",
+        metavar="Path to parcellation file in MNI-space",
+        default=None,
+        nargs="+",
+        help="Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. "
+        "Labels should be spatially distinct across hemispheres and ordered with consecutive "
+        "integers with a value of 0 as the background label. If specifying a list of paths to "
+        "multiple user atlases, separate them by space.\n",
+    )
+    parser.add_argument(
+        "-cm",
+        metavar="Cluster mask",
+        default=None,
+        nargs="+",
+        help="Optionally specify the path to a Nifti1Image mask file to constrained functional "
+        "clustering. If specifying a list of paths to multiple cluster masks, separate "
+        "them by space.\n",
+    )
+    parser.add_argument(
+        "-roi",
+        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space",
+        default=None,
+        nargs="+",
+        help="Optionally specify a binarized ROI mask in template MNI space and retain only those "
+        "nodes of a parcellation contained within that mask for connectome estimation.\n",
+    )
+    parser.add_argument(
+        "-ref",
+        metavar="Atlas reference file path",
+        default=None,
+        help="Specify the path to the atlas reference .txt file that maps labels to "
+        "intensities corresponding to the atlas parcellation file specified with the -ua flag.\n",
+    )
+    parser.add_argument(
+        "-way",
+        metavar="Path to binarized Nifti1Image to constrain tractography",
+        default=None,
+        nargs="+",
+        help="Optionally specify a binarized ROI mask in template MNI-space to constrain"
+        "tractography in the case of dmri connectome estimation.\n",
+    )
 
     # Debug/Runtime settings
-    parser.add_argument("--jobdir",
-                        action="store",
-                        help="""Local directory where the generated batch jobs will be 
-                        saved/run through in case of batch termination or check-up.""")
-    parser.add_argument("--credentials",
-                        action="store",
-                        help="csv formatted AWS credentials.",
-                        default=None)
-    parser.add_argument('-pm',
-                        metavar='Cores,memory',
-                        default='auto',
-                        help='Number of cores to use, number of GB of memory to use for single subject run, entered as '
-                             'two integers seperated by comma. Otherwise, default is `auto`, which uses all resources '
-                             'detected on the current compute node.\n')
-    parser.add_argument('-plug',
-                        metavar='Scheduler type',
-                        default='MultiProc',
-                        nargs=1,
-                        choices=['Linear', 'MultiProc', 'SGE', 'PBS', 'SLURM', 'SGEgraph', 'SLURMgraph',
-                                 'LegacyMultiProc'],
-                        help='Include this flag to specify a workflow plugin other than the default MultiProc.\n')
-    parser.add_argument('-v',
-                        default=False,
-                        action='store_true',
-                        help='Verbose print for debugging.\n')
-    parser.add_argument('-work',
-                        metavar='Working directory',
-                        default='/tmp/work',
-                        help='Specify the path to a working directory for pynets to run. Default is /tmp/work.\n')
+    parser.add_argument(
+        "--jobdir",
+        action="store",
+        help="""Local directory where the generated batch jobs will be
+                        saved/run through in case of batch termination or check-up.""",
+    )
+    parser.add_argument(
+        "--credentials",
+        action="store",
+        help="csv formatted AWS credentials.",
+        default=None,
+    )
+    parser.add_argument(
+        "-pm",
+        metavar="Cores,memory",
+        default="auto",
+        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
+        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
+        "detected on the current compute node.\n",
+    )
+    parser.add_argument(
+        "-plug",
+        metavar="Scheduler type",
+        default="MultiProc",
+        nargs=1,
+        choices=[
+            "Linear",
+            "MultiProc",
+            "SGE",
+            "PBS",
+            "SLURM",
+            "SGEgraph",
+            "SLURMgraph",
+            "LegacyMultiProc",
+        ],
+        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+    )
+    parser.add_argument(
+        "-v",
+        default=False,
+        action="store_true",
+        help="Verbose print for debugging.\n")
+    parser.add_argument(
+        "-work",
+        metavar="Working directory",
+        default="/tmp/work",
+        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+    )
 
     result = parser.parse_args()
 
@@ -478,8 +525,9 @@ def main():
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import warnings
+
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()
