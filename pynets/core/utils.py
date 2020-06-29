@@ -1247,8 +1247,8 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
         labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
     else:
-        coord_path = f"{namer_dir}/_coords.pkl"
-        labels_path = f"{namer_dir}/_labels.pkl"
+        coord_path = f"{namer_dir}/all_coords.pkl"
+        labels_path = f"{namer_dir}/all_labels.pkl"
 
     # Save coords to pickle
     with open(coord_path, "wb") as f:

@@ -219,8 +219,8 @@ def create_density_map(
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos),
-        boot (bootstrapped), and prob (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
 
@@ -302,16 +302,17 @@ def track_ensemble(
     min_separation_angle=20,
 ):
     """
-    Perform native-space ensemble tractography, restricted to a vector of ROI masks.
+    Perform native-space ensemble tractography, restricted to a vector of ROI
+    masks.
 
     target_samples : int
         Total number of streamline samples specified to generate streams.
     atlas_data_wm_gm_int : array
-        3D int32 numpy array of atlas parcellation intensities from Nifti1Image in T1w-warped native diffusion space,
-        restricted to wm-gm interface.
+        3D int32 numpy array of atlas parcellation intensities from Nifti1Image
+        in T1w-warped native diffusion space, restricted to wm-gm interface.
     parcels : list
-        List of 3D boolean numpy arrays of atlas parcellation ROI masks from a Nifti1Image in T1w-warped native
-        diffusion space.
+        List of 3D boolean numpy arrays of atlas parcellation ROI masks from a
+        Nifti1Image in T1w-warped native diffusion space.
     mod : obj
         Connectivity reconstruction model.
     tiss_classifier : str
@@ -319,8 +320,8 @@ def track_ensemble(
     sphere : obj
         DiPy object for modeling diffusion directions on a sphere.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -328,7 +329,8 @@ def track_ensemble(
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     maxcrossing : int
-        Maximum number if diffusion directions that can be assumed per voxel while tracking.
+        Maximum number if diffusion directions that can be assumed per voxel
+        while tracking.
     roi_neighborhood_tol : float
         Distance (in the units of the streamlines, usually mm). If any
         coordinate in the streamline is within this distance from the center

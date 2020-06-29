@@ -200,7 +200,7 @@ def build_subject_dict(sub, working_path, modality="func"):
         print(ses)
         subject_dict[sub][ses] = []
         for atlas in atlases:
-            atlas_name = "_".join(atlas.split("_")[1:])
+            #atlas_name = "_".join(atlas.split("_")[1:])
             auc_csvs = glob.glob(
                 f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*"
             )
@@ -213,7 +213,7 @@ def build_subject_dict(sub, working_path, modality="func"):
                 )
                 try:
                     subject_dict[sub][ses].append(
-                        load_pd_dfs_auc(atlas_name, prefix, auc_file)
+                        load_pd_dfs_auc(atlas, prefix, auc_file)
                     )
                 except BaseException:
                     print("Missing auc file...")

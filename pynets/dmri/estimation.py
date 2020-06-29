@@ -543,8 +543,8 @@ def streams2graph(
                 streams,
                 roi_img,
                 to_space=Space.RASMM,
-                to_origin=Origin.TRACKVIS,
-                bbox_valid_check=False,
+                to_origin=Origin.NIFTI,
+                bbox_valid_check=True,
             ).streamlines
         )
     ]

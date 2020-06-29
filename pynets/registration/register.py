@@ -1172,7 +1172,7 @@ class FmriReg(object):
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
-        mask = math_img("img > 0.05", img=t_img)
+        mask = math_img("img > 0.02", img=t_img)
         mask.to_filename(self.gm_mask_thr)
         os.system(
             f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask} 2>/dev/null"

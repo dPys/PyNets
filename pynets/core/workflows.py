@@ -84,7 +84,8 @@ def workflow_selector(
     outdir,
     clean=True,
 ):
-    """A meta-interface for selecting modality-specific workflows to nest into a single-subject workflow"""
+    """A meta-interface for selecting modality-specific workflows to nest
+    into a single-subject workflow"""
     import gc
     import os
     import sys
@@ -96,7 +97,8 @@ def workflow_selector(
     from pynets.stats import embeddings
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
-    from pynets.core.utils import pass_meta_ins, pass_meta_outs, pass_meta_ins_multi
+    from pynets.core.utils import pass_meta_ins, pass_meta_outs, \
+        pass_meta_ins_multi
 
     import_list = [
         "import sys",
@@ -665,7 +667,8 @@ def workflow_selector(
                         ("vox_size", "inputnode.vox_size"),
                         ("local_corr", "inputnode.local_corr"),
                         ("extract_strategy", "inputnode.extract_strategy"),
-                        ("extract_strategy_list", "inputnode.extract_strategy_list"),
+                        ("extract_strategy_list",
+                         "inputnode.extract_strategy_list"),
                         ("outdir_mod_func", "inputnode.outdir"),
                     ],
                 )
@@ -1540,8 +1543,9 @@ def dmri_connectometry(
                 ("node_size", node_size_list)]
         else:
             dmri_connectometry_wf.connect(
-                [(inputnode, prep_spherical_nodes_node, [("node_size", "node_size")]), ]
-            )
+                [(inputnode, prep_spherical_nodes_node,
+                  [("node_size", "node_size")])
+                 ])
 
         prep_spherical_nodes_node.synchronize = True
 
@@ -2074,9 +2078,11 @@ def dmri_connectometry(
                 (
                     inputnode,
                     get_node_membership_node,
-                    [("network", "network"), ("template", "infile"), ("parc", "parc")],
+                    [("network", "network"), ("template", "infile"),
+                     ("parc", "parc")],
                 ),
-                (get_node_membership_node, run_tracking_node, [("network", "network")]),
+                (get_node_membership_node, run_tracking_node,
+                 [("network", "network")]),
                 (
                     get_node_membership_node,
                     save_nifti_parcels_node,
@@ -2162,7 +2168,8 @@ def dmri_connectometry(
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node, [("network", "network")]),
+                (inputnode, save_coords_and_labels_node,
+                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -2215,8 +2222,10 @@ def dmri_connectometry(
                     register_atlas_node,
                     [("node_size", "node_size")],
                 ),
-                (register_atlas_node, run_tracking_node, [("node_size", "node_size")]),
-                (node_gen_node, register_atlas_node, [("uatlas", "uatlas")]),
+                (register_atlas_node, run_tracking_node,
+                 [("node_size", "node_size")]),
+                (node_gen_node, register_atlas_node,
+                 [("uatlas", "uatlas")]),
             ]
         )
     else:
@@ -2314,7 +2323,8 @@ def dmri_connectometry(
                     [
                         str(i)
                         for i in np.round(
-                            np.arange(float(min_thr), float(max_thr), float(step_thr)),
+                            np.arange(float(min_thr), float(max_thr),
+                                      float(step_thr)),
                             decimals=2,
                         ).tolist()
                     ]
@@ -2799,7 +2809,8 @@ def dmri_connectometry(
             (
                 inputnode,
                 register_node,
-                [("vox_size", "vox_size"), ("template_name", "template_name")],
+                [("vox_size", "vox_size"),
+                 ("template_name", "template_name")],
             ),
             (
                 inputnode,
@@ -2824,17 +2835,15 @@ def dmri_connectometry(
             (
                 register_atlas_node,
                 save_coords_and_labels_node,
-                [("coords", "coords"), ("labels", "labels")],
-            ),
-            (
-                fetch_nodes_and_labels_node,
-                save_nifti_parcels_node,
-                [("dir_path", "dir_path")],
+                [("coords", "coords"),
+                 ("labels", "labels")],
             ),
             (
                 node_gen_node,
                 save_nifti_parcels_node,
-                [("net_parcels_map_nifti", "net_parcels_map_nifti")],
+                [("net_parcels_map_nifti",
+                  "net_parcels_map_nifti"),
+                 ("dir_path", "dir_path")],
             ),
             (
                 inputnode,
@@ -2853,7 +2862,9 @@ def dmri_connectometry(
             (
                 node_gen_node,
                 register_atlas_node,
-                [("atlas", "atlas"), ("coords", "coords"), ("labels", "labels")],
+                [("atlas", "atlas"),
+                 ("coords", "coords"),
+                 ("labels", "labels")],
             ),
             (
                 register_node,
@@ -3797,7 +3808,8 @@ def fmri_connectometry(
                 (
                     inputnode,
                     register_clust_mask_node,
-                    [("vox_size", "vox_size"), ("template_name", "template_name")],
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
                 ),
                 (
                     register_node,
@@ -4221,14 +4233,10 @@ def fmri_connectometry(
         [
             (inputnode, save_nifti_parcels_node, [("ID", "ID")]),
             (
-                fetch_nodes_and_labels_node,
-                save_nifti_parcels_node,
-                [("dir_path", "dir_path")],
-            ),
-            (
                 node_gen_node,
                 save_nifti_parcels_node,
-                [("net_parcels_map_nifti", "net_parcels_map_nifti")],
+                [("net_parcels_map_nifti", "net_parcels_map_nifti"),
+                 ("dir_path", "dir_path")],
             ),
             (
                 save_nifti_parcels_node,
@@ -4460,14 +4468,16 @@ def fmri_connectometry(
                 (
                     inputnode,
                     get_node_membership_node,
-                    [("network", "network"), ("template", "infile"), ("parc", "parc")],
+                    [("network", "network"), ("template", "infile"),
+                     ("parc", "parc")],
                 ),
                 (
                     get_node_membership_node,
                     save_nifti_parcels_node,
                     [("network", "network")],
                 ),
-                (get_node_membership_node, extract_ts_node, [("network", "network")]),
+                (get_node_membership_node, extract_ts_node,
+                 [("network", "network")]),
                 (
                     get_node_membership_node,
                     get_conn_matrix_node,
@@ -4549,7 +4559,8 @@ def fmri_connectometry(
                 (inputnode, extract_ts_node, [("network", "network")]),
                 (inputnode, get_conn_matrix_node, [("network", "network")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node, [("network", "network")]),
+                (inputnode, save_coords_and_labels_node,
+                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -4650,7 +4661,8 @@ def fmri_connectometry(
                     [
                         str(i)
                         for i in np.round(
-                            np.arange(float(min_thr), float(max_thr), float(step_thr)),
+                            np.arange(float(min_thr), float(max_thr),
+                                      float(step_thr)),
                             decimals=2,
                         ).tolist()
                     ]
@@ -4718,7 +4730,8 @@ def fmri_connectometry(
                 name="join_iters_node")
 
         if not conn_model_list and (
-                node_size_list or smooth_list or hpass_list or extract_strategy_list):
+                node_size_list or smooth_list or hpass_list or
+                extract_strategy_list):
             # print('Time-series node extraction iterables...')
             join_iters_node_ext_ts = pe.JoinNode(
                 niu.IdentityInterface(fields=map_fields),
@@ -4747,8 +4760,10 @@ def fmri_connectometry(
             )
             fmri_connectometry_wf.connect(
                 [
-                    (thr_info_node, join_iters_node_get_conn_mx, map_connects),
-                    (join_iters_node_get_conn_mx, join_iters_node, map_connects),
+                    (thr_info_node, join_iters_node_get_conn_mx,
+                     map_connects),
+                    (join_iters_node_get_conn_mx, join_iters_node,
+                     map_connects),
                 ]
             )
         elif (
@@ -4763,7 +4778,8 @@ def fmri_connectometry(
                 [(thr_info_node, join_iters_node, map_connects)]
             )
         elif conn_model_list and (
-            node_size_list or smooth_list or hpass_list or extract_strategy_list
+            node_size_list or smooth_list or hpass_list or
+            extract_strategy_list
         ):
             # print('Connectivity model and time-series node extraction iterables...')
             join_iters_node_ext_ts = pe.JoinNode(
@@ -4781,7 +4797,8 @@ def fmri_connectometry(
             fmri_connectometry_wf.connect(
                 [
                     (thr_info_node, join_iters_node_get_conn_mx, map_connects),
-                    (join_iters_node_get_conn_mx, join_iters_node_ext_ts, map_connects),
+                    (join_iters_node_get_conn_mx, join_iters_node_ext_ts,
+                     map_connects),
                     (join_iters_node_ext_ts, join_iters_node, map_connects),
                 ]
             )
