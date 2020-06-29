@@ -208,31 +208,26 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
     df = pd.DataFrame(motif_dict)
 
     for idx in range(len(df)):
-        df.set_value(
+        df.at[
             df.index[idx],
-            "motif_dist",
-            spatial.distance.cosine(df["struct"][idx], df["func"][idx]),
-        )
+            "motif_dist"] = spatial.distance.cosine(df["struct"][idx],
+                                                      df["func"][idx])
 
     df = df[pd.notnull(df["motif_dist"])]
 
     for idx in range(len(df)):
-        df.set_value(
+        df.at[
             df.index[idx],
-            "graph_dist_cosine",
-            spatial.distance.cosine(
+            "graph_dist_cosine"] = spatial.distance.cosine(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            ),
-        )
-        df.set_value(
+            )
+        df.at[
             df.index[idx],
-            "graph_dist_correlation",
-            spatial.distance.correlation(
+            "graph_dist_correlation"] = spatial.distance.correlation(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            ),
-        )
+            )
 
     df["struct_func_3333"] = np.zeros(len(df))
     df["struct_func_2233"] = np.zeros(len(df))
@@ -254,23 +249,23 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
     df["func_1113"] = np.zeros(len(df))
 
     for idx in range(len(df)):
-        df.set_value(df.index[idx], "struct_3333", df["struct"][idx][-1])
-        df.set_value(df.index[idx], "func_3333", df["func"][idx][-1])
+        df.at[df.index[idx], "struct_3333"] = df["struct"][idx][-1]
+        df.at[df.index[idx], "func_3333"] = df["func"][idx][-1]
 
-        df.set_value(df.index[idx], "struct_2233", df["struct"][idx][-2])
-        df.set_value(df.index[idx], "func_2233", df["func"][idx][-2])
+        df.at[df.index[idx], "struct_2233"] = df["struct"][idx][-2]
+        df.at[df.index[idx], "func_2233"] = df["func"][idx][-2]
 
-        df.set_value(df.index[idx], "struct_2222", df["struct"][idx][-3])
-        df.set_value(df.index[idx], "func_2222", df["func"][idx][-3])
+        df.at[df.index[idx], "struct_2222"] = df["struct"][idx][-3]
+        df.at[df.index[idx], "func_2222"] = df["func"][idx][-3]
 
-        df.set_value(df.index[idx], "struct_1223", df["struct"][idx][-4])
-        df.set_value(df.index[idx], "func_1223", df["func"][idx][-4])
+        df.at[df.index[idx], "struct_1223"] = df["struct"][idx][-4]
+        df.at[df.index[idx], "func_1223"] = df["func"][idx][-4]
 
-        df.set_value(df.index[idx], "struct_1122", df["struct"][idx][-5])
-        df.set_value(df.index[idx], "func_1122", df["func"][idx][-5])
+        df.at[df.index[idx], "struct_1122"] = df["struct"][idx][-5]
+        df.at[df.index[idx], "func_1122"] = df["func"][idx][-5]
 
-        df.set_value(df.index[idx], "struct_1113", df["struct"][idx][-6])
-        df.set_value(df.index[idx], "func_1113", df["func"][idx][-6])
+        df.at[df.index[idx], "struct_1113"] = df["struct"][idx][-6]
+        df.at[df.index[idx], "func_1113"] = df["func"][idx][-6]
 
     df["struct_func_3333"] = np.abs(df["struct_3333"] - df["func_3333"])
     df["struct_func_2233"] = np.abs(df["struct_2233"] - df["func_2233"])

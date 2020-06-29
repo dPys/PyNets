@@ -113,14 +113,14 @@ In the case of running pynets on a single subject, several combinations of input
 Command-Line Arguments
 **********************
 
-PyNets BIDS CLI:
+:PyNets BIDS CLI:
 
 .. argparse::
     :module: pynets.cli.pynets_bids
     :func: get_bids_parser
     :prog: pynets
 
-PyNets Manual Execution CLI:
+:PyNets Manual Execution CLI:
 
 .. argparse::
     :module: pynets.cli.pynets_run

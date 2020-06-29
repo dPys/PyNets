@@ -2179,12 +2179,14 @@ class Tracking(SimpleInterface):
             ".trk",
         )
 
+        stf = StatefulTractogram(
+            streamlines,
+            reference=fa_img,
+            space=Space.RASMM,
+            origin=Origin.NIFTI)
+        stf.remove_invalid_streamlines()
         save_tractogram(
-            StatefulTractogram(
-                streamlines,
-                reference=fa_img,
-                space=Space.RASMM,
-                origin=Origin.NIFTI),
+            stf,
             streams,
             bbox_valid_check=True,
         )

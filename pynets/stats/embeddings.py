@@ -395,13 +395,20 @@ def build_omnetome(est_path_iterlist, ID):
             )
         )
 
-        func_subnets = list(
-            set([i.split("_est")[0].split("/")[-1] for i in est_path_iterlist_func])
-        )
-
-        dwi_subnets = list(
-            set([i.split("_est")[0].split("/")[-1] for i in est_path_iterlist_dwi])
-        )
+        if "_rsn" in ";".join(est_path_iterlist_func):
+            func_subnets = list(
+                set([i.split("_rsn-")[1].split("_")[0] for i in
+                     est_path_iterlist_func])
+            )
+        else:
+            func_subnets = []
+        if "_rsn" in ";".join(est_path_iterlist_dwi):
+            dwi_subnets = list(
+                set([i.split("_rsn-")[1].split("_")[0] for i in
+                     est_path_iterlist_dwi])
+            )
+        else:
+            dwi_subnets = []
 
         out_paths_func = []
         out_paths_dwi = []
@@ -439,90 +446,93 @@ def build_omnetome(est_path_iterlist, ID):
                                     graph_path)
                     else:
                         parcel_dict_func[atlas].append(graph_path)
-
-            pop_list = []
-            for pop_ref in parcel_dict_func[atlas]:
-                # RSN case
-                if isinstance(pop_ref, dict):
-                    rsns = [i.split("_")[1] for i in list(pop_ref.keys())]
-                    i = 0
-                    for rsn in rsns:
-                        pop_rsn_list = []
-                        for graph in pop_ref[rsn]:
-                            pop_list.append(np.load(graph))
-                        if len(pop_rsn_list) > 1:
-                            if len(
-                                    list(set([i.shape for i in pop_rsn_list]))) > 1:
-                                raise RuntimeWarning(
-                                    "ERROR: Inconsistent number of vertices in graph population "
-                                    "that precludes embedding")
-                            out_path = _omni_embed(
-                                pop_list, atlas, graph_path, ID, rsns[i]
-                            )
-                            out_paths_func.append(out_path)
-                        else:
-                            print(
-                                "WARNING: Only one graph sampled, omnibus embedding not appropriate."
-                            )
-                            pass
-                        i = i + 1
+            if len(parcel_dict_func[atlas]) > 0:
+                pop_list = []
+                for pop_ref in parcel_dict_func[atlas]:
+                    # RSN case
+                    if isinstance(pop_ref, dict):
+                        rsns = [i.split("_")[1] for i in list(pop_ref.keys())]
+                        i = 0
+                        for rsn in rsns:
+                            pop_rsn_list = []
+                            for graph in pop_ref[rsn]:
+                                pop_list.append(np.load(graph))
+                            if len(pop_rsn_list) > 1:
+                                if len(
+                                        list(set([i.shape for i in pop_rsn_list]))) > 1:
+                                    raise RuntimeWarning(
+                                        "ERROR: Inconsistent number of vertices in graph population "
+                                        "that precludes embedding")
+                                out_path = _omni_embed(
+                                    pop_list, atlas, graph_path, ID, rsns[i]
+                                )
+                                out_paths_func.append(out_path)
+                            else:
+                                print(
+                                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                                )
+                                pass
+                            i = i + 1
+                    else:
+                        pop_list.append(np.load(pop_ref))
+                if len(pop_list) > 1:
+                    if len(list(set([i.shape for i in pop_list]))) > 1:
+                        raise RuntimeWarning(
+                            "ERROR: Inconsistent number of vertices in graph population that "
+                            "precludes embedding")
+                    out_path = _omni_embed(pop_list, atlas, graph_path, ID)
+                    out_paths_func.append(out_path)
                 else:
-                    pop_list.append(np.load(pop_ref))
-            if len(pop_list) > 1:
-                if len(list(set([i.shape for i in pop_list]))) > 1:
-                    raise RuntimeWarning(
-                        "ERROR: Inconsistent number of vertices in graph population that "
-                        "precludes embedding")
-                out_path = _omni_embed(pop_list, atlas, graph_path, ID)
-                out_paths_func.append(out_path)
-            else:
-                print(
-                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
-                )
-                pass
+                    print(
+                        "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                    )
+                    pass
 
-            pop_list = []
-            for pop_ref in parcel_dict_dwi[atlas]:
-                # RSN case
-                if isinstance(pop_ref, dict):
-                    rsns = [i.split("_")[1] for i in list(pop_ref.keys())]
-                    i = 0
-                    for rsn in rsns:
-                        pop_rsn_list = []
-                        for graph in pop_ref[rsn]:
-                            pop_list.append(np.load(graph))
-                        if len(pop_rsn_list) > 1:
-                            if len(
-                                    list(set([i.shape for i in pop_rsn_list]))) > 1:
-                                raise RuntimeWarning(
-                                    "ERROR: Inconsistent number of vertices in graph population "
-                                    "that precludes embedding")
-                            out_path = _omni_embed(
-                                pop_list, atlas, graph_path, ID, rsns[i]
-                            )
-                            out_paths_dwi.append(out_path)
-                        else:
-                            print(
-                                "WARNING: Only one graph sampled, omnibus embedding not appropriate."
-                            )
-                            pass
-                        i = i + 1
+            if len(parcel_dict_dwi[atlas]) > 0:
+                pop_list = []
+                for pop_ref in parcel_dict_dwi[atlas]:
+                    # RSN case
+                    if isinstance(pop_ref, dict):
+                        rsns = [i.split("_")[1] for i in list(pop_ref.keys())]
+                        i = 0
+                        for rsn in rsns:
+                            pop_rsn_list = []
+                            for graph in pop_ref[rsn]:
+                                pop_list.append(np.load(graph))
+                            if len(pop_rsn_list) > 1:
+                                if len(
+                                        list(set([i.shape for i in pop_rsn_list]))) > 1:
+                                    raise RuntimeWarning(
+                                        "ERROR: Inconsistent number of vertices in graph population "
+                                        "that precludes embedding")
+                                out_path = _omni_embed(
+                                    pop_list, atlas, graph_path, ID, rsns[i]
+                                )
+                                out_paths_dwi.append(out_path)
+                            else:
+                                print(
+                                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                                )
+                                pass
+                            i = i + 1
+                    else:
+                        pop_list.append(np.load(pop_ref))
+                if len(pop_list) > 1:
+                    if len(list(set([i.shape for i in pop_list]))) > 1:
+                        raise RuntimeWarning(
+                            "ERROR: Inconsistent number of vertices in graph population that "
+                            "precludes embedding")
+                    out_path = _omni_embed(pop_list, atlas, graph_path, ID)
+                    out_paths_dwi.append(out_path)
                 else:
-                    pop_list.append(np.load(pop_ref))
-            if len(pop_list) > 1:
-                if len(list(set([i.shape for i in pop_list]))) > 1:
-                    raise RuntimeWarning(
-                        "ERROR: Inconsistent number of vertices in graph population that "
-                        "precludes embedding")
-                out_path = _omni_embed(pop_list, atlas, graph_path, ID)
-                out_paths_dwi.append(out_path)
-            else:
-                print(
-                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
-                )
-                pass
+                    print(
+                        "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                    )
+                    pass
     else:
         print("At least two graphs required to build an omnetome...")
+        out_paths_func = []
+        out_paths_dwi = []
         pass
 
     return out_paths_dwi, out_paths_func

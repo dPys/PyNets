@@ -43,24 +43,34 @@ def gen_mask(t1w_head, t1w_brain, mask):
         # TODO find a better heuristic for determining whether a t1w image has
         # already been skull-stripped
         if perc_nonzero > 0.25:
-            import tensorflow as tf
+            try:
+                import tensorflow as tf
+                if tf.__version__ > "2.0.0":
+                    import tensorflow.compat.v1 as tf
+                import logging
+                from deepbrain import Extractor
 
-            if tf.__version__ > "2.0.0":
-                import tensorflow.compat.v1 as tf
-            import logging
-            from deepbrain import Extractor
+                logger = tf.get_logger()
+                logger.setLevel(logging.ERROR)
+                os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+                ext = Extractor()
+                prob = ext.run(t1w_data)
+                mask = prob > 0.5
+                nib.save(
+                    nib.Nifti1Image(mask, affine=img.affine, header=img.header),
+                    t1w_brain_mask,
+                )
+                img.uncache()
+            except:
+                # Fallback to FSL's BET
+                import time
 
-            logger = tf.get_logger()
-            logger.setLevel(logging.ERROR)
-            os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-            ext = Extractor()
-            prob = ext.run(t1w_data)
-            mask = prob > 0.5
-            nib.save(
-                nib.Nifti1Image(mask, affine=img.affine, header=img.header),
-                t1w_brain_mask,
-            )
-            img.uncache()
+                t1w_brain = f"{op.dirname(t1w_head)}/t1w_brain_bet.nii.gz"
+                t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_bet_mask.nii.gz"
+                # Get mean B0 brain mask
+                cmd = f"bet {t1w_head} {t1w_brain} -m -f 0.2"
+                os.system(cmd)
+                time.sleep(1)
         else:
             # Fallback to FSL's BET
             import time
@@ -421,10 +431,10 @@ def atlas2t1w_align(
             cost="mutualinfo",
         )
 
-    # os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
-    os.system(
-        f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null"
-    )
+    os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
+    # os.system(
+    #     f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null"
+    # )
     atlas_img = nib.load(aligned_atlas_gm)
 
     uatlas_res_template_data = np.asarray(atlas_img.dataobj)
