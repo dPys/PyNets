@@ -32,13 +32,13 @@ before_install:
 #  - travis_retry wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 10 -c -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C $TRAVIS_BUILD_DIR/tests
 #  - mv $TRAVIS_BUILD_DIR/tests/examples/BIDS/ /home/travis/build/dPys/input
 # Local case
-  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-  - sudo apt-get update -qq
-  - sudo apt-get install -y --no-install-recommends fsl-core
-  - PYTHONPATH=$PYTHONPATH:$(pwd)
-  - pip install --upgrade pip
-  - pip install -r requirements.txt
-  - python setup.py install
+#  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+#  - sudo apt-get update -qq
+#  - sudo apt-get install -y --no-install-recommends fsl-core
+#  - PYTHONPATH=$PYTHONPATH:$(pwd)
+#  - pip install --upgrade pip
+#  - pip install -r requirements.txt
+#  - python setup.py install
 
 # Docker case
   - docker version

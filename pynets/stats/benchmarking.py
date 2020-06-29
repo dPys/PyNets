@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
     manhattan_distances,
-    nan_euclidean_distances,
+    euclidean_distances,
 )
 from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
@@ -158,7 +158,7 @@ def discr_stat(
         labels = Y
 
     if dissimilarity == "euclidean":
-        dissimilarities = nan_euclidean_distances(X)
+        dissimilarities = euclidean_distances(X)
     elif dissimilarity == "cosine":
         dissimilarities = cosine_distances(X)
     elif dissimilarity == "haversine":
