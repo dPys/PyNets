@@ -265,4 +265,12 @@ Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad
 Interpreting outputs
 ********************
 
-(IN CONSTRUCTION)
+To collect the graph topological outputs from one or more completed pynets
+runs, you can use the `pynets_collect` CLI: ::
+
+    pynets_collect -basedir '/Users/dPys/outputs'
+
+which will generate a new dataframe, all_subs_neat.csv, where each row is a
+given subject session and/or run, and each column is a graph topological
+metric the was calculated, with the prefix indicating correspondence to a
+given connectome sample of interest.

@@ -8,7 +8,7 @@ Derek Pisner <dpisner@utexas.edu>
 
 Contributors
 ------------
-Ryan Hammonds, Aki Nikolaidis, Kamil Bonna, Miriam Kosik, James Kunert-Graf, Mathias Goncalves, Andrew Reineberg
+Ryan Hammonds, Shreyas Fadnavis, Aki Nikolaidis, Kamil Bonna, Miriam Kosik, James Kunert-Graf, Mathias Goncalves, Andrew Reineberg
 
 Consultants
 -----------

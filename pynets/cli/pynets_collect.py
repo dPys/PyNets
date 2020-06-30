@@ -155,6 +155,10 @@ def df_concat(dfs, working_path):
     frame = frame.loc[:, ~frame.columns.str.contains(r"thr_auc$", regex=True)]
     # frame = frame.loc[:, (frame == 0).mean() < .5]
     # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
+    cols = list(frame.columns)
+    # Set ID to the first column
+    cols = [cols[-1]] + cols[:-1]
+    frame = frame[cols]
     frame.to_csv(f"{working_path}{'/all_subs_neat.csv'}", index=False)
     return frame
 
