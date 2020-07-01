@@ -38,11 +38,11 @@ def gen_mask(t1w_head, t1w_brain, mask):
         # Check if already skull-stripped. If not, strip it.
         img = nib.load(t1w_head)
         t1w_data = img.get_fdata()
-        perc_nonzero = np.count_nonzero(
-            t1w_data) / np.count_nonzero(t1w_data == 0)
+        perc_zero = np.count_nonzero(np.nan_to_num(np.array(t1w_data == 0).astype('int'))) / np.count_nonzero(
+            np.nan_to_num(t1w_data.astype('bool').astype('int')))
         # TODO find a better heuristic for determining whether a t1w image has
         # already been skull-stripped
-        if perc_nonzero > 0.25:
+        if perc_zero < 0.25:
             try:
                 import tensorflow as tf
                 if tf.__version__ > "2.0.0":

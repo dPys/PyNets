@@ -48,7 +48,8 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask)
-    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype("bool")
+    nodif_B0_mask_data = np.nan_to_num(np.asarray(
+        nodif_B0_img.dataobj).astype("bool"))
     model = TensorModel(gtab)
     mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
@@ -186,10 +187,11 @@ def tens_mod_est(gtab, data, B0_mask):
     from dipy.data import get_sphere
 
     sphere = get_sphere("repulsion724")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj).astype("bool"))
     print("Generating tensor model...")
     model = TensorModel(gtab)
-    mod = model.fit(data, B0_mask_data)
+    mod = model.fit(np.nan_to_num(data), B0_mask_data)
     mod_odf = mod.odf(sphere)
     del B0_mask_data
     return mod_odf, model
@@ -227,8 +229,9 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
 
     print("Fitting CSA model...")
     model = CsaOdfModel(gtab, sh_order=sh_order)
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
-    csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj).astype("bool"))
+    csa_mod = model.fit(np.nan_to_num(data), B0_mask_data).shm_coeff
     del B0_mask_data
     return csa_mod, model
 
@@ -276,12 +279,13 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     )
 
     print("Fitting CSD model...")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj).astype("bool"))
     print("Reconstructing...")
     response = recursive_response(
         gtab,
-        data,
-        mask=B0_mask_data,
+        np.nan_to_num(data),
+        mask=np.nan_to_num(B0_mask_data),
         sh_order=sh_order,
         peak_thr=0.01,
         init_fa=0.08,
@@ -292,7 +296,7 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     )
     print("CSD Reponse: " + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
-    csd_mod = model.fit(data, B0_mask_data).shm_coeff
+    csd_mod = model.fit(np.nan_to_num(data), B0_mask_data).shm_coeff
     del response, B0_mask_data
     return csd_mod, model
 
@@ -333,11 +337,12 @@ def sfm_mod_est(gtab, data, B0_mask):
 
     sphere = get_sphere("repulsion724")
     print("Fitting SF model...")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(nib.load(
+        B0_mask).dataobj).astype("bool"))
     print("Reconstructing...")
     model = sfm.SparseFascicleModel(
         gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
-    sf_mod = model.fit(data, mask=B0_mask_data)
+    sf_mod = model.fit(np.nan_to_num(data), mask=B0_mask_data)
     sf_odf = sf_mod.odf(sphere)
 
     del B0_mask_data
