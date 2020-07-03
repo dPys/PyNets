@@ -20,8 +20,8 @@ def get_parser():
 
     # Parse args
     parser = argparse.ArgumentParser(
-        description="PyNets: A Reproducible Workflow for Structural and Functional "
-        "Connectome Ensemble Learning")
+        description="PyNets: A Reproducible Workflow for Structural and "
+                    "Functional Connectome Ensemble Learning")
     parser.add_argument(
         "output_dir",
         default=str(Path.home()),
@@ -33,27 +33,31 @@ def get_parser():
         default=None,
         nargs="+",
         required=True,
-        help="An subject identifier OR list of subject identifiers, separated by space and of "
-        "equivalent length to the list of input files indicated with the -func flag. This "
-        "parameter must be an alphanumeric string and can be arbitrarily chosen. If functional "
-        "and dmri connectomes are being generated simultaneously, then space-separated id's "
-        "need to be repeated to match the total input file count.\n",
+        help="An subject identifier OR list of subject identifiers, separated "
+             "by space and of equivalent length to the list of input files "
+             "indicated with the -func flag. This parameter must be an "
+             "alphanumeric string and can be arbitrarily chosen. If "
+             "functional and dmri connectomes are being generated "
+             "simultaneously, then space-separated id's need to be repeated "
+             "to match the total input file count.\n",
     )
     # Primary file inputs
     parser.add_argument(
         "-func",
-        metavar="Path to input functional file (required for functional connectomes)",
+        metavar="Path to input functional file (required for functional "
+                "connectomes)",
         default=None,
         nargs="+",
-        help="Specify either a path to a preprocessed functional Nifti1Image in "
-        "MNI152 space OR multiple space-separated paths to multiple preprocessed functional "
-        "Nifti1Image files in MNI152 space and in .nii or .nii.gz format, "
-        "OR the path to a text file containing a list of paths "
-        "to subject files.\n",
+        help="Specify either a path to a preprocessed functional Nifti1Image "
+             "in MNI152 space OR multiple space-separated paths to multiple "
+             "preprocessed functional Nifti1Image files in MNI152 space and in"
+             " .nii or .nii.gz format, OR the path to a text file containing "
+             "a list of paths to subject files.\n",
     )
     parser.add_argument(
         "-dwi",
-        metavar="Path to diffusion-weighted imaging data file (required for dmri connectomes)",
+        metavar="Path to diffusion-weighted imaging data file (required for "
+                "dmri connectomes)",
         default=None,
         nargs="+",
         help="Specify either a path to a preprocessed dmri diffusion Nifti1Image in native diffusion "
@@ -178,7 +182,6 @@ def get_parser():
             "AdaptiveQuicGraphicalLasso",
             "csa",
             "csd",
-            "ten",
             "sfm",
         ],
         help="(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models "
@@ -186,7 +189,7 @@ def get_parser():
         "partcorr for partial correlation. sps type is used by default. "
         "If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, "
         "QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. "
-        "Default is partcorr for fMRI. For dMRI, models include csa and csd.\n",
+        "Default is partcorr for fMRI. For dMRI, current models include csa, csd, and sfm.\n",
     )
     parser.add_argument(
         "-a",
@@ -561,6 +564,7 @@ def build_workflow(args, retval):
     import sys
     import timeit
     from datetime import timedelta
+    from colorama import Fore, Style
     from pathlib import Path
     import pkg_resources
     import yaml
@@ -569,15 +573,19 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
+        print(f"{Fore.RED}\n\nPyNets Version:\n{Fore.MAGENTA}{pynets.__version__}\n")
     except ImportError:
         print(
             "PyNets not installed! Ensure that you are using the correct python version."
         )
 
+    print(Style.RESET_ALL)
+
     # Start timer
     now = datetime.datetime.now()
-    print(now.strftime("%Y-%m-%d %H:%M:%S\n\n"))
+    timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
+    print(f"{Fore.WHITE}{timestamp}")
+    print(Style.RESET_ALL)
     start_time = timeit.default_timer()
 
     # Set Arguments to global variables
@@ -906,6 +914,8 @@ def build_workflow(args, retval):
     if isinstance(multiplex, list):
         multiplex = multiplex[0]
     vox_size = args.vox
+    if isinstance(vox_size, list):
+        vox_size = vox_size[0]
     work_dir = args.work
     os.makedirs(work_dir, exist_ok=True)
 
@@ -1271,11 +1281,11 @@ def build_workflow(args, retval):
         or multi_subject_graph
         or multi_subject_multigraph
     ):
-        print("Running workflow of workflows across multiple subjects:")
+        print(
+            f"{Fore.GREEN}Running workflow of workflows across multiple "
+            f"subjects...")
     elif func_file_list is None and dwi_file_list is None:
-        print("Running workflow for single subject:")
-    print(str(ID))
-
+        print(f"{Fore.GREEN}Running workflow for single subject: {Fore.BLUE}{str(ID)}")
     if (
         graph is None
         and multi_graph is None
@@ -1283,66 +1293,76 @@ def build_workflow(args, retval):
         and multi_subject_multigraph is None
     ):
         if network is not None:
-            print(f"\nRunning pipeline for 1 RSN: {network}")
+            print(f"{Fore.GREEN}Selecting one RSN subgraph: {Fore.BLUE}{network}")
         elif multi_nets is not None:
             network = None
             print(
-                f"\nIterating pipeline across {len(multi_nets)} RSN's: "
-                f"{str(', '.join(str(n) for n in multi_nets))}..."
+                f"{Fore.GREEN}Iterating pipeline across {Fore.BLUE}{len(multi_nets)} RSN subgraphs:"
+            )
+            print(
+                f"{Fore.BLUE}{str(', '.join(str(n) for n in multi_nets))}"
             )
         else:
-            print("\nUsing whole-brain pipeline...")
-
+            print(f"{Fore.GREEN}Using whole-brain pipeline...")
         if node_size_list:
             print(
-                f"\nGrowing spherical nodes across multiple radius sizes: "
-                f"{str(', '.join(str(n) for n in node_size_list))}..."
+                f"{Fore.GREEN}Growing spherical nodes across multiple radius sizes:"
             )
+            print(f"{str(', '.join(str(n) for n in node_size_list))}")
             node_size = None
         elif parc is True:
-            print("\nUsing parcels as nodes...")
+            print(f"{Fore.GREEN}Using parcels as nodes...")
         else:
             if node_size is None:
                 node_size = 4
-            print(f"\nUsing node size of: {node_size}mm...")
-
+            print(f"{Fore.BLUE}Using node size of {Fore.BLUE}{node_size}mm:")
         if func_file or func_file_list:
             if smooth_list:
                 print(
-                    f"\nApplying smoothing to node signal at multiple FWHM mm values: "
-                    f"{str(', '.join(str(n) for n in smooth_list))}...")
+                    f"{Fore.GREEN}Applying smoothing to node signal at multiple FWHM mm values:")
+                print(
+                    f"{Fore.BLUE}{str(', '.join(str(n) for n in smooth_list))}")
             elif float(smooth) > 0:
                 print(
-                    f"\nApplying smoothing to node signal at: {smooth}FWHM mm...")
+                    f"{Fore.GREEN}Applying smoothing to node signal at: {Fore.BLUE}{smooth}FWHM mm...")
             else:
                 smooth = 0
 
             if hpass_list:
                 print(
-                    f"\nApplying high-pass filter to node signal at multiple Hz values: "
-                    f"{str(', '.join(str(n) for n in hpass_list))}...")
+                    f"{Fore.GREEN}Applying high-pass filter to node signal at multiple Hz values:"
+                )
+                print(
+                    f"{Fore.BLUE}{str(', '.join(str(n) for n in hpass_list))}"
+                )
             elif hpass is not None:
                 print(
-                    f"\nApplying high-pass filter to node signal at: {hpass}Hz...")
+                    f"{Fore.GREEN}Applying high-pass filter to node signal at: {Fore.BLUE}{hpass}Hz...")
             else:
                 hpass = None
 
             if extract_strategy_list:
                 print(
-                    f"\nExtracting node signal using multiple strategies: "
-                    f"{str(', '.join(str(n) for n in extract_strategy_list))}...")
+                    f"{Fore.GREEN}Extracting node signal using multiple strategies:"
+                )
+                print(
+                    f"{Fore.BLUE}{str(', '.join(str(n) for n in extract_strategy_list))}"
+                )
             else:
                 print(
-                    f"\nExtracting node signal using a {extract_strategy} strategy..."
+                    f"{Fore.GREEN}Extracting node signal using a {Fore.BLUE}{extract_strategy} {Fore.GREEN}strategy..."
                 )
 
         if conn_model_list:
             print(
-                f"\nIterating graph estimation across multiple connectivity models: "
-                f"{str(', '.join(str(n) for n in conn_model_list))}...")
+                f"{Fore.GREEN}Iterating graph estimation across multiple connectivity models:"
+            )
+            print(
+                f"{Fore.BLUE}{str(', '.join(str(n) for n in conn_model_list))}"
+            )
             conn_model = None
         else:
-            print(f"\nUsing connectivity model: {conn_model}")
+            print(f"Using connectivity model: {Fore.BLUE}{conn_model}...")
 
     elif graph or multi_graph or multi_subject_graph or multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
@@ -1359,12 +1379,13 @@ def build_workflow(args, retval):
         if (uatlas is not None) and (
                 k_clustering == 0) and (user_atlas_list is None):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
-            print(f"\nUser atlas: {atlas_par}")
+            print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
-            print(f"\nUser atlas: {atlas_par}")
+            print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
-            print("\nIterating across multiple user atlases...")
+            print(f"{Fore.GREEN}Iterating across multiple user atlases:")
+            print(Fore.BLUE)
             if func_file_list:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
@@ -1373,41 +1394,45 @@ def build_workflow(args, retval):
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
                     print(atlas_par)
-
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split(".nii")[0]
             atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
-            print(f"\nCluster atlas: {atlas_clust}")
-            print("\nClustering within mask at a single resolution...")
+            print(f"{Fore.GREEN}Cluster atlas: {Fore.BLUE}{atlas_clust}")
+            print(f"{Fore.GREEN}Clustering within mask at a single resolution...")
         elif k_clustering == 2:
-            print("\nClustering within mask at multiple resolutions...")
+            print(f"{Fore.GREEN}Clustering within mask at multiple resolutions:")
             if func_file_list:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _k in k_list:
                     cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
-                    print(f"Cluster atlas: {atlas_clust}")
+                    print(f"{Fore.BLUE}{atlas_clust}")
             else:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _k in k_list:
                     cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
-                    print(f"Cluster atlas: {atlas_clust}")
+                    print(f"{Fore.BLUE}{atlas_clust}")
             k = None
         elif k_clustering == 3:
-            print("\nClustering within multiple masks at a single resolution...")
+            print(f"{Fore.GREEN}Clustering within multiple masks at a single resolution:")
             if func_file_list:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
-                    print(f"Cluster atlas: {atlas_clust}")
+                    print(f"{Fore.BLUE}{atlas_clust}")
             else:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                     atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
-                    print(f"Cluster atlas: {atlas_clust}")
+                    print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
         elif k_clustering == 4:
-            print("\nClustering within multiple masks at multiple resolutions...")
+            print("Clustering within multiple masks at multiple resolutions:")
             if func_file_list:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(
@@ -1415,44 +1440,45 @@ def build_workflow(args, retval):
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             else:
+                print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(
                             _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
-                        print(f"Cluster atlas: {atlas_clust}")
+                        print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
             k = None
         elif k_clustering == 5:
+            print(
+                f"{Fore.GREEN}Clustering within mask at a single resolution using multiple clustering methods:"
+            )
             for _clust_type in clust_type_list:
                 cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                 atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
-                print(f"\nCluster atlas: {atlas_clust}")
-                print(
-                    "\nClustering within mask at a single resolution using multiple clustering methods..."
-                )
+                print(f"{Fore.BLUE}{atlas_clust}")
             clust_type = None
         elif k_clustering == 6:
             print(
-                "\nClustering within mask at multiple resolutions using multiple clustering methods..."
+                f"{Fore.GREEN}Clustering within mask at multiple resolutions using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
-                        print(f"Cluster atlas: {atlas_clust}")
+                        print(f"{Fore.BLUE}{atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _k in k_list:
                         cl_mask_name = op.basename(clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
-                        print(f"Cluster atlas: {atlas_clust}")
+                        print(f"{Fore.BLUE}{atlas_clust}")
             clust_type = None
             k = None
         elif k_clustering == 7:
             print(
-                "\nClustering within multiple masks at a single resolution using multiple clustering methods..."
+                f"{Fore.GREEN}Clustering within multiple masks at a single resolution using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1460,19 +1486,19 @@ def build_workflow(args, retval):
                         cl_mask_name = op.basename(
                             _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
-                        print(f"Cluster atlas: {atlas_clust}")
+                        print(f"{Fore.BLUE}{atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
                         cl_mask_name = op.basename(
                             _clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
-                        print(f"Cluster atlas: {atlas_clust}")
+                        print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
             clust_type = None
         elif k_clustering == 8:
             print(
-                "\nClustering within multiple masks at multiple resolutions using multiple clustering methods..."
+                f"{Fore.GREEN}Clustering within multiple masks at multiple resolutions using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1481,7 +1507,7 @@ def build_workflow(args, retval):
                             cl_mask_name = op.basename(
                                 _clust_mask).split(".nii")[0]
                             atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
-                            print(f"Cluster atlas: {atlas_clust}")
+                            print(f"{Fore.BLUE}{atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
@@ -1489,7 +1515,7 @@ def build_workflow(args, retval):
                             cl_mask_name = op.basename(
                                 _clust_mask).split(".nii")[0]
                             atlas_clust = f"{cl_mask_name}_{_clust_type}_k{_k}"
-                            print(f"Cluster atlas: {atlas_clust}")
+                            print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
             clust_type = None
             k = None
@@ -1511,7 +1537,7 @@ def build_workflow(args, retval):
 
         if multi_atlas is not None:
             print(
-                "\nIterating functional connectometry across multiple predefined atlases..."
+                f"{Fore.GREEN}Iterating functional connectometry across multiple predefined atlases:"
             )
             if func_file_list:
                 for _func_file in func_file_list:
@@ -1526,7 +1552,7 @@ def build_workflow(args, retval):
                             retval["return_code"] = 1
                             return retval
                         else:
-                            print(_atlas)
+                            print(f"{Fore.BLUE}{_atlas}")
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (
@@ -1539,7 +1565,7 @@ def build_workflow(args, retval):
                         retval["return_code"] = 1
                         return retval
                     else:
-                        print(_atlas)
+                        print(f"{Fore.BLUE}{_atlas}")
         elif atlas is not None:
             if (parc is True) and (
                 atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases
@@ -1565,7 +1591,7 @@ def build_workflow(args, retval):
                 pass
 
     if dwi_file or dwi_file_list:
-        if (conn_model == "tensor") and (directget == "prob"):
+        if (conn_model == "ten") and (directget == "prob"):
             print(
                 "Cannot perform probabilistic tracking with tensor model estimation..."
             )
@@ -1573,7 +1599,7 @@ def build_workflow(args, retval):
             return retval
 
         if (track_type == "particle") and (
-            conn_model == "tensor" or tiss_class != "cmc"
+            conn_model == "ten" or tiss_class != "cmc"
         ):
             print(
                 "Can only perform particle tracking with the `cmc` tissue classsifier and diffusion models "
@@ -1582,19 +1608,19 @@ def build_workflow(args, retval):
             return retval
 
         if user_atlas_list:
-            print("\nIterating across multiple user atlases...")
+            print(f"{Fore.GREEN}Iterating across multiple user atlases:")
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
                     for _uatlas in user_atlas_list:
                         atlas_par = _uatlas.split("/")[-1].split(".")[0]
-                        print(atlas_par)
+                        print(f"{Fore.BLUE}{atlas_par}")
             else:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
-                    print(atlas_par)
+                    print(f"{Fore.BLUE}{atlas_par}")
         if multi_atlas:
             print(
-                "\nIterating structural connectometry across multiple predefined atlases..."
+                f"{Fore.GREEN}Iterating structural connectometry across multiple predefined atlases:"
             )
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
@@ -1607,7 +1633,7 @@ def build_workflow(args, retval):
                             retval["return_code"] = 1
                             return retval
                         else:
-                            print(_atlas)
+                            print(f"{Fore.BLUE}{_atlas}")
             else:
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
@@ -1617,7 +1643,7 @@ def build_workflow(args, retval):
                         retval["return_code"] = 1
                         return retval
                     else:
-                        print(_atlas)
+                        print(f"{Fore.BLUE}{_atlas}")
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
                 print(
@@ -1626,30 +1652,29 @@ def build_workflow(args, retval):
                 retval["return_code"] = 1
                 return retval
             else:
-                print(f"\nUsing curated atlas: {atlas}")
+                print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
         if target_samples:
-            print(f"\nUsing {target_samples} streamline samples...")
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
         if min_length:
-            print(f"\nUsing {min_length}mm minimum streamline length...")
-
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} minimum streamline length...")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
-        print("\nRunning dmri connectometry only...")
+        print(f"{Fore.GREEN}Running dmri connectometry only...")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
-                print(f"Diffusion-Weighted Image:\n {_dwi_file}")
-                print(f"B-Values:\n {_fbval}")
-                print(f"B-Vectors:\n {_fbvec}")
+                print(f"{Fore.GREEN}Diffusion-Weighted Image:{Fore.BLUE}\n {_dwi_file}")
+                print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
+                print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
                 if waymask is not None:
-                    print(f"Waymask:\n {waymask}")
+                    print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
-            print(f"Diffusion-Weighted Image:\n {dwi_file}")
-            print(f"B-Values:\n {fbval}")
-            print(f"B-Vectors:\n {fbvec}")
+            print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{dwi_file}")
+            print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
+            print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if waymask is not None:
-                print(f"Waymask:\n {waymask}")
+                print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         conf = None
         k = None
         clust_mask = None
@@ -1664,64 +1689,61 @@ def build_workflow(args, retval):
         clust_type_list = None
         multimodal = False
     elif (func_file or func_file_list) and not (dwi_file or dwi_file_list):
-        print("\nRunning fmri connectometry only...")
+        print(f"{Fore.GREEN}Running fmri connectometry only...")
         if func_file_list:
             for _func_file in func_file_list:
-                print(f"BOLD Image: {_func_file}")
+                print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
         else:
-            print(f"BOLD Image: {func_file}")
+            print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
 
         if conf_list:
             for _conf in conf_list:
-                print(f"BOLD Confound Regressors: {_conf}")
+                print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{_conf}")
         elif conf:
-            print(f"BOLD Confound Regressors: {conf}")
-
+            print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
+        print(Style.RESET_ALL + '\n')
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
-        print("\nRunning joint fMRI-dMRI connectometry...")
+        print(f"{Fore.GREEN}Running joint fMRI-dMRI connectometry...")
         if func_file_list:
             for _func_file in func_file_list:
-                print(f"BOLD Image: {_func_file}")
+                print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
         else:
-            print(f"BOLD Image: {func_file}")
-
+            print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
         if conf_list:
             for _conf in conf_list:
-                print(f"BOLD Confound Regressors: {_conf}")
+                print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{_conf}")
         elif conf:
-            print(f"BOLD Confound Regressors: {conf}")
-
+            print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
-                print(f"Diffusion-Weighted Image:\n {_dwi_file}")
-                print(f"B-Values:\n {_fbval}")
-                print(f"B-Vectors:\n {_fbvec}")
+                print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{_dwi_file}")
+                print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
+                print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if waymask is not None:
-                    print(f"Waymask:\n {waymask}")
+                    print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
-            print(f"Diffusion-Weighted Image:\n {dwi_file}")
-            print(f"B-Values:\n {fbval}")
-            print(f"B-Vectors:\n {fbvec}")
+            print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{dwi_file}")
+            print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
+            print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
     else:
         multimodal = False
-
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
-                print(f"T1-Weighted Image:\n{anat_file}")
+                print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
         else:
-            print(f"T1-Weighted Image:\n{anat_file}")
-
+            print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
     if mask or mask_list:
         if mask_list and len(mask_list) > 1:
             for mask in mask_list:
-                print(f"Brain Mask Image:\n{mask}")
+                print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
         else:
-            print(f"Brain Mask Image:\n{mask}")
+            print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
+    print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------------\n\n"
     )
@@ -2198,7 +2220,7 @@ def build_workflow(args, retval):
             from pynets.core.workflows import raw_graph_workflow
 
             if multi_graph:
-                print("\nUsing multiple custom input graphs...")
+                print("Using multiple custom input graphs...")
                 conn_model_list = []
                 i = 1
                 for graph in multi_graph:
@@ -2211,7 +2233,7 @@ def build_workflow(args, retval):
                     i = i + 1
             else:
                 graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
-                print("\nUsing single custom graph input...")
+                print("Using single custom graph input...")
                 print(graph_name)
                 atlas = f"{graph_name}_{ID}"
                 do_dir_path(atlas, outdir)
@@ -2796,7 +2818,7 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
-        print(f"\nRunning with {str(plugin_args)}\n")
+        print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
         retval["workflow"] = wf_multi
@@ -2998,7 +3020,7 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
-        print(f"\nRunning with {str(plugin_args)}\n")
+        print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
         retval["workflow"] = wf

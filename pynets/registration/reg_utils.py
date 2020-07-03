@@ -38,11 +38,11 @@ def gen_mask(t1w_head, t1w_brain, mask):
         # Check if already skull-stripped. If not, strip it.
         img = nib.load(t1w_head)
         t1w_data = img.get_fdata()
-        perc_nonzero = np.count_nonzero(
-            t1w_data) / np.count_nonzero(t1w_data == 0)
+        perc_zero = np.count_nonzero(np.nan_to_num(np.array(t1w_data == 0).astype('int'))) / np.count_nonzero(
+            np.nan_to_num(t1w_data.astype('bool').astype('int')))
         # TODO find a better heuristic for determining whether a t1w image has
         # already been skull-stripped
-        if perc_nonzero > 0.25:
+        if perc_zero < 0.25:
             try:
                 import tensorflow as tf
                 if tf.__version__ > "2.0.0":
@@ -114,6 +114,7 @@ def atlas2t1w2dwi_align(
     aligned_atlas_skull,
     dwi_aligned_atlas,
     dwi_aligned_atlas_wmgm_int,
+    B0_mask,
     simple,
 ):
     """
@@ -239,11 +240,20 @@ def atlas2t1w2dwi_align(
     )
 
     dwi_aligned_atlas_wmgm_int_img = intersect_masks(
-        [wm_gm_mask_img, atlas_mask_img], threshold=0, connected=False
+        [wm_gm_mask_img, atlas_mask_img], threshold=0,
+        connected=False
     )
 
     nib.save(atlas_img_corr, dwi_aligned_atlas)
     nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
+
+    os.system(
+        f"fslmaths {dwi_aligned_atlas} -mas {B0_mask} {dwi_aligned_atlas} "
+        f"2>/dev/null")
+
+    os.system(
+        f"fslmaths {dwi_aligned_atlas_wmgm_int} -mas {B0_mask} "
+        f"{dwi_aligned_atlas_wmgm_int} 2>/dev/null")
 
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
@@ -770,6 +780,46 @@ def warp_streamlines(
     return streams_final_filt
 
 
+def rescale_affine_to_center(input_affine, voxel_dims=[1, 1, 1],
+                             target_center_coords=None):
+    """
+    This function uses a generic approach to rescaling an affine to arbitrary
+    voxel dimensions. It allows for affines with off-diagonal elements by
+    decomposing the affine matrix into u,s,v (or rather the numpy equivalents)
+    and applying the scaling to the scaling matrix (s).
+
+    Parameters
+    ----------
+    input_affine : np.array of shape 4,4
+        Result of nibabel.nifti1.Nifti1Image.affine
+    voxel_dims : list
+        Length in mm for x,y, and z dimensions of each voxel.
+    target_center_coords: list of float
+        3 numbers to specify the translation part of the affine if not using the same as the input_affine.
+
+    Returns
+    -------
+    target_affine : 4x4matrix
+        The resampled image.
+    """
+    # Initialize target_affine
+    target_affine = input_affine.copy()
+    # Decompose the image affine to allow scaling
+    u, s, v = np.linalg.svd(target_affine[:3, :3], full_matrices=False)
+
+    # Rescale the image to the appropriate voxel dimensions
+    s = voxel_dims
+
+    # Reconstruct the affine
+    target_affine[:3, :3] = u @ np.diag(s) @ v
+
+    # Set the translation component of the affine computed from the input
+    # image affine if coordinates are specified by the user.
+    if target_center_coords is not None:
+        target_affine[:3, 3] = target_center_coords
+    return target_affine
+
+
 def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     """
     A function to perform SyN registration
@@ -808,9 +858,9 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
 
     ap_img = nib.load(ap_path)
     template_anat_img = nib.load(template_anat_path)
-    static = np.asarray(template_anat_img.dataobj)
+    static = np.asarray(template_anat_img.dataobj, dtype=np.float32)
     static_affine = template_anat_img.affine
-    moving = np.asarray(ap_img.dataobj).astype(np.float32)
+    moving = np.asarray(ap_img.dataobj, dtype=np.float32)
     moving_affine = ap_img.affine
 
     affine_map = transform_origins(
@@ -866,9 +916,9 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     fa_img = nib.load(fa_path)
     template_img = nib.load(template_path)
     template_img_res = resample_to_img(template_img, template_anat_img)
-    static = np.asarray(template_img_res.dataobj)
+    static = np.asarray(template_img_res.dataobj, dtype=np.float32)
     static_affine = template_img_res.affine
-    moving = np.asarray(fa_img.dataobj).astype(np.float32)
+    moving = np.asarray(fa_img.dataobj, dtype=np.float32)
     moving_affine = fa_img.affine
 
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
@@ -1035,9 +1085,8 @@ def normalize_xform(img):
         return img
 
     new_img = img.__class__(
-        np.nan_to_num(
             np.asarray(
-                img.dataobj)),
+                img.dataobj),
         xform,
         img.header)
 
@@ -1211,6 +1260,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     orig_img = img_file
 
     img = nib.load(img_file)
+    data = img.get_fdata()
+
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
     if vox_size == "1mm":
@@ -1229,11 +1280,11 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
         else:
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(
-                np.asarray(img.dataobj), img.affine, zooms, new_zooms
+                data, img.affine, zooms, new_zooms
             )
             nib.save(
                 nib.Nifti1Image(
-                    np.nan_to_num(data2),
+                    data2,
                     affine=affine2),
                 img_file_res)
             img_file = img_file_res

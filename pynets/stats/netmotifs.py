@@ -108,7 +108,7 @@ def adaptivethresh(in_mat, thr, mlib, N):
     mf = countmotifs((in_mat > thr).astype(int), N=N)
     try:
         mf = np.array([mf[k] for k in mlib])
-    except BaseException:
+    finally:
         mf = np.zeros(len(mlib))
     return mf
 

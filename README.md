@@ -10,7 +10,7 @@ PyNets™
 
 About
 -----
-PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a variety of methodological choices known to impact node and/or edge definition, and then sample the prescribed connectome estimates, in a massively parallel framework, conducive to grid-search. PyNets is a post-processing workflow, which means that it can be run on virtually any preprocessed fMRI or dMRI data. It draws from Dipy, Nilearn, GrasPy, and Networkx libraries, but is powered primarily through the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives.
+PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a several of methodological choices known to impact brain network node and/or edge definition, and then sample the prescribed connectome estimates in a massively parallel framework that in turn becomes conducive to grid-search and multi-view learning. PyNets is a post-processing workflow, which means that it can be run on virtually any preprocessed fMRI or dMRI data. It draws from Dipy, Nilearn, GrasPy, and Networkx libraries, but is powered primarily through the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives.
 
 Install
 -------
@@ -19,7 +19,7 @@ Dockerhub (preferred):
 docker pull dpys/pynets:latest
 ```
 
-Manual (Requires a local dependency install of FSL version >=5.0.9 and Nilearn version >=0.7.0a):
+Manual (Requires a local dependency install of FSL version >=5.0.9 and forked version of Nilearn 0.6.0):
 ```
 pip install pynets --user
 ```
@@ -37,7 +37,7 @@ Explore official installation instruction, user-guide, API, and examples: <https
 
 Citing
 ------
-A manuscript is in preparation, but for now, please cite all uses with the following entry:
+A manuscript is in preparation, but for now, please cite ALL uses with the following entry:
 ```
 @CONFERENCE{
     title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
@@ -74,36 +74,36 @@ where the `-config` flag specifies that path to a .json configuration spec that 
 ```
 {
     "dwi": {
-            "dg": "['prob', 'det']",  # Indicates the direction-getting method(s) to use for tractography.
-            "ml": "['10', '40']",  # Indicates the minimum streamline length(s) to use for filtering tractography.
-            "mod": "['csd', 'csa', 'tensor']"  # Indicates the type(s) of diffusion model estimators to use for reconstruction.
+            "dg": "['prob', 'det']",  # Indicates the direction-getting method(s) of tractography.
+            "ml": "['10', '40']",  # Indicates the minimum streamline length(s) for tractographic filtering.
+            "mod": "['csd', 'csa', 'tensor']"  # Indicates the type(s) of diffusion model estimators for fixel reconstruction. At least 1 is required for structural connectometry.
         },
     "func": {
-            "ct": "['rena', 'ward', 'kmeans']", # Indicates the type(s) of clustering to perform to generate in a clustering-based parcellation. This should be left as "None" if no clustering will be performed.
+            "ct": "['rena', 'ward', 'kmeans']", # Indicates the type(s) of clustering that will be used to generate a clustering-based parcellation. This should be left as "None" if no clustering will be performed, but can be included simultaneously with the `-a` and `-ua` parcellation options.
             "k": "['200', '400', '600']", # Indicates the number of clusters to generate in a clustering-based parcellation. This should be left as "None" if no clustering will be performed.
             "hp": "['0', '0.028', '0.080']", # Indicates the high-pass frequenc(ies) to apply to signal extraction from nodes.
-            "mod": "['partcorr', 'sps']", # Indicates the connectivity estimator(s) to use.
-            "sm": "['0', '2', '4']", # Indicates the FWHM value(s) of smoothing to apply to signal extraction from nodes.
-            "es": "['mean', 'median']" # Indicates the method(s) of signal extraction from nodes.
+            "mod": "['partcorr', 'sps']", # Indicates the functional connectivity estimator(s) to use. At least 1 is required for functional connectometry.
+            "sm": "['0', '2', '4']", # Indicates the smoothing FWHM value(s) to apply during the nodal time-series signal extraction.
+            "es": "['mean', 'median']" # Indicates the method(s) of nodal time-series signal extraction.
         },
     "gen": {
-            "a":  "DesikanKlein2012", # Which atlases to use to define nodes.
-            "bin":  "False", # Whether to binarize the resulting connectome graph before analyzing it. Weighted graphs are analyzed by default.
-            "embed":  "False", # Whether to perform graph embedding of the resulting connectomes.
-            "mplx":  0, # If both functional and structural data is provided, what type of multiplex connectome modeling to perform.
-            "n":  "['Cont', 'Default']", # Which, if any, Yeo-7/17 resting-state networks to examine for the given parcellation.
-            "norm": "['6']", # What type of graph normalization to apply.
-            "spheres":  "False", # Whether to use spheres as nodes (vs. parcel labels, the default).
-            "ns":  "None", # If spheres is True, what radius size(s) to use.
-            "p":  "['1']", # How to prune isolated/low-importance node to remove network fragmentation.
-            "plt":  "False", # Whether to activate plotting.
-            "max_thr":  0.80, # If performing multi-thresholding, a minimum threshold to use.
-            "min_thr":  0.20, # If performing multi-thresholding, a maximum threshold to use.
+            "a":  "DesikanKlein2012", # Anatomical atlases to define nodes.
+            "bin":  "False", # Binarize the resulting connectome graph before analyzing it. Note that undirected weighted graphs are analyzed by default.
+            "embed":  "False", # Activate omnibus and single-graph adjacency spectral embedding of connectome estimates sampled.
+            "mplx":  0, # If both functional and structural data is provided, the type of multiplex connectome modeling to perform. See `pynets -h` for more information.
+            "n":  "['Cont', 'Default']", # Which, if any, Yeo-7/17 resting-state sub-networks to select from the given parcellation. If multiple are specified, all other options will iterate across each.
+            "norm": "['6']", # Level of normalization to apply to graph (e.g. standardize betwee 0-1, Pass-to-Ranks (PTR), log10).
+            "spheres":  "False", # Use spheres as nodes (vs. parcel labels, the default).
+            "ns":  "None", # If `spheres` is True, this indicates integer radius size(s) of spherical centroid nodes.
+            "p":  "['1']", # Apply anti-fragmentation, largest connected-component subgraph selection, or any of a variety of hub-detection methods to graph(s).
+            "plt":  "False", # Activate plotting (adjancency matrix and glass-brain included by default).
+            "thr":  1.0, # A threshold (0.0-1.0). This can be left as "None" if multi-thresholding is used.
+            "max_thr":  0.80, # If performing multi-thresholding, a minimum threshold.
+            "min_thr":  0.20, # If performing multi-thresholding, a maximum threshold.
             "step_thr":  0.10, # If performing multi-thresholding, a threshold interval size.
-            "thr":  1.0, # A threshold (0.0-1.0). This should be left as "None" if multi-thresholding is used.
-            "df":  "False", # Whether to perform local thresholding using a disparity filter.
-            "dt":  "False", # Whether to perform global thresholding to achieve a target density.
-            "mst":  "True", # Whether to perform local thresholding using the Minimum-Spanning Tree approach.
+            "dt":  "False", # Global thresholding to achieve a target density. (Only one of `mst`, `dt`, and `df` can be used).
+            "mst":  "True", # Local thresholding using the Minimum-Spanning Tree approach. (Only one of `mst`, `dt`, and `df` can be used).
+            "df":  "False", # Local thresholding using a disparity filter. (Only one of `mst`, `dt`, and `df` can be used).
             "vox":  "'2mm'" # Voxel size (1mm or 2mm). 2mm is the default.
         }
 }

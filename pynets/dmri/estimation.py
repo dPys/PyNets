@@ -46,11 +46,14 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
+    data = nib.load(dwi_file).get_fdata()
+
     print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask)
-    nodif_B0_mask_data = np.asarray(nodif_B0_img.dataobj).astype("bool")
+    nodif_B0_mask_data = np.nan_to_num(np.asarray(
+        nodif_B0_img.dataobj)).astype("bool")
     model = TensorModel(gtab)
-    mod = model.fit(np.asarray(nib.load(dwi_file).dataobj), nodif_B0_mask_data)
+    mod = model.fit(data, nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
     MD = mean_diffusivity(mod.evals)
     FA_MD = np.logical_or(
@@ -133,7 +136,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
         print("Generating anisotropic power map to use for registrations...")
         nodif_B0_img = nib.load(B0_mask)
 
-        dwi_data = np.asarray(img.dataobj)
+        dwi_data = np.asarray(img.dataobj, dtype=np.float32)
         for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
             dwi_data = np.delete(dwi_data, b0, 3)
 
@@ -186,7 +189,8 @@ def tens_mod_est(gtab, data, B0_mask):
     from dipy.data import get_sphere
 
     sphere = get_sphere("repulsion724")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj)).astype("bool")
     print("Generating tensor model...")
     model = TensorModel(gtab)
     mod = model.fit(data, B0_mask_data)
@@ -227,7 +231,8 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
 
     print("Fitting CSA model...")
     model = CsaOdfModel(gtab, sh_order=sh_order)
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj)).astype("bool")
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
     del B0_mask_data
     return csa_mod, model
@@ -276,7 +281,8 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     )
 
     print("Fitting CSD model...")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj)).astype("bool")
     print("Reconstructing...")
     response = recursive_response(
         gtab,
@@ -333,7 +339,8 @@ def sfm_mod_est(gtab, data, B0_mask):
 
     sphere = get_sphere("repulsion724")
     print("Fitting SF model...")
-    B0_mask_data = np.asarray(nib.load(B0_mask).dataobj).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(nib.load(
+        B0_mask).dataobj)).astype("bool")
     print("Reconstructing...")
     model = sfm.SparseFascicleModel(
         gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
@@ -552,7 +559,8 @@ def streams2graph(
 
     if fa_wei is True:
         fa_weights = values_from_volume(
-            np.asarray(nib.load(warped_fa).dataobj), streamlines, np.eye(4)
+            np.asarray(nib.load(warped_fa).dataobj, dtype=np.float32),
+            streamlines, np.eye(4)
         )
         global_fa_weights = list(utils.flatten(fa_weights))
         min_global_fa_wei = min(i for i in global_fa_weights if i > 0)

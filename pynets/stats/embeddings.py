@@ -258,8 +258,13 @@ def build_asetomes(est_path_iterlist, ID):
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
 
+    if isinstance(est_path_iterlist, list):
+        est_path_iterlist = list(flatten(est_path_iterlist))
+    else:
+        est_path_iterlist = [est_path_iterlist]
+
     out_paths = []
-    for file_ in list(flatten(est_path_iterlist)):
+    for file_ in est_path_iterlist:
         mat = np.load(file_)
         atlas = prune_suffices(file_.split("/")[-3])
         res = prune_suffices("_".join(file_.split(
@@ -368,7 +373,10 @@ def build_omnetome(est_path_iterlist, ID):
             )
     stream.close()
 
-    est_path_iterlist = list(flatten(est_path_iterlist))
+    if isinstance(est_path_iterlist, list):
+        est_path_iterlist = list(flatten(est_path_iterlist))
+    else:
+        est_path_iterlist = [est_path_iterlist]
 
     if len(est_path_iterlist) > 1:
         atlases = list(set([x.split("/")[-3].split("/")[0]
