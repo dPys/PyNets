@@ -307,21 +307,21 @@ def direct_streamline_norm(
             ".nii.gz",
         )
 
-        streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
-                                                                       '%s' % (network + '_' if network is not
-                                                                                                None else ''),
-                                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
-                                                                               roi is not None else ''),
-                                                                       conn_model, '_', target_samples,
-                                                                       '%s' % ("%s%s" %
-                                                                               ('_' + str(node_size),
-                                                                                'mm_') if ((node_size != 'parc') and
-                                                                                           (node_size is not None)) else
-                                                                               '_'),
-                                                                       'curv', str(curv_thr_list).replace(', ', '_'),
-                                                                       'step', str(step_list).replace(', ', '_'), 'tt-',
-                                                                       track_type,  '_dg-', directget, '_ml-', min_length,
-                                                                       '.png')
+        # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
+        #                                                                '%s' % (network + '_' if network is not
+        #                                                                                         None else ''),
+        #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
+        #                                                                        roi is not None else ''),
+        #                                                                conn_model, '_', target_samples,
+        #                                                                '%s' % ("%s%s" %
+        #                                                                        ('_' + str(node_size),
+        #                                                                         'mm_') if ((node_size != 'parc') and
+        #                                                                                    (node_size is not None)) else
+        #                                                                        '_'),
+        #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
+        #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
+        #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
+        #                                                                '.png')
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
@@ -354,39 +354,31 @@ def direct_streamline_norm(
         ref_grid_aff = vox_size * np.eye(4)
         ref_grid_aff[3][3] = 1
 
-        # streams_final_filt = []
-        # i = 0
-        # combs = [(-x_mul, -y_mul, -z_mul), (x_mul, y_mul, z_mul), (1, y_mul, -z_mul), (-1, y_mul, -z_mul),
-        #          (1, -y_mul, -z_mul), (1, 1, -z_mul), (1, 1, z_mul), (-x_mul, 1, 1), (x_mul, 1, 1), (1, -y_mul, 1),
-        #          (1, y_mul, 1)]
-        # while len(streams_final_filt)/len(streams_in_curr_grid) < 0.90:
-        #     print(f"Warping streamlines to MNI space. Attempt {i}...")
-        #     print(len(streams_final_filt)/len(streams_in_curr_grid))
-        #     adjusted_affine = affine_map.affine.copy()
-        #     if i > len(combs) - 1:
-        #         raise ValueError('DSN failed. Header orientation information may be corrupted...')
-        #     adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
-        #     adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
-        #     adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
-        #
-        #     streams_final_filt = regutils.warp_streamlines(adjusted_affine, ref_grid_aff, mapping, warped_fa_img,
-        #                                                    streams_in_curr_grid, brain_mask)
-        #
-        #     i += 1
+        streams_final_filt = []
+        i = 0
+        # Test for various types of voxel-grid configurations
+        combs = [(-x_mul, -y_mul, -z_mul), (-x_mul, -y_mul, z_mul),
+                 (-x_mul, y_mul, -z_mul), (x_mul, -y_mul, -z_mul),
+                 (x_mul, y_mul, z_mul)]
+        while len(streams_final_filt)/len(streams_in_curr_grid) < 0.90:
+            print(f"Warping streamlines to MNI space. Attempt {i}...")
+            print(len(streams_final_filt)/len(streams_in_curr_grid))
+            adjusted_affine = affine_map.affine.copy()
+            if i > len(combs) - 1:
+                raise ValueError('DSN failed. Header orientation information '
+                                 'may be corrupted. Is your dataset oblique?')
+            adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
+            adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
+            adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
 
-        adjusted_affine = affine_map.affine.copy()
-        adjusted_affine[0][3] = -adjusted_affine[0][3] * x_mul
-        adjusted_affine[1][3] = -adjusted_affine[1][3] * y_mul
-        adjusted_affine[2][3] = -adjusted_affine[2][3] * z_mul
+            streams_final_filt = regutils.warp_streamlines(adjusted_affine,
+                                                           ref_grid_aff,
+                                                           mapping,
+                                                           warped_fa_img,
+                                                           streams_in_curr_grid,
+                                                           brain_mask)
 
-        streams_final_filt = regutils.warp_streamlines(
-            adjusted_affine,
-            ref_grid_aff,
-            mapping,
-            warped_fa_img,
-            streams_in_curr_grid,
-            brain_mask,
-        )
+            i += 1
 
         # Remove streamlines with negative voxel indices
         lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -410,7 +402,7 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
         # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
 
         # Create and save MNI density map

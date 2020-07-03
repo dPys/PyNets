@@ -1400,7 +1400,7 @@ def view_tractogram(streams, atlas):
     warped_aff = affine_map.affine_inv.copy()
     warped_aff_scaled = rescale_affine_to_center(warped_aff,
                                                  voxel_dims=[4, 4, 4],
-                                                 target_center_coords=0.5*clean_template_img.affine[:3,3])
+                                                 target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
     streamlines = transform_streamlines(
         tractogram.streamlines, warped_aff_scaled)
 
@@ -1408,7 +1408,7 @@ def view_tractogram(streams, atlas):
     atlas_img = nib.load(atlas)
     resampled_img = resample_to_img(atlas_img, clean_template_img,
                                     interpolation='nearest', clip=False)
-    atlas_img_data = resampled_img.get_fdata(dtype='uint32')
+    atlas_img_data = resampled_img.get_fdata().astype('uint32')
 
     # Collapse list of connected streamlines for visualization
 
@@ -1456,7 +1456,7 @@ def view_tractogram(streams, atlas):
                              colormap.create_colormap(
                                  np.ones([len(streamlines)]),
                                  name='Greys_r', auto=True),
-                             lod_points=10000, depth_cue=True, linewidth=0.2,
+                             lod_points=10000, depth_cue=True, linewidth=0.3,
                              fake_tube=True, opacity=1.0)
     renderer.add(lines_actor)
 

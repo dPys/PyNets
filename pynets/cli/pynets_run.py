@@ -225,6 +225,11 @@ def get_parser():
             "AICHAJoliot2015",
             "whole_brain_cluster_labels_PCA200",
             "RandomParcellationsc05meanalll43Craddock2011",
+            'sub-colin27_label-L2018_desc-scale1_atlas',
+            'sub-colin27_label-L2018_desc-scale2_atlas',
+            'sub-colin27_label-L2018_desc-scale3_atlas',
+            'sub-colin27_label-L2018_desc-scale4_atlas',
+            'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
         help="(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. "
         "If you wish to iterate your pynets run over multiple "
@@ -573,7 +578,7 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets Version:\n{Fore.MAGENTA}{pynets.__version__}\n")
+        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version:{pynets.__version__}\n")
     except ImportError:
         print(
             "PyNets not installed! Ensure that you are using the correct python version."
@@ -1362,7 +1367,7 @@ def build_workflow(args, retval):
             )
             conn_model = None
         else:
-            print(f"Using connectivity model: {Fore.BLUE}{conn_model}...")
+            print(f"{Fore.GREEN}Using connectivity model: {Fore.BLUE}{conn_model}...")
 
     elif graph or multi_graph or multi_subject_graph or multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
@@ -1701,7 +1706,6 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{_conf}")
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
-        print(Style.RESET_ALL + '\n')
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True

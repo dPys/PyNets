@@ -25,11 +25,16 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="PyNets: A Fully-Automated Workflow for Reproducible Ensemble "
         "Sampling of Functional and Structural Connectomes")
-    # Debug/Runtime settings
     parser.add_argument(
         "-basedir",
         metavar="Output directory",
         help="Specify the path to the base output directory with group-level pynets derivatives.\n",
+    )
+    parser.add_argument(
+        "-modality",
+        nargs=1,
+        choices=["dwi", "func"],
+        help="Specify data modality from which to collect data. Options are `dwi` and `func`.",
     )
     parser.add_argument(
         "-pm",
@@ -163,7 +168,7 @@ def df_concat(dfs, working_path):
     return frame
 
 
-def build_subject_dict(sub, working_path, modality="func"):
+def build_subject_dict(sub, working_path, modality):
     import shutil
     import os
     import glob
@@ -253,7 +258,7 @@ def build_subject_dict(sub, working_path, modality="func"):
     return files_
 
 
-def collect_all(working_path):
+def collect_all(working_path, modality):
     import_list = [
         "import warnings",
         'warnings.filterwarnings("ignore")',
@@ -270,13 +275,15 @@ def collect_all(working_path):
     wf = pe.Workflow(name="load_pd_dfs")
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["working_path"]), name="inputnode"
+        niu.IdentityInterface(fields=["working_path", "modality"]),
+        name="inputnode"
     )
     inputnode.inputs.working_path = working_path
+    inputnode.inputs.modality = modality
 
     build_subject_dict_node = pe.Node(
         niu.Function(
-            input_names=["sub", "working_path"],
+            input_names=["sub", "working_path", "modality"],
             output_names=["files_"],
             function=build_subject_dict,
         ),
@@ -314,7 +321,8 @@ def collect_all(working_path):
 
     wf.connect(
         [
-            (inputnode, build_subject_dict_node, [("working_path", "working_path")]),
+            (inputnode, build_subject_dict_node,
+             [("working_path", "working_path"), ('modality', 'modality')]),
             (build_subject_dict_node, df_join_node, [("files_", "files_")]),
             (df_join_node, load_pd_dfs_map, [("files_", "file_")]),
             (load_pd_dfs_map, outputnode, [("df", "dfs")]),
@@ -359,12 +367,13 @@ def build_collect_workflow(args, retval):
     verbose = args.v
     working_path = args.basedir
     work_dir = args.work
+    modality = args.modality
 
     os.makedirs(
         f"{str(Path(working_path).parent)}/all_visits_netmets_auc",
         exist_ok=True)
 
-    wf = collect_all(working_path)
+    wf = collect_all(working_path, modality)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"

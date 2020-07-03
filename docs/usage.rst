@@ -184,7 +184,7 @@ Building upon the previous examples, let's say you now wish to analyze the Defau
     -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
 
 .. note::
-    In general, parcels are preferable to spheres as nodes because parcels more closely respect atlas or cluster topology.
+    In general, parcels are preferable to spheres as nodes because parcels more closely respect cortical topographgy.
 
 Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
 
@@ -268,7 +268,7 @@ Interpreting outputs
 To collect the graph topological outputs from one or more completed pynets
 runs, you can use the `pynets_collect` CLI: ::
 
-    pynets_collect -basedir '/Users/dPys/outputs'
+    pynets_collect -basedir '/Users/dPys/outputs' -modality 'func'
 
 which will generate a new dataframe, all_subs_neat.csv, where each row is a
 given subject session and/or run, and each column is a graph topological
