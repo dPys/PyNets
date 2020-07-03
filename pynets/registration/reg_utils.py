@@ -441,10 +441,10 @@ def atlas2t1w_align(
             cost="mutualinfo",
         )
 
-    os.system(f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm} 2>/dev/null")
-    # os.system(
-    #     f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} {aligned_atlas_gm} 2>/dev/null"
-    # )
+    os.system(
+        f"fslmaths {aligned_atlas_skull} -mas {gm_mask} "
+        f"{aligned_atlas_gm} 2>/dev/null")
+
     atlas_img = nib.load(aligned_atlas_gm)
 
     uatlas_res_template_data = np.asarray(atlas_img.dataobj)
@@ -457,12 +457,24 @@ def atlas2t1w_align(
         header=atlas_img.header,
     )
     nib.save(atlas_img_corr, aligned_atlas_gm)
-    final_dat = nib.load(aligned_atlas_gm).get_fdata()
+    final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
 
     if not checkConsecutive(unique_a):
-        print("Warning! Non-consecutive integers found in parcellation...")
-
+        old_count = len(np.unique(uatlas_res_template_data))
+        new_count = len(unique_a)
+        diff = np.abs(np.int(float(new_count) - float(old_count)))
+        print("\nWarning! Non-consecutive integers found in parcellation...")
+        print(f"Previous label count: {old_count}")
+        print(f"New label count: {new_count}")
+        print(f"Labels dropped: {diff}")
+        if diff > 1:
+            print('Grey-Matter mask too restrictive for this parcellation. '
+                  'Falling back to the T1w mask...')
+            os.system(
+                f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
+                f"{aligned_atlas_gm} 2>/dev/null"
+            )
     template_img.uncache()
 
     return aligned_atlas_gm, aligned_atlas_skull
