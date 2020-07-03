@@ -410,7 +410,7 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
         # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
 
         # Create and save MNI density map

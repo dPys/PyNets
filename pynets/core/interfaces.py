@@ -1990,7 +1990,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
     roi_neighborhood_tol = traits.Any(6, mandatory=True, usedefault=True)
-    sphere = traits.Str("repulsion724", mandatory=True, usedefault=True)
+    sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
 class _TrackingOutputSpec(TraitedSpec):

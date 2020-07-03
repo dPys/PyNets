@@ -20,11 +20,11 @@ tracking_method: # a tracking algorithm for dmri connectome estimation. Options 
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and bin (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
     - 'bin'
 tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
-    - 50000
+    - 10000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
 DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
-    - True
+    - False
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
     - 'betweenness'
 nilearn_parc_atlases:
