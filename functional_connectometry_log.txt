@@ -1,0 +1,82 @@
+Exception in thread Thread-1:
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_common.py", line 449, in wrapper
+    ret = self._cache[fun]
+KeyError: <function Process._get_pidtaskinfo at 0x7fdb3028c378>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 352, in catch_zombie
+    yield
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 393, in _get_pidtaskinfo
+    ret = cext.proc_pidtaskinfo_oneshot(self.pid)
+ProcessLookupError: [Errno 3] No such process (originated from proc_pidinfo())
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.7/threading.py", line 917, in _bootstrap_inner
+    self.run()
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/nipype/utils/profiler.py", line 105, in run
+    self._sample()
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/nipype/utils/profiler.py", line 90, in _sample
+    cpu += child.cpu_percent()
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/__init__.py", line 1011, in cpu_percent
+    pt2 = self._proc.cpu_times()
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 334, in wrapper
+    return fun(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 478, in cpu_times
+    rawtuple = self._get_pidtaskinfo()
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 334, in wrapper
+    return fun(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_common.py", line 456, in wrapper
+    ret = self._cache[fun] = fun(self)
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 393, in _get_pidtaskinfo
+    ret = cext.proc_pidtaskinfo_oneshot(self.pid)
+  File "/usr/local/anaconda3/lib/python3.7/contextlib.py", line 130, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/usr/local/anaconda3/lib/python3.7/site-packages/psutil/_psosx.py", line 365, in catch_zombie
+    raise AccessDenied(proc.pid, proc._name)
+psutil.AccessDenied: psutil.AccessDenied (pid=79489)
+
+WARNING: Logging before flag parsing goes to stderr.
+I0703 03:08:21.021058 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.register_node".
+I0703 03:09:05.126426 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.extract_ts_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_destrieux2009_rois/af71a6db033da3d775e443f3f69198192a2a90c8/extract_ts_node".
+I0703 03:09:06.765722 4391527872 nodes.py:739] [Node] Running "extract_ts_node" ("pynets.core.interfaces.ExtractTimeseries")
+I0703 03:09:57.520086 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.extract_ts_node".
+I0703 03:10:02.166208 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_destrieux2009_rois/586e0d8ff48662a7a06ea5bd1c2a2712af06b86d/get_conn_matrix_node".
+I0703 03:10:02.239645 4391527872 nodes.py:739] [Node] Running "get_conn_matrix_node" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:10:02.542532 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node".
+I0703 03:10:40.257257 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.join_iters_extract_ts_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_destrieux2009_rois/_thr_0.4/join_iters_extract_ts_node".
+I0703 03:10:40.595027 4391527872 nodes.py:739] [Node] Running "join_iters_extract_ts_node" ("nipype.interfaces.utility.base.IdentityInterface")
+I0703 03:10:41.014764 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.join_iters_extract_ts_node".
+I0703 03:11:11.227192 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_atlas_harvard_oxford/2940e7ce890c398c1e12365c458bc797367a8f9b/get_conn_matrix_node".
+I0703 03:11:11.281231 4391527872 nodes.py:739] [Node] Running "get_conn_matrix_node" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:11:11.571084 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node".
+I0703 03:11:17.210474 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.extract_ts_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_BrainnetomeAtlasFan2016/2940e7ce890c398c1e12365c458bc797367a8f9b/extract_ts_node".
+I0703 03:11:32.474507 4391527872 nodes.py:739] [Node] Running "extract_ts_node" ("pynets.core.interfaces.ExtractTimeseries")
+I0703 03:12:35.815802 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.extract_ts_node".
+I0703 03:12:57.275598 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_atlas_BrainnetomeAtlasFan2016/af71a6db033da3d775e443f3f69198192a2a90c8/get_conn_matrix_node".
+I0703 03:12:57.424597 4391527872 nodes.py:739] [Node] Running "get_conn_matrix_node" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:12:57.770816 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.get_conn_matrix_node".
+I0703 03:13:29.333114 4391527872 nodes.py:442] [Node] Setting-up "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.join_iters_node_atlas" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.3/join_iters_node_atlas".
+I0703 03:13:30.430138 4391527872 nodes.py:739] [Node] Running "join_iters_node_atlas" ("nipype.interfaces.utility.base.IdentityInterface")
+I0703 03:13:31.505713 4391527872 nodes.py:533] [Node] Finished "wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031.meta_wf_OAS31172_d0407_1.fmri_connectometry_OAS31172_d0407_1.join_iters_node_atlas".
+I0703 03:13:36.529175 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node5" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.3/thresh_func_node/mapflow/_thresh_func_node5".
+I0703 03:13:36.655313 4391527872 nodes.py:739] [Node] Running "_thresh_func_node5" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:14:25.891335 4391527872 nodes.py:533] [Node] Finished "_thresh_func_node5".
+I0703 03:14:26.679749 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node11" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.4/thresh_func_node/mapflow/_thresh_func_node11".
+I0703 03:14:26.724120 4391527872 nodes.py:739] [Node] Running "_thresh_func_node11" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:14:27.958788 4391527872 nodes.py:533] [Node] Finished "_thresh_func_node11".
+I0703 03:14:28.647732 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node14" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.4/thresh_func_node/mapflow/_thresh_func_node14".
+I0703 03:14:28.691262 4391527872 nodes.py:739] [Node] Running "_thresh_func_node14" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:14:29.970787 4391527872 nodes.py:533] [Node] Finished "_thresh_func_node14".
+I0703 03:14:30.643358 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node18" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.4/thresh_func_node/mapflow/_thresh_func_node18".
+I0703 03:14:30.696490 4391527872 nodes.py:739] [Node] Running "_thresh_func_node18" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:14:34.032640 4391527872 nodes.py:533] [Node] Finished "_thresh_func_node18".
+I0703 03:14:34.641549 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node21" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.4/thresh_func_node/mapflow/_thresh_func_node21".
+I0703 03:14:34.687708 4391527872 nodes.py:739] [Node] Running "_thresh_func_node21" ("nipype.interfaces.utility.wrappers.Function")
+I0703 03:14:38.210047 4391527872 nodes.py:533] [Node] Finished "_thresh_func_node21".
+I0703 03:14:38.659848 4391527872 nodes.py:442] [Node] Setting-up "_thresh_func_node2" in "/private/tmp/pynets_work/OAS31172_d0407_1_20200703_030032_373a0ddb-078a-4d18-9f26-033e49eb168a_wf_single_subject_fmri_OAS31172_d0407_1/wf_single_sub_OAS31172_d0407_1_fmri_20200703_030031/meta_wf_OAS31172_d0407_1/fmri_connectometry_OAS31172_d0407_1/_thr_0.6/thresh_func_node/mapflow/_thresh_func_node2".
+I0703 03:14:38.811671 4391527872 nodes.py:739] [Node] Running "_thresh_func_node2" ("nipype.interfaces.utility.wrappers.Function")
