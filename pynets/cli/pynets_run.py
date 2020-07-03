@@ -225,6 +225,11 @@ def get_parser():
             "AICHAJoliot2015",
             "whole_brain_cluster_labels_PCA200",
             "RandomParcellationsc05meanalll43Craddock2011",
+            'sub-colin27_label-L2018_desc-scale1_atlas',
+            'sub-colin27_label-L2018_desc-scale2_atlas',
+            'sub-colin27_label-L2018_desc-scale3_atlas',
+            'sub-colin27_label-L2018_desc-scale4_atlas',
+            'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
         help="(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. "
         "If you wish to iterate your pynets run over multiple "
