@@ -128,9 +128,10 @@ def prep_tissues(
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
     gm_img = nib.load(gm_in_dwi)
-    gm_mask_data = np.asarray(gm_img.dataobj)
-    wm_mask_data = np.asarray(wm_img.dataobj)
-    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj)
+    gm_mask_data = np.asarray(gm_img.dataobj, dtype=np.float32)
+    wm_mask_data = np.asarray(wm_img.dataobj, dtype=np.float32)
+    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj,
+                                      dtype=np.float32)
     if tiss_class == "act":
         background = np.ones(mask_img.shape)
         background[(gm_mask_data + wm_mask_data +
@@ -380,7 +381,8 @@ def track_ensemble(
     from colorama import Fore, Style
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
-    from dipy.tracking.local_tracking import LocalTracking, ParticleFilteringTracking
+    from dipy.tracking.local_tracking import LocalTracking, \
+        ParticleFilteringTracking
     from dipy.direction import (
         ProbabilisticDirectionGetter,
         ClosestPeakDirectionGetter,
@@ -481,7 +483,8 @@ def track_ensemble(
                 # Filter resulting streamlines by those that stay entirely
                 # inside the brain
                 roi_proximal_streamlines = utils.target(
-                    streamline_generator, np.eye(4), B0_mask_data, include=True
+                    streamline_generator, np.eye(4),
+                    B0_mask_data, include=True
                 )
 
                 # Filter resulting streamlines by roi-intersection

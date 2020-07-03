@@ -208,8 +208,7 @@ def direct_streamline_norm(
     import gc
     from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import reg_utils as regutils
-
-    # from pynets.plotting import plot_gen
+    from pynets.plotting import plot_gen
     import pkg_resources
     import yaml
     import os.path as op
@@ -308,21 +307,21 @@ def direct_streamline_norm(
             ".nii.gz",
         )
 
-        # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
-        #                                                                '%s' % (network + '_' if network is not
-        #                                                                                         None else ''),
-        #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
-        #                                                                        roi is not None else ''),
-        #                                                                conn_model, '_', target_samples,
-        #                                                                '%s' % ("%s%s" %
-        #                                                                        ('_' + str(node_size),
-        #                                                                         'mm_') if ((node_size != 'parc') and
-        #                                                                                    (node_size is not None)) else
-        #                                                                        '_'),
-        #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
-        #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
-        #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
-        #                                                                '.png')
+        streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
+                                                                       '%s' % (network + '_' if network is not
+                                                                                                None else ''),
+                                                                       '%s' % (op.basename(roi).split('.')[0] + '_' if
+                                                                               roi is not None else ''),
+                                                                       conn_model, '_', target_samples,
+                                                                       '%s' % ("%s%s" %
+                                                                               ('_' + str(node_size),
+                                                                                'mm_') if ((node_size != 'parc') and
+                                                                                           (node_size is not None)) else
+                                                                               '_'),
+                                                                       'curv', str(curv_thr_list).replace(', ', '_'),
+                                                                       'step', str(step_list).replace(', ', '_'), 'tt-',
+                                                                       track_type,  '_dg-', directget, '_ml-', min_length,
+                                                                       '.png')
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
@@ -411,7 +410,7 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
+        plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
         # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
 
         # Create and save MNI density map

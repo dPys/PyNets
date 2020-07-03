@@ -812,7 +812,7 @@ class NiParcellate(object):
             interpolation="nearest",
         )
         clust_mask_res_img.set_data_dtype(np.uint16)
-        func_data = np.asarray(func_vol_img.dataobj).astype("float32")
+        func_data = np.asarray(func_vol_img.dataobj, dtype=np.float32)
         func_int_thr = np.round(
             np.mean(func_data[func_data > 0])
             - np.std(func_data[func_data > 0]) * num_std_dev,

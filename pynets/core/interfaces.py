@@ -1288,6 +1288,7 @@ class RegisterAtlasDWI(SimpleInterface):
             aligned_atlas_skull,
             dwi_aligned_atlas,
             dwi_aligned_atlas_wmgm_int,
+            B0_mask_tmp_path,
             self.inputs.simple,
         )
 
@@ -2046,12 +2047,14 @@ class Tracking(SimpleInterface):
             create_density_map,
             track_ensemble,
         )
-        from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+        from dipy.io.stateful_tractogram import Space, StatefulTractogram, \
+            Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
+        dwi_data = dwi_img.get_fdata()
 
         # Load FA data
         fa_img = nib.load(self.inputs.fa_path)
@@ -2060,9 +2063,11 @@ class Tracking(SimpleInterface):
         model, mod = reconstruction(
             self.inputs.conn_model,
             load_pickle(self.inputs.gtab_file),
-            np.asarray(dwi_img.dataobj),
+            dwi_data,
             self.inputs.B0_mask,
         )
+
+        del dwi_data
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
         # seeding)
