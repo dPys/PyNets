@@ -14,7 +14,8 @@ warnings.filterwarnings("ignore")
 matplotlib.use("agg")
 
 
-def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
+def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
+                  dpi_resolution=300):
     """
     Plot a connectivity matrix.
 
@@ -33,9 +34,10 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
+    import matplotlib.ticker as mticker
 
-    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
+    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
     try:
@@ -43,8 +45,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
             conn_matrix_plt,
             figure=(10, 10),
             labels=labels,
-            vmax=np.abs(np.max(conn_matrix_plt)),
-            vmin=-np.abs(np.max(conn_matrix_plt)),
+            vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 80),
+            vmin=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 10),
             reorder="average",
             auto_fit=True,
             grid=False,
@@ -53,6 +55,10 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
         )
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
+
+    tick_interval = int(np.around(len(labels)/40))
+    plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
@@ -82,7 +88,7 @@ def plot_community_conn_mat(
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
-
+    import matplotlib.ticker as mticker
     matplotlib.use("agg")
     # from pynets import thresholding
     from nilearn.plotting import plot_matrix
@@ -105,8 +111,8 @@ def plot_community_conn_mat(
                 conn_matrix_plt,
                 figure=(10, 10),
                 labels=labels,
-                vmax=np.abs(np.max(conn_matrix_plt)),
-                vmin=-np.abs(np.max(conn_matrix_plt)),
+                vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 80),
+                vmin=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 10),
                 reorder=False,
                 auto_fit=True,
                 grid=False,
@@ -147,6 +153,9 @@ def plot_community_conn_mat(
         )
         total_size += size
 
+    tick_interval = int(np.around(len(labels)/40))
+    plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
     plt.close()
     return

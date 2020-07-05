@@ -77,6 +77,7 @@ def prep_tissues(
         vent_csf_in_dwi,
         wm_in_dwi,
         tiss_class,
+        B0_mask,
         cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
@@ -123,8 +124,12 @@ def prep_tissues(
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
 
-    # Loads mask
+    # Load B0 mask
+    B0_mask_img = nib.load(B0_mask)
+
+    # Load t1 mask
     mask_img = nib.load(t1_mask)
+
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
     gm_img = nib.load(gm_in_dwi)
@@ -140,13 +145,14 @@ def prep_tissues(
         tiss_classifier = ActStoppingCriterion(
             gm_mask_data, vent_csf_in_dwi_data)
         del background
-    elif tiss_class == "bin":
+    elif tiss_class == "wm":
         tiss_classifier = BinaryStoppingCriterion(
             np.asarray(
                 intersect_masks(
                     [
                         math_img("img > 0.0", img=mask_img),
                         math_img("img > 0.0", img=wm_img),
+                        math_img("img > 0.0", img=B0_mask_img),
                     ],
                     threshold=1,
                     connected=False,
@@ -164,7 +170,16 @@ def prep_tissues(
         )
     elif tiss_class == "wb":
         tiss_classifier = BinaryStoppingCriterion(
-            np.asarray(mask_img.dataobj).astype("bool")
+            np.asarray(
+                intersect_masks(
+                    [
+                        math_img("img > 0.0", img=mask_img),
+                        math_img("img > 0.0", img=B0_mask_img),
+                    ],
+                    threshold=1,
+                    connected=False,
+                ).dataobj
+            )
         )
     else:
         raise ValueError("Tissue classifier cannot be none.")
@@ -173,6 +188,7 @@ def prep_tissues(
     mask_img.uncache()
     gm_img.uncache()
     wm_img.uncache()
+    B0_mask_img.uncache()
 
     return tiss_classifier
 

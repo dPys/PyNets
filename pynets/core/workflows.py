@@ -142,7 +142,7 @@ def workflow_selector(
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
-        print("Parsing multimodal models...")
+        # print("Parsing multimodal models...")
         func_model_list = []
         dwi_model_list = []
         if conn_model_list is not None:
@@ -513,7 +513,7 @@ def workflow_selector(
 
     if multimodal is True:
         # Create input/output nodes
-        print("\nRunning Multimodal Workflow...")
+        # print("Running Multimodal Workflow...")
         pass_meta_ins_multi_node = pe.Node(
             niu.Function(
                 input_names=[
@@ -715,7 +715,7 @@ def workflow_selector(
         )
 
     else:
-        print("Running Unimodal Workflow...")
+        # print("Running Unimodal Workflow...")
 
         if dwi_file:
             pass_meta_ins_struct_node = pe.Node(

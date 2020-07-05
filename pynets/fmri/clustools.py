@@ -885,7 +885,8 @@ class NiParcellate(object):
                 self._conn_comps = self._clust_mask_corr_img
                 self.num_conn_comps = 1
         print(
-            f"Detected {self.num_conn_comps} connected components in clustering mask with a mininimum region "
+            f"Detected {self.num_conn_comps} connected components in "
+            f"clustering mask with a mininimum region "
             f"size of {min_region_size}")
         if (
             self.clust_type == "complete"
@@ -894,8 +895,8 @@ class NiParcellate(object):
         ):
             if self.num_conn_comps > 1:
                 raise ValueError(
-                    "Clustering method unstable with spatial constrainsts applied to multiple "
-                    "connected components.")
+                    "Clustering method unstable with spatial constrainsts "
+                    "applied to multiple connected components.")
 
         if (
             self.clust_type == "ward" and self.num_conn_comps > 1

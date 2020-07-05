@@ -90,8 +90,8 @@ def threshold_proportional(W, p, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if p > 1 or p < 0:

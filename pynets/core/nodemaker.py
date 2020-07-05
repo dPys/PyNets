@@ -1148,12 +1148,19 @@ def node_gen_masking(
         Path to directory containing subject derivative data for given run.
     """
     from pynets.core import nodemaker
-    import os.path as op
-
+    import os
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
@@ -1167,6 +1174,9 @@ def node_gen_masking(
         == len(labels)
         == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
     )
+
+    if parcel_pkl_file:
+        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1220,6 +1230,15 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     except ImportError:
         import _pickle as pickle
     from pynets.core import nodemaker
+    import os
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
 
@@ -1230,6 +1249,9 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         == len(labels)
         == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
     )
+
+    if parcel_pkl_file:
+        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 

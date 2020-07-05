@@ -66,27 +66,19 @@ RUN apt-get update -qq \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
     && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
     # Add new user.
-    && groupadd -r dpisner && useradd --no-log-init --create-home --shell /bin/bash -r -g dpisner dpisner \
+    && groupadd -r neuro && useradd --no-log-init --create-home --shell /bin/bash -r -g neuro neuro \
     && chmod a+s /opt \
     && chmod 777 -R /opt \
     && apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | tar xz -C /usr/local \
-       --exclude='fsl/doc' \
-       --exclude='fsl/data/first' \
-       --exclude='fsl/data/atlases' \
-       --exclude='fsl/data/possum' \
-       --exclude='fsl/src' \
-       --exclude='fsl/extras/src' \
-       --exclude='fsl/bin/fslview*' \
-       --exclude='fsl/bin/FSLeyes' \
-       --exclude='fsl/bin/*_gpu*' \
-       --exclude='fsl/bin/*_cuda*' \
-    && chmod 777 -R /usr/local/fsl/bin \
-    && chown -R dpisner:dpisner /usr/local/fsl
 
-USER dpisner
-WORKDIR /home/dpisner
+# Add Neurodebian package repositories (i.e. for FSL)
+RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    apt-key add /root/.neurodebian.gpg && \
+    (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
+    apt-get update -qq && apt-get update -qq && apt-get install -y fsl-core
+USER neuro
+WORKDIR /home/neuro
 
 # Install Miniconda, python, and basic packages.
 ARG miniconda_version="4.3.27"
@@ -103,8 +95,8 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 \
     # Install pynets
-    && git clone -b development https://github.com/dPys/PyNets /home/dpisner/PyNets && \
-    cd /home/dpisner/PyNets && \
+    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
+    cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
     # Install skggm
@@ -126,17 +118,17 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && rm -rf /home/dpisner/PyNets \
-    && rm -rf /home/dpisner/.cache
+    && rm -rf /home/neuro/PyNets \
+    && rm -rf /home/neuro/.cache
 
 # Handle permissions, cleanup, and create mountpoints
 USER root
 RUN chmod a+s -R /opt \
-    && chown -R dpisner /opt/conda/lib/python3.6/site-packages \
-    && mkdir -p /home/dpisner/.pynets \
-    && chown -R dpisner /home/dpisner/.pynets \
+    && chown -R neuro /opt/conda/lib/python3.6/site-packages \
+    && mkdir -p /home/neuro/.pynets \
+    && chown -R neuro /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
-    && chmod 777 -R /home/dpisner/.pynets \
+    && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 /opt/conda/bin/pynets_bids \
     && chmod 777 /opt/conda/bin/pynets_collect \
@@ -164,23 +156,27 @@ RUN chmod a+s -R /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
-USER dpisner
+USER neuro
 
 # ENV Config
 ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-ENV FSLDIR=/usr/local/fsl
-ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV PATH=/usr/local/fsl/bin:$PATH
-ENV FSLMULTIFILEQUIT=TRUE
-ENV LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH
+ENV FSLDIR=/usr/share/fsl/5.0
+ENV PATH=/usr/lib/fsl/5.0/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
 ENV FSLTCLSH=/usr/bin/tclsh
 ENV FSLWISH=/usr/bin/wish
 ENV FSLBROWSER=/etc/alternatives/x-www-browser
 ENV LD_LIBRARY_PATH="/usr/lib/openblas-base":$LD_LIBRARY_PATH
+ENV FSLMULTIFILEQUIT=TRUE
+ENV FSLOUTPUTTYPE=NIFTI_GZ
+ENV FSLMULTIFILEQUIT=TRUE
 ENV PYTHONWARNINGS ignore
 ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
+
+
+
 
 EXPOSE 22
 

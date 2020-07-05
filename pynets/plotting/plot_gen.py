@@ -39,8 +39,9 @@ def plot_connectogram(
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -48,8 +49,8 @@ def plot_connectogram(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g.
+        'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     comm : str, optional default: 'nodes'
@@ -83,8 +84,8 @@ def plot_connectogram(
         from pynets.stats.netstats import community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
-            G)
+        _, node_comm_aff_mat, resolution, num_comms = \
+            community_resolution_selection(G)
         clust_levels = len(node_comm_aff_mat)
         clust_levels_tmp = int(clust_levels) - 1
         mask_mat = np.squeeze(np.array([node_comm_aff_mat == 0]).astype("int"))
@@ -127,7 +128,8 @@ def plot_connectogram(
 
         def _write_roman(num):
             """
-            Create community/cluster assignments using a Roman-Numeral generator.
+            Create community/cluster assignments using a Roman-Numeral
+            generator.
             """
             roman = OrderedDict()
             roman[1000] = "M"
@@ -197,19 +199,24 @@ def plot_connectogram(
 
     if network:
         json_file_name = (
-            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.json'}"
+            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}"
+            f"{'_network.json'}"
         )
         json_fdg_file_name = (
             f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.json'}"
         )
         connectogram_plot = f"{dir_path}{'/'}{json_file_name}"
-        fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
-        fdg_js_sub_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}{'_network.js'}"
+        fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_'}{network}{'_fdg_'}" \
+                     f"{conn_model}{'_network.js'}"
+        fdg_js_sub_name = f"{str(ID)}{'_'}{network}{'_fdg_'}{conn_model}" \
+                          f"{'_network.js'}"
         connectogram_js_sub = (
-            f"{dir_path}/{str(ID)}_{network}_connectogram_{conn_model}_network.js"
+            f"{dir_path}/{str(ID)}_{network}_connectogram_{conn_model}"
+            f"_network.js"
         )
         connectogram_js_name = (
-            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}{'_network.js'}"
+            f"{str(ID)}{'_'}{network}{'_connectogram_'}{conn_model}"
+            f"{'_network.js'}"
         )
     else:
         json_file_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.json'}"
@@ -220,7 +227,8 @@ def plot_connectogram(
         )
         fdg_js_sub = f"{dir_path}{'/'}{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
         fdg_js_sub_name = f"{str(ID)}{'_fdg_'}{conn_model}{'.js'}"
-        connectogram_js_name = f"{str(ID)}{'_connectogram_'}{conn_model}{'.js'}"
+        connectogram_js_name = f"{str(ID)}{'_connectogram_'}{conn_model}" \
+                               f"{'.js'}"
     save_json(connectogram_plot, output)
 
     # Force-directed graphing
@@ -272,7 +280,8 @@ def plot_connectogram(
         "template.json": str(json_file_name),
         "interpolateCool": str(color_scheme),
     }
-    with open(conn_js_path) as infile, open(connectogram_js_sub, "w") as outfile:
+    with open(conn_js_path) as infile, open(connectogram_js_sub, "w") as \
+        outfile:
         for line in infile:
             for src, target in replacements_js.items():
                 line = line.replace(src, target)
@@ -294,11 +303,11 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     Parameters
     ----------
     time-series : array
-        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
-        n = number of ROI's.
+        2D m x n array consisting of the time-series signal for each ROI node
+        where m = number of scans and n = number of ROI's.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g.
+        'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     dir_path : str
@@ -355,7 +364,8 @@ def plot_network_clusters(
     node_size: int
         Default 50.
     plot_overlaps : bool
-        Flag to control if multiple algorithms memberships are plotted. Default is False.
+        Flag to control if multiple algorithms memberships are plotted.
+        Default is False.
     plot_labels : bool
         Flag to control if node labels are plotted. Default is False.
 
@@ -446,7 +456,8 @@ def create_gb_palette(
         labels,
         node_size="auto",
         node_cmap=None,
-        prune=True):
+        prune=True,
+        centrality_type='eig'):
     """
     Create conectome color palatte based on topography.
 
@@ -457,12 +468,13 @@ def create_gb_palette(
     edge_cmap: colormap
         colormap used for representing the weight of the edges.
     coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+        List of (x, y, z) tuples corresponding to an a-priori defined set
+        (e.g. a coordinate atlas).
     labels : list
         List of string labels corresponding to ROI nodes.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     node_size: scalar or array_like
         size(s) of the nodes in points^2.
     node_cmap: colormap
@@ -475,7 +487,8 @@ def create_gb_palette(
     from pynets.core import thresholding
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
-    from pynets.stats.netstats import community_resolution_selection, prune_disconnected
+    from pynets.stats.netstats import community_resolution_selection, \
+        prune_disconnected
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
@@ -497,9 +510,18 @@ def create_gb_palette(
 
     # Node centralities
     try:
-        node_centralities = list(
-            nx.algorithms.eigenvector_centrality_numpy(
-                G, weight="weight").values())
+        if centrality_type == 'eig':
+            node_centralities = list(
+                nx.algorithms.eigenvector_centrality_numpy(
+                    G, weight="weight").values())
+        elif centrality_type == 'bet':
+            node_centralities = list(
+                nx.algorithms.betweenness_centrality(
+                    G, weight="weight").values())
+        elif centrality_type == 'deg':
+            node_centralities = list(
+                nx.algorithms.degree_centrality(
+                    G).values())
     except BaseException:
         node_centralities = len(coords) * [1]
     max_node_size = 1 / mat.shape[0] * \
@@ -509,8 +531,8 @@ def create_gb_palette(
     )
 
     # Node communities
-    _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
-        G)
+    _, node_comm_aff_mat, resolution, num_comms = \
+        community_resolution_selection(G)
 
     # Path lengths
     edge_lengths = []
@@ -545,7 +567,8 @@ def create_gb_palette(
 
         try:
             ls_cmap = colors.LinearSegmentedColormap.from_list(
-                node_comm_aff_mat, sns.color_palette(flatui, n_colors=num_comms)
+                node_comm_aff_mat, sns.color_palette(flatui,
+                                                     n_colors=num_comms)
             )
             matplotlib.cm.register_cmap("community", ls_cmap)
             clust_pal = sns.color_palette("community", n_colors=mat.shape[0])
@@ -557,7 +580,7 @@ def create_gb_palette(
 
     # Edges
     z_min = np.percentile(mat[mat > 0], 10)
-    z_max = np.percentile(mat[mat > 0], 90)
+    z_max = np.percentile(mat[mat > 0], 80)
     edge_cmap_pl = sns.color_palette(edge_cmap)
     clust_pal_edges = colors.ListedColormap(edge_cmap_pl.as_hex())
 
@@ -679,9 +702,8 @@ def plot_all_func(
         hardcoded_params = yaml.load(stream)
         try:
             if edge_color_override is False:
-                color_theme = hardcoded_params["plotting"]["functional"]["glassbrain"][
-                    "color_theme"
-                ][0]
+                color_theme = hardcoded_params["plotting"]["functional"
+                ]["glassbrain"]["color_theme"][0]
             else:
                 color_theme = random.choice(
                     [
@@ -711,7 +733,8 @@ def plot_all_func(
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         except KeyError:
             print(
-                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+                "ERROR: Plotting configuration not successfully extracted "
+                "from runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
@@ -735,12 +758,14 @@ def plot_all_func(
             if len(conn_matrix) > 20:
                 try:
                     plot_gen.plot_connectogram(
-                        conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                        conn_matrix, conn_model, atlas, namer_dir, ID,
+                        network, labels)
                 except RuntimeWarning:
                     print("\n\n\nWarning: Connectogram plotting failed!")
             else:
                 print(
-                    "Warning: Cannot plot connectogram for graphs smaller than 20 x 20!"
+                    "Warning: Cannot plot connectogram for graphs smaller than"
+                    " 20 x 20!"
                 )
 
         # Plot adj. matrix based on determined inputs
@@ -799,7 +824,8 @@ def plot_all_func(
                                                                  )
 
             connectome = niplot.plot_connectome(
-                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
+                black_bg=True
             )
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
             [
@@ -857,8 +883,8 @@ def plot_all_func(
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
             raise RuntimeError(
-                "\nERROR: no coordinates to plot! Are you running plotting outside of pynets's "
-                "internal estimation schemes?")
+                "\nERROR: no coordinates to plot! Are you running plotting "
+                "outside of pynets's internal estimation schemes?")
 
         plt.close("all")
 
@@ -888,7 +914,8 @@ def plot_all_struct(
     min_length,
 ):
     """
-    Plot adjacency matrix, connectogram, and glass brain for functional connectome.
+    Plot adjacency matrix, connectogram, and glass brain for functional
+    connectome.
 
     Parameters
     ----------

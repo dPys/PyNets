@@ -656,7 +656,7 @@ def streams2graph(
     # Convert to numpy matrix
     conn_matrix_raw = nx.to_numpy_array(g)
 
-    # Impose symmetry
+    # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     print("Graph Building Complete:\n", str(time.time() - start))

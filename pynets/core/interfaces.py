@@ -297,7 +297,9 @@ class FetchNodesLabels(SimpleInterface):
         self._results["coords"] = coords
         self._results["atlas"] = atlas
         self._results["networks_list"] = networks_list
-        self._results["parcel_list"] = parcel_list
+        # TODO: Optimize this with 4d array concatenation and .npyz
+        self._results["parcel_list"] = utils.pkl_parcel_list(runtime.cwd,
+                                                             parcel_list)
         self._results["par_max"] = par_max
         self._results["uatlas"] = uatlas
         self._results["dir_path"] = dir_path
@@ -2142,6 +2144,7 @@ class Tracking(SimpleInterface):
                 self.inputs.vent_csf_in_dwi,
                 self.inputs.wm_in_dwi,
                 self.inputs.tiss_class,
+                self.inputs.B0_mask
             ),
             get_sphere(self.inputs.sphere),
             self.inputs.directget,

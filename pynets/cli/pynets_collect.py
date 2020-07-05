@@ -136,7 +136,7 @@ def load_pd_dfs(file_):
     return df
 
 
-def df_concat(dfs, working_path):
+def df_concat(dfs, working_path, modality):
     import re
     import pandas as pd
 
@@ -164,7 +164,7 @@ def df_concat(dfs, working_path):
     # Set ID to the first column
     cols = [cols[-1]] + cols[:-1]
     frame = frame[cols]
-    frame.to_csv(f"{working_path}{'/all_subs_neat.csv'}", index=False)
+    frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=False)
     return frame
 
 
@@ -479,7 +479,7 @@ def build_collect_workflow(args, retval):
             pass
         dfs.append(df)
         del df
-    df_concat(dfs, working_path)
+    df_concat(dfs, working_path, modality)
 
     return
 
