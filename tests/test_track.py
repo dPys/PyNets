@@ -133,7 +133,7 @@ def test_track_ensemble(directget, target_samples):
     labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_" \
                      f"track.nii.gz"
     conn_model = 'csa'
-    tiss_class = 'bin'
+    tiss_class = 'wm'
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
