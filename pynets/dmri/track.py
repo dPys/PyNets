@@ -175,6 +175,9 @@ def prep_tissues(
                     [
                         math_img("img > 0.0", img=mask_img),
                         math_img("img > 0.0", img=B0_mask_img),
+                        nib.Nifti1Image(np.invert(
+                            vent_csf_in_dwi_data.astype('bool')).astype('int'),
+                                        affine=mask_img.affine),
                     ],
                     threshold=1,
                     connected=False,
@@ -266,7 +269,8 @@ def create_density_map(
         namer_dir,
         "/density_map_",
         "%s" % (network + "_" if network is not None else ""),
-        "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
+        "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else
+                ""),
         conn_model,
         "_",
         target_samples,

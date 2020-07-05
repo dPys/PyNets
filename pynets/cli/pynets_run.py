@@ -578,13 +578,11 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: {pynets.__version__}\n")
+        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: {pynets.__version__}")
     except ImportError:
         print(
             "PyNets not installed! Ensure that you are using the correct python version."
         )
-
-    print(Style.RESET_ALL)
 
     # Start timer
     now = datetime.datetime.now()
@@ -1668,10 +1666,22 @@ def build_workflow(args, retval):
             else:
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
-        if target_samples:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
+        if directget:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} {Fore.GREEN}direction getting...")
+        else:
+            print(f"{Fore.GREEN}Iterating direction getting:")
+            for dg in multi_directget:
+                print(f"{Fore.BLUE}{dg}")
         if min_length:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} minimum streamline length...")
+        else:
+            print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
+            for ml in min_length_list:
+                print(f"{Fore.BLUE}{ml}")
+        if target_samples:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
+        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking with {Fore.BLUE}{tiss_class} tissue classification...")
+        print(f"{Fore.GREEN}Ensemble tractography step sizes: {Fore.BLUE}{step_list} {Fore.GREEN}and curvature thresholds: {Fore.BLUE}{curv_thr_list}")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print(f"\n{Fore.WHITE}Running dmri connectometry only...")
         if dwi_file_list:

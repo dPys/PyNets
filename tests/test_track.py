@@ -161,8 +161,8 @@ def test_track_ensemble(directget, target_samples):
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi,
-                                         wm_in_dwi, tiss_class,
+    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                         wm_in_dwi, tiss_class, B0_mask,
                                          cmc_step_size=0.2)
 
     track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model,
@@ -226,7 +226,8 @@ def test_track_ensemble_particle():
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                         wm_in_dwi, tiss_class, B0_mask,
                                          cmc_step_size=0.2)
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere,

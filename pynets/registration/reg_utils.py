@@ -1136,10 +1136,6 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     fname = dwi_prep
     bvec_fname = bvecs
 
-    out_dir = f"{out_dir}/reg"
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-
     out_bvec_fname = (
         f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
     )

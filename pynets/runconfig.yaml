@@ -14,13 +14,13 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 1
+    - 10
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'wm'
+    - 'wb'
 tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
-    - 10000
+    - 100000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
 DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
@@ -105,7 +105,7 @@ plotting:
     structural:
         glassbrain:
             color_theme:
-              - 'binary' # Recommend keeping the default here, as it produces white edges resembling white-matter fibers
+              - 'binary' # Recommend keeping the default here, as it produces white edges "resembling" white-matter fibers
         adjacency:
             color_theme:
                 - 'RdBu_r'
