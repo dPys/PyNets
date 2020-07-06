@@ -236,5 +236,6 @@ def test_track_ensemble_particle():
                                        n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
                                        particle_count=15, min_separation_angle=20)
     streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
+                                       space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)

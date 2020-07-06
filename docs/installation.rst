@@ -202,7 +202,18 @@ is found in the `Dockerfile <https://github.com/dPys/PyNets/blob/master/Dockerfi
 On a functional Python 3.6 (or above) environment with ``pip`` installed,
 PyNets can be installed using the habitual command: ::
 
-    pip install pynets --user
+    [sudo] pip install pynets [--user]
+
+or ::
+
+    # Install git-lfs
+    brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux)
+    git lfs install --skip-repo
+
+    # Clone the repository and install
+    git clone https://github.com/dpys/pynets
+    cd PyNets
+    [sudo] python setup.py install [--user]
 
 External Dependencies
 ---------------------

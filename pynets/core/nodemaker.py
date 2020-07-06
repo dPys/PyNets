@@ -106,14 +106,14 @@ def create_parcel_atlas(parcel_list):
 
 def fetch_nilearn_atlas_coords(atlas):
     """
-    Meta-API for nilearn's coordinate atlas fetching API to retrieve any publically-available coordinate
-    atlas by string name.
+    Meta-API for nilearn's coordinate atlas fetching API to retrieve any
+    publically-available coordinate atlas by string name.
 
     Parameters
     ----------
     atlas : str
-        Name of a Nilearn-hosted coordinate atlas supported for fetching. See Nilearn's datasets.atlas module for
-        more detailed reference.
+        Name of a Nilearn-hosted coordinate atlas supported for fetching. See
+        Nilearn's datasets.atlas module for more detailed reference.
 
     Returns
     -------
@@ -122,7 +122,8 @@ def fetch_nilearn_atlas_coords(atlas):
     atlas_name : str
         Name of atlas parcellation (can differ slightly from fetch API string).
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
+        List of RSN's and their associated cooordinates, if predefined
+        uniquely for a given atlas.
     labels : list
         List of string labels corresponding to atlas nodes.
     """
@@ -150,7 +151,8 @@ def fetch_nilearn_atlas_coords(atlas):
 
     if len(coords) <= 1:
         raise ValueError(
-            "\nERROR: No coords returned for specified atlas! Ensure an active internet connection."
+            "\nERROR: No coords returned for specified atlas! Ensure an active"
+            " internet connection."
         )
 
     assert len(coords) == len(labels)
@@ -160,23 +162,26 @@ def fetch_nilearn_atlas_coords(atlas):
 
 def nilearn_atlas_helper(atlas, parc):
     """
-    Meta-API for nilearn's parcellation-based atlas fetching API to retrieve any publically-available parcellation-based
-    atlas by string name.
+    Meta-API for nilearn's parcellation-based atlas fetching API to retrieve
+    any publically-available parcellation-based atlas by string name.
 
     Parameters
     ----------
     atlas : str
-        Name of a Nilearn-hosted parcellation/label-based atlas supported for fetching.
-        See Nilearn's datasets.atlas module for more detailed references.
+        Name of a Nilearn-hosted parcellation/label-based atlas supported for
+        fetching. See Nilearn's datasets.atlas module for more detailed
+        references.
     parc : bool
-        Indicates whether to use the raw parcels as ROI nodes instead of coordinates at their center-of-mass.
+        Indicates whether to use the raw parcels as ROI nodes instead of
+        coordinates at their center-of-mass.
 
     Returns
     -------
     labels : list
         List of string labels corresponding to atlas nodes.
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
+        List of RSN's and their associated cooordinates, if predefined
+        uniquely for a given atlas.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
@@ -244,7 +249,8 @@ def mmToVox(img_affine, mmcoords):
     Parameters
     ----------
     img_affine : array
-        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
+        4 x 4 2D Numpy array that is the affine of the image space that the
+        coordinates inhabit.
     mmcoords : list
         List of [x, y, z] or (x, y, z) coordinates in mm-space.
     """
@@ -258,7 +264,8 @@ def VoxTomm(img_affine, voxcoords):
     Parameters
     ----------
     img_affine : array
-        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
+        4 x 4 2D Numpy array that is the affine of the image space that the
+        coordinates inhabit.
     voxcoords : list
         List of [x, y, z] or (x, y, z) coordinates in voxel-space.
     """
@@ -275,8 +282,8 @@ def get_node_membership(
         perc_overlap=0.75,
         error=4):
     """
-    Evaluate the affinity of any arbitrary list of coordinate or parcel nodes for a user-specified RSN based on
-    Yeo-7 or Yeo-17 definitions.
+    Evaluate the affinity of any arbitrary list of coordinate or parcel nodes
+    for a user-specified RSN based on Yeo-7 or Yeo-17 definitions.
 
     Parameters
     ----------
@@ -417,7 +424,10 @@ def get_node_membership(
             "Z"])
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
-    par_img = nib.load(par_file)
+    try:
+        par_img = nib.load(par_file)
+    except IOError as e:
+        print(e, "\nCannot load RSN reference image. Do you have git-lfs installed?")
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = np.asarray(par_img.dataobj)[:, :, :, RSN_ix]
 

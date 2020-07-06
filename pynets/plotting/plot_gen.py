@@ -696,6 +696,13 @@ def plot_all_func(
         "pynets", "templates/ch2better.nii.gz"
     )
 
+    try:
+        nib.load(ch2better_loc)
+    except IOError as e:
+        print(e,
+              f"\nCannot load plotting template. Do you have git-lfs "
+              f"installed?")
+
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
@@ -991,6 +998,13 @@ def plot_all_struct(
         "pynets", "templates/ch2better.nii.gz"
     )
 
+    try:
+        nib.load(ch2better_loc)
+    except IOError as e:
+        print(e,
+              f"\nCannot load plotting template. Do you have git-lfs "
+              f"installed?")
+
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
@@ -1198,6 +1212,13 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/ch2better.nii.gz"
     )
+
+    try:
+        nib.load(ch2better_loc)
+    except IOError as e:
+        print(e,
+              f"\nCannot load plotting template. Do you have git-lfs "
+              f"installed?")
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"

@@ -99,8 +99,8 @@ class FetchNodesLabels(SimpleInterface):
                 else:
                     parcel_list = None
             else:
-                raise ValueError(
-                    f"\nERROR: Atlas file for {self.inputs.atlas} not found!"
+                raise FileNotFoundError(
+                    f"\nAtlas file for {self.inputs.atlas} not found!"
                 )
             atlas = self.inputs.atlas
         elif (
@@ -157,6 +157,12 @@ class FetchNodesLabels(SimpleInterface):
             uatlas = fname_presuffix(
                 uatlas_pre, suffix="_tmp", newpath=runtime.cwd)
             copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
+            try:
+                par_img = nib.load(uatlas)
+            except IOError as e:
+                print(e,
+                      "\nCannot load RSN reference image. Do you have git-lfs "
+                      "installed?")
             try:
                 uatlas = nodemaker.enforce_consecutive_labels(uatlas)
                 # Fetch user-specified atlas coords
