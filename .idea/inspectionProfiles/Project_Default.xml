@@ -1,10 +1,12 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+    <inspection_tool class="DuplicatedInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="InstalledPackageInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredPackages">
         <value>
-          <list size="11">
+          <list size="14">
             <item index="0" class="java.lang.String" itemvalue="graspy" />
             <item index="1" class="java.lang.String" itemvalue="sphinx-rtd-theme" />
             <item index="2" class="java.lang.String" itemvalue="pybids" />
@@ -16,9 +18,14 @@
             <item index="8" class="java.lang.String" itemvalue="pybind11" />
             <item index="9" class="java.lang.String" itemvalue="multinetx" />
             <item index="10" class="java.lang.String" itemvalue="pyparsing" />
+            <item index="11" class="java.lang.String" itemvalue="nibabel" />
+            <item index="12" class="java.lang.String" itemvalue="docutils" />
+            <item index="13" class="java.lang.String" itemvalue="numpy" />
           </list>
         </value>
       </option>
     </inspection_tool>
+    <inspection_tool class="ReferenceExistsInspection" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="UnusedInspection" enabled="true" level="WARNING" enabled_by_default="true" />
   </profile>
 </component>

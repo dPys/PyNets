@@ -1,10 +1,7 @@
-from pynets.__about__ import __version__
-from datetime import datetime
-
 PYNETS = """
 @CONFERENCE{dPys,
-    title = {PyNets v{version}: A Reproducible Workflow for Structural and
-    Functional Connectome Ensemble Learning'},
+    title = {PyNets: A Reproducible Workflow for Structural and
+    Functional Connectome Ensemble Learning},
     author = {Pisner, D.},
     publisher = {Poster session presented at: Annual Meeting of the Organization
     for Human Brain Mapping},
@@ -12,9 +9,7 @@ PYNETS = """
     year = {2020},
     month = {June}
 }
-""".format(
-    version=__version__, datestamp=datetime.utcnow().strftime("%Y-%m-%d")
-).strip()
+""".strip()
 
 BRANDES2001 = """
 @article{brandes2008variants,
@@ -207,7 +202,7 @@ BLONDEL2008 = """
 MEILA2007 = """
 @article{meila2007comparing,
   title={Comparing clusterings -- an information based distance},
-  author={Meil{\\={a}}, Marina},
+  author={Meil{\\={a}, Marina},
   journal={Journal of multivariate analysis},
   volume={98},
   number={5},
@@ -312,7 +307,7 @@ HUMPHRIES2008 = """
 BETZEL2016 = """
 @article{betzel2016generative,
   title={Generative models of the human connectome},
-  author={Betzel, Richard F and Avena-Koenigsberger, Andrea and Go{\\~n}i, Joaqu{\\'\\i}n and He, Ye and De Reus, Marcel A and Griffa, Alessandra and V{\\'e}rtes, Petra E and Mi{\\v{s}}ic, Bratislav and Thiran, Jean-Philippe and Hagmann, Patric and others},
+  author={Betzel, Richard F and Avena-Koenigsberger, Andrea and Go{\\~n}i, Joaqu{\\'\\i}n and He, Ye and De Reus, Marcel A and Griffa, Alessandra and V{\\'e}rtes, Petra E and Mi{\\v{s}ic, Bratislav and Thiran, Jean-Philippe and Hagmann, Patric and others},
   journal={Neuroimage},
   volume={124},
   pages={1054--1064},
@@ -324,12 +319,12 @@ BETZEL2016 = """
 VAROQUAUX2013 = """
 @article{Varoquaux2013,
   arxivId = {1304.3880},
-  author = {Varoquaux, Ga{\"{e}}l and Craddock, R. Cameron},
+  author = {Varoquaux, Ga{\"{e}l and Craddock, R. Cameron},
   doi = {10.1016/j.neuroimage.2013.04.007},
   journal = {NeuroImage},
   pages = {405--415},
   pmid = {23583357},
-  title = {{Learning and comparing functional connectomes across subjects}},
+  title = {Learning and comparing functional connectomes across subjects},
   volume = {80},
   year = {2013}
 }
@@ -340,7 +335,7 @@ YUEN2019 = """
   author = {Yuen, Nicole H. and Osachoff, Nathaniel and Chen, J. Jean},
   doi = {10.3389/fnins.2019.00900},
   journal = {Frontiers in Neuroscience},
-  title = {{Intrinsic Frequencies of the Resting-State fMRI Signal: The Frequency Dependence of Functional Connectivity and the Effect of Mode Mixing}},
+  title = {Intrinsic Frequencies of the Resting-State fMRI Signal: The Frequency Dependence of Functional Connectivity and the Effect of Mode Mixing},
   year = {2019}
 }
 """.strip()
@@ -351,7 +346,7 @@ CRADDOCK2013 = """
   journal = {Human brain mapping},
   number = {8},
   pages = {1914--1928},
-  title = {{A whole brain fMRI atlas spatial Generated via Spatially Constrained Spectral Clustering{\_} Craddock, James 2011 .pdf}},
+  title = {A whole brain fMRI atlas spatial Generated via Spatially Constrained Spectral Clustering{\_} Craddock, James 2011 .pdf},
   volume = {33},
   year = {2013}
 }
@@ -362,7 +357,7 @@ XIANG2020 = """
   author = {Xiang, Yu Tao and Yang, Yuan and Li, Wen and Zhang, Ling and Zhang, Qinge and Cheung, Teris and Ng, Chee H.},
   booktitle = {The Lancet Psychiatry},
   doi = {10.1016/S2215-0366(20)30046-8},
-  title = {{Timely mental health care for the 2019 novel coronavirus outbreak is urgently needed}},
+  title = {Timely mental health care for the 2019 novel coronavirus outbreak is urgently needed},
   year = {2020}
 }
 """.strip()
@@ -372,7 +367,7 @@ BASSETT2017 = """
   author = {Bassett, Danielle S. and Sporns, Olaf},
   booktitle = {Nature Neuroscience},
   doi = {10.1038/nn.4502},
-  title = {{Network neuroscience}},
+  title = {Network neuroscience},
   year = {2017}
 }
 """.strip()
@@ -382,7 +377,7 @@ SPORNS2012 = """
   author = {Sporns, Olaf},
   booktitle = {NeuroImage},
   doi = {10.1016/j.neuroimage.2011.08.085},
-  title = {{From simple graphs to the connectome: Networks in neuroimaging}},
+  title = {From simple graphs to the connectome: Networks in neuroimaging},
   year = {2012}
 }
 """.strip()
@@ -392,7 +387,7 @@ BULLMORE2009 = """
   author = {Bullmore, Ed and Sporns, Olaf},
   booktitle = {Nature Reviews Neuroscience},
   doi = {10.1038/nrn2575},
-  title = {{Complex brain networks: Graph theoretical analysis of structural and functional systems}},
+  title = {Complex brain networks: Graph theoretical analysis of structural and functional systems},
   year = {2009}
 }
 """.strip()
@@ -403,7 +398,7 @@ GARCIAGARCIA2018 = """
   doi = {10.1016/j.neuroimage.2017.07.029},
   journal = {NeuroImage},
   pages = {68--82},
-  title = {{Detecting stable individual differences in the functional organization of the human basal ganglia}},
+  title = {Detecting stable individual differences in the functional organization of the human basal ganglia},
   Volume = {170}
   year = {2018}
   publisher = {Elsevier}
@@ -415,7 +410,7 @@ GREENE2017 = """
   author = {Greene, Clint and Cieslak, Matt and Grafton, Scott T.},
   doi = {10.1162/netn_a_00035},
   journal = {Network Neuroscience},
-  title = {{Effect of different spatial normalization approaches on tractography and structural brain networks}},
+  title = {Effect of different spatial normalization approaches on tractography and structural brain networks},
   year = {2017}
 }
 """.strip()
@@ -425,21 +420,21 @@ SCHAEFER2018 = """
     author = {Schaefer, Alexander and Kong, Ru and Gordon, Evan M and Laumann, Timothy ) and Zuo, Xi-Nian and Holmes, Avram J and Eickhoff, Simon B and Yeo, BT Thomas},
     journal = {Cerebral Cortex},
     number = {9},
-    pages = {3095--3114}},
-    title = {{Local-global parcellation of the human cerebral cortex from intrinsic functional connectivity MRI}},
+    pages = {3095--3114},
+    title = {Local-global parcellation of the human cerebral cortex from intrinsic functional connectivity MRI},
     volume = {28},
     year = {2018},
     publisher = {Oxford University Press}
 }
 """.strip()
 
-THOMAS2011 = """
+YEO2011 = """
 @article{Thomas2011,
-    author = {Thomas Yeo, BT and Krienen, Fenna M and Sepulcre, Jorge and Sabuncu, Mert R and Lashkari, Danial and Hollinshead, Marisa and Roffman, Joshua L and Smoller, Jordan W and Z{\"o}llei, Lilla and Polimeni, Jonathan R and others},
+    author = {Yeo, BT and Krienen, Fenna M and Sepulcre, Jorge and Sabuncu, Mert R and Lashkari, Danial and Hollinshead, Marisa and Roffman, Joshua L and Smoller, Jordan W and Z{\"o}llei, Lilla and Polimeni, Jonathan R and others},
     journal = {Journal of Neurophysiology},
     number = {3},
     pages = {1125--1165},
-    title = {{The organization of the human cerebral cortex estimated by intrinsic functional connectivity}},
+    title = {The organization of the human cerebral cortex estimated by intrinsic functional connectivity},
     volume = {106},
     year = {2011},
     publisher = {American Physiological Society Bethesda, MD}
@@ -452,7 +447,7 @@ TZOURIO2002 = """
     journal = {Neuroimage},
     number = {1},
     pages = {273--289},
-    title = {{Automated anatomical labeling of activations in SPM using a macroscopic anatomical parcellation of the MNI MRI single-subject brain}},
+    title = {Automated anatomical labeling of activations in SPM using a macroscopic anatomical parcellation of the MNI MRI single-subject brain},
     volume = {15},
     year = {2002},
     publisher = {Academic Press}
@@ -465,7 +460,7 @@ YARKONI2011 = """
     journal = {Nature methods},
     number = {8},
     pages = {665},
-    title = {{Large-scale automated synthesis of human functional neuroimaging data}},
+    title = {Large-scale automated synthesis of human functional neuroimaging data},
     volume = {8},
     year = {2011},
     publisher = {Nature Publishing Group}
@@ -478,7 +473,7 @@ TAUSCZIK2010 = """
     journal = {Journal of language and social psychology},
     number = {1},
     pages = {24--54},
-    title = {{The psychological meaning of words: LIWC and computerized text analysis methods}},
+    title = {The psychological meaning of words: LIWC and computerized text analysis methods},
     volume = {29},
     year = {2010},
     publisher = {Sage Publications Sage CA: Los Angeles, CA}
@@ -490,7 +485,7 @@ VAN WIJK2010 = """
     author = {Van Wijk, Bernadette CM and Stam, Cornelis J and Daffertshofer, Andreas},
     journal = {PloS one},
     number = {10},
-    title = {{Comparing brain networks of different size and connectivity density using graph theory}},
+    title = {Comparing brain networks of different size and connectivity density using graph theory},
     volume = {5},
     year = {2010},
     publisher = {Public Library of Science}
@@ -503,7 +498,7 @@ SERRANO2009 = """
     journal = {Proceedings of the national academy of sciences},
     number = {16},
     pages = {6483--6488},
-    title = {{Extracting the multiscale backbone of complex weighted networks}},
+    title = {Extracting the multiscale backbone of complex weighted networks},
     volume = {106},
     year = {2009},
     publisher = {National Acad Sciences}
@@ -515,7 +510,7 @@ ALEXANDER2010 = """
     author = {Alexander-Bloch, Aaron F and Gogtay, Nitin and Meunier, David and Birn, Rasmus and Clasen, Liv and Lalonde, Francois and Lenroot, Rhoshel and Giedd, Jay and Bullmore, Edward T},
     journal = {Frontiers in systems neuroscience},
     pages = {147},
-    title = {{Disrupted modularity and local connectivity of brain functional networks in childhood-onset schizophrenia}},
+    title = {Disrupted modularity and local connectivity of brain functional networks in childhood-onset schizophrenia},
     volume = {4},
     year = {2010},
     publisher = {Frontiers}
@@ -527,7 +522,7 @@ TEWARIE2015 = """
     author = {Tewarie, Prejaas and van Dellen, Edwin and Hillebrand, Arjan and Stam, Cornelis J},
     journal = {Neuroimage},
     pages = {177--188},
-    title = {{The minimum spanning tree: an unbiased method for brain network analysis}},
+    title = {The minimum spanning tree: an unbiased method for brain network analysis},
     volume = {104},
     year = {2015},
     publisher = {Elsevier}
@@ -539,7 +534,7 @@ CHEN2019 = """
     author = {Chen, David Qixiang and Dell’Acqua, Flavio and Rokem, Ariel and Garyfallidis, Eleftherios and Hayes, David J and Zhong, Jidan and Hodaie, Mojgan},
     journal = {BioRxiv},
     pages = {864108},
-    title = {{Diffusion Weighted Image Co-registration: Investigation of Best Practices}},
+    title = {Diffusion Weighted Image Co-registration: Investigation of Best Practices},
     year = {2019},
     publisher = {Cold Spring Harbor Laboratory}
 }
@@ -551,7 +546,7 @@ BASSER1994 = """
     journal = {Biophysical journal},
     number = {1},
     pages = {259--267},
-    title = {{MR diffusion tensor spectroscopy and imaging}},
+    title = {MR diffusion tensor spectroscopy and imaging},
     volume = {66},
     year = {1994},
     publisher = {Elsevier}
@@ -564,7 +559,7 @@ PAJEVIC1999 = """
     journal = {Magnetic Resonance in Medicine: An Official Journal of the International Society for Magnetic Resonance in Medicine},
     number = {3},
     pages = {526--540},
-    title = {{Color schemes to represent the orientation of anisotropic tissues from diffusion tensor data: application to white matter fiber tract mapping in the human brain}},
+    title = {Color schemes to represent the orientation of anisotropic tissues from diffusion tensor data: application to white matter fiber tract mapping in the human brain},
     volume = {42},
     year = {1999},
     publisher = {Wiley Online Library}
@@ -576,7 +571,7 @@ AGANJ2009 = """
     author = {Aganj, Iman and Lenglet, Christophe and Sapiro, Guillermo},
     booktitle = {2009 IEEE International Symposium on Biomedical Imaging: From Nano to Macro},
     pages = {1398--1401},
-    title = {{ODF reconstruction in q-ball imaging with solid angle consideration}},
+    title = {ODF reconstruction in q-ball imaging with solid angle consideration},
     year = {2009},
     organization = {IEEE}
 }
@@ -588,7 +583,7 @@ TOURNIER2007 = """
     journal = {Neuroimage},
     number = {4},
     pages = {1459--1472},
-    title = {{Robust determination of the fibre orientation distribution in diffusion MRI: non-negativity constrained super-resolved spherical deconvolution}},
+    title = {Robust determination of the fibre orientation distribution in diffusion MRI: non-negativity constrained super-resolved spherical deconvolution},
     volume = {35},
     year = {2007},
     publisher = {Elsevier}
@@ -601,7 +596,7 @@ DESCOTEAUX2008 = """
     journal = {IEEE transactions on medical imaging},
     number = {2},
     pages = {269--286},
-    title = {{Deterministic and probabilistic tractography based on complex fibre orientation distributions}},
+    title = {Deterministic and probabilistic tractography based on complex fibre orientation distributions},
     volume = {28},
     year = {2008},
     publisher = {IEEE}
@@ -614,7 +609,7 @@ COTE2013 = """
     journal = {Medical image analysis},
     number = {7},
     pages = {844--857},
-    title = {{Tractometer: towards validation of tractography pipelines}},
+    title = {Tractometer: towards validation of tractography pipelines},
     volume = {17},
     year = {2013},
     publisher = {Elsevier}
@@ -627,7 +622,7 @@ TOURNIER2012 = """
     journal = {International journal of imaging systems and technology},
     number = {1},
     pages = {53--66},
-    title = {{MRtrix: diffusion tractography in crossing fiber regions}},
+    title = {MRtrix: diffusion tractography in crossing fiber regions},
     volume = {22},
     year = {2012},
     publisher = {Wiley Online Library}
@@ -639,7 +634,7 @@ ROKEM2015 = """
     author = {Rokem, Ariel and Yeatman, Jason D and Pestilli, Franco and Kay, Kendrick N and Mezer, Aviv and Van Der Walt, Stefan and Wandell, Brian A},
     journal = {PloS one},
     number = {4},
-    title = {{Evaluating the accuracy of diffusion MRI models in white matter}},
+    title = {Evaluating the accuracy of diffusion MRI models in white matter},
     volume = {10},
     year = {2015},
     publisher = {Public Library of Science}
@@ -665,7 +660,7 @@ SOTIROPOULOS2019 = """
     number = {4},
     pages = {e3752},
     volume = {32},
-    title = {{Building connectomes using diffusion MRI: why, how and but}},
+    title = {Building connectomes using diffusion MRI: why, how and but},
     year = {2019},
     publisher = {Wiley Online Library}
 }
@@ -677,7 +672,7 @@ CHUNG2017 = """
     journal = {Brain connectivity},
     number = {6},
     pages = {331--346},
-    title = {{Integrative structural brain network analysis in diffusion tensor imaging}},
+    title = {Integrative structural brain network analysis in diffusion tensor imaging},
     volume = {7},
     year = {2017},
     publisher = {Mary Ann Liebert, Inc. 140 Huguenot Street, 3rd Floor New Rochelle, NY 10801 USA}
@@ -689,7 +684,7 @@ SOARES2013 = """
     author = {Soares, Jose and Marques, Paulo and Alves, Victor and Sousa, Nuno},
     journal = {Frontiers in neuroscience},
     pages = {31},
-    title = {{A hitchhiker's guide to diffusion tensor imaging}},
+    title = {A hitchhiker's guide to diffusion tensor imaging},
     volume = {7},
     year = {2013},
     publisher = {Frontiers}
@@ -702,7 +697,7 @@ ZHANG2001 = """
     journal = {IEEE transactions on medical imaging},
     number = {1},
     pages = {45--57},
-    title = {{Segmentation of brain MR images through a hidden Markov random field model and the expectation-maximization algorithm}},
+    title = {Segmentation of brain MR images through a hidden Markov random field model and the expectation-maximization algorithm},
     volume = {20},
     year = {2001},
     publisher = {Ieee}
@@ -715,7 +710,7 @@ AVANTS2011 = """
     journal = {Neuroinformatics},
     number = {4},
     pages = {381--400},
-    title = {{An open source multivariate framework for n-tissue segmentation with evaluation on public data}},
+    title = {An open source multivariate framework for n-tissue segmentation with evaluation on public data},
     volume = {9},
     year = {2011},
     publisher = {Springer}
@@ -727,7 +722,7 @@ TAKEMURA2016 = """
     author = {Takemura, Hiromasa and Caiafa, Cesar F and Wandell, Brian A and Pestilli, Franco},
     journal = {PLoS computational biology},
     number = {2},
-    title = {{Ensemble tractography}},
+    title = {Ensemble tractography},
     volume = {12},
     year = {2016},
     publisher = {Public Library of Science}
@@ -741,7 +736,7 @@ SHI2000 = """
     number = {8},
     pages = {888--905},
     volume = {22},
-    title = {{Normalized cuts and image segmentation}},
+    title = {Normalized cuts and image segmentation},
     year = {2000},
     publisher = {Ieee}
 }
@@ -753,7 +748,7 @@ CRADDOCK2012 = """
     journal = {Human brain mapping},
     number = {8},
     pages = {1914--1928},
-    title = {{A whole brain fMRI atlas generated via spatially constrained spectral clustering}},
+    title = {A whole brain fMRI atlas generated via spatially constrained spectral clustering},
     volume = {33},
     year = {2012},
     publisher = {Wiley Online Library}
@@ -766,7 +761,7 @@ THIRION2014 = """
     journal = {Frontiers in neuroscience},
     pages = {167},
     volume = {8},
-    title = {{Which fMRI clustering gives good brain parcellations?}},
+    title = {Which fMRI clustering gives good brain parcellations?},
     year = {2014},
     publisher = {Frontiers}
 }
@@ -778,7 +773,7 @@ BELLEC2010 = """
     journal = {Neuroimage},
     number = {3},
     pages = {1126--1139},
-    title = {{Multi-level bootstrap analysis of stable clusters in resting-state fMRI}},
+    title = {Multi-level bootstrap analysis of stable clusters in resting-state fMRI},
     volume = {51},
     year = {2010},
     publisher = {Elsevier}
@@ -790,7 +785,7 @@ BELLEC2008 = """
     author = {Bellec, Pierre and Marrelec, Guillaume and Benali, Habib},
     journal = {Statistica Sinica},
     pages = {1253--1268},
-    title = {{A bootstrap test to investigate changes in brain connectivity for functional MRI}},
+    title = {A bootstrap test to investigate changes in brain connectivity for functional MRI},
     year={2008},
     publisher={JSTOR}
 }
@@ -802,7 +797,7 @@ GREENE2018 = """
     journal = {Network Neuroscience},
     number = {3},
     pages = {362--380},
-    title = {{Effect of different spatial normalization approaches on tractography and structural brain networks}},
+    title = {Effect of different spatial normalization approaches on tractography and structural brain networks},
     volume = {2},
     year = {2018},
     publisher = {MIT Press}
@@ -815,7 +810,7 @@ GREVE2009 = """
     journal = {Neuroimage},
     number = {1},
     pages = {63--72},
-    title = {{Accurate and robust brain image alignment using boundary-based registration}},
+    title = {Accurate and robust brain image alignment using boundary-based registration},
     volume = {48},
     year = {2009},
     publisher = {Elsevier}
@@ -828,7 +823,7 @@ BRETT2001 = """
     journal = {Neuroimage},
     number = {2},
     pages = {486--500},
-    title = {{Spatial normalization of brain images with focal lesions using cost function masking}},
+    title = {Spatial normalization of brain images with focal lesions using cost function masking},
     volume = {14},
     year = {2001},
     publisher = {Academic Press}
@@ -841,7 +836,7 @@ CHUNG2019 = """
     journal = {Journal of Machine Learning Research},
     number = {158},
     pages = {1--7},
-    title = {{GraSPy: Graph Statistics in Python}},
+    title = {GraSPy: Graph Statistics in Python},
     volume = {20},
     year = {2019}
 }
@@ -851,7 +846,7 @@ ARROYO2019 = """
 @article{Arroyo2019,
     author = {Arroyo, Jes{\'u}s and Athreya, Avanti and Cape, Joshua and Chen, Guodong and Priebe, Carey E and Vogelstein, Joshua T},
     journal = {arXiv preprint arXiv:1906.10026},
-    title = {{Inference for multiple heterogeneous networks with a common invariant subspace}},
+    title = {Inference for multiple heterogeneous networks with a common invariant subspace},
     year = {2019}
 }
 """.strip()
@@ -862,7 +857,7 @@ SUSSMAN2012 = """
     journal = {Journal of the American Statistical Association},
     number = {499},
     pages = {1119--1128},
-    title = {{A consistent adjacency spectral embedding for stochastic blockmodel graphs}},
+    title = {A consistent adjacency spectral embedding for stochastic blockmodel graphs},
     volume = {107},
     year = {2012},
     publisher = {Taylor \& Francis Group}
@@ -871,26 +866,14 @@ SUSSMAN2012 = """
 
 ROSENTHAL2018 = """
 @article{Rosenthal2018,
-    author = {Rosenthal, Gideon and V{\'a}{\v{s}}a, Franti{\v{s}}ek and Griffa, Alessandra and Hagmann, Patric and Amico, Enrico and Go{\~n}i, Joaqu{\'\i}n and Avidan, Galia and Sporns, Olaf},
+    author = {Rosenthal, Gideon and V{\'a}{\v{s}a, Franti{\v{s}ek and Griffa, Alessandra and Hagmann, Patric and Amico, Enrico and Go{\~n}i, Joaqu{\'\i}n and Avidan, Galia and Sporns, Olaf},
     journal = {Nature communications},
     number = {1},
     pages = {1--12},
     volume = {9},
-    title = {{Mapping higher-order relations between brain structure and function with embedded vector representations of connectomes}},
+    title = {Mapping higher-order relations between brain structure and function with embedded vector representations of connectomes},
     year = {2018},
     publisher = {Nature Publishing Group}
-}
-""".strip()
-
-SPORNS2004 = """
-@article{Sporns2004,
-    author = {Sporns, Olaf and K{\"o}tter, Rolf},
-    journal = {PLoS biology},
-    number = {11},
-    title = {{Motifs in brain networks}},
-    volume = {2},
-    year = {2004},
-    publisher = {Public Library of Science}
 }
 """.strip()
 
@@ -900,7 +883,7 @@ BATTISTON2017 = """
     journal = {Chaos: An Interdisciplinary Journal of Nonlinear Science},
     number = {4},
     pages = {047404},
-    title = {{Multilayer motif analysis of brain networks}},
+    title = {Multilayer motif analysis of brain networks},
     volume = {27},
     year = {2017},
     publisher = {AIP Publishing LLC}
@@ -913,7 +896,7 @@ AMATO2017 = """
     journal = {New Journal of Physics},
     number = {12},
     pages = {123019},
-    title = {{Opinion competition dynamics on multiplex networks}},
+    title = {Opinion competition dynamics on multiplex networks},
     volume = {19},
     year = {2017},
     publisher = {IOP Publishing}
@@ -926,7 +909,7 @@ KOUVARIS2015 = """
     journal = {Scientific reports},
     number = {1},
     pages = {1--9},
-    title = {{Pattern formation in multiplex networks}},
+    title = {Pattern formation in multiplex networks},
     volume = {5},
     year = {2015},
     publisher = {Nature Publishing Group}
@@ -939,23 +922,10 @@ SOLE2013 = """
     journal = {Physical Review E},
     number = {3},
     pages = {032807},
-    title = {{Spectral properties of the Laplacian of multiplex networks}},
+    title = {Spectral properties of the Laplacian of multiplex networks},
     volume = {88},
     year = {2013},
     publisher = {APS}
-}
-""".strip()
-
-BULLMORE2009 = """
-@article{Bullmore2009,
-    author = {Bullmore, Ed and Sporns, Olaf},
-    journal = {Nature reviews neuroscience},
-    number = {3},
-    pages = {186--198},
-    title = {{Complex brain networks: graph theoretical analysis of structural and functional systems}},
-    volume = {10},
-    year = {2009},
-    publisher = {Nature Publishing Group}
 }
 """.strip()
 
@@ -964,7 +934,7 @@ VAIANA2018 = """
     author = {Vaiana, Michael and Muldoon, Sarah Feldt},
     journal = {Journal of Nonlinear Science},
     pages = {1--23},
-    title = {{Multilayer brain networks}},
+    title = {Multilayer brain networks},
     year = {2018},
     publisher = {Springer}
 }
@@ -976,7 +946,7 @@ BRON1973 = """
     journal = {Communications of the ACM},
     number = {9},
     pages = {575--577},
-    title = {{Algorithm 457: finding all cliques of an undirected graph}},
+    title = {Algorithm 457: finding all cliques of an undirected graph},
     volume = {16},
     year = {1973},
     publisher = {ACM New York, NY, USA}
@@ -989,7 +959,7 @@ TOMITA2006 = """
     journal = {Theoretical computer science},
     number = {1},
     pages = {28--42},
-    title = {{The worst-case time complexity for generating all maximal cliques and computational experiments}},
+    title = {The worst-case time complexity for generating all maximal cliques and computational experiments},
     volume = {363},
     year = {2006},
     publisher = {Elsevier}
@@ -1002,7 +972,7 @@ CAZALS2008 = """
     journal = {Theoretical Computer Science},
     number = {1-3},
     pages = {564--568},
-    title = {{A note on the problem of reporting maximal cliques}},
+    title = {A note on the problem of reporting maximal cliques},
     volume = {407},
     year = {2008},
     publisher = {Elsevier}
@@ -1015,7 +985,7 @@ author = {Latora, Vito and Marchiori, Massimo},
 journal = {The European Physical Journal B-Condensed Matter and Complex Systems},
 number = {2},
 pages = {249--263},
-title = {{Economic small-world behavior in weighted networks}},
+title = {Economic small-world behavior in weighted networks},
 volume = {32},
 year = {2003},
 publisher = {Springer}
@@ -1028,7 +998,7 @@ TELESFORD2011 = """
     journal = {Brain connectivity},
     number = {5},
     pages = {367--375},
-    title = {{The ubiquity of small-world networks}},
+    title = {The ubiquity of small-world networks},
     volume = {1},
     year = {2011},
     publisher = {Mary Ann Liebert, Inc. 140 Huguenot Street, 3rd Floor New Rochelle, NY 10801 USA}
@@ -1041,7 +1011,7 @@ NEWMAN2004 = """
     journal = {Physical review E},
     number = {2},
     pages = {026113},
-    title = {{Finding and evaluating community structure in networks}},
+    title = {Finding and evaluating community structure in networks},
     volume = {69},
     year = {2004},
     publisher = {APS}
@@ -1054,7 +1024,7 @@ GUIMERA2005 = """
     journal = {nature},
     number = {7028},
     pages = {895--900},
-    title = {{Functional cartography of complex metabolic networks}},
+    title = {Functional cartography of complex metabolic networks},
     volume = {433},
     year = {2005},
     publisher = {Nature Publishing Group}
@@ -1067,7 +1037,7 @@ DE2014 = """
     journal = {Philosophical Transactions of the Royal Society B: Biological Sciences},
     number = {1653},
     pages = {20130527},
-    title = {{An edge-centric perspective on the human connectome: link communities in the brain}},
+    title = {An edge-centric perspective on the human connectome: link communities in the brain},
     volume = {369},
     year = {2014},
     publisher = {The Royal Society}
@@ -1077,7 +1047,7 @@ DE2014 = """
 WASSERMAN1994 = """
 @article{Wasserman1994,
     author = {Wasserman, Stanley and Faust, Katherine and others},
-    title = {{Social network analysis: Methods and applications}},
+    title = {Social network analysis: Methods and applications},
     volume = {8},
     year = {1994},
     publisher = {Cambridge university press}
@@ -1090,7 +1060,7 @@ BARRAT2004 = """
     journal = {Proceedings of the national academy of sciences},
     number = {11},
     pages = {3747--3752},
-    title = {{The architecture of complex weighted networks}},
+    title = {The architecture of complex weighted networks},
     volume = {101},
     year = {2004},
     publisher = {National Acad Sciences}
@@ -1103,7 +1073,7 @@ HAYASAKA2017 = """
     journal = {Brain connectivity},
     number = {8},
     pages = {504--514},
-    title = {{Anti-Fragmentation of Resting-State Functional Magnetic Resonance Imaging Connectivity Networks with Node-Wise Thresholding}},
+    title = {Anti-Fragmentation of Resting-State Functional Magnetic Resonance Imaging Connectivity Networks with Node-Wise Thresholding},
     volume = {7},
     year = {2017},
     publisher = {Mary Ann Liebert, Inc. 140 Huguenot Street, 3rd Floor New Rochelle, NY 10801 USA}
@@ -1116,7 +1086,7 @@ POWER2013 = """
     journal = {Neuron},
     number = {4},
     pages = {798--813},
-    title = {{Evidence for hubs in human functional brain networks}},
+    title = {Evidence for hubs in human functional brain networks},
     volume = {79},
     year = {2013},
     publisher = {Elsevier}
@@ -1129,7 +1099,7 @@ ROHE2016 = """
     journal = {Proceedings of the National Academy of Sciences},
     number = {45},
     pages = {12679--12684},
-    title = {{Co-clustering directed graphs to discover asymmetries and directional communities}},
+    title = {Co-clustering directed graphs to discover asymmetries and directional communities},
     volume = {113},
     year = {2016},
     publisher = {National Acad Sciences}
@@ -1141,7 +1111,7 @@ DRAKESMITH2015 = """
 author = {Drakesmith, Mark and Caeyenberghs, Karen and Dutt, A and Lewis, G and David, AS and Jones, Derek K},
 journal = {Neuroimage},
 pages = {313--333},
-title = {{Overcoming the effects of false positives and threshold bias in graph theoretical analyses of neuroimaging data}},
+title = {Overcoming the effects of false positives and threshold bias in graph theoretical analyses of neuroimaging data},
 volume = {118},
 year = {2015},
 publisher = {Elsevier}
@@ -1151,7 +1121,7 @@ publisher = {Elsevier}
 FORNITO2016 = """
 @book{Fornito2016,
     author = {Fornito, Alex and Zalesky, Andrew and Bullmore, Edward},
-    title = {{Fundamentals of brain network analysis}},
+    title = {Fundamentals of brain network analysis},
     year = {2016},
     publisher = {Academic Press}
 }
@@ -1162,7 +1132,7 @@ YU2001 = """
     author = {Yu, Stella X and Shi, Jianbo},
     pages = {II--II},
     booktitle = {Proceedings of the 2001 IEEE Computer Society Conference on Computer Vision and Pattern Recognition. CVPR 2001},
-    title = {{Understanding popout through repulsion}},
+    title = {Understanding popout through repulsion},
     volume = {2},
     year = {2001},
     organization = {IEEE}
@@ -1174,7 +1144,7 @@ STELLA2003 = """
     author = {Stella, X Yu and Shi, Jianbo},
     pages = {313},
     booktitle = {null},
-    title = {{Multiclass spectral clustering}},
+    title = {Multiclass spectral clustering},
     year = {2003},
     organization = {IEEE}
 }
@@ -1185,7 +1155,7 @@ ADLURU2013 = """
     author = {Adluru, Nagesh and Zhang, Hui and Tromp, Do PM and Alexander, Andrew L},
     pages = {86690A},
     booktitle = {Medical Imaging 2013: Image Processing},
-    title = {{Effects of DTI spatial normalization on white matter tract reconstructions}},
+    title = {Effects of DTI spatial normalization on white matter tract reconstructions},
     volume = {8669},
     year = {2013},
     organization = {International Society for Optics and Photonics}
@@ -1197,7 +1167,7 @@ LEVIN2017 = """
     author = {Levin, Keith and Athreya, Avanti and Tang, Minh and Lyzinski, Vince and Priebe, Carey E},
     pages = {964--967},
     booktitle = {2017 IEEE International Conference on Data Mining Workshops (ICDMW)},
-    title = {{A central limit theorem for an omnibus embedding of multiple random dot product graphs}},
+    title = {A central limit theorem for an omnibus embedding of multiple random dot product graphs},
     year = {2017},
     organization = {IEEE}
 }
@@ -1207,7 +1177,7 @@ LIU2018 = """
 @inproceedings{Liu2018,
     author = {Liu, Ye and He, Lifang and Cao, Bokai and Philip, S Yu and Ragin, Ann B and Leow, Alex D},
     booktitle = {Thirty-Second AAAI Conference on Artificial Intelligence},
-    title = {{Multi-view multi-graph embedding for brain network clustering analysis}},
+    title = {Multi-view multi-graph embedding for brain network clustering analysis},
     year = {2018}
 }
 """.strip()
@@ -1225,7 +1195,7 @@ QIN2013 = """
 LASKA2017 = """
 @software{Laska2017,
     author = {Jason Laska and Manjari Narayan},
-    title = {{skggm 0.2.7: A scikit-learn compatible package for Gaussian and related Graphical Models}},
+    title = {skggm 0.2.7: A scikit-learn compatible package for Gaussian and related Graphical Models},
     month = jul,
     year = 2017,
     publisher = {Zenodo},

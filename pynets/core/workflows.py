@@ -7,6 +7,7 @@ Copyright (C) 2017
 """
 import warnings
 import numpy as np
+# from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
 
@@ -117,6 +118,8 @@ def workflow_selector(
 
     # Available functional and structural connectivity models
     with open(
+
+
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
         hardcoded_params = yaml.load(stream)
@@ -510,7 +513,7 @@ def workflow_selector(
 
     if multimodal is True:
         # Create input/output nodes
-        print("Running Multimodal Workflow...")
+        print("\nRunning Multimodal Workflow...")
         pass_meta_ins_multi_node = pe.Node(
             niu.Function(
                 input_names=[
@@ -1217,7 +1220,7 @@ def workflow_selector(
                     meta_wf.get_node(
                         f"{wf_selected}{'.'}{node_name}"
                     ).interface.mem_gb = runtime_dict[node_name][1]
-                except BaseException:
+                except:
                     continue
 
     if dwi_file:
@@ -1237,7 +1240,7 @@ def workflow_selector(
                     meta_wf.get_node(
                         f"{wf_selected}{'.'}{node_name}"
                     ).interface.mem_gb = runtime_dict[node_name][1]
-                except BaseException:
+                except:
                     continue
 
     gc.collect()
@@ -1329,7 +1332,7 @@ def dmri_connectometry(
     base_dirname = f"dmri_connectometry_{ID}"
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    if template_name == "MNI152_T1":
+    if template_name == "MNI152_T1" or template_name == "colin27":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -3335,7 +3338,9 @@ def fmri_connectometry(
     extract_strategy_list,
     outdir,
 ):
-    """A function interface for generating an fMRI connectometry nested workflow"""
+    """
+    A function interface for generating an fMRI connectometry nested workflow
+    """
     import itertools
     import pkg_resources
     import os.path as op
@@ -3365,7 +3370,7 @@ def fmri_connectometry(
     base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    if template_name == "MNI152_T1":
+    if template_name == "MNI152_T1" or template_name == "colin27":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -3663,10 +3668,12 @@ def fmri_connectometry(
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
                     mask_name = atlas = utils.prune_suffices(mask_name)
-                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
+                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}" \
+                                         f"{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(
-                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                        f"{mask_name}_"
                         f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3684,7 +3691,8 @@ def fmri_connectometry(
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
-                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                    f"{mask_name}_"
                     f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3703,10 +3711,12 @@ def fmri_connectometry(
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
                     mask_name = atlas = utils.prune_suffices(mask_name)
-                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
+                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}" \
+                                         f"{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(
-                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                        f"{mask_name}_"
                         f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3725,10 +3735,12 @@ def fmri_connectometry(
                 for clust_mask in clust_mask_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
                     mask_name = atlas = utils.prune_suffices(mask_name)
-                    cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
+                    cluster_atlas_name = f"{mask_name}{'_'}" \
+                                         f"{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
                     cluster_atlas_file_list.append(
-                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                        f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                        f"{mask_name}_"
                         f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3749,10 +3761,12 @@ def fmri_connectometry(
                     for k in k_list:
                         mask_name = op.basename(clust_mask).split(".nii")[0]
                         mask_name = atlas = utils.prune_suffices(mask_name)
-                        cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
+                        cluster_atlas_name = f"{mask_name}{'_'}" \
+                                             f"{clust_type}{'_k'}{k}"
                         cluster_atlas_name_list.append(cluster_atlas_name)
                         cluster_atlas_file_list.append(
-                            f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                            f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                            f"{mask_name}_"
                             f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3930,25 +3944,30 @@ def fmri_connectometry(
         flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
+            # print('Flexi-atlas: multiple nilearn atlases + multiple user '
+            #       'atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + multi_atlas),
                 ("uatlas", user_atlas_list + len(multi_atlas) * [None]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif multi_atlas is not None and uatlas is not None and user_atlas_list is None:
+        elif multi_atlas is not None and uatlas is not None and \
+            user_atlas_list is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single user atlas + multiple nilearn atlases')
+            # print('Flexi-atlas: single user atlas + multiple nilearn '
+            #       'atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", multi_atlas + [None]),
                 ("uatlas", len(multi_atlas) * [None] + [uatlas]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif atlas is not None and user_atlas_list is not None and multi_atlas is None:
+        elif atlas is not None and user_atlas_list is not None and \
+            multi_atlas is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single nilearn atlas + multiple user atlases')
+            # print('Flexi-atlas: single nilearn atlas + multiple user '
+            #       'atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + [atlas]),
@@ -4136,39 +4155,6 @@ def fmri_connectometry(
     )
     extract_ts_node = pe.Node(
         ExtractTimeseries(),
-        input_names=[
-            "conf",
-            "func_file",
-            "coords",
-            "dir_path",
-            "ID",
-            "roi",
-            "network",
-            "smooth",
-            "atlas",
-            "uatlas",
-            "labels",
-            "hpass",
-            "mask",
-            "parc",
-            "node_size",
-            "net_parcels_nii_path",
-            "extract_strategy",
-        ],
-        output_names=[
-            "ts_within_nodes",
-            "node_size",
-            "smooth",
-            "dir_path",
-            "atlas",
-            "uatlas",
-            "labels",
-            "coords",
-            "hpass",
-            "roi",
-            "extract_strategy",
-        ],
-        imports=import_list,
         name="extract_ts_node",
     )
 
@@ -4306,7 +4292,8 @@ def fmri_connectometry(
         )
 
     if hpass_list or smooth_list or node_size_list or extract_strategy_list:
-        # print("%s%s" % ('Expanding within-node iterable combos:\n', extract_ts_info_iters))
+        # print("%s%s" % ('Expanding within-node iterable combos:\n',
+        #                 extract_ts_info_iters))
         extract_ts_info_node.iterables = extract_ts_info_iters
 
     extract_ts_info_node.synchronize = True
@@ -4454,8 +4441,10 @@ def fmri_connectometry(
             ),
             name="get_node_membership_node",
         )
-        get_node_membership_node._n_procs = runtime_dict["get_node_membership_node"][0]
-        get_node_membership_node._mem_gb = runtime_dict["get_node_membership_node"][1]
+        get_node_membership_node._n_procs = runtime_dict["get_node_" \
+                                                         "membership_node"][0]
+        get_node_membership_node._mem_gb = runtime_dict["get_node_" \
+                                                        "membership_node"][1]
 
         if multi_nets:
             get_node_membership_iterables = []

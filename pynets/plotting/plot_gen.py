@@ -1348,19 +1348,120 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     return
 
 
-# def show_template_bundles(final_streamlines, template_path, fname):
-#     import nibabel as nib
-#     from fury import actor, window
-#     renderer = window.Renderer()
-#     template_img_data = nib.load(template_path).get_data().astype('bool')
-#     template_actor = actor.contour_from_roi(template_img_data,
-#                                             color=(50, 50, 50), opacity=0.05)
-#     renderer.add(template_actor)
-#     lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
-#                                    linewidth=0.3)
-#     renderer.add(lines_actor)
-#     window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
-#     return
+def show_template_bundles(final_streamlines, template_path, fname):
+    import nibabel as nib
+    from fury import actor, window
+    renderer = window.Renderer()
+    template_img_data = nib.load(template_path).get_data().astype('bool')
+    template_actor = actor.contour_from_roi(template_img_data,
+                                            color=(50, 50, 50), opacity=0.05)
+    renderer.add(template_actor)
+    lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
+                                   linewidth=0.3)
+    renderer.add(lines_actor)
+    window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
+    return
+
+
+def view_tractogram(streams, atlas):
+    import nibabel as nib
+    import pkg_resources
+    from nibabel.affines import apply_affine
+    from dipy.io.streamline import load_tractogram
+    from fury import actor, window, colormap
+    from dipy.tracking.utils import streamline_near_roi
+    from nilearn.image import resample_to_img
+    from pynets.registration.reg_utils import rescale_affine_to_center
+    from dipy.tracking.streamline import transform_streamlines
+    from dipy.align.imaffine import (
+        transform_origins,
+    )
+
+    streams = '/Users/derekpisner/Downloads/HNU_test/0025427/0025427_parcels_masked_nores-2mm/tractography/streamlines_mni_csd_50000_curv[40_30]step[0.1_0.2_0.3_0.4_0.5]tt-local_dg-prob_ml-0.trk'
+
+    atlas = '/Users/derekpisner/Downloads/HNU_test/0025427/0025427_parcels_masked_nores-2mm/parcellations/0025427_parcels_masked_reor-RAS_nores-2mm_noreor-RAS_nores-2mm_liberal.nii.gz'
+
+    FA_template_path = pkg_resources.resource_filename("pynets",
+                                                       "templates/FA_2mm.nii.gz")
+    ch2_better_path = pkg_resources.resource_filename("pynets",
+                                                      "templates/ch2better.nii.gz")
+    FA_template_img = nib.load(FA_template_path)
+    clean_template_img = nib.load(ch2_better_path)
+
+    tractogram = load_tractogram(
+        streams,
+        'same',
+        bbox_valid_check=False,
+    )
+
+    affine_map = transform_origins(
+        clean_template_img.get_fdata(), clean_template_img.affine,
+        FA_template_img.get_fdata(), FA_template_img.affine)
+    warped_aff = affine_map.affine_inv.copy()
+    warped_aff_scaled = rescale_affine_to_center(warped_aff,
+                                                 voxel_dims=[4, 4, 4],
+                                                 target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
+    streamlines = transform_streamlines(
+        tractogram.streamlines, warped_aff_scaled)
+
+    # Load atlas rois
+    atlas_img = nib.load(atlas)
+    resampled_img = resample_to_img(atlas_img, clean_template_img,
+                                    interpolation='nearest', clip=False)
+    atlas_img_data = resampled_img.get_fdata().astype('uint32')
+
+    # Collapse list of connected streamlines for visualization
+
+    clean_template_data = clean_template_img.get_data()
+    mean, std = clean_template_data[clean_template_data > 0].mean(), \
+                clean_template_data[clean_template_data > 0].std()
+    value_range = (mean - 3 * std, mean + 3 * std)
+    clean_template_data[clean_template_data<0.01] = 0
+    template_actor = actor.slicer(clean_template_data, np.eye(4),
+                                  value_range)
+
+    renderer = window.Renderer()
+    renderer.add(template_actor)
+    template_actor2 = template_actor.copy()
+    template_actor2.display(template_actor2.shape[0] // 2, None, None)
+    renderer.add(template_actor2)
+
+    # renderer.add(actor.contour_from_roi(atlas_img_data.astype('bool')))
+
+    # Creat palette of roi colors and add them to the scene as faint contours
+    roi_colors = np.random.rand(int(np.max(atlas_img_data)), 3)
+    parcel_contours = []
+
+    i = 0
+    for roi in np.unique(atlas_img_data)[1:]:
+        include_roi_coords = np.array(np.where(atlas_img_data==roi)).T
+        x_include_roi_coords = apply_affine(np.eye(4), include_roi_coords)
+        bool_list = []
+        for sl in streamlines:
+            bool_list.append(streamline_near_roi(sl, x_include_roi_coords,
+                                                 tol=1.0, mode='either_end'))
+        if sum(bool_list) > 0:
+            print('ROI: ' + str(i))
+            parcel_contours.append(actor.contour_from_roi(atlas_img_data==roi,
+                                                          color=roi_colors[i],
+                                                          opacity=0.8))
+        else:
+            pass
+        i = i + 1
+
+    for vol_actor in parcel_contours:
+        renderer.add(vol_actor)
+
+    lines_actor = actor.line(streamlines,
+                             colormap.create_colormap(
+                                 np.ones([len(streamlines)]),
+                                 name='Greys_r', auto=True),
+                             lod_points=10000, depth_cue=True, linewidth=0.3,
+                             fake_tube=True, opacity=1.0)
+    renderer.add(lines_actor)
+
+    window.show(renderer)
+    return
 
 
 def plot_graph_measure_hists(df_concat, measures, net_pick_file):

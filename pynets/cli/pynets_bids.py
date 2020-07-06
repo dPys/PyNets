@@ -384,6 +384,7 @@ def main():
     from pynets.core.utils import flatten
     from pynets.cli.pynets_run import build_workflow
     from multiprocessing import set_start_method, Process, Manager
+    from colorama import Fore, Style
 
     try:
         import pynets
@@ -396,7 +397,13 @@ def main():
         print("\nMissing command-line inputs! See help options with the -h flag.\n")
         sys.exit()
 
-    print("Obtaining Derivatives Layout...")
+    print(f"{Fore.LIGHTBLUE_EX}\nBIDS API\n")
+
+    print(Style.RESET_ALL)
+
+    print(f"{Fore.LIGHTGREEN_EX}Obtaining Derivatives Layout...")
+
+    print(Style.RESET_ALL)
 
     modalities = ["func", "dwi"]
 

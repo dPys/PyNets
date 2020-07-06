@@ -271,21 +271,25 @@ class FetchNodesLabels(SimpleInterface):
         dir_path = utils.do_dir_path(atlas, self.inputs.outdir)
 
         if len(coords) != len(labels):
-            print("Length of coordinates is not equal to length of label names!")
-            if self.inputs.use_AAL_naming is True:
-                try:
-                    print("Attempting to use AAL instead...")
-                    labels = nodemaker.AAL_naming(coords)
-                except BaseException:
+            labels = [i for i in labels if (i != 'Unknown' and
+                                            i != 'Background')]
+            if len(coords) != len(labels):
+                print("Length of coordinates is not equal to length of "
+                      "label names!")
+                if self.inputs.use_AAL_naming is True:
+                    try:
+                        print("Attempting to use AAL instead...")
+                        labels = nodemaker.AAL_naming(coords)
+                    except BaseException:
+                        print("Reverting to integer labels instead...")
+                        labels = np.arange(len(coords) + 1)[
+                            np.arange(len(coords) + 1) != 0
+                        ].tolist()
+                else:
                     print("Reverting to integer labels instead...")
                     labels = np.arange(len(coords) + 1)[
                         np.arange(len(coords) + 1) != 0
                     ].tolist()
-            else:
-                print("Reverting to integer labels instead...")
-                labels = np.arange(len(coords) + 1)[
-                    np.arange(len(coords) + 1) != 0
-                ].tolist()
 
         assert len(coords) == len(labels)
 
@@ -644,11 +648,18 @@ class ExtractTimeseries(SimpleInterface):
 
         te.save_and_cleanup()
 
-        assert (
-            len(self.inputs.coords)
-            == len(self.inputs.labels)
-            == te.ts_within_nodes.shape[1]
-        )
+        try:
+            assert (
+                len(self.inputs.coords)
+                == len(self.inputs.labels)
+                == te.ts_within_nodes.shape[1]
+            )
+        except AssertionError as e:
+            e.args += ('Coords: ', len(self.inputs.coords),
+                       self.inputs.coords, 'Labels:',
+                       len(self.inputs.labels),
+                       self.inputs.labels, te.ts_within_nodes.shape)
+            raise
 
         self._results["ts_within_nodes"] = te.ts_within_nodes
         self._results["node_size"] = te.node_size
@@ -1288,6 +1299,7 @@ class RegisterAtlasDWI(SimpleInterface):
             aligned_atlas_skull,
             dwi_aligned_atlas,
             dwi_aligned_atlas_wmgm_int,
+            B0_mask_tmp_path,
             self.inputs.simple,
         )
 
@@ -1814,7 +1826,7 @@ class RegisterAtlasFunc(SimpleInterface):
             list(
                 np.unique(
                     np.asarray(
-                        nib.load(aligned_atlas_skull).dataobj).astype("int"))))
+                        nib.load(aligned_atlas_gm).dataobj).astype("int"))))
         bad_idxs = [i - 1 for i in bad_idxs]
         if len(bad_idxs) > 0:
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
@@ -1822,7 +1834,7 @@ class RegisterAtlasFunc(SimpleInterface):
                 del self.inputs.labels[j], self.inputs.coords[j]
 
         assert (len(self.inputs.coords) == len(self.inputs.labels) == len(
-            np.unique(np.asarray(nib.load(aligned_atlas_skull).dataobj))[1:]))
+            np.unique(np.asarray(nib.load(aligned_atlas_gm).dataobj))[1:]))
 
         reg_tmp = [
             uatlas_parcels_tmp_path,
@@ -1989,7 +2001,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
     roi_neighborhood_tol = traits.Any(6, mandatory=True, usedefault=True)
-    sphere = traits.Str("repulsion724", mandatory=True, usedefault=True)
+    sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
 class _TrackingOutputSpec(TraitedSpec):
@@ -2046,12 +2058,14 @@ class Tracking(SimpleInterface):
             create_density_map,
             track_ensemble,
         )
-        from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+        from dipy.io.stateful_tractogram import Space, StatefulTractogram, \
+            Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
+        dwi_data = dwi_img.get_fdata()
 
         # Load FA data
         fa_img = nib.load(self.inputs.fa_path)
@@ -2060,9 +2074,11 @@ class Tracking(SimpleInterface):
         model, mod = reconstruction(
             self.inputs.conn_model,
             load_pickle(self.inputs.gtab_file),
-            np.asarray(dwi_img.dataobj),
+            dwi_data,
             self.inputs.B0_mask,
         )
+
+        del dwi_data
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
         # seeding)
