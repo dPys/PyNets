@@ -159,7 +159,7 @@ class FetchNodesLabels(SimpleInterface):
             copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
             try:
                 par_img = nib.load(uatlas)
-            except IOError as e:
+            except indexed_gzip.ZranError as e:
                 print(e,
                       "\nCannot load RSN reference image. Do you have git-lfs "
                       "installed?")

@@ -251,7 +251,7 @@ def direct_streamline_norm(
         )
         try:
             template_img = nib.load(template_path)
-        except IOError as e:
+        except indexed_gzip.ZranError as e:
             print(e,
                   f"\nCannot load FA template. Do you have git-lfs "
                   f"installed?")
@@ -931,7 +931,7 @@ class DmriReg(object):
 
         try:
             nib.load(self.mni_vent_loc)
-        except IOError as e:
+        except indexed_gzip.ZranError as e:
             print(e,
                   f"\nCannot load ventricle ROI. Do you have git-lfs "
                   f"installed?")
@@ -957,7 +957,7 @@ class DmriReg(object):
 
             try:
                 nib.load(self.corpuscallosum)
-            except IOError as e:
+            except indexed_gzip.ZranError as e:
                 print(e,
                       f"\nCannot load Corpus Callosum ROI. Do you have "
                       f"git-lfs installed?")

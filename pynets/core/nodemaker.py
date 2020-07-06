@@ -17,7 +17,8 @@ warnings.filterwarnings("ignore")
 
 def get_sphere(coords, r, vox_dims, dims):
     """
-    Return all points within r mm of coords. Generates a cube and then discards all points outside sphere.
+    Return all points within r mm of coords. Generates a cube and then
+    discards all points outside sphere.
 
     Parameters
     ----------
@@ -34,8 +35,9 @@ def get_sphere(coords, r, vox_dims, dims):
     Returns
     -------
     neighbors : list
-        A list of indices, within the dimensions of the image, that fall within a spherical neighborhood defined by
-        the specified error radius of the list of the input coordinates.
+        A list of indices, within the dimensions of the image, that fall
+        within a spherical neighborhood defined by the specified error radius
+        of the list of the input coordinates.
 
     References
     ----------
@@ -426,7 +428,7 @@ def get_node_membership(
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
     try:
         par_img = nib.load(par_file)
-    except IOError as e:
+    except indexed_gzip.ZranError as e:
         print(e, "\nCannot load RSN reference image. Do you have git-lfs installed?")
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = np.asarray(par_img.dataobj)[:, :, :, RSN_ix]

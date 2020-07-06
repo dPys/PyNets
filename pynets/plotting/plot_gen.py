@@ -698,7 +698,7 @@ def plot_all_func(
 
     try:
         nib.load(ch2better_loc)
-    except IOError as e:
+    except indexed_gzip.ZranError as e:
         print(e,
               f"\nCannot load plotting template. Do you have git-lfs "
               f"installed?")
@@ -1000,7 +1000,7 @@ def plot_all_struct(
 
     try:
         nib.load(ch2better_loc)
-    except IOError as e:
+    except indexed_gzip.ZranError as e:
         print(e,
               f"\nCannot load plotting template. Do you have git-lfs "
               f"installed?")
@@ -1215,7 +1215,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 
     try:
         nib.load(ch2better_loc)
-    except IOError as e:
+    except indexed_gzip.ZranError as e:
         print(e,
               f"\nCannot load plotting template. Do you have git-lfs "
               f"installed?")

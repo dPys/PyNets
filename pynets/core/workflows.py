@@ -7,6 +7,7 @@ Copyright (C) 2017
 """
 import warnings
 import numpy as np
+import indexed_gzip
 # from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
@@ -1350,7 +1351,7 @@ def dmri_connectometry(
         try:
             nib.load(template)
             nib.load(template_mask)
-        except IOError as e:
+        except indexed_gzip.ZranError as e:
             print(e,
                   f"\nCannot load template {template_name} image or template "
                   f"mask. Do you have git-lfs installed?")
@@ -3407,7 +3408,7 @@ def fmri_connectometry(
         try:
             nib.load(template)
             nib.load(template_mask)
-        except IOError as e:
+        except indexed_gzip.ZranError as e:
             print(e,
                   f"\nCannot load template {template_name} image or template "
                   f"mask. Do you have git-lfs installed?")
