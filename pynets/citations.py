@@ -73,7 +73,7 @@ LANCICHINETTI2012 = """
   pages={336},
   year={2012},
   publisher={Nature Publishing Group}
-}
+ }
 """.strip()
 
 RUBINOV2011 = """
@@ -485,19 +485,6 @@ TAUSCZIK2010 = """
 }
 """.strip()
 
-RUBINOV2010 = """
-@article{Rubinov2010,
-    author = {Rubinov, Mikail and Sporns, Olaf},
-    journal = {Neuroimage},
-    number = {3},
-    pages = {1059--1069},
-    title = {{Complex network measures of brain connectivity: uses and interpretations}},
-    volume = {52},
-    year = {2010},
-    publisher = {Elsevier}
-}
-""".strip()
-
 VAN WIJK2010 = """
 @article{Van Wijk2010,
     author = {Van Wijk, Bernadette CM and Stam, Cornelis J and Daffertshofer, Andreas},
@@ -798,18 +785,6 @@ BELLEC2010 = """
     }
 """.strip()
 
-VAROQUAUX2013 = """
-@article{Varoquaux2013,
-    author = {Varoquaux, Ga{\"e}l and Craddock, R Cameron},
-    journal = {NeuroImage},
-    pages = {405--415},
-    volume = {80},
-    title = {{Learning and comparing functional connectomes across subjects}},
-    year = {2013},
-    publisher = {Elsevier}
-}
-""".strip()
-
 BELLEC2008 = """
 @article{Bellec2008,
     author = {Bellec, Pierre and Marrelec, Guillaume and Benali, Habib},
@@ -1034,19 +1009,6 @@ CAZALS2008 = """
 }
 """.strip()
 
-LATORA2001 = """
-@article{Latora2001,
-    author = {Latora, Vito and Marchiori, Massimo},
-    journal = {Physical review letters},
-    number = {19},
-    pages = {198701},
-    title = {{Efficient behavior of small-world networks}},
-    volume = {87},
-    year = {2001},
-    publisher = {APS}
-}
-""".strip()
-
 LATORA2003 = """
 @article{Latora2003,
 author = {Latora, Vito and Marchiori, Massimo},
@@ -1083,19 +1045,6 @@ NEWMAN2004 = """
     volume = {69},
     year = {2004},
     publisher = {APS}
-}
-""".strip()
-
-BLONDEL2008 = """
-@article{Blondel2008,
-    author = {Blondel, Vincent D and Guillaume, Jean-Loup and Lambiotte, Renaud and Lefebvre, Etienne},
-    journal = {Journal of statistical mechanics: theory and experiment},
-    number = {10},
-    pages = {P10008},
-    title = {{Fast unfolding of communities in large networks}},
-    volume = {2008},
-    year = {2008},
-    publisher = {IOP Publishing}
 }
 """.strip()
 

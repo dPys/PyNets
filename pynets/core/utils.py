@@ -202,7 +202,8 @@ def create_est_path_func(
                                                                              "Hz_") if hpass is not None else ""),
                                                          "%s" % ("%s%s%s" % ("extract-",
                                                                              extract_strategy,
-                                                                             "_") if extract_strategy is not None else ""),
+                                                                             "_") if extract_strategy
+                                                                                     is not None else ""),
                                                          "thrtype-",
                                                          thr_type,
                                                          "_thr-",
@@ -300,7 +301,8 @@ def create_est_path_diff(
                                                                          node_size is not None)) else "nodetype-parc_"),
                                                                  "%s" % ("%s%s%s" % ("samples-",
                                                                                      int(target_samples),
-                                                                                     "streams_") if float(target_samples) > 0 else "_"),
+                                                                                     "streams_") if
+                                                                         float(target_samples) > 0 else "_"),
                                                                  "tt-",
                                                                  track_type,
                                                                  "_dg-",
@@ -491,7 +493,8 @@ def create_raw_path_diff(
                                                                  node_size is not None)) else "nodetype-parc_"),
                                                          "%s" % ("%s%s%s" % ("samples-",
                                                                              int(target_samples),
-                                                                             "streams_") if float(target_samples) > 0 else ""),
+                                                                             "streams_") if
+                                                                 float(target_samples) > 0 else ""),
                                                          "tt-",
                                                          track_type,
                                                          "_dg-",

@@ -8,12 +8,14 @@ Copyright (C) 2017
 import warnings
 import numpy as np
 import networkx as nx
-
 warnings.filterwarnings("ignore")
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For thresholding a connectivity matrix by setting all the weights below"
+                                            " a given threshold and all the weights on the main diagonal equal to 0")
 def threshold_absolute(W, thr, copy=True):
-    """
+    '''
     This function thresholds the connectivity matrix by absolute weight
     magnitude. All weights below the given threshold, and all weights
     on the main diagonal (self-self connections) are set to 0.
@@ -39,7 +41,7 @@ def threshold_absolute(W, thr, copy=True):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     if copy:
         W = W.copy()
     np.fill_diagonal(W, 0)
@@ -47,8 +49,11 @@ def threshold_absolute(W, thr, copy=True):
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For setting all weights of a connectivity matrix,"
+                                            " other than a proportion of the strongest weights, equal to zero")
 def threshold_proportional(W, p, copy=True):
-    """
+    '''
     This function "thresholds" the connectivity matrix by preserving a
     proportion p (0<p<1) of the strongest weights. All other weights, and
     all weights on the main diagonal (self-self connections) are set to 0.
@@ -93,9 +98,9 @@ def threshold_proportional(W, p, copy=True):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     if p > 1 or p < 0:
-        raise ValueError("Threshold must be in range [0,1]")
+        raise ValueError('Threshold must be in range [0,1]')
     if copy:
         W = W.copy()
     n = len(W)
@@ -114,8 +119,10 @@ def threshold_proportional(W, p, copy=True):
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For normalizing an input weighted connection matrix")
 def normalize(W):
-    """
+    '''
     Normalizes an input weighted connection matrix.
 
     Parameters
@@ -133,13 +140,15 @@ def normalize(W):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     W /= np.max(np.abs(W))
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For normalizing an input weighted connection matrix [0, 1]")
 def standardize(W):
-    """
+    '''
     Normalizes an input weighted connection matrix [0, 1]
 
     Parameters
@@ -157,11 +166,14 @@ def standardize(W):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     W = (W - np.min(W)) / np.ptp(W)
     return W
 
 
+#VAN WIJK2010 RUBINOV2010
+@due.dcite(BibTeX(VAN WIJK2010), description="For applying an absolute threshold to achieve a target density")
+@due.dcite(BibTeX(RUBINOV2010), description="For applying an absolute threshold to achieve a target density")
 def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     """
     Iteratively apply an absolute threshold to achieve a target density.
@@ -193,7 +205,6 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
 
     """
     from pynets.core import thresholding
-
     np.fill_diagonal(conn_matrix, 0)
 
     work_thr = 0
@@ -202,32 +213,15 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     if float(thr) < float(density):
         while float(i) < max_iters and float(work_thr) < float(1):
             work_thr = float(work_thr) + float(interval)
-            density = nx.density(
-                nx.from_numpy_matrix(
-                    thresholding.threshold_absolute(conn_matrix, work_thr)
-                )
-            )
-            print(
-                "%s%d%s%.2f%s%.2f%s"
-                % (
-                    "Iteration ",
-                    i,
-                    " -- with Thresh: ",
-                    float(work_thr),
-                    " and Density: ",
-                    float(density),
-                    "...",
-                )
-            )
+            density = nx.density(nx.from_numpy_matrix(thresholding.threshold_absolute(conn_matrix, work_thr)))
+            print("%s%d%s%.2f%s%.2f%s" % ('Iteration ', i, ' -- with Thresh: ', float(work_thr), ' and Density: ',
+                                          float(density), '...'))
             if float(thr) >= float(density):
-                conn_matrix = thresholding.threshold_absolute(
-                    conn_matrix, work_thr)
+                conn_matrix = thresholding.threshold_absolute(conn_matrix, work_thr)
                 break
             i = i + 1
     else:
-        print(
-            "Density of raw matrix is already greater than or equal to the target density requested"
-        )
+        print('Density of raw matrix is already greater than or equal to the target density requested')
 
     return conn_matrix
 
@@ -236,6 +230,10 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
 def est_density(in_mat):
     """
     Calculates the density of a given undirected graph.
+
+    .. math::
+
+       d = \frac{2m}{n(n-1)},
 
     Parameters
     ----------
@@ -246,11 +244,12 @@ def est_density(in_mat):
     -------
     density : float
         Density of the graph.
-
     """
     return nx.density(nx.from_numpy_matrix(in_mat))
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For thresholding the near-zero ranks of a ranked graph")
 def thr2prob(W, copy=True):
     """
     Thresholds the near-zero ranks of a ranked graph.
@@ -277,8 +276,11 @@ def thr2prob(W, copy=True):
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For binarizing an input weighted connection matrix. "
+                                            "This function will also *modify W in place* if no copy is set")
 def binarize(W, copy=True):
-    """
+    '''
     Binarizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
 
@@ -300,15 +302,19 @@ def binarize(W, copy=True):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     if copy:
         W = W.copy()
     W[W != 0] = 1
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For changing the from the matrix of internode strengths"
+                                            " to the matrix of internode distances. This function will also"
+                                            " *modify W in place* if no copy is set")
 def invert(W, copy=False):
-    """
+    '''
     Inverts elementwise the weights in an input connection matrix.
     In other words, change the from the matrix of internode strengths to the
     matrix of internode distances.
@@ -332,17 +338,21 @@ def invert(W, copy=False):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     if copy:
         W = W.copy()
     E = np.where(W)
-    W[E] = 1.0 / W[E]
+    W[E] = 1. / W[E]
 
     return W
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For binarizing, normalizing, or converting an input weighted"
+                                            " connection matrix to a weighted connection-length matrix."
+                                            " This function will also *modify W in place* if no copy is set")
 def weight_conversion(W, wcm, copy=True):
-    """
+    '''
     W_bin = weight_conversion(W, 'binarize');
     W_nrm = weight_conversion(W, 'normalize');
     L = weight_conversion(W, 'lengths');
@@ -390,15 +400,18 @@ def weight_conversion(W, wcm, copy=True):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
-    if wcm == "binarize":
+    '''
+    if wcm == 'binarize':
         return binarize(W, copy)
-    elif wcm == "lengths":
+    elif wcm == 'lengths':
         return invert(W, copy)
 
 
+#RUBINOV2010
+@due.dcite(BibTeX(RUBINOV2010), description="For removing Inf and NaN, ensuring exact binariness and symmetry,"
+                                            " and zero diagonals")
 def autofix(W, copy=True):
-    """
+    '''
     Fix a bunch of common problems. More specifically, remove Inf and NaN,
     ensure exact binariness and symmetry (i.e. remove floating point
     instability), and zero diagonal.
@@ -420,7 +433,7 @@ def autofix(W, copy=True):
     .. [1] Complex network measures of brain connectivity: Uses and interpretations.
       Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
-    """
+    '''
     if copy:
         W = W.copy()
     # zero diagonal
@@ -440,7 +453,9 @@ def autofix(W, copy=True):
     return np.nan_to_num(W)
 
 
-def disparity_filter(G, weight="weight"):
+#SERRANO2009
+@due.dcite(BibTeX(SERRANO2009), description="For computing significance scores (alpha) for weighted edges in G")
+def disparity_filter(G, weight='weight'):
     """
     Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
 
@@ -473,43 +488,27 @@ def disparity_filter(G, weight="weight"):
             k_in = G.in_degree(u)
 
             if k_out > 1:
-                sum_w_out = sum(np.absolute(G[u][v][weight])
-                                for v in G.successors(u))
+                sum_w_out = sum(np.absolute(G[u][v][weight]) for v in G.successors(u))
                 for v in G.successors(u):
                     w = G[u][v][weight]
                     p_ij_out = float(np.absolute(w)) / sum_w_out
-                    alpha_ij_out = (
-                        1
-                        - (k_out - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[
-                            0
-                        ]
-                    )
-                    N.add_edge(
-                        u, v, weight=w, alpha_out=float(f"{alpha_ij_out:.4f}"))
+                    alpha_ij_out = 1 - (k_out - 1) * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[0]
+                    N.add_edge(u, v, weight=w, alpha_out=float(f'{alpha_ij_out:.4f}'))
 
             elif k_out == 1 and G.in_degree(list(G.successors(u))[0]) == 1:
-                # we need to keep the connection as it is the only way to
-                # maintain the connectivity of the network
+                # we need to keep the connection as it is the only way to maintain the connectivity of the network
                 v = list(G.successors(u))[0]
                 w = G[u][v][weight]
-                N.add_edge(u, v, weight=w, alpha_out=0.0, alpha_in=0.0)
-                # there is no need to do the same for the k_in, since the link
-                # is built already from the tail
+                N.add_edge(u, v, weight=w, alpha_out=0., alpha_in=0.)
+                # there is no need to do the same for the k_in, since the link is built already from the tail
 
             if k_in > 1:
-                sum_w_in = sum(np.absolute(G[v][u][weight])
-                               for v in G.predecessors(u))
+                sum_w_in = sum(np.absolute(G[v][u][weight]) for v in G.predecessors(u))
                 for v in G.predecessors(u):
                     w = G[v][u][weight]
                     p_ij_in = float(np.absolute(w)) / sum_w_in
-                    alpha_ij_in = (
-                        1
-                        - (k_in - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in)[0]
-                    )
-                    N.add_edge(
-                        v, u, weight=w, alpha_in=float(f"{alpha_ij_in:.4f}"))
+                    alpha_ij_in = 1 - (k_in - 1) * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in)[0]
+                    N.add_edge(v, u, weight=w, alpha_in=float(f'{alpha_ij_in:.4f}'))
         return N
 
     else:  # undirected case
@@ -521,18 +520,16 @@ def disparity_filter(G, weight="weight"):
                 for v in G[u]:
                     w = G[u][v][weight]
                     p_ij = float(np.absolute(w)) / sum_w
-                    alpha_ij = (
-                        1
-                        - (k - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[0]
-                    )
-                    B.add_edge(u, v, weight=w, alpha=float(f"{alpha_ij:.4f}"))
+                    alpha_ij = 1 - (k - 1) * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[0]
+                    B.add_edge(u, v, weight=w, alpha=float(f'{alpha_ij:.4f}'))
             else:
                 B.add_node(u)
         return B
 
 
-def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
+#SERRANO2009
+@due.dcite(BibTeX(SERRANO2009), description="For computing significance scores (alpha) for weighted edges in G")
+def disparity_filter_alpha_cut(G, weight='weight', alpha_t=0.4, cut_mode='or'):
     """
     Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
 
@@ -569,18 +566,18 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
         B = nx.DiGraph()
         for u, v, w in G.edges(data=True):
             try:
-                alpha_in = w["alpha_in"]
+                alpha_in = w['alpha_in']
             except KeyError:  # there is no alpha_in, so we assign 1. It will never pass the cut
                 alpha_in = 1
             try:
-                alpha_out = w["alpha_out"]
+                alpha_out = w['alpha_out']
             except KeyError:  # there is no alpha_out, so we assign 1. It will never pass the cut
                 alpha_out = 1
 
-            if cut_mode == "or":
+            if cut_mode == 'or':
                 if alpha_in < alpha_t or alpha_out < alpha_t:
                     B.add_edge(u, v, weight=w[weight])
-            elif cut_mode == "and":
+            elif cut_mode == 'and':
                 if alpha_in < alpha_t and alpha_out < alpha_t:
                     B.add_edge(u, v, weight=w[weight])
         return B
@@ -589,7 +586,7 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
         B = nx.Graph()  # Undirected case:
         for u, v, w in G.edges(data=True):
             try:
-                alpha = w["alpha"]
+                alpha = w['alpha']
             except KeyError:  # there is no alpha, so we assign 1. It will never pass the cut
                 alpha = 1
 
@@ -616,15 +613,12 @@ def weight_to_distance(G):
     -------
     G : Object
         Inverted NetworkX graph equivalent to the distance measure.
-
     """
-    edge_list = [v[2]["weight"] for v in G.edges(data=True)]
+    edge_list = [v[2]['weight'] for v in G.edges(data=True)]
     # maximum edge value
     emax = np.max(edge_list) + 1 / float(G.number_of_nodes())
     for edge in G.edges():
-        G.edges[edge[0], edge[1]]["distance"] = (
-            emax - G.edges[edge[0], edge[1]]["weight"]
-        )
+        G.edges[edge[0], edge[1]]['distance'] = emax - G.edges[edge[0], edge[1]]['weight']
 
     return G
 
@@ -644,14 +638,12 @@ def knn(conn_matrix, k):
     -------
     gra : Obj
         KNN Weighted NetworkX graph.
-
     """
     gra = nx.Graph()
     nodes = list(range(len(conn_matrix[0])))
     gra.add_nodes_from(nodes)
     for i in nodes:
-        line = np.ma.masked_array(
-            conn_matrix[i, :], mask=np.isnan(conn_matrix[i]))
+        line = np.ma.masked_array(conn_matrix[i, :], mask=np.isnan(conn_matrix[i]))
         line.mask[i] = True
         for _ in range(k):
             node = np.argmax(line)
@@ -663,6 +655,14 @@ def knn(conn_matrix, k):
     return gra
 
 
+
+#ALEXANDER-BLOCH2010 TEWARIE2015
+@due.dcite(BibTeX(ALEXANDER-BLOCH2010), description="For thresholding an adjacency matrix by building from the minimum"
+                                                    " spanning tree (MST) and adding successive N-nearest neighbor"
+                                                    " degree graphs to achieve target proportional threshold")
+@due.dcite(BibTeX(TEWARIE2015), description="For thresholding an adjacency matrix by building from the minimum"
+                                            " spanning tree (MST) and adding successive N-nearest neighbor degree "
+                                            "graphs to a achieve target proportional threshold")
 def local_thresholding_prop(conn_matrix, thr):
     """
     Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
@@ -702,9 +702,7 @@ def local_thresholding_prop(conn_matrix, thr):
     Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
     G0 = G.subgraph(Gcc[0])
 
-    min_t = nx.minimum_spanning_tree(
-        thresholding.weight_to_distance(G0), weight="distance"
-    )
+    min_t = nx.minimum_spanning_tree(thresholding.weight_to_distance(G0), weight="distance")
     min_t.add_nodes_from(G.nodes())
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
@@ -712,20 +710,16 @@ def local_thresholding_prop(conn_matrix, thr):
     edgenum = int(float(thr) * float(len(weights[~np.isnan(weights)])))
 
     if len_edges > edgenum:
-        print(
-            f"Warning: The minimum spanning tree already has: {len_edges} edges, select more edges. Local Threshold "
-            f"will be applied by just retaining the Minimum Spanning Tree")
+        print(f"Warning: The minimum spanning tree already has: {len_edges} edges, select more edges. Local Threshold "
+              f"will be applied by just retaining the Minimum Spanning Tree")
         conn_matrix_thr = nx.to_numpy_array(G)
         return conn_matrix_thr
 
     k = 1
     len_edge_list = []
-    while (
-        len_edges < edgenum
-        and k <= np.shape(conn_matrix)[0]
-        and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:])))
-        < (fail_tol - 1)
-    ):
+    while len_edges < edgenum and k <= np.shape(conn_matrix)[0] and (len(len_edge_list[-fail_tol:]) -
+                                                                     len(set(len_edge_list[-fail_tol:]))) < (fail_tol -
+                                                                                                             1):
         # print(k)
         # print(len_edges)
         len_edge_list.append(len_edges)
@@ -741,12 +735,10 @@ def local_thresholding_prop(conn_matrix, thr):
 
         # Add weights to NNG
         for e in nng.edges():
-            nng.edges[e[0], e[1]]["weight"] = float(conn_matrix[e[0], e[1]])
+            nng.edges[e[0], e[1]]['weight'] = float(conn_matrix[e[0], e[1]])
 
         # Obtain list of edges from the NNG in order of weight
-        edge_list = sorted(
-            nng.edges(data=True), key=lambda t: t[2]["weight"], reverse=True
-        )
+        edge_list = sorted(nng.edges(data=True), key=lambda t: t[2]['weight'], reverse=True)
 
         # Add edges in order of connectivity strength
         for edge in edge_list:
@@ -754,29 +746,24 @@ def local_thresholding_prop(conn_matrix, thr):
             min_t.add_edges_from([edge])
             len_edges = min_t.number_of_edges()
             if len_edges >= edgenum:
-                # print(len_edges)
+                #print(len_edges)
                 break
         k += 1
 
-    conn_matrix_bin = thresholding.binarize(
-        nx.to_numpy_array(min_t, nodelist=sorted(G.nodes()), dtype=np.float64)
-    )
+    conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(min_t, nodelist=sorted(G.nodes()), dtype=np.float64))
 
     try:
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
         return conn_matrix_thr
 
     except ValueError:
-        print("MST thresholding failed. Check raw graph output manually for debugging.")
+        print('MST thresholding failed. Check raw graph output manually for debugging.')
 
 
-def perform_thresholding(
-        conn_matrix,
-        thr,
-        min_span_tree,
-        dens_thresh,
-        disp_filt):
-    """
+#FORNITO2016
+@due.dcite(BibTex(FORNITO2016), description="")
+def perform_thresholding(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt):
+    '''
 
     References
     ----------
@@ -784,7 +771,7 @@ def perform_thresholding(
       Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
       https://doi.org/10.1016/C2012-0-06036-X
 
-    """
+    '''
     import numpy as np
     import networkx as nx
     from pynets.core import thresholding
@@ -792,89 +779,55 @@ def perform_thresholding(
     thr_perc = 100 - np.abs(100 * float(thr))
 
     if min_span_tree is True:
-        print(
-            "Using local thresholding option with the Minimum Spanning Tree (MST)...\n"
-        )
+        print('Using local thresholding option with the Minimum Spanning Tree (MST)...\n')
         if dens_thresh is True:
-            print(
-                "Ignoring -dt flag since local density thresholding is not currently supported."
-            )
-        thr_type = "MST"
+            print('Ignoring -dt flag since local density thresholding is not currently supported.')
+        thr_type = 'MST'
         edge_threshold = f"{str(thr_perc)}%"
-        conn_matrix_thr = thresholding.local_thresholding_prop(
-            conn_matrix, thr)
+        conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
     elif disp_filt is True:
 
-        thr_type = "DISPARITY"
+        thr_type = 'DISPARITY'
         edge_threshold = f"{str(thr_perc)}%"
-        G1 = thresholding.disparity_filter(
-            nx.from_numpy_array(np.abs(conn_matrix)))
+        G1 = thresholding.disparity_filter(nx.from_numpy_array(np.abs(conn_matrix)))
         # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print(f"Computing edge disparity significance with alpha = {thr}")
-        print(
-            f"Filtered graph: nodes = {G1.number_of_nodes()}, edges = {G1.number_of_edges()}"
-        )
+        print(f'Filtered graph: nodes = {G1.number_of_nodes()}, edges = {G1.number_of_edges()}')
         # print(f'Backbone graph: nodes = {G2.number_of_nodes()}, edges = {G2.number_of_edges()}")
         # print(G2.edges(data=True))
-        conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(
-            G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
+        conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
         # Enforce original dimensionality by padding with zeros.
         if conn_matrix_bin.shape != conn_matrix.shape:
             if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
                 result = np.zeros(conn_matrix.shape)
-                result[
-                    : conn_matrix_bin.shape[0], : conn_matrix_bin.shape[1]
-                ] = conn_matrix_bin
+                result[:conn_matrix_bin.shape[0], :conn_matrix_bin.shape[1]] = conn_matrix_bin
                 conn_matrix_thr = np.multiply(conn_matrix, result)
             else:
                 result = np.zeros(conn_matrix_bin.shape)
-                result[: conn_matrix.shape[0],
-                       : conn_matrix.shape[1]] = conn_matrix
+                result[:conn_matrix.shape[0], :conn_matrix.shape[1]] = conn_matrix
                 conn_matrix_thr = np.multiply(conn_matrix_bin, result)
         else:
             conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
         if dens_thresh is False:
-            thr_type = "PROP"
+            thr_type = 'PROP'
             edge_threshold = f"{str(thr_perc)}{'%'}"
             print(f"\nThresholding proportionally at: {thr_perc}% ...\n")
-            conn_matrix_thr = thresholding.threshold_proportional(
-                conn_matrix, float(thr)
-            )
+            conn_matrix_thr = thresholding.threshold_proportional(conn_matrix, float(thr))
         else:
-            thr_type = "DENS"
+            thr_type = 'DENS'
             edge_threshold = None
             print(f"\nThresholding to achieve density of: {thr_perc}% ...\n")
-            conn_matrix_thr = thresholding.density_thresholding(
-                conn_matrix, float(thr))
+            conn_matrix_thr = thresholding.density_thresholding(conn_matrix, float(thr))
     return thr_type, edge_threshold, conn_matrix_thr
 
 
-def thresh_func(
-    dens_thresh,
-    thr,
-    conn_matrix,
-    conn_model,
-    network,
-    ID,
-    dir_path,
-    roi,
-    node_size,
-    min_span_tree,
-    smooth,
-    disp_filt,
-    parc,
-    prune,
-    atlas,
-    uatlas,
-    labels,
-    coords,
-    norm,
-    binary,
-    hpass,
-    extract_strategy,
-    check_consistency=True,
-):
+#VAN WIJK2010
+@due.dcite(BibTeX(VAN WIJK2010), description="Allows for thresholding a functional connectivity" \
+                                             " matrix using a variety of methods")
+def thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
+                smooth, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                hpass, extract_strategy):
     """
     Threshold a functional connectivity matrix using any of a variety of methods.
 
@@ -994,108 +947,38 @@ def thresh_func(
     from pynets.core import utils, thresholding
 
     if parc is True:
-        node_size = "parc"
+        node_size = 'parc'
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_func(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            smooth,
-            hpass,
-            parc,
-            extract_strategy,
-        ),
-    )
+    utils.save_mat(conn_matrix, utils.create_raw_path_func(ID, network, conn_model, roi, dir_path, node_size, smooth,
+                                                           hpass, parc, extract_strategy))
 
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
-        print("Warning: Fragmented graph")
+        print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path_func(
-        ID,
-        network,
-        conn_model,
-        thr,
-        roi,
-        dir_path,
-        node_size,
-        smooth,
-        thr_type,
-        hpass,
-        parc,
-        extract_strategy,
-    )
+    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi, dir_path, node_size, smooth, thr_type,
+                                          hpass, parc, extract_strategy)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
-    if check_consistency is True:
-        assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
-
-    return (
-        conn_matrix_thr,
-        edge_threshold,
-        est_path,
-        thr,
-        node_size,
-        network,
-        conn_model,
-        roi,
-        smooth,
-        prune,
-        ID,
-        dir_path,
-        atlas,
-        uatlas,
-        labels,
-        coords,
-        norm,
-        binary,
-        hpass,
-        extract_strategy,
-    )
+    return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, prune, ID,
+            dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy)
 
 
-def thresh_struct(
-    dens_thresh,
-    thr,
-    conn_matrix,
-    conn_model,
-    network,
-    ID,
-    dir_path,
-    roi,
-    node_size,
-    min_span_tree,
-    disp_filt,
-    parc,
-    prune,
-    atlas,
-    uatlas,
-    labels,
-    coords,
-    norm,
-    binary,
-    target_samples,
-    track_type,
-    atlas_mni,
-    streams,
-    directget,
-    min_length,
-    check_consistency=True,
-):
+#VAN WIJK2010
+@due.dcite(BibTeX(VAN WIJK2010), description="Allows for thresholding a structural connectivity" \
+                                             " matrix using a variety of methods")
+def thresh_struct(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path, roi, node_size, min_span_tree,
+                  disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+                  target_samples, track_type, atlas_mni, streams, directget, min_length):
     """
     Threshold a structural connectivity matrix using any of a variety of methods.
 
@@ -1230,94 +1113,35 @@ def thresh_struct(
     from pynets.core import utils, thresholding
 
     if parc is True:
-        node_size = "parc"
+        node_size = 'parc'
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        raise ValueError('ERROR: Raw connectivity matrix contains only zeros.')
 
     # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_diff(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            target_samples,
-            track_type,
-            parc,
-            directget,
-            min_length,
-        ),
-    )
+    utils.save_mat(conn_matrix, utils.create_raw_path_diff(ID, network, conn_model, roi, dir_path, node_size,
+                                                           target_samples, track_type, parc, directget, min_length))
 
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
-        print("Warning: Fragmented graph")
+        print('Warning: Fragmented graph')
 
     # Save thresholded mat
-    est_path = utils.create_est_path_diff(
-        ID,
-        network,
-        conn_model,
-        thr,
-        roi,
-        dir_path,
-        node_size,
-        target_samples,
-        track_type,
-        thr_type,
-        parc,
-        directget,
-        min_length,
-    )
+    est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi, dir_path, node_size, target_samples,
+                                          track_type, thr_type, parc, directget, min_length)
 
     utils.save_mat(conn_matrix_thr, est_path)
     gc.collect()
 
-    if check_consistency is True:
-        assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
-
-    return (
-        conn_matrix_thr,
-        edge_threshold,
-        est_path,
-        thr,
-        node_size,
-        network,
-        conn_model,
-        roi,
-        prune,
-        ID,
-        dir_path,
-        atlas,
-        uatlas,
-        labels,
-        coords,
-        norm,
-        binary,
-        target_samples,
-        track_type,
-        atlas_mni,
-        streams,
-        directget,
-        min_length,
-    )
+    return (conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, ID, dir_path,
+            atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, atlas_mni, streams, directget,
+            min_length)
 
 
-def thresh_raw_graph(
-        conn_matrix,
-        thr,
-        min_span_tree,
-        dens_thresh,
-        disp_filt,
-        est_path):
+def thresh_raw_graph(conn_matrix, thr, min_span_tree, dens_thresh, disp_filt, est_path):
     from pynets.core import thresholding
-
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(conn_matrix, thr, min_span_tree,
+                                                                                    dens_thresh, disp_filt)
     return thr_type, edge_threshold, conn_matrix_thr, thr, est_path
