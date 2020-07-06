@@ -70,7 +70,7 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt \
     && apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Add Neurodebian package repositories (i.e. for FSL)
 RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
@@ -174,9 +174,6 @@ ENV FSLMULTIFILEQUIT=TRUE
 ENV PYTHONWARNINGS ignore
 ENV OMP_NUM_THREADS=1
 ENV USE_SIMPLE_THREADED_LEVEL3=1
-
-
-
 
 EXPOSE 22
 

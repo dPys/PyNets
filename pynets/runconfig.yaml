@@ -14,13 +14,13 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 10
+    - 50
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'wb'
+    - 'act'
 tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
-    - 100000
+    - 50000
 aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
     - True
 DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
@@ -74,8 +74,8 @@ available_models:
       - 'csd'
       - 'tensor'
 template: # `MNI152_T1` is the default and is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
-    - 'colin27'
-#    - 'MNI152_T1'
+#    - 'colin27'
+    - 'MNI152_T1'
 bids_defaults:
     space:
         - 'T1w'

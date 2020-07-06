@@ -331,8 +331,8 @@ def direct_streamline_norm(
         tractogram = load_tractogram(
             streams,
             fa_img,
-            to_space=Space.RASMM,
             to_origin=Origin.NIFTI,
+            to_space=Space.VOXMM,
             bbox_valid_check=False,
         )
 
@@ -393,7 +393,7 @@ def direct_streamline_norm(
         stf = StatefulTractogram(
             streams_final_filt_final,
             reference=uatlas_mni_img,
-            space=Space.RASMM,
+            space=Space.VOXMM,
             origin=Origin.NIFTI,
         )
         stf.remove_invalid_streamlines()

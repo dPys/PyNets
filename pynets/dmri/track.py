@@ -63,7 +63,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
-            "Error: No valid reconstruction model specified. See the `-mod` flag."
+            "Error: No valid reconstruction model specified. See the `-mod` "
+            "flag."
         )
 
     del dwi_data
@@ -105,8 +106,9 @@ def prep_tissues(
     References
     ----------
     .. [1] Zhang, Y., Brady, M. and Smith, S. Segmentation of Brain MR Images
-      Through a Hidden Markov Random Field Model and the Expectation-Maximization
-      Algorithm IEEE Transactions on Medical Imaging, 20(1): 45-56, 2001
+      Through a Hidden Markov Random Field Model and the
+      Expectation-Maximization Algorithm IEEE Transactions on Medical Imaging,
+      20(1): 45-56, 2001
     .. [2] Avants, B. B., Tustison, N. J., Wu, J., Cook, P. A. and Gee, J. C.
       An open source multivariate framework for n-tissue segmentation with
       evaluation on public data. Neuroinformatics, 9(4): 381-400, 2011.
@@ -219,7 +221,8 @@ def create_density_map(
     dwi_img : Nifti1Image
         Dwi data stored as a Nifti1image object.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     conn_model : str
@@ -227,8 +230,8 @@ def create_density_map(
     target_samples : int
         Total number of streamline samples specified to generate streams.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -247,9 +250,11 @@ def create_density_map(
     Returns
     -------
     streams : str
-        File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
+        File path to saved streamline array sequence in DTK-compatible
+        trackvis (.trk) format.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     dm_path : str
         File path to fiber density map Nifti1Image.
     """
@@ -361,19 +366,21 @@ def track_ensemble(
     min_length : int
         Minimum fiber length threshold in mm.
     waymask : str
-        Path to a Nifti1Image in native diffusion space to constrain tractography.
+        Path to a Nifti1Image in native diffusion space to constrain
+        tractography.
     B0_mask : str
         File path to B0 brain mask.
     max_length : int
         Maximum number of steps to restrict tracking.
     n_seeds_per_iter : int
-        Number of seeds from which to initiate tracking for each unique ensemble combination.
-        By default this is set to 200.
+        Number of seeds from which to initiate tracking for each unique
+        ensemble combination. By default this is set to 200.
     particle_count
         pft_back_tracking_dist : float
         Distance in mm to back track before starting the particle filtering
         tractography. The total particle filtering tractography distance is
-        equal to back_tracking_dist + front_tracking_dist. By default this is set to 2 mm.
+        equal to back_tracking_dist + front_tracking_dist. By default this is
+        set to 2 mm.
     pft_front_tracking_dist : float
         Distance in mm to run the particle filtering tractography after the
         the back track distance. The total particle filtering tractography
@@ -464,7 +471,8 @@ def track_ensemble(
                 )
                 if len(seeds) == 0:
                     raise RuntimeWarning(
-                        "Warning: No valid seed points found in wm-gm interface..."
+                        "Warning: No valid seed points found in wm-gm "
+                        "interface..."
                     )
 
                 # print(seeds)
@@ -529,7 +537,8 @@ def track_ensemble(
                 )
 
                 if str(min_length) != "0":
-                    roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence(
+                    roi_proximal_streamlines = nib.streamlines.\
+                        array_sequence.ArraySequence(
                         [
                             s
                             for s in roi_proximal_streamlines
@@ -563,7 +572,8 @@ def track_ensemble(
                 stream_counter = stream_counter + len(out_streams)
 
                 # Cleanup memory
-                del seeds, roi_proximal_streamlines, streamline_generator, out_streams
+                del seeds, roi_proximal_streamlines, streamline_generator, \
+                    out_streams
                 gc.collect()
             del dg
 

@@ -1680,7 +1680,7 @@ def build_workflow(args, retval):
                 print(f"{Fore.BLUE}{ml}")
         if target_samples:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
-        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking with {Fore.BLUE}{tiss_class} tissue classification...")
+        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking with {Fore.BLUE}{tiss_class} {Fore.GREEN}tissue classification...")
         print(f"{Fore.GREEN}Ensemble tractography step sizes: {Fore.BLUE}{step_list} {Fore.GREEN}and curvature thresholds: {Fore.BLUE}{curv_thr_list}")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print(f"\n{Fore.WHITE}Running dmri connectometry only...")

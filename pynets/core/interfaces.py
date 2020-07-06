@@ -1332,10 +1332,12 @@ class RegisterAtlasDWI(SimpleInterface):
 
             # Align waymask
             waymask_in_t1w = (
-                f"{base_dir_tmp}/waymask-{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
+                f"{base_dir_tmp}/waymask-"
+                f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_t1w.nii.gz")
             waymask_in_dwi = (
-                f"{base_dir_tmp}/waymask-{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
+                f"{base_dir_tmp}/waymask-"
+                f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_dwi.nii.gz")
 
             waymask_in_dwi = regutils.waymask2dwi_align(
@@ -1377,7 +1379,8 @@ class RegisterAtlasDWI(SimpleInterface):
             if j is not None:
                 os.remove(j)
 
-        self._results["dwi_aligned_atlas_wmgm_int"] = dwi_aligned_atlas_wmgm_int
+        self._results["dwi_aligned_atlas_wmgm_int"] = \
+            dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
         self._results["aligned_atlas_t1mni"] = aligned_atlas_t1mni
         self._results["node_size"] = self.inputs.node_size
@@ -1498,8 +1501,12 @@ class RegisterROIDWI(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        roi_in_t1w = f"{runtime.cwd}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
-        roi_in_dwi = f"{runtime.cwd}/waymask-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_dwi.nii.gz"
+        roi_in_t1w = f"{runtime.cwd}/waymask-" \
+                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
+                     f"_in_t1w.nii.gz"
+        roi_in_dwi = f"{runtime.cwd}/waymask-" \
+                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
+                     f"_in_dwi.nii.gz"
 
         if self.inputs.roi:
             # Align roi
@@ -1576,7 +1583,8 @@ class RegisterFunc(SimpleInterface):
 
         anat_mask_existing = [
             i
-            for i in glob.glob(self.inputs.in_dir + "/*_desc-brain_mask.nii.gz")
+            for i in glob.glob(self.inputs.in_dir +
+                               "/*_desc-brain_mask.nii.gz")
             if "MNI" not in i
         ]
 
@@ -1602,7 +1610,8 @@ class RegisterFunc(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path, self.inputs.vox_size)
+                    mask_tmp_path, self.inputs.basedir_path,
+                    self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 
@@ -1800,8 +1809,10 @@ class RegisterAtlasFunc(SimpleInterface):
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
         os.makedirs(base_dir_tmp, exist_ok=True)
 
-        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}{'_t1w_mni.nii.gz'}"
-        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}{'_t1w_skull.nii.gz'}"
+        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_t1w_mni." \
+                              f"nii.gz"
+        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_t1w_skull." \
+                              f"nii.gz"
         aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
 
         if self.inputs.node_size is not None:
@@ -1903,7 +1914,9 @@ class RegisterROIEPI(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        roi_in_t1w = f"{runtime.cwd}/roi-{os.path.basename(self.inputs.roi).split('.nii')[0]}_in_t1w.nii.gz"
+        roi_in_t1w = f"{runtime.cwd}/roi-" \
+                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
+                     f"_in_t1w.nii.gz"
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -2100,29 +2113,37 @@ class Tracking(SimpleInterface):
 
         if np.sum(atlas_data) == 0:
             raise ValueError(
-                "ERROR: No non-zero voxels found in atlas. Check any roi masks and/or wm-gm interface images "
+                "ERROR: No non-zero voxels found in atlas. Check any roi masks"
+                " and/or wm-gm interface images "
                 "to verify overlap with dwi-registered atlas.")
 
         # Iteratively build a list of streamlines for each ROI while tracking
         print(
-            f"{Fore.GREEN}Target number of samples: {Fore.BLUE} {self.inputs.target_samples}"
+            f"{Fore.GREEN}Target number of samples: {Fore.BLUE} "
+            f"{self.inputs.target_samples}"
         )
         print(Style.RESET_ALL)
         print(
-            f"{Fore.GREEN}Using curvature threshold(s): {Fore.BLUE} {self.inputs.curv_thr_list}"
+            f"{Fore.GREEN}Using curvature threshold(s): {Fore.BLUE} "
+            f"{self.inputs.curv_thr_list}"
         )
         print(Style.RESET_ALL)
-        print(f"{Fore.GREEN}Using step size(s): {Fore.BLUE} {self.inputs.step_list}")
+        print(f"{Fore.GREEN}Using step size(s): {Fore.BLUE} "
+              f"{self.inputs.step_list}")
         print(Style.RESET_ALL)
-        print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} {self.inputs.track_type}")
+        print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} "
+              f"{self.inputs.track_type}")
         print(Style.RESET_ALL)
         if self.inputs.directget == "prob":
-            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Probabilistic")
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}"
+                  f"Probabilistic")
         elif self.inputs.directget == "clos":
-            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest Peak")
+            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest "
+                  f"Peak")
         elif self.inputs.directget == "det":
             print(
-                f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic Maximum"
+                f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic"
+                f" Maximum"
             )
         else:
             raise ValueError("Direction-getting type not recognized!")
@@ -2167,7 +2188,8 @@ class Tracking(SimpleInterface):
             runtime.cwd,
             "/streamlines_",
             "%s"
-            % (self.inputs.network + "_" if self.inputs.network is not None else ""),
+            % (self.inputs.network + "_" if self.inputs.network is not None
+               else ""),
             "%s"
             % (
                 op.basename(self.inputs.roi).split(".")[0] + "_"
@@ -2200,14 +2222,13 @@ class Tracking(SimpleInterface):
 
         stf = StatefulTractogram(
             streamlines,
-            reference=fa_img,
-            space=Space.RASMM,
-            origin=Origin.NIFTI)
+            fa_img,
+            origin=Origin.NIFTI,
+            space=Space.VOXMM)
         stf.remove_invalid_streamlines()
         save_tractogram(
             stf,
             streams,
-            bbox_valid_check=False,
         )
 
         copyfile(
@@ -2261,7 +2282,8 @@ class Tracking(SimpleInterface):
         self._results["dm_path"] = dm_path
         self._results["directget"] = self.inputs.directget
         self._results["labels_im_file"] = self.inputs.labels_im_file
-        self._results["roi_neighborhood_tol"] = self.inputs.roi_neighborhood_tol
+        self._results["roi_neighborhood_tol"] = \
+            self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
 
         del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
@@ -2354,13 +2376,16 @@ class MakeGtabBmask(SimpleInterface):
         # med_b0_img = nib.load(med_b0_file)
         # med_b0_data = np.asarray(med_b0_img.dataobj)
         # # Create mean b0 brain mask
-        # b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2, numpass=1)
+        # b0_mask_data, mask_data = median_otsu(med_b0_data, median_radius=2,
+        # numpass=1)
         #
         # hdr = med_b0_img.header.copy()
         # hdr.set_xyzt_units("mm")
         # hdr.set_data_dtype(np.float32)
-        # nib.Nifti1Image(b0_mask_data, med_b0_img.affine, hdr).to_filename(B0_bet)
-        # nib.Nifti1Image(mask_data, med_b0_img.affine, hdr).to_filename(B0_mask)
+        # nib.Nifti1Image(b0_mask_data, med_b0_img.affine,
+        #                 hdr).to_filename(B0_bet)
+        # nib.Nifti1Image(mask_data, med_b0_img.affine,
+        #                 hdr).to_filename(B0_mask)
 
         # Get mean B0 brain mask
         cmd = f"bet {med_b0_file} {B0_bet} -m -f 0.2"
