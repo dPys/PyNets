@@ -63,19 +63,21 @@ def test_create_density_map():
     assert dm_path is not None
 
 
-@pytest.mark.parametrize("tiss_class", ['act', 'bin', 'cmc', 'wb'])
+@pytest.mark.parametrize("tiss_class", ['act', 'wm', 'cmc', 'wb'])
 def test_prep_tissues(tiss_class):
     """
     Test for prep_tissues functionality
     """
     from pynets.dmri import track
     base_dir = str(Path(__file__).parent/"examples")
+    t1w_mask = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
     B0_mask = f"{base_dir}/003/dmri/sub-003_b0_brain_mask.nii.gz"
     gm_in_dwi = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/dmri/csf_mask_dmri.nii.gz"
     wm_in_dwi = f"{base_dir}/003/dmri/wm_mask_dmri.nii.gz"
 
-    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+    tiss_classifier = track.prep_tissues(t1w_mask, gm_in_dwi, vent_csf_in_dwi,
+                                         wm_in_dwi, tiss_class, B0_mask,
                                          cmc_step_size=0.2)
     assert tiss_classifier is not None
 
@@ -105,7 +107,8 @@ def test_reconstruction(conn_model):
 
 
 @pytest.mark.parametrize("directget", ['det', 'prob'])
-@pytest.mark.parametrize("target_samples", [1000, pytest.param(0, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("target_samples",
+                         [1000, pytest.param(0, marks=pytest.mark.xfail)])
 def test_track_ensemble(directget, target_samples):
     """
     Test for ensemble tractography functionality
@@ -123,11 +126,14 @@ def test_track_ensemble(directget, target_samples):
     bvals = f"{dir_path}/sub-003_dwi.bval"
     bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
     gtab = gradient_table(bvals, bvecs)
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
-    atlas_data_wm_gm_int = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track_wmgm_int.nii.gz"
-    labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-" \
+               f"2mm.nii.gz"
+    atlas_data_wm_gm_int = f"{dir_path}/whole_brain_cluster_labels_PCA200_" \
+                           f"dwi_track_wmgm_int.nii.gz"
+    labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_" \
+                     f"track.nii.gz"
     conn_model = 'csa'
-    tiss_class = 'bin'
+    tiss_class = 'wm'
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
@@ -137,9 +143,11 @@ def test_track_ensemble(directget, target_samples):
     sphere = get_sphere('repulsion724')
     track_type = 'local'
 
-    # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
+    # Load atlas parcellation (and its wm-gm interface reduced version for
+    # seeding)
     atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
-    atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj).astype('uint16')
+    atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj
+                                      ).astype('uint16')
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
@@ -153,13 +161,18 @@ def test_track_ensemble(directget, target_samples):
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                         wm_in_dwi, tiss_class, B0_mask,
                                          cmc_step_size=0.2)
 
-    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere, directget,
-                         curv_thr_list, step_list, track_type, maxcrossing, roi_neighborhood_tol, min_length, waymask,
-                         B0_mask, max_length=1000, n_seeds_per_iter=500, pft_back_tracking_dist=2,
-                         pft_front_tracking_dist=1, particle_count=15, min_separation_angle=20)
+    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model,
+                         tiss_classifier, sphere, directget,
+                         curv_thr_list, step_list, track_type, maxcrossing,
+                         roi_neighborhood_tol, min_length, waymask,
+                         B0_mask, max_length=1000, n_seeds_per_iter=500,
+                         pft_back_tracking_dist=2,
+                         pft_front_tracking_dist=1, particle_count=15,
+                         min_separation_angle=20)
 
 
 def test_track_ensemble_particle():
@@ -213,7 +226,8 @@ def test_track_ensemble_particle():
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(B0_mask, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                         wm_in_dwi, tiss_class, B0_mask,
                                          cmc_step_size=0.2)
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere,
@@ -222,5 +236,6 @@ def test_track_ensemble_particle():
                                        n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
                                        particle_count=15, min_separation_angle=20)
     streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img, space=Space.RASMM, origin=Origin.TRACKVIS),
+    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
+                                       space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)

@@ -20,7 +20,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     Parameters
     ----------
     conn_model : str
-        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
+        'sfm').
     gtab : Obj
         DiPy object storing diffusion gradient information.
     dwi_data : array
@@ -53,17 +54,18 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         tens_mod_est,
     )
 
-    if conn_model == "csa":
+    if conn_model == "csa" or conn_model == "CSA":
         [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "csd":
+    elif conn_model == "csd" or conn_model == "CSD":
         [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "sfm":
+    elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "ten":
+    elif conn_model == "ten" or conn_model == "tensor":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
-            "Error: No valid reconstruction model specified. See the `-mod` flag."
+            "Error: No valid reconstruction model specified. See the `-mod` "
+            "flag."
         )
 
     del dwi_data
@@ -77,6 +79,7 @@ def prep_tissues(
         vent_csf_in_dwi,
         wm_in_dwi,
         tiss_class,
+        B0_mask,
         cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
@@ -104,8 +107,9 @@ def prep_tissues(
     References
     ----------
     .. [1] Zhang, Y., Brady, M. and Smith, S. Segmentation of Brain MR Images
-      Through a Hidden Markov Random Field Model and the Expectation-Maximization
-      Algorithm IEEE Transactions on Medical Imaging, 20(1): 45-56, 2001
+      Through a Hidden Markov Random Field Model and the
+      Expectation-Maximization Algorithm IEEE Transactions on Medical Imaging,
+      20(1): 45-56, 2001
     .. [2] Avants, B. B., Tustison, N. J., Wu, J., Cook, P. A. and Gee, J. C.
       An open source multivariate framework for n-tissue segmentation with
       evaluation on public data. Neuroinformatics, 9(4): 381-400, 2011.
@@ -123,8 +127,12 @@ def prep_tissues(
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
 
-    # Loads mask
+    # Load B0 mask
+    B0_mask_img = nib.load(B0_mask)
+
+    # Load t1 mask
     mask_img = nib.load(t1_mask)
+
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
     gm_img = nib.load(gm_in_dwi)
@@ -140,13 +148,14 @@ def prep_tissues(
         tiss_classifier = ActStoppingCriterion(
             gm_mask_data, vent_csf_in_dwi_data)
         del background
-    elif tiss_class == "bin":
+    elif tiss_class == "wm":
         tiss_classifier = BinaryStoppingCriterion(
             np.asarray(
                 intersect_masks(
                     [
                         math_img("img > 0.0", img=mask_img),
                         math_img("img > 0.0", img=wm_img),
+                        math_img("img > 0.0", img=B0_mask_img),
                     ],
                     threshold=1,
                     connected=False,
@@ -164,7 +173,19 @@ def prep_tissues(
         )
     elif tiss_class == "wb":
         tiss_classifier = BinaryStoppingCriterion(
-            np.asarray(mask_img.dataobj).astype("bool")
+            np.asarray(
+                intersect_masks(
+                    [
+                        math_img("img > 0.0", img=mask_img),
+                        math_img("img > 0.0", img=B0_mask_img),
+                        nib.Nifti1Image(np.invert(
+                            vent_csf_in_dwi_data.astype('bool')).astype('int'),
+                                        affine=mask_img.affine),
+                    ],
+                    threshold=1,
+                    connected=False,
+                ).dataobj
+            )
         )
     else:
         raise ValueError("Tissue classifier cannot be none.")
@@ -173,6 +194,7 @@ def prep_tissues(
     mask_img.uncache()
     gm_img.uncache()
     wm_img.uncache()
+    B0_mask_img.uncache()
 
     return tiss_classifier
 
@@ -200,7 +222,8 @@ def create_density_map(
     dwi_img : Nifti1Image
         Dwi data stored as a Nifti1image object.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
     conn_model : str
@@ -208,8 +231,8 @@ def create_density_map(
     target_samples : int
         Total number of streamline samples specified to generate streams.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -228,9 +251,11 @@ def create_density_map(
     Returns
     -------
     streams : str
-        File path to saved streamline array sequence in DTK-compatible trackvis (.trk) format.
+        File path to saved streamline array sequence in DTK-compatible
+        trackvis (.trk) format.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     dm_path : str
         File path to fiber density map Nifti1Image.
     """
@@ -250,7 +275,8 @@ def create_density_map(
         namer_dir,
         "/density_map_",
         "%s" % (network + "_" if network is not None else ""),
-        "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
+        "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else
+                ""),
         conn_model,
         "_",
         target_samples,
@@ -341,19 +367,21 @@ def track_ensemble(
     min_length : int
         Minimum fiber length threshold in mm.
     waymask : str
-        Path to a Nifti1Image in native diffusion space to constrain tractography.
+        Path to a Nifti1Image in native diffusion space to constrain
+        tractography.
     B0_mask : str
         File path to B0 brain mask.
     max_length : int
         Maximum number of steps to restrict tracking.
     n_seeds_per_iter : int
-        Number of seeds from which to initiate tracking for each unique ensemble combination.
-        By default this is set to 200.
+        Number of seeds from which to initiate tracking for each unique
+        ensemble combination. By default this is set to 200.
     particle_count
         pft_back_tracking_dist : float
         Distance in mm to back track before starting the particle filtering
         tractography. The total particle filtering tractography distance is
-        equal to back_tracking_dist + front_tracking_dist. By default this is set to 2 mm.
+        equal to back_tracking_dist + front_tracking_dist. By default this is
+        set to 2 mm.
     pft_front_tracking_dist : float
         Distance in mm to run the particle filtering tractography after the
         the back track distance. The total particle filtering tractography
@@ -407,21 +435,21 @@ def track_ensemble(
             print("%s%s" % ("Curvature: ", curv_thr))
 
             # Instantiate DirectionGetter
-            if directget == "prob":
+            if directget == "prob" or directget == "probabilistic":
                 dg = ProbabilisticDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
                     sphere=sphere,
                     min_separation_angle=min_separation_angle,
                 )
-            elif directget == "clos":
+            elif directget == "clos" or directget == "closest":
                 dg = ClosestPeakDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
                     sphere=sphere,
                     min_separation_angle=min_separation_angle,
                 )
-            elif directget == "det":
+            elif directget == "det" or directget == "deterministic":
                 dg = DeterministicMaximumDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
@@ -444,7 +472,8 @@ def track_ensemble(
                 )
                 if len(seeds) == 0:
                     raise RuntimeWarning(
-                        "Warning: No valid seed points found in wm-gm interface..."
+                        "Warning: No valid seed points found in wm-gm "
+                        "interface..."
                     )
 
                 # print(seeds)
@@ -509,7 +538,8 @@ def track_ensemble(
                 )
 
                 if str(min_length) != "0":
-                    roi_proximal_streamlines = nib.streamlines.array_sequence.ArraySequence(
+                    roi_proximal_streamlines = nib.streamlines.\
+                        array_sequence.ArraySequence(
                         [
                             s
                             for s in roi_proximal_streamlines
@@ -543,7 +573,8 @@ def track_ensemble(
                 stream_counter = stream_counter + len(out_streams)
 
                 # Cleanup memory
-                del seeds, roi_proximal_streamlines, streamline_generator, out_streams
+                del seeds, roi_proximal_streamlines, streamline_generator, \
+                    out_streams
                 gc.collect()
             del dg
 

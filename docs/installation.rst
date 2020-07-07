@@ -13,6 +13,33 @@ Prepared Environment (Python 3.6+).
 Using a local container method is highly recommended.
 Once you are ready to run pynets, see Usage_ for details.
 
+---------------------
+Hardware Requirements
+---------------------
+PyNets is designed for maximal scalability-- it can be run on a supercomputer,
+but it can also be run on your laptop. Nevertheless, exploring a larger
+grid-space of the connectome "multiverse" can be accomplished faster and more
+easily on a supercomputer, even if optimization reveals a clear connectome
+recipe that ultimately only requires samples in practice (e.g. a few select
+combinations for purposes of predictive algorithm deployment).
+
+With that in mind, the minimal hardware specs required to run PyNets,
+regardless of Linear vs. parallel execution, is 2 vCPUs and at least 6 GB of
+RAM. The recommended hardware, however, for single-subject ensemble sampling
+is at least 4-8 vCPU's and 16-24 GB of RAM (e.g. newer desktops and high-end
+laptops). On AWS and supercomputer clusters, however, PyNets is almost
+infinitely scalable-- because it relies on a forkserver for multiprocessing,
+it will auto-optimize its concurrency based on however many cores and memory
+are made available to it in an embaressingly parallelizable manner.
+
+    .. note::
+        Another important ceiling to consider is I/O. Be sure that whe you
+        specify the working directory for a PyNets run using the `-work` flag,
+        that it be to a location on disk that allows for more intensive I/O
+        operations. Locally, this would likely be a directory like '/tmp/work'
+        (the default). And on a supercomputer cluster, this would likely be
+        $SCRATCH, $DATA, or any location designated for flash-storage.
+
 Docker Container
 ================
 
@@ -175,7 +202,18 @@ is found in the `Dockerfile <https://github.com/dPys/PyNets/blob/master/Dockerfi
 On a functional Python 3.6 (or above) environment with ``pip`` installed,
 PyNets can be installed using the habitual command: ::
 
-    pip install pynets --user
+    [sudo] pip install pynets [--user]
+
+or ::
+
+    # Install git-lfs
+    brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux)
+    git lfs install --skip-repo
+
+    # Clone the repository and install
+    git clone https://github.com/dpys/pynets
+    cd PyNets
+    [sudo] python setup.py install [--user]
 
 External Dependencies
 ---------------------
@@ -187,4 +225,13 @@ PyNets requires some other neuroimaging software tools that are
 not handled by the Python's packaging system (Pypi) used to deploy
 the ``pynets`` package:
 
-- FSL_ (version >=5.0.9)
+- FSL_ (version >=5.0.9). See `<https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>`_
+
+    .. note::
+        If you are using a debian/ubuntu OS, installing FSL can be installed using neurodebian: ::
+
+        [sudo] curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list
+        [sudo] apt-key add {path to PyNets base directory}/docker/files/neurodebian.gpg
+        [sudo] apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true
+        [sudo] apt-get update
+        [sudo] apt-get install -y fsl-core

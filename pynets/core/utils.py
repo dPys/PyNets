@@ -1457,6 +1457,22 @@ def merge_dicts(x, y):
     return z
 
 
+def pkl_parcel_list(working_dir, parcel_list):
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    if isinstance(parcel_list, list):
+        out_path = f"{working_dir}/parcel_list.pkl"
+        with open(out_path, 'wb') as f:
+            pickle.dump(parcel_list, f, protocol=2)
+        f.close()
+        return out_path
+    else:
+        return parcel_list
+
+
 def timeout(seconds):
     """
     Timeout function for hung calculations.

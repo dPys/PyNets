@@ -7,6 +7,7 @@ Copyright (C) 2017
 """
 import warnings
 import numpy as np
+import indexed_gzip
 # from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
@@ -128,21 +129,23 @@ def workflow_selector(
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not successfully extracted from runconfig.yaml"
+                "ERROR: available functional models not successfully extracted"
+                " from runconfig.yaml"
             )
             sys.exit(0)
         try:
             struct_models = hardcoded_params["available_models"]["struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not successfully extracted from runconfig.yaml"
+                "ERROR: available structural models not successfully extracted"
+                " from runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
-        print("Parsing multimodal models...")
+        # print("Parsing multimodal models...")
         func_model_list = []
         dwi_model_list = []
         if conn_model_list is not None:
@@ -161,7 +164,8 @@ def workflow_selector(
                 dwi_model_list = None
         else:
             raise RuntimeError(
-                "ERROR: Multimodal fMRI-dMRI pipeline specified, but only one connectivity model "
+                "ERROR: Multimodal fMRI-dMRI pipeline specified, but only one"
+                " connectivity model "
                 "specified.")
             sys.exit(0)
     elif (dwi_file is not None) and (func_file is None):
@@ -513,7 +517,7 @@ def workflow_selector(
 
     if multimodal is True:
         # Create input/output nodes
-        print("\nRunning Multimodal Workflow...")
+        # print("Running Multimodal Workflow...")
         pass_meta_ins_multi_node = pe.Node(
             niu.Function(
                 input_names=[
@@ -715,7 +719,7 @@ def workflow_selector(
         )
 
     else:
-        print("Running Unimodal Workflow...")
+        # print("Running Unimodal Workflow...")
 
         if dwi_file:
             pass_meta_ins_struct_node = pe.Node(
@@ -1080,13 +1084,15 @@ def workflow_selector(
                         omni_embedding_node_struct,
                         [("est_path_iterlist", "est_path_iterlist")],
                     ),
-                    (meta_inputnode, omni_embedding_node_struct, [("ID", "ID")]),
+                    (meta_inputnode, omni_embedding_node_struct,
+                    [("ID", "ID")]),
                     (
                         pass_meta_ins_struct_node,
                         ase_embedding_node_struct,
                         [("est_path_iterlist", "est_path_iterlist")],
                     ),
-                    (meta_inputnode, ase_embedding_node_struct, [("ID", "ID")]),
+                    (meta_inputnode, ase_embedding_node_struct,
+                     [("ID", "ID")]),
                 ]
             )
     if multimodal is True:
@@ -1300,9 +1306,12 @@ def dmri_connectometry(
     min_length_list,
     outdir,
 ):
-    """A function interface for generating a dMRI connectometry nested workflow"""
+    """
+    A function interface for generating a dMRI connectometry nested workflow
+    """
     import itertools
     import pkg_resources
+    import nibabel as nib
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
@@ -1339,6 +1348,13 @@ def dmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
+        try:
+            nib.load(template)
+            nib.load(template_mask)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load template {template_name} image or template "
+                  f"mask. Do you have git-lfs installed?")
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
@@ -1693,7 +1709,8 @@ def dmri_connectometry(
             run_tracking_node_iterables.append(("directget", multi_directget))
             run_tracking_node_iterables.append(("conn_model", conn_model_list))
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("min_length", "min_length")])]
+                [(inputnode, run_tracking_node,
+                  [("min_length", "min_length")])]
             )
         elif not conn_model_list and multi_directget and min_length_list:
             min_length_directget_combo = list(
@@ -1704,31 +1721,38 @@ def dmri_connectometry(
             run_tracking_node_iterables.append(("min_length", min_length_list))
             run_tracking_node_iterables.append(("directget", multi_directget))
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("conn_model", "conn_model")])]
+                [(inputnode, run_tracking_node,
+                  [("conn_model", "conn_model")])]
             )
         elif conn_model_list and not multi_directget and not min_length_list:
             run_tracking_node_iterables.append(("conn_model", conn_model_list))
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("directget", "directget")])]
+                [(inputnode, run_tracking_node,
+                  [("directget", "directget")])]
             )
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("min_length", "min_length")])]
+                [(inputnode, run_tracking_node,
+                  [("min_length", "min_length")])]
             )
         elif not conn_model_list and not multi_directget and min_length_list:
             run_tracking_node_iterables.append(("min_length", min_length_list))
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("conn_model", "conn_model")])]
+                [(inputnode, run_tracking_node,
+                  [("conn_model", "conn_model")])]
             )
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("directget", "directget")])]
+                [(inputnode, run_tracking_node,
+                  [("directget", "directget")])]
             )
         elif not conn_model_list and multi_directget and not min_length_list:
             run_tracking_node_iterables.append(("directget", multi_directget))
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("conn_model", "conn_model")])]
+                [(inputnode, run_tracking_node,
+                  [("conn_model", "conn_model")])]
             )
             dmri_connectometry_wf.connect(
-                [(inputnode, run_tracking_node, [("min_length", "min_length")])]
+                [(inputnode, run_tracking_node,
+                  [("min_length", "min_length")])]
             )
         elif conn_model_list and multi_directget and min_length_list:
             all_combo = list(
@@ -1911,8 +1935,10 @@ def dmri_connectometry(
     )
 
     # Set atlas iterables and logic for multiple atlas useage
-    if (multi_atlas is not None and user_atlas_list is None and uatlas is None) or (
-            multi_atlas is None and atlas is None and user_atlas_list is not None):
+    if (multi_atlas is not None and user_atlas_list is None and uatlas is
+        None) or (
+            multi_atlas is None and atlas is None and user_atlas_list is not
+            None):
         # print('\n\n\n\n')
         # print('No flexi-atlas1')
         # print('\n\n\n\n')
@@ -1925,7 +1951,8 @@ def dmri_connectometry(
         fetch_nodes_and_labels_node.iterables = atlas_iters
 
     elif (
-        (atlas is not None and uatlas is None) or (atlas is None and uatlas is not None)
+        (atlas is not None and uatlas is None) or (atlas is None and uatlas is
+                                                   not None)
     ) and (multi_atlas is None and user_atlas_list is None):
         # print('\n\n\n\n')
         # print('No flexi-atlas2')
@@ -3344,6 +3371,7 @@ def fmri_connectometry(
     import itertools
     import pkg_resources
     import os.path as op
+    import nibabel as nib
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
@@ -3377,6 +3405,13 @@ def fmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
+        try:
+            nib.load(template)
+            nib.load(template_mask)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load template {template_name} image or template "
+                  f"mask. Do you have git-lfs installed?")
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)

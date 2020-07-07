@@ -549,12 +549,22 @@ def streams2graph(
             load_tractogram(
                 streams,
                 roi_img,
-                to_space=Space.RASMM,
                 to_origin=Origin.NIFTI,
-                bbox_valid_check=True,
+                to_space=Space.VOXMM
             ).streamlines
         )
     ]
+
+    # from fury import actor, window
+    # renderer = window.Renderer()
+    # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
+    #                                         color=(50, 50, 50), opacity=0.05)
+    # renderer.add(template_actor)
+    # lines_actor = actor.streamtube(streamlines, window.colors.orange,
+    #                                linewidth=0.3)
+    # renderer.add(lines_actor)
+    # window.show(renderer)
+
     roi_img.uncache()
 
     if fa_wei is True:
@@ -607,6 +617,7 @@ def streams2graph(
 
         # get labels for label_volume
         lab_arr = atlas_data[i, j, k]
+        # print(lab_arr)
         endlabels = []
         for ix, lab in enumerate(np.unique(lab_arr).astype("uint32")):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
@@ -615,8 +626,9 @@ def streams2graph(
                 except BaseException:
                     bad_idxs.append(ix)
                     print(
-                        f"Label {lab} missing from parcellation. Check registration and ensure valid input "
-                        f"parcellation file.")
+                        f"Label {lab} missing from parcellation. Check "
+                        f"registration and ensure valid input parcellation "
+                        f"file.")
 
         edges = combinations(endlabels, 2)
         for edge in edges:
@@ -654,9 +666,9 @@ def streams2graph(
             g.edges[u, v].update({"weight": np.nanmean(vals)})
 
     # Convert to numpy matrix
-    conn_matrix_raw = nx.to_numpy_array(g)
+    conn_matrix_raw = nx.to_numpy_array(g, weight='weight')
 
-    # Impose symmetry
+    # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
     print("Graph Building Complete:\n", str(time.time() - start))

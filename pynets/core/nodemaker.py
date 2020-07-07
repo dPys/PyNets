@@ -17,7 +17,8 @@ warnings.filterwarnings("ignore")
 
 def get_sphere(coords, r, vox_dims, dims):
     """
-    Return all points within r mm of coords. Generates a cube and then discards all points outside sphere.
+    Return all points within r mm of coords. Generates a cube and then
+    discards all points outside sphere.
 
     Parameters
     ----------
@@ -34,8 +35,9 @@ def get_sphere(coords, r, vox_dims, dims):
     Returns
     -------
     neighbors : list
-        A list of indices, within the dimensions of the image, that fall within a spherical neighborhood defined by
-        the specified error radius of the list of the input coordinates.
+        A list of indices, within the dimensions of the image, that fall
+        within a spherical neighborhood defined by the specified error radius
+        of the list of the input coordinates.
 
     References
     ----------
@@ -106,14 +108,14 @@ def create_parcel_atlas(parcel_list):
 
 def fetch_nilearn_atlas_coords(atlas):
     """
-    Meta-API for nilearn's coordinate atlas fetching API to retrieve any publically-available coordinate
-    atlas by string name.
+    Meta-API for nilearn's coordinate atlas fetching API to retrieve any
+    publically-available coordinate atlas by string name.
 
     Parameters
     ----------
     atlas : str
-        Name of a Nilearn-hosted coordinate atlas supported for fetching. See Nilearn's datasets.atlas module for
-        more detailed reference.
+        Name of a Nilearn-hosted coordinate atlas supported for fetching. See
+        Nilearn's datasets.atlas module for more detailed reference.
 
     Returns
     -------
@@ -122,7 +124,8 @@ def fetch_nilearn_atlas_coords(atlas):
     atlas_name : str
         Name of atlas parcellation (can differ slightly from fetch API string).
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
+        List of RSN's and their associated cooordinates, if predefined
+        uniquely for a given atlas.
     labels : list
         List of string labels corresponding to atlas nodes.
     """
@@ -150,7 +153,8 @@ def fetch_nilearn_atlas_coords(atlas):
 
     if len(coords) <= 1:
         raise ValueError(
-            "\nERROR: No coords returned for specified atlas! Ensure an active internet connection."
+            "\nERROR: No coords returned for specified atlas! Ensure an active"
+            " internet connection."
         )
 
     assert len(coords) == len(labels)
@@ -160,23 +164,26 @@ def fetch_nilearn_atlas_coords(atlas):
 
 def nilearn_atlas_helper(atlas, parc):
     """
-    Meta-API for nilearn's parcellation-based atlas fetching API to retrieve any publically-available parcellation-based
-    atlas by string name.
+    Meta-API for nilearn's parcellation-based atlas fetching API to retrieve
+    any publically-available parcellation-based atlas by string name.
 
     Parameters
     ----------
     atlas : str
-        Name of a Nilearn-hosted parcellation/label-based atlas supported for fetching.
-        See Nilearn's datasets.atlas module for more detailed references.
+        Name of a Nilearn-hosted parcellation/label-based atlas supported for
+        fetching. See Nilearn's datasets.atlas module for more detailed
+        references.
     parc : bool
-        Indicates whether to use the raw parcels as ROI nodes instead of coordinates at their center-of-mass.
+        Indicates whether to use the raw parcels as ROI nodes instead of
+        coordinates at their center-of-mass.
 
     Returns
     -------
     labels : list
         List of string labels corresponding to atlas nodes.
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined uniquely for a given atlas.
+        List of RSN's and their associated cooordinates, if predefined
+        uniquely for a given atlas.
     uatlas : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
@@ -244,7 +251,8 @@ def mmToVox(img_affine, mmcoords):
     Parameters
     ----------
     img_affine : array
-        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
+        4 x 4 2D Numpy array that is the affine of the image space that the
+        coordinates inhabit.
     mmcoords : list
         List of [x, y, z] or (x, y, z) coordinates in mm-space.
     """
@@ -258,7 +266,8 @@ def VoxTomm(img_affine, voxcoords):
     Parameters
     ----------
     img_affine : array
-        4 x 4 2D Numpy array that is the affine of the image space that the coordinates inhabit.
+        4 x 4 2D Numpy array that is the affine of the image space that the
+        coordinates inhabit.
     voxcoords : list
         List of [x, y, z] or (x, y, z) coordinates in voxel-space.
     """
@@ -275,8 +284,8 @@ def get_node_membership(
         perc_overlap=0.75,
         error=4):
     """
-    Evaluate the affinity of any arbitrary list of coordinate or parcel nodes for a user-specified RSN based on
-    Yeo-7 or Yeo-17 definitions.
+    Evaluate the affinity of any arbitrary list of coordinate or parcel nodes
+    for a user-specified RSN based on Yeo-7 or Yeo-17 definitions.
 
     Parameters
     ----------
@@ -329,6 +338,18 @@ def get_node_membership(
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = [
@@ -401,7 +422,8 @@ def get_node_membership(
 
     if not nets_ref_txt:
         raise ValueError(
-            f"Network: {str(network)} not found!\nSee valid network names using the `--help` flag with "
+            f"Network: {str(network)} not found!\nSee valid network names "
+            f"using the `--help` flag with "
             f"`pynets`")
 
     # Create membership dictionary
@@ -417,7 +439,10 @@ def get_node_membership(
             "Z"])
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
-    par_img = nib.load(par_file)
+    try:
+        par_img = nib.load(par_file)
+    except indexed_gzip.ZranError as e:
+        print(e, "\nCannot load RSN reference image. Do you have git-lfs installed?")
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
     RSNmask = np.asarray(par_img.dataobj)[:, :, :, RSN_ix]
 
@@ -1148,12 +1173,19 @@ def node_gen_masking(
         Path to directory containing subject derivative data for given run.
     """
     from pynets.core import nodemaker
-    import os.path as op
-
+    import os
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
@@ -1167,6 +1199,9 @@ def node_gen_masking(
         == len(labels)
         == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
     )
+
+    if parcel_pkl_file:
+        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1220,6 +1255,15 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     except ImportError:
         import _pickle as pickle
     from pynets.core import nodemaker
+    import os
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
 
@@ -1230,6 +1274,9 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         == len(labels)
         == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
     )
+
+    if parcel_pkl_file:
+        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 

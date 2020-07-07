@@ -9,9 +9,9 @@ def sweep_directory(
         derivatives_path,
         modality,
         space,
-        func_desc,
         subj=None,
-        sesh=None):
+        sesh=None,
+        run=None):
     """
     Given a BIDS derivatives directory containing preprocessed functional MRI or diffusion MRI data
     (e.g. fMRIprep or dMRIprep), crawls the outputs and prepares necessary inputs for the PyNets pipeline.
@@ -98,8 +98,9 @@ def sweep_directory(
             # our query for the anatomical image
             anat_query = {
                 "datatype": "anat",
-                "suffix": "T1w",
-                "extensions": [".nii", ".nii.gz"],
+                "suffix": ["T1w", "anat"],
+                "extension": [".nii", ".nii.gz"],
+                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
@@ -107,7 +108,10 @@ def sweep_directory(
             # make a query to find the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
             anat = [
-                i for i in anat if "MNI" not in i.filename and "space" not in i.filename]
+                i for i in anat if "MNI" not in i.filename and "space" not in
+                                   i.filename]
+            if len(anat) > 1 and run is not None:
+                anat = [i for i in anat if f"run-{run}" in i]
 
             if anat:
                 for an in anat:
@@ -117,7 +121,8 @@ def sweep_directory(
             mask_query = {
                 "datatype": "anat",
                 "suffix": "mask",
-                "extensions": [".nii", ".nii.gz"],
+                "extension": [".nii", ".nii.gz"],
+                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
@@ -131,13 +136,22 @@ def sweep_directory(
                 dwi = layout.get(
                     **merge_dicts(
                         mod_query,
-                        {"extensions": [".nii", ".nii.gz"], "suffix": ["dwi"]},
+                        {"extension": [".nii", ".nii.gz"],
+                         "suffix": ["dwi"]
+                         },
                     )
                 )
+                if len(dwi) > 1 and run is not None:
+                    dwi = [i for i in dwi if f"run-{run}" in i]
                 bval = layout.get(
-                    **merge_dicts(mod_query, {"extensions": "bval"}))
+                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"]}))
+                if len(bval) > 1 and run is not None:
+                    bval = [i for i in bval if f"run-{run}" in i]
                 bvec = layout.get(
-                    **merge_dicts(mod_query, {"extensions": "bvec"}))
+                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"]}))
+                if len(bvec) > 1 and run is not None:
+                    bvec = [i for i in bvec if f"run-{run}" in i]
+
                 if dwi and bval and bvec:
                     if not mask:
                         for (dw, bva, bve) in zip(dwi, bval, bvec):
@@ -158,17 +172,33 @@ def sweep_directory(
                     **merge_dicts(
                         mod_query,
                         {
-                            "extensions": [".nii", ".nii.gz"],
-                            "suffix": ["bold", "masked", func_desc],
-                            "space": space,
+                            "extension": [".nii", ".nii.gz"],
+                            "suffix": ["bold"],
                         },
                     )
                 )
-                func = [i for i in func if func_desc in i.filename]
+                if len(func) > 1:
+                    func = [i for i in func if space in i]
+                    if len(func) > 1 and run is not None:
+                        func = [i for i in func if f"run-{run}" in i]
+                elif len(func) == 1:
+                    if "MNI" in func[0].filename:
+                        raise ValueError('MNI-space BOLD images are not '
+                                         'currently supported, but are all '
+                                         'that are currently detected. '
+                                         'Is a T1w/anat-coregistered '
+                                         'preprocessed BOLD image available? '
+                                         'See documentation for more details.')
+                else:
+                    raise ValueError('No valid BOLD derivative data found!')
                 conf = layout.get(
-                    **merge_dicts(mod_query, {"extensions": [".tsv", ".tsv.gz"]})
+                    **merge_dicts(mod_query, {"extension":
+                                                  [".tsv", ".tsv.gz"]})
                 )
-                conf = [i for i in conf if "confounds_regressors" in i.filename]
+                conf = [i for i in conf if "confounds_regressors" in
+                        i.filename]
+                if len(conf) > 1 and run is not None:
+                    conf = [i for i in conf if f"run-{run}" in i]
 
                 if func:
                     if not conf and not mask:
@@ -200,14 +230,14 @@ def sweep_directory(
 
     if modality == "dwi":
         if not len(dwis) or not len(bvals) or not len(bvecs):
-            print("No dMRI files found in BIDs spec. Skipping...\n")
+            print("No dMRI files found in BIDS spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return None, None, dwis, bvals, bvecs, anats, masks, subjs, seshs
 
     elif modality == "func":
         if not len(funcs):
-            print("No fMRI files found in BIDs spec. Skipping...\n")
+            print("No fMRI files found in BIDS spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return funcs, confs, None, None, None, anats, masks, subjs, seshs
@@ -258,8 +288,17 @@ def get_bids_parser():
     parser.add_argument(
         "--session_label",
         help="""The label(s) of the session that should be analyzed. The label  corresponds to
-                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter
+                         ses-<session_label> from the BIDS spec (so it does not include "ses-"). If this parameter
                          is not provided all sessions should be analyzed. Multiple sessions can be specified with a
+                         space separated list.""",
+        nargs="+",
+        default=None,
+    )
+    parser.add_argument(
+        "--run_label",
+        help="""The label(s) of the run, if any, within a given session that should be analyzed. The label corresponds to
+                         run-<run_label> from the BIDS spec (so it does not include "run-"). If this parameter
+                         is not provided all runs should be analyzed. Multiple runs can be specified with a
                          space separated list.""",
         nargs="+",
         default=None,
@@ -410,6 +449,7 @@ def main():
     bids_args = get_bids_parser().parse_args()
     participant_label = bids_args.participant_label
     session_label = bids_args.session_label
+    run = bids_args.run_label
     modality = bids_args.modality
     bids_config = bids_args.config
     analysis_level = bids_args.analysis_level
@@ -457,7 +497,6 @@ def main():
             sys.exit()
 
         space = hardcoded_params["bids_defaults"]["space"][0]
-        func_desc = hardcoded_params["bids_defaults"]["desc"][0]
     stream.close()
 
     # S3
@@ -620,8 +659,8 @@ def main():
                     bids_dir,
                     modality=mod,
                     space=space,
-                    func_desc=func_desc,
                     sesh=session_label,
+                    run=run
                 )
                 if mod == "func":
                     if i == 0:
@@ -649,8 +688,8 @@ def main():
                 bids_dir,
                 modality=modality[0],
                 space=space,
-                func_desc=func_desc,
                 sesh=session_label,
+                run=run
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     elif analysis_level == "participant":
@@ -661,9 +700,9 @@ def main():
                     bids_dir,
                     modality=mod,
                     space=space,
-                    func_desc=func_desc,
                     subj=participant_label,
                     sesh=session_label,
+                    run=run
                 )
                 if mod == "func":
                     if i == 0:
@@ -691,9 +730,9 @@ def main():
                 bids_dir,
                 modality=modality[0],
                 space=space,
-                func_desc=func_desc,
                 subj=participant_label,
                 sesh=session_label,
+                run=run
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     else:

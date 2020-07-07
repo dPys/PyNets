@@ -316,6 +316,7 @@ def get_parser():
             "maximum",
             "variance",
             "standard_deviation",
+            "None"
         ],
         help="Include this flag if you are running functional connectometry using parcel labels and "
         "wish to specify the name of a specific function (i.e. other than the mean) to reduce the "
@@ -578,18 +579,16 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version:{pynets.__version__}\n")
+        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: {pynets.__version__}")
     except ImportError:
         print(
             "PyNets not installed! Ensure that you are using the correct python version."
         )
 
-    print(Style.RESET_ALL)
-
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
-    print(f"{Fore.WHITE}{timestamp}")
+    print(f"{Fore.MAGENTA}{timestamp}")
     print(Style.RESET_ALL)
     start_time = timeit.default_timer()
 
@@ -675,12 +674,16 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         from multiprocessing import cpu_count
-
-        nthreads = cpu_count()
-        procmem = [int(nthreads), int(float(nthreads) * 2)]
+        import psutil
+        nthreads = cpu_count() - 1
+        procmem = [int(nthreads),
+                   int(list(psutil.virtual_memory())[4]/1000000000)]
     else:
         procmem = list(eval(str(resources)))
-    thr = float(args.thr)
+    if args.thr is None:
+        thr = float(1.0)
+    else:
+        thr = float(args.thr)
     node_size = args.ns
     if node_size:
         if (isinstance(node_size, list)) and (len(node_size) > 1):
@@ -1287,10 +1290,13 @@ def build_workflow(args, retval):
         or multi_subject_multigraph
     ):
         print(
-            f"{Fore.GREEN}Running workflow of workflows across multiple "
-            f"subjects...")
+            f"{Fore.YELLOW}Running workflow of workflows across multiple "
+            f"subjects:\n")
+        for i in ID:
+            print(f"{Fore.BLUE}{str(ID)}")
     elif func_file_list is None and dwi_file_list is None:
-        print(f"{Fore.GREEN}Running workflow for single subject: {Fore.BLUE}{str(ID)}")
+        print(f"{Fore.YELLOW}Running workflow for single subject: "
+              f"{Fore.BLUE}{str(ID)}\n")
     if (
         graph is None
         and multi_graph is None
@@ -1298,11 +1304,13 @@ def build_workflow(args, retval):
         and multi_subject_multigraph is None
     ):
         if network is not None:
-            print(f"{Fore.GREEN}Selecting one RSN subgraph: {Fore.BLUE}{network}")
+            print(f"{Fore.GREEN}Selecting one RSN subgraph: "
+                  f"{Fore.BLUE}{network}")
         elif multi_nets is not None:
             network = None
             print(
-                f"{Fore.GREEN}Iterating pipeline across {Fore.BLUE}{len(multi_nets)} RSN subgraphs:"
+                f"{Fore.GREEN}Iterating pipeline across "
+                f"{Fore.BLUE}{len(multi_nets)} RSN subgraphs:"
             )
             print(
                 f"{Fore.BLUE}{str(', '.join(str(n) for n in multi_nets))}"
@@ -1311,7 +1319,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Using whole-brain pipeline...")
         if node_size_list:
             print(
-                f"{Fore.GREEN}Growing spherical nodes across multiple radius sizes:"
+                f"{Fore.GREEN}Growing spherical nodes across multiple radius "
+                f"sizes:"
             )
             print(f"{str(', '.join(str(n) for n in node_size_list))}")
             node_size = None
@@ -1324,12 +1333,14 @@ def build_workflow(args, retval):
         if func_file or func_file_list:
             if smooth_list:
                 print(
-                    f"{Fore.GREEN}Applying smoothing to node signal at multiple FWHM mm values:")
+                    f"{Fore.GREEN}Applying smoothing to node signal at "
+                    f"multiple FWHM mm values:")
                 print(
                     f"{Fore.BLUE}{str(', '.join(str(n) for n in smooth_list))}")
             elif float(smooth) > 0:
                 print(
-                    f"{Fore.GREEN}Applying smoothing to node signal at: {Fore.BLUE}{smooth}FWHM mm...")
+                    f"{Fore.GREEN}Applying smoothing to node signal at: "
+                    f"{Fore.BLUE}{smooth}FWHM mm...")
             else:
                 smooth = 0
 
@@ -1659,12 +1670,24 @@ def build_workflow(args, retval):
             else:
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
-        if target_samples:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
+        if directget:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} {Fore.GREEN}direction getting...")
+        else:
+            print(f"{Fore.GREEN}Iterating direction getting:")
+            for dg in multi_directget:
+                print(f"{Fore.BLUE}{dg}")
         if min_length:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} minimum streamline length...")
+        else:
+            print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
+            for ml in min_length_list:
+                print(f"{Fore.BLUE}{ml}")
+        if target_samples:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
+        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking with {Fore.BLUE}{tiss_class} {Fore.GREEN}tissue classification...")
+        print(f"{Fore.GREEN}Ensemble tractography step sizes: {Fore.BLUE}{step_list} {Fore.GREEN}and curvature thresholds: {Fore.BLUE}{curv_thr_list}")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
-        print(f"{Fore.GREEN}Running dmri connectometry only...")
+        print(f"\n{Fore.WHITE}Running dmri connectometry only...")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
@@ -1694,7 +1717,7 @@ def build_workflow(args, retval):
         clust_type_list = None
         multimodal = False
     elif (func_file or func_file_list) and not (dwi_file or dwi_file_list):
-        print(f"{Fore.GREEN}Running fmri connectometry only...")
+        print(f"\n{Fore.WHITE}Running fmri connectometry only...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
@@ -1709,7 +1732,7 @@ def build_workflow(args, retval):
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
-        print(f"{Fore.GREEN}Running joint fMRI-dMRI connectometry...")
+        print(f"\n{Fore.WHITE}Running joint fMRI-dMRI connectometry...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")

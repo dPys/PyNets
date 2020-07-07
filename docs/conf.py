@@ -145,7 +145,7 @@ html_theme = 'sphinx_rtd_theme'
 # html_style = '_static/nature.css'
 # html_style = '_static/default.css'
 html_css_files = [
-    'css/rtd_dark.css',
+    '_static/css/rtd_dark.css',
 ]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -157,7 +157,7 @@ html_css_files = [
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-# html_title = u'pynets vversion'
+# html_title = u'pynets version'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = 'PyNets'
@@ -218,7 +218,7 @@ html_context = {
 # html_show_sphinx = True
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-# html_show_copyright = True
+html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
@@ -250,16 +250,16 @@ htmlhelp_basename = 'pynetsdoc'
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    # 'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
 
     # The font size ('10pt', '11pt' or '12pt').
-    # 'pointsize': '10pt',
+    'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    # 'preamble': '',
+    'preamble': '',
 
     # Latex figure (float) alignment
-    # 'figure_align': 'htbp',
+    'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -273,7 +273,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-# latex_logo = '_static/link_communities.png'
+# latex_logo = 'logo.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.

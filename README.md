@@ -14,21 +14,27 @@ PyNets is a tool for sampling and analyzing varieties of individual structural a
 
 Install
 -------
-Dockerhub (preferred):
+## Dockerhub (preferred):
 ```
 docker pull dpys/pynets:latest
 ```
 
-Manual (Requires a local dependency install of FSL version >=5.0.9 and forked version of Nilearn 0.6.0):
+## Manual
+(Requires a local dependency install of FSL version >=5.0.9. See:
+<https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>):
 ```
-pip install pynets --user
+[sudo] pip install pynets [--user]
 ```
 or
 ```
+# Install git-lfs
+brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux)
+git lfs install --skip-repo
+
+# Clone the repository and install
 git clone https://github.com/dpys/pynets
 cd PyNets
-pip install -r requirements.txt --user
-python setup.py install
+[sudo] python setup.py install [--user]
 ```
 
 Documentation

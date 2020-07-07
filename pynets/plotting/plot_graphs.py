@@ -14,7 +14,8 @@ warnings.filterwarnings("ignore")
 matplotlib.use("agg")
 
 
-def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
+def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
+                  dpi_resolution=300):
     """
     Plot a connectivity matrix.
 
@@ -33,9 +34,10 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
+    import matplotlib.ticker as mticker
 
-    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
+    conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
     try:
@@ -43,8 +45,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
             conn_matrix_plt,
             figure=(10, 10),
             labels=labels,
-            vmax=np.abs(np.max(conn_matrix_plt)),
-            vmin=-np.abs(np.max(conn_matrix_plt)),
+            vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 90),
+            vmin=0,
             reorder="average",
             auto_fit=True,
             grid=False,
@@ -53,6 +55,10 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, dpi_resolution=300):
         )
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
+
+    tick_interval = int(np.around(len(labels)/40))
+    plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
@@ -75,14 +81,15 @@ def plot_community_conn_mat(
     labels : list
         List of string labels corresponding to ROI nodes.
     out_path_fig_comm : str
-        File path to save the community-parcellated connectivity matrix image as a .png figure.
+        File path to save the community-parcellated connectivity matrix image
+        as a .png figure.
     community_aff : array
         Community-affiliation vector.
     """
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
-
+    import matplotlib.ticker as mticker
     matplotlib.use("agg")
     # from pynets import thresholding
     from nilearn.plotting import plot_matrix
@@ -105,8 +112,8 @@ def plot_community_conn_mat(
                 conn_matrix_plt,
                 figure=(10, 10),
                 labels=labels,
-                vmax=np.abs(np.max(conn_matrix_plt)),
-                vmin=-np.abs(np.max(conn_matrix_plt)),
+                vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 90),
+                vmin=0,
                 reorder=False,
                 auto_fit=True,
                 grid=False,
@@ -147,6 +154,9 @@ def plot_community_conn_mat(
         )
         total_size += size
 
+    tick_interval = int(np.around(len(labels)/40))
+    plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
     plt.close()
     return
@@ -168,15 +178,17 @@ def plot_conn_mat_func(
     extract_strategy,
 ):
     """
-    API for selecting among various functional connectivity matrix plotting approaches.
+    API for selecting among various functional connectivity matrix plotting
+    approaches.
 
     Parameters
     ----------
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -184,24 +196,26 @@ def plot_conn_mat_func(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g.
+        'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
     """
     import matplotlib.pyplot as plt
     import pkg_resources

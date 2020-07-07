@@ -226,12 +226,12 @@ def get_conn_matrix(
         if conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
             if estimator_shrunk is None:
                 print("\nFetching precision matrix from covariance estimator...\n")
-                conn_matrix = -estimator.precision_
+                conn_matrix = estimator.precision_
             else:
                 print(
                     "\nFetching shrunk precision matrix from covariance estimator...\n"
                 )
-                conn_matrix = -estimator_shrunk.precision_
+                conn_matrix = estimator_shrunk.precision_
         elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
             if estimator_shrunk is None:
                 print("\nFetching covariance matrix from covariance estimator...\n")
@@ -252,7 +252,7 @@ def get_conn_matrix(
         )
         print("\nCalculating QuicGraphLasso precision matrix using skggm...\n")
         model.fit(time_series)
-        conn_matrix = -model.precision_
+        conn_matrix = model.precision_
     elif conn_model == "QuicGraphicalLassoCV":
         try:
             from inverse_covariance import QuicGraphicalLassoCV
@@ -264,7 +264,7 @@ def get_conn_matrix(
         model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
         print("\nCalculating QuicGraphLassoCV precision matrix using skggm...\n")
         model.fit(time_series)
-        conn_matrix = -model.precision_
+        conn_matrix = model.precision_
     elif conn_model == "QuicGraphicalLassoEBIC":
         try:
             from inverse_covariance import QuicGraphicalLassoEBIC
@@ -276,7 +276,7 @@ def get_conn_matrix(
         model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
         print("\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n")
         model.fit(time_series)
-        conn_matrix = -model.precision_
+        conn_matrix = model.precision_
     elif conn_model == "AdaptiveQuicGraphicalLasso":
         try:
             from inverse_covariance import (
@@ -294,7 +294,7 @@ def get_conn_matrix(
                 init_method="cov",), method="binary", )
         print("\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n")
         model.fit(time_series)
-        conn_matrix = -model.estimator_.precision_
+        conn_matrix = model.estimator_.precision_
     else:
         raise ValueError(
             "\nERROR! No connectivity model specified at runtime. Select a valid estimator using the "

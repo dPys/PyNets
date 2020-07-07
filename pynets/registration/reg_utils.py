@@ -130,13 +130,12 @@ def atlas2t1w2dwi_align(
 
     template_img = nib.load(t1_aligned_mni)
     if uatlas_parcels:
-        uatlas_res_template = resample_to_img(
-            nib.load(uatlas_parcels), template_img, interpolation="nearest"
-        )
+        atlas_img = nib.load(uatlas_parcels)
     else:
-        uatlas_res_template = resample_to_img(
-            nib.load(uatlas), template_img, interpolation="nearest"
-        )
+        atlas_img = nib.load(uatlas)
+    uatlas_res_template = resample_to_img(
+        atlas_img, template_img, interpolation="nearest"
+    )
     uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
     uatlas_res_template_data[
         uatlas_res_template_data != uatlas_res_template_data.astype(int)
@@ -261,6 +260,13 @@ def atlas2t1w2dwi_align(
     if not checkConsecutive(unique_a):
         print("Warning! Non-consecutive integers found in parcellation...")
 
+    old_count = len(np.unique(uatlas_res_template_data))
+    new_count = len(unique_a)
+    diff = np.abs(np.int(float(new_count) - float(old_count)))
+    print(f"Previous label count: {old_count}")
+    print(f"New label count: {new_count}")
+    print(f"Labels dropped: {diff}")
+
     atlas_img.uncache()
     atlas_img_corr.uncache()
     atlas_mask_img.uncache()
@@ -382,13 +388,12 @@ def atlas2t1w_align(
 
     template_img = nib.load(t1_aligned_mni)
     if uatlas_parcels:
-        uatlas_res_template = resample_to_img(
-            nib.load(uatlas_parcels), template_img, interpolation="nearest"
-        )
+        atlas_img = nib.load(uatlas_parcels)
     else:
-        uatlas_res_template = resample_to_img(
-            nib.load(uatlas), template_img, interpolation="nearest"
-        )
+        atlas_img = nib.load(uatlas)
+    uatlas_res_template = resample_to_img(
+        atlas_img, template_img, interpolation="nearest"
+    )
     uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
     uatlas_res_template_data[
         uatlas_res_template_data != uatlas_res_template_data.astype(int)
@@ -415,8 +420,8 @@ def atlas2t1w_align(
 
         except BaseException:
             print(
-                "Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
-                "registration.")
+                "Warning: Atlas is not in correct dimensions, or input is low "
+                "quality,\nusing linear template registration.")
 
             regutils.align(
                 aligned_atlas_t1mni,
@@ -461,20 +466,20 @@ def atlas2t1w_align(
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
 
     if not checkConsecutive(unique_a):
-        old_count = len(np.unique(uatlas_res_template_data))
-        new_count = len(unique_a)
-        diff = np.abs(np.int(float(new_count) - float(old_count)))
-        print("\nWarning! Non-consecutive integers found in parcellation...")
-        print(f"Previous label count: {old_count}")
-        print(f"New label count: {new_count}")
-        print(f"Labels dropped: {diff}")
-        if diff > 1:
-            print('Grey-Matter mask too restrictive for this parcellation. '
-                  'Falling back to the T1w mask...')
-            os.system(
-                f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
-                f"{aligned_atlas_gm} 2>/dev/null"
-            )
+        print("\nWarning! non-consecutive integers found in parcellation...")
+    old_count = len(np.unique(uatlas_res_template_data))
+    new_count = len(unique_a)
+    diff = np.abs(np.int(float(new_count) - float(old_count)))
+    print(f"Previous label count: {old_count}")
+    print(f"New label count: {new_count}")
+    print(f"Labels dropped: {diff}")
+    if diff > 1:
+        print('Grey-Matter mask too restrictive for this parcellation. '
+              'Falling back to the T1w mask...')
+        os.system(
+            f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
+            f"{aligned_atlas_gm} 2>/dev/null"
+        )
     template_img.uncache()
 
     return aligned_atlas_gm, aligned_atlas_skull
@@ -1135,10 +1140,6 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
 
     fname = dwi_prep
     bvec_fname = bvecs
-
-    out_dir = f"{out_dir}/reg"
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
 
     out_bvec_fname = (
         f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
