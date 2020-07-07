@@ -1,35 +1,35 @@
 {
     "dwi": {
-            "dg": "['clos']",
-            "ml": "['0']",
-            "mod": "['csa']"
+            "dg": "None",
+            "ml": "None",
+            "mod": "None"
         },
     "func": {
             "ct": "None",
-            "hp": "['0']",
+            "hp": "['0', '0.028']",
             "k": "None",
             "mod": "['partcorr']",
-            "sm": "['0']",
-            "es": "['mean']"
+            "sm": "['0', '4']",
+            "es": "['mean', 'variance']"
         },
     "gen": {
-            "a":  "['DesikanKlein2012']",
+            "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
-            "embed":  "False",
-            "max_thr":  "None",
-            "min_thr":  "None",
-            "mplx":  0,
+            "embed":  "True",
+            "max_thr":  0.80,
+            "min_thr":  0.20,
+            "mplx":  "['0']",
             "mst":  "True",
-            "n":  "['Default']",
+            "n":  "None",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",
             "plt":  "True",
             "spheres":  "False",
-            "step_thr":  "None",
-            "thr":  1.0,
+            "step_thr":  0.10,
+            "thr":  "None",
             "vox":  "'2mm'"
         }
 }

@@ -338,6 +338,18 @@ def get_node_membership(
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import _pickle as pickle
+
+    if isinstance(parcel_list, str):
+        parcel_pkl_file = parcel_list
+        with open(parcel_pkl_file, "rb") as file_:
+            parcel_list = pickle.load(file_)
+        file_.close()
+    else:
+        parcel_pkl_file = None
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = [
@@ -410,7 +422,8 @@ def get_node_membership(
 
     if not nets_ref_txt:
         raise ValueError(
-            f"Network: {str(network)} not found!\nSee valid network names using the `--help` flag with "
+            f"Network: {str(network)} not found!\nSee valid network names "
+            f"using the `--help` flag with "
             f"`pynets`")
 
     # Create membership dictionary
@@ -1095,7 +1108,7 @@ def psycho_naming(coords, node_size):
     return labels
 
 
-def node_gen_masking(
+def node_gen(
     roi,
     coords,
     parcel_list,

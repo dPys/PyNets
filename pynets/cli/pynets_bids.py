@@ -9,7 +9,6 @@ def sweep_directory(
         derivatives_path,
         modality,
         space,
-        func_desc,
         subj=None,
         sesh=None):
     """
@@ -98,8 +97,9 @@ def sweep_directory(
             # our query for the anatomical image
             anat_query = {
                 "datatype": "anat",
-                "suffix": "T1w",
-                "extensions": [".nii", ".nii.gz"],
+                "suffix": ["T1w", "anat"],
+                "extension": [".nii", ".nii.gz"],
+                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
@@ -107,7 +107,8 @@ def sweep_directory(
             # make a query to find the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
             anat = [
-                i for i in anat if "MNI" not in i.filename and "space" not in i.filename]
+                i for i in anat if "MNI" not in i.filename and "space" not in
+                                   i.filename]
 
             if anat:
                 for an in anat:
@@ -117,7 +118,8 @@ def sweep_directory(
             mask_query = {
                 "datatype": "anat",
                 "suffix": "mask",
-                "extensions": [".nii", ".nii.gz"],
+                "extension": [".nii", ".nii.gz"],
+                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
@@ -131,13 +133,17 @@ def sweep_directory(
                 dwi = layout.get(
                     **merge_dicts(
                         mod_query,
-                        {"extensions": [".nii", ".nii.gz"], "suffix": ["dwi"]},
+                        {"extension": [".nii", ".nii.gz"],
+                         "suffix": ["dwi"],
+                         "run": 1},
                     )
                 )
                 bval = layout.get(
-                    **merge_dicts(mod_query, {"extensions": "bval"}))
+                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"],
+                                              "run": 1}))
                 bvec = layout.get(
-                    **merge_dicts(mod_query, {"extensions": "bvec"}))
+                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"],
+                                              "run": 1}))
                 if dwi and bval and bvec:
                     if not mask:
                         for (dw, bva, bve) in zip(dwi, bval, bvec):
@@ -158,17 +164,31 @@ def sweep_directory(
                     **merge_dicts(
                         mod_query,
                         {
-                            "extensions": [".nii", ".nii.gz"],
-                            "suffix": ["bold", "masked", func_desc],
-                            "space": space,
+                            "extension": [".nii", ".nii.gz"],
+                            "suffix": ["bold"],
+                            "run": 1
                         },
                     )
                 )
-                func = [i for i in func if func_desc in i.filename]
+                if len(func) > 1:
+                    func = [i for i in func if space in i]
+                elif len(func) == 1:
+                    if "MNI" in func[0].filename:
+                        raise ValueError('MNI-space BOLD images are not '
+                                         'currently supported, but are all '
+                                         'that are currently detected. '
+                                         'Is a T1w/anat-coregistered '
+                                         'preprocessed BOLD image available? '
+                                         'See documentation for more details.')
+                else:
+                    raise ValueError('No valid BOLD derivative data found!')
                 conf = layout.get(
-                    **merge_dicts(mod_query, {"extensions": [".tsv", ".tsv.gz"]})
+                    **merge_dicts(mod_query, {"extension":
+                                                  [".tsv", ".tsv.gz"],
+                                              "run": 1})
                 )
-                conf = [i for i in conf if "confounds_regressors" in i.filename]
+                conf = [i for i in conf if "confounds_regressors" in
+                        i.filename]
 
                 if func:
                     if not conf and not mask:
@@ -200,14 +220,14 @@ def sweep_directory(
 
     if modality == "dwi":
         if not len(dwis) or not len(bvals) or not len(bvecs):
-            print("No dMRI files found in BIDs spec. Skipping...\n")
+            print("No dMRI files found in BIDS spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return None, None, dwis, bvals, bvecs, anats, masks, subjs, seshs
 
     elif modality == "func":
         if not len(funcs):
-            print("No fMRI files found in BIDs spec. Skipping...\n")
+            print("No fMRI files found in BIDS spec. Skipping...\n")
             return None, None, None, None, None, None, None, subjs, seshs
         else:
             return funcs, confs, None, None, None, anats, masks, subjs, seshs
@@ -457,7 +477,6 @@ def main():
             sys.exit()
 
         space = hardcoded_params["bids_defaults"]["space"][0]
-        func_desc = hardcoded_params["bids_defaults"]["desc"][0]
     stream.close()
 
     # S3
@@ -620,7 +639,6 @@ def main():
                     bids_dir,
                     modality=mod,
                     space=space,
-                    func_desc=func_desc,
                     sesh=session_label,
                 )
                 if mod == "func":
@@ -649,7 +667,6 @@ def main():
                 bids_dir,
                 modality=modality[0],
                 space=space,
-                func_desc=func_desc,
                 sesh=session_label,
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
@@ -661,7 +678,6 @@ def main():
                     bids_dir,
                     modality=mod,
                     space=space,
-                    func_desc=func_desc,
                     subj=participant_label,
                     sesh=session_label,
                 )
@@ -691,7 +707,6 @@ def main():
                 bids_dir,
                 modality=modality[0],
                 space=space,
-                func_desc=func_desc,
                 subj=participant_label,
                 sesh=session_label,
             )

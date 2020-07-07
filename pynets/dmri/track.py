@@ -20,7 +20,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     Parameters
     ----------
     conn_model : str
-        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
+        'sfm').
     gtab : Obj
         DiPy object storing diffusion gradient information.
     dwi_data : array
@@ -53,13 +54,13 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         tens_mod_est,
     )
 
-    if conn_model == "csa":
+    if conn_model == "csa" or conn_model == "CSA":
         [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "csd":
+    elif conn_model == "csd" or conn_model == "CSD":
         [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "sfm":
+    elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "ten":
+    elif conn_model == "ten" or conn_model == "tensor":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
@@ -434,21 +435,21 @@ def track_ensemble(
             print("%s%s" % ("Curvature: ", curv_thr))
 
             # Instantiate DirectionGetter
-            if directget == "prob":
+            if directget == "prob" or directget == "probabilistic":
                 dg = ProbabilisticDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
                     sphere=sphere,
                     min_separation_angle=min_separation_angle,
                 )
-            elif directget == "clos":
+            elif directget == "clos" or directget == "closest":
                 dg = ClosestPeakDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
                     sphere=sphere,
                     min_separation_angle=min_separation_angle,
                 )
-            elif directget == "det":
+            elif directget == "det" or directget == "deterministic":
                 dg = DeterministicMaximumDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),

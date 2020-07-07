@@ -273,7 +273,6 @@ class FetchNodesLabels(SimpleInterface):
                             np.arange(len(coords) + 1) != 0
                         ].tolist()
 
-        print(f"Labels:\n{labels}")
         dir_path = utils.do_dir_path(atlas, self.inputs.outdir)
 
         if len(coords) != len(labels):
@@ -296,6 +295,9 @@ class FetchNodesLabels(SimpleInterface):
                     labels = np.arange(len(coords) + 1)[
                         np.arange(len(coords) + 1) != 0
                     ].tolist()
+
+        print(f"Coordinates:\n{coords}")
+        print(f"Labels:\n{labels}")
 
         assert len(coords) == len(labels)
 
@@ -594,7 +596,8 @@ class ExtractTimeseries(SimpleInterface):
 
         if self.inputs.net_parcels_nii_path:
             out_name_net_parcels_nii_path = fname_presuffix(
-                self.inputs.net_parcels_nii_path, suffix="_tmp", newpath=runtime.cwd)
+                self.inputs.net_parcels_nii_path, suffix="_tmp",
+                newpath=runtime.cwd)
             copyfile(
                 self.inputs.net_parcels_nii_path,
                 out_name_net_parcels_nii_path,

@@ -225,4 +225,13 @@ PyNets requires some other neuroimaging software tools that are
 not handled by the Python's packaging system (Pypi) used to deploy
 the ``pynets`` package:
 
-- FSL_ (version >=5.0.9)
+- FSL_ (version >=5.0.9). See `<https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>`_
+
+    .. note::
+        If you are using a debian/ubuntu OS, installing FSL can be installed using neurodebian: ::
+
+        [sudo] curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list
+        [sudo] apt-key add {path to PyNets base directory}/docker/files/neurodebian.gpg
+        [sudo] apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true
+        [sudo] apt-get update
+        [sudo] apt-get install -y fsl-core

@@ -679,7 +679,10 @@ def build_workflow(args, retval):
                    int(list(psutil.virtual_memory())[4]/1000000000)]
     else:
         procmem = list(eval(str(resources)))
-    thr = float(args.thr)
+    if args.thr is None:
+        thr = float(1.0)
+    else:
+        thr = float(args.thr)
     node_size = args.ns
     if node_size:
         if (isinstance(node_size, list)) and (len(node_size) > 1):

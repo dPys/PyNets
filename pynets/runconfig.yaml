@@ -62,9 +62,13 @@ local_atlases:
 available_models:
     func_models:
       - 'corr'
+      - 'correlation'
       - 'sps'
+      - 'precision'
       - 'cov'
+      - 'covariance'
       - 'partcorr'
+      - 'partialcorrelation'
       - 'QuicGraphicalLasso'
       - 'QuicGraphicalLassoCV'
       - 'QuicGraphicalLassoEBIC'
@@ -79,8 +83,6 @@ template: # `MNI152_T1` is the default and is provided by PyNets already. Other 
 bids_defaults:
     space:
         - 'T1w'
-    desc:
-        - 'preproc'
 sentiment_labeling:
     liwc_file:
         - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed.
