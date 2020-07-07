@@ -316,6 +316,7 @@ def get_parser():
             "maximum",
             "variance",
             "standard_deviation",
+            "None"
         ],
         help="Include this flag if you are running functional connectometry using parcel labels and "
         "wish to specify the name of a specific function (i.e. other than the mean) to reduce the "

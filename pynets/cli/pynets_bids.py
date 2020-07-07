@@ -10,7 +10,8 @@ def sweep_directory(
         modality,
         space,
         subj=None,
-        sesh=None):
+        sesh=None,
+        run=None):
     """
     Given a BIDS derivatives directory containing preprocessed functional MRI or diffusion MRI data
     (e.g. fMRIprep or dMRIprep), crawls the outputs and prepares necessary inputs for the PyNets pipeline.
@@ -109,6 +110,8 @@ def sweep_directory(
             anat = [
                 i for i in anat if "MNI" not in i.filename and "space" not in
                                    i.filename]
+            if len(anat) > 1 and run is not None:
+                anat = [i for i in anat if f"run-{run}" in i]
 
             if anat:
                 for an in anat:
@@ -134,16 +137,21 @@ def sweep_directory(
                     **merge_dicts(
                         mod_query,
                         {"extension": [".nii", ".nii.gz"],
-                         "suffix": ["dwi"],
-                         "run": 1},
+                         "suffix": ["dwi"]
+                         },
                     )
                 )
+                if len(dwi) > 1 and run is not None:
+                    dwi = [i for i in dwi if f"run-{run}" in i]
                 bval = layout.get(
-                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"],
-                                              "run": 1}))
+                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"]}))
+                if len(bval) > 1 and run is not None:
+                    bval = [i for i in bval if f"run-{run}" in i]
                 bvec = layout.get(
-                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"],
-                                              "run": 1}))
+                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"]}))
+                if len(bvec) > 1 and run is not None:
+                    bvec = [i for i in bvec if f"run-{run}" in i]
+
                 if dwi and bval and bvec:
                     if not mask:
                         for (dw, bva, bve) in zip(dwi, bval, bvec):
@@ -166,12 +174,13 @@ def sweep_directory(
                         {
                             "extension": [".nii", ".nii.gz"],
                             "suffix": ["bold"],
-                            "run": 1
                         },
                     )
                 )
                 if len(func) > 1:
                     func = [i for i in func if space in i]
+                    if len(func) > 1 and run is not None:
+                        func = [i for i in func if f"run-{run}" in i]
                 elif len(func) == 1:
                     if "MNI" in func[0].filename:
                         raise ValueError('MNI-space BOLD images are not '
@@ -184,11 +193,12 @@ def sweep_directory(
                     raise ValueError('No valid BOLD derivative data found!')
                 conf = layout.get(
                     **merge_dicts(mod_query, {"extension":
-                                                  [".tsv", ".tsv.gz"],
-                                              "run": 1})
+                                                  [".tsv", ".tsv.gz"]})
                 )
                 conf = [i for i in conf if "confounds_regressors" in
                         i.filename]
+                if len(conf) > 1 and run is not None:
+                    conf = [i for i in conf if f"run-{run}" in i]
 
                 if func:
                     if not conf and not mask:
@@ -278,8 +288,17 @@ def get_bids_parser():
     parser.add_argument(
         "--session_label",
         help="""The label(s) of the session that should be analyzed. The label  corresponds to
-                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter
+                         ses-<session_label> from the BIDS spec (so it does not include "ses-"). If this parameter
                          is not provided all sessions should be analyzed. Multiple sessions can be specified with a
+                         space separated list.""",
+        nargs="+",
+        default=None,
+    )
+    parser.add_argument(
+        "--run_label",
+        help="""The label(s) of the run, if any, within a given session that should be analyzed. The label corresponds to
+                         run-<run_label> from the BIDS spec (so it does not include "run-"). If this parameter
+                         is not provided all runs should be analyzed. Multiple runs can be specified with a
                          space separated list.""",
         nargs="+",
         default=None,
@@ -430,6 +449,7 @@ def main():
     bids_args = get_bids_parser().parse_args()
     participant_label = bids_args.participant_label
     session_label = bids_args.session_label
+    run = bids_args.run_label
     modality = bids_args.modality
     bids_config = bids_args.config
     analysis_level = bids_args.analysis_level
@@ -640,6 +660,7 @@ def main():
                     modality=mod,
                     space=space,
                     sesh=session_label,
+                    run=run
                 )
                 if mod == "func":
                     if i == 0:
@@ -668,6 +689,7 @@ def main():
                 modality=modality[0],
                 space=space,
                 sesh=session_label,
+                run=run
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     elif analysis_level == "participant":
@@ -680,6 +702,7 @@ def main():
                     space=space,
                     subj=participant_label,
                     sesh=session_label,
+                    run=run
                 )
                 if mod == "func":
                     if i == 0:
@@ -709,6 +732,7 @@ def main():
                 space=space,
                 subj=participant_label,
                 sesh=session_label,
+                run=run
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     else:

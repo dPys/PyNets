@@ -1108,7 +1108,7 @@ def psycho_naming(coords, node_size):
     return labels
 
 
-def node_gen(
+def node_gen_masking(
     roi,
     coords,
     parcel_list,

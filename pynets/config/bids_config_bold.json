@@ -1,16 +1,16 @@
 {
     "dwi": {
-            "dg": "['det', 'prob']",
-            "ml": "['0', '20']",
-            "mod": "['csa']"
+            "dg": "None",
+            "ml": "None",
+            "mod": "None"
         },
     "func": {
             "ct": "None",
-            "hp": "None",
+            "hp": "['0', '0.028']",
             "k": "None",
-            "mod": "None",
-            "sm": "None",
-            "es": "None"
+            "mod": "['partcorr']",
+            "sm": "['0', '4']",
+            "es": "['mean', 'variance']"
         },
     "gen": {
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']",
