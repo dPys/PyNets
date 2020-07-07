@@ -575,21 +575,36 @@ def build_workflow(args, retval):
     import pkg_resources
     import yaml
     import datetime
+    from os import environ
+    from subprocess import check_output
 
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: {pynets.__version__}")
+        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: "
+              f"{pynets.__version__}")
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are using the correct python version."
+            "PyNets not installed! Ensure that you are using the correct "
+            "python version."
         )
+
+    if environ.get('FSLDIR') is None:
+        raise EnvironmentError('FSLDIR not found! Be sure that this '
+                               'environment variable is set and/or that FSL '
+                               'has been properly installed before '
+                               'proceeding.')
+    else:
+        fsl_version = check_output('flirt -version | cut -f2-3 -d\" \"',
+                                   shell=True).strip()
+        print(f"{Fore.MAGENTA}FSL installation: {os.environ['FSLDIR']} "
+              f"{fsl_version.decode()}")
+    print(Style.RESET_ALL)
 
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
     print(f"{Fore.MAGENTA}{timestamp}")
-    print(Style.RESET_ALL)
     start_time = timeit.default_timer()
 
     # Set Arguments to global variables

@@ -716,7 +716,7 @@ class DmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge} 2>/dev/null"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
         )
 
         shutil.copyfile(wm_mask, self.wm_mask)
@@ -766,7 +766,7 @@ class DmriReg(object):
 
                 # Get mat from MNI -> T1
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init} 2>/dev/null"
+                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
                 )
 
             except BaseException:
@@ -786,7 +786,7 @@ class DmriReg(object):
                 )
                 # Get mat from MNI -> T1
                 os.system(
-                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null"
+                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
                 )
         else:
             # Falling back to linear registration
@@ -805,7 +805,7 @@ class DmriReg(object):
             )
             # Get mat from MNI -> T1
             os.system(
-                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null"
+                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
             )
 
     def t1w2dwi_align(self):
@@ -829,7 +829,7 @@ class DmriReg(object):
             sch=None,
         )
         os.system(
-            f"convert_xfm -omat {self.dwi2t1w_xfm} -inverse {self.t1w2dwi_xfm} 2>/dev/null"
+            f"convert_xfm -omat {self.dwi2t1w_xfm} -inverse {self.t1w2dwi_xfm}"
         )
 
         if self.simple is False:
@@ -851,7 +851,7 @@ class DmriReg(object):
                     sch="${FSLDIR}/etc/flirtsch/bbr.sch",
                 )
                 os.system(
-                    f"convert_xfm -omat {self.t1w2dwi_bbr_xfm} -inverse {self.dwi2t1w_bbr_xfm} 2>/dev/null"
+                    f"convert_xfm -omat {self.t1w2dwi_bbr_xfm} -inverse {self.dwi2t1w_bbr_xfm}"
                 )
 
                 # Apply the alignment
@@ -1032,37 +1032,37 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         os.system(
-            f"fslmaths {self.wm_in_dwi} -mas {self.wm_in_dwi_bin} {self.wm_in_dwi} 2>/dev/null"
+            f"fslmaths {self.wm_in_dwi} -mas {self.wm_in_dwi_bin} {self.wm_in_dwi}"
         )
 
         # Threshold GM to binary in dwi space
         os.system(
-            f"fslmaths {self.gm_in_dwi} -mas {self.gm_in_dwi_bin} {self.gm_in_dwi} 2>/dev/null"
+            f"fslmaths {self.gm_in_dwi} -mas {self.gm_in_dwi_bin} {self.gm_in_dwi}"
         )
 
         # Threshold CSF to binary in dwi space
         os.system(
-            f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin} {self.csf_mask_dwi} 2>/dev/null"
+            f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin} {self.csf_mask_dwi}"
         )
 
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
         os.system(
-            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi} 2>/dev/null"
+            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi}"
         )
         os.system(
-            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi} 2>/dev/null"
+            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi}"
         )
 
         print("Creating Corpus Callosum mask...")
         os.system(
             f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} -sub {self.vent_csf_in_dwi} "
-            f"-bin {self.corpuscallosum_dwi} 2>/dev/null")
+            f"-bin {self.corpuscallosum_dwi}")
 
         # Create gm-wm interface image
         os.system(
             f"fslmaths {self.gm_in_dwi_bin} -mul {self.wm_in_dwi_bin} -add {self.corpuscallosum_dwi} "
-            f"-mas {self.B0_mask} -bin {self.wm_gm_int_in_dwi} 2>/dev/null")
+            f"-mas {self.B0_mask} -bin {self.wm_gm_int_in_dwi}")
 
         return
 
@@ -1186,7 +1186,7 @@ class FmriReg(object):
         mask = math_img("img > 0.02", img=t_img)
         mask.to_filename(self.gm_mask_thr)
         os.system(
-            f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask} 2>/dev/null"
+            f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask}"
         )
 
         # Threshold WM to binary in dwi space
@@ -1196,7 +1196,7 @@ class FmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge} 2>/dev/null"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
         )
 
         return
@@ -1242,7 +1242,7 @@ class FmriReg(object):
 
                 # Get mat from MNI -> T1w
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init} 2>/dev/null"
+                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
                 )
 
             except BaseException:
@@ -1262,7 +1262,7 @@ class FmriReg(object):
                 )
                 # Get mat from MNI -> T1w
                 os.system(
-                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null"
+                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
                 )
         else:
             # Falling back to linear registration
@@ -1281,6 +1281,6 @@ class FmriReg(object):
             )
             # Get mat from MNI -> T1w
             os.system(
-                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm} 2>/dev/null"
+                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
             )
         return
