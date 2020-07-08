@@ -41,7 +41,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
         perc_zero = np.count_nonzero(np.nan_to_num(np.array(
             t1w_data < 10).astype('int'))) / np.count_nonzero(
             np.nan_to_num(t1w_data.astype('bool').astype('int')))
-        # TODO find a better heuristic for determining whether a t1w image has
+        # TODO: find a better heuristic for determining whether a t1w image has
         # already been skull-stripped
         if perc_zero < 0.75:
             try:

@@ -91,7 +91,7 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
+                [uatlas, labels] = nodemaker.enforce_hem_distinct_consecutive_labels(uatlas, label_names=labels)
                 [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(
                     uatlas)
                 if self.inputs.parc is True:
@@ -138,7 +138,7 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
+                [uatlas, labels] = nodemaker.enforce_hem_distinct_consecutive_labels(uatlas, label_names=labels)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -164,7 +164,7 @@ class FetchNodesLabels(SimpleInterface):
                       "\nCannot load RSN reference image. Do you have git-lfs "
                       "installed?")
             try:
-                uatlas = nodemaker.enforce_consecutive_labels(uatlas)
+                [uatlas, _] = nodemaker.enforce_hem_distinct_consecutive_labels(uatlas)
                 # Fetch user-specified atlas coords
                 [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(
                     uatlas)
@@ -195,7 +195,7 @@ class FetchNodesLabels(SimpleInterface):
 
             try:
                 # Fetch user-specified atlas coords
-                uatlas = nodemaker.enforce_consecutive_labels(
+                [uatlas, _] = nodemaker.enforce_hem_distinct_consecutive_labels(
                     self.inputs.uatlas)
                 [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(
                     uatlas)
@@ -280,10 +280,10 @@ class FetchNodesLabels(SimpleInterface):
                                             i != 'Background')]
             if len(coords) != len(labels):
                 print("Length of coordinates is not equal to length of "
-                      "label names!")
+                      "label names...")
                 if self.inputs.use_AAL_naming is True:
                     try:
-                        print("Attempting to use AAL instead...")
+                        print("Attempting AAL instead...")
                         labels = nodemaker.AAL_naming(coords)
                     except BaseException:
                         print("Reverting to integer labels instead...")

@@ -6,7 +6,8 @@ COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
 ARG DEBIAN_FRONTEND="noninteractive"
 
 ENV LANG="C.UTF-8" \
-    LC_ALL="C.UTF-8"
+    LC_ALL="C.UTF-8" \
+    PIP_DEFAULT_TIMEOUT=100
 
 RUN apt-get update -qq \
     && apt-get install -y --no-install-recommends software-properties-common \

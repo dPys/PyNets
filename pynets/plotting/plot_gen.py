@@ -525,7 +525,7 @@ def create_gb_palette(
     except BaseException:
         node_centralities = len(coords) * [1]
     max_node_size = 1 / mat.shape[0] * \
-        1e3 if node_size == "auto" else node_size
+        1e3 + 0.5 if node_size == "auto" else node_size
     node_sizes = np.array(
         minmax_scale(node_centralities, feature_range=(1, max_node_size))
     )
@@ -579,8 +579,8 @@ def create_gb_palette(
     clust_pal_nodes = colors.to_rgba_array(clust_pal)
 
     # Edges
-    z_min = np.min(mat)
-    z_max = np.max(mat) + 1
+    z_max = np.percentile(mat[mat > 0], 95)
+    z_min = np.min(mat) - 0.001
     edge_cmap_pl = sns.color_palette(edge_cmap)
     clust_pal_edges = colors.ListedColormap(edge_cmap_pl.as_hex())
 

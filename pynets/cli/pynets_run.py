@@ -581,7 +581,7 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: "
+        print(f"{Fore.RED}\n\nPyNets\nVersion: "
               f"{pynets.__version__}")
     except ImportError:
         print(
@@ -597,15 +597,15 @@ def build_workflow(args, retval):
     else:
         fsl_version = check_output('flirt -version | cut -f2-3 -d\" \"',
                                    shell=True).strip()
-        print(f"{Fore.MAGENTA}FSL installation: {os.environ['FSLDIR']} "
-              f"{fsl_version.decode()}")
-    print(Style.RESET_ALL)
+        print(f"{Fore.RED}FSL {fsl_version.decode()} with "
+              f"FSLDIR={os.environ['FSLDIR']}")
 
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
     print(f"{Fore.MAGENTA}{timestamp}")
     start_time = timeit.default_timer()
+    print(Style.RESET_ALL)
 
     # Set Arguments to global variables
     ID = args.id
