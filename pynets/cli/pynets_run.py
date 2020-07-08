@@ -595,9 +595,9 @@ def build_workflow(args, retval):
                                'has been properly installed before '
                                'proceeding.')
     else:
-        fsl_version = check_output('flirt -version | cut -f2-3 -d\" \"',
+        fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
-        print(f"{Fore.RED}FSL {fsl_version.decode()} with "
+        print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
               f"FSLDIR={os.environ['FSLDIR']}")
 
     # Start timer
