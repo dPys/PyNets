@@ -579,8 +579,8 @@ def create_gb_palette(
     clust_pal_nodes = colors.to_rgba_array(clust_pal)
 
     # Edges
-    z_max = np.percentile(mat[mat > 0], 95)
-    z_min = np.min(mat) - 0.001
+    z_max = np.max(mat)
+    z_min = 0
     edge_cmap_pl = sns.color_palette(edge_cmap)
     clust_pal_edges = colors.ListedColormap(edge_cmap_pl.as_hex())
 

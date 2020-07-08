@@ -2097,11 +2097,6 @@ def collect_pandas_df_make(
                 else:
                     df_concat = pd.concat(dfs_non_auc)
                 measures = list(df_concat.columns)
-                if plot_switch is True:
-                    from pynets.plotting import plot_gen
-
-                    plot_gen.plot_graph_measure_hists(
-                        df_concat, measures, file_)
                 df_concatted_mean = (df_concat.loc[:, measures].mean(
                     skipna=True).to_frame().transpose())
                 df_concatted_median = (
