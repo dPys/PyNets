@@ -1425,10 +1425,6 @@ def view_tractogram(streams, atlas):
         transform_origins,
     )
 
-    streams = '/Users/derekpisner/Downloads/HNU_test/0025427/0025427_parcels_masked_nores-2mm/tractography/streamlines_mni_csd_50000_curv[40_30]step[0.1_0.2_0.3_0.4_0.5]tt-local_dg-prob_ml-0.trk'
-
-    atlas = '/Users/derekpisner/Downloads/HNU_test/0025427/0025427_parcels_masked_nores-2mm/parcellations/0025427_parcels_masked_reor-RAS_nores-2mm_noreor-RAS_nores-2mm_liberal.nii.gz'
-
     FA_template_path = pkg_resources.resource_filename("pynets",
                                                        "templates/FA_2mm.nii.gz")
     ch2_better_path = pkg_resources.resource_filename("pynets",
