@@ -1512,33 +1512,26 @@ def view_tractogram(streams, atlas):
     return
 
 
-def plot_graph_measure_hists(df_concat, measures, net_pick_file):
+def plot_graph_measure_hists(csv_all_metrics):
     """
-    Plot histograms for each graph theoretical measure.
+    Plot histograms for each graph theoretical measure for a given
+    subject.
 
     Parameters
     ----------
-    df_concat : DataFrame
-        Pandas dataframe of concatenated graph measures across ensemble.
-    measures : list
-        List of string names for graph measures whose order corresponds to headers/values in df_concat.
-    net_pick_file : str
-        File path to .pkl file of network measures used to generate df_concat.
-
+    csv_all_metrics : str
+        CSV file of concatenated graph measures across ensemble.
     """
-    import os
+    import numpy as np
     import matplotlib
-
-    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.preprocessing import scale
 
-    print("Saving model plots...")
-
-    namer_dir = op.dirname(op.dirname(op.dirname(net_pick_file)))
-    if not os.path.isdir(namer_dir):
-        os.makedirs(namer_dir, exist_ok=True)
+    df_concat = pd.read_csv(csv_all_metrics)
+    df_concat = df_concat.drop(columns=['id'])
+    measures = df_concat.columns
+    print("Making model plots...")
 
     def nearest_square_root(limit):
         answer = 0
@@ -1546,75 +1539,60 @@ def plot_graph_measure_hists(df_concat, measures, net_pick_file):
             answer += 1
         return int(np.sqrt(answer ** 2))
 
-    global_measures = [
-        meas
-        for meas in measures
-        if not meas.split("_")[0].isdigit()
-        and meas.endswith("_auc")
-        and not meas.startswith("thr_")
-    ]
+    try:
+        global_measures = list(set([
+            meas.split('auc_')[1] for meas in measures
+        ]))
+    except ValueError:
+        print(measures)
 
-    if len(df_concat) >= 30:
-        fig, axes = plt.subplots(
-            ncols=nearest_square_root(len(global_measures)),
-            nrows=nearest_square_root(len(global_measures)),
-            sharex=True,
-            sharey=True,
-            figsize=(10, 10),
-        )
-        for i, ax in enumerate(axes.flatten()):
+    fig, axes = plt.subplots(
+        ncols=nearest_square_root(len(global_measures)),
+        nrows=nearest_square_root(len(global_measures)),
+        sharex=True,
+        sharey=True,
+        figsize=(10, 10),
+    )
+    for i, ax in enumerate(axes.flatten()):
+        try:
+            ensemble_metric_df = df_concat.loc[:, df_concat.columns.str.contains(global_measures[i])]
+            x = np.asarray(
+                ensemble_metric_df[
+                    np.isfinite(ensemble_metric_df)
+                ]
+            )[0]
+        except BaseException:
+            continue
+        try:
+            x = scale(x, axis=0, with_mean=True, with_std=True, copy=True)
+        except BaseException:
+            continue
+        if True in pd.isnull(x):
             try:
-                x = np.array(
-                    df_concat[global_measures[i]][
-                        np.isfinite(df_concat[global_measures[i]])
-                    ]
-                )
-            except BaseException:
-                continue
-            try:
-                x = np.delete(x, np.argwhere(x == "")).astype("float")
-            except BaseException:
-                continue
-            try:
-                x = scale(x, axis=0, with_mean=True, with_std=True, copy=True)
-            except BaseException:
-                continue
-            if True in pd.isnull(x):
-                try:
-                    x = x[~pd.isnull(x)]
-                    if len(x) > 0:
-                        print(
-                            f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
-                            f"values. Checking output is recommended...")
-                        ax.hist(x, density=True, bins="auto", alpha=0.8)
-                        ax.set_title(global_measures[i])
-                    else:
-                        print(
-                            f"{'Warning: No numeric data to plot for '}{global_measures[i]}"
-                        )
-                        continue
-                except BaseException:
-                    continue
-            else:
-                try:
+                x = x[~pd.isnull(x)]
+                if len(x) > 0:
+                    print(
+                        f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
+                        f"values. Checking output is recommended...")
                     ax.hist(x, density=True, bins="auto", alpha=0.8)
                     ax.set_title(global_measures[i])
-                except BaseException:
+                else:
                     print(
-                        f"Warning: Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}"
+                        f"{'Warning: No numeric data to plot for '}{global_measures[i]}"
                     )
                     continue
+            except BaseException:
+                continue
+        else:
+            try:
+                ax.hist(x, density=True, bins="auto", alpha=0.8)
+                ax.set_title(global_measures[i])
+            except BaseException:
+                print(
+                    f"Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}"
+                )
+                continue
 
-        plt.tight_layout()
-        out_path_fig = (
-            f"{namer_dir}{'/mean_global_topology_distribution_multiplot.png'}"
-        )
-        fig.savefig(out_path_fig)
-        plt.close("all")
-    else:
-        print(
-            "At least 30 iterations needed to produce multiplot of global graph topology distributions. "
-            "Continuing...")
-        pass
+    plt.tight_layout()
+    return plt
 
-    return

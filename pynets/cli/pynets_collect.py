@@ -39,9 +39,10 @@ def get_parser():
     parser.add_argument(
         "-pm",
         metavar="Cores,memory",
-        default="4,8",
+        default="auto",
         help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
-        "two integers seperated by comma.\n",
+        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
+        "detected on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -90,7 +91,7 @@ def load_pd_dfs(file_):
                 df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
             except BaseException:
                 pass
-            id = op.basename(file_).split("_netmets")[0]
+            id = op.basename(file_).split("_topology")[0]
             print(id)
             df["id"] = id
             try:
@@ -118,14 +119,14 @@ def load_pd_dfs(file_):
                 df = df.loc[:, ~df.columns.duplicated()]
             except BaseException:
                 pass
-            df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=True)
-            del bad_cols2
-            del bad_cols1
-            del id
             try:
                 df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
             except BaseException:
                 pass
+            df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=True)
+            del bad_cols2
+            del bad_cols1
+            del id
 
         else:
             df = pd.DataFrame()
@@ -198,7 +199,7 @@ def build_subject_dict(sub, working_path, modality):
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/netmetrics/*'}")
+                for i in glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/topology/*'}")
             ]
         )
     )
@@ -211,7 +212,7 @@ def build_subject_dict(sub, working_path, modality):
         for atlas in atlases:
             #atlas_name = "_".join(atlas.split("_")[1:])
             auc_csvs = glob.glob(
-                f"{working_path}/{sub}/{ses}/{modality}/{atlas}/netmetrics/auc/*"
+                f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology/auc/*"
             )
             for auc_file in auc_csvs:
                 prefix = (
@@ -246,7 +247,7 @@ def build_subject_dict(sub, working_path, modality):
                     f"{working_path}/{sub}/{ses}/{modality}/all_combinations_auc.csv"
                 )
                 df_base.to_csv(out_path)
-                out_path_new = f"{str(Path(working_path).parent)}/all_visits_netmets_auc/{sub}_{ses}_netmets_auc.csv"
+                out_path_new = f"{str(Path(working_path))}/{modality}_group_topology_auc/{sub}_{ses}_topology_auc.csv"
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -334,9 +335,9 @@ def collect_all(working_path, modality):
 
 def build_collect_workflow(args, retval):
     import re
+    import os
     import glob
     import warnings
-
     warnings.filterwarnings("ignore")
     import ast
     import pkg_resources
@@ -354,13 +355,14 @@ def build_collect_workflow(args, retval):
 
     # Set Arguments to global variables
     resources = args.pm
-    if resources:
-        procmem = list(eval(str(resources)))
-    else:
+    if resources == "auto":
         from multiprocessing import cpu_count
-
-        nthreads = cpu_count()
-        procmem = [int(nthreads), int(float(nthreads) * 2)]
+        import psutil
+        nthreads = cpu_count() - 1
+        procmem = [int(nthreads),
+                   int(list(psutil.virtual_memory())[4]/1000000000)]
+    else:
+        procmem = list(eval(str(resources)))
     plugin_type = args.plug
     if isinstance(plugin_type, list):
         plugin_type = plugin_type[0]
@@ -368,9 +370,11 @@ def build_collect_workflow(args, retval):
     working_path = args.basedir
     work_dir = args.work
     modality = args.modality
+    if isinstance(modality, list):
+        modality = modality[0]
 
     os.makedirs(
-        f"{str(Path(working_path).parent)}/all_visits_netmets_auc",
+        f"{str(Path(working_path))}/{modality}_group_topology_auc",
         exist_ok=True)
 
     wf = collect_all(working_path, modality)
@@ -465,9 +469,11 @@ def build_collect_workflow(args, retval):
         handler.close()
         logger.removeHandler(handler)
 
-    files_ = glob.glob(
-        f"{str(Path(working_path).parent)}{'/all_visits_netmets_auc/*clean.csv'}"
+    all_files = glob.glob(
+        f"{str(Path(working_path))}/{modality}_group_topology_auc/*.csv"
     )
+
+    files_ = [i for i in all_files if '_clean.csv' in i]
 
     print("Aggregating dataframes...")
     dfs = []
@@ -481,6 +487,12 @@ def build_collect_workflow(args, retval):
         del df
     df_concat(dfs, working_path, modality)
 
+    # Cleanup
+    for j in all_files:
+        if j not in files_:
+            os.remove(j)
+
+    print('\nDone!')
     return
 
 
@@ -525,11 +537,10 @@ def main():
         # Clean up master process before running workflow, which may create
         # forks
         gc.collect()
-
+    mgr.shutdown()
 
 if __name__ == "__main__":
     import warnings
-
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()
