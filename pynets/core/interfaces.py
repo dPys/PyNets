@@ -1365,8 +1365,20 @@ class RegisterAtlasDWI(SimpleInterface):
 
         if self.inputs.uatlas is None:
             uatlas_out = self.inputs.uatlas_parcels
+            copyfile(
+                dwi_aligned_atlas,
+                f"{os.path.dirname(uatlas_out)}/{os.path.basename(dwi_aligned_atlas)}",
+                copy=True,
+                use_hardlink=False,
+            )
         else:
             uatlas_out = self.inputs.uatlas
+            copyfile(
+                dwi_aligned_atlas,
+                f"{os.path.dirname(uatlas_out)}/parcellations/{os.path.basename(dwi_aligned_atlas)}",
+                copy=True,
+                use_hardlink=False,
+            )
 
         reg_tmp = [
             B0_mask_tmp_path,
@@ -1868,6 +1880,24 @@ class RegisterAtlasFunc(SimpleInterface):
             mni2t1_xfm_tmp_path,
             t1w_brain_tmp_path,
         ]
+
+        if self.inputs.uatlas is None:
+            uatlas_out = self.inputs.uatlas_parcels
+            copyfile(
+                aligned_atlas_gm,
+                f"{os.path.dirname(uatlas_out)}/{os.path.basename(aligned_atlas_gm)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        else:
+            uatlas_out = self.inputs.uatlas
+            copyfile(
+                aligned_atlas_gm,
+                f"{os.path.dirname(uatlas_out)}/parcellations/{os.path.basename(aligned_atlas_gm)}",
+                copy=True,
+                use_hardlink=False,
+            )
+
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
@@ -2185,8 +2215,7 @@ class Tracking(SimpleInterface):
             int(self.inputs.roi_neighborhood_tol),
             self.inputs.min_length,
             self.inputs.waymask,
-            self.inputs.B0_mask,
-            n_seeds_per_iter
+            self.inputs.B0_mask
         )
 
         namer_dir = "{}/tractography".format(dir_path)
