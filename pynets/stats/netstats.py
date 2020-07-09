@@ -1952,7 +1952,7 @@ def collect_pandas_df_make(
         models = []
         for file_ in net_mets_csv_list:
             models.append(
-                f"{op.basename(op.dirname(op.dirname(file_)))}{'/netmetrics/'}{op.basename(file_)}"
+                f"{op.basename(op.dirname(op.dirname(file_)))}{'/topology/'}{op.basename(file_)}"
             )
 
         def sort_thr(model_name):
@@ -2025,7 +2025,7 @@ def collect_pandas_df_make(
                     set(
                         [
                             re.sub(
-                                r"thr\-\d+\.*\d+", "", i.split("/netmetrics/")[1]
+                                r"thr\-\d+\.*\d+\_", "", i.split("/topology/")[1]
                             ).replace("neat", "auc")
                             for i in models_grouped[thr_set]
                         ]
@@ -2049,7 +2049,7 @@ def collect_pandas_df_make(
                         f"{measure}{': '}{df_summary_auc[measure].to_string(index=False)}"
                     )
                 meta[thr_set]["auc_dataframe"] = df_summary_auc
-                auc_dir = f"{subject_path}{'/'}{atlas}{'/netmetrics/auc/'}"
+                auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
                 if not os.path.isdir(auc_dir):
                     os.makedirs(auc_dir, exist_ok=True)
                 df_summary_auc = df_summary_auc.drop(columns=["thr_auc"])
@@ -2097,11 +2097,6 @@ def collect_pandas_df_make(
                 else:
                     df_concat = pd.concat(dfs_non_auc)
                 measures = list(df_concat.columns)
-                if plot_switch is True:
-                    from pynets.plotting import plot_gen
-
-                    plot_gen.plot_graph_measure_hists(
-                        df_concat, measures, file_)
                 df_concatted_mean = (df_concat.loc[:, measures].mean(
                     skipna=True).to_frame().transpose())
                 df_concatted_median = (

@@ -374,9 +374,8 @@ def test_plot_all_struct_func(plotting_data):
     mG_path.close()
 
 
-@pytest.mark.parametrize("long", [True, False])
 @pytest.mark.parametrize("nan", [True, False])
-def test_plot_graph_measure_hists(long, nan):
+def test_plot_graph_measure_hists(nan):
     """Test plotting histograms from metric dataframe."""
     import pandas as pd
 
@@ -384,31 +383,17 @@ def test_plot_graph_measure_hists(long, nan):
     temp_dir = tempfile.TemporaryDirectory()
     dir_name = str(temp_dir.name)
 
-    # This is to make sure the file gets written to the temp dir
-    os.mkdir(f"{dir_name}/dir_a")
-    os.mkdir(f"{dir_name}/dir_a/dir_b")
-    os.mkdir(f"{dir_name}/dir_a/dir_b/dir_c")
-
-    # This file isn't actually used, the output is written a few dirs up.
-    net_pick_file = f"{dir_name}/dir_a/dir_b/dir_c/netstats.pkl"
-
-    df_csv = (f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_th"
-          f"r-0.9_net_mets.csv")
+    df_csv = (f"{base_dir}/miscellaneous/sub-OAS31172_ses-d0407_topology_auc_clean.csv")
 
     # Hack the dataframe
-    df = pd.read_csv(df_csv)
-    if long:
-        for row in range(31):
-            df = df.append(pd.read_csv(df_csv), ignore_index=True)
-    for column in range(7):
-        df.columns.values[column] = f"{df.columns.values[column]}_auc"
-        if nan:
-            df[column] = np.nan
-
-    measures = df.columns.values[:7]
-
-    plot_gen.plot_graph_measure_hists(df, measures, net_pick_file)
-
+    if nan is True:
+        df = pd.read_csv(df_csv)
+        df[df.columns[4]] = np.nan
+        df.to_csv(f"{dir_name}/TEST.csv", index=False)
+        fig = plot_gen.plot_graph_measure_hists(f"{dir_name}/TEST.csv")
+    else:
+        fig = plot_gen.plot_graph_measure_hists(df_csv)
+    assert fig is not None
     temp_dir.cleanup()
 
 

@@ -75,11 +75,11 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_omnetome.npy"
+        f"{namer_dir}/{atlas}_{subgraph_name}_omnetome.npy"
     )
 
-    out_path_est_omni = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator_omni.joblib"
-    out_path_est_mds = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator_mds.joblib"
+    out_path_est_omni = f"{namer_dir}/{atlas}_{subgraph_name}_masetome_estimator_omni.joblib"
+    out_path_est_mds = f"{namer_dir}/{atlas}_{subgraph_name}_masetome_estimator_mds.joblib"
 
     dump(omni, out_path_est_omni)
     dump(omni, out_path_est_mds)
@@ -153,9 +153,9 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome.npy"
+        f"{namer_dir}/{atlas}_{subgraph_name}_masetome.npy"
     )
-    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_masetome_estimator.joblib"
+    out_path_est = f"{namer_dir}/{atlas}_{subgraph_name}_masetome_estimator.joblib"
 
     dump(mase, out_path_est)
 
@@ -230,8 +230,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_asetome.npy"
-    out_path_est = f"{namer_dir}/{list(flatten(ID))[0]}_{atlas}_{subgraph_name}_asetome_estimator.joblib"
+    out_path = f"{namer_dir}/{atlas}_{subgraph_name}_asetome.npy"
+    out_path_est = f"{namer_dir}/{atlas}_{subgraph_name}_asetome_estimator.joblib"
 
     dump(ase, out_path_est)
 

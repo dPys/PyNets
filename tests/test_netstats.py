@@ -455,11 +455,11 @@ def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary
     elif graph_num == 0:
         net_mets_csv_list = []
     elif graph_num == 1:
-        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
+        net_mets_csv_list = [f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
     else:
         # This was breaking.
-        net_mets_csv_list = [f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv",
-                             f"{base_dir}/netmetrics/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
+        net_mets_csv_list = [f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv",
+                             f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
 
     combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
                                                            nc_collect=nc_collect, create_summary=create_summary,

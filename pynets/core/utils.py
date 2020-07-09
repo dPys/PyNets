@@ -524,7 +524,7 @@ def create_csv_path(dir_path, est_path):
     import os
     from pathlib import Path
 
-    namer_dir = f"{str(Path(dir_path).parent)}/netmetrics"
+    namer_dir = f"{str(Path(dir_path).parent)}/topology"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 

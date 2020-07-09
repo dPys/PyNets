@@ -38,49 +38,20 @@ def gen_mask(t1w_head, t1w_brain, mask):
         # Check if already skull-stripped. If not, strip it.
         img = nib.load(t1w_head)
         t1w_data = img.get_fdata()
-        perc_zero = np.count_nonzero(np.nan_to_num(np.array(t1w_data == 0).astype('int'))) / np.count_nonzero(
+        perc_zero = np.count_nonzero(np.nan_to_num(np.array(
+            t1w_data < 10).astype('int'))) / np.count_nonzero(
             np.nan_to_num(t1w_data.astype('bool').astype('int')))
-        # TODO find a better heuristic for determining whether a t1w image has
+        # TODO: find a better heuristic for determining whether a t1w image has
         # already been skull-stripped
-        if perc_zero < 0.25:
+        if perc_zero < 0.75:
             try:
-                import tensorflow as tf
-                if tf.__version__ > "2.0.0":
-                    import tensorflow.compat.v1 as tf
-                import logging
-                from deepbrain import Extractor
-
-                logger = tf.get_logger()
-                logger.setLevel(logging.ERROR)
-                os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-                ext = Extractor()
-                prob = ext.run(t1w_data)
-                mask = prob > 0.5
-                nib.save(
-                    nib.Nifti1Image(mask, affine=img.affine, header=img.header),
-                    t1w_brain_mask,
-                )
-                img.uncache()
-            except:
-                # Fallback to FSL's BET
-                import time
-
-                t1w_brain = f"{op.dirname(t1w_head)}/t1w_brain_bet.nii.gz"
-                t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_bet_mask.nii.gz"
-                # Get mean B0 brain mask
-                cmd = f"bet {t1w_head} {t1w_brain} -m -f 0.2"
-                os.system(cmd)
-                time.sleep(1)
+                t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask,
+                                                  img)
+            except RuntimeError:
+                print('Deepbrain extraction failed...')
         else:
-            # Fallback to FSL's BET
-            import time
-
-            t1w_brain = f"{op.dirname(t1w_head)}/t1w_brain_bet.nii.gz"
-            t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_bet_mask.nii.gz"
-            # Get mean B0 brain mask
-            cmd = f"bet {t1w_head} {t1w_brain} -m -f 0.2"
-            os.system(cmd)
-            time.sleep(1)
+            print('Your T1w data appears to already be skull-stripped? '
+                  'Skipping...')
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
@@ -88,13 +59,66 @@ def gen_mask(t1w_head, t1w_brain, mask):
     img.to_filename(t1w_brain_mask)
     t_img.uncache()
 
-    os.system(
-        f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain} 2>/dev/null")
+    os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain}")
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)
 
     return t1w_brain, t1w_brain_mask
+
+
+def t1w_skullstrip(t1w, out, skull=None):
+    """Skull-strips the t1w image using AFNIs 3dSkullStrip algorithm, which is
+    a modification of FSLs BET specialized to t1w images.
+    Offers robust skull-stripping with no hyperparameters
+    Note: renormalizes the intensities, call extract_t1w_brain instead if you
+    want the original intensity values. Credit: Ross Lawrence @Neurodata.
+
+    Parameters
+    ----------
+    t1w : str
+        path for the input t1w image file
+    out : str
+        path for the output skull-stripped image file
+    skull : str, optional
+        skullstrip parameter pre-set. Default is "none".
+    """
+    if skull == "below":
+        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -shrink_fac_bot_lim 0.6 -ld 45"
+    elif skull == "cerebelum":
+        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -shrink_fac_bot_lim 0.3 -ld 45"
+    elif skull == "eye":
+        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -no_avoid_eyes -ld 45"
+    elif skull == "general":
+        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -push_to_edge -ld 45"
+    else:
+        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -ld 30"
+    print(cmd)
+    os.system(cmd)
+    return out
+
+
+def deep_skull_strip(t1w_data, t1w_brain_mask, img):
+    import tensorflow as tf
+    if tf.__version__ > "2.0.0":
+        import tensorflow.compat.v1 as tf
+    from deepbrain import Extractor
+    import logging
+
+    print('Attempting deepbrain skull-stripping...')
+    logger = tf.get_logger()
+    logger.setLevel(logging.ERROR)
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    ext = Extractor()
+    prob = ext.run(t1w_data)
+    mask = prob > 0.5
+    nib.save(
+        nib.Nifti1Image(mask, affine=img.affine,
+                        header=img.header),
+        t1w_brain_mask,
+    )
+    img.uncache()
+    return t1w_brain_mask
 
 
 def atlas2t1w2dwi_align(
@@ -247,12 +271,11 @@ def atlas2t1w2dwi_align(
     nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
 
     os.system(
-        f"fslmaths {dwi_aligned_atlas} -mas {B0_mask} {dwi_aligned_atlas} "
-        f"2>/dev/null")
+        f"fslmaths {dwi_aligned_atlas} -mas {B0_mask} {dwi_aligned_atlas}")
 
     os.system(
         f"fslmaths {dwi_aligned_atlas_wmgm_int} -mas {B0_mask} "
-        f"{dwi_aligned_atlas_wmgm_int} 2>/dev/null")
+        f"{dwi_aligned_atlas_wmgm_int}")
 
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
@@ -447,8 +470,7 @@ def atlas2t1w_align(
         )
 
     os.system(
-        f"fslmaths {aligned_atlas_skull} -mas {gm_mask} "
-        f"{aligned_atlas_gm} 2>/dev/null")
+        f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm}")
 
     atlas_img = nib.load(aligned_atlas_gm)
 
@@ -478,7 +500,7 @@ def atlas2t1w_align(
               'Falling back to the T1w mask...')
         os.system(
             f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
-            f"{aligned_atlas_gm} 2>/dev/null"
+            f"{aligned_atlas_gm}"
         )
     template_img.uncache()
 

@@ -111,7 +111,7 @@ def sweep_directory(
                 i for i in anat if "MNI" not in i.filename and "space" not in
                                    i.filename]
             if len(anat) > 1 and run is not None:
-                anat = [i for i in anat if f"run-{run}" in i]
+                anat = [i for i in anat if f"run-{run}" in i.filename]
 
             if anat:
                 for an in anat:
@@ -130,7 +130,8 @@ def sweep_directory(
 
             mask = layout.get(**mask_query)
             mask = [
-                i for i in mask if "MNI" not in i.filename and "space" not in i.filename]
+                i for i in mask if "MNI" not in i.filename and "space" not in
+                                   i.filename]
 
             if modality == "dwi":
                 dwi = layout.get(
@@ -142,15 +143,15 @@ def sweep_directory(
                     )
                 )
                 if len(dwi) > 1 and run is not None:
-                    dwi = [i for i in dwi if f"run-{run}" in i]
+                    dwi = [i for i in dwi if f"run-{run}" in i.filename]
                 bval = layout.get(
                     **merge_dicts(mod_query, {"extension": ["bval", "bvals"]}))
                 if len(bval) > 1 and run is not None:
-                    bval = [i for i in bval if f"run-{run}" in i]
+                    bval = [i for i in bval if f"run-{run}" in i.filename]
                 bvec = layout.get(
                     **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"]}))
                 if len(bvec) > 1 and run is not None:
-                    bvec = [i for i in bvec if f"run-{run}" in i]
+                    bvec = [i for i in bvec if f"run-{run}" in i.filename]
 
                 if dwi and bval and bvec:
                     if not mask:
@@ -177,20 +178,19 @@ def sweep_directory(
                         },
                     )
                 )
-                if len(func) > 1:
-                    func = [i for i in func if space in i]
-                    if len(func) > 1 and run is not None:
-                        func = [i for i in func if f"run-{run}" in i]
-                elif len(func) == 1:
-                    if "MNI" in func[0].filename:
+                if len(func) > 1 and run is not None:
+                    func = [i for i in func if f"run-{run}" in i.filename]
+                if len(func) > 1 and 'space' in [i.filename for i in func]:
+                    if "MNI" in [i.filename for i in func]:
                         raise ValueError('MNI-space BOLD images are not '
                                          'currently supported, but are all '
                                          'that are currently detected. '
                                          'Is a T1w/anat-coregistered '
                                          'preprocessed BOLD image available? '
                                          'See documentation for more details.')
-                else:
-                    raise ValueError('No valid BOLD derivative data found!')
+                    else:
+                        func = [i for i in func if space in i.filename]
+
                 conf = layout.get(
                     **merge_dicts(mod_query, {"extension":
                                                   [".tsv", ".tsv.gz"]})
@@ -198,7 +198,7 @@ def sweep_directory(
                 conf = [i for i in conf if "confounds_regressors" in
                         i.filename]
                 if len(conf) > 1 and run is not None:
-                    conf = [i for i in conf if f"run-{run}" in i]
+                    conf = [i for i in conf if f"run-{run}" in i.filename]
 
                 if func:
                     if not conf and not mask:
@@ -298,8 +298,7 @@ def get_bids_parser():
         "--run_label",
         help="""The label(s) of the run, if any, within a given session that should be analyzed. The label corresponds to
                          run-<run_label> from the BIDS spec (so it does not include "run-"). If this parameter
-                         is not provided all runs should be analyzed. Multiple runs can be specified with a
-                         space separated list.""",
+                         is not provided all runs should be analyzed. Specifying multiple runs is not yet supported.""",
         nargs="+",
         default=None,
     )
@@ -450,6 +449,8 @@ def main():
     participant_label = bids_args.participant_label
     session_label = bids_args.session_label
     run = bids_args.run_label
+    if isinstance(run, list):
+        run = str(run[0]).zfill(2)
     modality = bids_args.modality
     bids_config = bids_args.config
     analysis_level = bids_args.analysis_level
@@ -470,7 +471,7 @@ def main():
             arg_dict = json.load(stream)
     else:
         with open(
-            pkg_resources.resource_filename("pynets", "config/bids_config_test.json"),
+            pkg_resources.resource_filename("pynets", "config/bids_config.json"),
             "r",
         ) as stream:
             arg_dict = json.load(stream)
@@ -654,22 +655,22 @@ def main():
     if analysis_level == "group":
         if len(modality) > 1:
             i = 0
-            for mod in modality:
+            for mod_ in modality:
                 outs = sweep_directory(
                     bids_dir,
-                    modality=mod,
+                    modality=mod_,
                     space=space,
                     sesh=session_label,
                     run=run
                 )
-                if mod == "func":
+                if mod_ == "func":
                     if i == 0:
                         funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
-                elif mod == "dwi":
+                elif mod_ == "dwi":
                     if i == 0:
                         _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
                     else:
@@ -695,23 +696,23 @@ def main():
     elif analysis_level == "participant":
         if len(modality) > 1:
             i = 0
-            for mod in modality:
+            for mod_ in modality:
                 outs = sweep_directory(
                     bids_dir,
-                    modality=mod,
+                    modality=mod_,
                     space=space,
                     subj=participant_label,
                     sesh=session_label,
                     run=run
                 )
-                if mod == "func":
+                if mod_ == "func":
                     if i == 0:
                         funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
-                elif mod == "dwi":
+                elif mod_ == "dwi":
                     if i == 0:
                         _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
                     else:
@@ -746,8 +747,8 @@ def main():
         ]
 
     arg_list = []
-    for mod in modalities:
-        arg_list.append(arg_dict[mod])
+    for mod_ in modalities:
+        arg_list.append(arg_dict[mod_])
 
     arg_list.append(arg_dict["gen"])
 
@@ -755,13 +756,15 @@ def main():
     models = []
     for d in arg_list:
         if "mod" in d.keys():
-            if len(modality) == 1:
-                if any(x in d["mod"] for x in func_models):
-                    if "dwi" in modality:
-                        del d["mod"]
-                elif any(x in d["mod"] for x in struct_models):
-                    if "func" in modality:
-                        del d["mod"]
+            if d["mod"] == "None":
+                del d["mod"]
+                args_dict_all.update(d)
+                continue
+            if len(modality) > 1:
+                if any(x in d["mod"] for x in func_models) and ("dwi" in modality):
+                    del d["mod"]
+                elif any(x in d["mod"] for x in struct_models) and ("func" in modality):
+                    del d["mod"]
             else:
                 if any(x in d["mod"] for x in func_models) or any(
                     x in d["mod"] for x in struct_models

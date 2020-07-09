@@ -774,11 +774,10 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     """
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
-
     if not op.isfile(uatlas):
         raise ValueError(
-            "\nERROR: User-specified atlas input not found! Check that the file(s) specified with the -ua "
-            "flag exist(s)")
+            "\nERROR: User-specified atlas input not found! Check that the "
+            "file(s) specified with the -ua flag exist(s)")
 
     atlas = uatlas.split("/")[-1].split(".")[0]
 
@@ -786,6 +785,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
         uatlas, background_label, return_label_names=True
     )
     print(f"Region intensities:\n{label_intensities}")
+
     par_max = len(coords)
 
     return coords, atlas, par_max
@@ -841,11 +841,58 @@ def gen_img_list(uatlas):
     return img_list
 
 
-def enforce_consecutive_labels(uatlas):
+def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
+                                            background_label=0):
+    from nilearn.image.resampling import coord_transform
+    from nilearn.image import new_img_like, reorder_img
+
+    labels_img = reorder_img(nib.load(uatlas))
+    labels_data = labels_img.get_fdata()
+    labels_affine = labels_img.affine
+
+    # Grab number of unique values in 3d image
+    unique_labels = set(np.unique(labels_data)) - set([background_label])
+    x, y, z = coord_transform(0, 0, 0, np.linalg.inv(labels_affine))
+    new_labs = []
+    if label_names is not None:
+        new_lab_names = []
+    ix = 0
+    for lab in unique_labels:
+        cur_dat = labels_data == lab
+        left_lab = cur_dat.copy()
+        right_lab = cur_dat.copy()
+
+        # Grab hemispheres separately
+        left_hemi = labels_data.copy() == lab
+        right_hemi = labels_data.copy() == lab
+        left_hemi[int(x):] = 0
+        right_hemi[:int(x)] = 0
+
+        # Two connected component in both hemispheres
+        if not np.all(left_hemi == False) or np.all(right_hemi == False):
+            left_lab[int(x):] = 0
+            right_lab[:int(x)] = 0
+            new_labs.append(left_lab)
+            new_labs.append(right_lab)
+            if label_names is not None:
+                new_lab_names.append(f"{label_names[ix]}_Left")
+                new_lab_names.append(f"{label_names[ix]}_Right")
+        else:
+            new_labs.append(cur_dat)
+            if label_names is not None:
+                new_lab_names.append(label_names[ix])
+        del left_lab, right_lab, left_hemi, right_hemi
+
+    del labels_data
+
+    img_list = [new_img_like(labels_img, i) for i in new_labs]
+
     # Enforce consecutive labelings
-    atlas_img_corr = create_parcel_atlas(gen_img_list(uatlas))[0]
+    atlas_img_corr = create_parcel_atlas(img_list)[0]
     nib.save(atlas_img_corr, uatlas)
-    return uatlas
+
+    del img_list, atlas_img_corr, new_labs, labels_img
+    return uatlas, label_names
 
 
 def gen_network_parcels(uatlas, network, labels, dir_path):
@@ -952,7 +999,7 @@ def AAL_naming(coords):
     labels = []
     for region_ix in labels_ix:
         if region_ix is np.nan:
-            labels.append("Unknown")
+            labels.append("Unlabeled")
         else:
             labels.append(aal_labs_dict[str(region_ix)])
 
