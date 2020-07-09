@@ -321,8 +321,8 @@ def track_ensemble(
     min_length,
     waymask,
     B0_mask,
+    n_seeds_per_iter=250,
     max_length=1000,
-    n_seeds_per_iter=500,
     pft_back_tracking_dist=2,
     pft_front_tracking_dist=1,
     particle_count=15,
@@ -371,11 +371,11 @@ def track_ensemble(
         tractography.
     B0_mask : str
         File path to B0 brain mask.
-    max_length : int
-        Maximum number of steps to restrict tracking.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique
-        ensemble combination. By default this is set to 200.
+        ensemble combination. By default this is set to 250.
+    max_length : int
+        Maximum number of steps to restrict tracking.
     particle_count
         pft_back_tracking_dist : float
         Distance in mm to back track before starting the particle filtering

@@ -2186,6 +2186,7 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             self.inputs.waymask,
             self.inputs.B0_mask,
+            n_seeds_per_iter
         )
 
         namer_dir = "{}/tractography".format(dir_path)
