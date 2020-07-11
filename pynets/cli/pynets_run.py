@@ -597,9 +597,12 @@ def build_workflow(args, retval):
     else:
         fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
-        print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
-              f"FSLDIR={os.environ['FSLDIR']}")
-
+        if fsl_version:
+            print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
+                  f"FSLDIR={os.environ['FSLDIR']}")
+        else:
+            raise EnvironmentError('Is your FSL installation corrupted? '
+                                   'Check permissions.')
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -609,14 +612,14 @@ def build_workflow(args, retval):
 
     # Set Arguments to global variables
     ID = args.id
-    outdir = args.output_dir
+    outdir = f"{args.output_dir}/pynets"
+    os.makedirs(outdir, exist_ok=True)
     func_file = args.func
     mask = args.m
     dwi_file = args.dwi
     fbval = args.bval
     fbvec = args.bvec
     graph = args.g
-    clean = args.clean
 
     if graph:
         if len(graph) > 1:

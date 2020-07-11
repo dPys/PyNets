@@ -100,7 +100,6 @@ def sweep_directory(
                 "datatype": "anat",
                 "suffix": ["T1w", "anat"],
                 "extension": [".nii", ".nii.gz"],
-                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
@@ -122,13 +121,14 @@ def sweep_directory(
                 "datatype": "anat",
                 "suffix": "mask",
                 "extension": [".nii", ".nii.gz"],
-                "run": 1
             }
             for attr, key in zip(anat_attributes, anat_keys):
                 if attr:
                     mask_query[key] = attr
 
             mask = layout.get(**mask_query)
+            if len(mask) > 1 and run is not None:
+                mask = [i for i in mask if f"run-{run}" in i.filename]
             mask = [
                 i for i in mask if "MNI" not in i.filename and "space" not in
                                    i.filename]
@@ -180,7 +180,7 @@ def sweep_directory(
                 )
                 if len(func) > 1 and run is not None:
                     func = [i for i in func if f"run-{run}" in i.filename]
-                if len(func) > 1 and 'space' in [i.filename for i in func]:
+                if len(func) > 1 and space is not None:
                     if "MNI" in [i.filename for i in func]:
                         raise ValueError('MNI-space BOLD images are not '
                                          'currently supported, but are all '
@@ -444,6 +444,7 @@ def main():
     print(Style.RESET_ALL)
 
     modalities = ["func", "dwi"]
+    space = 'T1w'
 
     bids_args = get_bids_parser().parse_args()
     participant_label = bids_args.participant_label
@@ -497,7 +498,6 @@ def main():
             )
             sys.exit()
 
-        space = hardcoded_params["bids_defaults"]["space"][0]
     stream.close()
 
     # S3

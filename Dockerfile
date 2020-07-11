@@ -4,6 +4,7 @@ FROM debian:stretch-slim
 COPY docker/files/neurodebian.gpg /root/.neurodebian.gpg
 
 ARG DEBIAN_FRONTEND="noninteractive"
+ARG miniconda_version="4.3.27"
 
 ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8" \
@@ -41,7 +42,8 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-	    openssh-server \
+	openssh-server \
+        jq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -71,20 +73,36 @@ RUN apt-get update -qq \
     && chmod a+s /opt \
     && chmod 777 -R /opt \
     && apt-get clean -y && apt-get autoclean -y && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Add Neurodebian package repositories (i.e. for FSL)
-RUN curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
-    apt-get update -qq && apt-get update -qq && apt-get install -y fsl-core
-USER neuro
+    apt-get update -qq && apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
+    apt-get clean && cd /tmp \
+    && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
+    && tar -zxvf fsl-5.0.10-python3.tar.gz \
+    && cp fsl/bin/* $FSLDIR/bin/ \
+    && rm -r fsl* \
+    && chmod 777 -R $FSLDIR/bin \
+    && chmod 777 -R /usr/lib/fsl/5.0
+
+ENV FSLDIR=/usr/share/fsl/5.0 \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    FSLMULTIFILEQUIT=TRUE \
+    POSSUMDIR=/usr/share/fsl/5.0 \
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
+    FSLTCLSH=/usr/bin/tclsh \
+    FSLWISH=/usr/bin/wish \
+    PATH=$FSLDIR/bin:$PATH
+ENV PATH="/opt/conda/bin":$PATH
+
 WORKDIR /home/neuro
 
-# Install Miniconda, python, and basic packages.
-ARG miniconda_version="4.3.27"
-ENV PATH="/opt/conda/bin":$PATH
-RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
+RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
+    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0" >> /home/neuro/.bashrc && \
+    echo ". $FSLDIR/etc/fslconf/fsl.sh" >> /home/neuro/.bashrc && \
+    echo "export FSLDIR PATH" >> /home/neuro/.bashrc \
+    && curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
@@ -106,10 +124,7 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
         libgfortran \
         matplotlib \
         openblas \
-    && conda clean -tipsy \
     && pip install skggm python-dateutil==2.8.0 \
-    && sed -i '/mpl_patches = _get/,+3 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
-    && sed -i '/for mpl_patch in mpl_patches:/,+2 d' /opt/conda/lib/python3.6/site-packages/nilearn/plotting/glass_brain.py \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
     && python -c "from matplotlib import font_manager" \
     && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" ) \
@@ -119,12 +134,10 @@ RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_versio
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
     && pip uninstall -y pandas \
     && pip install pandas -U \
+    && cd / \
     && rm -rf /home/neuro/PyNets \
-    && rm -rf /home/neuro/.cache
-
-# Handle permissions, cleanup, and create mountpoints
-USER root
-RUN chmod a+s -R /opt \
+    && rm -rf /home/neuro/.cache \
+    && chmod a+s -R /opt \
     && chown -R neuro /opt/conda/lib/python3.6/site-packages \
     && mkdir -p /home/neuro/.pynets \
     && chown -R neuro /home/neuro/.pynets \
@@ -148,8 +161,8 @@ RUN chmod a+s -R /opt \
 	g++ \
 	openssl \
 	git-lfs \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && conda clean -tipsy \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir /inputs && \
     chmod -R 777 /inputs \
     && mkdir /outputs && \
@@ -157,26 +170,20 @@ RUN chmod a+s -R /opt \
     && mkdir /working && \
     chmod -R 777 /working
 
-USER neuro
-
 # ENV Config
-ENV LD_LIBRARY_PATH="/opt/conda/lib":$LD_LIBRARY_PATH
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-ENV FSLDIR=/usr/share/fsl/5.0
-ENV PATH=/usr/lib/fsl/5.0/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/lib/fsl/5.0:$LD_LIBRARY_PATH
-ENV FSLTCLSH=/usr/bin/tclsh
-ENV FSLWISH=/usr/bin/wish
-ENV FSLBROWSER=/etc/alternatives/x-www-browser
-ENV LD_LIBRARY_PATH="/usr/lib/openblas-base":$LD_LIBRARY_PATH
-ENV FSLMULTIFILEQUIT=TRUE
-ENV FSLOUTPUTTYPE=NIFTI_GZ
-ENV FSLMULTIFILEQUIT=TRUE
-ENV PYTHONWARNINGS ignore
-ENV OMP_NUM_THREADS=1
-ENV USE_SIMPLE_THREADED_LEVEL3=1
+ENV FSLDIR=/usr/share/fsl/5.0 \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    FSLMULTIFILEQUIT=TRUE \
+    POSSUMDIR=/usr/share/fsl/5.0 \
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
+    FSLTCLSH=/usr/bin/tclsh \
+    FSLWISH=/usr/bin/wish \
+    PATH=$FSLDIR/bin:$PATH
 
 EXPOSE 22
+
+RUN ldconfig && . /home/neuro/.bashrc && bash
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets_bids"]
