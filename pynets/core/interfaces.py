@@ -2252,9 +2252,9 @@ class Tracking(SimpleInterface):
             str(self.inputs.curv_thr_list).replace(", ", "_"),
             "_step-",
             str(self.inputs.step_list).replace(", ", "_"),
-            "_dg-",
+            "_directget-",
             self.inputs.directget,
-            "_ml-",
+            "_minlength-",
             self.inputs.min_length,
             ".trk",
         )

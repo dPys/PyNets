@@ -496,12 +496,10 @@ def test_parcel_naming():
 def test_enforce_hem_distinct_consecutive_labels():
     base_dir = str(Path(__file__).parent/"examples")
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-    parlist_img = nib.load(parlistfile)
-    parcels_parlistfile = len(np.unique(parlist_img.get_fdata())) - 1
     uatlas = nodemaker.enforce_hem_distinct_consecutive_labels(parlistfile)[0]
     uatlas_img = nib.load(uatlas)
     parcels_uatlas = len(np.unique(uatlas_img.get_fdata())) - 1
-    assert parcels_parlistfile == parcels_uatlas
+    assert parcels_uatlas == 354
 
 
 def test_mask_roi():

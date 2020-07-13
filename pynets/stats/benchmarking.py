@@ -70,34 +70,34 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
                     file_renamed.split("hpass-")[1].split("_")[0].split("Hz")[0])
             hyperparams.append("hpass")
     elif modality == "dwi":
-        if "tt-" in file_renamed:
+        if "tracktype-" in file_renamed:
             if "track_type" not in hyperparam_dict.keys():
                 hyperparam_dict["track_type"] = [
-                    file_renamed.split("tt-")[1].split("_")[0]
+                    file_renamed.split("tracktype-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["track_type"].append(
-                    file_renamed.split("tt-")[1].split("_")[0]
+                    file_renamed.split("tracktype-")[1].split("_")[0]
                 )
             hyperparams.append("track_type")
-        if "dg-" in file_renamed:
+        if "directget-" in file_renamed:
             if "directget" not in hyperparam_dict.keys():
                 hyperparam_dict["directget"] = [
-                    file_renamed.split("dg-")[1].split("_")[0]
+                    file_renamed.split("directget-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["directget"].append(
-                    file_renamed.split("dg-")[1].split("_")[0]
+                    file_renamed.split("directget-")[1].split("_")[0]
                 )
             hyperparams.append("directget")
-        if "ml-" in file_renamed:
+        if "minlength-" in file_renamed:
             if "min_length" not in hyperparam_dict.keys():
                 hyperparam_dict["min_length"] = [
-                    file_renamed.split("ml-")[1].split("_")[0]
+                    file_renamed.split("minlength-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["min_length"].append(
-                    file_renamed.split("ml-")[1].split("_")[0]
+                    file_renamed.split("minlength-")[1].split("_")[0]
                 )
             hyperparams.append("min_length")
     return hyperparam_dict, hyperparams
@@ -270,16 +270,16 @@ if __name__ == "__main__":
         df = df.rename(
             columns=lambda x: re.sub(
                 "_partcorr_",
-                "_est-partcorr_",
+                "_model-partcorr_",
                 x))
-        df = df.rename(columns=lambda x: re.sub("_sps_", "_est-sps_", x))
+        df = df.rename(columns=lambda x: re.sub("_sps_", "_model-sps_", x))
         df = df.rename(columns=lambda x: re.sub("_sig_bin_nores-2mm", "", x))
     elif modality == "dwi":
-        df = df.rename(columns=lambda x: re.sub("csa_", "est-csa_", x))
-        df = df.rename(columns=lambda x: re.sub("csd_", "est-csd_", x))
+        df = df.rename(columns=lambda x: re.sub("csa_", "model-csa_", x))
+        df = df.rename(columns=lambda x: re.sub("csd_", "model-csd_", x))
     df = df.rename(columns=lambda x: re.sub("_k", "_k-", x))
     df = df.rename(columns=lambda x: re.sub("_thr_", "", x))
-    df = df.rename(columns=lambda x: re.sub("_est-est-", "_est-", x))
+    df = df.rename(columns=lambda x: re.sub("_model-model-", "_model-", x))
     df = df.rename(columns=lambda x: re.sub("__", "_", x))
     df = df.dropna(subset=["id"])
 
@@ -350,7 +350,7 @@ if __name__ == "__main__":
                         + clust
                         + "_k-"
                         + str(_k)
-                        + "_est-"
+                        + "_model-"
                         + est
                         + "_nodetype-parc_"
                         + "smooth-"
@@ -501,13 +501,13 @@ if __name__ == "__main__":
                         + clust
                         + "_k-"
                         + str(_k)
-                        + "_est-"
+                        + "_model-"
                         + est
-                        + "_nodetype-parc_samples-50000streams_tt-"
+                        + "_nodetype-parc_samples-20000streams_tracktype-"
                         + track_type
-                        + "_dg-"
+                        + "_directget-"
                         + directget
-                        + "_ml-"
+                        + "_minlength-"
                         + min_length
                         + "_thrtype-"
                         + thr_type

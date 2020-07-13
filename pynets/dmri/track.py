@@ -291,9 +291,9 @@ def create_density_map(
         str(curv_thr_list).replace(", ", "_"),
         "_step-",
         str(step_list).replace(", ", "_"),
-        "_dg-",
+        "_directget-",
         directget,
-        "_ml-",
+        "_minlength-",
         min_length,
         ".nii.gz",
     )

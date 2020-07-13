@@ -1561,7 +1561,8 @@ def dmri_connectometry(
 
     save_nifti_parcels_node = pe.Node(
         niu.Function(
-            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti"],
+            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti",
+                         "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
             imports=import_list,
@@ -2184,7 +2185,8 @@ def dmri_connectometry(
     else:
         dmri_connectometry_wf.connect(
             [
-                (inputnode, save_nifti_parcels_node, [("network", "network")]),
+                (inputnode, save_nifti_parcels_node,
+                 [("network", "network")]),
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
@@ -2846,7 +2848,8 @@ def dmri_connectometry(
                 register_node,
                 [("outfile", "anat_file")],
             ),
-            (inputnode, save_nifti_parcels_node, [("ID", "ID")]),
+            (inputnode, save_nifti_parcels_node, [("ID", "ID"),
+                                                  ("vox_size", "vox_size")]),
             (
                 fetch_nodes_and_labels_node,
                 save_coords_and_labels_node,
@@ -4231,7 +4234,8 @@ def fmri_connectometry(
 
     save_nifti_parcels_node = pe.Node(
         niu.Function(
-            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti"],
+            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti",
+                         "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
             imports=import_list,
@@ -4241,7 +4245,8 @@ def fmri_connectometry(
     fmri_connectometry_wf.add_nodes([save_nifti_parcels_node])
     fmri_connectometry_wf.connect(
         [
-            (inputnode, save_nifti_parcels_node, [("ID", "ID")]),
+            (inputnode, save_nifti_parcels_node, [("ID", "ID"),
+                                                  ("vox_size", "vox_size")]),
             (
                 node_gen_node,
                 save_nifti_parcels_node,

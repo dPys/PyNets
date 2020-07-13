@@ -1140,7 +1140,7 @@ class CleanGraphs(object):
 
         # Saved pruned
         if (self.prune != 0) and (self.prune is not None):
-            final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned_mat'}"
+            final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned'}"
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
         else:

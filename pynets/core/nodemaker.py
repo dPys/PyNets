@@ -1001,7 +1001,7 @@ def parcel_naming(coords, vox_size):
     stream.close()
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_" f"brain_{vox_size}.nii.gz"
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
     try:
         template_img = nib.load(template_brain)

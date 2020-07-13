@@ -54,12 +54,13 @@ def test_save_nifti_parcels_map():
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     ID = '002'
+    vox_size = '2mm'
     network = None
     array_data = np.arange(24, dtype=np.int16).reshape((2, 3, 4))
     affine = np.diag([1, 2, 3, 1])
     net_parcels_map_nifti = nib.Nifti1Image(array_data, affine)
 
-    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti)
+    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_size)
     assert os.path.isfile(net_parcels_nii_path) is True
 
 

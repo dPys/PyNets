@@ -637,7 +637,7 @@ def build_multigraphs(est_path_iterlist, ID):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("est-")[1].split("_")[0] in struct_models
+                if i.split("model-")[1].split("_")[0] in struct_models
             ]
         )
     )
@@ -646,7 +646,7 @@ def build_multigraphs(est_path_iterlist, ID):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("est-")[1].split("_")[0] in func_models
+                if i.split("model-")[1].split("_")[0] in func_models
             ]
         )
     )
