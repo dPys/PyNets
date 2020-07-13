@@ -760,7 +760,7 @@ def main():
                 del d["mod"]
                 args_dict_all.update(d)
                 continue
-            if len(modality) > 1:
+            if len(modality) == 1:
                 if any(x in d["mod"] for x in func_models) and ("dwi" in modality):
                     del d["mod"]
                 elif any(x in d["mod"] for x in struct_models) and ("func" in modality):

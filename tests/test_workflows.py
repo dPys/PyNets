@@ -432,7 +432,6 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
         runtime_dict = {}
         execution_dict = {}
         maxcrossing = hardcoded_params['maxcrossing'][0]
-        overlap_thr = hardcoded_params['overlap_thr'][0]
         step_list = hardcoded_params['step_list']
         curv_thr_list = hardcoded_params['curv_thr_list']
         for i in range(len(hardcoded_params['resource_dict'])):
@@ -482,7 +481,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
                                                conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
                                                step_thr, node_size_list, conn_model_list, min_span_tree,
                                                use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
-                                               binary, target_samples, curv_thr_list, step_list, overlap_thr,
+                                               binary, target_samples, curv_thr_list, step_list,
                                                track_type, min_length, maxcrossing, directget, tiss_class,
                                                runtime_dict, execution_dict, multi_directget, template_name,
                                                vox_size, waymask, min_length_list, outdir)

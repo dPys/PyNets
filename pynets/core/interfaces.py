@@ -30,7 +30,7 @@ class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
     ref_txt = traits.Any()
     in_file = traits.Any(mandatory=True)
     parc = traits.Bool(mandatory=True)
-    use_AAL_naming = traits.Bool(False, usedefault=True)
+    use_parcel_naming = traits.Bool(False, usedefault=True)
     outdir = traits.Str(mandatory=True)
     vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
     clustering = traits.Bool(False, usedefault=True)
@@ -245,9 +245,9 @@ class FetchNodesLabels(SimpleInterface):
                             ref_txt, sep=" ", header=None, names=[
                                 "Index", "Region"])["Region"].tolist()
                     except BaseException:
-                        if self.inputs.use_AAL_naming is True:
+                        if self.inputs.use_parcel_naming is True:
                             try:
-                                labels = nodemaker.AAL_naming(coords)
+                                labels = nodemaker.parcel_naming(coords, self.inputs.vox_size)
                             except BaseException:
                                 print("AAL reference labeling failed!")
                                 labels = np.arange(len(coords) + 1)[
@@ -259,9 +259,9 @@ class FetchNodesLabels(SimpleInterface):
                                 np.arange(len(coords) + 1) != 0
                             ].tolist()
                 else:
-                    if self.inputs.use_AAL_naming is True:
+                    if self.inputs.use_parcel_naming is True:
                         try:
-                            labels = nodemaker.AAL_naming(coords)
+                            labels = nodemaker.parcel_naming(coords, self.inputs.vox_size)
                         except BaseException:
                             print("AAL reference labeling failed!")
                             labels = np.arange(len(coords) + 1)[
@@ -281,10 +281,10 @@ class FetchNodesLabels(SimpleInterface):
             if len(coords) != len(labels):
                 print("Length of coordinates is not equal to length of "
                       "label names...")
-                if self.inputs.use_AAL_naming is True:
+                if self.inputs.use_parcel_naming is True:
                     try:
                         print("Attempting AAL instead...")
-                        labels = nodemaker.AAL_naming(coords)
+                        labels = nodemaker.parcel_naming(coords, self.inputs.vox_size)
                     except BaseException:
                         print("Reverting to integer labels instead...")
                         labels = np.arange(len(coords) + 1)[

@@ -1244,11 +1244,11 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         os.makedirs(namer_dir, exist_ok=True)
 
     if network is not None:
-        coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
-        labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
+        coord_path = f"{namer_dir}{'/'}{network}{'_mni_coords_rsn.pkl'}"
+        labels_path = f"{namer_dir}{'/'}{network}{'_mni_labels_rsn.pkl'}"
     else:
-        coord_path = f"{namer_dir}/all_coords.pkl"
-        labels_path = f"{namer_dir}/all_labels.pkl"
+        coord_path = f"{namer_dir}/all_mni_coords.pkl"
+        labels_path = f"{namer_dir}/all_mni_labels.pkl"
 
     # Save coords to pickle
     with open(coord_path, "wb") as f:

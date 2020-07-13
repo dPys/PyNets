@@ -354,7 +354,6 @@ def sfm_mod_est(gtab, data, B0_mask):
 def streams2graph(
     atlas_mni,
     streams,
-    overlap_thr,
     dir_path,
     track_type,
     target_samples,
@@ -378,7 +377,6 @@ def streams2graph(
     warped_fa,
     error_margin,
     min_length,
-    fa_wei=True,
 ):
     """
     Use tracked streamlines as a basis for estimating a structural connectome.
@@ -389,9 +387,6 @@ def streams2graph(
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     streams : str
         File path to streamline array sequence in .trk format.
-    overlap_thr : int
-        Number of voxels for which a given streamline must intersect with an ROI
-        for an edge to be counted.
     dir_path : str
         Path to directory containing subject derivative data for a given pynets run.
     track_type : str
@@ -446,8 +441,6 @@ def streams2graph(
         Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
-    fa_wei :  bool
-        Scale streamline count edges by fractional anistropy (FA). Default is False.
 
     Returns
     -------
@@ -524,6 +517,9 @@ def streams2graph(
     """
     import gc
     import time
+    import pkg_resources
+    import sys
+    import yaml
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates
     import networkx as nx
@@ -533,6 +529,33 @@ def streams2graph(
     from pynets.dmri.dmri_utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            fa_wei = hardcoded_params["StructuralNetworkWeighting"]["fa_weighting"][0]
+        except KeyError:
+            print(
+                "No fa_weighting parameter listed in runconfig.yaml"
+            )
+            sys.exit(0)
+        try:
+            fiber_density = hardcoded_params["StructuralNetworkWeighting"]["fiber_density"][0]
+        except KeyError:
+            print(
+                "No fiber_density parameter specified in runconfig.yaml"
+            )
+            sys.exit(0)
+        try:
+            overlap_thr = hardcoded_params["StructuralNetworkWeighting"]["overlap_thr"][0]
+        except KeyError:
+            print(
+                "No overlap_thr parameter specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     start = time.time()
 
@@ -586,6 +609,7 @@ def streams2graph(
             )
 
     # Make streamlines into generators to keep memory at a minimum
+    total_streamlines = len(streamlines)
     sl = [generate_sl(i) for i in streamlines]
     del streamlines
 
@@ -598,17 +622,29 @@ def streams2graph(
     node_dict = dict(
         zip(np.unique(atlas_data.astype("uint16"))[1:], np.arange(mx) + 1))
 
-    # Add empty vertices
+    # Add empty vertices with label volume attributes
     for node in range(1, mx + 1):
-        g.add_node(node)
+        g.add_node(node, roi_volume=np.sum(
+            atlas_data.astype("uint16") == node)
+                   )
 
     # Build graph
-    ix = 0
+    pc = 0
     bad_idxs = []
-    for s in sl:
+    fiberlengths = {}
+    fa_weights_dict = {}
+    print(f"Structural Connectome Completion Status:")
+    for ix, s in enumerate(sl):
+        # Percent counter
+        pcN = int(round(100*float(ix / total_streamlines)))
+        if pcN % 10 == 0 and ix > 0 and pcN > pc:
+            pc = pcN
+            print(f"{pcN}%")
+
         # Map the streamlines coordinates to voxel coordinates and get labels
         # for label_volume
         vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
+
         lab_coords = [
             nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape)
             for coord in vox_coords
@@ -619,12 +655,12 @@ def streams2graph(
         lab_arr = atlas_data[i, j, k]
         # print(lab_arr)
         endlabels = []
-        for ix, lab in enumerate(np.unique(lab_arr).astype("uint32")):
+        for jx, lab in enumerate(np.unique(lab_arr).astype("uint32")):
             if (lab > 0) and (np.sum(lab_arr == lab) >= overlap_thr):
                 try:
                     endlabels.append(node_dict[lab])
                 except BaseException:
-                    bad_idxs.append(ix)
+                    bad_idxs.append(jx)
                     print(
                         f"Label {lab} missing from parcellation. Check "
                         f"registration and ensure valid input parcellation "
@@ -632,41 +668,84 @@ def streams2graph(
 
         edges = combinations(endlabels, 2)
         for edge in edges:
+            # Get fiber lengths along edge
+            if fiber_density is True:
+                if not (edge[0], edge[1]) in fiberlengths.keys():
+                    fiberlengths[(edge[0], edge[1])] = [len(vox_coords)]
+                else:
+                    fiberlengths[(edge[0], edge[1])].append(len(vox_coords))
+
+            # Get FA values along edge
+            if fa_wei is True:
+                if not (edge[0], edge[1]) in fa_weights_dict.keys():
+                    fa_weights_dict[(edge[0], edge[1])] = [fa_weights_norm[ix]]
+                else:
+                    fa_weights_dict[(edge[0], edge[1])].append(fa_weights_norm[ix])
+
             lst = tuple([int(node) for node in edge])
             edge_dict[tuple(sorted(lst))] += 1
 
-        edge_list = [(k[0], k[1], v) for k, v in edge_dict.items()]
+        edge_list = [(k[0], k[1], count) for k, count in edge_dict.items()]
 
-        if fa_wei is True:
-            # Add edgelist to g, weighted by average fa of the streamline
-            g.add_weighted_edges_from(edge_list, weight=fa_weights_norm[ix])
-        else:
-            g.add_weighted_edges_from(edge_list)
-        ix = ix + 1
+        g.add_weighted_edges_from(edge_list)
 
         del lab_coords, lab_arr, endlabels, edges, edge_list
 
     gc.collect()
 
-    if fa_wei is True:
-        # Add average fa weights to streamline counts
-        for u, v in list(g.edges):
-            h = g.get_edge_data(u, v)
-            edge_att_dict = {}
-            for e, w in h.items():
-                if w not in edge_att_dict.keys():
-                    edge_att_dict[w] = []
-                else:
-                    edge_att_dict[w].append(e)
-            for key in edge_att_dict.keys():
-                edge_att_dict[key] = np.nanmean(edge_att_dict[key])
-            vals = []
-            for e2, w2 in edge_att_dict.items():
-                vals.append(float(e2) * float(w2))
-            g.edges[u, v].update({"weight": np.nanmean(vals)})
+    # Add fiber density attributes for each edge
+    if fiber_density is True:
+        # Summarize total fibers and total label volumes
+        total_fibers = 0
+        total_volume = 0
+        u_start = -1
+        for u, v, d in g.edges(data=True):
+            total_fibers += len(d)
+            if u != u_start:
+                total_volume += g.node[int(u)]['roi_volume']
+            u_start = u
 
-    # Convert to numpy matrix
-    conn_matrix_raw = nx.to_numpy_array(g, weight='weight')
+        ix = 0
+        for u, v, d in g.edges(data=True):
+            if d['weight'] > 0:
+                edge_fiberlength_mean = np.nanmean(fiberlengths[(u, v)])
+                fiber_density = (float(((float(d['weight']) / float(total_fibers)) /
+                       float(edge_fiberlength_mean)) *
+                      ((2.0 * float(total_volume)) /
+                       (g.node[int(u)]['roi_volume'] +
+                        g.node[int(v)]['roi_volume'])))) * 1000
+            else:
+                fiber_density = 0
+            g.edges[u, v].update({"fiber_density": fiber_density})
+            ix += 1
+
+    if fa_wei is True:
+        # Add FA attributes for each edge
+        ix = 0
+        for u, v, d in g.edges(data=True):
+            if d['weight'] > 0:
+                edge_average_fa = np.nanmean(fa_weights_dict[(u, v)])
+            else:
+                edge_average_fa = np.nan
+            g.edges[u, v].update({"fa_weight": edge_average_fa})
+            ix += 1
+
+    # Summarize weights
+    if fa_wei is True and fiber_density is True:
+        for u, v, d in g.edges(data=True):
+            g.edges[u, v].update({"final_weight": (d['fa_weight'])*d['fiber_density']})
+    elif fiber_density is True and fa_wei is False:
+        for u, v, d in g.edges(data=True):
+            g.edges[u, v].update({"final_weight": d['fiber_density']})
+    elif fa_wei is True and fiber_density is False:
+        for u, v, d in g.edges(data=True):
+            g.edges[u, v].update({"final_weight": d['fa_weight']*d['weight']})
+    else:
+        for u, v, d in g.edges(data=True):
+            g.edges[u, v].update({"final_weight": d['weight']})
+
+    # Convert weighted graph to numpy matrix
+    conn_matrix_raw = nx.to_numpy_array(g, weight='final_weight')
 
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)

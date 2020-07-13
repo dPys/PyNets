@@ -417,6 +417,9 @@ class TimeseriesExtraction(object):
         mask,
         extract_strategy,
     ):
+        import sys
+        import yaml
+        import pkg_resources
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
@@ -438,6 +441,19 @@ class TimeseriesExtraction(object):
         self._net_parcels_nii_temp_path = None
         self._net_parcels_map_nifti = None
         self._parcel_masker = None
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                self.low_pass = hardcoded_params["low_pass"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted "
+                    "from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
 
     def prepare_inputs(self):
         """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
@@ -512,6 +528,7 @@ class TimeseriesExtraction(object):
             background_label=0,
             standardize=True,
             smoothing_fwhm=float(self.smooth),
+            low_pass=self.low_pass,
             high_pass=self.hpass,
             detrend=self._detrending,
             t_r=self._t_r,

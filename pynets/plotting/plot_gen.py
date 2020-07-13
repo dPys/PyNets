@@ -684,6 +684,7 @@ def plot_all_func(
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
+    from pynets.core import nodemaker
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
 
@@ -738,6 +739,7 @@ def plot_all_func(
             glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
+            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
         except KeyError:
             print(
                 "ERROR: Plotting configuration not successfully extracted "
@@ -751,6 +753,9 @@ def plot_all_func(
 
     if not isinstance(labels, list):
         labels = list(labels)
+
+    if any(isinstance(sub, dict) for sub in labels):
+        labels = [lab[labeling_atlas] for lab in labels]
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):
@@ -986,6 +991,7 @@ def plot_all_struct(
     from nilearn import plotting as niplot
     import pkg_resources
     import networkx as nx
+    from pynets.core import nodemaker
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
 
@@ -1017,9 +1023,11 @@ def plot_all_struct(
             glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
+            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
         except KeyError:
             print(
-                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
@@ -1029,6 +1037,9 @@ def plot_all_struct(
 
     if not isinstance(labels, list):
         labels = list(labels)
+
+    if any(isinstance(sub, dict) for sub in labels):
+        labels = [lab[labeling_atlas] for lab in labels]
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):

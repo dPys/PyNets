@@ -1,7 +1,12 @@
 maxcrossing: # Maximum crossing fibers per voxel in tractography
     - 2
-overlap_thr: # Tractography/ node overlap in units of voxels
-    - 1
+StructuralNetworkWeighting:
+    fiber_density: # If set to True, scale fiber count by mean length relative to the volume of roi node pairs. If false, raw streamline counts will be used.
+        - True
+    fa_weighting: # If True, scale edge weights by average Fractional Anisotropy (FA) along all streamlines used to define an edge.
+        - True
+    overlap_thr: # ROI-streamline overlap in units of voxels.
+        - 1
 step_list: # Ensemble tractography, should never exceed the voxel size.
     - 0.1
     - 0.2
@@ -15,18 +20,20 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 50
+low_pass:
+    - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
     - 'act'
 tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
     - 20000
-aal_names: # Whether to use AAL lookup to label nodes of a custom atlas or atlas without labels. Default is True.
+parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
     - True
 DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
     - False
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
-    - 'betweenness'
+    - 'coreness'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
@@ -59,6 +66,18 @@ local_atlases:
     - 'whole_brain_cluster_labels_PCA100'
     - 'whole_brain_cluster_labels_PCA200'
     - 'RandomParcellationsc05meanalll43Craddock2011'
+labeling_atlases:
+    - 'talairach_labels'
+    - 'mni_labels'
+    - 'juelich_labels'
+    - 'harvardoxford_cortical_labels'
+    - 'harvardoxford_subcortical_labels'
+    - 'AAL2zourioMazoyer2002'
+    - 'DesikanKlein2012'
+    - 'BrainnetomeAtlasFan2016'
+    - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
+    - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
+    - 'AICHAreorderedJoliot2015'
 available_models:
     func_models:
       - 'corr'
@@ -73,7 +92,7 @@ available_models:
       - 'csa'
       - 'csd'
       - 'ten'
-template: # `MNI152_T1` is the default and is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
+template: # `MNI152_T1` is the default and, along with `colin27` is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates provided by the user should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
 #    - 'colin27'
     - 'MNI152_T1'
 sentiment_labeling:
@@ -90,6 +109,8 @@ plotting:
         - True
     dpi:
         - 300
+    labeling_atlas:
+        - 'AAL2zourioMazoyer2002'
     functional:
         glassbrain:
             color_theme:

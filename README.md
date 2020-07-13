@@ -39,7 +39,9 @@ cd PyNets
 
 Documentation
 -------------
-Explore official installation instruction, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
+Explore official installation instructions, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
+
+*NEW: Try out the first official PyNets tutorial on connectome ensemble sampling: <https://github.com/dPys/PyNets/blob/master/tutorial/QuickStartTutorial.ipynb>
 
 Citing
 ------

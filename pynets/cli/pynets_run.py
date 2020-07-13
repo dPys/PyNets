@@ -291,7 +291,15 @@ def get_parser():
         nargs="+",
         help="(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. "
         "If you wish to iterate the pipeline across multiple smoothing "
-        "separate the list by space (e.g. 2 4 6).\n",
+        "separate the list by space (e.g. 0 2 4 6). Smoothing value modulation "
+             "can facilitate exploration of functional connectomes across "
+             "different levels of bias and variance. For thresholded networks, "
+             "larger smoothing kernels lead to more similar networks across "
+             "individuals, depending network density. Smoothing also alters "
+             "the effect sizes of the individual link differences, with higher"
+             " values decreasing inter‐subject variability, but increasing"
+             " reproducibility. "
+             "See Triana et al. 2020 and Alakörkkö et al. 2017 for guidance.\n",
     )
     parser.add_argument(
         "-hp",
@@ -301,7 +309,7 @@ def get_parser():
         help="(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted "
         "time-series for fMRI. Default is None. If you wish to iterate the pipeline across "
         "multiple high-pass filter thresholds, values, separate the list by space "
-        "(e.g. 0.008 0.01).\n",
+        "(e.g. 0.028, 0.08, 0.15, 0.22). See Yuen et al. 2019 for guidance.\n",
     )
     parser.add_argument(
         "-es",
@@ -329,7 +337,8 @@ def get_parser():
         default=None,
         nargs="+",
         help="(Hyperparameter): Specify a number of clusters to produce. If you wish to iterate the "
-        "pipeline across multiple values of k, separate the list by space (e.g. 100 150 200).\n",
+        "pipeline across multiple values of k, separate the list by space (e.g. 100 150 200). "
+             "See Thirion et al. 2014 for guidance.\n",
     )
     parser.add_argument(
         "-ct",
@@ -341,7 +350,7 @@ def get_parser():
         "ward, rena or kmeans. Note that imposing spatial constraints with a mask consisting of "
         "disconnected components will leading to clustering instability in the case of complete, "
         "average, or single clustering. If specifying a list of "
-        "clustering types, separate them by space.\n",
+        "clustering types, separate them by space. See Thirion et al. 2014 for guidance.\n",
     )
     parser.add_argument(
         "-cm",
@@ -350,7 +359,7 @@ def get_parser():
         nargs="+",
         help="(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional "
         "clustering. If specifying a list of paths to multiple cluster masks, separate "
-        "them by space.\n",
+        "them by space. See Craddock et al. 2012 for guidance on spatially-constrained parcellations.\n",
     )
 
     # dMRI hyperparameters
@@ -956,12 +965,11 @@ def build_workflow(args, retval):
         try:
             hardcoded_params = yaml.load(stream)
             maxcrossing = hardcoded_params["maxcrossing"][0]
-            overlap_thr = hardcoded_params["overlap_thr"][0]
             local_corr = hardcoded_params["clustering_local_conn"][0]
             track_type = hardcoded_params["tracking_method"][0]
             tiss_class = hardcoded_params["tissue_classifier"][0]
             target_samples = hardcoded_params["tracking_samples"][0]
-            use_AAL_naming = hardcoded_params["aal_names"][0]
+            use_parcel_naming = hardcoded_params["parcel_naming"][0]
             step_list = hardcoded_params["step_list"]
             curv_thr_list = hardcoded_params["curv_thr_list"]
             nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
@@ -1965,7 +1973,7 @@ def build_workflow(args, retval):
         min_span_tree,
         verbose,
         plugin_type,
-        use_AAL_naming,
+        use_parcel_naming,
         multi_graph,
         smooth,
         smooth_list,
@@ -1980,7 +1988,6 @@ def build_workflow(args, retval):
         target_samples,
         curv_thr_list,
         step_list,
-        overlap_thr,
         track_type,
         min_length,
         maxcrossing,
@@ -2134,7 +2141,7 @@ def build_workflow(args, retval):
                 min_span_tree,
                 verbose,
                 plugin_type,
-                use_AAL_naming,
+                use_parcel_naming,
                 smooth,
                 smooth_list,
                 disp_filt,
@@ -2148,7 +2155,6 @@ def build_workflow(args, retval):
                 target_samples,
                 curv_thr_list,
                 step_list,
-                overlap_thr,
                 track_type,
                 min_length,
                 maxcrossing,
@@ -2399,7 +2405,7 @@ def build_workflow(args, retval):
         min_span_tree,
         verbose,
         plugin_type,
-        use_AAL_naming,
+        use_parcel_naming,
         multi_subject_graph,
         multi_subject_multigraph,
         smooth,
@@ -2415,7 +2421,6 @@ def build_workflow(args, retval):
         target_samples,
         curv_thr_list,
         step_list,
-        overlap_thr,
         track_type,
         min_length,
         maxcrossing,
@@ -2525,7 +2530,7 @@ def build_workflow(args, retval):
                     min_span_tree=min_span_tree,
                     verbose=verbose,
                     plugin_type=plugin_type,
-                    use_AAL_naming=use_AAL_naming,
+                    use_parcel_naming=use_parcel_naming,
                     multi_graph=None,
                     smooth=smooth,
                     smooth_list=smooth_list,
@@ -2540,7 +2545,6 @@ def build_workflow(args, retval):
                     target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
-                    overlap_thr=overlap_thr,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
@@ -2642,7 +2646,7 @@ def build_workflow(args, retval):
                     min_span_tree=min_span_tree,
                     verbose=verbose,
                     plugin_type=plugin_type,
-                    use_AAL_naming=use_AAL_naming,
+                    use_parcel_naming=use_parcel_naming,
                     multi_graph=multi_graph,
                     smooth=smooth,
                     smooth_list=smooth_list,
@@ -2657,7 +2661,6 @@ def build_workflow(args, retval):
                     target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
-                    overlap_thr=overlap_thr,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
@@ -2757,7 +2760,7 @@ def build_workflow(args, retval):
             min_span_tree,
             verbose,
             plugin_type,
-            use_AAL_naming,
+            use_parcel_naming,
             multi_subject_graph,
             multi_subject_multigraph,
             smooth,
@@ -2773,7 +2776,6 @@ def build_workflow(args, retval):
             target_samples,
             curv_thr_list,
             step_list,
-            overlap_thr,
             track_type,
             min_length,
             maxcrossing,
@@ -2948,7 +2950,7 @@ def build_workflow(args, retval):
             min_span_tree,
             verbose,
             plugin_type,
-            use_AAL_naming,
+            use_parcel_naming,
             multi_graph,
             smooth,
             smooth_list,
@@ -2963,7 +2965,6 @@ def build_workflow(args, retval):
             target_samples,
             curv_thr_list,
             step_list,
-            overlap_thr,
             track_type,
             min_length,
             maxcrossing,

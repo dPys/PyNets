@@ -49,7 +49,7 @@ def workflow_selector(
     min_span_tree,
     verbose,
     plugin_type,
-    use_AAL_naming,
+    use_parcel_naming,
     smooth,
     smooth_list,
     disp_filt,
@@ -63,7 +63,6 @@ def workflow_selector(
     target_samples,
     curv_thr_list,
     step_list,
-    overlap_thr,
     track_type,
     min_length,
     maxcrossing,
@@ -223,7 +222,7 @@ def workflow_selector(
             node_size_list,
             dwi_model_list,
             min_span_tree,
-            use_AAL_naming,
+            use_parcel_naming,
             disp_filt,
             plugin_type,
             multi_nets,
@@ -234,7 +233,6 @@ def workflow_selector(
             target_samples,
             curv_thr_list,
             step_list,
-            overlap_thr,
             track_type,
             min_length,
             maxcrossing,
@@ -292,7 +290,7 @@ def workflow_selector(
             node_size_list,
             func_model_list,
             min_span_tree,
-            use_AAL_naming,
+            use_parcel_naming,
             smooth,
             smooth_list,
             disp_filt,
@@ -403,7 +401,7 @@ def workflow_selector(
                 "min_span_tree",
                 "verbose",
                 "plugin_type",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "smooth",
                 "smooth_list",
                 "disp_filt",
@@ -417,7 +415,6 @@ def workflow_selector(
                 "target_samples",
                 "curv_thr_list",
                 "step_list",
-                "overlap_thr",
                 "track_type",
                 "min_length",
                 "maxcrossing",
@@ -481,7 +478,7 @@ def workflow_selector(
     meta_inputnode.inputs.min_span_tree = min_span_tree
     meta_inputnode.inputs.verbose = verbose
     meta_inputnode.inputs.plugin_type = plugin_type
-    meta_inputnode.inputs.use_AAL_naming = use_AAL_naming
+    meta_inputnode.inputs.use_parcel_naming = use_parcel_naming
     meta_inputnode.inputs.smooth = smooth
     meta_inputnode.inputs.smooth_list = smooth_list
     meta_inputnode.inputs.hpass = hpass
@@ -495,7 +492,6 @@ def workflow_selector(
     meta_inputnode.inputs.target_samples = target_samples
     meta_inputnode.inputs.curv_thr_list = curv_thr_list
     meta_inputnode.inputs.step_list = step_list
-    meta_inputnode.inputs.overlap_thr = overlap_thr
     meta_inputnode.inputs.track_type = track_type
     meta_inputnode.inputs.min_length = min_length
     meta_inputnode.inputs.maxcrossing = maxcrossing
@@ -599,7 +595,7 @@ def workflow_selector(
                         ("prune", "inputnode.prune"),
                         ("dwi_model_list", "inputnode.conn_model_list"),
                         ("min_span_tree", "inputnode.min_span_tree"),
-                        ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                        ("use_parcel_naming", "inputnode.use_parcel_naming"),
                         ("disp_filt", "inputnode.disp_filt"),
                         ("mask", "inputnode.mask"),
                         ("norm", "inputnode.norm"),
@@ -607,7 +603,6 @@ def workflow_selector(
                         ("target_samples", "inputnode.target_samples"),
                         ("curv_thr_list", "inputnode.curv_thr_list"),
                         ("step_list", "inputnode.step_list"),
-                        ("overlap_thr", "inputnode.overlap_thr"),
                         ("track_type", "inputnode.track_type"),
                         ("min_length", "inputnode.min_length"),
                         ("maxcrossing", "inputnode.maxcrossing"),
@@ -660,7 +655,7 @@ def workflow_selector(
                         ("prune", "inputnode.prune"),
                         ("func_model_list", "inputnode.conn_model_list"),
                         ("min_span_tree", "inputnode.min_span_tree"),
-                        ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                        ("use_parcel_naming", "inputnode.use_parcel_naming"),
                         ("smooth", "inputnode.smooth"),
                         ("hpass", "inputnode.hpass"),
                         ("hpass_list", "inputnode.hpass_list"),
@@ -790,7 +785,7 @@ def workflow_selector(
                             ("prune", "inputnode.prune"),
                             ("dwi_model_list", "inputnode.conn_model_list"),
                             ("min_span_tree", "inputnode.min_span_tree"),
-                            ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                            ("use_parcel_naming", "inputnode.use_parcel_naming"),
                             ("disp_filt", "inputnode.disp_filt"),
                             ("mask", "inputnode.mask"),
                             ("norm", "inputnode.norm"),
@@ -798,7 +793,6 @@ def workflow_selector(
                             ("target_samples", "inputnode.target_samples"),
                             ("curv_thr_list", "inputnode.curv_thr_list"),
                             ("step_list", "inputnode.step_list"),
-                            ("overlap_thr", "inputnode.overlap_thr"),
                             ("track_type", "inputnode.track_type"),
                             ("min_length", "inputnode.min_length"),
                             ("maxcrossing", "inputnode.maxcrossing"),
@@ -908,7 +902,7 @@ def workflow_selector(
                             ("prune", "inputnode.prune"),
                             ("func_model_list", "inputnode.conn_model_list"),
                             ("min_span_tree", "inputnode.min_span_tree"),
-                            ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                            ("use_parcel_naming", "inputnode.use_parcel_naming"),
                             ("smooth", "inputnode.smooth"),
                             ("hpass", "inputnode.hpass"),
                             ("hpass_list", "inputnode.hpass_list"),
@@ -1280,7 +1274,7 @@ def dmri_connectometry(
     node_size_list,
     conn_model_list,
     min_span_tree,
-    use_AAL_naming,
+    use_parcel_naming,
     disp_filt,
     plugin_type,
     multi_nets,
@@ -1291,7 +1285,6 @@ def dmri_connectometry(
     target_samples,
     curv_thr_list,
     step_list,
-    overlap_thr,
     track_type,
     min_length,
     maxcrossing,
@@ -1390,7 +1383,7 @@ def dmri_connectometry(
                 "min_thr",
                 "step_thr",
                 "min_span_tree",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "disp_filt",
                 "multi_nets",
                 "prune",
@@ -1403,7 +1396,6 @@ def dmri_connectometry(
                 "target_samples",
                 "curv_thr_list",
                 "step_list",
-                "overlap_thr",
                 "track_type",
                 "min_length",
                 "maxcrossing",
@@ -1446,7 +1438,7 @@ def dmri_connectometry(
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
-    inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.use_parcel_naming = use_parcel_naming
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.multi_nets = multi_nets
     inputnode.inputs.prune = prune
@@ -1459,7 +1451,6 @@ def dmri_connectometry(
     inputnode.inputs.target_samples = target_samples
     inputnode.inputs.curv_thr_list = curv_thr_list
     inputnode.inputs.step_list = step_list
-    inputnode.inputs.overlap_thr = overlap_thr
     inputnode.inputs.track_type = track_type
     inputnode.inputs.min_length = min_length
     inputnode.inputs.maxcrossing = maxcrossing
@@ -1856,7 +1847,6 @@ def dmri_connectometry(
             input_names=[
                 "atlas_mni",
                 "streams",
-                "overlap_thr",
                 "dir_path",
                 "track_type",
                 "target_samples",
@@ -2798,7 +2788,7 @@ def dmri_connectometry(
                 [
                     ("parc", "parc"),
                     ("ref_txt", "ref_txt"),
-                    ("use_AAL_naming", "use_AAL_naming"),
+                    ("use_parcel_naming", "use_parcel_naming"),
                     ("outdir", "outdir"),
                     ("vox_size", "vox_size"),
                 ],
@@ -2991,7 +2981,6 @@ def dmri_connectometry(
                     ("maxcrossing", "maxcrossing"),
                 ],
             ),
-            (inputnode, streams2graph_node, [("overlap_thr", "overlap_thr")]),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
             (
                 register_node,
@@ -3341,7 +3330,7 @@ def fmri_connectometry(
     node_size_list,
     conn_model_list,
     min_span_tree,
-    use_AAL_naming,
+    use_parcel_naming,
     smooth,
     smooth_list,
     disp_filt,
@@ -3445,7 +3434,7 @@ def fmri_connectometry(
                 "k_clustering",
                 "user_atlas_list",
                 "min_span_tree",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "smooth",
                 "disp_filt",
                 "prune",
@@ -3499,7 +3488,7 @@ def fmri_connectometry(
     inputnode.inputs.clust_mask_list = clust_mask_list
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
-    inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.use_parcel_naming = use_parcel_naming
     inputnode.inputs.smooth = smooth
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
@@ -5317,7 +5306,7 @@ def fmri_connectometry(
                 [
                     ("parc", "parc"),
                     ("ref_txt", "ref_txt"),
-                    ("use_AAL_naming", "use_AAL_naming"),
+                    ("use_parcel_naming", "use_parcel_naming"),
                     ("outdir", "outdir"),
                     ("vox_size", "vox_size"),
                 ],
