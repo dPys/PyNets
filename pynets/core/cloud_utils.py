@@ -159,7 +159,8 @@ def s3_fetch(client, bucket, remote, local, bpath, mod):
 
 
 def s3_get_data(bucket, remote, local, modality, info=None, force=False):
-    """Given and s3 directory, copies files/subdirectories in that directory to local
+    """Given and s3 directory, copies files/subdirectories in that directory
+    to local
 
     Parameters
     ----------
@@ -169,11 +170,13 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
         The path to the data on your S3 bucket. The data will be
         downloaded to the provided bids_dir on your machine.
     local : list
-        Local input directory where you want the files copied to and subject/session info [input, sub-#/ses-#]
+        Local input directory where you want the files copied to and
+        subject/session info [input, sub-#/ses-#]
     info : str, optional
         Relevant subject and session information in the form of sub-#/ses-#/
     force : bool, optional
-        Whether to overwrite the local directory containing the s3 files if it already exists, by default False
+        Whether to overwrite the local directory containing the
+        s3 files if it already exists, by default False
     """
 
     # get client with credentials if they exist
@@ -193,7 +196,8 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
             if os.path.exists(os.path.join(local, info)) and not force:
                 if os.listdir(os.path.join(local, info)):
                     print(
-                        f"Local directory: {os.path.join(local, info)} already exists. Not pulling s3 data. Delete "
+                        f"Local directory: {os.path.join(local, info)} already"
+                        f" exists. Not pulling s3 data. Delete "
                         f"contents to re-download data.")
                     return
             run_str = info.split("/")
@@ -240,8 +244,9 @@ def s3_push_data(
     bucket : str
         s3 bucket you are pushing files to
     remote : str
-        The path to the directory on your S3 bucket containing the data used in the pipeline, the string in 'modifier'
-        will be put after the first directory specified in the path as its own directory
+        The path to the directory on your S3 bucket containing the data used
+         in the pipeline, the string in 'modifier' will be put after the
+         first directory specified in the path as its own directory
         (/remote[0]/modifier/remote[1]/...)
     outDir : str
         Path of local directory being pushed to the s3 bucket
@@ -250,7 +255,8 @@ def s3_push_data(
     session : str
         session we're pushing with
     creds : bool, optional
-        Whether s3 credentials are being provided, may fail to push big files if False, by default True
+        Whether s3 credentials are being provided, may fail to push big
+        files if False, by default True
     """
     import re
     import hashlib

@@ -78,11 +78,13 @@ class FetchNodesLabels(SimpleInterface):
         nilearn_prob_atlases = ["atlas_msdl", "atlas_pauli_2017"]
         local_atlases = [
             op.basename(i).split(".nii")[0]
-            for i in glob.glob(f"{str(Path(base_path).parent)}{'/atlases/*.nii.gz'}")
+            for i in glob.glob(f"{str(Path(base_path).parent)}"
+                               f"{'/atlases/*.nii.gz'}")
             if "_4d" not in i
         ]
 
-        if self.inputs.uatlas is None and self.inputs.atlas in nilearn_parc_atlases:
+        if self.inputs.uatlas is None and self.inputs.atlas \
+            in nilearn_parc_atlases:
             [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
                 self.inputs.atlas, self.inputs.parc
             )
@@ -92,8 +94,8 @@ class FetchNodesLabels(SimpleInterface):
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
                 uatlas = nodemaker.enforce_consecutive_labels(uatlas)
-                [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                [coords, _, par_max] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -109,7 +111,8 @@ class FetchNodesLabels(SimpleInterface):
             and self.inputs.atlas in nilearn_coords_atlases
         ):
             print(
-                "Fetching coords and labels from nilearn coordinate-based atlas library..."
+                "Fetching coords and labels from nilearn "
+                "coordinate-based atlas library..."
             )
             # Fetch nilearn atlas coords
             [coords, _, networks_list, labels] = nodemaker.fetch_nilearn_atlas_coords(
@@ -126,7 +129,8 @@ class FetchNodesLabels(SimpleInterface):
             from nilearn.plotting import find_probabilistic_atlas_cut_coords
 
             print(
-                "Fetching coords and labels from nilearn probabilistic atlas library..."
+                "Fetching coords and labels from "
+                "nilearn probabilistic atlas library..."
             )
             # Fetch nilearn atlas coords
             [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
@@ -152,7 +156,8 @@ class FetchNodesLabels(SimpleInterface):
             from nipype.utils.filemanip import fname_presuffix, copyfile
 
             uatlas_pre = (
-                f"{str(Path(base_path).parent)}/atlases/{self.inputs.atlas}.nii.gz"
+                f"{str(Path(base_path).parent)}"
+                f"/atlases/{self.inputs.atlas}.nii.gz"
             )
             uatlas = fname_presuffix(
                 uatlas_pre, suffix="_tmp", newpath=runtime.cwd)
@@ -166,8 +171,8 @@ class FetchNodesLabels(SimpleInterface):
             try:
                 uatlas = nodemaker.enforce_consecutive_labels(uatlas)
                 # Fetch user-specified atlas coords
-                [coords, _, par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                [coords, _, par_max]\
+                    = nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -176,8 +181,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
             except ValueError:
                 print(
-                    "Either you have specified the name of an atlas that does not exist in the nilearn or local "
-                    "repository or you have not supplied a 3d atlas parcellation image!")
+                    "Either you have specified the name of an atlas that does"
+                    " not exist in the nilearn or local repository or you have"
+                    " not supplied a 3d atlas parcellation image!")
                 parcel_list = None
                 par_max = None
                 coords = None
@@ -197,8 +203,8 @@ class FetchNodesLabels(SimpleInterface):
                 # Fetch user-specified atlas coords
                 uatlas = nodemaker.enforce_consecutive_labels(
                     self.inputs.uatlas)
-                [coords, atlas, par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                [coords, atlas, par_max] \
+                    = nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -211,8 +217,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{atlas} comes with {par_max} parcels\n")
             except ValueError:
                 print(
-                    "Either you have specified the name of an atlas that does not exist in the nilearn or local "
-                    "repository or you have not supplied a 3d atlas parcellation image!")
+                    "Either you have specified the name of an atlas that "
+                    "does not exist in the nilearn or local repository or you"
+                    " have not supplied a 3d atlas parcellation image!")
                 parcel_list = None
                 par_max = None
                 coords = None
@@ -222,8 +229,9 @@ class FetchNodesLabels(SimpleInterface):
             networks_list = None
         else:
             raise ValueError(
-                "Either you have specified the name of an atlas that does not exist in the nilearn or local "
-                "repository or you have not supplied a 3d atlas parcellation image!")
+                "Either you have specified the name of an atlas that does not"
+                " exist in the nilearn or local repository or you have not "
+                "supplied a 3d atlas parcellation image!")
 
         # Labels prep
         if atlas and not labels:
@@ -235,7 +243,8 @@ class FetchNodesLabels(SimpleInterface):
             else:
                 if atlas in local_atlases:
                     ref_txt = (
-                        f"{str(Path(base_path).parent)}{'/labelcharts/'}{atlas}{'.txt'}"
+                        f"{str(Path(base_path).parent)}{'/labelcharts/'}"
+                        f"{atlas}{'.txt'}"
                     )
                 else:
                     ref_txt = self.inputs.ref_txt
@@ -508,7 +517,8 @@ class IndividualClustering(SimpleInterface):
 
         if self.inputs.clust_type in clust_list:
             print(
-                f"Performing circular block bootstrapping with {c_boot} iterations..."
+                f"Performing circular block bootstrapping "
+                f"with {c_boot} iterations..."
             )
             ts_data, block_size = nip.prep_boot()
             boot_parcellations = []
@@ -529,7 +539,8 @@ class IndividualClustering(SimpleInterface):
         else:
             raise ValueError(
                 "Clustering method not recognized. "
-                "See: https://nilearn.github.io/modules/generated/nilearn.regions.Parcellations."
+                "See: https://nilearn.github.io/modules/generated/"
+                "nilearn.regions.Parcellations."
                 "html#nilearn.regions.Parcellations")
 
         self._results["atlas"] = atlas
@@ -594,7 +605,8 @@ class ExtractTimeseries(SimpleInterface):
 
         if self.inputs.net_parcels_nii_path:
             out_name_net_parcels_nii_path = fname_presuffix(
-                self.inputs.net_parcels_nii_path, suffix="_tmp", newpath=runtime.cwd)
+                self.inputs.net_parcels_nii_path,
+                suffix="_tmp", newpath=runtime.cwd)
             copyfile(
                 self.inputs.net_parcels_nii_path,
                 out_name_net_parcels_nii_path,
@@ -926,7 +938,8 @@ class RegisterDWI(SimpleInterface):
 
         anat_mask_existing = [
             i
-            for i in glob.glob(self.inputs.in_dir + "/*_desc-brain_mask.nii.gz")
+            for i in
+            glob.glob(self.inputs.in_dir + "/*_desc-brain_mask.nii.gz")
             if "MNI" not in i
         ]
 
@@ -952,7 +965,8 @@ class RegisterDWI(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path, self.inputs.vox_size)
+                    mask_tmp_path, self.inputs.basedir_path,
+                    self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 
@@ -1275,9 +1289,12 @@ class RegisterAtlasDWI(SimpleInterface):
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
         os.makedirs(base_dir_tmp, exist_ok=True)
 
-        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}{'_t1w_mni.nii.gz'}"
-        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}{'_t1w_skull.nii.gz'}"
-        dwi_aligned_atlas = f"{base_dir_tmp}{'/'}{atlas_name}{'_dwi_track.nii.gz'}"
+        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}" \
+                              f"{'_t1w_mni.nii.gz'}"
+        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}" \
+                              f"{'_t1w_skull.nii.gz'}"
+        dwi_aligned_atlas = f"{base_dir_tmp}{'/'}{atlas_name}" \
+                            f"{'_dwi_track.nii.gz'}"
         dwi_aligned_atlas_wmgm_int = (
             f"{base_dir_tmp}{'/'}{atlas_name}{'_dwi_track_wmgm_int.nii.gz'}"
         )

@@ -13,12 +13,15 @@ def sweep_directory(
         subj=None,
         sesh=None):
     """
-    Given a BIDS derivatives directory containing preprocessed functional MRI or diffusion MRI data
-    (e.g. fMRIprep or dMRIprep), crawls the outputs and prepares necessary inputs for the PyNets pipeline.
+    Given a BIDS derivatives directory containing preprocessed functional MRI
+    or diffusion MRI data (e.g. fMRIprep or dMRIprep), crawls the outputs and
+    prepares necessary inputs for the PyNets pipeline.
 
-    *Note: Since this function searches for derivative file inputs, it does not impose strict BIDS compliance, which
-    can therefore create errors in the case that files are missing or redundant. Please ensure that there redundant
-    files are removed and that BIDS naming conventions are followed closely.
+    *Note: Since this function searches for derivative file inputs, it does
+    not impose strict BIDS compliance, which can therefore create errors in
+    the case that files are missing or redundant. Please ensure that there
+    redundant files are removed and that BIDS naming conventions are followed
+    closely.
     """
 
     if modality == "dwi":
@@ -63,8 +66,10 @@ def sweep_directory(
             if len(spaces) > 1:
                 space_list = ", ".join(spaces)
                 print(
-                    f"No space was provided, but multiple spaces were detected: {space_list}. "
-                    f"Selecting the first (ordered lexicographically): {space}")
+                    f"No space was provided, but multiple spaces were "
+                    f"detected: {space_list}. "
+                    f"Selecting the first (ordered lexicographically): "
+                    f"{space}")
 
     for sub in subjs:
         all_seshs = layout.get_sessions(subject=sub)
@@ -107,7 +112,8 @@ def sweep_directory(
             # make a query to find the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
             anat = [
-                i for i in anat if "MNI" not in i.filename and "space" not in i.filename]
+                i for i in anat if "MNI" not in i.filename and "space"
+                                   not in i.filename]
 
             if anat:
                 for an in anat:
@@ -125,7 +131,8 @@ def sweep_directory(
 
             mask = layout.get(**mask_query)
             mask = [
-                i for i in mask if "MNI" not in i.filename and "space" not in i.filename]
+                i for i in mask if "MNI" not in i.filename and "space"
+                                   not in i.filename]
 
             if modality == "dwi":
                 dwi = layout.get(
@@ -166,9 +173,11 @@ def sweep_directory(
                 )
                 func = [i for i in func if func_desc in i.filename]
                 conf = layout.get(
-                    **merge_dicts(mod_query, {"extensions": [".tsv", ".tsv.gz"]})
+                    **merge_dicts
+                    (mod_query, {"extensions": [".tsv", ".tsv.gz"]})
                 )
-                conf = [i for i in conf if "confounds_regressors" in i.filename]
+                conf = [i for i in conf if "confounds_regressors"
+                        in i.filename]
 
                 if func:
                     if not conf and not mask:
@@ -223,12 +232,14 @@ def get_bids_parser():
     # Parse args
     # Primary inputs
     parser = argparse.ArgumentParser(
-        description="PyNets BIDS CLI: A Fully-Automated Workflow for Reproducible "
-        "Ensemble Sampling of Functional and Structural Connectomes")
+        description="PyNets BIDS CLI: A Fully-Automated Workflow for "
+                    "Reproducible Ensemble Sampling of Functional and "
+                    "Structural Connectomes")
     parser.add_argument(
         "bids_dir",
-        help="""The directory with the input dataset formatted according to the BIDS standard. To use
-                        data from s3, just pass `s3://<bucket>/<dataset>` as the input directory.""",
+        help="""The directory with the input dataset formatted according to
+         the BIDS standard. To use data from s3, just pass
+          `s3://<bucket>/<dataset>` as the input directory.""",
     )
     parser.add_argument(
         "output_dir",
@@ -244,31 +255,35 @@ def get_bids_parser():
         choices=[
             "dwi",
             "func"],
-        help="Specify data modality to process from bids directory. Options are `dwi` and `func`.",
+        help="Specify data modality to process from bids directory. "
+             "Options are `dwi` and `func`.",
     )
     parser.add_argument(
         "--participant_label",
-        help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to
-                            sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this
-                            parameter is not provided all subjects found in `bids_dir` will be analyzed.
-                            Multiple participants can be specified with a space separated list.""",
+        help="""The label(s) of the participant(s) that should be analyzed.
+        The label corresponds to sub-<participant_label> from the BIDS spec
+        (so it does not include "sub-"). If this parameter is not provided all
+        subjects found in `bids_dir` will be analyzed. Multiple participants
+        can be specified with a space separated list.""",
         nargs="+",
         default=None,
     )
     parser.add_argument(
         "--session_label",
-        help="""The label(s) of the session that should be analyzed. The label  corresponds to
-                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter
-                         is not provided all sessions should be analyzed. Multiple sessions can be specified with a
-                         space separated list.""",
+        help="""The label(s) of the session that should be analyzed.
+        The label  corresponds to ses-<participant_label> from the BIDS spec
+        (so it does not include "ses-"). If this parameter is not provided
+        all sessions should be analyzed. Multiple sessions can be specified
+         with a space separated list.""",
         nargs="+",
         default=None,
     )
     parser.add_argument(
         "--push_location",
         action="store",
-        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
-        "created. Format the location as `s3://<bucket>/<path>`",
+        help="Name of folder on s3 to push output data to, "
+             "if the folder does not exist, it will be created. "
+             "Format the location as `s3://<bucket>/<path>`",
         default=None,
     )
 
@@ -278,42 +293,47 @@ def get_bids_parser():
         metavar="Path to parcellation file in MNI-space",
         default=None,
         nargs="+",
-        help="Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. "
-        "Labels should be spatially distinct across hemispheres and ordered with consecutive "
-        "integers with a value of 0 as the background label. If specifying a list of paths to "
-        "multiple user atlases, separate them by space.\n",
+        help="Optionally specify a path to a parcellation/atlas Nifti1Image "
+             "file in MNI152 space. Labels should be spatially distinct across"
+             " hemispheres and ordered with consecutive integers with a value "
+             "of 0 as the background label. If specifying a list of paths to "
+             "multiple user atlases, separate them by space.\n",
     )
     parser.add_argument(
         "-cm",
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="Optionally specify the path to a Nifti1Image mask file to constrained functional "
-        "clustering. If specifying a list of paths to multiple cluster masks, separate "
-        "them by space.\n",
+        help="Optionally specify the path to a Nifti1Image mask file to "
+             "constrained functional clustering. If specifying a list of paths "
+             "to multiple cluster masks, separate them by space.\n",
     )
     parser.add_argument(
         "-roi",
-        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space",
+        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in "
+                "template MNI space",
         default=None,
         nargs="+",
-        help="Optionally specify a binarized ROI mask in template MNI space and retain only those "
-        "nodes of a parcellation contained within that mask for connectome estimation.\n",
+        help="Optionally specify a binarized ROI mask in template MNI space "
+             "and retain only those nodes of a parcellation contained within "
+             "that mask for connectome estimation.\n",
     )
     parser.add_argument(
         "-ref",
         metavar="Atlas reference file path",
         default=None,
-        help="Specify the path to the atlas reference .txt file that maps labels to "
-        "intensities corresponding to the atlas parcellation file specified with the -ua flag.\n",
+        help="Specify the path to the atlas reference .txt file that maps "
+             "labels to intensities corresponding to the atlas parcellation "
+             "file specified with the -ua flag.\n",
     )
     parser.add_argument(
         "-way",
         metavar="Path to binarized Nifti1Image to constrain tractography",
         default=None,
         nargs="+",
-        help="Optionally specify a binarized ROI mask in template MNI-space to constrain"
-        "tractography in the case of dmri connectome estimation.\n",
+        help="Optionally specify a binarized ROI mask in template MNI-space "
+             "to constrain tractography in the case of dmri connectome "
+             "estimation.\n",
     )
 
     # Debug/Runtime settings
@@ -321,16 +341,18 @@ def get_bids_parser():
         "-config",
         metavar="Optional path to a config.json file with runtime settings.",
         default=None,
-        help="Including this flag will override the bids_config.json template in the base directory "
-        "of pynets. See the template ad `pynets -h` for available settings.\n",
+        help="Including this flag will override the bids_config.json template "
+             "in the base directory of pynets. See the template ad "
+             "`pynets -h` for available settings.\n",
     )
     parser.add_argument(
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
-        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
-        "detected on the current compute node.\n",
+        help="Number of cores to use, number of GB of memory to use for "
+             "single subject run, entered as two integers seperated by comma. "
+             "Otherwise, default is `auto`, which uses all resources "
+             "detected on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -347,7 +369,8 @@ def get_bids_parser():
             "SLURMgraph",
             "LegacyMultiProc",
         ],
-        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+        help="Include this flag to specify a workflow plugin other than the "
+             "default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
@@ -358,19 +381,22 @@ def get_bids_parser():
         "-clean",
         default=False,
         action="store_true",
-        help="Clean up temporary runtime directory after workflow termination.\n",
+        help="Clean up temporary runtime directory after workflow "
+             "termination.\n",
     )
     parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
-        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+        help="Specify the path to a working directory for pynets to run. "
+             "Default is /tmp/work.\n",
     )
     return parser
 
 
 def main():
-    """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
+    """Initializes main script from command-line call to generate
+        single-subject or multi-subject workflow(s)"""
     import os
     import gc
     import sys
@@ -390,11 +416,13 @@ def main():
         import pynets
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+"
+            "PyNets not installed! Ensure that you are referencing the "
+            "correct site-packages and using Python3.6+"
         )
 
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h flag.\n")
+        print("\nMissing command-line inputs! "
+              "See help options with the -h flag.\n")
         sys.exit()
 
     print(f"{Fore.LIGHTBLUE_EX}\nBIDS API\n")
@@ -417,20 +445,22 @@ def main():
 
     if analysis_level == "group" and participant_label is not None:
         raise ValueError(
-            "Error: You have indicated a group analysis level run, but specified a participant label!"
+            "Error: You have indicated a group analysis level run, "
+            "but specified a participant label!"
         )
 
     if analysis_level == "participant" and participant_label is None:
         raise ValueError(
-            "Error: You have indicated a participant analysis level run, but not specified a participant "
-            "label!")
+            "Error: You have indicated a participant analysis level run, "
+            "but not specified a participant label!")
 
     if bids_config:
         with open(bids_config, "r") as stream:
             arg_dict = json.load(stream)
     else:
         with open(
-            pkg_resources.resource_filename("pynets", "config/bids_config_test.json"),
+            pkg_resources.resource_filename
+                ("pynets", "config/bids_config_test.json"),
             "r",
         ) as stream:
             arg_dict = json.load(stream)
@@ -445,14 +475,17 @@ def main():
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not successfully extracted from runconfig.yaml"
+                "ERROR: available functional models not successfully extracted"
+                " from runconfig.yaml"
             )
             sys.exit()
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"]
+            ["struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not successfully extracted from runconfig.yaml"
+                "ERROR: available structural models not successfully "
+                "extracted from runconfig.yaml"
             )
             sys.exit()
 
@@ -516,8 +549,8 @@ def main():
             bids_dir = as_directory(f"{home}/.pynets/input", remove=False)
             if (not creds) and bids_args.push_location:
                 raise AttributeError(
-                    """No AWS credentials found, but `--push_location` flag called.
-                Pushing will most likely fail.""")
+                    """No AWS credentials found, but `--push_location` flag
+                    called. Pushing will most likely fail.""")
             else:
                 output_dir = as_directory(
                     f"{home}/.pynets/output", remove=False)
@@ -592,7 +625,8 @@ def main():
 
             if bids_args.ref:
                 if bids_args.ref.startswith("s3://"):
-                    bids_args.ref = f"{sec_dir}/{os.path.basename(bids_args.ref)}"
+                    bids_args.ref = \
+                        f"{sec_dir}/{os.path.basename(bids_args.ref)}"
     else:
         output_dir = bids_args.output_dir
         if output_dir is None:
@@ -625,14 +659,16 @@ def main():
                 )
                 if mod == "func":
                     if i == 0:
-                        funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
+                        funcs, confs, _, _, _, anats, masks, subjs, \
+                        seshs = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
                 elif mod == "dwi":
                     if i == 0:
-                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+                        _, _, dwis, bvals, bvecs, anats, masks, subjs, \
+                        seshs = outs
                     else:
                         _, _, dwis, bvals, bvecs, _, _, _, _ = outs
                     intermodal_dict["dwis"].append(dwis)
@@ -667,14 +703,16 @@ def main():
                 )
                 if mod == "func":
                     if i == 0:
-                        funcs, confs, _, _, _, anats, masks, subjs, seshs = outs
+                        funcs, confs, _, _, _, anats, masks, subjs, \
+                        seshs = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
                 elif mod == "dwi":
                     if i == 0:
-                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
+                        _, _, dwis, bvals, bvecs, anats, masks, subjs, \
+                        seshs = outs
                     else:
                         _, _, dwis, bvals, bvecs, _, _, _, _ = outs
                     intermodal_dict["dwis"].append(dwis)
@@ -698,7 +736,8 @@ def main():
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     else:
         raise ValueError(
-            "Analysis level invalid. Must be `participant` or `group`. See --help."
+            "Analysis level invalid. Must be `participant` or `group`. "
+            "See --help."
         )
 
     if intermodal_dict:
@@ -844,5 +883,6 @@ if __name__ == "__main__":
     import warnings
 
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class " \
+               "'_frozen_importlib.BuiltinImporter'>)"
     main()

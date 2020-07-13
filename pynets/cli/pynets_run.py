@@ -60,18 +60,20 @@ def get_parser():
                 "dmri connectomes)",
         default=None,
         nargs="+",
-        help="Specify either a path to a preprocessed dmri diffusion Nifti1Image in native diffusion "
-        "space and in .nii or .nii.gz format OR multiple space-separated paths to multiple "
-        "preprocessed dmri diffusion Nifti1Image files in native diffusion space and in .nii or "
-        ".nii.gz format.\n",
+        help="Specify either a path to a preprocessed dmri diffusion "
+             "Nifti1Image in native diffusion space and in .nii or "
+             ".nii.gz format OR multiple space-separated paths to multiple "
+        "preprocessed dmri diffusion Nifti1Image files in native "
+             "diffusion space and in .nii or .nii.gz format.\n",
     )
     parser.add_argument(
         "-bval",
         metavar="Path to b-values file (required for dmri connectomes)",
         default=None,
         nargs="+",
-        help="Specify either a path to a b-values text file containing gradient shell values per "
-        "diffusion direction OR multiple space-separated paths to multiple b-values text files in "
+        help="Specify either a path to a b-values text file containing "
+             "gradient shell values per diffusion direction OR multiple "
+             "space-separated paths to multiple b-values text files in "
         "the order of accompanying b-vectors and dwi files.\n",
     )
     parser.add_argument(
@@ -79,9 +81,10 @@ def get_parser():
         metavar="Path to b-vectors file (required for dmri connectomes)",
         default=None,
         nargs="+",
-        help="Specify either a path to a b-vectors text file containing gradient directions (x,y,z) "
-        "per diffusion direction OR multiple space-separated paths to multiple b-vectors text "
-        "files in the order of accompanying b-values and dwi files.\n",
+        help="Specify either a path to a b-vectors text file containing "
+             "gradient directions (x,y,z) per diffusion direction OR "
+             "multiple space-separated paths to multiple b-vectors text files "
+             "in the order of accompanying b-values and dwi files.\n",
     )
 
     # Secondary file inputs
@@ -90,50 +93,59 @@ def get_parser():
         metavar="Path to a skull-stripped anatomical Nifti1Image",
         default=None,
         nargs="+",
-        help="Required for dmri and/or functional connectomes. Multiple paths to multiple "
-        "anatomical files should be specified by space in the order of accompanying functional "
-        "and/or dmri files. If functional and dmri connectomes are both being generated "
-        "simultaneously, then anatomical Nifti1Image file paths need to be repeated, "
-        "but separated by comma.\n",
+        help="Required for dmri and/or functional connectomes. Multiple "
+             "paths to multiple anatomical files should be specified by space "
+             "in the order of accompanying functional and/or dmri files. "
+             "If functional and dmri connectomes are both being generated "
+        "simultaneously, then anatomical Nifti1Image file paths "
+             "need to be repeated, but separated by comma.\n",
     )
     parser.add_argument(
         "-m",
-        metavar="Path to a T1w brain mask image (if available) in native anatomical space",
+        metavar="Path to a T1w brain mask image (if available) in native "
+                "anatomical space",
         default=None,
         nargs="+",
-        help="File path to a T1w brain mask Nifti image (if available) in native anatomical space"
-        "OR multiple file paths to multiple T1w brain mask Nifti images in the case of running "
-        "multiple participants, in which case paths should be separated by a space. If no brain "
-        "mask is supplied, the template mask will be used (see runconfig.yaml).\n",
+        help="File path to a T1w brain mask Nifti image (if available) in "
+             "native anatomical space OR multiple file paths to multiple T1w "
+             "brain mask Nifti images in the case of running multiple "
+             "participants, in which case paths should be separated by "
+             "a space. If no brain mask is supplied, the template mask will "
+             "be used (see runconfig.yaml).\n",
     )
     parser.add_argument(
         "-conf",
         metavar="Confound regressor file (.tsv/.csv format)",
         default=None,
         nargs="+",
-        help="Optionally specify a path to a confound regressor file to reduce noise in the "
-        "time-series estimation for the graph. This can also be a list of paths in the case of "
-        "running multiple subjects, which requires separation by space and of equivalent length "
-        "to the list of input files indicated with the -func flag.\n",
+        help="Optionally specify a path to a confound regressor file to "
+             "reduce noise in the time-series estimation for the graph. "
+             "This can also be a list of paths in the case of running multiple"
+             "subjects, which requires separation by space and of equivalent"
+             " length to the list of input files indicated with "
+             "the -func flag.\n",
     )
     parser.add_argument(
         "-g",
         metavar="Path to graph file input.",
         default=None,
         nargs="+",
-        help="In either .txt, .npy, .graphml, .csv, .ssv, .tsv, or .gpickle format. "
-        "This skips fMRI and dMRI graph estimation workflows and "
-        "begins at the thresholding and graph analysis stage. "
-        "Multiple graph files corresponding to multiple subject ID's should be "
-        "separated by space, and multiple graph files corresponding to the same subject ID "
-        "should be separated by comma. If the `-g` flag is used, then the `-id` flag "
-        "must also be used. Consider also including `-thr` flag to activate thresholding only "
-        "or the `-p` and `-norm` flags if graph defragementation or normalization is desired. "
-        "The `-mod` flag can be used for additional provenance/file-naming.\n",
+        help="In either .txt, .npy, .graphml, .csv, .ssv, .tsv, "
+             "or .gpickle format. This skips fMRI and dMRI graph estimation "
+             "workflows and begins at the thresholding and graph analysis "
+             "stage. Multiple graph files corresponding to multiple subject "
+             "ID's should be separated by space, and multiple graph files "
+             "corresponding to the same subject ID should be separated by "
+             "comma. If the `-g` flag is used, then the `-id` flag must also "
+             "be used. Consider also including `-thr` flag to activate "
+             "thresholding only or the `-p` and `-norm` flags if graph "
+             "defragementation or normalization is desired. The `-mod` flag "
+             "can be used for additional provenance/file-naming.\n",
     )
     parser.add_argument(
         "-roi",
-        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space.",
+        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in "
+                "template MNI space.",
         default=None,
         nargs="+",
         help="Optionally specify a binarized ROI mask and retain only those nodes "
@@ -143,26 +155,30 @@ def get_parser():
         "-ref",
         metavar="Atlas reference file path",
         default=None,
-        help="Specify the path to the atlas reference .txt file that maps labels to "
-        "intensities corresponding to the atlas parcellation file specified with the -ua flag.\n",
+        help="Specify the path to the atlas reference .txt file that maps "
+             "labels to intensities corresponding to the atlas parcellation "
+             "file specified with the -ua flag.\n",
     )
     parser.add_argument(
         "-way",
         metavar="Path to binarized Nifti1Image to constrain tractography",
         default=None,
         nargs="+",
-        help="Optionally specify a binarized ROI mask in MNI-space to constrain tractography in the "
-        "case of dmri connectome estimation.\n",
+        help="Optionally specify a binarized ROI mask in MNI-space to"
+             "constrain tractography in the case of dmri connectome "
+             "estimation.\n",
     )
     parser.add_argument(
         "-ua",
         metavar="Path to custom parcellation file",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Optionally specify a path to a parcellation/atlas Nifti1Image file in "
-        "MNI space. Labels should be spatially distinct across hemispheres and ordered with "
-        "consecutive integers with a value of 0 as the background label. If specifying a list of "
-        "paths to multiple user atlases, separate them by space.\n",
+        help="(Hyperparameter): Optionally specify a path to a "
+             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
+             "be spatially distinct across hemispheres and ordered with"
+            "consecutive integers with a value of 0 as the background label."
+             "If specifying a list of paths to multiple user atlases, "
+             "separate them by space.\n",
     )
 
     # Modality-independent hyperparameters
@@ -184,12 +200,15 @@ def get_parser():
             "csd",
             "sfm",
         ],
-        help="(Hyperparameter): Specify connectivity estimation model. For fMRI, possible models "
-        "include: corr for correlation, cov for covariance, sps for precision covariance, "
-        "partcorr for partial correlation. sps type is used by default. "
-        "If skgmm is installed (https://github.com/skggm/skggm), then QuicGraphicalLasso, "
-        "QuicGraphicalLassoCV, QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. "
-        "Default is partcorr for fMRI. For dMRI, current models include csa, csd, and sfm.\n",
+        help="(Hyperparameter): Specify connectivity estimation model. "
+             "For fMRI, possible models include: corr for correlation, "
+             "cov for covariance, sps for precision covariance, partcorr for "
+             "partial correlation. sps type is used by default. If skgmm is "
+             "installed (https://github.com/skggm/skggm), then "
+             "QuicGraphicalLasso, QuicGraphicalLassoCV, "
+             "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default "
+             "is partcorr for fMRI. For dMRI, current models include csa, "
+             "csd, and sfm.\n",
     )
     parser.add_argument(
         "-a",
@@ -216,7 +235,7 @@ def get_parser():
             "AICHAreorderedJoliot2015",
             "HarvardOxfordThr252mmWholeBrainMakris2006",
             "VoxelwiseParcellationt058kLeadDBS",
-            "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
+        "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
             "Hammers_mithAtlasn30r83Hammers2003Gousias2008",
             "AALTzourioMazoyer2002",
             "DesikanKlein2012",
@@ -231,38 +250,48 @@ def get_parser():
             'sub-colin27_label-L2018_desc-scale4_atlas',
             'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
-        help="(Hyperparameter): Specify an atlas parcellation from nilearn or local libraries. "
-        "If you wish to iterate your pynets run over multiple "
-        "atlases, separate them by space. Available nilearn atlases are:"
-        "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba\natlas_talairach_lobe\n"
-        "atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl\ncoords_dosenbach_2010\n"
+        help="(Hyperparameter): Specify an atlas parcellation from nilearn or "
+             "local libraries. If you wish to iterate your pynets run over "
+             "multiple atlases, separate them by space. Available nilearn "
+             "atlases are:"
+        "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba"
+             "\natlas_talairach_lobe\n"
+        "atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl"
+             "\ncoords_dosenbach_2010\n"
         "coords_power_2011\natlas_pauli_2017.\n\nAvailable local atlases are:"
-        "\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016\nVoxelwiseParcellationt0515kLeadDBS\n"
+        "\n\ndestrieux2009_rois\nBrainnetomeAtlasFan2016"
+             "\nVoxelwiseParcellationt0515kLeadDBS\n"
         "Juelichgmthr252mmEickhoff2005\n"
         "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014\n"
         "whole_brain_cluster_labels_PCA100\nAICHAreorderedJoliot2015\n"
-        "HarvardOxfordThr252mmWholeBrainMakris2006\nVoxelwiseParcellationt058kLeadDBS\n"
+        "HarvardOxfordThr252mmWholeBrainMakris2006"
+             "\nVoxelwiseParcellationt058kLeadDBS\n"
         "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics\n"
-        "Hammers_mithAtlasn30r83Hammers2003Gousias2008\nAALTzourioMazoyer2002\nDesikanKlein2012\n"
-        "AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS\nAICHAJoliot2015\n"
-        "whole_brain_cluster_labels_PCA200\nRandomParcellationsc05meanalll43Craddock2011",
+        "Hammers_mithAtlasn30r83Hammers2003Gousias2008"
+             "\nAALTzourioMazoyer2002\nDesikanKlein2012\n"
+        "AAL2zourioMazoyer2002\nVoxelwiseParcellationt0435kLeadDBS"
+             "\nAICHAJoliot2015\n"
+        "whole_brain_cluster_labels_PCA200"
+             "\nRandomParcellationsc05meanalll43Craddock2011",
     )
     parser.add_argument(
         "-ns",
         metavar="Spherical centroid node size",
         default=4,
         nargs="+",
-        help="(Hyperparameter): Optionally specify coordinate-based node radius size(s). Default is 4 "
-        "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline across multiple "
-        "node sizes, separate the list by space (e.g. 2 4 6).\n",
+        help="(Hyperparameter): Optionally specify coordinate-based node "
+             "radius size(s). Default is 4 "
+        "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline "
+             "across multiple node sizes, separate the list "
+             "by space (e.g. 2 4 6).\n",
     )
     parser.add_argument(
         "-thr",
         metavar="Graph threshold",
         default=1.00,
-        help="Optionally specify a threshold indicating a proportion of weights to preserve in the "
-        "graph. Default is proportional thresholding. If omitted, no thresholding will be applied."
-        "\n",
+        help="Optionally specify a threshold indicating a proportion of "
+             "weights to preserve in the graph. Default is proportional "
+             "thresholding. If omitted, no thresholding will be applied. \n",
     )
     parser.add_argument(
         "-min_thr",
@@ -280,7 +309,8 @@ def get_parser():
         "-step_thr",
         metavar="Multi-thresholding step size",
         default=None,
-        help="(Hyperparameter): Threshold step value for multi-thresholding. Default is 0.01.\n",
+        help="(Hyperparameter): Threshold step value for multi-thresholding. "
+             "Default is 0.01.\n",
     )
 
     # fMRI hyperparameters
@@ -289,19 +319,21 @@ def get_parser():
         metavar="Smoothing value (mm fwhm)",
         default=0,
         nargs="+",
-        help="(Hyperparameter): Optionally specify smoothing width(s). Default is 0 / no smoothing. "
-        "If you wish to iterate the pipeline across multiple smoothing "
-        "separate the list by space (e.g. 2 4 6).\n",
+        help="(Hyperparameter): Optionally specify smoothing width(s). "
+             "Default is 0 / no smoothing. If you wish to iterate the pipeline"
+             " across multiple smoothing separate the list "
+             "by space (e.g. 2 4 6).\n",
     )
     parser.add_argument(
         "-hp",
         metavar="High-pass filter (Hz)",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Optionally specify high-pass filter values to apply to node-extracted "
-        "time-series for fMRI. Default is None. If you wish to iterate the pipeline across "
-        "multiple high-pass filter thresholds, values, separate the list by space "
-        "(e.g. 0.008 0.01).\n",
+        help="(Hyperparameter): Optionally specify high-pass filter values "
+             "to apply to node-extracted time-series for fMRI. "
+             "Default is None. If you wish to iterate the pipeline across "
+             "multiple high-pass filter thresholds, values, "
+             "separate the list by space (e.g. 0.008 0.01).\n",
     )
     parser.add_argument(
         "-es",
@@ -317,18 +349,20 @@ def get_parser():
             "variance",
             "standard_deviation",
         ],
-        help="Include this flag if you are running functional connectometry using parcel labels and "
-        "wish to specify the name of a specific function (i.e. other than the mean) to reduce the "
-        "region's time-series. Options are: `sum`, `mean`, `median`, `mininum`, `maximum`, "
-        "`variance`, `standard_deviation`.\n",
+        help="Include this flag if you are running functional connectometry "
+             "using parcel labels and wish to specify the name of a specific "
+             "function (i.e. other than the mean) to reduce the region's "
+             "time-series. Options are: `sum`, `mean`, `median`, `mininum`, "
+             "`maximum`, `variance`, `standard_deviation`.\n",
     )
     parser.add_argument(
         "-k",
         metavar="Number of k clusters",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Specify a number of clusters to produce. If you wish to iterate the "
-        "pipeline across multiple values of k, separate the list by space (e.g. 100 150 200).\n",
+        help="(Hyperparameter): Specify a number of clusters to produce. "
+             "If you wish to iterate the pipeline across multiple values of k,"
+             " separate the list by space (e.g. 100 150 200).\n",
     )
     parser.add_argument(
         "-ct",
@@ -336,20 +370,21 @@ def get_parser():
         default="ward",
         nargs="+",
         choices=["ward", "rena", "kmeans", "complete", "average", "single"],
-        help="(Hyperparameter): Specify the types of clustering to use. Recommended options are: "
-        "ward, rena or kmeans. Note that imposing spatial constraints with a mask consisting of "
-        "disconnected components will leading to clustering instability in the case of complete, "
-        "average, or single clustering. If specifying a list of "
-        "clustering types, separate them by space.\n",
+        help="(Hyperparameter): Specify the types of clustering to use. "
+             "Recommended options are: ward, rena or kmeans. Note that "
+             "imposing spatial constraints with a mask consisting of "
+             "disconnected components will leading to clustering instability "
+             "in the case of complete, average, or single clustering. If "
+             "specifying list of clustering types, separate them by space.\n",
     )
     parser.add_argument(
         "-cm",
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Specify the path to a Nifti1Image mask file to constrained functional "
-        "clustering. If specifying a list of paths to multiple cluster masks, separate "
-        "them by space.\n",
+        help="(Hyperparameter): Specify the path to a Nifti1Image mask file"
+             " to constrained functional clustering. If specifying a list of "
+             "paths to multiple cluster masks, separate them by space.\n",
     )
 
     # dMRI hyperparameters
@@ -358,9 +393,10 @@ def get_parser():
         metavar="Minimum fiber length for tracking",
         default=20,
         nargs="+",
-        help="(Hyperparameter): Include this flag to manually specify a minimum tract length (mm) for "
-        "dmri connectome tracking. Default is 20. If you wish to iterate the pipeline across "
-        "multiple minimums, separate the list by space (e.g. 10 30 50).\n",
+        help="(Hyperparameter): Include this flag to manually specify a "
+             "minimum tract length (mm) for dmri connectome tracking. Default "
+             "is 20. If you wish to iterate the pipeline across multiple "
+             "minimums, separate the list by space (e.g. 10 30 50).\n",
     )
     parser.add_argument(
         "-dg",
@@ -368,12 +404,12 @@ def get_parser():
         default="det",
         nargs="+",
         choices=["det", "prob", "clos"],
-        help="(Hyperparameter): Include this flag to manually specify the statistical approach to "
-        "tracking for dmri connectome estimation. Options are: det (deterministic), "
-        "closest (clos), and prob (probabilistic). "
-        "Default is det. If you wish to iterate the pipeline across multiple "
-        "direction-getting methods, separate the list by space (e.g. 'det', 'prob', "
-        "'clos').\n",
+        help="(Hyperparameter): Include this flag to manually specify the "
+             "statistical approach to tracking for dmri connectome estimation."
+             " Options are: det (deterministic), closest (clos), and "
+             "prob (probabilistic). Default is det. If you wish to iterate the"
+             " pipeline across multiple direction-getting methods, separate "
+             "the list by space (e.g. 'det', 'prob', 'clos').\n",
     )
     # General settings
     parser.add_argument(
@@ -382,33 +418,36 @@ def get_parser():
         default=0,
         nargs=1,
         choices=["0", "1", "2", "3", "4", "5", "6"],
-        help="Include this flag to normalize the resulting graph by (1) maximum edge weight; "
-        "(2) using log10; (3) using pass-to-ranks for all non-zero edges; "
-        "(4) using pass-to-ranks for all non-zero edges relative to the number of nodes; (5) "
-        "using pass-to-ranks with zero-edge boost; and (6) which standardizes the matrix to "
-        "values [0, 1]. Default is (0) which is no normalization.\n",
+        help="Include this flag to normalize the resulting graph by (1) "
+             "maximum edge weight; (2) using log10; (3) using pass-to-ranks "
+             "for all non-zero edges; (4) using pass-to-ranks for all non-zero"
+             " edges relative to the number of nodes; (5) using pass-to-ranks"
+             " with zero-edge boost; and (6) which standardizes the matrix to "
+             "values [0, 1]. Default is (0) which is no normalization.\n",
     )
     parser.add_argument(
         "-bin",
         default=False,
         action="store_true",
-        help="Include this flag to binarize the resulting graph such that edges are boolean and not "
-        "weighted.\n",
+        help="Include this flag to binarize the resulting graph such that "
+             "edges are boolean and not weighted.\n",
     )
     parser.add_argument(
         "-dt",
         default=False,
         action="store_true",
-        help="Optionally use this flag if you wish to threshold to achieve a given density or "
-        "densities indicated by the -thr and -min_thr, -max_thr, -step_thr flags, respectively.\n",
+        help="Optionally use this flag if you wish to threshold to achieve a "
+             "given density or densities indicated by the -thr and -min_thr,"
+             " -max_thr, -step_thr flags, respectively.\n",
     )
     parser.add_argument(
         "-mst",
         default=False,
         action="store_true",
-        help="Optionally use this flag if you wish to apply local thresholding via the Minimum "
-        "Spanning Tree approach. -thr values in this case correspond to a target density (if the "
-        "-dt flag is also included), otherwise a target proportional threshold.\n",
+        help="Optionally use this flag if you wish to apply local thresholding"
+             " via the Minimum Spanning Tree approach. -thr values in this "
+             "case correspond to a target density (if the -dt flag is also"
+             " included), otherwise a target proportional threshold.\n",
     )
     parser.add_argument(
         "-p",
@@ -416,38 +455,41 @@ def get_parser():
         default=1,
         nargs=1,
         choices=["0", "1", "2", "3"],
-        help="Include this flag to (1) prune the graph of any isolated + fully "
-        "disconnected nodes (i.e. anti-fragmentation), (2) prune the graph of all but hubs as "
-        "defined by any of a variety of definitions (see ruconfig.yaml), or "
-        "(3) retain only the largest connected component subgraph. "
-        "Default is 1. Include `-p 0` to disable fragmentation-protection.\n",
+        help="Include this flag to (1) prune the graph of any "
+             "isolated + fully disconnected nodes (i.e. anti-fragmentation),"
+             " (2) prune the graph of all but hubs as defined by any of a "
+             "variety of definitions (see ruconfig.yaml), or (3) retain only "
+             "the largest connected component subgraph. Default is 1. Include"
+             " `-p 0` to disable fragmentation-protection.\n",
     )
     parser.add_argument(
         "-df",
         default=False,
         action="store_true",
-        help="Optionally use this flag if you wish to apply local thresholding via the disparity "
-        "filter approach. -thr values in this case correspond to α.\n",
+        help="Optionally use this flag if you wish to apply local thresholding"
+             " via the disparity filter approach. -thr values in this case "
+             "correspond to α.\n",
     )
     parser.add_argument(
         "-mplx",
-        metavar="Perform various levels of multiplex graph analysis (only) if both structural and "
-        "diffusion connectometry is run simultaneously.",
+        metavar="Perform various levels of multiplex graph analysis (only) if"
+                " both structural and diffusion connectometry is run "
+                "simultaneously.",
         default=0,
         nargs=1,
         choices=["0", "1", "2"],
-        help="Include this flag to perform multiplex graph analysis across structural-functional "
-        "connectome modalities. Options include level (1) Create multiplex graphs "
-        "using motif-matched adaptive thresholding; (2) Additionally perform multiplex graph "
-        "embedding and analysis."
-        "Default is (0) which is no multiplex analysis.\n",
+        help="Include this flag to perform multiplex graph analysis across "
+             "structural-functional connectome modalities. Options include "
+             "level (1) Create multiplex graphs using motif-matched adaptive "
+             "thresholding; (2) Additionally perform multiplex graph embedding"
+             " and analysis. Default is (0) which is no multiplex analysis.\n",
     )
     parser.add_argument(
         "-embed",
         default=False,
         action="store_true",
-        help="Optionally use this flag if you wish to embed the ensemble(s) produced into "
-        "feature vector(s).\n",
+        help="Optionally use this flag if you wish to embed the ensemble(s) "
+             "produced into feature vector(s).\n",
     )
     parser.add_argument(
         "-spheres",
@@ -486,12 +528,13 @@ def get_parser():
             "DefaultC",
             "TempPar",
         ],
-        help="Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs (7-network or "
-        "17-network): Vis, SomMot, DorsAttn, SalVentAttn, Limbic, Cont, Default, VisCent, "
-        "VisPeri, SomMotA, SomMotB, DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
-        "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, DefaultC, TempPar. If listing "
-        "multiple RSNs, separate them by space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'."
-        "\n",
+        help="Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs"
+             " (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn,"
+             " Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, "
+             "DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
+            "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
+             "DefaultC, TempPar. If listing multiple RSNs, separate them by "
+             "space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'.\n",
     )
     parser.add_argument(
         "-vox",
@@ -500,15 +543,15 @@ def get_parser():
         choices=[
             "1mm",
             "2mm"],
-        help="Optionally use this flag if you wish to change the resolution of the images in the "
-        "workflow. Default is 2mm.\n",
+        help="Optionally use this flag if you wish to change the resolution of"
+             " the images in the workflow. Default is 2mm.\n",
     )
     parser.add_argument(
         "-plt",
         default=False,
         action="store_true",
-        help="Optionally use this flag if you wish to activate plotting of adjacency matrices, "
-        "connectomes, and time-series.\n",
+        help="Optionally use this flag if you wish to activate plotting of "
+             "adjacency matrices, connectomes, and time-series.\n",
     )
 
     # Debug/Runtime settings
@@ -516,9 +559,10 @@ def get_parser():
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
-        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
-        "detected on the current compute node.\n",
+        help="Number of cores to use, number of GB of memory to use for single"
+             " subject run, entered as two integers seperated by comma. "
+             "Otherwise, default is `auto`, which uses all resources "
+             "detected on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -535,7 +579,8 @@ def get_parser():
             "SLURMgraph",
             "LegacyMultiProc",
         ],
-        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+        help="Include this flag to specify a workflow plugin other than the"
+             " default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
@@ -546,13 +591,15 @@ def get_parser():
         "-clean",
         default=False,
         action="store_true",
-        help="Clean up temporary runtime directory after workflow termination.\n",
+        help="Clean up temporary runtime directory after "
+             "workflow termination.\n",
     )
     parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
-        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+        help="Specify the path to a working directory for pynets to run. "
+             "Default is /tmp/work.\n",
     )
     parser.add_argument("--version", action="version", version=verstr)
     return parser
@@ -578,10 +625,12 @@ def build_workflow(args, retval):
     try:
         import pynets
 
-        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version: {pynets.__version__}")
+        print(f"{Fore.RED}\n\nPyNets\n{Fore.MAGENTA}Version:"
+              f" {pynets.__version__}")
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are using the correct python version."
+            "PyNets not installed! Ensure that you are using the "
+            "correct python version."
         )
 
     # Start timer
@@ -652,20 +701,24 @@ def build_workflow(args, retval):
         if multi_subject_graph:
             if len(ID) != len(multi_subject_graph):
                 print(
-                    "Error: Length of ID list does not correspond to length of input graph file list."
+                    "Error: Length of ID list does not correspond to length of"
+                    " input graph file list."
                 )
                 retval["return_code"] = 1
                 return retval
         if multi_subject_multigraph:
             if len(ID) != len(multi_subject_multigraph):
                 print(
-                    "Error: Length of ID list does not correspond to length of input graph file list."
+                    "Error: Length of ID list does not correspond to length of"
+                    " input graph file list."
                 )
                 retval["return_code"] = 1
                 return retval
-        if len(ID) > 1 and not multi_subject_graph and not multi_subject_multigraph:
+        if len(ID) > 1 and not multi_subject_graph \
+            and not multi_subject_multigraph:
             print(
-                "Error: Length of ID list does not correspond to length of input graph file list."
+                "Error: Length of ID list does not correspond to length of"
+                " input graph file list."
             )
             retval["return_code"] = 1
             return retval
@@ -924,7 +977,8 @@ def build_workflow(args, retval):
     os.makedirs(work_dir, exist_ok=True)
 
     print(
-        "\n\n\n------------------------------------------------------------------------\n"
+        "\n\n\n-------------------------------------------------------"
+        "-----------------\n"
     )
 
     # Hard-coded:
@@ -970,7 +1024,8 @@ def build_workflow(args, retval):
     if (min_thr is not None) and (
             max_thr is not None) and (step_thr is not None):
         multi_thr = True
-    elif (min_thr is not None) or (max_thr is not None) or (step_thr is not None):
+    elif (min_thr is not None) or (max_thr is not None) \
+        or (step_thr is not None):
         print("Error: Missing either min_thr, max_thr, or step_thr flags!")
         retval["return_code"] = 1
         return retval
@@ -987,9 +1042,10 @@ def build_workflow(args, retval):
         and (multi_subject_multigraph is None)
     ):
         print(
-            "\nError: You must include a file path to either a 4d BOLD EPI image in T1w space"
-            "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image series in native diffusion"
-            "space using the `-dwi` flag.")
+            "\nError: You must include a file path to either a 4d BOLD EPI "
+            "image in T1w space in .nii/.nii.gz format using the `-func` flag,"
+            " or a 4d DWI image series in native diffusion space using "
+            "the `-dwi` flag.")
         retval["return_code"] = 1
         return retval
     if func_file:
@@ -1011,7 +1067,8 @@ def build_workflow(args, retval):
 
     if not anat_file and not graph and not multi_graph:
         print(
-            "ERROR: An anatomical image must be specified for fmri and dmri_connectometry using the `-anat` flag."
+            "ERROR: An anatomical image must be specified for fmri and "
+            "dmri_connectometry using the `-anat` flag."
         )
         retval["return_code"] = 1
         return retval
@@ -1043,7 +1100,8 @@ def build_workflow(args, retval):
     if func_file_list and isinstance(ID, list):
         if len(ID) != len(func_file_list):
             print(
-                "Error: Length of ID list does not correspond to length of input func file list."
+                "Error: Length of ID list does not correspond to length of "
+                "input func file list."
             )
             retval["return_code"] = 1
             return retval
@@ -1055,7 +1113,8 @@ def build_workflow(args, retval):
         if isinstance(conf, list) and func_file_list:
             if len(conf) != len(func_file_list):
                 print(
-                    "Error: Length of confound regressor list does not correspond to length of input file list."
+                    "Error: Length of confound regressor list does not"
+                    " correspond to length of input file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1078,7 +1137,8 @@ def build_workflow(args, retval):
     if dwi_file_list and isinstance(ID, list):
         if len(ID) != len(dwi_file_list):
             print(
-                "Error: Length of ID list does not correspond to length of input dwi file list."
+                "Error: Length of ID list does not correspond to length"
+                " of input dwi file list."
             )
             retval["return_code"] = 1
             return retval
@@ -1086,7 +1146,8 @@ def build_workflow(args, retval):
         if isinstance(fbval, list) and dwi_file_list:
             if len(fbval) != len(dwi_file_list):
                 print(
-                    "Error: Length of fbval list does not correspond to length of input dwi file list."
+                    "Error: Length of fbval list does not correspond to length"
+                    " of input dwi file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1110,7 +1171,8 @@ def build_workflow(args, retval):
         if isinstance(fbvec, list) and dwi_file_list:
             if len(fbvec) != len(dwi_file_list):
                 print(
-                    "Error: Length of fbvec list does not correspond to length of input dwi file list."
+                    "Error: Length of fbvec list does not correspond to length"
+                    " of input dwi file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1136,7 +1198,8 @@ def build_workflow(args, retval):
                 dwi_file_list
             ):
                 print(
-                    "Error: Length of anat list does not correspond to length of input dwi and func file lists."
+                    "Error: Length of anat list does not correspond to length"
+                    " of input dwi and func file lists."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1146,7 +1209,8 @@ def build_workflow(args, retval):
         elif isinstance(anat_file, list) and dwi_file_list:
             if len(anat_file) != len(dwi_file_list):
                 print(
-                    "Error: Length of anat list does not correspond to length of input dwi file list."
+                    "Error: Length of anat list does not correspond to length"
+                    " of input dwi file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1156,7 +1220,8 @@ def build_workflow(args, retval):
         elif isinstance(anat_file, list) and func_file_list:
             if len(anat_file) != len(func_file_list):
                 print(
-                    "Error: Length of anat list does not correspond to length of input func file list."
+                    "Error: Length of anat list does not correspond to length"
+                    " of input func file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1177,8 +1242,8 @@ def build_workflow(args, retval):
             if len(mask) != len(func_file_list) and len(
                     mask) != len(dwi_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to length of input func "
-                    "and dwi file lists.")
+                    "Error: Length of brain mask list does not correspond to "
+                    "length of input func and dwi file lists.")
                 retval["return_code"] = 1
                 return retval
             else:
@@ -1187,7 +1252,8 @@ def build_workflow(args, retval):
         elif isinstance(mask, list) and func_file_list:
             if len(mask) != len(func_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to length of input func file list."
+                    "Error: Length of brain mask list does not correspond to"
+                    " length of input func file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1197,7 +1263,8 @@ def build_workflow(args, retval):
         elif isinstance(mask, list) and dwi_file_list:
             if len(mask) != len(dwi_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to length of input dwi file list."
+                    "Error: Length of brain mask list does not correspond to"
+                    " length of input dwi file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1332,7 +1399,7 @@ def build_workflow(args, retval):
                     f"{Fore.GREEN}Applying smoothing to node signal at "
                     f"multiple FWHM mm values:")
                 print(
-                    f"{Fore.BLUE}{str(', '.join(str(n) for n in smooth_list))}")
+                f"{Fore.BLUE}{str(', '.join(str(n) for n in smooth_list))}")
             elif float(smooth) > 0:
                 print(
                     f"{Fore.GREEN}Applying smoothing to node signal at: "
@@ -1342,41 +1409,48 @@ def build_workflow(args, retval):
 
             if hpass_list:
                 print(
-                    f"{Fore.GREEN}Applying high-pass filter to node signal at multiple Hz values:"
+                    f"{Fore.GREEN}Applying high-pass filter to node"
+                    f" signal at multiple Hz values:"
                 )
                 print(
                     f"{Fore.BLUE}{str(', '.join(str(n) for n in hpass_list))}"
                 )
             elif hpass is not None:
                 print(
-                    f"{Fore.GREEN}Applying high-pass filter to node signal at: {Fore.BLUE}{hpass}Hz...")
+                    f"{Fore.GREEN}Applying high-pass filter to node "
+                    f"signal at: {Fore.BLUE}{hpass}Hz...")
             else:
                 hpass = None
 
             if extract_strategy_list:
                 print(
-                    f"{Fore.GREEN}Extracting node signal using multiple strategies:"
+                    f"{Fore.GREEN}Extracting node signal using"
+                    f" multiple strategies:"
                 )
                 print(
                     f"{Fore.BLUE}{str(', '.join(str(n) for n in extract_strategy_list))}"
                 )
             else:
                 print(
-                    f"{Fore.GREEN}Extracting node signal using a {Fore.BLUE}{extract_strategy} {Fore.GREEN}strategy..."
+                    f"{Fore.GREEN}Extracting node signal using a "
+                    f"{Fore.BLUE}{extract_strategy} {Fore.GREEN}strategy..."
                 )
 
         if conn_model_list:
             print(
-                f"{Fore.GREEN}Iterating graph estimation across multiple connectivity models:"
+                f"{Fore.GREEN}Iterating graph estimation "
+                f"across multiple connectivity models:"
             )
             print(
                 f"{Fore.BLUE}{str(', '.join(str(n) for n in conn_model_list))}"
             )
             conn_model = None
         else:
-            print(f"{Fore.GREEN}Using connectivity model: {Fore.BLUE}{conn_model}...")
+            print(f"{Fore.GREEN}Using connectivity model:"
+                  f" {Fore.BLUE}{conn_model}...")
 
-    elif graph or multi_graph or multi_subject_graph or multi_subject_multigraph:
+    elif graph or multi_graph or multi_subject_graph \
+        or multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
 
         network = "custom_graph"
@@ -1392,7 +1466,8 @@ def build_workflow(args, retval):
                 k_clustering == 0) and (user_atlas_list is None):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
-        elif (uatlas is not None) and (user_atlas_list is None) and (k_clustering == 0):
+        elif (uatlas is not None) and (user_atlas_list is None)\
+            and (k_clustering == 0):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
@@ -1410,9 +1485,11 @@ def build_workflow(args, retval):
             cl_mask_name = op.basename(clust_mask).split(".nii")[0]
             atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
             print(f"{Fore.GREEN}Cluster atlas: {Fore.BLUE}{atlas_clust}")
-            print(f"{Fore.GREEN}Clustering within mask at a single resolution...")
+            print(f"{Fore.GREEN}Clustering within "
+                  f"mask at a single resolution...")
         elif k_clustering == 2:
-            print(f"{Fore.GREEN}Clustering within mask at multiple resolutions:")
+            print(f"{Fore.GREEN}Clustering within "
+                  f"mask at multiple resolutions:")
             if func_file_list:
                 print(f"{Fore.GREEN}Cluster atlas:")
                 for _k in k_list:
@@ -1427,7 +1504,8 @@ def build_workflow(args, retval):
                     print(f"{Fore.BLUE}{atlas_clust}")
             k = None
         elif k_clustering == 3:
-            print(f"{Fore.GREEN}Clustering within multiple masks at a single resolution:")
+            print(f"{Fore.GREEN}Clustering within "
+                  f"multiple masks at a single resolution:")
             if func_file_list:
                 print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
@@ -1463,7 +1541,8 @@ def build_workflow(args, retval):
             k = None
         elif k_clustering == 5:
             print(
-                f"{Fore.GREEN}Clustering within mask at a single resolution using multiple clustering methods:"
+                f"{Fore.GREEN}Clustering within mask at a single resolution "
+                f"using multiple clustering methods:"
             )
             for _clust_type in clust_type_list:
                 cl_mask_name = op.basename(clust_mask).split(".nii")[0]
@@ -1472,7 +1551,8 @@ def build_workflow(args, retval):
             clust_type = None
         elif k_clustering == 6:
             print(
-                f"{Fore.GREEN}Clustering within mask at multiple resolutions using multiple clustering methods:"
+                f"{Fore.GREEN}Clustering within mask at multiple resolutions "
+                f"using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1490,7 +1570,8 @@ def build_workflow(args, retval):
             k = None
         elif k_clustering == 7:
             print(
-                f"{Fore.GREEN}Clustering within multiple masks at a single resolution using multiple clustering methods:"
+                f"{Fore.GREEN}Clustering within multiple masks at a "
+                f"single resolution using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1510,7 +1591,8 @@ def build_workflow(args, retval):
             clust_type = None
         elif k_clustering == 8:
             print(
-                f"{Fore.GREEN}Clustering within multiple masks at multiple resolutions using multiple clustering methods:"
+                f"{Fore.GREEN}Clustering within multiple masks at "
+                f"multiple resolutions using multiple clustering methods:"
             )
             if func_file_list:
                 for _clust_type in clust_type_list:
@@ -1542,14 +1624,16 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "Error: the -ua flag cannot be used alone with the clustering option. Use the `-cm` flag instead."
+                "Error: the -ua flag cannot be used alone with the "
+                "clustering option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
             return retval
 
         if multi_atlas is not None:
             print(
-                f"{Fore.GREEN}Iterating functional connectometry across multiple predefined atlases:"
+                f"{Fore.GREEN}Iterating functional connectometry across "
+                f"multiple predefined atlases:"
             )
             if func_file_list:
                 for _func_file in func_file_list:
@@ -1559,7 +1643,8 @@ def build_workflow(args, retval):
                             or _atlas in nilearn_prob_atlases
                         ):
                             print(
-                                f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                                f"\nERROR: {_atlas} is a coordinate atlas "
+                                f"and must be used with the `-spheres` flag."
                             )
                             retval["return_code"] = 1
                             return retval
@@ -1572,7 +1657,8 @@ def build_workflow(args, retval):
                         or _atlas in nilearn_prob_atlases
                     ):
                         print(
-                            f"\nERROR: {_atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                            f"\nERROR: {_atlas} is a coordinate atlas and "
+                            f"must be used with the `-spheres` flag."
                         )
                         retval["return_code"] = 1
                         return retval
@@ -1583,7 +1669,8 @@ def build_workflow(args, retval):
                 atlas in nilearn_coord_atlases or atlas in nilearn_prob_atlases
             ):
                 print(
-                    f"\nERROR: {atlas} is a coordinate atlas and must be used with the `-spheres` flag."
+                    f"\nERROR: {atlas} is a coordinate atlas and "
+                    f"must be used with the `-spheres` flag."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1605,7 +1692,8 @@ def build_workflow(args, retval):
     if dwi_file or dwi_file_list:
         if (conn_model == "ten") and (directget == "prob"):
             print(
-                "Cannot perform probabilistic tracking with tensor model estimation..."
+                "Cannot perform probabilistic tracking with "
+                "tensor model estimation..."
             )
             retval["return_code"] = 1
             return retval
@@ -1614,7 +1702,8 @@ def build_workflow(args, retval):
             conn_model == "ten" or tiss_class != "cmc"
         ):
             print(
-                "Can only perform particle tracking with the `cmc` tissue classsifier and diffusion models "
+                "Can only perform particle tracking with the `cmc` tissue "
+                "classifier and diffusion models "
                 "other than tensor...")
             retval["return_code"] = 1
             return retval
@@ -1632,7 +1721,8 @@ def build_workflow(args, retval):
                     print(f"{Fore.BLUE}{atlas_par}")
         if multi_atlas:
             print(
-                f"{Fore.GREEN}Iterating structural connectometry across multiple predefined atlases:"
+                f"{Fore.GREEN}Iterating structural connectometry across "
+                f"multiple predefined atlases:"
             )
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
@@ -1640,7 +1730,8 @@ def build_workflow(args, retval):
                         if (parc is True) and (
                                 _atlas in nilearn_coord_atlases):
                             print(
-                                f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag."
+                                f"\nERROR: {_atlas} is a coordinate atlas and"
+                                f" must be used with the -spheres flag."
                             )
                             retval["return_code"] = 1
                             return retval
@@ -1650,7 +1741,8 @@ def build_workflow(args, retval):
                 for _atlas in multi_atlas:
                     if (parc is True) and (_atlas in nilearn_coord_atlases):
                         print(
-                            f"\nERROR: {_atlas} is a coordinate atlas and must be used with the -spheres flag."
+                            f"\nERROR: {_atlas} is a coordinate atlas and"
+                            f" must be used with the -spheres flag."
                         )
                         retval["return_code"] = 1
                         return retval
@@ -1659,7 +1751,8 @@ def build_workflow(args, retval):
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
                 print(
-                    f"\nERROR: {atlas} is a coordinate atlas and must be used with the -spheres flag."
+                    f"\nERROR: {atlas} is a coordinate atlas and must be"
+                    f" used with the -spheres flag."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1667,34 +1760,43 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
         if directget:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} {Fore.GREEN}direction getting...")
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} "
+                  f"{Fore.GREEN}direction getting...")
         else:
             print(f"{Fore.GREEN}Iterating direction getting:")
             for dg in multi_directget:
                 print(f"{Fore.BLUE}{dg}")
         if min_length:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} minimum streamline length...")
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} "
+                  f"minimum streamline length...")
         else:
             print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
             for ml in min_length_list:
                 print(f"{Fore.BLUE}{ml}")
         if target_samples:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} {Fore.GREEN}streamline samples...")
-        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking with {Fore.BLUE}{tiss_class} {Fore.GREEN}tissue classification...")
-        print(f"{Fore.GREEN}Ensemble tractography step sizes: {Fore.BLUE}{step_list} {Fore.GREEN}and curvature thresholds: {Fore.BLUE}{curv_thr_list}")
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} "
+                  f"{Fore.GREEN}streamline samples...")
+        print(f"{Fore.GREEN}Using {Fore.BLUE}{track_type} {Fore.GREEN}tracking"
+              f" with {Fore.BLUE}{tiss_class} "
+              f"{Fore.GREEN}tissue classification...")
+        print(f"{Fore.GREEN}Ensemble tractography step sizes: "
+              f"{Fore.BLUE}{step_list} {Fore.GREEN}and curvature "
+              f"thresholds: {Fore.BLUE}{curv_thr_list}")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
         print(f"\n{Fore.WHITE}Running dmri connectometry only...")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
-                print(f"{Fore.GREEN}Diffusion-Weighted Image:{Fore.BLUE}\n {_dwi_file}")
+                print(f"{Fore.GREEN}Diffusion-Weighted Image:"
+                      f"{Fore.BLUE}\n {_dwi_file}")
                 print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
                 if waymask is not None:
                     print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
-            print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{dwi_file}")
+            print(f"{Fore.GREEN}Diffusion-Weighted Image:"
+                  f"\n {Fore.BLUE}{dwi_file}")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if waymask is not None:
@@ -1722,7 +1824,8 @@ def build_workflow(args, retval):
 
         if conf_list:
             for _conf in conf_list:
-                print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{_conf}")
+                print(f"{Fore.GREEN}BOLD Confound Regressors:"
+                      f"\n {Fore.BLUE}{_conf}")
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
         multimodal = False
@@ -1736,20 +1839,23 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
         if conf_list:
             for _conf in conf_list:
-                print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{_conf}")
+                print(f"{Fore.GREEN}BOLD Confound Regressors:"
+                      f"\n {Fore.BLUE}{_conf}")
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
-                print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{_dwi_file}")
+                print(f"{Fore.GREEN}Diffusion-Weighted Image:"
+                      f"\n {Fore.BLUE}{_dwi_file}")
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if waymask is not None:
                     print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
-            print(f"{Fore.GREEN}Diffusion-Weighted Image:\n {Fore.BLUE}{dwi_file}")
+            print(f"{Fore.GREEN}Diffusion-Weighted Image:"
+                  f"\n {Fore.BLUE}{dwi_file}")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
     else:
@@ -1757,7 +1863,8 @@ def build_workflow(args, retval):
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
-                print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
+                print(f"{Fore.GREEN}T1-Weighted Image:"
+                      f"\n {Fore.BLUE}{anat_file}")
         else:
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
     if mask or mask_list:
@@ -1768,7 +1875,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
     print(Style.RESET_ALL)
     print(
-        "\n-------------------------------------------------------------------------\n\n"
+        "\n------------------------------------------------"
+        "-------------------------\n\n"
     )
 
     # Variable tracking
@@ -2415,7 +2523,8 @@ def build_workflow(args, retval):
         extract_strategy_list,
         outdir,
     ):
-        """A function interface for generating multiple single-subject workflows -- i.e. a 'multi-subject' workflow"""
+        """A function interface for generating multiple
+        single-subject workflows -- i.e. a 'multi-subject' workflow"""
         import warnings
 
         warnings.filterwarnings("ignore")
@@ -2459,7 +2568,8 @@ def build_workflow(args, retval):
 
                 try:
                     subj_dir = (
-                        f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
+                        f"{outdir}/sub-{ID[i].split('_')[0]}"
+                        f"/ses-{ID[i].split('_')[1]}"
                     )
                 except BaseException:
                     subj_dir = f"{outdir}/{ID[i]}"
@@ -2576,7 +2686,8 @@ def build_workflow(args, retval):
 
                 try:
                     subj_dir = (
-                        f"{outdir}/sub-{ID[i].split('_')[0]}/ses-{ID[i].split('_')[1]}"
+                        f"{outdir}/sub-{ID[i].split('_')[0]}"
+                        f"/ses-{ID[i].split('_')[1]}"
                     )
                 except BaseException:
                     subj_dir = f"{outdir}/{ID[i]}"
@@ -2883,7 +2994,8 @@ def build_workflow(args, retval):
     # Single-subject workflow generator
     else:
         try:
-            subj_dir = f"{outdir}/sub-{ID.split('_')[0]}/ses-{ID.split('_')[1]}"
+            subj_dir = f"{outdir}/sub-{ID.split('_')[0]}" \
+                       f"/ses-{ID.split('_')[1]}"
         except BaseException:
             subj_dir = f"{outdir}/{ID}"
         os.makedirs(subj_dir, exist_ok=True)
@@ -3092,7 +3204,8 @@ def build_workflow(args, retval):
 
 
 def main():
-    """Initializes main script from command-line call to generate single-subject or multi-subject workflow(s)"""
+    """Initializes main script from command-line call to generate
+    single-subject or multi-subject workflow(s)"""
     import gc
     import os
     import sys
@@ -3102,11 +3215,13 @@ def main():
         import pynets
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.6+"
+            "PyNets not installed! Ensure that you are referencing the correct"
+            " site-packages and using Python3.6+"
         )
 
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h flag.\n")
+        print("\nMissing command-line inputs! "
+              "See help options with the -h flag.\n")
         sys.exit(0)
 
     args = get_parser().parse_args()
@@ -3150,5 +3265,6 @@ if __name__ == "__main__":
     import warnings
 
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class " \
+               "'_frozen_importlib.BuiltinImporter'>)"
     main()

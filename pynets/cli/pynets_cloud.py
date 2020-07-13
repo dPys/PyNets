@@ -39,8 +39,9 @@ def batch_submit(
     jobdir,
     credentials,
 ):
-    """Searches through an S3 bucket, gets all subject-ids, creates json files for each,
-    submits batch jobs, and returns list of job ids to query status upon later."""
+    """Searches through an S3 bucket, gets all subject-ids, creates json
+    files for each, submits batch jobs, and returns list of job ids to query
+    status upon later."""
 
     print(f"Getting list from s3://{bucket}/{dataset}/...")
     seshs = crawl_bucket(bucket, dataset, jobdir)
@@ -176,10 +177,12 @@ def create_json(
     out = subprocess.check_output(f"mkdir -p {jobdir}/ids/", shell=True)
 
     with open(
-        "%s%s" % (str(Path(__file__).parent.parent), "/config/cloud_config.json"), "r"
+        "%s%s" % (str(Path(__file__).parent.parent),
+                  "/config/cloud_config.json"), "r"
     ) as inf:
         # with
-        # open('/Users/derekpisner/Applications/PyNets/pynets/cloud_config.json')
+        # open('/Users/derekpisner/Applications/PyNets/pynets/
+        # cloud_config.json')
         # as inf:
         template = json.load(inf)
 
@@ -297,7 +300,8 @@ def submit_jobs(jobs, jobdir):
         print(f"Submitting Job: {job}")
         submission = batch.submit_job(**kwargs)
         print(
-            (f'Job Name: {submission["jobName"]}, Job ID: {submission["jobId"]}'))
+            (f'Job Name: {submission["jobName"]}, '
+             f'Job ID: {submission["jobId"]}'))
         sub_file = os.path.join(jobdir, "ids", submission["jobName"] + ".json")
         with open(sub_file, "w") as outfile:
             json.dump(submission, outfile)
@@ -338,13 +342,15 @@ def kill_jobs(jobdir, reason='"Killing job"'):
 
 def main():
     parser = ArgumentParser(
-        description="PyNets AWS Cloud CLI: A Fully-Automated Workflow for Reproducible "
-        "Ensemble Sampling of Functional and Structural Connectomes")
+        description="PyNets AWS Cloud CLI: A Fully-Automated Workflow for "
+                    "Reproducible Ensemble Sampling of Functional and "
+                    "Structural Connectomes")
     parser.add_argument("--bucket", help="""The S3 bucket name.""")
     parser.add_argument(
         "--dataset",
-        help="""The directory with the input dataset formatted according to the BIDS standard such that
-                        `s3://<bucket>/<dataset>` as the input directory.""",
+        help="""The directory with the input dataset formatted according to
+                the BIDS standard such that `s3://<bucket>/<dataset>`
+                as the input directory.""",
     )
     parser.add_argument(
         "modality",
@@ -353,31 +359,35 @@ def main():
         choices=[
             "dwi",
             "func"],
-        help="Specify data modality to process from bids directory. Options are `dwi` and `func`.",
+        help="Specify data modality to process from bids directory. "
+             "Options are `dwi` and `func`.",
     )
     parser.add_argument(
         "--participant_label",
-        help="""The label(s) of the participant(s) that should be analyzed. The label corresponds to
-                            sub-<participant_label> from the BIDS spec (so it does not include "sub-"). If this
-                            parameter is not provided all subjects should be analyzed. Multiple participants can be
-                            specified with a space separated list.""",
+        help="""The label(s) of the participant(s) that should be analyzed.
+                The label corresponds to sub-<participant_label> from the
+                BIDS spec (so it does not include "sub-"). If this parameter
+                is not provided all subjects should be analyzed. Multiple
+                participants can be specified with a space separated list.""",
         nargs="+",
         default=None,
     )
     parser.add_argument(
         "--session_label",
-        help="""The label(s) of the session that should be analyzed. The label  corresponds to
-                         ses-<participant_label> from the BIDS spec (so it does not include "ses-"). If this parameter
-                         is not provided all sessions should be analyzed. Multiple sessions can be specified with a
-                         space separated list.""",
+        help="""The label(s) of the session that should be analyzed. The label
+                corresponds to ses-<participant_label> from the BIDS spec
+                (so it does not include "ses-"). If this parameter is not
+                provided all sessions should be analyzed. Multiple sessions
+                can be specified with a space separated list.""",
         nargs="+",
         default=None,
     )
     parser.add_argument(
         "--push_location",
         action="store",
-        help="Name of folder on s3 to push output data to, if the folder does not exist, it will be "
-        "created. Format the location as `s3://<bucket>/<path>`",
+        help="Name of folder on s3 to push output data to, if the folder "
+             "does not exist, it will be created. Format the location as "
+             "`s3://<bucket>/<path>`",
         default=None,
     )
 
@@ -387,42 +397,47 @@ def main():
         metavar="Path to parcellation file in MNI-space",
         default=None,
         nargs="+",
-        help="Optionally specify a path to a parcellation/atlas Nifti1Image file in MNI152 space. "
-        "Labels should be spatially distinct across hemispheres and ordered with consecutive "
-        "integers with a value of 0 as the background label. If specifying a list of paths to "
-        "multiple user atlases, separate them by space.\n",
+        help="Optionally specify a path to a parcellation/atlas Nifti1Image "
+             "file in MNI152 space. Labels should be spatially distinct "
+             "across hemispheres and ordered with consecutive integers with a "
+             "value of 0 as the background label. If specifying a list of "
+             "paths to multiple user atlases, separate them by space.\n",
     )
     parser.add_argument(
         "-cm",
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="Optionally specify the path to a Nifti1Image mask file to constrained functional "
-        "clustering. If specifying a list of paths to multiple cluster masks, separate "
-        "them by space.\n",
+        help="Optionally specify the path to a Nifti1Image mask file to "
+             "constrained functional clustering. If specifying a list of "
+             "paths to multiple cluster masks, separate them by space.\n",
     )
     parser.add_argument(
         "-roi",
-        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in template MNI space",
+        metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in "
+                "template MNI space",
         default=None,
         nargs="+",
-        help="Optionally specify a binarized ROI mask in template MNI space and retain only those "
-        "nodes of a parcellation contained within that mask for connectome estimation.\n",
+        help="Optionally specify a binarized ROI mask in template MNI space "
+             "and retain only those nodes of a parcellation contained within "
+             "that mask for connectome estimation.\n",
     )
     parser.add_argument(
         "-ref",
         metavar="Atlas reference file path",
         default=None,
-        help="Specify the path to the atlas reference .txt file that maps labels to "
-        "intensities corresponding to the atlas parcellation file specified with the -ua flag.\n",
+        help="Specify the path to the atlas reference .txt file that "
+             "maps labels to intensities corresponding to the atlas "
+             "parcellation file specified with the -ua flag.\n",
     )
     parser.add_argument(
         "-way",
         metavar="Path to binarized Nifti1Image to constrain tractography",
         default=None,
         nargs="+",
-        help="Optionally specify a binarized ROI mask in template MNI-space to constrain"
-        "tractography in the case of dmri connectome estimation.\n",
+        help="Optionally specify a binarized ROI mask in template MNI-space "
+             "to constrain tractography in the case of "
+             "dmri connectome estimation.\n",
     )
 
     # Debug/Runtime settings
@@ -430,7 +445,8 @@ def main():
         "--jobdir",
         action="store",
         help="""Local directory where the generated batch jobs will be
-                        saved/run through in case of batch termination or check-up.""",
+                        saved/run through in case of
+                        batch termination or check-up.""",
     )
     parser.add_argument(
         "--credentials",
@@ -442,9 +458,10 @@ def main():
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
-        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
-        "detected on the current compute node.\n",
+        help="Number of cores to use, number of GB of memory to use for single"
+             "subject run, entered as two integers seperated by comma. "
+             "Otherwise, default is `auto`, which uses all resources detected "
+             "on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -461,7 +478,8 @@ def main():
             "SLURMgraph",
             "LegacyMultiProc",
         ],
-        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+        help="Include this flag to specify a workflow plugin other than the "
+             "default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
@@ -472,7 +490,8 @@ def main():
         "-work",
         metavar="Working directory",
         default="/tmp/work",
-        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+        help="Specify the path to a working directory for pynets to run. "
+             "Default is /tmp/work.\n",
     )
 
     result = parser.parse_args()
@@ -529,5 +548,6 @@ if __name__ == "__main__":
     import warnings
 
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', " \
+               "loader=<class '_frozen_importlib.BuiltinImporter'>)"
     main()

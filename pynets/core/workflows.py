@@ -133,7 +133,8 @@ def workflow_selector(
             )
             sys.exit(0)
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models\
+                = hardcoded_params["available_models"]["struct_models"]
         except KeyError:
             print(
                 "ERROR: available structural models not successfully extracted"
@@ -1968,25 +1969,30 @@ def dmri_connectometry(
         flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
+            # print('Flexi-atlas: multiple nilearn atlases
+            # + multiple user atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + multi_atlas),
                 ("uatlas", user_atlas_list + len(multi_atlas) * [None]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif multi_atlas is not None and uatlas is not None and user_atlas_list is None:
+        elif multi_atlas is not None and uatlas\
+            is not None and user_atlas_list is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single user atlas + multiple nilearn atlases')
+            # print('Flexi-atlas: single user atlas
+            # + multiple nilearn atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", multi_atlas + [None]),
                 ("uatlas", len(multi_atlas) * [None] + [uatlas]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif atlas is not None and user_atlas_list is not None and multi_atlas is None:
+        elif atlas is not None and user_atlas_list\
+            is not None and multi_atlas is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single nilearn atlas + multiple user atlases')
+            # print('Flexi-atlas: single nilearn atlas
+            # + multiple user atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + [atlas]),
@@ -2093,8 +2099,10 @@ def dmri_connectometry(
             ),
             name="get_node_membership_node",
         )
-        get_node_membership_node._n_procs = runtime_dict["get_node_membership_node"][0]
-        get_node_membership_node._mem_gb = runtime_dict["get_node_membership_node"][1]
+        get_node_membership_node._n_procs\
+            = runtime_dict["get_node_membership_node"][0]
+        get_node_membership_node._mem_gb\
+            = runtime_dict["get_node_membership_node"][1]
 
         if multi_nets:
             get_node_membership_iterables = []
@@ -2425,8 +2433,10 @@ def dmri_connectometry(
             )
             dmri_connectometry_wf.connect(
                 [
-                    (thr_info_node, join_iters_node_prep_spheres, map_connects),
-                    (join_iters_node_prep_spheres, join_iters_node, map_connects),
+                    (thr_info_node, join_iters_node_prep_spheres,
+                     map_connects),
+                    (join_iters_node_prep_spheres, join_iters_node,
+                     map_connects),
                 ]
             )
         elif (
@@ -3145,7 +3155,8 @@ def dmri_connectometry(
                 (
                     inputnode,
                     register_roi_node,
-                    [("vox_size", "vox_size"), ("template_name", "template_name")],
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
                 ),
                 (
                     register_node,
@@ -3645,7 +3656,8 @@ def fmri_connectometry(
             mask_name = atlas = utils.prune_suffices(mask_name)
             cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
             cluster_atlas_file = (
-                f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_{clust_type}_k"
+                f"{utils.do_dir_path(cluster_atlas_name, outdir)}"
+                f"/{mask_name}_{clust_type}_k"
                 f"{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list.append(cluster_atlas_file)
@@ -3665,7 +3677,8 @@ def fmri_connectometry(
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
-                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}"
+                    f"/{mask_name}_"
                     f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3683,7 +3696,8 @@ def fmri_connectometry(
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
-                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}"
+                    f"/{mask_name}_"
                     f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3946,8 +3960,10 @@ def fmri_connectometry(
     if all_clustering is True:
         flexi_atlas = False
     elif (
-        (multi_atlas is not None and user_atlas_list is None and uatlas is None)
-        or (multi_atlas is None and atlas is None and user_atlas_list is not None)
+        (multi_atlas is not None and user_atlas_list
+         is None and uatlas is None)
+        or (multi_atlas is None and atlas
+            is None and user_atlas_list is not None)
     ) and k_clustering == 0:
         # print('\n\n\n\n')
         # print('No flexi-atlas1')
@@ -4796,7 +4812,8 @@ def fmri_connectometry(
             and not hpass_list
             and not extract_strategy_list
         ):
-            # print('No connectivity model or time-series node extraction iterables...')
+            # print('No connectivity model or time-series
+            # node extraction iterables...')
             fmri_connectometry_wf.connect(
                 [(thr_info_node, join_iters_node, map_connects)]
             )
@@ -4804,7 +4821,8 @@ def fmri_connectometry(
             node_size_list or smooth_list or hpass_list or
             extract_strategy_list
         ):
-            # print('Connectivity model and time-series node extraction iterables...')
+            # print('Connectivity model and time-series
+            # node extraction iterables...')
             join_iters_node_ext_ts = pe.JoinNode(
                 niu.IdentityInterface(fields=map_fields),
                 name="join_iters_node_ext_ts",
@@ -5278,7 +5296,8 @@ def fmri_connectometry(
                 (
                     inputnode,
                     register_roi_node,
-                    [("vox_size", "vox_size"), ("template_name", "template_name")],
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
                 ),
                 (
                     register_node,
@@ -5458,7 +5477,8 @@ def fmri_connectometry(
                     ("basedir_path", "basedir_path"),
                 ],
             ),
-            (inputnode, check_orient_and_dims_uatlas_node, [("vox_size", "vox_size")]),
+            (inputnode, check_orient_and_dims_uatlas_node,
+             [("vox_size", "vox_size")]),
             (
                 fetch_nodes_and_labels_node,
                 check_orient_and_dims_uatlas_node,
@@ -5472,7 +5492,8 @@ def fmri_connectometry(
             (
                 node_gen_node,
                 register_atlas_node,
-                [("coords", "coords"), ("labels", "labels"), ("atlas", "atlas")],
+                [("coords", "coords"), ("labels", "labels"),
+                 ("atlas", "atlas")],
             ),
             (
                 register_atlas_node,
@@ -5830,7 +5851,8 @@ def raw_graph_workflow(
             wf.connect(
                 [
                     (inputinfo, load_mat_node, [("est_path", "est_path")]),
-                    (load_mat_node, thr_info_node, [("conn_matrix", "conn_matrix")]),
+                    (load_mat_node, thr_info_node,
+                     [("conn_matrix", "conn_matrix")]),
                     (
                         inputinfo,
                         thr_info_node,
@@ -5858,7 +5880,8 @@ def raw_graph_workflow(
                     [
                         str(i)
                         for i in np.round(
-                            np.arange(float(min_thr), float(max_thr), float(step_thr)),
+                            np.arange(float(min_thr), float(max_thr),
+                                      float(step_thr)),
                             decimals=2,
                         ).tolist()
                     ]

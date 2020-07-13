@@ -43,7 +43,8 @@ def prune_suffices(res):
 
 def do_dir_path(atlas, outdir):
     """
-    Creates an atlas subdirectory from the base directory of the given subject's input file.
+    Creates an atlas subdirectory from the base directory of the given
+    subject's input file.
 
     Parameters
     ----------
@@ -122,30 +123,33 @@ def create_est_path_func(
     extract_strategy,
 ):
     """
-    Name the thresholded functional connectivity matrix file based on relevant graph-generating parameters.
+    Name the thresholded functional connectivity matrix file based on relevant
+     graph-generating parameters.
 
     Parameters
     ----------
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+         used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     thr_type : str
         Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
     hpass : bool
@@ -153,12 +157,14 @@ def create_est_path_func(
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     Returns
     -------
     est_path : str
-        File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
+        File path to .npy file containing graph with all specified combinations
+         of hyperparameter characteristics.
 
     """
     import os
@@ -229,28 +235,30 @@ def create_est_path_diff(
     min_length,
 ):
     """
-    Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
+    Name the thresholded structural connectivity matrix file based on relevant
+    graph-generating parameters.
 
     Parameters
     ----------
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     track_type : str
@@ -260,8 +268,8 @@ def create_est_path_diff(
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic),
+         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
 
@@ -329,38 +337,43 @@ def create_raw_path_func(
     extract_strategy,
 ):
     """
-    Name the raw functional connectivity matrix file based on relevant graph-generating parameters.
+    Name the raw functional connectivity matrix file based on relevant
+    graph-generating parameters.
 
     Parameters
     ----------
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     Returns
     -------
     est_path : str
-        File path to .npy file containing graph with all specified combinations of hyperparameter characteristics.
+        File path to .npy file containing graph with all specified combinations
+         of hyperparameter characteristics.
 
     """
     import os
@@ -425,25 +438,28 @@ def create_raw_path_diff(
     min_length,
 ):
     """
-    Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
+    Name the raw structural connectivity matrix file based on relevant
+    graph-generating parameters.
 
     Parameters
     ----------
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+         used to filter nodes in the study of
         brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     track_type : str
@@ -451,8 +467,8 @@ def create_raw_path_diff(
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
 
@@ -528,7 +544,8 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/{est_path.split('/')[-1].split('.npy')[0]}_net_mets.csv"
+    out_path = f"{namer_dir}/{est_path.split('/')[-1].split('.npy')[0]}" \
+               f"_net_mets.csv"
 
     return out_path
 
@@ -619,7 +636,8 @@ def save_mat(conn_matrix, est_path, fmt="npy"):
     est_path : str
         File path to .npy file containing graph.
     fmt : str
-        Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
+        Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml,
+         .txt, .ssv, .csv). Default is .npy.
 
     """
     import numpy as np
@@ -694,54 +712,66 @@ def pass_meta_outs(
     Parameters
     ----------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
-       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+       List of connectivity estimation model parameters (e.g. corr for
+       correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
     est_path_iterlist : list
-        List of file paths to .npy file containing graph with thresholding applied.
+        List of file paths to .npy file containing graph with thresholding
+        applied.
     network_iterlist : list
-        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_iterlist : list
-        List of values, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        List of values, between 0 and 1, to threshold the graph using any
+        variety of methods triggered through other options.
     prune_iterlist : list
-        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+        List of booleans indicating whether final graphs were pruned of
+        disconnected nodes/isolates.
     ID_iterlist : list
         List of repeated subject id strings.
     roi_iterlist : list
-        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+        List of file paths to binarized/boolean region-of-interest
+        Nifti1Image files.
     norm_iterlist : list
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
-        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+        List of booleans indicating whether resulting graph edges to form an
+        unweighted graph were binarized.
 
     Returns
     -------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
-       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+       List of connectivity estimation model parameters (e.g. corr for
+       correlation, cov for covariance, sps for precision covariance,
+       partcorr for partial correlation). sps type is used by default.
     est_path_iterlist : list
-        List of file paths to .npy file containing graph with thresholding applied.
+        List of file paths to .npy file containing graph with thresholding
+        applied.
     network_iterlist : list
-        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_iterlist : list
-        List of values, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        List of values, between 0 and 1, to threshold the graph using
+        any variety of methods triggered through other options.
     prune_iterlist : list
-        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+        List of booleans indicating whether final graphs were pruned of
+        disconnected nodes/isolates.
     ID_iterlist : list
         List of repeated subject id strings.
     roi_iterlist : list
-        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+        List of file paths to binarized/boolean region-of-interest
+        Nifti1Image files.
     norm_iterlist : list
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
-        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+        List of booleans indicating whether resulting graph edges to form an
+        unweighted graph were binarized.
     embed_iterlist : list
-        List of booleans indicating whether omnibus embedding of graph population was performed.
+        List of booleans indicating whether omnibus embedding of graph
+        population was performed.
     multimodal_iterlist : list
-        List of booleans indicating whether multiple modalities of input data have been specified.
+        List of booleans indicating whether multiple modalities of input data
+        have been specified.
 
     """
 
@@ -774,16 +804,17 @@ def pass_meta_ins(
     Parameters
     ----------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     ID : str
@@ -799,16 +830,17 @@ def pass_meta_ins(
     Returns
     -------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     ID : str
@@ -881,76 +913,95 @@ def pass_meta_ins_multi(
     Parameters
     ----------
     conn_model_func : str
-       Functional connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision
-       covariance, partcorr for partial correlation). sps type is used by default.
+       Functional connectivity estimation model (e.g. corr for correlation, cov
+       for covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     est_path_func : str
-        File path to .npy file containing functional graph with thresholding applied.
+        File path to .npy file containing functional graph with thresholding
+        applied.
     network_func : str
-        Functional resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        Functional resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_func : float
-        A value, between 0 and 1, to threshold the functional graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the functional graph using any
+        variety of methods triggered through other options.
     prune_func : bool
-        Indicates whether to prune final functional graph of disconnected nodes/isolates.
+        Indicates whether to prune final functional graph of disconnected
+        nodes/isolates.
     ID_func : str
         A subject id or other unique identifier for the functional workflow.
     roi_func : str
-        File path to binarized/boolean region-of-interest Nifti1Image file applied to the functional data.
+        File path to binarized/boolean region-of-interest Nifti1Image file
+        applied to the functional data.
     norm_func : int
         Indicates method of normalizing resulting functional graph.
     binary_func : bool
-        Indicates whether to binarize resulting graph edges to form an unweighted functional graph.
+        Indicates whether to binarize resulting graph edges to form an
+        unweighted functional graph.
     conn_model_struct : str
-       Diffusion structural connectivity estimation model (e.g. corr for correlation, cov for covariance,
-       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+       Diffusion structural connectivity estimation model (e.g. corr for
+       correlation, cov for covariance, sps for precision covariance, partcorr
+        for partial correlation). sps type is used by default.
     est_path_struct : str
-        File path to .npy file containing diffusion structural graph with thresholding applied.
+        File path to .npy file containing diffusion structural graph with
+        thresholding applied.
     network_struct : str
-        Diffusion structural resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter
-        nodes in the study of brain subgraphs.
+        Diffusion structural resting-state network based on Yeo-7 and Yeo-17
+        naming (e.g. 'Default') used to filter nodes in the study of brain
+        subgraphs.
     thr_struct : float
-        A value, between 0 and 1, to threshold the diffusion structural graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the diffusion structural graph
+        using any variety of methods triggered through other options.
     prune_struct : bool
-        Indicates whether to prune final diffusion structural graph of disconnected nodes/isolates.
+        Indicates whether to prune final diffusion structural graph of
+        disconnected nodes/isolates.
     ID_struct : str
-        A subject id or other unique identifier for the diffusion structural workflow.
+        A subject id or other unique identifier for the diffusion structural
+        workflow.
     roi_struct : str
-        File path to binarized/boolean region-of-interest Nifti1Image file applied too the dwi data.
+        File path to binarized/boolean region-of-interest Nifti1Image file
+        applied too the dwi data.
     norm_struct : int
         Indicates method of normalizing resulting diffusion structural graph.
     binary_struct : bool
-        Indicates whether to binarize resulting diffusion structural graph edges to form an unweighted graph.
+        Indicates whether to binarize resulting diffusion structural graph
+        edges to form an unweighted graph.
 
 
     Returns
     -------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for correlation, cov for covariance,
-       sps for precision covariance, partcorr for partial correlation). sps type is used by default.
+       List of connectivity estimation model parameters (e.g. corr for
+       correlation, cov for covariance, sps for precision covariance, partcorr
+       for partial correlation). sps type is used by default.
     est_path_iterlist : list
-        List of file paths to .npy file containing graph with thresholding applied.
+        List of file paths to .npy file containing graph with thresholding
+        applied.
     network_iterlist : list
-        List of resting-state networks based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        List of resting-state networks based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_iterlist : list
-        List of values, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        List of values, between 0 and 1, to threshold the graph using any
+        variety of methods triggered through other options.
     prune_iterlist : list
-        List of booleans indicating whether final graphs were pruned of disconnected nodes/isolates.
+        List of booleans indicating whether final graphs were pruned of
+        disconnected nodes/isolates.
     ID_iterlist : list
         List of repeated subject id strings.
     roi_iterlist : list
-        List of file paths to binarized/boolean region-of-interest Nifti1Image files.
+        List of file paths to binarized/boolean region-of-interest
+        Nifti1Image files.
     norm_iterlist : list
         Indicates method of normalizing resulting graph.
     binary_iterlist : list
-        List of booleans indicating whether resulting graph edges to form an unweighted graph were binarized.
+        List of booleans indicating whether resulting graph edges to form an
+        unweighted graph were binarized.
     embed_iterlist : list
-        List of booleans indicating whether omnibus embedding of graph population was performed.
+        List of booleans indicating whether omnibus embedding of graph
+        population was performed.
     multimodal_iterlist : list
-        List of booleans indicating whether multiple modalities of input data have been specified.
+        List of booleans indicating whether multiple modalities of input data
+        have been specified.
 
     """
     est_path_iterlist = [est_path_func, est_path_struct]
@@ -1045,13 +1096,14 @@ def collect_pandas_df(
     network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
 ):
     """
-    API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
+    API for summarizing independent lists of pickled pandas dataframes of
+    graph metrics for each modality, RSN, and roi.
 
     Parameters
     ----------
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     net_mets_csv_list : list
@@ -1061,7 +1113,8 @@ def collect_pandas_df(
     multi_nets : list
         List of Yeo RSN's specified in workflow(s).
     multimodal : bool
-        Indicates whether multiple modalities of input data have been specified.
+        Indicates whether multiple modalities of input data have been
+        specified.
 
     Returns
     -------
@@ -1084,13 +1137,16 @@ def collect_pandas_df(
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available functional models not sucessfully extracted "
+                "from runconfig.yaml"
             )
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models\
+                = hardcoded_params["available_models"]["struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available structural models not sucessfully extracted "
+                "from runconfig.yaml"
             )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
@@ -1107,7 +1163,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("est-")[1].split("_")[0] in struct_models
+                            if i.split("est-")[1].split("_")[0]
+                               in struct_models
                         ]
                     )
                 )
@@ -1119,7 +1176,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("est-")[1].split("_")[0] in func_models
+                            if i.split("est-")[1].split("_")[0]
+                               in func_models
                         ]
                     )
                 )
@@ -1165,7 +1223,8 @@ def collect_pandas_df(
                 net_mets_csv_list_func, ID, network, plot_switch
             )
 
-            if combination_complete_dwi is True and combination_complete_func is True:
+            if combination_complete_dwi is True and \
+                combination_complete_func is True:
                 combination_complete = True
             else:
                 combination_complete = False
@@ -1184,13 +1243,16 @@ def check_est_path_existence(est_path_list):
     Parameters
     ----------
     est_path_list : list
-        List of file paths to .npy file containing graph with thresholding applied.
+        List of file paths to .npy file containing graph with
+        thresholding applied.
     Returns
     -------
     est_path_list_ex : list
-        List of existing file paths to .npy file containing graph with thresholding applied.
+        List of existing file paths to .npy file containing graph with
+        thresholding applied.
     bad_ixs : int
-        List of indices in est_path_list with non-existent and/or corrupt files.
+        List of indices in est_path_list with non-existent
+         and/or corrupt files.
 
     """
     est_path_list_ex = []
@@ -1222,8 +1284,8 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
 
     Returns
     -------
@@ -1306,7 +1368,8 @@ def get_template_tf(template_name, vox_size):
 
 def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     """
-    This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
+    This function takes a Nifti1Image parcellation object resulting from some
+    form of masking and saves it to disk.
 
     Parameters
     ----------
@@ -1315,17 +1378,17 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        used to filter nodes in the study of brain subgraphs.
     net_parcels_map_nifti : Nifti1Image
-        A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
-        membership.
+        A nibabel-based nifti image consisting of a 3D array with integer
+        voxel intensities corresponding to ROI membership.
 
     Returns
     -------
     net_parcels_nii_path : str
-        File path to Nifti1Image consisting of a 3D array with integer voxel intensities corresponding to ROI
-        membership.
+        File path to Nifti1Image consisting of a 3D array with integer voxel
+        intensities corresponding to ROI membership.
 
     """
     import os
@@ -1366,29 +1429,33 @@ def save_ts_to_file(
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     ts_within_nodes : array
-        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
-        n = number of ROI's, where ROI's are parcel volumes.
+        2D m x n array consisting of the time-series signal for each ROI node
+        where m = number of scans and n = number of ROI's, where ROI's are
+        parcel volumes.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for time-series extraction.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for time-series extraction.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     Returns
     -------
     out_path_ts : str
-        Path to .npy file containing array of fMRI time-series extracted from nodes.
+        Path to .npy file containing array of fMRI time-series extracted from
+        nodes.
 
     """
     import os
@@ -1506,7 +1573,8 @@ def timeout(seconds):
 
 def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
-    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
+    A function to build a hyperparameter dictionary by parsing a given
+    net_mets file path.
     """
     hyperparam_dict["atlas"] = atlas
 
@@ -1595,7 +1663,8 @@ class build_sql_db(object):
 
         df_summary_auc_ext = pd.concat(
             [
-                pd.DataFrame.from_dict(hyperparam_dict, orient="index").transpose(),
+                pd.DataFrame.from_dict
+                (hyperparam_dict, orient="index").transpose(),
                 df_summary_auc,
             ],
             axis=1,

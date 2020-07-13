@@ -166,9 +166,9 @@ html_short_title = 'PyNets'
 # of the sidebar.
 html_logo = '_static/logo.png'
 
-# The name of an image file (relative to this directory) to use as a favicon of
-# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
-# pixels large.
+# The name of an image file (relative to this directory) to use as a favicon
+# of the docs.  This file should be a Windows icon file (.ico) being 16x16 or
+# 32x32 pixels large.
 html_favicon = '_static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -343,4 +343,5 @@ suppress_warnings = ["image.nonlocal_uri"]
 def setup(app):
     app.add_stylesheet('theme_overrides.css')
     # We need this for the boilerplate script
-    app.add_javascript("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
+    app.add_javascript\
+        ("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
