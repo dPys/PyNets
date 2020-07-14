@@ -2038,8 +2038,8 @@ def collect_pandas_df_make(
                     set(
                         [
                             re.sub(
-                                r"thr\-\d+\.*\d+\_", "", i.split("/topology/"
-                                                                 )[1]
+                                r"thr\-\d+\.*\d+\_", "",
+                                i.split("/topology/")[1]
                             ).replace("neat", "auc")
                             for i in models_grouped[thr_set]
                         ]
