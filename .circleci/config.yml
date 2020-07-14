@@ -151,7 +151,7 @@ jobs:
           paths:
             - tests/*
 
-  unit_tests:
+  unit_and_integration_tests:
     machine:
       image: ubuntu-1604:201903-01
     working_directory: /tmp/src/pynets
@@ -249,7 +249,7 @@ jobs:
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - run:
-          name: Run unit tests
+          name: Run unit and integration tests
           no_output_timeout: 5h
           command: |
             set -e
@@ -261,7 +261,7 @@ jobs:
           paths:
             - .coverage*
       - save_cache:
-          key: unittests
+          key: unit&integrationtests
           paths:
             - ~/test_cache
       - store_test_results:
@@ -276,7 +276,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: unittests
+          key: unit&integrationtests
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
@@ -497,7 +497,7 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
-      - unit_tests:
+      - unit_and_integration_tests:
           requires:
             - get_data
           filters:
@@ -509,7 +509,7 @@ workflows:
       - coverage:
           requires:
             - get_data
-            - unit_tests
+            - unit_and_integration_tests
           filters:
             branches:
               ignore:
@@ -519,7 +519,7 @@ workflows:
       - build:
           requires:
             - get_data
-            - unit_tests
+            - unit_and_integration_tests
           filters:
             branches:
               ignore:
@@ -530,7 +530,7 @@ workflows:
       - test_deploy_pypi:
           requires:
             - get_data
-            - unit_tests
+            - unit_and_integration_tests
           filters:
             branches:
               ignore:

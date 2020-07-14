@@ -79,7 +79,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
     )
 
     out_path_est_omni = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_{subgraph_name}.joblib"
-    out_path_est_mds = f"{namer_dir}/MDSestimator_embedding-OMNI_{atlas}_{subgraph_name}.joblib"
+    out_path_est_mds = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_{subgraph_name}_MDS.joblib"
 
     dump(omni, out_path_est_omni)
     dump(omni, out_path_est_mds)
@@ -136,7 +136,6 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
 
     """
     import numpy as np
-    from pynets.core.utils import flatten
     from graspy.embed import MultipleASE
     from joblib import dump
 

@@ -331,10 +331,10 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     # plt.tight_layout()
     if network:
         plt.title(f"{network}{' Time Series'}")
-        out_path_fig = f"{dir_path}{'/'}{ID}{'_'}{network}{'rsn_ts_plot.png'}"
+        out_path_fig = f"{dir_path}/timseries_sub-{ID}_rsn-{network}.png"
     else:
         plt.title("Time Series")
-        out_path_fig = f"{dir_path}{'/'}{ID}{'_wb_ts_plot.png'}"
+        out_path_fig = f"{dir_path}/timseries_sub-{ID}.png"
     plt.savefig(out_path_fig)
     plt.close("all")
     return
@@ -805,7 +805,7 @@ def plot_all_func(
             views = ["x", "y", "z"]
             # Plot connectome
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                 "/",
+                                                                 "/glassbrain_",
                                                                  ID,
                                                                  "_modality-func_",
                                                                  "%s" % ("%s%s%s" % ("rsn-",
@@ -832,7 +832,7 @@ def plot_all_func(
                                                                                    extract_strategy) if extract_strategy is not None else ""),
                                                                  "_thr-",
                                                                  thr,
-                                                                 "_glass_viz.png",
+                                                                 ".png",
                                                                  )
 
             connectome = niplot.plot_connectome(
@@ -1088,7 +1088,7 @@ def plot_all_struct(
             views = ["x", "y", "z"]
             # Plot connectome
             out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                         "/",
+                                                                         "/glassbrain_",
                                                                          ID,
                                                                          "_modality-dwi_",
                                                                          "%s" % ("%s%s%s" % ("rsn-",
@@ -1116,7 +1116,7 @@ def plot_all_struct(
                                                                          min_length,
                                                                          "_thr-",
                                                                          thr,
-                                                                         "_glass_viz.png",
+                                                                         ".png",
                                                                          )
 
             connectome = niplot.plot_connectome(
@@ -1320,7 +1320,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             cmap=plt.cm.RdBu,
         )
         plt.savefig(
-            f"{namer_dir}/{name[:200]}supra_adj.png",
+            f"{namer_dir}/adjacency-supra_{name[:200]}.png",
             dpi=dpi_resolution)
 
     if glassbrain is True:
@@ -1405,7 +1405,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             connectome.axes[view].ax.lines[len(edge_sizes_struct):] = mod_lines
 
         connectome.savefig(
-            f"{namer_dir}/{name[:200]}glassbrain_mplx.png", dpi=dpi_resolution
+            f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution
         )
 
     return

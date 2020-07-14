@@ -462,8 +462,7 @@ def test_create_spherical_roi_volumes():
     import pkg_resources
     node_size = 2
     template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
-    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)],
-                                                                                     template_mask)
+    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)], template_mask)
     assert len(parcel_list) > 0
 
 

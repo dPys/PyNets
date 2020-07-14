@@ -11,11 +11,11 @@ import warnings
 import networkx as nx
 from pynets.core import thresholding
 from pynets.core.utils import timeout
-
 warnings.filterwarnings("ignore")
 
+DEFAULT_TIMEOUT = 720
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -43,7 +43,7 @@ def average_shortest_path_length_for_all(G):
         sg, weight="weight") for sg in subgraphs) / len(subgraphs)
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def subgraph_number_of_cliques_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -91,7 +91,7 @@ def subgraph_number_of_cliques_for_all(G):
                              for sg in subgraphs) / len(subgraphs))
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def global_efficiency(G, weight="weight"):
     """
     Return the global efficiency of the G
@@ -146,7 +146,7 @@ def global_efficiency(G, weight="weight"):
     return sum(inv_lengths) / (N * (N - 1))
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def local_efficiency(G, weight="weight"):
     """
     Return the local efficiency of each node in the G
@@ -205,7 +205,7 @@ def local_efficiency(G, weight="weight"):
     return efficiencies
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def average_local_efficiency(G, weight="weight"):
     """
     Return the average local efficiency of all of the nodes in the G
@@ -238,7 +238,7 @@ def average_local_efficiency(G, weight="weight"):
     return total / N
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def smallworldness(
         G,
         niter=10,
@@ -363,7 +363,7 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def participation_coef(W, ci, degree="undirected"):
     """
     Participation coefficient is a measure of diversity of intermodular
@@ -412,7 +412,7 @@ def participation_coef(W, ci, degree="undirected"):
     return P
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def participation_coef_sign(W, ci):
     """
     Participation coefficient is a measure of diversity of intermodular
@@ -467,7 +467,7 @@ def participation_coef_sign(W, ci):
     return Ppos, Pneg
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def diversity_coef_sign(W, ci):
     """
     The Shannon-entropy based diversity coefficient measures the diversity
@@ -725,7 +725,7 @@ def link_communities(W, type_clustering="single"):
     return M
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def weighted_transitivity(G):
     r"""
     Compute weighted graph transitivity, the fraction of all possible weighted triangles
@@ -1546,7 +1546,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(720)
+@timeout(DEFAULT_TIMEOUT)
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import rich_club_coefficient
 
@@ -1663,7 +1663,8 @@ def extractnetstats(
 
     # Load netstats config and parse graph algorithms as objects
     with open(
-        pkg_resources.resource_filename("pynets", "stats/global_graph_measures.yaml"),
+        pkg_resources.resource_filename("pynets",
+                                        "stats/global_graph_measures.yaml"),
         "r",
     ) as stream:
         try:
@@ -1704,12 +1705,14 @@ def extractnetstats(
                     for i in metric_list_global
                 ]
             print(
-                f"\n\nGlobal Topographic Metrics:\n{metric_list_global_names}\n")
+                f"\n\nGlobal Topographic Metrics:"
+                f"\n{metric_list_global_names}\n")
         except FileNotFoundError:
             print("Failed to parse global_graph_measures.yaml")
 
     with open(
-        pkg_resources.resource_filename("pynets", "stats/local_graph_measures.yaml"),
+        pkg_resources.resource_filename("pynets",
+                                        "stats/local_graph_measures.yaml"),
         "r",
     ) as stream:
         try:
@@ -1940,11 +1943,15 @@ def collect_pandas_df_make(
     net_mets_csv_list_exist = []
     for net_mets_csv in list(utils.flatten(net_mets_csv_list)):
         if op.isfile(net_mets_csv) is True:
-            net_mets_csv_list_exist.append(net_mets_csv)
+            if net_mets_csv.endswith('.csv'):
+                net_mets_csv_list_exist.append(net_mets_csv)
+            else:
+                raise ValueError('File not .csv format')
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(
-            "Warning! Number of actual models produced less than expected. Some graphs were excluded"
+            "Warning! Number of actual graphs produced less than expected. "
+            "Some were excluded"
         )
 
     net_mets_csv_list = net_mets_csv_list_exist
@@ -1956,7 +1963,8 @@ def collect_pandas_df_make(
         models = []
         for file_ in net_mets_csv_list:
             models.append(
-                f"{op.basename(op.dirname(op.dirname(file_)))}{'/topology/'}{op.basename(file_)}"
+                f"{op.basename(op.dirname(op.dirname(file_)))}/topology/"
+                f"{op.basename(file_)}"
             )
 
         def sort_thr(model_name):
@@ -1983,7 +1991,8 @@ def collect_pandas_df_make(
         gen_hyperparams = ["nodetype", "model"]
         if max([len(i) for i in models_grouped]) > 1:
             print(
-                "Multiple thresholds detected. Computing Area Under the Curve (AUC)..."
+                "Multiple thresholds detected. Computing Area Under the Curve "
+                "(AUC)..."
             )
             meta = dict()
             non_decimal = re.compile(r"[^\d.]+")
@@ -2029,7 +2038,8 @@ def collect_pandas_df_make(
                     set(
                         [
                             re.sub(
-                                r"thr\-\d+\.*\d+\_", "", i.split("/topology/")[1]
+                                r"thr\-\d+\.*\d+\_", "", i.split("/topology/"
+                                                                 )[1]
                             ).replace("neat", "auc")
                             for i in models_grouped[thr_set]
                         ]
@@ -2040,7 +2050,8 @@ def collect_pandas_df_make(
 
                 # Build hyperparameter dictionary
                 hyperparam_dict, hyperparams = utils.build_hp_dict(
-                    file_renamed, atlas, modality, hyperparam_dict, gen_hyperparams)
+                    file_renamed, atlas, modality, hyperparam_dict,
+                    gen_hyperparams)
 
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
@@ -2050,7 +2061,8 @@ def collect_pandas_df_make(
                         np.array(df_summary_nonan[measure]).astype("float32")
                     )
                     print(
-                        f"{measure}{': '}{df_summary_auc[measure].to_string(index=False)}"
+                        f"{measure}: "
+                        f"{df_summary_auc[measure].to_string(index=False)}"
                     )
                 meta[thr_set]["auc_dataframe"] = df_summary_auc
                 auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
@@ -2093,7 +2105,8 @@ def collect_pandas_df_make(
                 if models_grouped:
                     if max([len(i) for i in models_grouped]) > 1:
                         df_concat = pd.concat(
-                            [meta[thr_set]["auc_dataframe"] for thr_set in meta.keys()]
+                            [meta[thr_set]["auc_dataframe"] for
+                             thr_set in meta.keys()]
                         )
                         del meta
                     else:
@@ -2130,14 +2143,15 @@ def collect_pandas_df_make(
                     str(col) + "_maxmode" for col in df_concatted_mode.columns
                 ]
                 result = pd.concat(
-                    [df_concatted_mean, df_concatted_median, df_concatted_mode], axis=1
+                    [df_concatted_mean, df_concatted_median,
+                     df_concatted_mode], axis=1
                 )
                 df_concatted_final = result.reindex(
                     sorted(result.columns), axis=1)
                 print(f"\nConcatenating dataframes for {str(ID)}...\n")
                 net_csv_summary_out_path = (
-                    f"{summary_dir}/{str(ID)}_"
-                    f"net_mets{'%s' % ('_' + network if network is not None else '')}_mean.csv")
+                    f"{summary_dir}/topology_sub-{str(ID)}_"
+                    f"{'%s' % ('_' + network if network is not None else '')}.csv")
                 df_concatted_final.to_csv(
                     net_csv_summary_out_path, index=False)
                 del (
@@ -2153,14 +2167,16 @@ def collect_pandas_df_make(
             except RuntimeWarning:
                 combination_complete = False
                 print(
-                    f"\nWARNING: DATAFRAME CONCATENATION FAILED FOR {str(ID)}!\n")
+                    f"\nWARNING: DATAFRAME CONCATENATION FAILED FOR "
+                    f"{str(ID)}!\n")
                 pass
         else:
             combination_complete = True
     else:
         if network is not None:
             print(
-                f"\nSingle dataframe for the {network} network for subject {ID}\n")
+                f"\nSingle dataframe for the {network} network for subject "
+                f"{ID}\n")
         else:
             print(f"\nSingle dataframe for subject {ID}\n")
         combination_complete = True

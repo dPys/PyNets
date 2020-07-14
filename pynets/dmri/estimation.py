@@ -388,7 +388,8 @@ def streams2graph(
     streams : str
         File path to streamline array sequence in .trk format.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     target_samples : int
@@ -399,8 +400,8 @@ def streams2graph(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -433,12 +434,14 @@ def streams2graph(
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are:
+        det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
     error_margin : int
-        Euclidean margin of error for classifying a streamline as a connection to an ROI. Default is 2 voxels.
+        Euclidean margin of error for classifying a streamline as a connection
+         to an ROI. Default is 2 voxels.
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
 
@@ -462,8 +465,8 @@ def streams2graph(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -535,21 +538,24 @@ def streams2graph(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            fa_wei = hardcoded_params["StructuralNetworkWeighting"]["fa_weighting"][0]
+            fa_wei = hardcoded_params[
+                "StructuralNetworkWeighting"]["fa_weighting"][0]
         except KeyError:
             print(
                 "No fa_weighting parameter listed in runconfig.yaml"
             )
             sys.exit(0)
         try:
-            fiber_density = hardcoded_params["StructuralNetworkWeighting"]["fiber_density"][0]
+            fiber_density = hardcoded_params[
+                "StructuralNetworkWeighting"]["fiber_density"][0]
         except KeyError:
             print(
                 "No fiber_density parameter specified in runconfig.yaml"
             )
             sys.exit(0)
         try:
-            overlap_thr = hardcoded_params["StructuralNetworkWeighting"]["overlap_thr"][0]
+            overlap_thr = hardcoded_params[
+                "StructuralNetworkWeighting"]["overlap_thr"][0]
         except KeyError:
             print(
                 "No overlap_thr parameter specified in runconfig.yaml"
@@ -678,9 +684,11 @@ def streams2graph(
             # Get FA values along edge
             if fa_wei is True:
                 if not (edge[0], edge[1]) in fa_weights_dict.keys():
-                    fa_weights_dict[(edge[0], edge[1])] = [fa_weights_norm[ix]]
+                    fa_weights_dict[(edge[0],
+                                     edge[1])] = [fa_weights_norm[ix]]
                 else:
-                    fa_weights_dict[(edge[0], edge[1])].append(fa_weights_norm[ix])
+                    fa_weights_dict[(edge[0],
+                                     edge[1])].append(fa_weights_norm[ix])
 
             lst = tuple([int(node) for node in edge])
             edge_dict[tuple(sorted(lst))] += 1
@@ -709,7 +717,8 @@ def streams2graph(
         for u, v, d in g.edges(data=True):
             if d['weight'] > 0:
                 edge_fiberlength_mean = np.nanmean(fiberlengths[(u, v)])
-                fiber_density = (float(((float(d['weight']) / float(total_fibers)) /
+                fiber_density = (float(((float(d['weight']) /
+                                         float(total_fibers)) /
                        float(edge_fiberlength_mean)) *
                       ((2.0 * float(total_volume)) /
                        (g.node[int(u)]['roi_volume'] +
@@ -733,7 +742,8 @@ def streams2graph(
     # Summarize weights
     if fa_wei is True and fiber_density is True:
         for u, v, d in g.edges(data=True):
-            g.edges[u, v].update({"final_weight": (d['fa_weight'])*d['fiber_density']})
+            g.edges[u, v].update({"final_weight":
+                                      (d['fa_weight'])*d['fiber_density']})
     elif fiber_density is True and fa_wei is False:
         for u, v, d in g.edges(data=True):
             g.edges[u, v].update({"final_weight": d['fiber_density']})

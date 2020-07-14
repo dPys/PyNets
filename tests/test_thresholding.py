@@ -137,7 +137,7 @@ def test_conn_mat_operations(cp, thr):
         assert w is not None
 
     base_dir = str(Path(__file__).parent/"examples")
-    W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_est-cov_raw_mat.npy")
+    W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_model-cov_raw_mat.npy")
 
     x_orig = W.copy()
     x_rand = x = np.random.rand(10, 10)
@@ -293,7 +293,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     target_samples = 2
     track_type = 'local'
     atlas_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-    streams = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
+    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
     directget = 'prob'
     max_length = 200
 

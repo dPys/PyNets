@@ -599,7 +599,7 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/topology_{est_path.split('/')[-1].split('.npy')[0]}.csv"
+    out_path = f"{namer_dir}/metrics_{est_path.split('/')[-1].split('.npy')[0]}.csv"
 
     return out_path
 
@@ -1116,13 +1116,14 @@ def collect_pandas_df(
     network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
 ):
     """
-    API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
+    API for summarizing independent lists of pickled pandas dataframes of
+     graph metrics for each modality, RSN, and roi.
 
     Parameters
     ----------
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     net_mets_csv_list : list
@@ -1132,7 +1133,8 @@ def collect_pandas_df(
     multi_nets : list
         List of Yeo RSN's specified in workflow(s).
     multimodal : bool
-        Indicates whether multiple modalities of input data have been specified.
+        Indicates whether multiple modalities of input data have been
+        specified.
 
     Returns
     -------
@@ -1155,13 +1157,16 @@ def collect_pandas_df(
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available functional models not sucessfully extracted"
+                " from runconfig.yaml"
             )
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available structural models not sucessfully extracted"
+                " from runconfig.yaml"
             )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
@@ -1178,7 +1183,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("model-")[1].split("_")[0] in struct_models
+                            if i.split("model-")[1].split("_")[0] in
+                               struct_models
                         ]
                     )
                 )
@@ -1190,7 +1196,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("model-")[1].split("_")[0] in func_models
+                            if i.split("model-")[1].split("_")[0] in
+                               func_models
                         ]
                     )
                 )
@@ -1236,7 +1243,8 @@ def collect_pandas_df(
                 net_mets_csv_list_func, ID, network, plot_switch
             )
 
-            if combination_complete_dwi is True and combination_complete_func is True:
+            if combination_complete_dwi is \
+                True and combination_complete_func is True:
                 combination_complete = True
             else:
                 combination_complete = False
@@ -1609,7 +1617,8 @@ def timeout(seconds):
 
 def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
-    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
+    A function to build a hyperparameter dictionary by parsing a given
+    topology metrics .csv file path.
     """
     hyperparam_dict["atlas"] = atlas
 
@@ -1622,8 +1631,12 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
             and (hyperparam != "directget")
             and (hyperparam != "minlength")
         ):
-            hyperparam_dict[hyperparam] = file_renamed.split(
-                hyperparam + "-")[1].split("_")[0]
+            try:
+                hyperparam_dict[hyperparam] = file_renamed.split(
+                    hyperparam + "-")[1].split("_")[0]
+            except ValueError:
+                print(f"Hyperparameter: {hyperparam} not found.")
+
     if modality == "func":
         if "smooth-" in file_renamed:
             hyperparam_dict["smooth"] = (
@@ -1704,7 +1717,8 @@ class build_sql_db(object):
 
         df_summary_auc_ext = pd.concat(
             [
-                pd.DataFrame.from_dict(hyperparam_dict, orient="index").transpose(),
+                pd.DataFrame.from_dict(hyperparam_dict,
+                                       orient="index").transpose(),
                 df_summary_auc,
             ],
             axis=1,
