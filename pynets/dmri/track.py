@@ -348,7 +348,7 @@ def track_ensemble(
         DiPy object for modeling diffusion directions on a sphere.
     directget : str
         The statistical approach to tracking. Options are: det (deterministic),
-        closest (clos), boot (bootstrapped), and prob (probabilistic).
+        closest (clos), and prob (probabilistic).
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -450,6 +450,7 @@ def track_ensemble(
                     min_separation_angle=min_separation_angle,
                 )
             elif directget == "det" or directget == "deterministic":
+                maxcrossing = 1
                 dg = DeterministicMaximumDirectionGetter.from_shcoeff(
                     mod_fit,
                     max_angle=float(curv_thr),
@@ -458,7 +459,8 @@ def track_ensemble(
                 )
             else:
                 raise ValueError(
-                    "ERROR: No valid direction getter(s) specified.")
+                    "ERROR: No valid direction getter(s) specified."
+                )
 
             for step in step_list:
                 print("%s%s" % ("Step: ", step))

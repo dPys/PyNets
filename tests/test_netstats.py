@@ -329,8 +329,6 @@ def test_clean_graphs(fmt, conn_model, prune, norm):
     clean.create_length_matrix()
     clean.binarize_graph()
 
-    # The docstring says prune should be a bool, but it is evaulated as an int.
-    #   there is also a bug (final_mat_path can't be returned), when prune == 0.
     clean.prune_graph()
 
     G = nx.from_numpy_array(in_mat)

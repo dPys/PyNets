@@ -7,7 +7,7 @@
 Installation
 ------------
 
-There are many ways to use pynets: in a `Docker Container`_,
+There are many ways to use ``PyNets®``: in a `Docker Container`_,
 in a `Singularity Container`_, using AWS Batch, or in a Manually
 Prepared Environment (Python 3.6+).
 Using a local container method is highly recommended.

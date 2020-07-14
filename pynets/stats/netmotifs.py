@@ -108,7 +108,8 @@ def adaptivethresh(in_mat, thr, mlib, N):
     mf = countmotifs((in_mat > thr).astype(int), N=N)
     try:
         mf = np.array([mf[k] for k in mlib])
-    finally:
+    except BaseException:
+        print('Zero motifs detected...')
         mf = np.zeros(len(mlib))
     return mf
 
@@ -451,29 +452,29 @@ def motif_matching(
 
     if rsn is not None:
         struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_mni_coords_rsn.pkl"
         )[0]
         func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_mni_coords_rsn.pkl"
         )[0]
         struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_mni_labels_rsn.pkl"
         )[0]
         func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_mni_labels_rsn.pkl"
         )[0]
     else:
         struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*coords.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/all_mni_coords.pkl"
         )[0]
         func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/*coords.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/all_mni_coords.pkl"
         )[0]
         struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*labels.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/all_mni_labels.pkl"
         )[0]
         func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/*labels.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/all_mni_labels.pkl"
         )[0]
 
     with open(struct_coords_path, "rb") as file_:
@@ -533,9 +534,9 @@ def motif_matching(
         comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
         struct_mat[~comm_mask] = 0
         func_mat[~comm_mask] = 0
-        struct_name = struct_graph_path.split("/")[-1].split("_raw.npy")[0]
-        func_name = func_graph_path.split("/")[-1].split("_raw.npy")[0]
-        name = f"{ID}_{atlas}_mplx_Layer-1_{struct_name}_Layer-2_{func_name}"
+        struct_name = struct_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
+        func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
+        name = f"sub-{ID}_{atlas}_mplx_Layer-1_{struct_name}_Layer-2_{func_name}"
         name_list.append(name)
         struct_mat = np.maximum(struct_mat, struct_mat.T)
         func_mat = np.maximum(func_mat, func_mat.T)
@@ -603,7 +604,7 @@ def build_multigraphs(est_path_iterlist, ID):
     raw_est_path_iterlist = list(
         set(
             [
-                i.split("_thrtype")[0] + "_raw.npy"
+                os.path.dirname(i) + '/raw' + os.path.basename(i).split("_thrtype")[0] + ".npy"
                 for i in list(flatten(est_path_iterlist))
             ]
         )

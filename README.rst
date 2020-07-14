@@ -1,4 +1,4 @@
-PyNets™
+PyNets®
 =======
 
 About

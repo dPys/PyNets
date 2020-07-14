@@ -1130,7 +1130,7 @@ class CleanGraphs(object):
             print("Pruning all but the largest connected component subgraph...")
             self.G = self.G.subgraph(get_lcc(self.G))
         else:
-            print("Graph is connected...")
+            print("No graph anti-fragmentation applied...")
 
         self.in_mat = symmetrize(remove_loops(nx.to_numpy_matrix(self.G)))
 
@@ -1143,8 +1143,12 @@ class CleanGraphs(object):
             final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned'}"
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
+        elif self.prune == 0:
+            final_mat_path = f"{self.est_path.split('.npy')[0]}"
+            utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
+            print(f"{'Source File: '}{final_mat_path}")
         else:
-            print(f"{'Source File: '}{self.est_path}")
+            raise ValueError(f"Pruning option {self.prune} invalid!")
         return self.in_mat, final_mat_path
 
     def print_summary(self):
@@ -1976,7 +1980,7 @@ def collect_pandas_df_make(
         hyperparam_dict = {}
         dfs_non_auc = []
         hyperparam_dict["id"] = ID
-        gen_hyperparams = ["nodetype", "est"]
+        gen_hyperparams = ["nodetype", "model"]
         if max([len(i) for i in models_grouped]) > 1:
             print(
                 "Multiple thresholds detected. Computing Area Under the Curve (AUC)..."

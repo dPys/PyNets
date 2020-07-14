@@ -162,6 +162,22 @@ def create_est_path_func(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -176,7 +192,7 @@ def create_est_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
                                                          "/graph_sub-",
                                                          ID,
                                                          "_modality-func_",
@@ -188,6 +204,8 @@ def create_est_path_func(
                                                                              "_") if roi is not None else ""),
                                                          "model-",
                                                          conn_model,
+                                                         "_template-",
+                                                         template_name,
                                                          "_",
                                                          "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                              node_size,
@@ -272,6 +290,22 @@ def create_est_path_diff(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -280,7 +314,7 @@ def create_est_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
                                                                  "/graph_sub-",
                                                                  ID,
                                                                  "_modality-dwi_",
@@ -292,6 +326,8 @@ def create_est_path_diff(
                                                                                      "_") if roi is not None else ""),
                                                                  "model-",
                                                                  conn_model,
+                                                                 "_template-",
+                                                                 template_name,
                                                                  "_",
                                                                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                                      node_size,
@@ -420,9 +456,8 @@ def create_raw_path_func(
                                                  "%s" % ("%s%s%s" % ("hpass-",
                                                                      hpass,
                                                                      "Hz_") if hpass is not None else ""),
-                                                 "%s" % ("%s%s%s" % ("extract-",
-                                                                     extract_strategy,
-                                                                     "_") if extract_strategy is not None else ""),
+                                                 "%s" % ("%s%s" % ("extract-",
+                                                                     extract_strategy) if extract_strategy is not None else ""),
                                                  ".npy",
                                                  )
 
