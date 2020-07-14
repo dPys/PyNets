@@ -3188,9 +3188,6 @@ def build_workflow(args, retval):
         # Clean up temporary directories
         print("Cleaning up...")
         if func_file:
-            for cnfnd_tmp_dir in glob.glob(f"{subj_dir}/*/confounds_tmp"):
-                shutil.rmtree(cnfnd_tmp_dir)
-            shutil.rmtree(f"{subj_dir}/reg_fmri", ignore_errors=True)
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
@@ -3199,11 +3196,10 @@ def build_workflow(args, retval):
                     except BaseException:
                         continue
         if dwi_file:
-            shutil.rmtree(f"{subj_dir}/dmri_tmp", ignore_errors=True)
-            shutil.rmtree(f"{subj_dir}/reg_dmri", ignore_errors=True)
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/*/*") if os.path.isfile(i)]:
-                if ("reor-RAS" in file_) or ("res-" in file_):
+                if ("reor-RAS" in file_) or ("res-" in file_) or \
+                   ("_bvecs_reor.bvec" in file_):
                     try:
                         os.remove(file_)
                     except BaseException:

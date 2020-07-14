@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
                                     fill_confound_nans, TimeseriesExtraction)
-from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est, tens_mod_est,
-                                    csa_mod_est, csd_mod_est, streams2graph, sfm_mod_est)
+from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
+                                    tens_mod_est, csa_mod_est, csd_mod_est,
+                                    streams2graph, sfm_mod_est)
 
 
 # fMRI
@@ -376,6 +377,7 @@ def test_streams2graph(fa_wei, dsn):
     from pynets.registration import register
     from pynets.core import nodemaker
     from dipy.io import save_pickle
+    import random
     import os
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -416,7 +418,7 @@ def test_streams2graph(fa_wei, dsn):
     save_pickle(gtab_file, gtab)
     fa_path = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
 
-    coords = nodemaker.get_names_and_coords_of_parcels(uatlas)[0]
+    coords = [(random.random()*2.0, random.random()*2.0, random.random()*2.0) for _ in range(200)]
     labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     # if dsn is True:

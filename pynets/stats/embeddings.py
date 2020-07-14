@@ -59,7 +59,8 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
 
     # Omnibus embedding
     print(
-        f"{'Embedding unimodal omnetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}"
+        f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
+        f"{subgraph_name}{'...'}"
     )
     omni = OmnibusEmbed(check_lcc=False)
     mds = ClassicalMDS()
@@ -78,8 +79,10 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         f"{namer_dir}/gradients-OMNI_{atlas}_{subgraph_name}.npy"
     )
 
-    out_path_est_omni = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_{subgraph_name}.joblib"
-    out_path_est_mds = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_{subgraph_name}_MDS.joblib"
+    out_path_est_omni = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_" \
+                        f"{subgraph_name}.joblib"
+    out_path_est_mds = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_" \
+                       f"{subgraph_name}_MDS.joblib"
 
     dump(omni, out_path_est_omni)
     dump(omni, out_path_est_mds)
@@ -141,7 +144,8 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
 
     # Multiple Adjacency Spectral embedding
     print(
-        f"{'Embedding multimodal masetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}"
+        f"{'Embedding multimodal masetome for atlas: '}{atlas} and "
+        f"{subgraph_name}{'...'}"
     )
     mase = MultipleASE()
     mase_fit = mase.fit_transform(pop_array)
@@ -154,7 +158,8 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
     out_path = (
         f"{namer_dir}/gradients_embedding-MASE_{atlas}_{subgraph_name}.npy"
     )
-    out_path_est = f"{namer_dir}/estimator_embedding-MASE_{atlas}_{subgraph_name}.joblib"
+    out_path_est = f"{namer_dir}/estimator_embedding-MASE_{atlas}_" \
+                   f"{subgraph_name}.joblib"
 
     dump(mase, out_path_est)
 
@@ -218,7 +223,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
 
     # Adjacency Spectral embedding
     print(
-        f"{'Embedding unimod asetome for atlas: '}{atlas}{' and '}{subgraph_name}{'...'}"
+        f"{'Embedding unimod asetome for atlas: '}{atlas} and "
+        f"{subgraph_name}{'...'}"
     )
     ase = AdjacencySpectralEmbed()
     ase_fit = ase.fit_transform(get_lcc(mat))
@@ -229,8 +235,10 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/gradients_embedding-ASE_{atlas}_{subgraph_name}.npy"
-    out_path_est = f"{namer_dir}/estimator_embedding-ASE_{atlas}_{subgraph_name}.joblib"
+    out_path = f"{namer_dir}/gradients_embedding-ASE_{atlas}_{subgraph_name}" \
+               f".npy"
+    out_path_est = f"{namer_dir}/estimator_embedding-ASE_{atlas}" \
+                   f"_{subgraph_name}.joblib"
 
     dump(ase, out_path_est)
 
@@ -286,7 +294,8 @@ def build_masetome(est_path_iterlist, ID):
     ----------
     est_path_iterlist : list
         List of list of pairs of file paths (.npy) corresponding to
-        structural and functional connectomes matched at a given node resolution.
+        structural and functional connectomes matched at a given node
+        resolution.
     ID : str
         A subject id or other unique identifier.
 
@@ -327,7 +336,8 @@ def build_masetome(est_path_iterlist, ID):
 
 def build_omnetome(est_path_iterlist, ID):
     """
-    Embeds ensemble population of graphs into an embedded ensemble feature vector.
+    Embeds ensemble population of graphs into an embedded ensemble feature
+    vector.
 
     Parameters
     ----------
@@ -362,13 +372,16 @@ def build_omnetome(est_path_iterlist, ID):
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available functional models not sucessfully extracted"
+                " from runconfig.yaml"
             )
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available structural models not sucessfully extracted"
+                " from runconfig.yaml"
             )
     stream.close()
 
@@ -466,9 +479,11 @@ def build_omnetome(est_path_iterlist, ID):
                                 pop_list.append(np.load(graph))
                             if len(pop_rsn_list) > 1:
                                 if len(
-                                        list(set([i.shape for i in pop_rsn_list]))) > 1:
+                                        list(set([i.shape for i in
+                                                  pop_rsn_list]))) > 1:
                                     raise RuntimeWarning(
-                                        "ERROR: Inconsistent number of vertices in graph population "
+                                        "ERROR: Inconsistent number of"
+                                        " vertices in graph population "
                                         "that precludes embedding")
                                 out_path = _omni_embed(
                                     pop_list, atlas, graph_path, ID, rsns[i]
@@ -476,7 +491,8 @@ def build_omnetome(est_path_iterlist, ID):
                                 out_paths_func.append(out_path)
                             else:
                                 print(
-                                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                                    "WARNING: Only one graph sampled, omnibus"
+                                    " embedding not appropriate."
                                 )
                                 pass
                             i = i + 1
@@ -485,13 +501,14 @@ def build_omnetome(est_path_iterlist, ID):
                 if len(pop_list) > 1:
                     if len(list(set([i.shape for i in pop_list]))) > 1:
                         raise RuntimeWarning(
-                            "ERROR: Inconsistent number of vertices in graph population that "
-                            "precludes embedding")
+                            "ERROR: Inconsistent number of vertices in graph"
+                            " population that precludes embedding")
                     out_path = _omni_embed(pop_list, atlas, graph_path, ID)
                     out_paths_func.append(out_path)
                 else:
                     print(
-                        "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                        "WARNING: Only one graph sampled, omnibus embedding"
+                        " not appropriate."
                     )
                     pass
 
@@ -508,9 +525,12 @@ def build_omnetome(est_path_iterlist, ID):
                                 pop_list.append(np.load(graph))
                             if len(pop_rsn_list) > 1:
                                 if len(
-                                        list(set([i.shape for i in pop_rsn_list]))) > 1:
+                                        list(set(
+                                            [i.shape for i in pop_rsn_list]
+                                        ))) > 1:
                                     raise RuntimeWarning(
-                                        "ERROR: Inconsistent number of vertices in graph population "
+                                        "ERROR: Inconsistent number of"
+                                        " vertices in graph population "
                                         "that precludes embedding")
                                 out_path = _omni_embed(
                                     pop_list, atlas, graph_path, ID, rsns[i]
@@ -518,7 +538,8 @@ def build_omnetome(est_path_iterlist, ID):
                                 out_paths_dwi.append(out_path)
                             else:
                                 print(
-                                    "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                                    "WARNING: Only one graph sampled, omnibus"
+                                    " embedding not appropriate."
                                 )
                                 pass
                             i = i + 1
@@ -527,13 +548,14 @@ def build_omnetome(est_path_iterlist, ID):
                 if len(pop_list) > 1:
                     if len(list(set([i.shape for i in pop_list]))) > 1:
                         raise RuntimeWarning(
-                            "ERROR: Inconsistent number of vertices in graph population that "
-                            "precludes embedding")
+                            "ERROR: Inconsistent number of vertices in graph"
+                            " population that precludes embedding")
                     out_path = _omni_embed(pop_list, atlas, graph_path, ID)
                     out_paths_dwi.append(out_path)
                 else:
                     print(
-                        "WARNING: Only one graph sampled, omnibus embedding not appropriate."
+                        "WARNING: Only one graph sampled, omnibus embedding"
+                        " not appropriate."
                     )
                     pass
     else:

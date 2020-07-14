@@ -639,7 +639,7 @@ def streams2graph(
     bad_idxs = []
     fiberlengths = {}
     fa_weights_dict = {}
-    print(f"Structural Connectome Completion Status:")
+    print(f"Quantifying fiber-ROI intsersection for {atlas}:")
     for ix, s in enumerate(sl):
         # Percent counter
         pcN = int(round(100*float(ix / total_streamlines)))
@@ -703,6 +703,7 @@ def streams2graph(
 
     # Add fiber density attributes for each edge
     if fiber_density is True:
+        print("Weighting edges by fiber density...")
         # Summarize total fibers and total label volumes
         total_fibers = 0
         total_volume = 0
@@ -729,6 +730,7 @@ def streams2graph(
             ix += 1
 
     if fa_wei is True:
+        print("Weighting edges by FA...")
         # Add FA attributes for each edge
         ix = 0
         for u, v, d in g.edges(data=True):
