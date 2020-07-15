@@ -23,26 +23,30 @@ def get_parser():
 
     # Parse args
     parser = argparse.ArgumentParser(
-        description="PyNets: A Fully-Automated Workflow for Reproducible Ensemble "
-        "Sampling of Functional and Structural Connectomes")
+        description="PyNets: A Fully-Automated Workflow for Reproducible"
+                    " Ensemble Sampling of Functional and Structural"
+                    " Connectomes")
     parser.add_argument(
         "-basedir",
         metavar="Output directory",
-        help="Specify the path to the base output directory with group-level pynets derivatives.\n",
+        help="Specify the path to the base output directory with group-level"
+             " pynets derivatives.\n",
     )
     parser.add_argument(
         "-modality",
         nargs=1,
         choices=["dwi", "func"],
-        help="Specify data modality from which to collect data. Options are `dwi` and `func`.",
+        help="Specify data modality from which to collect data. Options are"
+             " `dwi` and `func`.",
     )
     parser.add_argument(
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single subject run, entered as "
-        "two integers seperated by comma. Otherwise, default is `auto`, which uses all resources "
-        "detected on the current compute node.\n",
+        help="Number of cores to use, number of GB of memory to use for single"
+             " subject run, entered as two integers seperated by comma. "
+             "Otherwise, default is `auto`, which uses all resources detected"
+             " on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -59,7 +63,8 @@ def get_parser():
             "SLURMgraph",
             "LegacyMultiProc",
         ],
-        help="Include this flag to specify a workflow plugin other than the default MultiProc.\n",
+        help="Include this flag to specify a workflow plugin other than the"
+             " default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
@@ -70,7 +75,8 @@ def get_parser():
         "-work",
         metavar="Working directory",
         default="/tmp/work",
-        help="Specify the path to a working directory for pynets to run. Default is /tmp/work.\n",
+        help="Specify the path to a working directory for pynets to run."
+             " Default is /tmp/work.\n",
     )
     parser.add_argument("--version", action="version", version=verstr)
     return parser
@@ -192,14 +198,16 @@ def build_subject_dict(sub, working_path, modality):
     print(sub)
     subject_dict[sub] = {}
     sessions = sorted(
-        [i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith("ses-")],
+        [i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith(
+            "ses-")],
         key=lambda x: x.split("-")[1],
     )
     atlases = list(
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}{'/'}{sub}{'/*/*/*/topology/*'}")
+                for i in glob.glob(f"{working_path}{'/'}{sub}"
+                                   f"/*/*/*/topology/*")
             ]
         )
     )
@@ -235,7 +243,8 @@ def build_subject_dict(sub, working_path, modality):
                 0].columns if c.endswith("auc")]]
             for m in range(len(list_))[1:]:
                 df_base = df_base.merge(
-                    list_[m][[c for c in list_[m].columns if c.endswith("auc")]],
+                    list_[m][[c for c in list_[m].columns if c.endswith(
+                        "auc")]],
                     how="right",
                     right_index=True,
                     left_index=True,
@@ -244,10 +253,13 @@ def build_subject_dict(sub, working_path, modality):
             if os.path.isdir(
                     f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
                 out_path = (
-                    f"{working_path}/{sub}/{ses}/{modality}/all_combinations_auc.csv"
+                    f"{working_path}/{sub}/{ses}/{modality}/all_combinations"
+                    f"_auc.csv"
                 )
                 df_base.to_csv(out_path)
-                out_path_new = f"{str(Path(working_path))}/{modality}_group_topology_auc/{sub}_{ses}_topology_auc.csv"
+                out_path_new = f"{str(Path(working_path))}/{modality}_" \
+                               f"group_topology_auc/{sub}_{ses}" \
+                               f"_topology_auc.csv"
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -350,7 +362,8 @@ def build_collect_workflow(args, retval):
         print(f"\n\nPyNets Version:\n{pynets.__version__}\n\n")
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are using the correct python version."
+            "PyNets not installed! Ensure that you are using the correct"
+            " python version."
         )
 
     # Set Arguments to global variables
@@ -505,11 +518,13 @@ def main():
         from pynets.core.utils import do_dir_path
     except ImportError:
         print(
-            "PyNets not installed! Ensure that you are referencing the correct site-packages and using Python3.5+"
+            "PyNets not installed! Ensure that you are referencing the correct"
+            " site-packages and using Python3.5+"
         )
 
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h flag.\n")
+        print("\nMissing command-line inputs! See help options with the -h"
+              " flag.\n")
         sys.exit()
 
     args = get_parser().parse_args()
@@ -542,5 +557,6 @@ def main():
 if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen" \
+               "_importlib.BuiltinImporter'>)"
     main()

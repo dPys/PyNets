@@ -172,14 +172,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-ENV FSLDIR=/usr/share/fsl/5.0 \
-    FSLOUTPUTTYPE=NIFTI_GZ \
-    FSLMULTIFILEQUIT=TRUE \
-    POSSUMDIR=/usr/share/fsl/5.0 \
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
-    FSLTCLSH=/usr/bin/tclsh \
-    FSLWISH=/usr/bin/wish \
-    PATH=$FSLDIR/bin:$PATH
 
 EXPOSE 22
 

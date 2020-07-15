@@ -23,7 +23,7 @@ def test_average_shortest_path_length_for_all():
     Test for average_shortest_path_length_for_all functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
@@ -38,7 +38,7 @@ def test_average_local_efficiency():
     Test for average_local_efficiency functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
@@ -69,7 +69,7 @@ def test_participation_coef():
     Test for participation_coef functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     ci = np.ones(in_mat.shape[0])
     ci_dim = int(np.shape(ci)[0])
     W = np.random.rand(ci_dim, ci_dim)
@@ -87,7 +87,7 @@ def test_modularity():
     """
     import community
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_matrix(in_mat)
     start_time = time.time()
     ci = community.best_partition(G)
@@ -103,7 +103,7 @@ def test_diversity_coef_sign():
     Test for diversity_coef_sign functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     ci = np.ones(in_mat.shape[0])
     ci_dim = int(np.shape(ci)[0])
     W = np.random.rand(ci_dim, ci_dim)
@@ -128,7 +128,7 @@ def test_link_communities(clustering):
     Test for link_communities functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
 
     start_time = time.time()
     M = netstats.link_communities(in_mat, type_clustering=clustering)
@@ -142,7 +142,7 @@ def test_prune_disconnected():
     Test pruning functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
@@ -159,7 +159,7 @@ def test_most_important():
     Test pruning for most important nodes functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
@@ -182,7 +182,7 @@ def test_extractnetstats(binary, prune, norm):
     network = 'Default'
     thr = 0.95
     conn_model = 'cov'
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     prune = 1
     norm = 1
     binary = False
@@ -222,7 +222,7 @@ def test_raw_mets():
         average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, \
         sigma
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
     [G, _] = netstats.prune_disconnected(G)
@@ -241,7 +241,7 @@ def test_subgraph_number_of_cliques_for_all():
     Test cliques computation
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodety"
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodety"
                      f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
@@ -255,7 +255,7 @@ def test_smallworldness():
     Test small-world coefficient (omega) computation
     """
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
 
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
@@ -272,7 +272,7 @@ def test_participation_coef_sign():
     Test participation coefficient computation
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodety"
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodety"
                      f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
 
     ci = np.ones(in_mat.shape[0])
@@ -292,7 +292,7 @@ def test_weighted_transitivity(binarize):
     from pynets.core.thresholding import binarize
 
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
 
     in_mat = np.load(est_path)
     if binarize:
@@ -317,10 +317,10 @@ def test_clean_graphs(fmt, conn_model, prune, norm):
     base_dir = str(Path(__file__).parent/"examples")
 
     if fmt == 'npy':
-        est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+        est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
         in_mat = np.load(est_path)
     else:
-        est_path = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-sps_thrtype-PROP_thr-0.94.txt"
+        est_path = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_model-sps_thrtype-PROP_thr-0.94.txt"
         in_mat = np.genfromtxt(est_path)
 
     clean = netstats.CleanGraphs(0.5, conn_model, est_path, prune, norm)
@@ -329,8 +329,6 @@ def test_clean_graphs(fmt, conn_model, prune, norm):
     clean.create_length_matrix()
     clean.binarize_graph()
 
-    # The docstring says prune should be a bool, but it is evaulated as an int.
-    #   there is also a bug (final_mat_path can't be returned), when prune == 0.
     clean.prune_graph()
 
     G = nx.from_numpy_array(in_mat)
@@ -345,7 +343,7 @@ def test_save_netmets():
     dir_path = str(tempfile.TemporaryDirectory().name)
 
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
 
     metric_list_names = ['metric_a', 'metric_b', 'metric_c']
     net_met_val_list_final = [1, 2, 3]
@@ -360,7 +358,7 @@ def test_iterate_nx_global_measures(true_metric):
     from networkx.algorithms import average_shortest_path_length
 
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
 
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
@@ -397,7 +395,7 @@ def test_get_metrics(metric):
     Test various wrappers for getting nx graph metrics
     """
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-sps_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
 
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
@@ -437,7 +435,7 @@ def test_get_metrics(metric):
 @pytest.mark.parametrize("sql_out", [True, False])
 @pytest.mark.parametrize("nc_collect", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
-@pytest.mark.parametrize("graph_num", [-1,
+@pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=ValueError)),
                                        pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
                                        1,
                                        2])
@@ -447,19 +445,16 @@ def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary
     base_dir = str(Path(__file__).parent/"examples")
     network = None
     ID = '002'
-    plot_switch = False
 
     if graph_num == -1:
-        # This should raise an error but doesn't.
         net_mets_csv_list = [f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"]
     elif graph_num == 0:
         net_mets_csv_list = []
     elif graph_num == 1:
-        net_mets_csv_list = [f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
+        net_mets_csv_list = [f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.2.csv"]
     else:
-        # This was breaking.
-        net_mets_csv_list = [f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv",
-                             f"{base_dir}/topology/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv"]
+        net_mets_csv_list = [f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.2.csv",
+                             f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.3.csv"]
 
     combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
                                                            nc_collect=nc_collect, create_summary=create_summary,

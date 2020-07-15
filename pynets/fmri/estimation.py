@@ -188,7 +188,8 @@ def get_conn_matrix(
             estimator.fit(time_series)
         except BaseException:
             print(
-                "Unstable Lasso estimation--Attempting to re-run by first applying shrinkage..."
+                "Unstable Lasso estimation--Attempting to re-run by first"
+                " applying shrinkage..."
             )
             try:
                 from sklearn.covariance import (
@@ -206,7 +207,8 @@ def get_conn_matrix(
                             estimator_shrunk = GraphicalLasso(alpha)
                             estimator_shrunk.fit(shrunk_cov)
                             print(
-                                f"Retrying covariance matrix estimate with alpha={alpha}"
+                                f"Retrying covariance matrix estimate with"
+                                f" alpha={alpha}"
                             )
                             if estimator_shrunk is None:
                                 pass
@@ -214,27 +216,32 @@ def get_conn_matrix(
                                 break
                         except BaseException:
                             print(
-                                f"Covariance estimation failed with shrinkage at alpha={alpha}"
+                                f"Covariance estimation failed with shrinkage"
+                                f" at alpha={alpha}"
                             )
                             continue
             except ValueError:
                 print(
-                    "Unstable Lasso estimation! Shrinkage failed. A different connectivity model may be needed."
+                    "Unstable Lasso estimation! Shrinkage failed. A different"
+                    " connectivity model may be needed."
                 )
         if estimator is None and estimator_shrunk is None:
             raise RuntimeError("\nERROR: Covariance estimation failed.")
         if conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
             if estimator_shrunk is None:
-                print("\nFetching precision matrix from covariance estimator...\n")
+                print("\nFetching precision matrix from covariance "
+                      "estimator...\n")
                 conn_matrix = estimator.precision_
             else:
                 print(
-                    "\nFetching shrunk precision matrix from covariance estimator...\n"
+                    "\nFetching shrunk precision matrix from covariance "
+                    "estimator...\n"
                 )
                 conn_matrix = estimator_shrunk.precision_
         elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
             if estimator_shrunk is None:
-                print("\nFetching covariance matrix from covariance estimator...\n")
+                print("\nFetching covariance matrix from covariance"
+                      " estimator...\n")
                 conn_matrix = estimator.covariance_
             else:
                 conn_matrix = estimator_shrunk.covariance_
@@ -262,7 +269,8 @@ def get_conn_matrix(
         # Compute the sparse inverse covariance via QuicGraphLassoCV
         # credit: skggm
         model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
-        print("\nCalculating QuicGraphLassoCV precision matrix using skggm...\n")
+        print("\nCalculating QuicGraphLassoCV precision matrix using"
+              " skggm...\n")
         model.fit(time_series)
         conn_matrix = model.precision_
     elif conn_model == "QuicGraphicalLassoEBIC":
@@ -274,7 +282,8 @@ def get_conn_matrix(
         # Compute the sparse inverse covariance via QuicGraphLassoEBIC
         # credit: skggm
         model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
-        print("\nCalculating QuicGraphLassoEBIC precision matrix using skggm...\n")
+        print("\nCalculating QuicGraphLassoEBIC precision matrix using"
+              " skggm...\n")
         model.fit(time_series)
         conn_matrix = model.precision_
     elif conn_model == "AdaptiveQuicGraphicalLasso":
@@ -292,20 +301,22 @@ def get_conn_matrix(
         model = AdaptiveQuicGraphicalLasso(
             estimator=QuicGraphicalLassoEBIC(
                 init_method="cov",), method="binary", )
-        print("\nCalculating AdaptiveQuicGraphLasso precision matrix using skggm...\n")
+        print("\nCalculating AdaptiveQuicGraphLasso precision matrix using"
+              " skggm...\n")
         model.fit(time_series)
         conn_matrix = model.estimator_.precision_
     else:
         raise ValueError(
-            "\nERROR! No connectivity model specified at runtime. Select a valid estimator using the "
-            "-mod flag.")
+            "\nERROR! No connectivity model specified at runtime. Select a"
+            " valid estimator using the -mod flag.")
 
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix, conn_matrix.T)
 
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
-            "\nERROR! Matrix estimation selection yielded an empty or 1-dimensional graph. "
+            "\nERROR! Matrix estimation selection yielded an empty or"
+            " 1-dimensional graph. "
             "Check time-series for errors or try using a different atlas")
     coords = np.array(coords)
     labels = np.array(labels)
@@ -386,12 +397,13 @@ def fill_confound_nans(confounds, dir_path):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     print(
-        "Warning: NaN's detected in confound regressor file. Filling these with mean values, but the "
-        "regressor file should be checked manually.")
+        "Warning: NaN's detected in confound regressor file. Filling these"
+        " with mean values, but the regressor file should be checked"
+        " manually.")
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
     os.makedirs(f"{dir_path}{'/confounds_tmp'}", exist_ok=True)
     conf_corr = (
-        f"{dir_path}{'/confounds_tmp/confounds_mean_corrected_'}{run_uuid}{'.tsv'}"
+        f"{dir_path}/confounds_tmp/confounds_mean_corrected_{run_uuid}.tsv"
     )
     confounds_nonan.to_csv(conf_corr, sep="\t")
     return conf_corr
@@ -417,6 +429,9 @@ class TimeseriesExtraction(object):
         mask,
         extract_strategy,
     ):
+        import sys
+        import yaml
+        import pkg_resources
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_size = node_size
         self.conf = conf
@@ -438,23 +453,38 @@ class TimeseriesExtraction(object):
         self._net_parcels_nii_temp_path = None
         self._net_parcels_map_nifti = None
         self._parcel_masker = None
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                self.low_pass = hardcoded_params["low_pass"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted "
+                    "from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
 
     def prepare_inputs(self):
-        """Helper function to creating temporary nii's and prepare inputs from time-series extraction"""
+        """Helper function to creating temporary nii's and prepare inputs from
+         time-series extraction"""
         import os.path as op
         import nibabel as nib
         from nilearn.image import math_img
 
         if not op.isfile(self.func_file):
             raise ValueError(
-                "\nERROR: Functional data input not found! Check that the file(s) specified with the -i "
+                "\nERROR: Functional data input not found! Check that the"
+                " file(s) specified with the -i "
                 "flag exist(s)")
 
         if self.conf:
             if not op.isfile(self.conf):
                 raise ValueError(
-                    "\nERROR: Confound regressor file not found! Check that the file(s) specified with "
-                    "the -conf flag exist(s)")
+                    "\nERROR: Confound regressor file not found! Check that"
+                    " the file(s) specified with the -conf flag exist(s)")
 
         self._func_img = nib.load(self.func_file)
         self._func_img.set_data_dtype(np.float32)
@@ -497,9 +527,11 @@ class TimeseriesExtraction(object):
 
     def extract_ts_parc(self):
         """
-        API for employing Nilearn's NiftiLabelsMasker to extract fMRI time-series data from spherical ROI's based on a
-        given 3D atlas image of integer-based voxel intensities. The resulting time-series can then optionally be
-        resampled using circular-block bootrapping. The final 2D m x n array is ultimately saved to file in .npy format.
+        API for employing Nilearn's NiftiLabelsMasker to extract fMRI
+        time-series data from spherical ROI's based on a given 3D atlas image
+        of integer-based voxel intensities. The resulting time-series can then
+        optionally be resampled using circular-block bootrapping. The final 2D
+        m x n array is ultimately saved to file in .npy format.
         """
         import nibabel as nib
         from nilearn import input_data
@@ -512,6 +544,7 @@ class TimeseriesExtraction(object):
             background_label=0,
             standardize=True,
             smoothing_fwhm=float(self.smooth),
+            low_pass=self.low_pass,
             high_pass=self.hpass,
             detrend=self._detrending,
             t_r=self._t_r,

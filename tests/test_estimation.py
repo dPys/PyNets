@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
                                     fill_confound_nans, TimeseriesExtraction)
-from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est, tens_mod_est,
-                                    csa_mod_est, csd_mod_est, streams2graph, sfm_mod_est)
+from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
+                                    tens_mod_est, csa_mod_est, csd_mod_est,
+                                    streams2graph, sfm_mod_est)
 
 
 # fMRI
@@ -94,7 +95,7 @@ def test_fill_confound_nans():
 
 
 @pytest.mark.parametrize("conf", [True, pytest.param(False, marks=pytest.mark.xfail)])
-@pytest.mark.parametrize("hpass", [None, 100, -1])
+@pytest.mark.parametrize("hpass", [None, 0.028, 0.080])
 @pytest.mark.parametrize("mask", [True, None])
 @pytest.mark.parametrize("func_file", [True, pytest.param(None, marks=pytest.mark.xfail)])
 @pytest.mark.parametrize("dim", [3, 4])
@@ -376,6 +377,7 @@ def test_streams2graph(fa_wei, dsn):
     from pynets.registration import register
     from pynets.core import nodemaker
     from dipy.io import save_pickle
+    import random
     import os
 
     base_dir = str(Path(__file__).parent/"examples")
@@ -386,7 +388,6 @@ def test_streams2graph(fa_wei, dsn):
     directget = 'prob'
     track_type = 'particle'
     target_samples = 500
-    overlap_thr = 1
     min_span_tree = True
     prune = 3
     norm = 6
@@ -402,8 +403,7 @@ def test_streams2graph(fa_wei, dsn):
     uatlas = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     t1_aligned_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
-    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_" \
-        f"dg-prob_ml-10.trk"
+    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     dir_path = f"{base_dir}/003/dmri"
     bvals = f"{dir_path}/sub-003_dwi.bval"
@@ -418,7 +418,7 @@ def test_streams2graph(fa_wei, dsn):
     save_pickle(gtab_file, gtab)
     fa_path = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
 
-    coords = nodemaker.get_names_and_coords_of_parcels(uatlas)[0]
+    coords = [(random.random()*2.0, random.random()*2.0, random.random()*2.0) for _ in range(200)]
     labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     # if dsn is True:
@@ -435,19 +435,19 @@ def test_streams2graph(fa_wei, dsn):
     #                                                                             directget, min_length, t1_aligned_mni,
     #                                                                             error_margin)
     #
-    #     conn_matrix = streams2graph(atlas_mni, streams_mni, overlap_thr, dir_path, track_type, target_samples,
+    #     conn_matrix = streams2graph(atlas_mni, streams_mni, dir_path, track_type, target_samples,
     #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
     #                                 disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
-    #                                 directget, warped_fa, error_margin, min_length, fa_wei)[2]
+    #                                 directget, warped_fa, error_margin, min_length)[2]
     # else:
-    #     conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
+    #     conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type, target_samples,
     #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
     #                                 disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
-    #                                 directget, fa_path, error_margin, min_length, fa_wei)[2]
+    #                                 directget, fa_path, error_margin, min_length)[2]
 
-    conn_matrix = streams2graph(atlas_dwi, streams, overlap_thr, dir_path, track_type, target_samples,
+    conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type, target_samples,
                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
                                 disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
-                                directget, fa_path, error_margin, min_length, fa_wei)[2]
+                                directget, fa_path, error_margin, min_length)[2]
 
     assert conn_matrix is not None

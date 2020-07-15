@@ -46,7 +46,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
             figure=(10, 10),
             labels=labels,
             vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 95),
-            vmin=np.min(conn_matrix_plt)-0.001,
+            vmin=np.min(conn_matrix_plt)-0.000001,
             reorder="average",
             auto_fit=True,
             grid=False,
@@ -56,7 +56,10 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    tick_interval = int(np.around(len(labels)/40))
+    if len(labels) > 40:
+        tick_interval = int(np.around(len(labels)/40))
+    else:
+        tick_interval = int(np.around(len(labels)))
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig, dpi=dpi_resolution)
@@ -113,7 +116,7 @@ def plot_community_conn_mat(
                 figure=(10, 10),
                 labels=labels,
                 vmax=np.percentile(conn_matrix_plt[conn_matrix_plt > 0], 95),
-                vmin=np.min(conn_matrix_plt) - 0.001,
+                vmin=np.min(conn_matrix_plt) - 0.000001,
                 reorder=False,
                 auto_fit=True,
                 grid=False,
@@ -154,7 +157,10 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    tick_interval = int(np.around(len(labels)/40))
+    if len(labels) > 40:
+        tick_interval = int(np.around(len(labels)/40))
+    else:
+        tick_interval = int(np.around(len(labels)))
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
@@ -226,7 +232,7 @@ def plot_conn_mat_func(
     from pynets.plotting import plot_graphs
 
     out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
-                                                         "/",
+                                                         "/adjacency_",
                                                          ID,
                                                          "_modality-func_",
                                                          "%s" % ("%s%s%s" % ("rsn-",
@@ -235,7 +241,7 @@ def plot_conn_mat_func(
                                                          "%s" % ("%s%s%s" % ("roi-",
                                                                              op.basename(roi).split(".")[0],
                                                                              "_") if roi is not None else ""),
-                                                         "est-",
+                                                         "model-",
                                                          conn_model,
                                                          "_",
                                                          "%s" % ("%s%s%s" % ("nodetype-spheres-",
@@ -254,7 +260,7 @@ def plot_conn_mat_func(
                                                                              "") if extract_strategy is not None else ""),
                                                          "_thr-",
                                                          thr,
-                                                         "_adj_mat.png",
+                                                         ".png",
                                                          )
 
     with open(
@@ -262,12 +268,12 @@ def plot_conn_mat_func(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params["plotting"]["functional"]["adjacency"][
-                "color_theme"
-            ][0]
+            cmap_name = hardcoded_params["plotting"]["functional"][
+                "adjacency"]["color_theme"][0]
         except KeyError:
             print(
-                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
@@ -281,10 +287,10 @@ def plot_conn_mat_func(
         from pynets.stats.netstats import community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
-            G)
+        _, node_comm_aff_mat, resolution, num_comms = \
+            community_resolution_selection(G)
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
-                                                                  "/",
+                                                                  "/adjacency-communities_",
                                                                   ID,
                                                                   "_modality-func_",
                                                                   "%s" % ("%s%s%s" % ("rsn-",
@@ -293,7 +299,7 @@ def plot_conn_mat_func(
                                                                   "%s" % ("%s%s%s" % ("roi-",
                                                                                       op.basename(roi).split(".")[0],
                                                                                       "_") if roi is not None else ""),
-                                                                  "est-",
+                                                                  "model-",
                                                                   conn_model,
                                                                   "_",
                                                                   "%s" % ("%s%s%s" % ("nodetype-spheres-",
@@ -312,7 +318,7 @@ def plot_conn_mat_func(
                                                                                       "") if extract_strategy is not None else ""),
                                                                   "_thr-",
                                                                   thr,
-                                                                  "_adj_mat_comm.png",
+                                                                  ".png",
                                                                   )
         plot_graphs.plot_community_conn_mat(
             conn_matrix,
@@ -323,7 +329,8 @@ def plot_conn_mat_func(
         )
     except BaseException:
         print(
-            "\nWARNING: Louvain community detection failed. Cannot plot community matrix..."
+            "\nWARNING: Louvain community detection failed. Cannot plot "
+            "community matrix..."
         )
 
     return
@@ -346,15 +353,17 @@ def plot_conn_mat_struct(
     min_length,
 ):
     """
-    API for selecting among various structural connectivity matrix plotting approaches.
+    API for selecting among various structural connectivity matrix plotting
+    approaches.
 
     Parameters
     ----------
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -362,25 +371,26 @@ def plot_conn_mat_struct(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
-        and prob (probabilistic).
+        The statistical approach to tracking. Options are:
+        det (deterministic), closest (clos), boot (bootstrapped), and prob
+        (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
     """
@@ -393,7 +403,7 @@ def plot_conn_mat_struct(
     import os.path as op
 
     out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
-                                                                 "/",
+                                                                 "/adjacency_",
                                                                  ID,
                                                                  "_modality-dwi_",
                                                                  "%s" % ("%s%s%s" % ("rsn-",
@@ -402,7 +412,7 @@ def plot_conn_mat_struct(
                                                                  "%s" % ("%s%s%s" % ("roi-",
                                                                                      op.basename(roi).split(".")[0],
                                                                                      "_") if roi is not None else ""),
-                                                                 "est-",
+                                                                 "model-",
                                                                  conn_model,
                                                                  "_",
                                                                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
@@ -413,15 +423,15 @@ def plot_conn_mat_struct(
                                                                  "%s" % ("%s%s%s" % ("samples-",
                                                                                      int(target_samples),
                                                                                      "streams_") if float(target_samples) > 0 else "_"),
-                                                                 "tt-",
+                                                                 "tracktype-",
                                                                  track_type,
-                                                                 "_dg-",
+                                                                 "_directget-",
                                                                  directget,
-                                                                 "_ml-",
+                                                                 "_minlength-",
                                                                  min_length,
                                                                  "_thr-",
                                                                  thr,
-                                                                 "_adj_mat.png",
+                                                                 ".png",
                                                                  )
 
     with open(
@@ -429,12 +439,12 @@ def plot_conn_mat_struct(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            cmap_name = hardcoded_params["plotting"]["structural"]["adjacency"][
-                "color_theme"
-            ][0]
+            cmap_name = hardcoded_params["plotting"]["structural"][
+                "adjacency"]["color_theme"][0]
         except KeyError:
             print(
-                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
@@ -448,10 +458,10 @@ def plot_conn_mat_struct(
         from pynets.stats.netstats import community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = community_resolution_selection(
-            G)
+        _, node_comm_aff_mat, resolution, num_comms = \
+            community_resolution_selection(G)
         out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
-                                                                          "/",
+                                                                          "/adjacency-communities_",
                                                                           ID,
                                                                           "_modality-dwi_",
                                                                           "%s" % ("%s%s%s" % ("rsn-",
@@ -460,7 +470,7 @@ def plot_conn_mat_struct(
                                                                           "%s" % ("%s%s%s" % ("roi-",
                                                                                               op.basename(roi).split(".")[0],
                                                                                               "_") if roi is not None else ""),
-                                                                          "est-",
+                                                                          "model-",
                                                                           conn_model,
                                                                           "_",
                                                                           "%s" % ("%s%s%s" % ("nodetype-spheres-",
@@ -471,15 +481,15 @@ def plot_conn_mat_struct(
                                                                           "%s" % ("%s%s%s" % ("samples-",
                                                                                               int(target_samples),
                                                                                               "streams_") if float(target_samples) > 0 else "_"),
-                                                                          "tt-",
+                                                                          "tracktype-",
                                                                           track_type,
-                                                                          "_dg-",
+                                                                          "_directget-",
                                                                           directget,
-                                                                          "_ml-",
+                                                                          "_minlength-",
                                                                           min_length,
                                                                           "_thr-",
                                                                           thr,
-                                                                          "_adj_mat_comm.png",
+                                                                          ".png",
                                                                           )
         plot_graphs.plot_community_conn_mat(
             conn_matrix,
@@ -490,7 +500,8 @@ def plot_conn_mat_struct(
         )
     except BaseException:
         print(
-            "\nWARNING: Louvain community detection failed. Cannot plot community matrix..."
+            "\nWARNING: Louvain community detection failed. Cannot plot"
+            " community matrix..."
         )
 
     return

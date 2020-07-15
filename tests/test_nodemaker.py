@@ -462,8 +462,7 @@ def test_create_spherical_roi_volumes():
     import pkg_resources
     node_size = 2
     template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
-    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)],
-                                                                                     template_mask)
+    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)], template_mask)
     assert len(parcel_list) > 0
 
 
@@ -482,6 +481,24 @@ def test_get_sphere():
         neighbors.append(nodemaker.get_sphere(coord, r, vox_dims, img.shape[0:3]))
     neighbors = [i for i in neighbors if len(i) > 0]
     assert len(neighbors) == 3
+
+
+def test_parcel_naming():
+    """
+    Test parcel_namiing functionality
+    """
+    coords = [[0, 0, 0], [-5, -5, -5], [5, 5, 5], [-10, -10, -10], [10, 10, 10]]
+    labels = nodemaker.parcel_naming(coords, vox_size='2mm')
+    assert len(coords) == len(labels)
+
+
+def test_enforce_hem_distinct_consecutive_labels():
+    base_dir = str(Path(__file__).parent/"examples")
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    uatlas = nodemaker.enforce_hem_distinct_consecutive_labels(parlistfile)[0]
+    uatlas_img = nib.load(uatlas)
+    parcels_uatlas = len(np.unique(uatlas_img.get_fdata())) - 1
+    assert parcels_uatlas == 354
 
 
 def test_mask_roi():

@@ -67,37 +67,6 @@ def gen_mask(t1w_head, t1w_brain, mask):
     return t1w_brain, t1w_brain_mask
 
 
-def t1w_skullstrip(t1w, out, skull=None):
-    """Skull-strips the t1w image using AFNIs 3dSkullStrip algorithm, which is
-    a modification of FSLs BET specialized to t1w images.
-    Offers robust skull-stripping with no hyperparameters
-    Note: renormalizes the intensities, call extract_t1w_brain instead if you
-    want the original intensity values. Credit: Ross Lawrence @Neurodata.
-
-    Parameters
-    ----------
-    t1w : str
-        path for the input t1w image file
-    out : str
-        path for the output skull-stripped image file
-    skull : str, optional
-        skullstrip parameter pre-set. Default is "none".
-    """
-    if skull == "below":
-        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -shrink_fac_bot_lim 0.6 -ld 45"
-    elif skull == "cerebelum":
-        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -shrink_fac_bot_lim 0.3 -ld 45"
-    elif skull == "eye":
-        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -no_avoid_eyes -ld 45"
-    elif skull == "general":
-        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -push_to_edge -ld 45"
-    else:
-        cmd = f"3dSkullStrip -prefix {out} -input {t1w} -ld 30"
-    print(cmd)
-    os.system(cmd)
-    return out
-
-
 def deep_skull_strip(t1w_data, t1w_brain_mask, img):
     import tensorflow as tf
     if tf.__version__ > "2.0.0":
@@ -143,8 +112,9 @@ def atlas2t1w2dwi_align(
 ):
     """
     A function to perform atlas alignment atlas --> T1 --> dwi.
-    Tries nonlinear registration first, and if that fails, does a linear registration instead. For this to succeed,
-    must first have called t1w2dwi_align.
+    Tries nonlinear registration first, and if that fails, does a linear
+    registration instead. For this to succeed, must first have called
+    t1w2dwi_align.
     """
     from nilearn.image import resample_to_img
     from pynets.core.utils import checkConsecutive
@@ -198,8 +168,8 @@ def atlas2t1w2dwi_align(
 
         except BaseException:
             print(
-                "Warning: Atlas is not in correct dimensions, or input is low quality,\nusing linear template "
-                "registration.")
+                "Warning: Atlas is not in correct dimensions, or input is low"
+                " quality,\nusing linear template registration.")
 
             regutils.align(
                 aligned_atlas_t1mni,
@@ -311,7 +281,8 @@ def roi2dwi_align(
     simple,
 ):
     """
-    A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
+    A function to perform alignment of a waymask from
+    MNI space --> T1w --> dwi.
     """
     from pynets.registration import reg_utils as regutils
 
@@ -340,7 +311,8 @@ def waymask2dwi_align(
     simple,
 ):
     """
-    A function to perform alignment of a waymask from MNI space --> T1w --> dwi.
+    A function to perform alignment of a waymask from
+    MNI space --> T1w --> dwi.
     """
     from pynets.registration import reg_utils as regutils
 
@@ -520,12 +492,14 @@ def segment_t1w(t1w, basename, opts=""):
         A basename to use for output files.
     opts : str
         Additional options that can optionally be passed to fast.
-        Desirable options might be -P, which will use prior probability maps if the input T1w MRI is in standard space.
+        Desirable options might be -P, which will use prior probability maps
+        if the input T1w MRI is in standard space.
 
     Returns
     -------
     out : str
-        File path to the probability map Nifti1Image consisting of GM, WM, and CSF in the 4th dimension.
+        File path to the probability map Nifti1Image consisting of GM, WM,
+        and CSF in the 4th dimension.
     """
     print("Segmenting Anatomical Image into WM, GM, and CSF...")
     # run FAST, with options -t for the image type and -n to
@@ -561,16 +535,18 @@ def align(
         inp : str
             File path to input Nifti1Image to be aligned for registration.
         ref : str
-            File path to reference Nifti1Image to use as the target for alignment.
+            File path to reference Nifti1Image to use as the target for
+            alignment.
         xfm : str
             File path for the transformation matrix output in .xfm.
         out : str
-            File path to input Nifti1Image output following registration alignment.
+            File path to input Nifti1Image output following registration
+            alignment.
         dof : int
             Number of degrees of freedom to use in the alignment.
         searchrad : bool
-            Indicating whether to use the predefined searchradius parameter (180 degree sweep in x, y, and z).
-            Default is True.
+            Indicating whether to use the predefined searchradius parameter
+            (180 degree sweep in x, y, and z). Default is True.
         bins : int
             Number of histogram bins. Default is 256.
         interp : str
@@ -578,9 +554,11 @@ def align(
         sch : str
             Optional file path to a FLIRT schedule file.
         wmseg : str
-            Optional file path to white-matter segmentation Nifti1Image for boundary-based registration (BBR).
+            Optional file path to white-matter segmentation Nifti1Image for
+            boundary-based registration (BBR).
         init : str
-            File path to a transformation matrix in .xfm format to use as an initial guess for the alignment.
+            File path to a transformation matrix in .xfm format to use as an
+            initial guess for the alignment.
 
     """
     cmd = f"flirt -in {inp} -ref {ref}"
@@ -619,29 +597,35 @@ def align_nonlinear(
         in_mask=None,
         config=None):
     """
-    Aligns two images using nonlinear registration and stores the transform between them.
+    Aligns two images using nonlinear registration and stores the transform
+    between them.
 
     Parameters
     ----------
         inp : str
             File path to input Nifti1Image to be aligned for registration.
         ref : str
-            File path to reference Nifti1Image to use as the target for alignment.
+            File path to reference Nifti1Image to use as the target for
+            alignment.
         xfm : str
             File path for the transformation matrix output in .xfm.
         out : str
-            File path to input Nifti1Image output following registration alignment.
+            File path to input Nifti1Image output following registration
+            alignment.
         warp : str
-            File path to input Nifti1Image output for the nonlinear warp following alignment.
+            File path to input Nifti1Image output for the nonlinear warp
+            following alignment.
         ref_mask : str
             Optional file path to a mask in reference image space.
         in_mask : str
             Optional file path to a mask in input image space.
         config : str
-            Optional file path to config file specifying command line arguments.
+            Optional file path to config file specifying command line
+            arguments.
 
     """
-    cmd = f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} --cout={warp} --warpres=8,8,8"
+    cmd = f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} " \
+          f"--cout={warp} --warpres=8,8,8"
     if ref_mask is not None:
         cmd += f" --refmask={ref_mask}"
     if in_mask is not None:
@@ -662,18 +646,21 @@ def applyxfm(ref, inp, xfm, aligned, interp="trilinear", dof=6):
         inp : str
             File path to input Nifti1Image to be aligned for registration.
         ref : str
-            File path to reference Nifti1Image to use as the target for alignment.
+            File path to reference Nifti1Image to use as the target for
+            alignment.
         xfm : str
             File path for the transformation matrix output in .xfm.
         aligned : str
-            File path to input Nifti1Image output following registration alignment.
+            File path to input Nifti1Image output following registration
+            alignment.
         interp : str
             Interpolation method to use. Default is trilinear.
         dof : int
             Number of degrees of freedom to use in the alignment.
 
     """
-    cmd = f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp {interp} -dof {dof} -applyxfm"
+    cmd = f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp" \
+          f" {interp} -dof {dof} -applyxfm"
     print(cmd)
     os.system(cmd)
     return
@@ -689,18 +676,22 @@ def apply_warp(
         interp=None,
         sup=False):
     """
-    Applies a warp to a Nifti1Image which transforms the image to the reference space used in generating the warp.
+    Applies a warp to a Nifti1Image which transforms the image to the
+    reference space used in generating the warp.
 
     Parameters
     ----------
         ref : str
-            File path to reference Nifti1Image to use as the target for alignment.
+            File path to reference Nifti1Image to use as the target for
+            alignment.
         inp : str
             File path to input Nifti1Image to be aligned for registration.
         out : str
-            File path to input Nifti1Image output following registration alignment.
+            File path to input Nifti1Image output following registration
+            alignment.
         warp : str
-            File path to input Nifti1Image output for the nonlinear warp following alignment.
+            File path to input Nifti1Image output for the nonlinear warp
+            following alignment.
         xfm : str
             File path for the transformation matrix input in .xfm.
         mask : str
@@ -729,17 +720,20 @@ def apply_warp(
 
 def inverse_warp(ref, out, warp):
     """
-    Generates the inverse of a warp from a reference image space to the input image space.
-    space used in generating the warp.
+    Generates the inverse of a warp from a reference image space to the input
+    image used in generating the warp.
 
     Parameters
     ----------
         ref : str
-            File path to reference Nifti1Image to use as the target for alignment.
+            File path to reference Nifti1Image to use as the target for
+            alignment.
         out : str
-            File path to input Nifti1Image output following registration alignment.
+            File path to input Nifti1Image output following registration
+            alignment.
         warp : str
-            File path to input Nifti1Image output for the nonlinear warp following alignment.
+            File path to input Nifti1Image output for the nonlinear warp
+            following alignment.
 
     """
     cmd = f"invwarp --warp={warp} --out={out} --ref={ref}"
@@ -750,7 +744,8 @@ def inverse_warp(ref, out, warp):
 
 def combine_xfms(xfm1, xfm2, xfmout):
     """
-    A function to combine two transformations, and output the resulting transformation.
+    A function to combine two transformations, and output the resulting
+    transformation.
 
     Parameters
     ----------
@@ -834,7 +829,8 @@ def rescale_affine_to_center(input_affine, voxel_dims=[1, 1, 1],
     voxel_dims : list
         Length in mm for x,y, and z dimensions of each voxel.
     target_center_coords: list of float
-        3 numbers to specify the translation part of the affine if not using the same as the input_affine.
+        3 numbers to specify the translation part of the affine if not using
+        the same as the input_affine.
 
     Returns
     -------
@@ -977,12 +973,18 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
         warped_fa)
 
     # # We show the registration result with:
-    # regtools.overlay_slices(static, warped_moving, None, 0, "Static", "Moving",
-    #                         "%s%s%s%s" % (working_dir, "/transformed_sagittal_", run_uuid, ".png"))
-    # regtools.overlay_slices(static, warped_moving, None, 1, "Static", "Moving",
-    #                         "%s%s%s%s" % (working_dir, "/transformed_coronal_", run_uuid, ".png"))
-    # regtools.overlay_slices(static, warped_moving, None, 2, "Static", "Moving",
-    #                         "%s%s%s%s" % (working_dir, "/transformed_axial_", run_uuid, ".png"))
+    # regtools.overlay_slices(static, warped_moving, None, 0,
+    # "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir,
+    #                         "/transformed_sagittal_", run_uuid, ".png"))
+    # regtools.overlay_slices(static, warped_moving, None,
+    # 1, "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir,
+    #                         "/transformed_coronal_", run_uuid, ".png"))
+    # regtools.overlay_slices(static, warped_moving,
+    # None, 2, "Static", "Moving",
+    #                         "%s%s%s%s" % (working_dir,
+    #                         "/transformed_axial_", run_uuid, ".png"))
 
     return mapping, affine_map, warped_fa
 
@@ -1014,7 +1016,8 @@ def check_orient_and_dims(
         bvecs=None,
         overwrite=True):
     """
-    An API to reorient any image to RAS+ and resample any image to a given voxel resolution.
+    An API to reorient any image to RAS+ and resample any image to a given
+    voxel resolution.
 
     Parameters
     ----------
@@ -1027,7 +1030,8 @@ def check_orient_and_dims(
     bvecs : str
         File path to corresponding bvecs file if infile is a dwi.
     overwrite : bool
-        Boolean indicating whether to overwrite existing outputs. Default is True.
+        Boolean indicating whether to overwrite existing outputs. Default is
+        True.
 
     Returns
     -------
@@ -1327,7 +1331,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     else:
         img_file_nores = (
             f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
-            f"nores-{vox_size}.nii{os.path.basename(img_file).split('.nii')[1]}")
+            f"nores-{vox_size}"
+            f".nii{os.path.basename(img_file).split('.nii')[1]}")
         if overwrite is False and os.path.isfile(img_file_nores):
             img_file = img_file_nores
             pass

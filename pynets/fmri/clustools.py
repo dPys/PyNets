@@ -15,7 +15,8 @@ warnings.filterwarnings("ignore")
 
 def indx_1dto3d(idx, sz):
     """
-    Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix of size sz.
+    Translate 1D vector coordinates to 3D matrix coordinates for a 3D matrix
+     of size sz.
 
     Parameters
     ----------
@@ -43,7 +44,8 @@ def indx_1dto3d(idx, sz):
 
 def indx_3dto1d(idx, sz):
     """
-    Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix of size sz.
+    Translate 3D matrix coordinates to 1D vector coordinates for a 3D matrix
+     of size sz.
 
     Parameters
     ----------
@@ -127,7 +129,8 @@ def ncut(W, nbEigenValues):
 
     # Perform the eigen decomposition
     eigen_val, eigen_vec = eigsh(
-        P, nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence, which="LA")
+        P, nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence,
+        which="LA")
 
     # Sort the eigen_vals so that the first is the largest
     i = np.argsort(-eigen_val)
@@ -537,8 +540,8 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     Returns
     -------
     W : Compressed Sparse Matrix
-        A Scipy sparse matrix, with weights corresponding to the temporal correlation between the time series from
-        voxel i and voxel j
+        A Scipy sparse matrix, with weights corresponding to the temporal
+        correlation between the time series from voxel i and voxel j
 
     References
     ----------
@@ -558,7 +561,8 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         sorted(
             sorted(
                 sorted(
-                    [list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
+                    [list(x) for x in list(set(product({-1, 0, 1},
+                                                       repeat=3)))],
                     key=lambda k: (k[0]),
                 ),
                 key=lambda k: (k[1]),
@@ -796,10 +800,12 @@ class NiParcellate(object):
         mask_name = os.path.basename(self.clust_mask).split(".nii")[0]
         self.atlas = f"{mask_name}{'_'}{self.clust_type}{'_k'}{str(self.k)}"
         print(
-            f"\nCreating atlas using {self.clust_type} at cluster level {str(self.k)} for {str(self.atlas)}...\n"
+            f"\nCreating atlas using {self.clust_type} at cluster level"
+            f" {str(self.k)} for {str(self.atlas)}...\n"
         )
         self._dir_path = utils.do_dir_path(self.atlas, self.outdir)
-        self.uatlas = f"{self._dir_path}/{mask_name}_clust-{self.clust_type}_k{str(self.k)}.nii.gz"
+        self.uatlas = f"{self._dir_path}/{mask_name}_clust-{self.clust_type}" \
+                      f"_k{str(self.k)}.nii.gz"
 
         # Load clustering mask
         self._func_img.set_data_dtype(np.float32)
@@ -861,7 +867,8 @@ class NiParcellate(object):
 
     def create_local_clustering(self, overwrite, r_thresh, min_region_size=80):
         """
-        API for performing any of a variety of clustering routines available through NiLearn.
+        API for performing any of a variety of clustering routines available
+         through NiLearn.
         """
         import os.path as op
         from scipy.sparse import save_npz, load_npz
@@ -903,11 +910,13 @@ class NiParcellate(object):
         ) or self.clust_type == "ncut":
             if self.k < self.num_conn_comps:
                 raise ValueError(
-                    "k must minimally be greater than the total number of connected components in "
+                    "k must minimally be greater than the total number of "
+                    "connected components in "
                     "the mask in the case of agglomerative clustering.")
             if self.local_corr == "tcorr" or self.local_corr == "scorr":
                 self._local_conn_mat_path = (
-                    f"{self.uatlas.split('.nii')[0]}_{self.local_corr}_conn.npz"
+                    f"{self.uatlas.split('.nii')[0]}_"
+                    f"{self.local_corr}_conn.npz"
                 )
 
                 if (not op.isfile(self._local_conn_mat_path)) or (
@@ -919,16 +928,19 @@ class NiParcellate(object):
 
                     if self.local_corr == "tcorr":
                         self._local_conn = make_local_connectivity_tcorr(
-                            self._func_img, self._clust_mask_corr_img, thresh=r_thresh)
+                            self._func_img, self._clust_mask_corr_img,
+                            thresh=r_thresh)
                     elif self.local_corr == "scorr":
                         self._local_conn = make_local_connectivity_scorr(
-                            self._func_img, self._clust_mask_corr_img, thresh=r_thresh)
+                            self._func_img, self._clust_mask_corr_img,
+                            thresh=r_thresh)
                     else:
                         raise ValueError(
                             "Local connectivity type not available")
 
                     print(
-                        f"Saving spatially constrained connectivity structure to: {self._local_conn_mat_path}"
+                        f"Saving spatially constrained connectivity structure"
+                        f" to: {self._local_conn_mat_path}"
                     )
                     save_npz(self._local_conn_mat_path, self._local_conn)
                 elif op.isfile(self._local_conn_mat_path):
@@ -936,12 +948,14 @@ class NiParcellate(object):
             elif self.local_corr == "allcorr":
                 if self.clust_type == "ncut":
                     raise ValueError(
-                        "Must select either `tcorr` or `scorr` local connectivity option if you are using "
+                        "Must select either `tcorr` or `scorr` local "
+                        "connectivity option if you are using "
                         "`ncut` clustering method")
                 self._local_conn = "auto"
             else:
                 raise ValueError(
-                    "Local connectivity method not recognized. Only tcorr, scorr, and auto are currently "
+                    "Local connectivity method not recognized. Only tcorr,"
+                    " scorr, and auto are currently "
                     "supported")
         else:
             self._local_conn = "auto"
@@ -955,7 +969,8 @@ class NiParcellate(object):
 
     def parcellate(self, func_boot_img):
         """
-        API for performing any of a variety of clustering routines available through NiLearn.
+        API for performing any of a variety of clustering routines available
+        through NiLearn.
         """
         import time
         import os
@@ -968,11 +983,13 @@ class NiParcellate(object):
             if self._local_conn_mat_path is not None:
                 if not os.path.isfile(self._local_conn_mat_path):
                     raise FileNotFoundError(
-                        "File containing sparse matrix of local connectivity structure not found."
+                        "File containing sparse matrix of local connectivity"
+                        " structure not found."
                     )
             else:
                 raise FileNotFoundError(
-                    "File containing sparse matrix of local connectivity structure not found."
+                    "File containing sparse matrix of local connectivity"
+                    " structure not found."
                 )
 
         if (
@@ -1009,7 +1026,8 @@ class NiParcellate(object):
 
             self._clust_est.labels_img_.set_data_dtype(np.uint16)
             print(
-                f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}"
+                f"{self.clust_type}{self.k}"
+                f"{(' clusters: %.2fs' % (time.time() - start))}"
             )
             return self._clust_est.labels_img_
 
@@ -1019,7 +1037,8 @@ class NiParcellate(object):
             )
             out_img.set_data_dtype(np.uint16)
             print(
-                f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}"
+                f"{self.clust_type}{self.k}"
+                f"{(' clusters: %.2fs' % (time.time() - start))}"
             )
             return out_img
 
@@ -1046,7 +1065,8 @@ class NiParcellate(object):
 
             conn_comp_atlases = []
             print(
-                f"Building {len(mask_img_list)} separate atlases with voxel-proportional k clusters for each "
+                f"Building {len(mask_img_list)} separate atlases with "
+                f"voxel-proportional k clusters for each "
                 f"connected component...")
             for i, mask_img in enumerate(mask_img_list):
                 if k_list[i] == 0:
@@ -1107,9 +1127,11 @@ class NiParcellate(object):
             [super_atlas_ward, _] = nodemaker.create_parcel_atlas(
                 atlas_of_atlases)
             super_atlas_ward.set_data_dtype(np.uint16)
-            del atlas_of_atlases, conn_comp_atlases, mask_img_list, mask_voxels_dict
+            del atlas_of_atlases, conn_comp_atlases, mask_img_list, \
+                mask_voxels_dict
 
             print(
-                f"{self.clust_type}{self.k}{(' clusters: %.2fs' % (time.time() - start))}"
+                f"{self.clust_type}{self.k}"
+                f"{(' clusters: %.2fs' % (time.time() - start))}"
             )
             return super_atlas_ward

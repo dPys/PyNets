@@ -49,7 +49,7 @@ def workflow_selector(
     min_span_tree,
     verbose,
     plugin_type,
-    use_AAL_naming,
+    use_parcel_naming,
     smooth,
     smooth_list,
     disp_filt,
@@ -63,7 +63,6 @@ def workflow_selector(
     target_samples,
     curv_thr_list,
     step_list,
-    overlap_thr,
     track_type,
     min_length,
     maxcrossing,
@@ -126,7 +125,8 @@ def workflow_selector(
         hardcoded_params = yaml.load(stream)
         template_name = hardcoded_params["template"][0]
         try:
-            func_models = hardcoded_params["available_models"]["func_models"]
+            func_models = hardcoded_params["available_models"][
+                "func_models"]
         except KeyError:
             print(
                 "ERROR: available functional models not successfully extracted"
@@ -134,7 +134,8 @@ def workflow_selector(
             )
             sys.exit(0)
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
         except KeyError:
             print(
                 "ERROR: available structural models not successfully extracted"
@@ -223,7 +224,7 @@ def workflow_selector(
             node_size_list,
             dwi_model_list,
             min_span_tree,
-            use_AAL_naming,
+            use_parcel_naming,
             disp_filt,
             plugin_type,
             multi_nets,
@@ -234,7 +235,6 @@ def workflow_selector(
             target_samples,
             curv_thr_list,
             step_list,
-            overlap_thr,
             track_type,
             min_length,
             maxcrossing,
@@ -292,7 +292,7 @@ def workflow_selector(
             node_size_list,
             func_model_list,
             min_span_tree,
-            use_AAL_naming,
+            use_parcel_naming,
             smooth,
             smooth_list,
             disp_filt,
@@ -403,7 +403,7 @@ def workflow_selector(
                 "min_span_tree",
                 "verbose",
                 "plugin_type",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "smooth",
                 "smooth_list",
                 "disp_filt",
@@ -417,7 +417,6 @@ def workflow_selector(
                 "target_samples",
                 "curv_thr_list",
                 "step_list",
-                "overlap_thr",
                 "track_type",
                 "min_length",
                 "maxcrossing",
@@ -481,7 +480,7 @@ def workflow_selector(
     meta_inputnode.inputs.min_span_tree = min_span_tree
     meta_inputnode.inputs.verbose = verbose
     meta_inputnode.inputs.plugin_type = plugin_type
-    meta_inputnode.inputs.use_AAL_naming = use_AAL_naming
+    meta_inputnode.inputs.use_parcel_naming = use_parcel_naming
     meta_inputnode.inputs.smooth = smooth
     meta_inputnode.inputs.smooth_list = smooth_list
     meta_inputnode.inputs.hpass = hpass
@@ -495,7 +494,6 @@ def workflow_selector(
     meta_inputnode.inputs.target_samples = target_samples
     meta_inputnode.inputs.curv_thr_list = curv_thr_list
     meta_inputnode.inputs.step_list = step_list
-    meta_inputnode.inputs.overlap_thr = overlap_thr
     meta_inputnode.inputs.track_type = track_type
     meta_inputnode.inputs.min_length = min_length
     meta_inputnode.inputs.maxcrossing = maxcrossing
@@ -599,7 +597,7 @@ def workflow_selector(
                         ("prune", "inputnode.prune"),
                         ("dwi_model_list", "inputnode.conn_model_list"),
                         ("min_span_tree", "inputnode.min_span_tree"),
-                        ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                        ("use_parcel_naming", "inputnode.use_parcel_naming"),
                         ("disp_filt", "inputnode.disp_filt"),
                         ("mask", "inputnode.mask"),
                         ("norm", "inputnode.norm"),
@@ -607,7 +605,6 @@ def workflow_selector(
                         ("target_samples", "inputnode.target_samples"),
                         ("curv_thr_list", "inputnode.curv_thr_list"),
                         ("step_list", "inputnode.step_list"),
-                        ("overlap_thr", "inputnode.overlap_thr"),
                         ("track_type", "inputnode.track_type"),
                         ("min_length", "inputnode.min_length"),
                         ("maxcrossing", "inputnode.maxcrossing"),
@@ -660,7 +657,7 @@ def workflow_selector(
                         ("prune", "inputnode.prune"),
                         ("func_model_list", "inputnode.conn_model_list"),
                         ("min_span_tree", "inputnode.min_span_tree"),
-                        ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                        ("use_parcel_naming", "inputnode.use_parcel_naming"),
                         ("smooth", "inputnode.smooth"),
                         ("hpass", "inputnode.hpass"),
                         ("hpass_list", "inputnode.hpass_list"),
@@ -790,7 +787,8 @@ def workflow_selector(
                             ("prune", "inputnode.prune"),
                             ("dwi_model_list", "inputnode.conn_model_list"),
                             ("min_span_tree", "inputnode.min_span_tree"),
-                            ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                            ("use_parcel_naming",
+                             "inputnode.use_parcel_naming"),
                             ("disp_filt", "inputnode.disp_filt"),
                             ("mask", "inputnode.mask"),
                             ("norm", "inputnode.norm"),
@@ -798,7 +796,6 @@ def workflow_selector(
                             ("target_samples", "inputnode.target_samples"),
                             ("curv_thr_list", "inputnode.curv_thr_list"),
                             ("step_list", "inputnode.step_list"),
-                            ("overlap_thr", "inputnode.overlap_thr"),
                             ("track_type", "inputnode.track_type"),
                             ("min_length", "inputnode.min_length"),
                             ("maxcrossing", "inputnode.maxcrossing"),
@@ -908,7 +905,8 @@ def workflow_selector(
                             ("prune", "inputnode.prune"),
                             ("func_model_list", "inputnode.conn_model_list"),
                             ("min_span_tree", "inputnode.min_span_tree"),
-                            ("use_AAL_naming", "inputnode.use_AAL_naming"),
+                            ("use_parcel_naming",
+                             "inputnode.use_parcel_naming"),
                             ("smooth", "inputnode.smooth"),
                             ("hpass", "inputnode.hpass"),
                             ("hpass_list", "inputnode.hpass_list"),
@@ -1280,7 +1278,7 @@ def dmri_connectometry(
     node_size_list,
     conn_model_list,
     min_span_tree,
-    use_AAL_naming,
+    use_parcel_naming,
     disp_filt,
     plugin_type,
     multi_nets,
@@ -1291,7 +1289,6 @@ def dmri_connectometry(
     target_samples,
     curv_thr_list,
     step_list,
-    overlap_thr,
     track_type,
     min_length,
     maxcrossing,
@@ -1390,7 +1387,7 @@ def dmri_connectometry(
                 "min_thr",
                 "step_thr",
                 "min_span_tree",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "disp_filt",
                 "multi_nets",
                 "prune",
@@ -1403,7 +1400,6 @@ def dmri_connectometry(
                 "target_samples",
                 "curv_thr_list",
                 "step_list",
-                "overlap_thr",
                 "track_type",
                 "min_length",
                 "maxcrossing",
@@ -1446,7 +1442,7 @@ def dmri_connectometry(
     inputnode.inputs.node_size_list = node_size_list
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
-    inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.use_parcel_naming = use_parcel_naming
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.multi_nets = multi_nets
     inputnode.inputs.prune = prune
@@ -1459,7 +1455,6 @@ def dmri_connectometry(
     inputnode.inputs.target_samples = target_samples
     inputnode.inputs.curv_thr_list = curv_thr_list
     inputnode.inputs.step_list = step_list
-    inputnode.inputs.overlap_thr = overlap_thr
     inputnode.inputs.track_type = track_type
     inputnode.inputs.min_length = min_length
     inputnode.inputs.maxcrossing = maxcrossing
@@ -1570,7 +1565,8 @@ def dmri_connectometry(
 
     save_nifti_parcels_node = pe.Node(
         niu.Function(
-            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti"],
+            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti",
+                         "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
             imports=import_list,
@@ -1856,7 +1852,6 @@ def dmri_connectometry(
             input_names=[
                 "atlas_mni",
                 "streams",
-                "overlap_thr",
                 "dir_path",
                 "track_type",
                 "target_samples",
@@ -1969,25 +1964,30 @@ def dmri_connectometry(
         flexi_atlas_source.synchronize = True
         if multi_atlas is not None and user_atlas_list is not None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: multiple nilearn atlases + multiple user atlases')
+            # print('Flexi-atlas: multiple nilearn atlases + multiple user
+            # atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + multi_atlas),
                 ("uatlas", user_atlas_list + len(multi_atlas) * [None]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif multi_atlas is not None and uatlas is not None and user_atlas_list is None:
+        elif multi_atlas is not None and uatlas is\
+            not None and user_atlas_list is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single user atlas + multiple nilearn atlases')
+            # print('Flexi-atlas: single user atlas + multiple nilearn
+            # atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", multi_atlas + [None]),
                 ("uatlas", len(multi_atlas) * [None] + [uatlas]),
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
-        elif atlas is not None and user_atlas_list is not None and multi_atlas is None:
+        elif atlas is not None and user_atlas_list is not None and multi_atlas\
+         is None:
             # print('\n\n\n\n')
-            # print('Flexi-atlas: single nilearn atlas + multiple user atlases')
+            # print('Flexi-atlas: single nilearn atlas + multiple user
+         # atlases')
             # print('\n\n\n\n')
             flexi_atlas_source_iterables = [
                 ("atlas", len(user_atlas_list) * [None] + [atlas]),
@@ -2094,8 +2094,10 @@ def dmri_connectometry(
             ),
             name="get_node_membership_node",
         )
-        get_node_membership_node._n_procs = runtime_dict["get_node_membership_node"][0]
-        get_node_membership_node._mem_gb = runtime_dict["get_node_membership_node"][1]
+        get_node_membership_node._n_procs = runtime_dict[
+            "get_node_membership_node"][0]
+        get_node_membership_node._mem_gb = runtime_dict[
+            "get_node_membership_node"][1]
 
         if multi_nets:
             get_node_membership_iterables = []
@@ -2194,7 +2196,8 @@ def dmri_connectometry(
     else:
         dmri_connectometry_wf.connect(
             [
-                (inputnode, save_nifti_parcels_node, [("network", "network")]),
+                (inputnode, save_nifti_parcels_node,
+                 [("network", "network")]),
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
@@ -2426,8 +2429,10 @@ def dmri_connectometry(
             )
             dmri_connectometry_wf.connect(
                 [
-                    (thr_info_node, join_iters_node_prep_spheres, map_connects),
-                    (join_iters_node_prep_spheres, join_iters_node, map_connects),
+                    (thr_info_node, join_iters_node_prep_spheres,
+                     map_connects),
+                    (join_iters_node_prep_spheres, join_iters_node,
+                     map_connects),
                 ]
             )
         elif (
@@ -2798,7 +2803,7 @@ def dmri_connectometry(
                 [
                     ("parc", "parc"),
                     ("ref_txt", "ref_txt"),
-                    ("use_AAL_naming", "use_AAL_naming"),
+                    ("use_parcel_naming", "use_parcel_naming"),
                     ("outdir", "outdir"),
                     ("vox_size", "vox_size"),
                 ],
@@ -2856,7 +2861,8 @@ def dmri_connectometry(
                 register_node,
                 [("outfile", "anat_file")],
             ),
-            (inputnode, save_nifti_parcels_node, [("ID", "ID")]),
+            (inputnode, save_nifti_parcels_node, [("ID", "ID"),
+                                                  ("vox_size", "vox_size")]),
             (
                 fetch_nodes_and_labels_node,
                 save_coords_and_labels_node,
@@ -2991,7 +2997,6 @@ def dmri_connectometry(
                     ("maxcrossing", "maxcrossing"),
                 ],
             ),
-            (inputnode, streams2graph_node, [("overlap_thr", "overlap_thr")]),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
             (
                 register_node,
@@ -3146,7 +3151,8 @@ def dmri_connectometry(
                 (
                     inputnode,
                     register_roi_node,
-                    [("vox_size", "vox_size"), ("template_name", "template_name")],
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
                 ),
                 (
                     register_node,
@@ -3341,7 +3347,7 @@ def fmri_connectometry(
     node_size_list,
     conn_model_list,
     min_span_tree,
-    use_AAL_naming,
+    use_parcel_naming,
     smooth,
     smooth_list,
     disp_filt,
@@ -3445,7 +3451,7 @@ def fmri_connectometry(
                 "k_clustering",
                 "user_atlas_list",
                 "min_span_tree",
-                "use_AAL_naming",
+                "use_parcel_naming",
                 "smooth",
                 "disp_filt",
                 "prune",
@@ -3499,7 +3505,7 @@ def fmri_connectometry(
     inputnode.inputs.clust_mask_list = clust_mask_list
     inputnode.inputs.conn_model_list = conn_model_list
     inputnode.inputs.min_span_tree = min_span_tree
-    inputnode.inputs.use_AAL_naming = use_AAL_naming
+    inputnode.inputs.use_parcel_naming = use_parcel_naming
     inputnode.inputs.smooth = smooth
     inputnode.inputs.disp_filt = disp_filt
     inputnode.inputs.prune = prune
@@ -3646,7 +3652,8 @@ def fmri_connectometry(
             mask_name = atlas = utils.prune_suffices(mask_name)
             cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
             cluster_atlas_file = (
-                f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_{clust_type}_k"
+                f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                f"{mask_name}_{clust_type}_k"
                 f"{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list.append(cluster_atlas_file)
@@ -3666,7 +3673,8 @@ def fmri_connectometry(
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
-                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                    f"{mask_name}_"
                     f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3684,7 +3692,8 @@ def fmri_connectometry(
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
-                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/{mask_name}_"
+                    f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
+                    f"{mask_name}_"
                     f"{clust_type}_k{str(k)}.nii.gz")
             if user_atlas_list:
                 user_atlas_list = user_atlas_list + cluster_atlas_file_list
@@ -3947,8 +3956,10 @@ def fmri_connectometry(
     if all_clustering is True:
         flexi_atlas = False
     elif (
-        (multi_atlas is not None and user_atlas_list is None and uatlas is None)
-        or (multi_atlas is None and atlas is None and user_atlas_list is not None)
+        (multi_atlas is not None and user_atlas_list is None and
+         uatlas is None)
+        or (multi_atlas is None and atlas is None and user_atlas_list is
+            not None)
     ) and k_clustering == 0:
         # print('\n\n\n\n')
         # print('No flexi-atlas1')
@@ -4242,7 +4253,8 @@ def fmri_connectometry(
 
     save_nifti_parcels_node = pe.Node(
         niu.Function(
-            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti"],
+            input_names=["ID", "dir_path", "network", "net_parcels_map_nifti",
+                         "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
             imports=import_list,
@@ -4252,7 +4264,8 @@ def fmri_connectometry(
     fmri_connectometry_wf.add_nodes([save_nifti_parcels_node])
     fmri_connectometry_wf.connect(
         [
-            (inputnode, save_nifti_parcels_node, [("ID", "ID")]),
+            (inputnode, save_nifti_parcels_node, [("ID", "ID"),
+                                                  ("vox_size", "vox_size")]),
             (
                 node_gen_node,
                 save_nifti_parcels_node,
@@ -4797,7 +4810,8 @@ def fmri_connectometry(
             and not hpass_list
             and not extract_strategy_list
         ):
-            # print('No connectivity model or time-series node extraction iterables...')
+            # print('No connectivity model or time-series node extraction'
+            #       ' iterables...')
             fmri_connectometry_wf.connect(
                 [(thr_info_node, join_iters_node, map_connects)]
             )
@@ -4805,7 +4819,8 @@ def fmri_connectometry(
             node_size_list or smooth_list or hpass_list or
             extract_strategy_list
         ):
-            # print('Connectivity model and time-series node extraction iterables...')
+            # print('Connectivity model and time-series node extraction'
+            #       ' iterables...')
             join_iters_node_ext_ts = pe.JoinNode(
                 niu.IdentityInterface(fields=map_fields),
                 name="join_iters_node_ext_ts",
@@ -5279,7 +5294,8 @@ def fmri_connectometry(
                 (
                     inputnode,
                     register_roi_node,
-                    [("vox_size", "vox_size"), ("template_name", "template_name")],
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
                 ),
                 (
                     register_node,
@@ -5305,7 +5321,7 @@ def fmri_connectometry(
 
     if k_clustering > 0:
         fmri_connectometry_wf.connect(
-            [(register_node, clustering_node, [("t1w_brain_mask", "mask")]), ]
+            [(register_node, clustering_node, [("t1w_brain_mask", "mask")])]
         )
 
     # Connect remaining nodes of workflow
@@ -5317,7 +5333,7 @@ def fmri_connectometry(
                 [
                     ("parc", "parc"),
                     ("ref_txt", "ref_txt"),
-                    ("use_AAL_naming", "use_AAL_naming"),
+                    ("use_parcel_naming", "use_parcel_naming"),
                     ("outdir", "outdir"),
                     ("vox_size", "vox_size"),
                 ],
@@ -5459,7 +5475,8 @@ def fmri_connectometry(
                     ("basedir_path", "basedir_path"),
                 ],
             ),
-            (inputnode, check_orient_and_dims_uatlas_node, [("vox_size", "vox_size")]),
+            (inputnode, check_orient_and_dims_uatlas_node,
+             [("vox_size", "vox_size")]),
             (
                 fetch_nodes_and_labels_node,
                 check_orient_and_dims_uatlas_node,
@@ -5473,7 +5490,8 @@ def fmri_connectometry(
             (
                 node_gen_node,
                 register_atlas_node,
-                [("coords", "coords"), ("labels", "labels"), ("atlas", "atlas")],
+                [("coords", "coords"), ("labels", "labels"),
+                 ("atlas", "atlas")],
             ),
             (
                 register_atlas_node,
@@ -5831,7 +5849,8 @@ def raw_graph_workflow(
             wf.connect(
                 [
                     (inputinfo, load_mat_node, [("est_path", "est_path")]),
-                    (load_mat_node, thr_info_node, [("conn_matrix", "conn_matrix")]),
+                    (load_mat_node, thr_info_node,
+                     [("conn_matrix", "conn_matrix")]),
                     (
                         inputinfo,
                         thr_info_node,
@@ -5859,7 +5878,8 @@ def raw_graph_workflow(
                     [
                         str(i)
                         for i in np.round(
-                            np.arange(float(min_thr), float(max_thr), float(step_thr)),
+                            np.arange(float(min_thr), float(max_thr),
+                                      float(step_thr)),
                             decimals=2,
                         ).tolist()
                     ]

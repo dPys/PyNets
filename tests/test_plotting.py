@@ -243,7 +243,8 @@ def test_plot_network_clusters(plotting_data, plot_overlaps):
     _, communities, _, _ = community_resolution_selection(G)
     plot_labels = True
 
-    plot_gen.plot_network_clusters(G, communities, fname, plot_overlaps=plot_overlaps,
+    plot_gen.plot_network_clusters(G, communities, fname,
+                                   plot_overlaps=plot_overlaps,
                                    plot_labels=plot_labels)
 
     assert os.path.isfile(fname)
@@ -348,12 +349,8 @@ def test_plot_all_struct_func(plotting_data):
 
     name = 'output_fname'
 
-    func_file = (f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_roi-002_parcels_re"
-                 f"sampled2roimask_pDMN_3_bin_raw_est-sps_nodetype-spheres-6mm_smooth-2fwhm_hpass-"
-                 f"FalseHz_raw.npy")
-    dwi_file = (f"{base_dir}/miscellaneous/graphs/002_modality-dwi_rsn-Default_roi-002_parcels_res"
-                f"ampled2roimask_pDMN_3_bin_raw_est-sps_parc_samples-2streams_tt-local_dg-prob_ml-"
-                f"200_raw.npy")
+    func_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-func_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_smooth-2fwhm_hpass-FalseHz_extract-mean.npy")
+    dwi_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-dwi_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_samples-2streams_tracktype-local_directget-prob_minlength-200.npy")
     modality_paths = (func_file, dwi_file)
 
     G_func = nx.from_numpy_matrix(np.load(func_file))
@@ -383,7 +380,7 @@ def test_plot_graph_measure_hists(nan):
     temp_dir = tempfile.TemporaryDirectory()
     dir_name = str(temp_dir.name)
 
-    df_csv = (f"{base_dir}/miscellaneous/sub-OAS31172_ses-d0407_topology_auc_clean.csv")
+    df_csv = (f"{base_dir}/miscellaneous/metrics_sub-OAS31172_ses-d0407_topology_auc_clean.csv")
 
     # Hack the dataframe
     if nan is True:

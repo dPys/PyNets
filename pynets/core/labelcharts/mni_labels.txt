@@ -1,0 +1,9 @@
+Caudate
+Cerebellum
+Frontal_Lobe
+Insula
+Occipital_Lobe
+Parietal_Lobe
+Putamen
+Temporal_Lobe
+Thalamus

@@ -946,7 +946,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     return out_path
 
 
-def AAL_naming(coords):
+def parcel_naming(coords, vox_size):
     """
     Perform Automated-Anatomical Labeling of each coordinate from a list of a voxel coordinates.
 
@@ -959,200 +959,264 @@ def AAL_naming(coords):
     Returns
     -------
     labels : list
-        List of string labels corresponding to each coordinates closest anatomical label based on AAL.
+        List of string labels corresponding to each coordinate's closest anatomical label.
 
     References
     ----------
-    .. [1] N. Tzourio-Mazoyer; B. Landeau; D. Papathanassiou; F. Crivello; O. Etard; N. Delcroix;
+    .. [1] Craddock, R. C., James, G. A., Holtzheimer, P. E., Hu, X. P., &
+      Mayberg, H. S. (2012). A whole brain fMRI atlas generated via
+      spatially constrained spectral clustering. Human Brain Mapping.
+      https://doi.org/10.1002/hbm.21333
+    .. [2] N. Tzourio-Mazoyer; B. Landeau; D. Papathanassiou; F. Crivello; O. Etard; N. Delcroix;
       Bernard Mazoyer & M. Joliot (January 2002). "Automated Anatomical Labeling of
       activations in SPM using a Macroscopic Anatomical Parcellation of the MNI MRI
       single-subject brain". NeuroImage. 15 (1): 273–289. doi:10.1006/nimg.2001.0978.
 
     """
+    import sys
     import pandas as pd
-    import csv
-    from pathlib import Path
-
-    aal_coords_ix_path = f"{str(Path(__file__).parent)}/labelcharts/aal_coords_ix.csv"
-    aal_region_names_path = (
-        f"{str(Path(__file__).parent)}/labelcharts/aal_dictionary.csv"
-    )
-    try:
-        aal_coords_ix = pd.read_csv(aal_coords_ix_path)
-        with open(aal_region_names_path, "r") as csv_file:
-            reader = csv.reader(csv_file)
-            aal_labs_dict = dict(reader)
-    except FileNotFoundError:
-        print("Loading AAL references failed!")
-
-    labels_ix = []
-    print("Building region index using AAL MNI coords...")
-    for coord in coords:
-        reg_lab = aal_coords_ix.loc[aal_coords_ix["coord_tuple"] == str(
-            tuple(np.round(coord).astype("int"))), "Region_index", ]
-        if len(reg_lab) > 0:
-            labels_ix.append(reg_lab.values[0])
-        else:
-            labels_ix.append(np.nan)
-
-    print("Building list of label names using AAL dictionary...")
-    labels = []
-    for region_ix in labels_ix:
-        if region_ix is np.nan:
-            labels.append("Unlabeled")
-        else:
-            labels.append(aal_labs_dict[str(region_ix)])
-
-    return labels
-
-
-def psycho_naming(coords, node_size):
-    """
-    Perform Automated Sentiment Labeling of each coordinate from a list of MNI coordinates.
-
-    Parameters
-    ----------
-    coords : list
-        List of (x, y, z) tuples in voxel-space corresponding to a coordinate atlas used or
-        which represent the center-of-mass of each parcellation node.
-    node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
-
-    Returns
-    -------
-    labels : list
-        List of string labels corresponding to each coordinate-corresponding psychological topic.
-
-    References
-    ----------
-    .. [1] Tor D., W. (2011). NeuroSynth: a new platform for large-scale automated synthesis of
-      human functional neuroimaging data. Frontiers in Neuroinformatics.
-      https://doi.org/10.3389/conf.fninf.2011.08.00058
-    .. [2] Tausczik, Y. R., & Pennebaker, J. W. (2010). The psychological meaning of words:
-      LIWC and computerized text analysis methods. Journal of Language and Social Psychology.
-      https://doi.org/10.1177/0261927X09351676
-
-    """
-    import liwc
     import pkg_resources
-    import nimare
-    import nltk
-    from collections import Counter
-    from nltk.corpus import sentiwordnet as swn
-    from pynets.core.utils import flatten
-    from nltk.stem import WordNetLemmatizer
-
-    try:
-        swn.senti_synsets("TEST")
-    except BaseException:
-        nltk.download("sentiwordnet")
-        nltk.download("wordnet")
+    import nibabel as nib
+    from collections import defaultdict
+    from nilearn.image import resample_to_img
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            LIWC_file = hardcoded_params["sentiment_labeling"]["liwc_file"][0]
-        except FileNotFoundError:
-            print("LIWC file not found. Check runconfig.yaml.")
+            labeling_atlases = hardcoded_params["labeling_atlases"]
+        except KeyError:
+            print(
+                "No labeling atlases listed in runconfig.yaml"
+            )
+            sys.exit(0)
         try:
-            neurosynth_dset_file = hardcoded_params["sentiment_labeling"][
-                "neurosynth_db"
-            ][0]
-        except FileNotFoundError:
-            print("Neurosynth dataset .pkl file not found. Check runconfig.yaml.")
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
     stream.close()
 
+    template_brain = pkg_resources.resource_filename(
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+    )
     try:
-        dset = nimare.dataset.Dataset.load(neurosynth_dset_file)
-    except FileNotFoundError:
-        print("Loading neurosynth dictionary failed!")
+        template_img = nib.load(template_brain)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI template. Do you have git-lfs "
+              f"installed?")
 
-    try:
-        parse, category_names = liwc.load_token_parser(LIWC_file)
-    except FileNotFoundError:
-        print("Loading LIWC dictionary failed!")
+    coords_vox = []
+    for i in coords:
+        coords_vox.append(mmToVox(template_img.affine, i))
+    coords_vox = list(
+        tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x))
+        for x in coords_vox
+    )
+
+    label_img_dict = defaultdict()
+    for label_atlas in labeling_atlases:
+        label_img_dict[label_atlas] = {}
+        label_path = pkg_resources.resource_filename("pynets",
+                                                     f"/core/labelcharts/{label_atlas}.txt")
+        label_img_path = pkg_resources.resource_filename("pynets",
+                                                         f"/core/atlases/{label_atlas}.nii.gz")
+
+        label_img = nib.load(label_img_path)
+
+        label_img_res = resample_to_img(
+            label_img, template_img, interpolation="nearest"
+        )
+        label_img_dict[label_atlas]['affine'] = label_img_res.affine
+        label_img_dict[label_atlas]['data'] = np.asarray(label_img_res.dataobj, dtype='uint8')
+        df = pd.read_csv(label_path, sep=' ', names=['region_index', 'label'])
+        if df['label'].isna().all():
+            df = pd.read_csv(label_path, names=['label'])
+            df = df[(df.label != 'Background')]
+            df['region_index'] = np.arange(1, len(df) + 1)
+        df = df[~((df.label == 'Background') & (df.region_index == 0))]
+        df = df[~((df.label == 'Unknown') & (df.region_index == 0))]
+        label_img_dict[label_atlas]['reference'] = df
+
+    # Create a consensus labeling dictionary
+    label_dict = defaultdict()
+    for coord in coords_vox:
+        label_dict[coord] = {}
+        for label_atlas in label_img_dict.keys():
+            label_dict[coord][label_atlas] = {}
+            label_dict[coord][label_atlas]['intensity'] = label_img_dict[label_atlas]['data'][coord]
+            df_ref = label_img_dict[label_atlas]['reference']
+            try:
+                label_dict[coord][label_atlas]['label'] = df_ref.loc[df_ref['region_index']==int(label_dict[coord][label_atlas]['intensity'])]['label'].values[0]
+            except BaseException:
+                label_dict[coord][label_atlas]['label'] = "Unlabeled"
 
     labels = []
-    print("Building coordinate labels...")
-    for coord in coords:
-        print(coord)
-        roi_ids = dset.get_studies_by_coordinate(
-            np.array(coord).reshape(1, -1), node_size
-        )
-        labs = dset.get_labels(ids=roi_ids)
-        labs_filt = list(
-            flatten(
-                [
-                    list(
-                        [
-                            i
-                            for j in swn.senti_synsets(i)
-                            if j.pos_score() > 0.75 or j.neg_score() > 0.75
-                        ]
-                    )
-                    for i in labs
-                ]
-            )
-        )
-        st = WordNetLemmatizer()
-        labs_filt = list(set([st.lemmatize(k) for k in labs_filt]))
-        liwc_counts = dict(
-            Counter(
-                top.split(" (")[0]
-                for token in labs_filt
-                for top in parse(token)
-                if (top.split(" (")[0].lower() != "bio")
-                and (top.split(" (")[0].lower() != "adj")
-                and (top.split(" (")[0].lower() != "verb")
-                and (top.split(" (")[0].lower() != "conj")
-                and (top.split(" (")[0].lower() != "adverb")
-                and (top.split(" (")[0].lower() != "auxverb")
-                and (top.split(" (")[0].lower() != "prep")
-                and (top.split(" (")[0].lower() != "article")
-                and (top.split(" (")[0].lower() != "ipron")
-                and (top.split(" (")[0].lower() != "ppron")
-                and (top.split(" (")[0].lower() != "pronoun")
-                and (top.split(" (")[0].lower() != "function")
-                and (top.split(" (")[0].lower() != "affect")
-                and (top.split(" (")[0].lower() != "cogproc")
-            )
-        )
-        liwc_counts_ordered = dict(
-            sorted(liwc_counts.items(), key=lambda x: x[1], reverse=True)
-        )
+    for coord in label_dict.keys():
+        coord_dict = {}
+        for atlas, i in list(zip(label_dict[coord].keys(), label_dict[coord].values())):
+            try:
+                coord_dict[atlas] = i['label']
+            except BaseException:
+                continue
+        labels.append(coord_dict)
 
-        if "posemo" and "negemo" in liwc_counts_ordered.keys():
-            if liwc_counts_ordered["posemo"] > liwc_counts_ordered["negemo"]:
-                del liwc_counts_ordered["negemo"]
-            else:
-                del liwc_counts_ordered["posemo"]
-        liwc_counts_ordered_ratios = {}
-        for i in liwc_counts_ordered:
-            liwc_counts_ordered_ratios[i] = float(liwc_counts_ordered[i]) / float(
-                sum(liwc_counts_ordered.values())
-            )
-
-        lab = " ".join(
-            map(
-                str,
-                [
-                    key + " " + str(np.round(100 * val, 2)) + "%"
-                    for key, val in liwc_counts_ordered_ratios.items()
-                ],
-            )
-        )
-        print(lab)
-        if len(lab) > 0:
-            labels.append(lab)
-        else:
-            labels.append(np.nan)
-        del roi_ids, labs_filt, lab, liwc_counts_ordered, liwc_counts, labs
-        print("\n")
+    assert len(labels) == len(coords)
 
     return labels
+
+
+# def psycho_naming(coords, node_size):
+#     """
+#     Perform Automated Sentiment Labeling of each coordinate from a list of MNI coordinates.
+#
+#     Parameters
+#     ----------
+#     coords : list
+#         List of (x, y, z) tuples in voxel-space corresponding to a coordinate atlas used or
+#         which represent the center-of-mass of each parcellation node.
+#     node_size : int
+#         Spherical centroid node size in the case that coordinate-based centroids
+#         are used as ROI's for tracking.
+#
+#     Returns
+#     -------
+#     labels : list
+#         List of string labels corresponding to each coordinate-corresponding psychological topic.
+#
+#     References
+#     ----------
+#     .. [1] Tor D., W. (2011). NeuroSynth: a new platform for large-scale automated synthesis of
+#       human functional neuroimaging data. Frontiers in Neuroinformatics.
+#       https://doi.org/10.3389/conf.fninf.2011.08.00058
+#     .. [2] Tausczik, Y. R., & Pennebaker, J. W. (2010). The psychological meaning of words:
+#       LIWC and computerized text analysis methods. Journal of Language and Social Psychology.
+#       https://doi.org/10.1177/0261927X09351676
+#
+#     """
+#     import liwc
+#     import pkg_resources
+#     import nimare
+#     import nltk
+#     from collections import Counter
+#     from nltk.corpus import sentiwordnet as swn
+#     from pynets.core.utils import flatten
+#     from nltk.stem import WordNetLemmatizer
+#
+#     try:
+#         swn.senti_synsets("TEST")
+#     except BaseException:
+#         nltk.download("sentiwordnet")
+#         nltk.download("wordnet")
+#
+#     with open(
+#         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+#     ) as stream:
+#         hardcoded_params = yaml.load(stream)
+#         try:
+#             LIWC_file = hardcoded_params["sentiment_labeling"]["liwc_file"][0]
+#         except FileNotFoundError:
+#             print("LIWC file not found. Check runconfig.yaml.")
+#         try:
+#             neurosynth_dset_file = hardcoded_params["sentiment_labeling"][
+#                 "neurosynth_db"
+#             ][0]
+#         except FileNotFoundError:
+#             print("Neurosynth dataset .pkl file not found. Check runconfig.yaml.")
+#     stream.close()
+#
+#     try:
+#         dset = nimare.dataset.Dataset.load(neurosynth_dset_file)
+#     except FileNotFoundError:
+#         print("Loading neurosynth dictionary failed!")
+#
+#     try:
+#         parse, category_names = liwc.load_token_parser(LIWC_file)
+#     except FileNotFoundError:
+#         print("Loading LIWC dictionary failed!")
+#
+#     labels = []
+#     print("Building coordinate labels...")
+#     for coord in coords:
+#         print(coord)
+#         roi_ids = dset.get_studies_by_coordinate(
+#             np.array(coord).reshape(1, -1), node_size
+#         )
+#         labs = dset.get_labels(ids=roi_ids)
+#         labs_filt = list(
+#             flatten(
+#                 [
+#                     list(
+#                         [
+#                             i
+#                             for j in swn.senti_synsets(i)
+#                             if j.pos_score() > 0.75 or j.neg_score() > 0.75
+#                         ]
+#                     )
+#                     for i in labs
+#                 ]
+#             )
+#         )
+#         st = WordNetLemmatizer()
+#         labs_filt = list(set([st.lemmatize(k) for k in labs_filt]))
+#         liwc_counts = dict(
+#             Counter(
+#                 top.split(" (")[0]
+#                 for token in labs_filt
+#                 for top in parse(token)
+#                 if (top.split(" (")[0].lower() != "bio")
+#                 and (top.split(" (")[0].lower() != "adj")
+#                 and (top.split(" (")[0].lower() != "verb")
+#                 and (top.split(" (")[0].lower() != "conj")
+#                 and (top.split(" (")[0].lower() != "adverb")
+#                 and (top.split(" (")[0].lower() != "auxverb")
+#                 and (top.split(" (")[0].lower() != "prep")
+#                 and (top.split(" (")[0].lower() != "article")
+#                 and (top.split(" (")[0].lower() != "ipron")
+#                 and (top.split(" (")[0].lower() != "ppron")
+#                 and (top.split(" (")[0].lower() != "pronoun")
+#                 and (top.split(" (")[0].lower() != "function")
+#                 and (top.split(" (")[0].lower() != "affect")
+#                 and (top.split(" (")[0].lower() != "cogproc")
+#             )
+#         )
+#         liwc_counts_ordered = dict(
+#             sorted(liwc_counts.items(), key=lambda x: x[1], reverse=True)
+#         )
+#
+#         if "posemo" and "negemo" in liwc_counts_ordered.keys():
+#             if liwc_counts_ordered["posemo"] > liwc_counts_ordered["negemo"]:
+#                 del liwc_counts_ordered["negemo"]
+#             else:
+#                 del liwc_counts_ordered["posemo"]
+#         liwc_counts_ordered_ratios = {}
+#         for i in liwc_counts_ordered:
+#             liwc_counts_ordered_ratios[i] = float(liwc_counts_ordered[i]) / float(
+#                 sum(liwc_counts_ordered.values())
+#             )
+#
+#         lab = " ".join(
+#             map(
+#                 str,
+#                 [
+#                     key + " " + str(np.round(100 * val, 2)) + "%"
+#                     for key, val in liwc_counts_ordered_ratios.items()
+#                 ],
+#             )
+#         )
+#         print(lab)
+#         if len(lab) > 0:
+#             labels.append(lab)
+#         else:
+#             labels.append(np.nan)
+#         del roi_ids, labs_filt, lab, liwc_counts_ordered, liwc_counts, labs
+#         print("\n")
+#
+#     return labels
 
 
 def node_gen_masking(

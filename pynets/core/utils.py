@@ -162,6 +162,22 @@ def create_est_path_func(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -176,8 +192,8 @@ def create_est_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                         "/",
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                         "/graph_sub-",
                                                          ID,
                                                          "_modality-func_",
                                                          "%s" % ("%s%s%s" % ("rsn-",
@@ -186,8 +202,10 @@ def create_est_path_func(
                                                          "%s" % ("%s%s%s" % ("roi-",
                                                                              op.basename(roi).split(".")[0],
                                                                              "_") if roi is not None else ""),
-                                                         "est-",
+                                                         "model-",
                                                          conn_model,
+                                                         "_template-",
+                                                         template_name,
                                                          "_",
                                                          "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                              node_size,
@@ -272,6 +290,22 @@ def create_est_path_diff(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -280,8 +314,8 @@ def create_est_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                 "/",
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                                 "/graph_sub-",
                                                                  ID,
                                                                  "_modality-dwi_",
                                                                  "%s" % ("%s%s%s" % ("rsn-",
@@ -290,8 +324,10 @@ def create_est_path_diff(
                                                                  "%s" % ("%s%s%s" % ("roi-",
                                                                                      op.basename(roi).split(".")[0],
                                                                                      "_") if roi is not None else ""),
-                                                                 "est-",
+                                                                 "model-",
                                                                  conn_model,
+                                                                 "_template-",
+                                                                 template_name,
                                                                  "_",
                                                                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                                      node_size,
@@ -301,11 +337,11 @@ def create_est_path_diff(
                                                                  "%s" % ("%s%s%s" % ("samples-",
                                                                                      int(target_samples),
                                                                                      "streams_") if float(target_samples) > 0 else "_"),
-                                                                 "tt-",
+                                                                 "tracktype-",
                                                                  track_type,
-                                                                 "_dg-",
+                                                                 "_directget-",
                                                                  directget,
-                                                                 "_ml-",
+                                                                 "_minlength-",
                                                                  min_length,
                                                                  "_thrtype-",
                                                                  thr_type,
@@ -364,6 +400,22 @@ def create_raw_path_func(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -378,8 +430,8 @@ def create_raw_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                 "/",
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                 "/rawgraph_sub-",
                                                  ID,
                                                  "_modality-func_",
                                                  "%s" % ("%s%s%s" % ("rsn-",
@@ -388,8 +440,10 @@ def create_raw_path_func(
                                                  "%s" % ("%s%s%s" % ("roi-",
                                                                      op.basename(roi).split(".")[0],
                                                                      "_") if roi is not None else ""),
-                                                 "est-",
+                                                 "model-",
                                                  conn_model,
+                                                 "_template-",
+                                                 template_name,
                                                  "_",
                                                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                      node_size,
@@ -402,10 +456,9 @@ def create_raw_path_func(
                                                  "%s" % ("%s%s%s" % ("hpass-",
                                                                      hpass,
                                                                      "Hz_") if hpass is not None else ""),
-                                                 "%s" % ("%s%s%s" % ("extract-",
-                                                                     extract_strategy,
-                                                                     "_") if extract_strategy is not None else ""),
-                                                 "raw.npy",
+                                                 "%s" % ("%s%s" % ("extract-",
+                                                                     extract_strategy) if extract_strategy is not None else ""),
+                                                 ".npy",
                                                  )
 
     return est_path
@@ -463,6 +516,22 @@ def create_raw_path_diff(
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -471,8 +540,8 @@ def create_raw_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                         "/",
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+                                                         "/rawgraph_sub-",
                                                          ID,
                                                          "_modality-dwi_",
                                                          "%s" % ("%s%s%s" % ("rsn-",
@@ -481,8 +550,10 @@ def create_raw_path_diff(
                                                          "%s" % ("%s%s%s" % ("roi-",
                                                                              op.basename(roi).split(".")[0],
                                                                              "_") if roi is not None else ""),
-                                                         "est-",
+                                                         "model-",
                                                          conn_model,
+                                                         "_template-",
+                                                         template_name,
                                                          "_",
                                                          "%s" % ("%s%s%s" % ("nodetype-spheres-",
                                                                              node_size,
@@ -492,13 +563,13 @@ def create_raw_path_diff(
                                                          "%s" % ("%s%s%s" % ("samples-",
                                                                              int(target_samples),
                                                                              "streams_") if float(target_samples) > 0 else ""),
-                                                         "tt-",
+                                                         "tracktype-",
                                                          track_type,
-                                                         "_dg-",
+                                                         "_directget-",
                                                          directget,
-                                                         "_ml-",
+                                                         "_minlength-",
                                                          min_length,
-                                                         "_raw.npy",
+                                                         ".npy",
                                                          )
     return est_path
 
@@ -528,7 +599,7 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/{est_path.split('/')[-1].split('.npy')[0]}_net_mets.csv"
+    out_path = f"{namer_dir}/metrics_{est_path.split('/')[-1].split('.npy')[0]}.csv"
 
     return out_path
 
@@ -1045,13 +1116,14 @@ def collect_pandas_df(
     network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
 ):
     """
-    API for summarizing independent lists of pickled pandas dataframes of graph metrics for each modality, RSN, and roi.
+    API for summarizing independent lists of pickled pandas dataframes of
+     graph metrics for each modality, RSN, and roi.
 
     Parameters
     ----------
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     net_mets_csv_list : list
@@ -1061,7 +1133,8 @@ def collect_pandas_df(
     multi_nets : list
         List of Yeo RSN's specified in workflow(s).
     multimodal : bool
-        Indicates whether multiple modalities of input data have been specified.
+        Indicates whether multiple modalities of input data have been
+        specified.
 
     Returns
     -------
@@ -1084,13 +1157,16 @@ def collect_pandas_df(
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available functional models not sucessfully extracted"
+                " from runconfig.yaml"
             )
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available structural models not sucessfully extracted"
+                " from runconfig.yaml"
             )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
@@ -1107,7 +1183,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("est-")[1].split("_")[0] in struct_models
+                            if i.split("model-")[1].split("_")[0] in
+                               struct_models
                         ]
                     )
                 )
@@ -1119,7 +1196,8 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("est-")[1].split("_")[0] in func_models
+                            if i.split("model-")[1].split("_")[0] in
+                               func_models
                         ]
                     )
                 )
@@ -1145,7 +1223,7 @@ def collect_pandas_df(
                     [
                         i
                         for i in net_mets_csv_list
-                        if i.split("est-")[1].split("_")[0] in struct_models
+                        if i.split("model-")[1].split("_")[0] in struct_models
                     ]
                 )
             )
@@ -1157,7 +1235,7 @@ def collect_pandas_df(
                     [
                         i
                         for i in net_mets_csv_list
-                        if i.split("est-")[1].split("_")[0] in func_models
+                        if i.split("model-")[1].split("_")[0] in func_models
                     ]
                 )
             )
@@ -1165,7 +1243,8 @@ def collect_pandas_df(
                 net_mets_csv_list_func, ID, network, plot_switch
             )
 
-            if combination_complete_dwi is True and combination_complete_func is True:
+            if combination_complete_dwi is \
+                True and combination_complete_func is True:
                 combination_complete = True
             else:
                 combination_complete = False
@@ -1244,11 +1323,11 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         os.makedirs(namer_dir, exist_ok=True)
 
     if network is not None:
-        coord_path = f"{namer_dir}{'/'}{network}{'_coords_rsn.pkl'}"
-        labels_path = f"{namer_dir}{'/'}{network}{'_labels_rsn.pkl'}"
+        coord_path = f"{namer_dir}{'/'}{network}{'_mni_coords_rsn.pkl'}"
+        labels_path = f"{namer_dir}{'/'}{network}{'_mni_labels_rsn.pkl'}"
     else:
-        coord_path = f"{namer_dir}/all_coords.pkl"
-        labels_path = f"{namer_dir}/all_labels.pkl"
+        coord_path = f"{namer_dir}/all_mni_coords.pkl"
+        labels_path = f"{namer_dir}/all_mni_labels.pkl"
 
     # Save coords to pickle
     with open(coord_path, "wb") as f:
@@ -1304,7 +1383,7 @@ def get_template_tf(template_name, vox_size):
     return template, template_mask, templateflow_home
 
 
-def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
+def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_size):
     """
     This function takes a Nifti1Image parcellation object resulting from some form of masking and saves it to disk.
 
@@ -1320,6 +1399,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
     net_parcels_map_nifti : Nifti1Image
         A nibabel-based nifti image consisting of a 3D array with integer voxel intensities corresponding to ROI
         membership.
+    vox_size : str
+        Voxel size in mm. (e.g. 2mm).
 
     Returns
     -------
@@ -1329,18 +1410,48 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti):
 
     """
     import os
+    import yaml
+    import pkg_resources
+    import sys
+    from nilearn.image import resample_to_img
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    net_parcels_nii_path = "%s%s%s%s%s%s" % (
+    net_parcels_nii_path = "%s%s%s%s%s" % (
         namer_dir,
-        "/",
-        str(ID),
-        "_parcels_masked",
+        "/parcellation_space-",
+        template_name,
         "%s" % ("%s%s" % ("_rsn-", network) if network is not None else ""),
         ".nii.gz",
+    )
+
+    template_brain = pkg_resources.resource_filename(
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+    )
+    try:
+        template_img = nib.load(template_brain)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI template. Do you have git-lfs "
+              f"installed?")
+
+    net_parcels_map_nifti = resample_to_img(
+        net_parcels_map_nifti, template_img, interpolation="nearest"
     )
 
     nib.save(net_parcels_map_nifti, net_parcels_nii_path)
@@ -1405,7 +1516,7 @@ def save_ts_to_file(
 
     # Save time series as npy file
     out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                              "/",
+                                              "/nodetimeseries_sub-",
                                               ID,
                                               "_",
                                               "%s" % ("%s%s%s" % ("rsn-",
@@ -1428,7 +1539,7 @@ def save_ts_to_file(
                                               "%s" % ("%s%s%s" % ("extract-",
                                                                   extract_strategy,
                                                                   "_") if extract_strategy is not None else ""),
-                                              "node_ts.npy",
+                                              ".npy",
                                               )
 
     np.save(out_path_ts, ts_within_nodes)
@@ -1506,7 +1617,8 @@ def timeout(seconds):
 
 def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
-    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
+    A function to build a hyperparameter dictionary by parsing a given
+    topology metrics .csv file path.
     """
     hyperparam_dict["atlas"] = atlas
 
@@ -1514,12 +1626,17 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
         if (
             (hyperparam != "smooth")
             and (hyperparam != "hpass")
-            and (hyperparam != "track_type")
+            and (hyperparam != "extract")
+            and (hyperparam != "tracktype")
             and (hyperparam != "directget")
-            and (hyperparam != "min_length")
+            and (hyperparam != "minlength")
         ):
-            hyperparam_dict[hyperparam] = file_renamed.split(
-                hyperparam + "-")[1].split("_")[0]
+            try:
+                hyperparam_dict[hyperparam] = file_renamed.split(
+                    hyperparam + "-")[1].split("_")[0]
+            except ValueError:
+                print(f"Hyperparameter: {hyperparam} not found.")
+
     if modality == "func":
         if "smooth-" in file_renamed:
             hyperparam_dict["smooth"] = (
@@ -1531,19 +1648,24 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
                 file_renamed.split("hpass-")[1].split("_")[0].split("Hz")[0]
             )
             hyperparams.append("hpass")
+        if "extract-" in file_renamed:
+            hyperparam_dict["extract"] = (
+                file_renamed.split("extract-")[1].split("_")[0]
+            )
+            hyperparams.append("extract")
     elif modality == "dwi":
-        if "tt-" in file_renamed:
-            hyperparam_dict["track_type"] = file_renamed.split(
-                "tt-")[1].split("_")[0]
-            hyperparams.append("track_type")
-        if "dg-" in file_renamed:
+        if "tracktype-" in file_renamed:
+            hyperparam_dict["tracktype"] = file_renamed.split(
+                "tracktype-")[1].split("_")[0]
+            hyperparams.append("tracktype")
+        if "directget-" in file_renamed:
             hyperparam_dict["directget"] = file_renamed.split(
-                "dg-")[1].split("_")[0]
+                "directget-")[1].split("_")[0]
             hyperparams.append("directget")
-        if "ml-" in file_renamed:
-            hyperparam_dict["min_length"] = file_renamed.split(
-                "ml-")[1].split("_")[0]
-            hyperparams.append("min_length")
+        if "minlength-" in file_renamed:
+            hyperparam_dict["minlength"] = file_renamed.split(
+                "minlength-")[1].split("_")[0]
+            hyperparams.append("minlength")
     return hyperparam_dict, hyperparams
 
 
@@ -1595,7 +1717,8 @@ class build_sql_db(object):
 
         df_summary_auc_ext = pd.concat(
             [
-                pd.DataFrame.from_dict(hyperparam_dict, orient="index").transpose(),
+                pd.DataFrame.from_dict(hyperparam_dict,
+                                       orient="index").transpose(),
                 df_summary_auc,
             ],
             axis=1,

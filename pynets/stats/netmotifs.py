@@ -70,7 +70,8 @@ def countmotifs(A, N=4):
         )[1]
     ]
     umotifs = Counter(
-        ["".join(np.sort(np.sum(A[x, :][:, x], 1)).astype(int).astype(str)) for x in X2]
+        ["".join(np.sort(np.sum(A[x, :][:, x], 1)).astype(int).astype(str))
+         for x in X2]
     )
     del X2
     gc.collect()
@@ -108,7 +109,8 @@ def adaptivethresh(in_mat, thr, mlib, N):
     mf = countmotifs((in_mat > thr).astype(int), N=N)
     try:
         mf = np.array([mf[k] for k in mlib])
-    finally:
+    except BaseException:
+        print('Zero motifs detected...')
         mf = np.zeros(len(mlib))
     return mf
 
@@ -190,7 +192,8 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
         motif_dict["struct"]["%s%s" %
                              ("thr-", np.round(thr_func, 4))] = at_struct
         motif_dict["func"]["%s%s" % ("thr-", np.round(thr_func, 4))] = at_func
-        mat_dict["funcs"]["%s%s" % ("thr-", np.round(thr_func, 4))] = sym_matrix_to_vec(
+        mat_dict["funcs"]["%s%s" %
+                          ("thr-", np.round(thr_func, 4))] = sym_matrix_to_vec(
             threshold_absolute(func_mat, thr_func), discard_diagonal=True)
 
         print(
@@ -451,29 +454,37 @@ def motif_matching(
 
     if rsn is not None:
         struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_coords_rsn.pkl"
         )[0]
         func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_coords_rsn.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_coords_rsn.pkl"
         )[0]
         struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_labels_rsn.pkl"
         )[0]
         func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/{rsn}_labels_rsn.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_labels_rsn.pkl"
         )[0]
     else:
         struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*coords.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/"
+            f"nodes/all_mni_coords.pkl"
         )[0]
         func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/*coords.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/"
+            f"nodes/all_mni_coords.pkl"
         )[0]
         struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*labels.pkl"
+            f"{str(Path(struct_graph_path).parent.parent)}/"
+            f"nodes/all_mni_labels.pkl"
         )[0]
         func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/*labels.pkl"
+            f"{str(Path(func_graph_path).parent.parent)}/"
+            f"nodes/all_mni_labels.pkl"
         )[0]
 
     with open(struct_coords_path, "rb") as file_:
@@ -533,9 +544,11 @@ def motif_matching(
         comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
         struct_mat[~comm_mask] = 0
         func_mat[~comm_mask] = 0
-        struct_name = struct_graph_path.split("/")[-1].split("_raw.npy")[0]
-        func_name = func_graph_path.split("/")[-1].split("_raw.npy")[0]
-        name = f"{ID}_{atlas}_mplx_Layer-1_{struct_name}_Layer-2_{func_name}"
+        struct_name = struct_graph_path.split("/rawgraph_"
+                                              )[-1].split(".npy")[0]
+        func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
+        name = f"sub-{ID}_{atlas}_mplx_Layer-1_{struct_name}_" \
+               f"Layer-2_{func_name}"
         name_list.append(name)
         struct_mat = np.maximum(struct_mat, struct_mat.T)
         func_mat = np.maximum(func_mat, func_mat.T)
@@ -547,7 +560,8 @@ def motif_matching(
             multigraph_path_list_dict = {}
             [struct, func] = g_dict[thr]
             struct_out = f"{namer_dir}/struct_{atlas}_{struct_name}.npy"
-            func_out = f"{namer_dir}/struct_{atlas}_{func_name}_motif-{thr}.npy"
+            func_out = f"{namer_dir}/struct_{atlas}_{func_name}_" \
+                       f"motif-{thr}.npy"
             np.save(struct_out, struct)
             np.save(func_out, func)
             multigraph_path_list_dict[f"struct_{atlas}_{thr}"] = struct_out
@@ -556,7 +570,8 @@ def motif_matching(
         graph_path_list_all.append(graph_path_list)
     else:
         print(
-            f"Skipping {rsn} rsn, since structural and functional graphs are not identical shapes."
+            f"Skipping {rsn} rsn, since structural and functional graphs are "
+            f"not identical shapes."
         )
 
     return name_list, metadata_list, multigraph_list_all, graph_path_list_all
@@ -564,7 +579,8 @@ def motif_matching(
 
 def build_multigraphs(est_path_iterlist, ID):
     """
-    Constructs a multimodal multigraph for each available resolution of vertices.
+    Constructs a multimodal multigraph for each available resolution of
+    vertices.
 
     Parameters
     ----------
@@ -603,7 +619,8 @@ def build_multigraphs(est_path_iterlist, ID):
     raw_est_path_iterlist = list(
         set(
             [
-                i.split("_thrtype")[0] + "_raw.npy"
+                os.path.dirname(i) + '/raw' + os.path.basename(i).split(
+                    "_thrtype")[0] + ".npy"
                 for i in list(flatten(est_path_iterlist))
             ]
         )
@@ -618,13 +635,16 @@ def build_multigraphs(est_path_iterlist, ID):
             func_models = hardcoded_params["available_models"]["func_models"]
         except KeyError:
             print(
-                "ERROR: available functional models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available functional models not sucessfully extracted"
+                " from runconfig.yaml"
             )
         try:
-            struct_models = hardcoded_params["available_models"]["struct_models"]
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
         except KeyError:
             print(
-                "ERROR: available structural models not sucessfully extracted from runconfig.yaml"
+                "ERROR: available structural models not sucessfully extracted"
+                " from runconfig.yaml"
             )
     stream.close()
 
@@ -637,7 +657,7 @@ def build_multigraphs(est_path_iterlist, ID):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("est-")[1].split("_")[0] in struct_models
+                if i.split("model-")[1].split("_")[0] in struct_models
             ]
         )
     )
@@ -646,20 +666,22 @@ def build_multigraphs(est_path_iterlist, ID):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("est-")[1].split("_")[0] in func_models
+                if i.split("model-")[1].split("_")[0] in func_models
             ]
         )
     )
 
     if "_rsn" in ";".join(est_path_iterlist_func):
         func_subnets = list(
-            set([i.split("_rsn-")[1].split("_")[0] for i in est_path_iterlist_func])
+            set([i.split("_rsn-")[1].split("_")[0] for i in
+                 est_path_iterlist_func])
         )
     else:
         func_subnets = []
     if "_rsn" in ";".join(est_path_iterlist_dwi):
         dwi_subnets = list(
-            set([i.split("_rsn-")[1].split("_")[0] for i in est_path_iterlist_dwi])
+            set([i.split("_rsn-")[1].split("_")[0] for i in
+                 est_path_iterlist_dwi])
         )
     else:
         dwi_subnets = []
@@ -710,14 +732,15 @@ def build_multigraphs(est_path_iterlist, ID):
                     parcel_dict_func[atlas].append(graph_path)
 
         parcel_dict = {}
-        # Create dictionary of all possible pairs of structural-functional graphs for each unique resolution
-        # of vertices
+        # Create dictionary of all possible pairs of structural-functional
+        # graphs for each unique resolution of vertices
         if len(dwi_subnets) >= 1 and len(func_subnets) >= 1:
             parcel_dict[atlas] = {}
             rsns = np.intersect1d(dwi_subnets, func_subnets).tolist()
             for rsn in rsns:
                 parcel_dict[atlas][rsn] = list(set(itertools.product(
-                    parcel_dict_dwi[atlas][rsn], parcel_dict_func[atlas][rsn])))
+                    parcel_dict_dwi[atlas][rsn],
+                    parcel_dict_func[atlas][rsn])))
                 for paths in list(parcel_dict[atlas][rsn]):
                     [
                         name_list,

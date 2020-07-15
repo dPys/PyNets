@@ -4,7 +4,7 @@
 Usage
 #####
 
-The exact command to run ``PyNets`` depends on several factors:
+The exact command to run ``PyNets®`` depends on several factors:
 
 :(1): The Installation_ method (i.e. pip, docker, singularity, git), along with the environment resources available for computing;
 
@@ -113,14 +113,10 @@ In the case of running pynets on a single subject, several combinations of input
 Command-Line Arguments
 **********************
 
-:PyNets BIDS CLI:
-
 .. argparse::
     :module: pynets.cli.pynets_bids
     :func: get_bids_parser
     :prog: pynets
-
-:PyNets Manual Execution CLI:
 
 .. argparse::
     :module: pynets.cli.pynets_run

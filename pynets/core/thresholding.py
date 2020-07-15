@@ -1253,7 +1253,8 @@ def thresh_struct(
         ),
     )
 
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
+    [thr_type, edge_threshold, conn_matrix_thr] = \
+        thresholding.perform_thresholding(
         conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
@@ -1318,6 +1319,7 @@ def thresh_raw_graph(
         est_path):
     from pynets.core import thresholding
 
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
+    [thr_type, edge_threshold, conn_matrix_thr] = \
+        thresholding.perform_thresholding(
         conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
     return thr_type, edge_threshold, conn_matrix_thr, thr, est_path

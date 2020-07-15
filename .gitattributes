@@ -11,6 +11,15 @@ pynets/templates/MNI152_T1_brain_mask_1mm.nii.gz filter=lfs diff=lfs merge=lfs -
 pynets/templates/MNI152_T1_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/MNI152_T1_brain_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/MNI152_T1_brain_mask_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/colin27_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/colin27_brain_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/colin27_brain_mask_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_brain_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_brain_mask_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_brain_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/templates/CN200_brain_mask_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/FA_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/FA_2mm.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/templates/LateralVentricles_1mm.nii.gz filter=lfs diff=lfs merge=lfs -text
@@ -37,6 +46,11 @@ pynets/core/atlases/AICHAJoliot2015.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/AICHAreorderedJoliot2015.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/VoxelwiseParcellationt0435kLeadDBS.nii.gz filter=lfs diff=lfs merge=lfs -text
 pynets/core/atlases/VoxelwiseParcellationt0515kLeadDBS.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/core/atlases/mni_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/core/atlases/juelich_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/core/atlases/talairach_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/core/atlases/harvardoxford_cortical_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
+pynets/core/atlases/harvardoxford_subcortical_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
 docs/_static/structural_functional_multiplex.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/yeo7_mosaic.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/graph.png filter=lfs diff=lfs merge=lfs -text

@@ -277,11 +277,11 @@ def direct_streamline_norm(
             str(curv_thr_list).replace(", ", "_"),
             "step",
             str(step_list).replace(", ", "_"),
-            "tt-",
+            "tracktype-",
             track_type,
-            "_dg-",
+            "_directget-",
             directget,
-            "_ml-",
+            "_minlength-",
             min_length,
             ".trk",
         )
@@ -304,11 +304,11 @@ def direct_streamline_norm(
             str(curv_thr_list).replace(", ", "_"),
             "step",
             str(step_list).replace(", ", "_"),
-            "tt-",
+            "tracktype-",
             track_type,
-            "_dg-",
+            "_directget-",
             directget,
-            "_ml-",
+            "_minlength-",
             min_length,
             ".nii.gz",
         )
@@ -325,8 +325,8 @@ def direct_streamline_norm(
         #                                                                                    (node_size is not None)) else
         #                                                                        '_'),
         #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
-        #                                                                'step', str(step_list).replace(', ', '_'), 'tt-',
-        #                                                                track_type,  '_dg-', directget, '_ml-', min_length,
+        #                                                                'step', str(step_list).replace(', ', '_'), 'tracktype-',
+        #                                                                track_type,  '_directget-', directget, '_minlength-', min_length,
         #                                                                '.png')
 
         # SyN FA->Template

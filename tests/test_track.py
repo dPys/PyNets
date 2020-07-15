@@ -33,7 +33,7 @@ def test_create_density_map():
     dwi_img = nib.load(dwi_file)
 
     # Load output from test_filter_streamlines: dictionary of streamline info
-    streamlines_trk = f"{base_dir}/miscellaneous/streamlines_est-csd_nodetype-parc_samples-10000streams_tt-local_dg-prob_ml-0.trk"
+    streamlines_trk = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
     streamlines = nib.streamlines.load(streamlines_trk).streamlines
 
     # Remove streamlines with negative voxel indices
@@ -235,7 +235,7 @@ def test_track_ensemble_particle():
                                        roi_neighborhood_tol, min_length, waymask, B0_mask, max_length=1000,
                                        n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
                                        particle_count=15, min_separation_angle=20)
-    streams = f"{base_dir}/miscellaneous/003_streamlines_est-csd_nodetype-parc_samples-1000streams_tt-particle_dg-prob_ml-10.trk"
+    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
                                        space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)

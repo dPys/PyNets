@@ -54,12 +54,13 @@ def test_save_nifti_parcels_map():
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     ID = '002'
+    vox_size = '2mm'
     network = None
     array_data = np.arange(24, dtype=np.int16).reshape((2, 3, 4))
     affine = np.diag([1, 2, 3, 1])
     net_parcels_map_nifti = nib.Nifti1Image(array_data, affine)
 
-    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti)
+    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_size)
     assert os.path.isfile(net_parcels_nii_path) is True
 
 
@@ -86,97 +87,36 @@ def test_save_ts_to_file():
     assert os.path.isfile(out_path_ts) is True
 
 
-# def test_build_embedded_connectome():
-#     """
-#     Test build_embedded_connectome functionality
-#     """
-#     base_dir = str(Path(__file__).parent/"examples")
-#     ID = '002'
-#     multimodal = False
-#     types = ['omni', 'mase']
-#     est_path_iterlist = [f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.09.npy",
-#                          f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.08.npy",
-#                          f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.07.npy",
-#                          f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.06.npy",
-#                          f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.09.npy"]
-#     for type in types:
-#         out_path = utils.build_embedded_connectome(est_path_iterlist, ID, multimodal, type)
-#         assert out_path is not None
-
-
 def test_check_est_path_existence():
     """
     Test check_est_path_existence functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    est_path_iterlist = [f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.09.npy",
-                         f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.08.npy",
-                         f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.07.npy",
-                         f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.06.npy",
-                         f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.1.npy",
+    est_path_iterlist = [f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.09.npy",
+                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.08.npy",
+                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.07.npy",
+                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.06.npy",
+                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-csd_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.1.npy",
                          f"{base_dir}/miscellaneous/bad_path.npy"]
     [est_path_list_ex, _] = utils.check_est_path_existence(est_path_iterlist)
     assert est_path_list_ex is not None
 
 
-# def test_collect_pandas_df():
-#     """
-#     Test collect_pandas_df functionality
-#     """
-#     base_dir = str(Path(__file__).parent/"examples")
-#     multi_nets = ['Default', 'SalVentAttn']
-#     network = 'Default'
-#     ID = '002'
-#     plot_switch = True
-#     multimodal = False
-#     net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.1_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.1_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.1_net_mets.csv"]
-#     utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
-#
-#
-# def test_collect_pandas_df_make():
-#     """
-#     Test collect_pandas_df_make functionality
-#     """
-#     base_dir = str(Path(__file__).parent/"examples")
-#     network = 'Default'
-#     ID = '002'
-#     plot_switch = True
-#     net_pickle_mt_list = [f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csa_thrtype-PROP_thr-0.1_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-csd_thrtype-PROP_thr-0.1_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.05_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.06_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.07_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.08_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.09_net_mets.csv",
-#                           f"{base_dir}/miscellaneous/0021001_rsn-Default_nodetype-parc_est-tensor_thrtype-PROP_thr-0.1_net_mets.csv"]
-#     utils.collect_pandas_df_make(net_pickle_mt_list, ID, network, plot_switch)
+def test_collect_pandas_df():
+    """
+    Test collect_pandas_df_make functionality
+    """
+    import glob
+    base_dir = str(Path(__file__).parent/"examples")
+    multi_nets = None
+    multimodal = False
+    network = None
+    ID = '002'
+    plot_switch = False
+    net_mets_csv_list = [glob.glob(f"{base_dir}/topology/*.csv")][0]
+    out = utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
+    assert out is True
+
 
 @pytest.mark.parametrize("node_size", [6, None])
 @pytest.mark.parametrize("hpass", [100, None])
@@ -397,11 +337,11 @@ def test_pass_meta_ins():
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent/"examples")
     conn_model = 'corr'
-    est_path = f"{base_dir}/miscellaneous/0021001_modality-dwi_rsn-Default_est-tensor_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_thrtype-DENS_thr-0.09.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-Default_model-tensor_nodetype-parc_samples-100000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_thr-0.09.npy"
     network = 'Default'
     thr = 0.09
     prune = True
-    ID = '0021001'
+    ID = 'sub-0021001'
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     norm = 10
     binary = True
@@ -429,8 +369,8 @@ def test_pass_meta_ins_multi():
 
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
-    est_path_func = f"{base_dir}/miscellaneous/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy"
-    est_path_struct = f"{base_dir}/miscellaneous/0025427_modality-dwi_est-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_thrtype-PROP_thr-1.0.npy"
+    est_path_func = f"{base_dir}/miscellaneous/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
+    est_path_struct = f"{base_dir}/miscellaneous/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
     network_func = 'Default'
     network_struct = 'Default'
     thr_func = 0.95
@@ -463,125 +403,12 @@ def test_pass_meta_ins_multi():
     assert len(binary_iterlist) == 2
 
 
-# @pytest.mark.parametrize("embed_multimodal_multiplex",
-#                          [[None, False, 0], pytest.param(['omni', True, 1],
-#                                                          marks=pytest.mark.xfail(raises=IndexError))])
-# def test_pass_meta_outs(embed_multimodal_multiplex):
-#     """
-#     Test pass_meta_outs functionality
-#
-#     Note: omni argument may be failing due to functions in netmotifs or due to
-#     an unexpected input. Marked for xfail and should be updated after tests for
-#     netmotifs are created.
-#     """
-#     base_dir = str(Path(__file__).parent/"examples")
-#     conn_model_func = 'corr'
-#     conn_model_struct = 'csa'
-#     network_func = 'Default'
-#     network_struct = 'Default'
-#     thr_func = 0.6
-#     thr_struct = 0.8
-#     prune_func = True
-#     prune_struct = False
-#     ID_func = '002'
-#     ID_struct = '002'
-#     roi_func = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-#     roi_struct = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-#     norm_func = 1
-#     norm_struct = 2
-#     binary_func = False
-#     binary_struct = True
-#     embed = embed_multimodal_multiplex[0]
-#     multimodal = embed_multimodal_multiplex[1]
-#     multiplex = embed_multimodal_multiplex[2]
-#
-#     node_size = 6
-#     smooth = 6
-#     thr_type = 'prop'
-#     hpass = 100
-#     parc = True
-#     directget = 'prob'
-#     max_length = 200
-#     thr_type = 'prop'
-#     target_samples = 10
-#     track_type = 'local'
-#     conn_matrix_diff = np.random.rand(10, 10)
-#     conn_matrix_func = np.random.rand(10, 10)
-#
-#     est_path_func = utils.create_est_path_func(ID_func, network_func,
-#                                                conn_model_func, thr_func,
-#                                                roi_func, func_path, node_size,
-#                                                smooth, thr_type, hpass,
-#                                                parc)
-#
-#     est_path_diff = utils.create_est_path_diff(ID_struct, network_struct,
-#                                                conn_model_struct, thr_struct,
-#                                                roi_struct, dmri_path,
-#                                                node_size, target_samples,
-#                                                track_type, thr_type, parc,
-#                                                directget, max_length)
-#
-#     utils.save_mat(conn_matrix_diff, est_path_diff)
-#     utils.save_mat(conn_matrix_func, est_path_func)
-#
-#     [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist, roi_iterlist,
-#      norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-#         conn_model_func, est_path_func, network_func, thr_func, prune_func, ID_func, roi_func, norm_func, binary_func,
-#         conn_model_struct, est_path_diff, network_struct, thr_struct, prune_struct, ID_struct, roi_struct,
-#         norm_struct, binary_struct)
-#
-#     [conn_model_iterlist_out, est_path_iterlist_out, network_iterlist_out, thr_iterlist_out, prune_iterlist_out,
-#      ID_iterlist_out, roi_iterlist_out, norm_iterlist_out, binary_iterlist_out] = utils.pass_meta_outs(
-#         conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist, prune_iterlist, ID_iterlist,
-#         roi_iterlist, norm_iterlist, binary_iterlist, embed, multimodal, multiplex)
-#
-#     assert conn_model_iterlist_out is not None
-#     assert est_path_iterlist_out is not None
-#     assert network_iterlist_out is not None
-#     assert thr_iterlist_out is not None
-#     assert prune_iterlist_out is not None
-#     assert ID_iterlist_out is not None
-#     assert roi_iterlist_out is not None
-#     assert norm_iterlist_out is not None
-#     assert binary_iterlist_out is not None
-
-
 def test_collectpandasjoin():
     base_dir = str(Path(__file__).parent/"examples")
-    net_mets_csv = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_est-cov_thrtype-PROP_thr-0.95_net_metrics.csv"
+    net_mets_csv = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_model-cov_template-MNI152_T1_thrtype-PROP_thr-0.95_net_metrics.csv"
     net_mets_csv_out = utils.collectpandasjoin(net_mets_csv)
 
     assert net_mets_csv == net_mets_csv_out
-
-
-def test_collect_pandas_df():
-    base_dir = str(Path(__file__).parent/"examples")
-    network = None
-    ID = '002'
-    plot_switch = False
-    multi_nets = None
-    multimodal = False
-    if multi_nets is not None and multimodal is False:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv",
-                             f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
-    elif multi_nets is not None and multimodal is True:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv",
-                             f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
-    elif multi_nets is None and multimodal is False:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv",
-                             f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
-    elif multi_nets is None and multimodal is True:
-        net_mets_csv_list = [f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.3_net_mets.csv",
-                             f"{base_dir}/miscellaneous/0021001_modality-dwi_nodetype-parc_est-csa_thrtype-PROP_thr-0.2_net_mets.csv"]
-    else:
-        return
-
-    combination_complete = utils.collect_pandas_df(network, ID,
-                                                   net_mets_csv_list,
-                                                   plot_switch, multi_nets,
-                                                   multimodal)
-
-    assert combination_complete is not None
 
 
 @pytest.mark.parametrize("x", [[1, 2, 3], 1])
@@ -613,11 +440,11 @@ def test_build_hp_dict(modality):
     atlas = 'Power'
 
     if modality == 'func':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_est-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy"
-        hyperparams = ['modality', 'rsn', 'est', 'nodetype', 'smooth', 'hpass', 'thrtype', 'thr']
+        file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_modality-func_rsn-Default_model-cov_template-MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
+        hyperparams = ['modality', 'rsn', 'model', 'nodetype', 'smooth', 'hpass', 'extract', 'thrtype', 'thr']
     elif modality == 'dwi':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_est-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_thrtype-PROP_thr-1.0.npy"
-        hyperparams = ['modality', 'est', 'nodetype', 'samples', 'tt', 'dg', 'ml', 'thrtype', 'thr']
+        file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
+        hyperparams = ['modality', 'model', 'nodetype', 'samples', 'tracktype', 'directget', 'minlength', 'thrtype', 'thr']
 
     hyperparam_dict = dict.fromkeys(hyperparams)
     file_renamed = file_renamed.split('graphs/')[1]

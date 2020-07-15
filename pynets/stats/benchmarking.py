@@ -27,7 +27,8 @@ warnings.filterwarnings("ignore")
 
 def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
     """
-    A function to build a hyperparameter dictionary by parsing a given net_mets file path.
+    A function to build a hyperparameter dictionary by parsing a given
+    topology file path.
     """
 
     if "atlas" not in hyperparam_dict.keys():
@@ -59,7 +60,8 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
                     "smooth-")[1].split("_")[0].split("fwhm")[0]]
             else:
                 hyperparam_dict["smooth"].append(
-                    file_renamed.split("smooth-")[1].split("_")[0].split("fwhm")[0])
+                    file_renamed.split("smooth-"
+                                       )[1].split("_")[0].split("fwhm")[0])
             hyperparams.append("smooth")
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
@@ -67,37 +69,49 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
                     "hpass-")[1].split("_")[0].split("Hz")[0]]
             else:
                 hyperparam_dict["hpass"].append(
-                    file_renamed.split("hpass-")[1].split("_")[0].split("Hz")[0])
+                    file_renamed.split("hpass-"
+                                       )[1].split("_")[0].split("Hz")[0])
             hyperparams.append("hpass")
+        if "extract-" in file_renamed:
+            if "extract" not in hyperparam_dict.keys():
+                hyperparam_dict["extract"] = [
+                    file_renamed.split("extract-")[1].split("_")[0]
+                ]
+            else:
+                hyperparam_dict["extract"].append(
+                    file_renamed.split("extract-")[1].split("_")[0]
+                )
+            hyperparams.append("extract")
+
     elif modality == "dwi":
-        if "tt-" in file_renamed:
+        if "tracktype-" in file_renamed:
             if "track_type" not in hyperparam_dict.keys():
                 hyperparam_dict["track_type"] = [
-                    file_renamed.split("tt-")[1].split("_")[0]
+                    file_renamed.split("tracktype-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["track_type"].append(
-                    file_renamed.split("tt-")[1].split("_")[0]
+                    file_renamed.split("tracktype-")[1].split("_")[0]
                 )
             hyperparams.append("track_type")
-        if "dg-" in file_renamed:
+        if "directget-" in file_renamed:
             if "directget" not in hyperparam_dict.keys():
                 hyperparam_dict["directget"] = [
-                    file_renamed.split("dg-")[1].split("_")[0]
+                    file_renamed.split("directget-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["directget"].append(
-                    file_renamed.split("dg-")[1].split("_")[0]
+                    file_renamed.split("directget-")[1].split("_")[0]
                 )
             hyperparams.append("directget")
-        if "ml-" in file_renamed:
+        if "minlength-" in file_renamed:
             if "min_length" not in hyperparam_dict.keys():
                 hyperparam_dict["min_length"] = [
-                    file_renamed.split("ml-")[1].split("_")[0]
+                    file_renamed.split("minlength-")[1].split("_")[0]
                 ]
             else:
                 hyperparam_dict["min_length"].append(
-                    file_renamed.split("ml-")[1].split("_")[0]
+                    file_renamed.split("minlength-")[1].split("_")[0]
                 )
             hyperparams.append("min_length")
     return hyperparam_dict, hyperparams
@@ -115,12 +129,13 @@ def discr_stat(
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-        Input data. If dissimilarity=='precomputed', the input should be the dissimilarity matrix.
+        Input data. If dissimilarity=='precomputed', the input should be the
+         dissimilarity matrix.
     Y : 1d-array, shape (n_samples)
         Input labels.
-    dissimilarity : str, {"euclidean" (default), "precomputed"} Dissimilarity measure can be
-        'euclidean' (pairwise Euclidean distances between points in the dataset) or 'precomputed'
-        (pre-computed dissimilarities).
+    dissimilarity : str, {"euclidean" (default), "precomputed"} Dissimilarity
+        measure can be 'euclidean' (pairwise Euclidean distances between points
+        in the dataset) or 'precomputed' (pre-computed dissimilarities).
     remove_isolates : bool, optional, default=True
         Whether to remove data that have single label.
     return_rdfs : bool, optional, default=False
@@ -138,7 +153,8 @@ def discr_stat(
 
     uniques, counts = np.unique(Y, return_counts=True)
     if (counts != 1).sum() <= 1:
-        msg = "You have passed a vector containing only a single unique sample id."
+        msg = "You have passed a vector containing only a single unique" \
+              " sample id."
         raise ValueError(msg)
     if remove_isolates:
         idx = np.isin(Y, uniques[counts != 1])
@@ -184,7 +200,7 @@ def _discr_rdf(dissimilarities, labels):
 
     Parameters
     ----------
-    dissimilarities : array, shape (n_samples, n_features) or (n_samples, n_samples)
+    dissimilarities : array, shape (n_samples, n_features)
         Input data. If dissimilarity=='precomputed', the input should be the
         dissimilarity matrix.
     labels : 1d-array, shape (n_samples)
@@ -238,7 +254,8 @@ def CronbachAlpha(itemscores):
 
 
 if __name__ == "__main__":
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
 
     working_dir = "/scratch/04171/dpisner/HNU/HNU_outs"
     thr_type = "MST"
@@ -247,7 +264,7 @@ if __name__ == "__main__":
 
     mets = [
         "global_efficiency",
-        "average_shortest_path_length",
+        "average_shortmodel_path_length",
         "average_betweenness_centrality",
         "average_eigenvector_centrality",
         "average_degree_centrality",
@@ -270,23 +287,24 @@ if __name__ == "__main__":
         df = df.rename(
             columns=lambda x: re.sub(
                 "_partcorr_",
-                "_est-partcorr_",
+                "_model-partcorr_",
                 x))
-        df = df.rename(columns=lambda x: re.sub("_sps_", "_est-sps_", x))
+        df = df.rename(columns=lambda x: re.sub("_sps_", "_model-sps_", x))
         df = df.rename(columns=lambda x: re.sub("_sig_bin_nores-2mm", "", x))
     elif modality == "dwi":
-        df = df.rename(columns=lambda x: re.sub("csa_", "est-csa_", x))
-        df = df.rename(columns=lambda x: re.sub("csd_", "est-csd_", x))
+        df = df.rename(columns=lambda x: re.sub("csa_", "model-csa_", x))
+        df = df.rename(columns=lambda x: re.sub("csd_", "model-csd_", x))
     df = df.rename(columns=lambda x: re.sub("_k", "_k-", x))
     df = df.rename(columns=lambda x: re.sub("_thr_", "", x))
-    df = df.rename(columns=lambda x: re.sub("_est-est-", "_est-", x))
+    df = df.rename(columns=lambda x: re.sub("_model-model-", "_model-", x))
     df = df.rename(columns=lambda x: re.sub("__", "_", x))
     df = df.dropna(subset=["id"])
 
     cols = [
         j
         for j in set(
-            [i.split("_thrtype-" + thr_type + "_")[0] for i in list(set(df.columns))]
+            [i.split("_thrtype-" + thr_type + "_")[0] for i in
+             list(set(df.columns))]
         )
         if j != "id"
     ]
@@ -298,7 +316,8 @@ if __name__ == "__main__":
         # df[col] = df[col][(np.abs(stats.zscore(df[col])) < 3)]
 
     df = df.drop(
-        df.loc[:, list((100 * (df.isnull().sum() / len(df.index)) > 20))].columns, 1
+        df.loc[:, list((100 * (df.isnull().sum() /
+                               len(df.index)) > 20))].columns, 1
     )
 
     hyperparam_dict = {}
@@ -311,7 +330,7 @@ if __name__ == "__main__":
         df_summary = pd.DataFrame(columns=["grid", "discriminability", "icc"])
 
     if modality == "func":
-        gen_hyperparams = ["est", "clust", "_k"]
+        gen_hyperparams = ["model", "clust", "_k"]
         for col in cols:
             build_hp_dict(
                 col,
@@ -337,9 +356,10 @@ if __name__ == "__main__":
             if ID not in subject_dict.keys():
                 subject_dict[ID] = {}
             subject_dict[ID][ses] = dict.fromkeys(grid, np.nan)
-            for atlas, est, clust, _k, smooth, hpass in subject_dict[ID][ses]:
+            for atlas, model, clust, _k, smooth, hpass in \
+                subject_dict[ID][ses]:
                 subject_dict[ID][ses][(
-                    atlas, est, clust, _k, smooth, hpass)] = {}
+                    atlas, model, clust, _k, smooth, hpass)] = {}
                 met_vals = np.empty([len(mets), 1], dtype=np.float32)
                 met_vals[:] = np.nan
                 i = 0
@@ -350,8 +370,8 @@ if __name__ == "__main__":
                         + clust
                         + "_k-"
                         + str(_k)
-                        + "_est-"
-                        + est
+                        + "_model-"
+                        + model
                         + "_nodetype-parc_"
                         + "smooth-"
                         + str(smooth)
@@ -360,7 +380,7 @@ if __name__ == "__main__":
                         + "Hz_"
                         + "thrtype-"
                         + thr_type
-                        + "_net_mets_auc_"
+                        + "_topology_"
                         + met
                         + "_auc"
                     )
@@ -377,18 +397,17 @@ if __name__ == "__main__":
                         met_vals[i] = np.nan
                     del col
                     i += 1
-                subject_dict[ID][ses][(atlas, est, clust, _k, smooth, hpass)][
-                    "topology"
-                ] = met_vals
-                del i, atlas, est, clust, _k, smooth, hpass
+                subject_dict[ID][ses][(atlas, model, clust, _k, smooth,
+                                       hpass)]["topology"] = met_vals
+                del i, atlas, model, clust, _k, smooth, hpass
             del ID, ses
 
         if icc is True:
             i = 0
-            for atlas, est, clust, _k, smooth, hpass in grid:
+            for atlas, model, clust, _k, smooth, hpass in grid:
                 df_summary.at[i, "grid"] = (
-                    atlas, est, clust, _k, smooth, hpass)
-                print(atlas, est, clust, _k, smooth, hpass)
+                    atlas, model, clust, _k, smooth, hpass)
+                print(atlas, model, clust, _k, smooth, hpass)
                 id_list = []
                 icc_list = []
                 for ID in subject_dict.keys():
@@ -397,7 +416,7 @@ if __name__ == "__main__":
                         id_list.append(ID)
                         ses_list.append(
                             subject_dict[ID][ses][
-                                (atlas, est, clust, _k, smooth, hpass)
+                                (atlas, model, clust, _k, smooth, hpass)
                             ]["topology"]
                         )
                     meas = np.hstack(ses_list)
@@ -413,8 +432,8 @@ if __name__ == "__main__":
 
         if disc is True:
             i = 0
-            for atlas, est, clust, _k, smooth, hpass in grid:
-                print(atlas, est, clust, _k, smooth, hpass)
+            for atlas, model, clust, _k, smooth, hpass in grid:
+                print(atlas, model, clust, _k, smooth, hpass)
                 id_list = []
                 vect_all = []
                 for ID in subject_dict.keys():
@@ -423,7 +442,7 @@ if __name__ == "__main__":
                         id_list.append(ID)
                         vects.append(
                             subject_dict[ID][ses][
-                                (atlas, est, clust, _k, smooth, hpass)
+                                (atlas, model, clust, _k, smooth, hpass)
                             ]["topology"]
                         )
                     vect_all.append(np.concatenate(vects, axis=1))
@@ -433,7 +452,7 @@ if __name__ == "__main__":
                 Y = np.array(id_list)
                 try:
                     df_summary.at[i, "grid"] = (
-                        atlas, est, clust, _k, smooth, hpass)
+                        atlas, model, clust, _k, smooth, hpass)
                     bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
                     for m in set(bad_ixs):
                         if (X_top.shape[0] - bad_ixs.count(m)
@@ -453,7 +472,7 @@ if __name__ == "__main__":
                     i += 1
                     continue
     elif modality == "dwi":
-        gen_hyperparams = ["est", "clust", "_k"]
+        gen_hyperparams = ["model", "clust", "_k"]
         for col in cols:
             build_hp_dict(
                 col,
@@ -481,7 +500,7 @@ if __name__ == "__main__":
             subject_dict[ID][ses] = dict.fromkeys(grid, np.nan)
             for (
                 atlas,
-                est,
+                model,
                 clust,
                 _k,
                 track_type,
@@ -489,7 +508,8 @@ if __name__ == "__main__":
                 min_length,
             ) in subject_dict[ID][ses]:
                 subject_dict[ID][ses][
-                    (atlas, est, clust, _k, track_type, directget, min_length)
+                    (atlas, model, clust, _k, track_type, directget,
+                     min_length)
                 ] = {}
                 met_vals = np.empty([len(mets), 1], dtype=np.float32)
                 met_vals[:] = np.nan
@@ -501,17 +521,17 @@ if __name__ == "__main__":
                         + clust
                         + "_k-"
                         + str(_k)
-                        + "_est-"
-                        + est
-                        + "_nodetype-parc_samples-50000streams_tt-"
+                        + "_model-"
+                        + model
+                        + "_nodetype-parc_samples-20000streams_tracktype-"
                         + track_type
-                        + "_dg-"
+                        + "_directget-"
                         + directget
-                        + "_ml-"
+                        + "_minlength-"
                         + min_length
                         + "_thrtype-"
                         + thr_type
-                        + "_net_mets_auc_"
+                        + "_topology_"
                         + met
                         + "_auc"
                     )
@@ -529,24 +549,27 @@ if __name__ == "__main__":
                     del col
                     i += 1
                 subject_dict[ID][ses][
-                    (atlas, est, clust, _k, track_type, directget, min_length)
-                ]["topology"] = met_vals
-                del i, atlas, est, clust, _k, track_type, directget, min_length
+                    (atlas, model, clust, _k, track_type, directget,
+                     min_length)]["topology"] = met_vals
+                del i, atlas, model, clust, _k, track_type, directget, \
+                    min_length
             del ID, ses
 
         if icc is True:
             i = 0
-            for atlas, est, clust, _k, track_type, directget, min_length in grid:
+            for atlas, model, clust, _k, track_type, directget, min_length in \
+                grid:
                 df_summary.at[i, "grid"] = (
                     atlas,
-                    est,
+                    model,
                     clust,
                     _k,
                     track_type,
                     directget,
                     min_length,
                 )
-                print(atlas, est, clust, _k, track_type, directget, min_length)
+                print(atlas, model, clust, _k, track_type, directget,
+                      min_length)
                 id_list = []
                 icc_list = []
                 for ID in subject_dict.keys():
@@ -557,7 +580,7 @@ if __name__ == "__main__":
                             subject_dict[ID][ses][
                                 (
                                     atlas,
-                                    est,
+                                    model,
                                     clust,
                                     _k,
                                     track_type,
@@ -579,8 +602,10 @@ if __name__ == "__main__":
 
         if disc is True:
             i = 0
-            for atlas, est, clust, _k, track_type, directget, min_length in grid:
-                print(atlas, est, clust, _k, track_type, directget, min_length)
+            for atlas, model, clust, _k, track_type, directget, min_length in\
+                grid:
+                print(atlas, model, clust, _k, track_type, directget,
+                      min_length)
                 id_list = []
                 vect_all = []
                 for ID in subject_dict.keys():
@@ -591,7 +616,7 @@ if __name__ == "__main__":
                             subject_dict[ID][ses][
                                 (
                                     atlas,
-                                    est,
+                                    model,
                                     clust,
                                     _k,
                                     track_type,
@@ -608,7 +633,7 @@ if __name__ == "__main__":
                 try:
                     df_summary.at[i, "grid"] = (
                         atlas,
-                        est,
+                        model,
                         clust,
                         _k,
                         track_type,
@@ -636,7 +661,8 @@ if __name__ == "__main__":
 
     if icc is True and disc is False:
         df_summary = df_summary.sort_values("icc", ascending=False)
-        # df_summary = df_summary[df_summary.topological_icc > df_summary.icc.quantile(.50)]
+        # df_summary = df_summary[df_summary.topological_icc >
+        #                         df_summary.icc.quantile(.50)]
     elif icc is False and disc is True:
         df_summary = df_summary.sort_values(
             "discriminability", ascending=False)
