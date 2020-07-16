@@ -226,8 +226,8 @@ def build_subject_dict(sub, working_path, modality):
                 prefix = (
                     os.path.basename(auc_file)
                     .split(".csv")[0]
-                    .split("est-")[1]
-                    .split("%s%s" % (modality, "net_mets"))[0]
+                    .split("model-")[1]
+                    .split(modality)[0]
                 )
                 try:
                     subject_dict[sub][ses].append(
@@ -258,8 +258,8 @@ def build_subject_dict(sub, working_path, modality):
                 )
                 df_base.to_csv(out_path)
                 out_path_new = f"{str(Path(working_path))}/{modality}_" \
-                               f"group_topology_auc/{sub}_{ses}" \
-                               f"_topology_auc.csv"
+                               f"group_topology_auc/topology_auc_sub-{sub}_" \
+                               f"ses-{ses}.csv"
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -553,6 +553,7 @@ def main():
         # forks
         gc.collect()
     mgr.shutdown()
+
 
 if __name__ == "__main__":
     import warnings

@@ -459,7 +459,7 @@ def create_gb_palette(
         prune=True,
         centrality_type='eig'):
     """
-    Create conectome color palatte based on topography.
+    Create connectome color palette based on graph topography.
 
     Parameters
     ----------
@@ -481,6 +481,8 @@ def create_gb_palette(
         colormap used for representing the community assignment of the nodes.
 
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import random
     import seaborn as sns
     import networkx as nx
@@ -854,12 +856,14 @@ def plot_all_func(
 
             if roi:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                coord_path = f"{namer_dir}/coords_" \
+                             f"{op.basename(roi).split('.')[0]}_plotting.pkl"
                 with open(coord_path, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
-                labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                labels_path = f"{namer_dir}/labelnames_" \
+                              f"{op.basename(roi).split('.')[0]}_plotting.pkl"
                 with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
 
@@ -981,7 +985,6 @@ def plot_all_struct(
 
     """
     import matplotlib
-
     matplotlib.use("agg")
     import os
     import yaml
@@ -1016,9 +1019,8 @@ def plot_all_struct(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme = hardcoded_params["plotting"]["structural"]["glassbrain"][
-                "color_theme"
-            ][0]
+            color_theme = hardcoded_params["plotting"]["structural"][
+                "glassbrain"]["color_theme"][0]
             connectogram = hardcoded_params["plotting"]["connectogram"][0]
             glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
@@ -1054,12 +1056,14 @@ def plot_all_struct(
             if len(conn_matrix) > 20:
                 try:
                     plot_gen.plot_connectogram(
-                        conn_matrix, conn_model, atlas, namer_dir, ID, network, labels)
+                        conn_matrix, conn_model, atlas, namer_dir, ID,
+                        network, labels)
                 except RuntimeWarning:
                     print("\n\n\nWarning: Connectogram plotting failed!")
             else:
                 print(
-                    "Warning: Cannot plot connectogram for graphs smaller than 20 x 20!"
+                    "Warning: Cannot plot connectogram for graphs smaller than"
+                    " 20 x 20!"
                 )
 
         # Plot adj. matrix based on determined inputs
@@ -1120,7 +1124,8 @@ def plot_all_struct(
                                                                          )
 
             connectome = niplot.plot_connectome(
-                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+                np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
+                black_bg=True
             )
             connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
 
@@ -1203,10 +1208,13 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         Dictionary coontaining coords and labels shared by each layer of the multilayer graph.
 
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import numpy as np
+    import indexed_gzip
+    import nibabel as nib
     import multinetx as mx
     import matplotlib
-
     matplotlib.use("agg")
     import pkg_resources
     import networkx as nx
@@ -1236,9 +1244,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
-            color_theme_func = hardcoded_params["plotting"]["functional"]["glassbrain"][
-                "color_theme"
-            ][0]
+            color_theme_func = hardcoded_params["plotting"]["functional"][
+                "glassbrain"]["color_theme"][0]
             color_theme_struct = hardcoded_params["plotting"]["structural"][
                 "glassbrain"
             ]["color_theme"][0]
@@ -1248,7 +1255,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
         except KeyError:
             print(
-                "ERROR: Plotting configuration not successfully extracted from runconfig.yaml"
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
             )
             sys.exit(0)
     stream.close()
@@ -1327,7 +1335,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         # Multiplex glass brain
         views = ["x", "y", "z"]
         connectome = niplot.plot_connectome(
-            np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001, black_bg=True
+            np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
+            black_bg=True
         )
         connectome.add_overlay(ch2better_loc, alpha=0.50, cmap=plt.cm.gray)
 
@@ -1441,9 +1450,11 @@ def view_tractogram(streams, atlas):
     )
 
     FA_template_path = pkg_resources.resource_filename("pynets",
-                                                       "templates/FA_2mm.nii.gz")
+                                                       "templates/"
+                                                       "FA_2mm.nii.gz")
     ch2_better_path = pkg_resources.resource_filename("pynets",
-                                                      "templates/ch2better.nii.gz")
+                                                      "templates/"
+                                                      "ch2better.nii.gz")
     FA_template_img = nib.load(FA_template_path)
     clean_template_img = nib.load(ch2_better_path)
 
@@ -1566,7 +1577,9 @@ def plot_graph_measure_hists(csv_all_metrics):
     )
     for i, ax in enumerate(axes.flatten()):
         try:
-            ensemble_metric_df = df_concat.loc[:, df_concat.columns.str.contains(global_measures[i])]
+            ensemble_metric_df = df_concat.loc[:,
+                                 df_concat.columns.str.contains(
+                                     global_measures[i])]
             x = np.asarray(
                 ensemble_metric_df[
                     np.isfinite(ensemble_metric_df)
@@ -1583,13 +1596,15 @@ def plot_graph_measure_hists(csv_all_metrics):
                 x = x[~pd.isnull(x)]
                 if len(x) > 0:
                     print(
-                        f"NaNs encountered for {global_measures[i]}. Plotting and averaging across non-missing "
+                        f"NaNs encountered for {global_measures[i]}. Plotting "
+                        f"and averaging across non-missing "
                         f"values. Checking output is recommended...")
                     ax.hist(x, density=True, bins="auto", alpha=0.8)
                     ax.set_title(global_measures[i])
                 else:
                     print(
-                        f"{'Warning: No numeric data to plot for '}{global_measures[i]}"
+                        f"Warning: No numeric data to plot for "
+                        f"{global_measures[i]}"
                     )
                     continue
             except BaseException:
@@ -1600,7 +1615,8 @@ def plot_graph_measure_hists(csv_all_metrics):
                 ax.set_title(global_measures[i])
             except BaseException:
                 print(
-                    f"Inf or NaN values encounterd. No numeric data to plot for {global_measures[i]}"
+                    f"Inf or NaN values encounterd. No numeric data to plot "
+                    f"for {global_measures[i]}"
                 )
                 continue
 

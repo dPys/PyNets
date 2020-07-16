@@ -19,7 +19,7 @@ Required Inputs
 Required
 ========
 
-:(A): An alphanumeric subject identifier must be specified with the `-id` flag. It can be a pre-existing label or an arbitrarily selected one, but it will be used by PyNets for naming of output directories.
+:(A): An alphanumeric subject identifier must be specified with the `-id` flag. It can be a pre-existing label or an arbitrarily selected one, but it will be used by PyNets for naming of output directories. In the case of BIDS data, this should be `PARTICIPANT`_`SESSION`_`RUN` from sub-PARTICIPANT, ses-SESSION, run-RUN.
 
 :(B): A supported connectivity model specified with the `-mod` flag. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
 
@@ -57,11 +57,14 @@ Required
 
 :(D): A set of brain image files. `PyNets` is a post-processing workflow which means that input files should already be preprocessed. Minimally, all DWI, BOLD, and T1W image inputs should be **motion-corrected** (and ideally also susceptibility-corrected + denoised).
 
-    :`anat`: The T1w can be preprocessed using any method, but should be in its native MRI space.
+    :`anat`: The T1w can be preprocessed using any method, but should be in its native scanner anatomical space.
 
-    :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same space as the T1w (i.e. coregistered to the T1w anat).
+    :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same scanner anatomical space as the T1w (i.e. cleanly coregistered to the T1w anat).
 
-    :`dwi`: A DWI series should be in its native diffusion MRI (dMRI) space, and contain at least one B0 for reference. The DWI should **not** be registered to another space because reconstruction and tractography using the dwi will be distorted if it has been non-rigidly resampled elsewhere. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+    :`dwi`: A DWI series should ideally be in its native diffusion MRI (dMRI) space (but can also be co-registered to the T1w image) and contain at least one B0 for reference. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+
+    .. note::
+        Native-space DWI is preferred because resampling raw diffusion signal to a different modality (e.g. T1w) with different white-matter/grey-matter contrast (and lower spatial specificity for the former) may lead to spatial misalignment of reconstructed fiber models and SNR-loss that can increase the likelihood of tractographic error. Note that this is unlike the case of BOLD EPI -- an inherently noisy, temporal (i.e. non-structural) modality -- which benefits from being co-registered to T1w images of significantly higher spatial resolution, particularly in grey-matter tissue where BOLD signal is most-often observed.
 
     :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
 

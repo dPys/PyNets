@@ -6,8 +6,6 @@ PyNets®
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pynets.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-![](docs/_static/logo.png)
-
 About
 -----
 PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. PyNets enables the user to specify any of a several of methodological choices known to impact brain network node and/or edge definition, and then sample the prescribed connectome estimates in a massively parallel framework that in turn becomes conducive to grid-search and multi-view learning. PyNets is a post-processing workflow, which means that it can be run on virtually any preprocessed fMRI or dMRI data. It draws from Dipy, Nilearn, GrasPy, and Networkx libraries, but is powered primarily through the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives.

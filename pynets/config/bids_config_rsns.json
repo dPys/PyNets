@@ -13,22 +13,22 @@
             "es": "['mean']"
         },
     "gen": {
-            "a":  "['DesikanKlein2012']",
+            "a":  "['DesikanKlein2012', 'atlas_aal', 'BrainnetomeAtlasFan2016']",
             "bin":  "False",
             "df":  "False",
             "dt":  "False",
-            "embed":  "False",
-            "max_thr":  "None",
-            "min_thr": "None",
+            "embed":  "True",
+            "max_thr":  0.80,
+            "min_thr":  0.20,
             "mplx":  2,
             "mst":  "True",
-            "n":  "['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']",
+            "n":  "['SalVentAttn', 'Cont', 'Default']",
             "norm": "['6']",
             "ns":  "None",
             "p":  "['1']",
             "plt":  "True",
             "spheres":  "False",
-            "step_thr":  "None",
+            "step_thr":  0.10,
             "thr":  1.00,
             "vox":  "'2mm'"
         }
