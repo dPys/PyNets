@@ -715,6 +715,42 @@ def workflow_selector(
             ]
         )
 
+        # Handle case in which the structural atlas to be used was generated
+        # from an fmri-clustering based parcellation.
+        if k_clustering > 0:
+            meta_wf.disconnect(
+                [
+                    (
+                        meta_inputnode,
+                        sub_struct_wf,
+                        [
+                            ("uatlas", "inputnode.uatlas"),
+                            ("atlas", "inputnode.atlas")
+                        ],
+                    )
+                ]
+            )
+            meta_wf.connect(
+                [
+                    (
+                        sub_func_wf.get_node("fetch_nodes_and_labels_node"),
+                        sub_struct_wf,
+                        [
+                            ("uatlas", "inputnode.uatlas"),
+                            ("atlas", "inputnode.atlas")
+                        ],
+                    ),
+                    (
+                        sub_func_wf.get_node("clustering_node"),
+                        sub_struct_wf,
+                        [
+                            ("clustering",
+                             "fetch_nodes_and_labels_node.clustering"),
+                        ],
+                    )
+                ]
+            )
+
     else:
         # print("Running Unimodal Workflow...")
 
@@ -4116,7 +4152,7 @@ def fmri_connectometry(
                         [
                             ("uatlas", "uatlas"),
                             ("atlas", "atlas"),
-                            ("k_clustering", "clustering"),
+                            ("clustering", "clustering"),
                         ],
                     )
                 ]
