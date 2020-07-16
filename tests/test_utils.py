@@ -113,7 +113,7 @@ def test_collect_pandas_df():
     network = None
     ID = '002'
     plot_switch = False
-    net_mets_csv_list = [glob.glob(f"{base_dir}/topology/*.csv")][0]
+    net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv") if '_neat.csv' not in i]
     out = utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
     assert out is True
 

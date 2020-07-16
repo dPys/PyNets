@@ -83,7 +83,7 @@ def workflow_selector(
     extract_strategy,
     extract_strategy_list,
     outdir,
-    clean=True,
+    clean=True
 ):
     """A meta-interface for selecting modality-specific workflows to nest
     into a single-subject workflow"""
@@ -715,42 +715,45 @@ def workflow_selector(
             ]
         )
 
-        # Handle case in which the structural atlas to be used was generated
-        # from an fmri-clustering based parcellation.
-        if k_clustering > 0:
-            meta_wf.disconnect(
-                [
-                    (
-                        meta_inputnode,
-                        sub_struct_wf,
-                        [
-                            ("uatlas", "inputnode.uatlas"),
-                            ("atlas", "inputnode.atlas")
-                        ],
-                    )
-                ]
-            )
-            meta_wf.connect(
-                [
-                    (
-                        sub_func_wf.get_node("fetch_nodes_and_labels_node"),
-                        sub_struct_wf,
-                        [
-                            ("uatlas", "inputnode.uatlas"),
-                            ("atlas", "inputnode.atlas")
-                        ],
-                    ),
-                    (
-                        sub_func_wf.get_node("clustering_node"),
-                        sub_struct_wf,
-                        [
-                            ("clustering",
-                             "fetch_nodes_and_labels_node.clustering"),
-                        ],
-                    )
-                ]
-            )
-
+        # # Handle case in which the structural atlas to be used was generated
+        # # from an fmri-clustering based parcellation.
+        # TODO: This will almost unavoidably require the split/combine
+        #  semantics of Nipype 2.0/Pydra because parcellation iterables must be
+        #  dynamically combined across sub-workflows.
+        # if k_clustering > 0:
+        #     meta_wf.disconnect(
+        #         [
+        #             (
+        #                 sub_struct_wf.get_node("flexi_atlas_source"),
+        #                 sub_struct_wf.get_node("fetch_nodes_and_labels_"
+        #                                        "node"),
+        #                 [
+        #                     ("uatlas", "uatlas"),
+        #                     ("atlas", "atlas")
+        #                 ],
+        #             )
+        #         ]
+        #     )
+        #     meta_wf.connect(
+        #         [
+        #             (
+        #                 sub_func_wf.get_node("fetch_nodes_and_labels_node"),
+        #                 sub_struct_wf,
+        #                 [
+        #                     ("uatlas", "fetch_nodes_and_labels_node.uatlas")
+        #                 ],
+        #             ),
+        #             (
+        #                 sub_func_wf.get_node("clustering_node"),
+        #                 sub_struct_wf,
+        #                 [
+        #                     ("clustering",
+        #                      "fetch_nodes_and_labels_node.clustering"),
+        #                     ("atlas", "fetch_nodes_and_labels_node.atlas")
+        #                 ],
+        #             )
+        #         ]
+        #     )
     else:
         # print("Running Unimodal Workflow...")
 

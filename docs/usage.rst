@@ -75,11 +75,13 @@ Required
         If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`.
 
     .. note::
-        Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or possible override with the `-vox` flag.
+        Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or resolution override using the `-vox` flag.
 
     .. note::
         All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), and **absolute** file paths should always be specified to the CLI's.
 
+    .. note::
+        Tissue segmentations are calculated automatically in PyNets using FAST, but if you are using the `pynets_bids` CLI on preprocessed BIDS derivatives containing existing segmentations, pynets will alternatively attempt to autodetect and use those.
 
 Custom File Inputs
 ==================
@@ -233,10 +235,10 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
     singularity run -w \
      '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
      pynets /outputs \
-     -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-     -k 100 200 -pm '24,48' \
+     -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
+     -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+     -pm '24,48' \
      -norm 6 \
-     -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
      -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
      -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
      -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
@@ -254,10 +256,9 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
 
       singularity run --no-home --cleanenv '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
-        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
+        -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
         -norm 6 \
-        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
         -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
@@ -268,10 +269,9 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
 
       unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         pynets /outputs \
-        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
+        -ct 'ward' -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' -k 100 200 \
         -norm 6 \
-        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
         -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \
@@ -289,10 +289,9 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
       singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
-        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 -ct 'ward' \
-        -k 100 200 \
+        -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 \
+        -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
         -norm 6 \
-        -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
         -conf '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_desc-confounds_regressors.tsv' \

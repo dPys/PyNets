@@ -82,7 +82,7 @@ def sweep_directory(
             # make a list so we can iterate
             seshs = as_list(sesh)
 
-        # print(f"Subject: {sub}\nSession(s): {seshs}\nModality: {modality}")
+        print(f"Subject: {sub}\nSession(s): {seshs}\nModality: {modality}")
 
         for ses in seshs:
             # the attributes for our modality img

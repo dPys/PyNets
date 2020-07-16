@@ -39,7 +39,7 @@ Documentation
 -------------
 Explore official installation instructions, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
 
-*NEW July 2020: Try out the first official PyNets tutorial introducing connectome ensemble sampling: <https://github.com/dPys/PyNets/blob/master/tutorial/QuickStartTutorial.ipynb>
+*NEW July 2020: Try out the first official PyNets tutorial introducing connectome ensemble sampling: <https://nbviewer.jupyter.org/github/dPys/PyNets/blob/master/tutorial/QuickStartTutorial.ipynb>
 
 Citing
 ------
