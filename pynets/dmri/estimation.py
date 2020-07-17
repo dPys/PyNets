@@ -279,15 +279,15 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         ConstrainedSphericalDeconvModel,
         recursive_response,
     )
-    # import pkg_resources
-    # import yaml
-    #
-    # with open(
-    #     pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    # ) as stream:
-    #     hardcoded_params = yaml.load(stream)
-    #     nthreads = hardcoded_params["nthreads"][0]
-    # stream.close()
+    import pkg_resources
+    import yaml
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        nthreads = hardcoded_params["nthreads"][0]
+    stream.close()
 
     print("Fitting CSD model...")
     B0_mask_data = np.nan_to_num(np.asarray(
@@ -302,7 +302,9 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         init_fa=0.08,
         init_trace=0.0021,
         iter=8,
-        convergence=0.001
+        convergence=0.001,
+        parallel=False,
+        nbr_processes=nthreads
     )
     print("CSD Reponse: " + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
