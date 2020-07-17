@@ -1072,15 +1072,15 @@ class RegisterDWI(SimpleInterface):
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
 
         # Align t1w to mni template
-        # from joblib import Memory
-        # import os
-        # location = f"~/pynets_cache/" \
-        #            f"{self.inputs.anat_file.split('.nii')[0]}"
-        # os.makedirs(location, exist_ok=True)
-        # memory = Memory(location)
-        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
-        # t1w2mni_align()
-        reg.t1w2mni_align()
+        from joblib import Memory
+        import os
+        location = f"~/pynets_cache/" \
+                   f"{self.inputs.anat_file.split('.nii')[0]}"
+        os.makedirs(location, exist_ok=True)
+        memory = Memory(location)
+        t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        t1w2mni_align()
+        # reg.t1w2mni_align()
 
         if (self.inputs.overwrite is True) or (
                 op.isfile(reg.t1w2dwi) is False):
@@ -1745,15 +1745,15 @@ class RegisterFunc(SimpleInterface):
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
 
         # Align t1w to mni template
-        # from joblib import Memory
-        # import os
-        # location = f"~/pynets_cache/" \
-        #            f"{self.inputs.anat_file.split('.nii')[0]}"
-        # os.makedirs(location, exist_ok=True)
-        # memory = Memory(location)
-        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
-        # t1w2mni_align()
-        reg.t1w2mni_align()
+        from joblib import Memory
+        import os
+        location = f"~/pynets_cache/" \
+                   f"{self.inputs.anat_file.split('.nii')[0]}"
+        os.makedirs(location, exist_ok=True)
+        memory = Memory(location)
+        t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        t1w2mni_align()
+        # reg.t1w2mni_align()
 
         self._results["reg_fmri_complete"] = True
         self._results["basedir_path"] = runtime.cwd
