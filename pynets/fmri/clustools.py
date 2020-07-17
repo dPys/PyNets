@@ -779,7 +779,7 @@ class NiParcellate(object):
         self._mask_img = None
         self._local_conn_mat_path = None
         self._dir_path = None
-        self._clust_est = None
+        _clust_est = None
         self._local_conn = None
         self._clust_mask_corr_img = None
         self._func_img_data = None
@@ -1000,7 +1000,7 @@ class NiParcellate(object):
             or (self.clust_type == "rena" and self.num_conn_comps == 1)
             or (self.clust_type == "kmeans" and self.num_conn_comps == 1)
         ):
-            self._clust_est = Parcellations(
+            _clust_est = Parcellations(
                 method=self.clust_type,
                 standardize=self._standardize,
                 detrend=self._detrending,
@@ -1018,18 +1018,18 @@ class NiParcellate(object):
                 confounds = pd.read_csv(self.conf, sep="\t")
                 if confounds.isnull().values.any():
                     conf_corr = fill_confound_nans(confounds, self._dir_path)
-                    self._clust_est.fit(func_boot_img, confounds=conf_corr)
+                    _clust_est.fit(func_boot_img, confounds=conf_corr)
                 else:
-                    self._clust_est.fit(func_boot_img, confounds=self.conf)
+                    _clust_est.fit(func_boot_img, confounds=self.conf)
             else:
-                self._clust_est.fit(func_boot_img)
+                _clust_est.fit(func_boot_img)
 
-            self._clust_est.labels_img_.set_data_dtype(np.uint16)
+            _clust_est.labels_img_.set_data_dtype(np.uint16)
             print(
                 f"{self.clust_type}{self.k}"
                 f"{(' clusters: %.2fs' % (time.time() - start))}"
             )
-            return self._clust_est.labels_img_
+            return _clust_est.labels_img_
 
         elif self.clust_type == "ncut":
             out_img = parcellate_ncut(
@@ -1072,7 +1072,7 @@ class NiParcellate(object):
                 if k_list[i] == 0:
                     # print('0 voxels in component. Discarding...')
                     continue
-                self._clust_est = Parcellations(
+                _clust_est = Parcellations(
                     method=self.clust_type,
                     standardize=self._standardize,
                     detrend=self._detrending,
@@ -1089,12 +1089,12 @@ class NiParcellate(object):
                     if confounds.isnull().values.any():
                         conf_corr = fill_confound_nans(
                             confounds, self._dir_path)
-                        self._clust_est.fit(func_boot_img, confounds=conf_corr)
+                        _clust_est.fit(func_boot_img, confounds=conf_corr)
                     else:
-                        self._clust_est.fit(func_boot_img, confounds=self.conf)
+                        _clust_est.fit(func_boot_img, confounds=self.conf)
                 else:
-                    self._clust_est.fit(func_boot_img)
-                conn_comp_atlases.append(self._clust_est.labels_img_)
+                    _clust_est.fit(func_boot_img)
+                conn_comp_atlases.append(_clust_est.labels_img_)
 
             # Then combine the multiple atlases, corresponding to each
             # connected component, into a single atlas

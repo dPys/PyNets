@@ -460,20 +460,20 @@ class IndividualClustering(SimpleInterface):
     output_spec = _IndividualClusteringOutputSpec
 
     def _run_interface(self, runtime):
-        import gc
+        import nibabel as nib
         import pkg_resources
         import yaml
-        from nilearn.masking import unmask
-        from pynets.fmri.estimation import timeseries_bootstrap
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
+        from joblib import Parallel, delayed
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
         ) as stream:
             hardcoded_params = yaml.load(stream)
             c_boot = hardcoded_params["c_boot"][0]
+            nthreads = hardcoded_params["nthreads"][0]
         stream.close()
 
         clust_list = ["kmeans", "ward", "complete", "average", "ncut", "rena"]
@@ -535,16 +535,46 @@ class IndividualClustering(SimpleInterface):
                 f" iterations..."
             )
             ts_data, block_size = nip.prep_boot()
-            boot_parcellations = []
-            for i in range(c_boot):
-                print(f"\nBootstrapped iteration: {i}")
-                boot_series = timeseries_bootstrap(ts_data, block_size)[0]
-                func_boot_img = unmask(boot_series, nip._clust_mask_corr_img)
-                out_path = f"{runtime.cwd}/boot_parc_tmp_{str(i)}.nii.gz"
-                nib.save(nip.parcellate(func_boot_img), out_path)
-                boot_parcellations.append(out_path)
-                gc.collect()
 
+            def create_bs_imgs(i, ts_data, block_size, nip, work_dir):
+                import nibabel as nib
+                from nilearn.masking import unmask
+                from pynets.fmri.estimation import timeseries_bootstrap
+                boot_series = timeseries_bootstrap(ts_data, block_size)[0]
+                out_path = f"{work_dir}/boot_bs_img_tmp_{str(i)}.nii.gz"
+                nib.save(unmask(boot_series, nip._clust_mask_corr_img),
+                         out_path)
+                return out_path
+
+            def run_bs_iteration(i, boot_imgs, parcellate, work_dir):
+                import nibabel as nib
+                print(f"\nBootstrapped iteration: {i}")
+                func_boot_img = nib.load(boot_imgs[i])
+                out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
+                parcellate(func_boot_img).to_filename(out_path)
+                return out_path
+
+            boot_imgs = []
+            for i in range(c_boot):
+                boot_imgs.append(create_bs_imgs(i, ts_data,
+                block_size, nip, runtime.cwd))
+
+            # Use joblib multithreading
+            boot_parcellations = Parallel(n_jobs=nthreads,
+                                          verbose=10,
+                                          backend='threading')(
+                delayed(run_bs_iteration)(
+                    i, boot_imgs, nip.parcellate, runtime.cwd) for i in
+                range(c_boot))
+
+            # boot_parcellations = []
+            # for i in range(c_boot):
+            #     boot_parcellations.append(run_bs_iteration(i, boot_imgs,
+            #                                                nip.parcellate,
+            #                                                runtime.cwd))
+
+            print('Bootstrapped samples complete:')
+            print(boot_parcellations)
             print("Creating spatially-constrained consensus parcellation...")
             consensus_parcellation = clustools.ensemble_parcellate(
                 boot_parcellations, int(self.inputs.k)
@@ -1041,7 +1071,15 @@ class RegisterDWI(SimpleInterface):
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
 
-        # Align t1w to mni
+        # Align t1w to mni template
+        # from joblib import Memory
+        # import os
+        # location = f"~/pynets_cache/" \
+        #            f"{self.inputs.anat_file.split('.nii')[0]}"
+        # os.makedirs(location, exist_ok=True)
+        # memory = Memory(location)
+        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        # t1w2mni_align()
         reg.t1w2mni_align()
 
         if (self.inputs.overwrite is True) or (
@@ -1706,7 +1744,15 @@ class RegisterFunc(SimpleInterface):
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
 
-        # Align t1w to mni
+        # Align t1w to mni template
+        # from joblib import Memory
+        # import os
+        # location = f"~/pynets_cache/" \
+        #            f"{self.inputs.anat_file.split('.nii')[0]}"
+        # os.makedirs(location, exist_ok=True)
+        # memory = Memory(location)
+        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        # t1w2mni_align()
         reg.t1w2mni_align()
 
         self._results["reg_fmri_complete"] = True

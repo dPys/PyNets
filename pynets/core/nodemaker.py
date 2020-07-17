@@ -868,7 +868,7 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
         left_hemi[int(x):] = 0
         right_hemi[:int(x)] = 0
 
-        # Two connected component in both hemispheres
+        # Two connected components in both hemispheres
         if not np.all(left_hemi == False) or np.all(right_hemi == False):
             left_lab[int(x):] = 0
             right_lab[:int(x)] = 0
