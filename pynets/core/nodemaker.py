@@ -295,8 +295,9 @@ def get_node_membership(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
          used to filter nodes in the study of brain subgraphs.
     infile : str
-        File path to Nifti1Image object whose affine will provide sampling
-        reference for evaluation spatial proximity.
+        File path to Nifti1Image object whose affine will provide resampling
+        reference for evaluation spatial proximity. Typically, this is an
+        MNI-space template image.
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
@@ -345,14 +346,28 @@ def get_node_membership(
       cortex from intrinsic functional connectivity MRI, Cerebral Cortex,
       29:3095-3114, 2018.
     """
-    from nilearn.image import resample_img
-    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     import pkg_resources
     import pandas as pd
+    import sys
+    from nilearn.image import resample_to_img, resample_img
+    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
     try:
         import cPickle as pickle
     except ImportError:
         import _pickle as pickle
+
+    try:
+        template_img = nib.load(infile)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI reference. Do you have git-lfs "
+              f"installed?")
+        sys.exit(1)
+    bna_aff = template_img.affine
+
+    x_vox = np.diagonal(bna_aff[:3, 0:3])[0]
+    y_vox = np.diagonal(bna_aff[:3, 0:3])[1]
+    z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
     if isinstance(parcel_list, str):
         parcel_pkl_file = parcel_list
@@ -391,14 +406,6 @@ def get_node_membership(
         "DefaultC",
         "TempPar",
     ]
-
-    # Load subject func data
-    bna_img = nib.load(infile)
-    bna_aff = bna_img.affine
-    bna_img.uncache()
-    x_vox = np.diagonal(bna_aff[:3, 0:3])[0]
-    y_vox = np.diagonal(bna_aff[:3, 0:3])[1]
-    z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
@@ -451,12 +458,18 @@ def get_node_membership(
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
     try:
-        par_img = nib.load(par_file)
+        rsn_img = nib.load(par_file)
     except indexed_gzip.ZranError as e:
         print(e, "\nCannot load RSN reference image. Do you have git-lfs "
                  "installed?")
+        sys.exit(1)
+
+    rsn_img_res = resample_to_img(
+        rsn_img, template_img, interpolation="nearest"
+    )
+
     RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
-    RSNmask = np.asarray(par_img.dataobj)[:, :, :, RSN_ix]
+    RSNmask = np.asarray(rsn_img_res.dataobj)[:, :, :, RSN_ix]
 
     coords_vox = []
     for i in coords:
@@ -465,6 +478,7 @@ def get_node_membership(
         tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x))
         for x in coords_vox
     )
+
     # coords_vox = list(set(list(tuple(x) for x in coords_vox)))
     if parc is False:
         i = -1
@@ -505,7 +519,7 @@ def get_node_membership(
         for parcel in parcel_list:
             parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
             parcel_vol[np.asarray(
-                resample_img(parcel, target_affine=par_img.affine,
+                resample_img(parcel, target_affine=rsn_img.affine,
                              target_shape=RSNmask.shape).dataobj) == 1] = 1
 
             # Count number of unique voxels where overlap of parcel and mask
@@ -528,8 +542,8 @@ def get_node_membership(
             # Calculate % overlap
             try:
                 overlap = float(overlap_count / total_count)
-            except RuntimeWarning:
-                print("\nWarning: No overlap with roi mask!\n")
+            except BaseException:
+                print(f"No overlap with roi mask. Dropping parcel {i}...")
                 overlap = float(0)
 
             if overlap >= perc_overlap:
@@ -543,7 +557,8 @@ def get_node_membership(
             i = i + 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
 
-    par_img.uncache()
+    rsn_img.uncache()
+    template_img.uncache()
 
     if len(coords_mm) <= 1:
         raise ValueError(
@@ -1018,6 +1033,8 @@ def parcel_naming(coords, vox_size):
         List of (x, y, z) tuples in voxel-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each parcellation
         node.
+    vox_size : str
+        Voxel resolution (`1mm` or `2mm` stored as strings with units).
 
     Returns
     -------
@@ -1074,6 +1091,7 @@ def parcel_naming(coords, vox_size):
         print(e,
               f"\nCannot load MNI template. Do you have git-lfs "
               f"installed?")
+        sys.exit(1)
 
     coords_vox = []
     for i in coords:

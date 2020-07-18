@@ -2115,7 +2115,7 @@ def dmri_connectometry(
             niu.Function(
                 input_names=[
                     "network",
-                    "infile",
+                    "vox_size",
                     "coords",
                     "labels",
                     "parc",

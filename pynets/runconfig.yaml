@@ -71,6 +71,11 @@ local_atlases:
     - 'whole_brain_cluster_labels_PCA100'
     - 'whole_brain_cluster_labels_PCA200'
     - 'RandomParcellationsc05meanalll43Craddock2011'
+    - 'sub-colin27_label-L2018_desc-scale1_atlas'
+    - 'sub-colin27_label-L2018_desc-scale2_atlas'
+    - 'sub-colin27_label-L2018_desc-scale3_atlas'
+    - 'sub-colin27_label-L2018_desc-scale4_atlas'
+    - 'sub-colin27_label-L2018_desc-scale5_atlas'
 labeling_atlases:
     - 'talairach_labels'
     - 'mni_labels'
@@ -194,7 +199,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
