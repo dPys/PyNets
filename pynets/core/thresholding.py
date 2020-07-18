@@ -781,8 +781,8 @@ def perform_thresholding(
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-      https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network
+      Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
     import numpy as np
@@ -793,11 +793,13 @@ def perform_thresholding(
 
     if min_span_tree is True:
         print(
-            "Using local thresholding option with the Minimum Spanning Tree (MST)...\n"
+            "Using local thresholding from the "
+            "Minimum Spanning Tree (MST)...\n"
         )
         if dens_thresh is True:
             print(
-                "Ignoring -dt flag since local density thresholding is not currently supported."
+                "Ignoring -dt flag since local density thresholding is not"
+                " currently supported."
             )
         thr_type = "MST"
         edge_threshold = f"{str(thr_perc)}%"

@@ -175,7 +175,17 @@ ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
 
 EXPOSE 22
 
-RUN ldconfig && . /home/neuro/.bashrc && bash
+RUN . /home/neuro/.bashrc & bash
+
+ENV FSLDIR=/usr/share/fsl/5.0 \
+    FSLOUTPUTTYPE=NIFTI_GZ \
+    FSLMULTIFILEQUIT=TRUE \
+    POSSUMDIR=/usr/share/fsl/5.0 \
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
+    FSLTCLSH=/usr/bin/tclsh \
+    FSLWISH=/usr/bin/wish \
+    PATH=$FSLDIR/bin:$PATH
+ENV PATH="/opt/conda/bin":$PATH
 
 # and add it as an entrypoint
-#ENTRYPOINT ["pynets_bids"]
+#ENTRYPOINT ["pynets"]

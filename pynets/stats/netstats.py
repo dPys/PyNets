@@ -852,11 +852,11 @@ def most_important(G, method="betweenness", sd=1):
     if method == "coreness":
         try:
             import cpalgorithm as cp
+            algorithm = cp.KM_config()
+            algorithm.detect(G)
+            ranking = algorithm.get_coreness().items()
         except ImportError:
             print("Cannot run coreness detection. cpalgorithm not installed!")
-        algorithm = cp.KM_config()
-        algorithm.detect(G)
-        ranking = algorithm.get_coreness().items()
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
@@ -1117,17 +1117,20 @@ class CleanGraphs(object):
             import yaml
 
             with open(
-                pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+                pkg_resources.resource_filename("pynets",
+                                                "runconfig.yaml"), "r"
             ) as stream:
                 try:
                     hardcoded_params = yaml.load(stream)
-                    hub_detection_method = hardcoded_params["hub_detection_method"][0]
+                    hub_detection_method = hardcoded_params[
+                        "hub_detection_method"][0]
                 except FileNotFoundError:
                     print("Failed to parse runconfig.yaml")
             stream.close()
             [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
-            print("Pruning all but the largest connected component subgraph...")
+            print("Pruning all but the largest connected "
+                  "component subgraph...")
             self.G = self.G.subgraph(get_lcc(self.G))
         else:
             print("No graph anti-fragmentation applied...")

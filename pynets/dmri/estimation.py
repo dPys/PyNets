@@ -279,6 +279,15 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         ConstrainedSphericalDeconvModel,
         recursive_response,
     )
+    import pkg_resources
+    import yaml
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        nthreads = hardcoded_params["nthreads"][0]
+    stream.close()
 
     print("Fitting CSD model...")
     B0_mask_data = np.nan_to_num(np.asarray(
@@ -295,6 +304,7 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         iter=8,
         convergence=0.001,
         parallel=False,
+        nbr_processes=nthreads
     )
     print("CSD Reponse: " + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
@@ -711,7 +721,7 @@ def streams2graph(
         for u, v, d in g.edges(data=True):
             total_fibers += len(d)
             if u != u_start:
-                total_volume += g.node[int(u)]['roi_volume']
+                total_volume += g.nodes[int(u)]['roi_volume']
             u_start = u
 
         ix = 0
@@ -722,8 +732,8 @@ def streams2graph(
                                          float(total_fibers)) /
                        float(edge_fiberlength_mean)) *
                       ((2.0 * float(total_volume)) /
-                       (g.node[int(u)]['roi_volume'] +
-                        g.node[int(v)]['roi_volume'])))) * 1000
+                       (g.nodes[int(u)]['roi_volume'] +
+                        g.nodes[int(v)]['roi_volume'])))) * 1000
             else:
                 fiber_density = 0
             g.edges[u, v].update({"fiber_density": fiber_density})

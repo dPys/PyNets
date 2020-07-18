@@ -1787,15 +1787,13 @@ def build_workflow(args, retval):
                   f"{Fore.GREEN}direction getting...")
         else:
             print(f"{Fore.GREEN}Iterating direction getting:")
-            for dg in multi_directget:
-                print(f"{Fore.BLUE}{dg}")
+            print(f"{Fore.BLUE}{', '.join(multi_directget)}")
         if min_length:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} "
                   f"minimum streamline length...")
         else:
             print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
-            for ml in min_length_list:
-                print(f"{Fore.BLUE}{ml}")
+            print(f"{Fore.BLUE}{', '.join(min_length_list)}")
         if target_samples:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} "
                   f"{Fore.GREEN}streamline samples...")
