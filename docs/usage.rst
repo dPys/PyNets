@@ -251,10 +251,10 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    the container <https://github.com/singularityware/singularity/issues/445>`_.
    Because of this your host libraries (such as nipype) could be accidentally used
    instead of the ones inside the container - if they are included in ``PYTHONPATH``.
-   To avoid such situation we recommend using the ``--cleanenv`` singularity flag
+   To avoid such situation we sometimes recommend using the ``--cleanenv`` singularity flag
    in production use. For example: ::
 
-      singularity run --no-home --cleanenv '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
+      singularity run --cleanenv --no-home_clust_est '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
         -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
@@ -286,7 +286,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    the ``-B <host_folder>:<container_folder>`` Singularity argument.
    For example: ::
 
-      singularity run --cleanenv -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      singularity run_clust_est -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 \
