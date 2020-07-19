@@ -479,7 +479,7 @@ def direct_streamline_norm(
 
         # # Correct coords and labels
         # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
-        # bad_idxs = [i-1 for i in bad_idxs]
+        # bad_idxs = [i+1 for i in bad_idxs]
         # if len(bad_idxs) > 0:
         #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
         #     for j in bad_idxs:

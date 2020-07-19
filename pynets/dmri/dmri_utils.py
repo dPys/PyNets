@@ -126,3 +126,69 @@ def extract_b0(in_file, b0_ixs, out_path=None):
         img.affine,
         hdr).to_filename(out_path)
     return out_path
+
+
+def evaluate_streamline_plausibility(dwi_data, gtab, streamlines,
+                                     affine=np.eye(4),
+                                     sphere='repulsion724'):
+    """
+    Linear Fascicle Evaluation (LiFE) takes any connectome and uses a
+    forward modelling approach to predict diffusion measurements in the
+    same brain.
+
+    Parameters
+    ----------
+    dwi_data : array
+        4D array of dwi data.
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+
+    Returns
+    -------
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+
+    References
+    ----------
+    .. [1] Pestilli, F., Yeatman, J, Rokem, A. Kay, K. and Wandell B.A. (2014).
+     Validation and statistical inference in living connectomes.
+     Nature Methods 11: 1058-1063. doi:10.1038/nmeth.3098
+    """
+    import dipy.tracking.life as life
+    import dipy.core.optimize as opt
+    from dipy.data import get_sphere
+
+    print('Performing Linear Fascicle Evaluation...')
+    affine = 2*np.eye(4)
+    affine[3][3] = 1
+    original_count = len(streamlines)
+    sphere = get_sphere(sphere)
+    fiber_model = life.FiberModel(gtab)
+    fiber_fit = fiber_model.fit(dwi_data, streamlines, affine=affine,
+                                sphere=sphere)
+    streamlines = list(np.array(streamlines)[np.where(fiber_fit.beta > 0)[0]])
+    pruned_count = len(streamlines)
+    model_predict = fiber_fit.predict()
+    model_error = model_predict - fiber_fit.data
+    model_rmse = np.sqrt(np.mean(model_error[:, 10:] ** 2, -1))
+    beta_baseline = np.zeros(fiber_fit.beta.shape[0])
+    pred_weighted = np.reshape(opt.spdot(fiber_fit.life_matrix, beta_baseline),
+                               (fiber_fit.vox_coords.shape[0],
+                                np.sum(~gtab.b0s_mask)))
+    mean_pred = np.empty((fiber_fit.vox_coords.shape[0], gtab.bvals.shape[0]))
+    S0 = fiber_fit.b0_signal
+    mean_pred[..., gtab.b0s_mask] = S0[:, None]
+    mean_pred[..., ~gtab.b0s_mask] = (pred_weighted +
+                                      fiber_fit.mean_signal
+                                      [:, None]) * S0[:, None]
+    mean_error = mean_pred - fiber_fit.data
+    mean_rmse = np.sqrt(np.mean(mean_error ** 2, -1))
+    print(f"Original # Streamlines: {original_count}")
+    print(f"Final # Streamlines: {pruned_count}")
+    print(f"Streamlines removed: {pruned_count - original_count}")
+    print(f"Mean RMSE: {mean_rmse}")
+    print(f"Model RMSE: {model_rmse}")
+    print(f"Reduction RMSE: {mean_rmse - model_rmse}")
+    return streamlines

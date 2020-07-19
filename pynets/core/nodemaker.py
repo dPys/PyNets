@@ -407,6 +407,7 @@ def get_node_membership(
         "TempPar",
     ]
 
+    # 17 triple: SalVentAttnA 7 (6), ContB 12 (11), DefaultA 14 (13)
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
@@ -1056,8 +1057,8 @@ def parcel_naming(coords, vox_size):
 
     """
     import sys
-    import pandas as pd
     import pkg_resources
+    import pandas as pd
     import nibabel as nib
     from collections import defaultdict
     from nilearn.image import resample_to_img

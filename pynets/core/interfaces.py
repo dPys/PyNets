@@ -1074,7 +1074,7 @@ class RegisterDWI(SimpleInterface):
         # Align t1w to mni template
         # from joblib import Memory
         # import os
-        # location = f"~/pynets_cache/" \
+        # location = f"{outdir}/joblib_" \
         #            f"{self.inputs.anat_file.split('.nii')[0]}"
         # os.makedirs(location, exist_ok=True)
         # memory = Memory(location)
@@ -1386,14 +1386,22 @@ class RegisterAtlasDWI(SimpleInterface):
                 np.unique(
                     np.asarray(
                         nib.load(dwi_aligned_atlas).dataobj).astype("int"))))
-        bad_idxs = [i - 1 for i in bad_idxs]
+
         if len(bad_idxs) > 0:
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            print(f"Missing parcels: {bad_idxs}")
             for j in bad_idxs:
+                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
                 del self.inputs.labels[j], self.inputs.coords[j]
-
-        assert (len(self.inputs.coords) == len(self.inputs.labels) == len(
-            np.unique(np.asarray(nib.load(dwi_aligned_atlas).dataobj))[1:]))
+        try:
+            intensity_count = len(np.unique(
+                np.asarray(nib.load(
+                    dwi_aligned_atlas).dataobj).astype("int"))[1:])
+            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+        except ValueError as err:
+            print(f"# Coords: {len(self.inputs.coords)}")
+            print(f"# Labels: {len(self.inputs.labels)}")
+            print(f"# Intensities: {intensity_count}")
 
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
@@ -1747,7 +1755,7 @@ class RegisterFunc(SimpleInterface):
         # Align t1w to mni template
         # from joblib import Memory
         # import os
-        # location = f"~/pynets_cache/" \
+        # location = f"{outdir}/joblib_" \
         #            f"{self.inputs.anat_file.split('.nii')[0]}"
         # os.makedirs(location, exist_ok=True)
         # memory = Memory(location)
@@ -1937,14 +1945,22 @@ class RegisterAtlasFunc(SimpleInterface):
                 np.unique(
                     np.asarray(
                         nib.load(aligned_atlas_gm).dataobj).astype("int"))))
-        bad_idxs = [i - 1 for i in bad_idxs]
+
         if len(bad_idxs) > 0:
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            print(f"Missing parcels: {bad_idxs}")
             for j in bad_idxs:
+                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
                 del self.inputs.labels[j], self.inputs.coords[j]
-
-        assert (len(self.inputs.coords) == len(self.inputs.labels) == len(
-            np.unique(np.asarray(nib.load(aligned_atlas_gm).dataobj))[1:]))
+        try:
+            intensity_count = len(np.unique(
+                np.asarray(nib.load(
+                    aligned_atlas_gm).dataobj).astype("int"))[1:])
+            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+        except ValueError as err:
+            print(f"# Coords: {len(self.inputs.coords)}")
+            print(f"# Labels: {len(self.inputs.labels)}")
+            print(f"# Intensities: {intensity_count}")
 
         reg_tmp = [
             uatlas_parcels_tmp_path,
