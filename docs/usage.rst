@@ -232,7 +232,7 @@ Running a Singularity Image
 If the data to be preprocessed is also on an HPC server, you are ready to run pynets, either manually or as a BIDS application.
 For example, where PARTICIPANT is a subject identifier and SESSION is a given scan session, we could sample an ensemble of connectomes manually as follows ::
 
-    singularity run -w \
+    singularity exec -w \
      '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
      pynets /outputs \
      -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
@@ -254,7 +254,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    To avoid such situation we sometimes recommend using the ``--cleanenv`` singularity flag
    in production use. For example: ::
 
-      singularity run --cleanenv --no-home_clust_est '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
+      singularity exec --cleanenv --no-home_clust_est '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
         -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
@@ -267,7 +267,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
 
    or, unset the ``PYTHONPATH`` variable before running: ::
 
-      unset PYTHONPATH; singularity run ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      unset PYTHONPATH; singularity exec ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
         -ct 'ward' -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' -k 100 200 \
@@ -286,7 +286,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    the ``-B <host_folder>:<container_folder>`` Singularity argument.
    For example: ::
 
-      singularity run_clust_est -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      singularity exec_clust_est -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 \

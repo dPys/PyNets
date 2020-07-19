@@ -303,7 +303,7 @@ class FetchNodesLabels(SimpleInterface):
                       "label names...")
                 if self.inputs.use_parcel_naming is True:
                     try:
-                        print("Attempting AAL instead...")
+                        print("Attempting consensus parcel naming instead...")
                         labels = nodemaker.parcel_naming(
                             coords, self.inputs.vox_size)
                     except BaseException:
@@ -1072,15 +1072,15 @@ class RegisterDWI(SimpleInterface):
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
 
         # Align t1w to mni template
-        from joblib import Memory
-        import os
-        location = f"~/pynets_cache/" \
-                   f"{self.inputs.anat_file.split('.nii')[0]}"
-        os.makedirs(location, exist_ok=True)
-        memory = Memory(location)
-        t1w2mni_align = memory.cache(reg.t1w2mni_align)
-        t1w2mni_align()
-        # reg.t1w2mni_align()
+        # from joblib import Memory
+        # import os
+        # location = f"{outdir}/joblib_" \
+        #            f"{self.inputs.anat_file.split('.nii')[0]}"
+        # os.makedirs(location, exist_ok=True)
+        # memory = Memory(location)
+        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        # t1w2mni_align()
+        reg.t1w2mni_align()
 
         if (self.inputs.overwrite is True) or (
                 op.isfile(reg.t1w2dwi) is False):
@@ -1386,14 +1386,22 @@ class RegisterAtlasDWI(SimpleInterface):
                 np.unique(
                     np.asarray(
                         nib.load(dwi_aligned_atlas).dataobj).astype("int"))))
-        bad_idxs = [i - 1 for i in bad_idxs]
+
         if len(bad_idxs) > 0:
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            print(f"Missing parcels: {bad_idxs}")
             for j in bad_idxs:
+                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
                 del self.inputs.labels[j], self.inputs.coords[j]
-
-        assert (len(self.inputs.coords) == len(self.inputs.labels) == len(
-            np.unique(np.asarray(nib.load(dwi_aligned_atlas).dataobj))[1:]))
+        try:
+            intensity_count = len(np.unique(
+                np.asarray(nib.load(
+                    dwi_aligned_atlas).dataobj).astype("int"))[1:])
+            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+        except ValueError as err:
+            print(f"# Coords: {len(self.inputs.coords)}")
+            print(f"# Labels: {len(self.inputs.labels)}")
+            print(f"# Intensities: {intensity_count}")
 
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
@@ -1745,15 +1753,15 @@ class RegisterFunc(SimpleInterface):
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
 
         # Align t1w to mni template
-        from joblib import Memory
-        import os
-        location = f"~/pynets_cache/" \
-                   f"{self.inputs.anat_file.split('.nii')[0]}"
-        os.makedirs(location, exist_ok=True)
-        memory = Memory(location)
-        t1w2mni_align = memory.cache(reg.t1w2mni_align)
-        t1w2mni_align()
-        # reg.t1w2mni_align()
+        # from joblib import Memory
+        # import os
+        # location = f"{outdir}/joblib_" \
+        #            f"{self.inputs.anat_file.split('.nii')[0]}"
+        # os.makedirs(location, exist_ok=True)
+        # memory = Memory(location)
+        # t1w2mni_align = memory.cache(reg.t1w2mni_align)
+        # t1w2mni_align()
+        reg.t1w2mni_align()
 
         self._results["reg_fmri_complete"] = True
         self._results["basedir_path"] = runtime.cwd
@@ -1937,14 +1945,22 @@ class RegisterAtlasFunc(SimpleInterface):
                 np.unique(
                     np.asarray(
                         nib.load(aligned_atlas_gm).dataobj).astype("int"))))
-        bad_idxs = [i - 1 for i in bad_idxs]
+
         if len(bad_idxs) > 0:
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            print(f"Missing parcels: {bad_idxs}")
             for j in bad_idxs:
+                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
                 del self.inputs.labels[j], self.inputs.coords[j]
-
-        assert (len(self.inputs.coords) == len(self.inputs.labels) == len(
-            np.unique(np.asarray(nib.load(aligned_atlas_gm).dataobj))[1:]))
+        try:
+            intensity_count = len(np.unique(
+                np.asarray(nib.load(
+                    aligned_atlas_gm).dataobj).astype("int"))[1:])
+            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+        except ValueError as err:
+            print(f"# Coords: {len(self.inputs.coords)}")
+            print(f"# Labels: {len(self.inputs.labels)}")
+            print(f"# Intensities: {intensity_count}")
 
         reg_tmp = [
             uatlas_parcels_tmp_path,

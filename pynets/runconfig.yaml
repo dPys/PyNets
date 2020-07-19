@@ -71,6 +71,11 @@ local_atlases:
     - 'whole_brain_cluster_labels_PCA100'
     - 'whole_brain_cluster_labels_PCA200'
     - 'RandomParcellationsc05meanalll43Craddock2011'
+    - 'sub-colin27_label-L2018_desc-scale1_atlas'
+    - 'sub-colin27_label-L2018_desc-scale2_atlas'
+    - 'sub-colin27_label-L2018_desc-scale3_atlas'
+    - 'sub-colin27_label-L2018_desc-scale4_atlas'
+    - 'sub-colin27_label-L2018_desc-scale5_atlas'
 labeling_atlases:
     - 'talairach_labels'
     - 'mni_labels'
@@ -129,7 +134,7 @@ plotting:
                 - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
-        - (2, 4)
+        - (2, 6)
       - 'save_nifti_parcels_node':
         - (1, 1.5)
       - 'gtab_node':
@@ -146,7 +151,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 0.5)
       - 'node_gen_node':
         - (2, 4)
-      - get_node_membership_node:
+      - 'get_node_membership_node':
         - (1, 4)
       - 'check_orient_and_dims_dwi_node':
         - (1, 4)
@@ -155,7 +160,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (2, 6)
+        - (4, 6)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -194,7 +199,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

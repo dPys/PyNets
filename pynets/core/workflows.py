@@ -2099,7 +2099,6 @@ def dmri_connectometry(
                                           "roi")],
                                         ),
                                        ])
-
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],

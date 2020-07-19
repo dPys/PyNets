@@ -1495,15 +1495,14 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
             print(f"{Fore.GREEN}Iterating across multiple user atlases:")
-            print(Fore.BLUE)
             if func_file_list:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
-                    print(atlas_par)
+                    print(f"{Fore.BLUE}{atlas_par}")
             else:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
-                    print(atlas_par)
+                    print(f"{Fore.BLUE}{atlas_par}")
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split(".nii")[0]
             atlas_clust = f"{cl_mask_name}_{clust_type}_k{k}"
