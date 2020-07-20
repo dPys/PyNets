@@ -2200,6 +2200,8 @@ class Tracking(SimpleInterface):
         from colorama import Fore, Style
         from dipy.data import get_sphere
         from pynets.core import utils
+        import pkg_resources
+        import yaml
         from pynets.dmri.track import (
             prep_tissues,
             reconstruction,
@@ -2211,6 +2213,21 @@ class Tracking(SimpleInterface):
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile
 
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            use_life = hardcoded_params["use_life"][0]
+        stream.close()
+
+        dir_path = utils.do_dir_path(
+            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
+        )
+
+        namer_dir = "{}/tractography".format(dir_path)
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
         dwi_data = dwi_img.get_fdata()
@@ -2219,13 +2236,63 @@ class Tracking(SimpleInterface):
         fa_img = nib.load(self.inputs.fa_path)
 
         # Fit diffusion model
-        model, mod = reconstruction(
+        # Save reconstruction to .npy
+        recon_path = "%s%s%s%s%s%s%s%s" % (
+            runtime.cwd,
+            "/reconstruction_",
+            "%s"
+            % (self.inputs.network + "_" if self.inputs.network is not None
+               else ""),
+            "%s"
+            % (
+                op.basename(self.inputs.roi).split(".")[0] + "_"
+                if self.inputs.roi is not None
+                else ""
+            ),
             self.inputs.conn_model,
-            load_pickle(self.inputs.gtab_file),
-            dwi_data,
-            self.inputs.B0_mask,
+            "_",
+            "%s"
+            % (
+                "%s%s" % (self.inputs.node_size, "mm_")
+                if (
+                    (self.inputs.node_size != "parc")
+                    and (self.inputs.node_size is not None)
+                )
+                else "parc_"
+            ),
+            ".npy",
         )
 
+        gtab = load_pickle(self.inputs.gtab_file)
+
+        # Only re-run the reconstruction if we have to
+        if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
+            model, _ = reconstruction(
+                self.inputs.conn_model,
+                gtab,
+                dwi_data,
+                self.inputs.B0_mask,
+            )
+            np.save(recon_path, model)
+            copyfile(
+                recon_path,
+                f"{namer_dir}/{op.basename(recon_path)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        else:
+            print(
+                f"Found existing reconstruction with "
+                f"{self.inputs.conn_model}. Loading...")
+            copyfile(
+                f"{namer_dir}/{op.basename(recon_path)}",
+                recon_path,
+                copy=True,
+                use_hardlink=False,
+            )
+            model = np.load(recon_path)
+
+        dwi_img.uncache()
         del dwi_data
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
@@ -2282,10 +2349,6 @@ class Tracking(SimpleInterface):
             raise ValueError("Direction-getting type not recognized!")
         print(Style.RESET_ALL)
 
-        dir_path = utils.do_dir_path(
-            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
-        )
-
         # Commence Ensemble Tractography
         streamlines = track_ensemble(
             self.inputs.target_samples,
@@ -2311,10 +2374,6 @@ class Tracking(SimpleInterface):
             self.inputs.waymask,
             self.inputs.B0_mask
         )
-
-        namer_dir = "{}/tractography".format(dir_path)
-        if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
 
         # Save streamlines to trk
         streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
@@ -2370,6 +2429,21 @@ class Tracking(SimpleInterface):
             copy=True,
             use_hardlink=False,
         )
+
+        # Linear Fascicle Evaluation (LiFE)
+        if use_life is True:
+            from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+            dwi_img = nib.load(self.inputs.dwi_file)
+            dwi_data = dwi_img.get_fdata()
+            B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
+            try:
+                streamlines = evaluate_streamline_plausibility(
+                    dwi_data, gtab, B0_mask_data, streamlines,
+                    sphere=self.inputs.sphere)
+            except BaseException:
+                print(f"Linear Fascicle Evaluation failed. Visually checking "
+                      f"streamlines output {namer_dir}/{op.basename(streams)}"
+                      f" is recommended.")
 
         # Create streamline density map
         [dir_path, dm_path] = create_density_map(

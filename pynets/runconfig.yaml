@@ -16,12 +16,16 @@ step_list: # Ensemble tractography, should never exceed the voxel size.
 curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
     - 40
     - 30
+use_life:  # Filter ensemble tractogram to yield more plausible streamlines
+    - True
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 50
 nthreads:
     - 4
+graph_file_format:
+    - '.npy'
 low_pass:
     - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
@@ -102,11 +106,11 @@ available_models:
       - 'csa'
       - 'csd'
       - 'ten'
-sentiment_labeling:
-    liwc_file:
-        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
-    neurosynth_db:
-        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz' # https://nimare.readthedocs.io/
+#sentiment_labeling:
+#    liwc_file:
+#        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
+#    neurosynth_db:
+#        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz' # https://nimare.readthedocs.io/
 plotting:
     connectogram:
         - False
@@ -136,11 +140,11 @@ resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
         - (2, 6)
       - 'save_nifti_parcels_node':
-        - (1, 1.5)
+        - (1, 2)
       - 'gtab_node':
         - (1, 0.5)
       - 'save_coords_and_labels_node':
-        - (1, 1.5)
+        - (1, 2)
       - 'check_orient_and_dims_func_node':
         - (2, 2)
       - 'check_orient_and_dims_mask_node':

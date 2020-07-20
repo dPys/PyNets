@@ -128,7 +128,7 @@ def extract_b0(in_file, b0_ixs, out_path=None):
     return out_path
 
 
-def evaluate_streamline_plausibility(dwi_data, gtab, streamlines,
+def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
                                      affine=np.eye(4),
                                      sphere='repulsion724'):
     """
@@ -142,6 +142,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, streamlines,
         4D array of dwi data.
     gtab : Obj
         DiPy object storing diffusion gradient information.
+    B0_mask_data : array
+       B0 brain mask 3d data.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
 
@@ -158,17 +160,48 @@ def evaluate_streamline_plausibility(dwi_data, gtab, streamlines,
     """
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
+    from dipy.tracking._utils import _mapping_to_voxel
     from dipy.data import get_sphere
+    from dipy.tracking import utils
+    from dipy.tracking.streamline import Streamlines
 
+    print('Filtering streamlines by length > 10...')
+    streamlines_long = nib.streamlines. \
+        array_sequence.ArraySequence(
+        [
+            s
+            for s in streamlines
+            if len(s) >= float(10)
+        ]
+    )
+    print('Removing streamlines with negative voxel indices...')
+    # Remove any streamlines with negative voxel indices
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
+    streamlines_positive = []
+    for sl in streamlines_long:
+        inds = np.dot(sl, lin_T)
+        inds += offset
+        if not inds.min().round(decimals=6) < 0:
+            streamlines_positive.append(sl)
+    del streamlines_long
+
+    # Filter resulting streamlines by those that stay entirely
+    # inside the brain
+    streamlines_in_brain = Streamlines(utils.target(
+        streamlines_positive, np.eye(4),
+        B0_mask_data.astype('bool'), include=True
+    ))
+    streamlines_in_brain = [i for i in streamlines_in_brain]
+    del streamlines_positive
     print('Performing Linear Fascicle Evaluation...')
-    affine = 2*np.eye(4)
-    affine[3][3] = 1
     original_count = len(streamlines)
     sphere = get_sphere(sphere)
     fiber_model = life.FiberModel(gtab)
-    fiber_fit = fiber_model.fit(dwi_data, streamlines, affine=affine,
+    fiber_fit = fiber_model.fit(dwi_data, streamlines_in_brain,
+                                affine=affine,
                                 sphere=sphere)
-    streamlines = list(np.array(streamlines)[np.where(fiber_fit.beta > 0)[0]])
+    streamlines = list(np.array(streamlines_in_brain)[
+                           np.where(fiber_fit.beta > 0)[0]])
     pruned_count = len(streamlines)
     model_predict = fiber_fit.predict()
     model_error = model_predict - fiber_fit.data
@@ -188,7 +221,7 @@ def evaluate_streamline_plausibility(dwi_data, gtab, streamlines,
     print(f"Original # Streamlines: {original_count}")
     print(f"Final # Streamlines: {pruned_count}")
     print(f"Streamlines removed: {pruned_count - original_count}")
-    print(f"Mean RMSE: {mean_rmse}")
-    print(f"Model RMSE: {model_rmse}")
-    print(f"Reduction RMSE: {mean_rmse - model_rmse}")
+    print(f"Mean RMSE: {np.mean(mean_rmse)}")
+    print(f"Mean Model RMSE: {np.mean(model_rmse)}")
+    print(f"Mean Reduction RMSE: {np.mean(mean_rmse - model_rmse)}")
     return streamlines

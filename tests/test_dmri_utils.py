@@ -45,40 +45,40 @@ def test_normalize_grads():
     assert bvals_normed is not None
 
 
-# def test_evaluate_streamline_plausibility():
-#     """
-#     Test evaluate_streamline_plausibility functionality
-#     """
-#     import nibabel as nib
-#     from pynets.registration import reg_utils
-#     from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-#     from dipy.core.gradients import gradient_table
-#     from dipy.io.stateful_tractogram import Space, Origin
-#     from dipy.io.streamline import load_tractogram
-#
-#     base_dir = str(Path(__file__).parent / "examples")
-#     test_dir = f"{base_dir}/003/test_out/test_check_orient_and_dims"
-#     fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
-#     fbvec = f"{base_dir}/outputs/pynets/sub-25659/ses-1/dwi/final_" \
-#             f"preprocessed_dwi_bvecs_reor.bvec"
-#     dwi_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi" \
-#                f".nii.gz"
-#     streams = f"{base_dir}/outputs/pynets/sub-25659/ses-1/dwi/" \
-#               f"DesikanKlein2012/tractography/streamlines_SalVentAttn_csa_" \
-#               f"20000_parc_curv-[40_30]_step-[0.1_0.2_0.3_0.4_0.5]_" \
-#               f"directget-clos_minlength-0.trk"
-#     dwi_res = reg_utils.check_orient_and_dims(dwi_path, test_dir, '2mm')
-#     dwi_img = nib.load(dwi_res)
-#     tractogram = load_tractogram(
-#         streams,
-#         dwi_img,
-#         to_origin=Origin.TRACKVIS,
-#         to_space=Space.VOXMM,
-#         bbox_valid_check=True,
-#     )
-#     streamlines = tractogram.streamlines
-#     gtab = gradient_table(fbval, fbvec)
-#     dwi_data = dwi_img.get_fdata()
-#     cleaned = evaluate_streamline_plausibility(dwi_data, gtab, streamlines)
-#
-#     assert len(cleaned) > 0
+def test_evaluate_streamline_plausibility():
+    """
+    Test evaluate_streamline_plausibility functionality
+    """
+    import nibabel as nib
+    from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+    from dipy.io.stateful_tractogram import Space, Origin
+    from dipy.io.streamline import load_tractogram
+    from dipy.io import load_pickle
+
+    base_dir = str(Path(__file__).parent / "examples")
+    gtab_file = f"{base_dir}/miscellaneous/tractography/gtab.pkl"
+    dwi_path = f"{base_dir}/miscellaneous/tractography/sub-OAS31172_" \
+               f"ses-d0407_dwi_reor-RAS_res-2mm.nii.gz"
+    B0_mask = f"{base_dir}/miscellaneous/tractography/mean_B0_bet_mask.nii.gz"
+    streams = f"{base_dir}/miscellaneous/tractography/streamlines_csa_" \
+              f"20000_parc_curv-[40_30]_step-[0.1_0.2_0.3_0.4_0.5]_" \
+              f"directget-prob_minlength-20.trk"
+
+    gtab = load_pickle(gtab_file)
+    dwi_img = nib.load(dwi_path)
+    dwi_data = dwi_img.get_fdata()
+    B0_mask_img = nib.load(B0_mask)
+    B0_mask_data = B0_mask_img.get_fdata()
+    tractogram = load_tractogram(
+        streams,
+        B0_mask_img,
+        to_origin=Origin.NIFTI,
+        to_space=Space.VOXMM,
+        bbox_valid_check=False,
+    )
+    streamlines = tractogram.streamlines
+    cleaned = evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data,
+                                               streamlines)
+
+    assert len(cleaned) > 0
+    assert len(cleaned) <= len(streamlines)

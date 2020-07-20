@@ -679,7 +679,7 @@ def load_mat_ext(
     )
 
 
-def save_mat(conn_matrix, est_path, fmt="npy"):
+def save_mat(conn_matrix, est_path, fmt=None):
     """
     Save an adjacency matrix using any of a variety of methods.
 
@@ -690,11 +690,22 @@ def save_mat(conn_matrix, est_path, fmt="npy"):
     est_path : str
         File path to .npy file containing graph.
     fmt : str
-        Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml, .txt, .ssv, .csv). Default is .npy.
+        Format to save connectivity matrix/graph (e.g. .npy, .pkl, .graphml,
+         .txt, .ssv, .csv).
 
     """
     import numpy as np
     import networkx as nx
+    import pkg_resources
+    import yaml
+
+    if fmt is None:
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            fmt = hardcoded_params["graph_file_format"][0]
+        stream.close()
 
     G = nx.from_numpy_array(conn_matrix)
     G.graph["ecount"] = nx.number_of_edges(G)
