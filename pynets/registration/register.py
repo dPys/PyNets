@@ -263,7 +263,8 @@ def direct_streamline_norm(
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
+            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
+                    else ""),
             conn_model,
             "_",
             target_samples,
@@ -290,7 +291,8 @@ def direct_streamline_norm(
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
+            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
+                    else ""),
             conn_model,
             "_",
             target_samples,
