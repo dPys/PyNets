@@ -439,6 +439,13 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
     local_corr = traits.Str("allcorr", mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
     outdir = traits.Str(mandatory=True)
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    t1w_brain = File(exists=True, mandatory=True)
+    mni2t1w_warp = File(exists=True, mandatory=True)
+    mni2t1_xfm = File(exists=True, mandatory=True)
+    template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):
@@ -460,6 +467,7 @@ class IndividualClustering(SimpleInterface):
     output_spec = _IndividualClusteringOutputSpec
 
     def _run_interface(self, runtime):
+        import os
         import nibabel as nib
         import pkg_resources
         import yaml
@@ -467,6 +475,7 @@ class IndividualClustering(SimpleInterface):
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed
+        from pynets.registration import reg_utils as regutils
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -481,6 +490,55 @@ class IndividualClustering(SimpleInterface):
         clust_mask_temp_path = check_orient_and_dims(
             self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size
         )
+
+        clust_mask_in_t1w_path = f"{runtime.cwd}/clust_mask-" \
+                                 f"{os.path.basename(self.inputs.clust_mask).split('.nii')[0]}_in_t1w.nii.gz"
+
+        t1w_brain_tmp_path = fname_presuffix(
+            self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w_brain,
+            t1w_brain_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        mni2t1w_warp_tmp_path = fname_presuffix(
+            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1w_warp,
+            mni2t1w_warp_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
+
+        mni2t1_xfm_tmp_path = fname_presuffix(
+            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1_xfm,
+            mni2t1_xfm_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        clust_mask_in_t1w = regutils.roi2t1w_align(
+            clust_mask_temp_path,
+            t1w_brain_tmp_path,
+            mni2t1_xfm_tmp_path,
+            mni2t1w_warp_tmp_path,
+            clust_mask_in_t1w_path,
+            self.inputs.simple,
+        )
+
+        reg_tmp = [
+            t1w_brain_tmp_path,
+            mni2t1w_warp_tmp_path,
+            mni2t1_xfm_tmp_path,
+        ]
+        for j in reg_tmp:
+            if j is not None:
+                os.remove(j)
 
         if self.inputs.mask:
             out_name_mask = fname_presuffix(
@@ -517,7 +575,7 @@ class IndividualClustering(SimpleInterface):
 
         nip = clustools.NiParcellate(
             func_file=out_name_func_file,
-            clust_mask=clust_mask_temp_path,
+            clust_mask=clust_mask_in_t1w,
             k=int(self.inputs.k),
             clust_type=self.inputs.clust_type,
             local_corr=self.inputs.local_corr,
@@ -1391,13 +1449,15 @@ class RegisterAtlasDWI(SimpleInterface):
             bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
             print(f"Missing parcels: {bad_idxs}")
             for j in bad_idxs:
-                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
+                print(f"Removing: "
+                      f"{(self.inputs.labels[j], self.inputs.coords[j])}...")
                 del self.inputs.labels[j], self.inputs.coords[j]
         try:
             intensity_count = len(np.unique(
                 np.asarray(nib.load(
                     dwi_aligned_atlas).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+            assert len(self.inputs.coords) == len(self.inputs.labels) == \
+                   intensity_count
         except ValueError as err:
             print(f"# Coords: {len(self.inputs.coords)}")
             print(f"# Labels: {len(self.inputs.labels)}")
@@ -1707,7 +1767,7 @@ class RegisterFunc(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path,
+                    mask_tmp_path, self.inputs.in_dir,
                     self.inputs.vox_size)
             else:
                 mask_tmp_path = None
@@ -1956,7 +2016,8 @@ class RegisterAtlasFunc(SimpleInterface):
             intensity_count = len(np.unique(
                 np.asarray(nib.load(
                     aligned_atlas_gm).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
+            assert len(self.inputs.coords) == len(self.inputs.labels) == \
+                   intensity_count
         except ValueError as err:
             print(f"# Coords: {len(self.inputs.coords)}")
             print(f"# Labels: {len(self.inputs.labels)}")

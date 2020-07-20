@@ -3866,50 +3866,22 @@ def fmri_connectometry(
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
-        check_orient_and_dims_clust_mask_node = pe.Node(
-            niu.Function(
-                input_names=["infile", "outdir", "vox_size"],
-                output_names=["outfile"],
-                function=regutils.check_orient_and_dims,
-                imports=import_list,
-            ),
-            name="check_orient_and_dims_clust_mask_node",
-        )
-
-        register_clust_mask_node = pe.Node(
-            RegisterROIEPI(), name="register_clust_mask_node"
-        )
-
         fmri_connectometry_wf.connect(
             [
                 (
-                    inputnode,
-                    check_orient_and_dims_clust_mask_node,
-                    [
-                        ("clust_mask", "infile"),
-                        ("vox_size", "vox_size"),
-                        ("outdir", "outdir"),
-                    ],
-                ),
-                (
-                    check_orient_and_dims_clust_mask_node,
-                    register_clust_mask_node,
-                    [("outfile", "roi")],
-                ),
-                (
                     check_orient_and_dims_anat_node,
-                    register_clust_mask_node,
+                    clustering_node,
                     [("outfile", "anat_file")],
                 ),
                 (
                     inputnode,
-                    register_clust_mask_node,
+                    clustering_node,
                     [("vox_size", "vox_size"),
                      ("template_name", "template_name")],
                 ),
                 (
                     register_node,
-                    register_clust_mask_node,
+                    clustering_node,
                     [
                         ("basedir_path", "basedir_path"),
                         ("t1w_brain", "t1w_brain"),
@@ -3937,7 +3909,6 @@ def fmri_connectometry(
                     clustering_node,
                     [("outfile", "func_file")],
                 ),
-                (inputnode, clustering_node, [("vox_size", "vox_size")]),
                 (
                     clustering_node,
                     fetch_nodes_and_labels_node,
@@ -3950,12 +3921,9 @@ def fmri_connectometry(
                 (
                     inputnode,
                     clustering_info_node,
-                    [("clust_type", "clust_type"), ("k", "k")],
-                ),
-                (
-                    register_clust_mask_node,
-                    clustering_info_node,
-                    [("roi", "clust_mask")],
+                    [("clust_mask", "clust_mask"),
+                     ("clust_type", "clust_type"),
+                     ("k", "k")],
                 ),
                 (
                     clustering_info_node,
