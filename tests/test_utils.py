@@ -220,7 +220,6 @@ def test_save_mat(fmt):
     assert os.path.isfile(save_mat_path)
 
 
-
 @pytest.mark.parametrize("node_size", [6, None])
 @pytest.mark.parametrize("hpass", [100, None])
 @pytest.mark.parametrize("smooth", [6, None])

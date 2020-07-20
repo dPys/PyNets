@@ -321,7 +321,7 @@ def track_ensemble(
     min_length,
     waymask,
     B0_mask,
-    n_seeds_per_iter=250,
+    n_seeds_per_iter=500,
     max_length=1000,
     pft_back_tracking_dist=2,
     pft_front_tracking_dist=1,

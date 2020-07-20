@@ -224,8 +224,6 @@ execution_dict: # Nipype workflow global settings
         - False
     - 'raise_insufficient':
         - False
-    - 'maxtasksperchild':
-        - 1
     - 'poll_sleep_duration':
         - 1
     - 'hash_method':
