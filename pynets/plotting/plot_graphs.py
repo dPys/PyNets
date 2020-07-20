@@ -28,8 +28,9 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     out_path_fig : str
         File path to save the connectivity matrix image as a .png figure.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
-
     matplotlib.use("agg")
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
@@ -56,8 +57,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    if len(labels) > 40:
-        tick_interval = int(np.around(len(labels)/40))
+    if len(labels) > 150:
+        tick_interval = int(np.around(len(labels)/50))
     else:
         tick_interval = int(np.around(len(labels)))
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
@@ -89,12 +90,13 @@ def plot_community_conn_mat(
     community_aff : array
         Community-affiliation vector.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     import matplotlib.ticker as mticker
     matplotlib.use("agg")
-    # from pynets import thresholding
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
@@ -157,8 +159,8 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    if len(labels) > 40:
-        tick_interval = int(np.around(len(labels)/40))
+    if len(labels) > 150:
+        tick_interval = int(np.around(len(labels)/50))
     else:
         tick_interval = int(np.around(len(labels)))
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
