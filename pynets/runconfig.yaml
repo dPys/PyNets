@@ -25,7 +25,7 @@ c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
 nthreads:
     - 4
 graph_file_format:
-    - '.npy'
+    - 'npy'
 low_pass:
     - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
