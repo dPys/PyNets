@@ -1022,7 +1022,7 @@ def check_orient_and_dims(
     Parameters
     ----------
     infile : str
-        File path to a dwi Nifti1Image.
+        File path to a Nifti1Image.
     outdir : str
         Path to base derivatives directory.
     vox_size : str
