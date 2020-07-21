@@ -2015,7 +2015,7 @@ class RegisterAtlasFunc(SimpleInterface):
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        if self.inputs.already_run is True:
+        if self.inputs.already_run is False:
             if self.inputs.uatlas is None:
                 uatlas_tmp_path = None
             else:

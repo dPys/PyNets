@@ -975,8 +975,10 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     # from pynets.core.utils import missing_elements
     import os
     from nipype.utils.filemanip import fname_presuffix
-    parcellation_img = nib.load(parcellation)
 
+    print('Checking parcellation for consistency...')
+
+    parcellation_img = nib.load(parcellation)
     intensities = list(np.unique(
         np.asarray(
             parcellation_img.dataobj).astype("int"))[1:]
@@ -1005,9 +1007,12 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                 np.asarray(parcellation_img.dataobj).astype("int"))[1:])
 
         elif len(label_intensities) < len(intensities):
+            print('Incoonsistent number of intensities andn labels. '
+                  'Correcting parcellation...')
             diff = list(set(intensities) - set(label_intensities))
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
+                print(f"Removing: {str(val)}...")
                 parlist_img_data[np.where(parlist_img_data == val)] = 0
             parcellation = fname_presuffix(
             parcellation, suffix="_mod", newpath=os.path.dirname(parcellation))
@@ -1021,13 +1026,14 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
         else:
             intensity_count = len(intensities)
     else:
+        print('Warning: Labels do not include intensity values!')
         intensity_count = len(intensities)
 
     try:
-        print('Checking parcellation for consistency...')
         assert len(coords) == len(labels) == intensity_count
-        print('Pass!')
+        print('Passed!')
     except ValueError as err:
+        print('Failed!')
         print(f"# Coords: {len(coords)}")
         print(f"# Labels: {len(labels)}")
         print(f"# Intensities: {intensity_count}")
