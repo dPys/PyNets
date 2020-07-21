@@ -359,6 +359,53 @@ def roi2t1w_align(
     return roi_in_t1w
 
 
+def RegisterParcellation2MNIFunc_align(
+    uatlas,
+    template,
+    t1w2mni_xfm,
+    aligned_atlas_mni,
+):
+    """
+    A function to perform atlas alignment from atlas --> MNI.
+    """
+    from pynets.registration import reg_utils as regutils
+    from nilearn.image import resample_to_img
+
+    regutils.align(
+        uatlas,
+        template,
+        init=t1w2mni_xfm,
+        out=aligned_atlas_mni,
+        dof=6,
+        searchrad=True,
+        interp="nearestneighbour",
+        cost="mutualinfo",
+    )
+
+    atlas_img = nib.load(aligned_atlas_mni)
+    template_img = nib.load(template)
+
+    uatlas_res_template = resample_to_img(
+        atlas_img, template_img, interpolation="nearest"
+    )
+    uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
+    uatlas_res_template_data[
+        uatlas_res_template_data != uatlas_res_template_data.astype(int)
+    ] = 0
+
+    uatlas_res_template = nib.Nifti1Image(
+        uatlas_res_template_data.astype("uint16"),
+        affine=uatlas_res_template.affine,
+        header=uatlas_res_template.header,
+    )
+    nib.save(uatlas_res_template, aligned_atlas_mni)
+
+    template_img.uncache()
+    atlas_img.uncache()
+
+    return aligned_atlas_mni
+
+
 def atlas2t1w_align(
     uatlas,
     uatlas_parcels,
