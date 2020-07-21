@@ -3657,20 +3657,17 @@ def fmri_connectometry(
     register_node._n_procs = runtime_dict["register_node"][0]
     register_node._mem_gb = runtime_dict["register_node"][1]
 
-    if float(k_clustering) > 0:
-        register_atlas_node = pe.Node(
-            RegisterAtlasFunc(already_run=True),
-            name="register_atlas_node")
-    else:
-        register_atlas_node = pe.Node(
-            RegisterAtlasFunc(),
-            name="register_atlas_node")
-    register_atlas_node._n_procs = runtime_dict["register_atlas_node"][0]
-    register_atlas_node._mem_gb = runtime_dict["register_atlas_node"][1]
+    register_atlas_node = pe.Node(
+        RegisterAtlasFunc(),
+        name="register_atlas_node")
 
     # Clustering
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
+
+        register_atlas_node = pe.Node(
+            RegisterAtlasFunc(already_run=True),
+            name="register_atlas_node")
 
         clustering_info_node = pe.Node(
             niu.IdentityInterface(fields=["clust_mask", "clust_type", "k"]),
@@ -3989,6 +3986,9 @@ def fmri_connectometry(
                 ),
             ]
         )
+
+    register_atlas_node._n_procs = runtime_dict["register_atlas_node"][0]
+    register_atlas_node._mem_gb = runtime_dict["register_atlas_node"][1]
 
     # Set atlas iterables and logic for multiple atlas useage
     if all_clustering is True:

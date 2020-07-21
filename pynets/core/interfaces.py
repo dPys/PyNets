@@ -1979,6 +1979,7 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
+    already_run = traits.Bool(False, usedefault=True)
 
 
 class _RegisterAtlasFuncOutputSpec(TraitedSpec):
@@ -1989,7 +1990,6 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
-    already_run = traits.Bool(False, usedefault=True)
 
 
 class RegisterAtlasFunc(SimpleInterface):
