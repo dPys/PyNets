@@ -124,11 +124,14 @@ def atlas2t1w2dwi_align(
 
     template_img = nib.load(t1_aligned_mni)
     if uatlas_parcels:
-        atlas_img = nib.load(uatlas_parcels)
+        atlas_img_orig = nib.load(uatlas_parcels)
     else:
-        atlas_img = nib.load(uatlas)
+        atlas_img_orig = nib.load(uatlas)
+
+    old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
+
     uatlas_res_template = resample_to_img(
-        atlas_img, template_img, interpolation="nearest"
+        atlas_img_orig, template_img, interpolation="nearest"
     )
     uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
     uatlas_res_template_data[
@@ -253,7 +256,6 @@ def atlas2t1w2dwi_align(
     if not checkConsecutive(unique_a):
         print("Warning! Non-consecutive integers found in parcellation...")
 
-    old_count = len(np.unique(uatlas_res_template_data))
     new_count = len(unique_a)
     diff = np.abs(np.int(float(new_count) - float(old_count)))
     print(f"Previous label count: {old_count}")
@@ -262,6 +264,7 @@ def atlas2t1w2dwi_align(
 
     atlas_img.uncache()
     atlas_img_corr.uncache()
+    atlas_img_orig.uncache()
     atlas_mask_img.uncache()
     wm_gm_img.uncache()
     wm_gm_mask_img.uncache()
@@ -430,11 +433,14 @@ def atlas2t1w_align(
 
     template_img = nib.load(t1_aligned_mni)
     if uatlas_parcels:
-        atlas_img = nib.load(uatlas_parcels)
+        atlas_img_orig = nib.load(uatlas_parcels)
     else:
-        atlas_img = nib.load(uatlas)
+        atlas_img_orig = nib.load(uatlas)
+
+    old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
+
     uatlas_res_template = resample_to_img(
-        atlas_img, template_img, interpolation="nearest"
+        atlas_img_orig, template_img, interpolation="nearest"
     )
     uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
     uatlas_res_template_data[
@@ -508,7 +514,6 @@ def atlas2t1w_align(
 
     if not checkConsecutive(unique_a):
         print("\nWarning! non-consecutive integers found in parcellation...")
-    old_count = len(np.unique(uatlas_res_template_data))
     new_count = len(unique_a)
     diff = np.abs(np.int(float(new_count) - float(old_count)))
     print(f"Previous label count: {old_count}")
@@ -522,6 +527,9 @@ def atlas2t1w_align(
             f"{aligned_atlas_gm}"
         )
     template_img.uncache()
+    atlas_img_orig.uncache()
+    atlas_img.uncache()
+    atlas_img_corr.uncache()
 
     return aligned_atlas_gm, aligned_atlas_skull
 

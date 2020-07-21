@@ -36,8 +36,9 @@ def get_conn_matrix(
     extract_strategy,
 ):
     """
-    Computes a functional connectivity matrix based on a node-extracted time-series array.
-    Includes a library of routines across Nilearn, scikit-learn, and skggm packages, among others.
+    Computes a functional connectivity matrix based on a node-extracted
+    time-series array. Includes a library of routines across Nilearn,
+    scikit-learn, and skggm packages, among others.
 
     Parameters
     ----------

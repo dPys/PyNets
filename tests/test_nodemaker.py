@@ -48,7 +48,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     parc = True
 
     start_time = time.time()
-    [coords, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    [coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
     print("%s%s%s" % ('get_names_and_coords_of_parcels --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -124,7 +124,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     parc = True
 
     start_time = time.time()
-    [coords, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    [coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
     print("%s%s%s" % ('get_names_and_coords_of_parcels --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -212,7 +212,7 @@ def test_nodemaker_tools_parlistfile_WB():
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
 
     start_time = time.time()
-    [WB_coords, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
     print("%s%s%s" % ('get_names_and_coords_of_parcels (User-atlas whole-brain version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -261,7 +261,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     perc_overlap = 0.10
 
     start_time = time.time()
-    [WB_coords, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
     print("%s%s%s" % ('get_names_and_coords_of_parcels (Masking whole-brain version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -499,6 +499,71 @@ def test_enforce_hem_distinct_consecutive_labels():
     uatlas_img = nib.load(uatlas)
     parcels_uatlas = len(np.unique(uatlas_img.get_fdata())) - 1
     assert parcels_uatlas == 354
+
+
+def test_drop_coords_labels_from_restricted_parcellation():
+    import tempfile
+    from nipype.utils.filemanip import copyfile
+
+    base_dir = str(Path(__file__).parent/"examples")
+    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+
+    [coords, _, _, label_intensities] = \
+        nodemaker.get_names_and_coords_of_parcels(parlistfile)
+
+    labels = np.arange(len(coords) +
+                       1)[np.arange(len(coords) + 1) != 0].tolist()
+    labs = list(zip(labels, label_intensities))
+    [parcellation_okay, cleaned_coords, cleaned_labels] = \
+        nodemaker.drop_coords_labels_from_restricted_parcellation(parlistfile,
+                                                                  coords,
+                                                                  labs)
+
+    parcellation_okay_img = nib.load(parcellation_okay)
+    intensities_ok = list(np.unique(
+        np.asarray(
+            parcellation_okay_img.dataobj).astype("int"))[1:]
+    )
+
+    assert len(cleaned_coords) == len(cleaned_labels) == len(intensities_ok)
+
+    parlist_img = nib.load(parlistfile)
+    parlist_img_data = parlist_img.get_fdata()
+    parlist_img_data[np.where(parlist_img_data==10)] = 0
+    par_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    nib.save(nib.Nifti1Image(parlist_img_data, affine=parlist_img.affine),
+             par_tmp.name)
+    [parcellation_okay, cleaned_coords, cleaned_labels] = \
+        nodemaker.drop_coords_labels_from_restricted_parcellation(parlistfile,
+                                                                  coords,
+                                                                  labs)
+    parcellation_okay_img = nib.load(parcellation_okay)
+    intensities_ok = list(np.unique(
+        np.asarray(
+            parcellation_okay_img.dataobj).astype("int"))[1:]
+    )
+
+    assert len(cleaned_coords) == len(cleaned_labels) == len(intensities_ok)
+
+    bad_coords = np.delete(coords, 30, axis=0)
+    del labs[-30]
+    par_tmp2 = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz').name
+    copyfile(
+        parlistfile,
+        par_tmp2,
+        copy=True,
+        use_hardlink=False)
+    [parcellation_mod, cleaned_coords, cleaned_labels] = \
+        nodemaker.drop_coords_labels_from_restricted_parcellation(par_tmp2,
+                                                                  bad_coords,
+                                                                  labs)
+    parcellation_mod_img = nib.load(parcellation_mod)
+    intensities_ok = list(np.unique(
+        np.asarray(
+            parcellation_mod_img.dataobj).astype("int"))[1:]
+    )
+
+    assert len(cleaned_coords) == len(cleaned_labels) == len(intensities_ok)
 
 
 def test_mask_roi():

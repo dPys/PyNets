@@ -824,6 +824,8 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
         An arbitrary identified for the atlas based on the filename.
     par_max : int
         The maximum label intensity in the parcellation image.
+    label_intensities : list
+        A list of integer label intensity values from the parcellation.
     """
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
@@ -841,7 +843,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
 
     par_max = len(coords)
 
-    return coords, atlas, par_max
+    return coords, atlas, par_max, label_intensities
 
 
 def gen_img_list(uatlas):
@@ -968,6 +970,71 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
     return uatlas, label_names
 
 
+def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
+                                                    labels):
+    # from pynets.core.utils import missing_elements
+    import os
+    from nipype.utils.filemanip import fname_presuffix
+    parcellation_img = nib.load(parcellation)
+
+    intensities = list(np.unique(
+        np.asarray(
+            parcellation_img.dataobj).astype("int"))[1:]
+    )
+
+    # Correct coords and labels
+    # bad_idxs = missing_elements(intensities)
+
+    bad_idxs = []
+    if isinstance(labels[0], tuple):
+        label_intensities = [i[1] for i in labels]
+        if len(label_intensities) > len(intensities):
+            diff = list(set(label_intensities) - set(intensities))
+            for val in diff:
+                bad_idxs.append(label_intensities.index(val))
+            if len(bad_idxs) > 0:
+                bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+                if type(coords) is np.ndarray:
+                    coords = list(tuple(x) for x in coords)
+                print(f"Missing parcels at indices: {bad_idxs}")
+                for j in bad_idxs:
+                    print(f"Removing: {(labels[j], coords[j])}...")
+                    del labels[j], coords[j]
+
+            intensity_count = len(np.unique(
+                np.asarray(parcellation_img.dataobj).astype("int"))[1:])
+
+        elif len(label_intensities) < len(intensities):
+            diff = list(set(intensities) - set(label_intensities))
+            parlist_img_data = parcellation_img.get_fdata()
+            for val in diff:
+                parlist_img_data[np.where(parlist_img_data == val)] = 0
+            parcellation = fname_presuffix(
+            parcellation, suffix="_mod", newpath=os.path.dirname(parcellation))
+            nib.save(
+                nib.Nifti1Image(parlist_img_data,
+                                affine=parcellation_img.affine),
+                parcellation)
+
+            intensity_count = len(np.unique(
+                parlist_img_data.astype("int"))[1:])
+        else:
+            intensity_count = len(intensities)
+    else:
+        intensity_count = len(intensities)
+
+    try:
+        print('Checking parcellation for consistency...')
+        assert len(coords) == len(labels) == intensity_count
+        print('Pass!')
+    except ValueError as err:
+        print(f"# Coords: {len(coords)}")
+        print(f"# Labels: {len(labels)}")
+        print(f"# Intensities: {intensity_count}")
+
+    return parcellation, coords, labels
+
+
 def gen_network_parcels(uatlas, network, labels, dir_path):
     """
     Return a modified verion of an atlas parcellation label, where labels have
@@ -1026,7 +1093,9 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
 def parcel_naming(coords, vox_size):
     """
     Perform Automated-Anatomical Labeling of each coordinate from a list of a
-    voxel coordinates.
+    voxel coordinates. This was adapted from a function of the same
+    name created by Cameron Craddock and included in PyClusterROI (See:
+    <https://github.com/ccraddock/cluster_roi/blob/master/parcel_naming.py>).
 
     Parameters
     ----------

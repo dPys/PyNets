@@ -93,11 +93,12 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                [uatlas,
-                 labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    uatlas, label_names=labels)
-                [coords, _,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas, label_names=labels)
+                [coords, atlas, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -124,6 +125,7 @@ class FetchNodesLabels(SimpleInterface):
             par_max = None
             atlas = self.inputs.atlas
             uatlas = None
+            label_intensities = None
         elif (
             self.inputs.uatlas is None
             and self.inputs.parc is False
@@ -145,9 +147,10 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                [uatlas,
-                 labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    uatlas, label_names=labels)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas, label_names=labels)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -157,6 +160,7 @@ class FetchNodesLabels(SimpleInterface):
                     f"\nAtlas file for {self.inputs.atlas} not found!")
             par_max = None
             atlas = self.inputs.atlas
+            label_intensities = None
         elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
             from nipype.utils.filemanip import fname_presuffix, copyfile
 
@@ -174,12 +178,13 @@ class FetchNodesLabels(SimpleInterface):
                       "\nCannot load RSN reference image. Do you have git-lfs "
                       "installed?")
             try:
-                [uatlas,
-                 _] = nodemaker.enforce_hem_distinct_consecutive_labels(uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas)
                 # Fetch user-specified atlas coords
-                [coords, _,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                [coords, _, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -194,6 +199,7 @@ class FetchNodesLabels(SimpleInterface):
                 parcel_list = None
                 par_max = None
                 coords = None
+                label_intensities = None
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -204,16 +210,18 @@ class FetchNodesLabels(SimpleInterface):
                         break
                     else:
                         print("Waiting for atlas file...")
-                        time.sleep(15)
+                        time.sleep(5)
 
             try:
                 # Fetch user-specified atlas coords
-                [uatlas,
-                 _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    self.inputs.uatlas)
-                [coords, atlas,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        self.inputs.uatlas)
+                else:
+                    uatlas = self.inputs.uatlas
+                [coords, atlas, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -234,6 +242,7 @@ class FetchNodesLabels(SimpleInterface):
                 coords = None
                 atlas = None
                 uatlas = None
+                label_intensities = None
             labels = None
             networks_list = None
         else:
@@ -322,7 +331,10 @@ class FetchNodesLabels(SimpleInterface):
 
         assert len(coords) == len(labels)
 
-        self._results["labels"] = labels
+        if label_intensities is not None:
+            self._results["labels"] = list(zip(labels, label_intensities))
+        else:
+            self._results["labels"] = labels
         self._results["coords"] = coords
         self._results["atlas"] = atlas
         self._results["networks_list"] = networks_list
@@ -475,8 +487,9 @@ class IndividualClustering(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
-        from joblib import Parallel, delayed
+        from joblib import Parallel, delayed, dump, load
         from pynets.registration import reg_utils as regutils
+        from nilearn.image import concat_imgs
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -607,11 +620,13 @@ class IndividualClustering(SimpleInterface):
                     return out_path
 
                 def run_bs_iteration(i, boot_imgs, parcellate, work_dir):
-                    import nibabel as nib
+                    import os
+                    import time
                     print(f"\nBootstrapped iteration: {i}")
-                    func_boot_img = nib.load(boot_imgs[i])
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
-                    parcellate(func_boot_img).to_filename(out_path)
+                    parcellate(boot_imgs[..., i]).to_filename(out_path)
+                    while not os.path.isfile(out_path):
+                        time.sleep(0.1)
                     return out_path
 
                 boot_imgs = []
@@ -619,12 +634,23 @@ class IndividualClustering(SimpleInterface):
                     boot_imgs.append(create_bs_imgs(i, ts_data,
                     block_size, nip, runtime.cwd))
 
-                # Use joblib multithreading
+                boot_imgs_4d = concat_imgs(boot_imgs)
+                del boot_imgs
+
+                # Use joblib multithreading with memmapping
+                folder = f"{runtime.cwd}/joblib_memmap"
+                os.makedirs(folder, exist_ok=True)
+
+                boot_imgs_4d_data = boot_imgs_4d.get_fdata()
+                data_filename_memmap = os.path.join(folder, 'data_memmap')
+                dump(boot_imgs_4d_data, data_filename_memmap)
+                data = load(data_filename_memmap, mmap_mode='r')
+
                 boot_parcellations = Parallel(n_jobs=nthreads,
                                               verbose=10,
                                               backend='threading')(
                     delayed(run_bs_iteration)(
-                        i, boot_imgs, nip.parcellate, runtime.cwd) for i in
+                        i, data, nip.parcellate, runtime.cwd) for i in
                     range(c_boot))
 
                 # boot_parcellations = []
@@ -1256,7 +1282,8 @@ class RegisterAtlasDWI(SimpleInterface):
         import gc
         import os
         from pynets.registration import reg_utils as regutils
-        from pynets.core.utils import missing_elements
+        from pynets.core.nodemaker import \
+            drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
@@ -1449,29 +1476,9 @@ class RegisterAtlasDWI(SimpleInterface):
         )
 
         # Correct coords and labels
-        bad_idxs = missing_elements(
-            list(
-                np.unique(
-                    np.asarray(
-                        nib.load(dwi_aligned_atlas).dataobj).astype("int"))))
-
-        if len(bad_idxs) > 0:
-            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-            print(f"Missing parcels: {bad_idxs}")
-            for j in bad_idxs:
-                print(f"Removing: "
-                      f"{(self.inputs.labels[j], self.inputs.coords[j])}...")
-                del self.inputs.labels[j], self.inputs.coords[j]
-        try:
-            intensity_count = len(np.unique(
-                np.asarray(nib.load(
-                    dwi_aligned_atlas).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == \
-                   intensity_count
-        except ValueError as err:
-            print(f"# Coords: {len(self.inputs.coords)}")
-            print(f"# Labels: {len(self.inputs.labels)}")
-            print(f"# Intensities: {intensity_count}")
+        [dwi_aligned_atlas, coords, labels] = \
+            drop_coords_labels_from_restricted_parcellation(
+            dwi_aligned_atlas, self.inputs.coords, self.inputs.labels)
 
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
@@ -1554,8 +1561,8 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["atlas"] = self.inputs.atlas
         self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
         self._results["uatlas"] = uatlas_out
-        self._results["coords"] = self.inputs.coords
-        self._results["labels"] = self.inputs.labels
+        self._results["coords"] = coords
+        self._results["labels"] = labels
         self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
         self._results["gm_in_dwi"] = self.inputs.gm_in_dwi
         self._results["vent_csf_in_dwi"] = self.inputs.vent_csf_in_dwi
@@ -1771,7 +1778,8 @@ class RegisterFunc(SimpleInterface):
         else:
             if len(anat_mask_existing) > 0 and self.inputs.mask is None:
                 mask_tmp_path = fname_presuffix(
-                    anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
+                    anat_mask_existing[0], suffix="_tmp",
+                    newpath=runtime.cwd
                 )
                 copyfile(
                     anat_mask_existing[0],
@@ -1788,7 +1796,8 @@ class RegisterFunc(SimpleInterface):
             self.inputs.in_dir +
             "/*_label-GM_probseg.nii.gz")
         if len(gm_mask_existing) > 0:
-            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
+            gm_mask = fname_presuffix(gm_mask_existing[0],
+                                      newpath=runtime.cwd)
             copyfile(
                 gm_mask_existing[0],
                 gm_mask,
@@ -1801,7 +1810,8 @@ class RegisterFunc(SimpleInterface):
             self.inputs.in_dir +
             "/*_label-WM_probseg.nii.gz")
         if len(wm_mask_existing) > 0:
-            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
+            wm_mask = fname_presuffix(wm_mask_existing[0],
+                                      newpath=runtime.cwd)
             copyfile(
                 wm_mask_existing[0],
                 wm_mask,
@@ -1979,13 +1989,13 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
+    already_run = traits.Bool(False, usedefault=True)
 
 
 class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     """Output interface wrapper for RegisterAtlasFunc"""
 
     aligned_atlas_gm = File(exists=True, mandatory=True)
-    roi_in_epi = traits.Any(mandatory=False)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
@@ -2001,190 +2011,175 @@ class RegisterAtlasFunc(SimpleInterface):
         import gc
         import os
         from pynets.registration import reg_utils as regutils
-        from pynets.core.utils import missing_elements
+        from pynets.core.nodemaker import \
+            drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        if self.inputs.uatlas is None:
-            uatlas_tmp_path = None
-        else:
-            uatlas_tmp_path = fname_presuffix(
-                self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+        if self.inputs.already_run is True:
+            if self.inputs.uatlas is None:
+                uatlas_tmp_path = None
+            else:
+                uatlas_tmp_path = fname_presuffix(
+                    self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+                )
+                copyfile(
+                    self.inputs.uatlas,
+                    uatlas_tmp_path,
+                    copy=True,
+                    use_hardlink=False)
+
+            if self.inputs.uatlas_parcels is None:
+                uatlas_parcels_tmp_path = None
+            else:
+                uatlas_parcels_tmp_path = fname_presuffix(
+                    self.inputs.uatlas_parcels, suffix="_tmp",
+                    newpath=runtime.cwd
+                )
+                copyfile(
+                    self.inputs.uatlas_parcels,
+                    uatlas_parcels_tmp_path,
+                    copy=True,
+                    use_hardlink=False,
+                )
+
+            if self.inputs.network:
+                atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+            else:
+                atlas_name = f"{self.inputs.atlas}"
+
+            t1w_brain_tmp_path = fname_presuffix(
+                self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.uatlas,
-                uatlas_tmp_path,
+                self.inputs.t1w_brain,
+                t1w_brain_tmp_path,
                 copy=True,
                 use_hardlink=False)
 
-        if self.inputs.uatlas_parcels is None:
-            uatlas_parcels_tmp_path = None
-        else:
-            uatlas_parcels_tmp_path = fname_presuffix(
-                self.inputs.uatlas_parcels, suffix="_tmp",
-                newpath=runtime.cwd
+            t1w_brain_mask_tmp_path = fname_presuffix(
+                self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.uatlas_parcels,
+                self.inputs.t1w_brain_mask,
+                t1w_brain_mask_tmp_path,
+                copy=True,
+                use_hardlink=False,
+            )
+
+            t1_aligned_mni_tmp_path = fname_presuffix(
+                self.inputs.t1_aligned_mni, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1_aligned_mni,
+                t1_aligned_mni_tmp_path,
+                copy=True,
+                use_hardlink=False,
+            )
+
+            gm_mask_tmp_path = fname_presuffix(
+                self.inputs.gm_mask, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.gm_mask,
+                gm_mask_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
+            os.makedirs(base_dir_tmp, exist_ok=True)
+
+            aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                                  f"t1w_mni.nii.gz"
+            aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                                  f"t1w_skull.nii.gz"
+            aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
+
+            if self.inputs.node_size is not None:
+                atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+            mni2t1_xfm_tmp_path = fname_presuffix(
+                self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1_xfm,
+                mni2t1_xfm_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            mni2t1w_warp_tmp_path = fname_presuffix(
+                self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1w_warp,
+                mni2t1w_warp_tmp_path,
+                copy=True,
+                use_hardlink=False,
+            )
+
+            aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
+                uatlas_tmp_path,
                 uatlas_parcels_tmp_path,
-                copy=True,
-                use_hardlink=False,
-            )
-
-        if self.inputs.network:
-            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
-        else:
-            atlas_name = f"{self.inputs.atlas}"
-
-        t1w_brain_tmp_path = fname_presuffix(
-            self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.t1w_brain,
-            t1w_brain_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        t1w_brain_mask_tmp_path = fname_presuffix(
-            self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.t1w_brain_mask,
-            t1w_brain_mask_tmp_path,
-            copy=True,
-            use_hardlink=False,
-        )
-
-        t1_aligned_mni_tmp_path = fname_presuffix(
-            self.inputs.t1_aligned_mni, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.t1_aligned_mni,
-            t1_aligned_mni_tmp_path,
-            copy=True,
-            use_hardlink=False,
-        )
-
-        gm_mask_tmp_path = fname_presuffix(
-            self.inputs.gm_mask, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.gm_mask,
-            gm_mask_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
-        os.makedirs(base_dir_tmp, exist_ok=True)
-
-        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                              f"t1w_mni.nii.gz"
-        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                              f"t1w_skull.nii.gz"
-        aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
-
-        if self.inputs.node_size is not None:
-            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
-
-        mni2t1_xfm_tmp_path = fname_presuffix(
-            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.mni2t1_xfm,
-            mni2t1_xfm_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        mni2t1w_warp_tmp_path = fname_presuffix(
-            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.mni2t1w_warp,
-            mni2t1w_warp_tmp_path,
-            copy=True,
-            use_hardlink=False,
-        )
-
-        aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
-            uatlas_tmp_path,
-            uatlas_parcels_tmp_path,
-            atlas_name,
-            t1w_brain_tmp_path,
-            t1w_brain_mask_tmp_path,
-            t1_aligned_mni_tmp_path,
-            mni2t1w_warp_tmp_path,
-            mni2t1_xfm_tmp_path,
-            gm_mask_tmp_path,
-            aligned_atlas_t1mni,
-            aligned_atlas_skull,
-            aligned_atlas_gm,
-            self.inputs.simple,
-        )
-
-        # Correct coords and labels
-        bad_idxs = missing_elements(
-            list(
-                np.unique(
-                    np.asarray(
-                        nib.load(aligned_atlas_gm).dataobj).astype("int"))
-            )
-        )
-
-        if len(bad_idxs) > 0:
-            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-            print(f"Missing parcels: {bad_idxs}")
-            for j in bad_idxs:
-                print(f"Removing: "
-                      f"{(self.inputs.labels[j], self.inputs.coords[j])}"
-                      f"...")
-                del self.inputs.labels[j], self.inputs.coords[j]
-        try:
-            intensity_count = len(np.unique(
-                np.asarray(nib.load(
-                    aligned_atlas_gm).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == \
-                   intensity_count
-        except ValueError as err:
-            print(f"# Coords: {len(self.inputs.coords)}")
-            print(f"# Labels: {len(self.inputs.labels)}")
-            print(f"# Intensities: {intensity_count}")
-
-        reg_tmp = [
-            uatlas_parcels_tmp_path,
-            uatlas_tmp_path,
-            gm_mask_tmp_path,
-            t1_aligned_mni_tmp_path,
-            t1w_brain_mask_tmp_path,
-            mni2t1w_warp_tmp_path,
-            mni2t1_xfm_tmp_path,
-            t1w_brain_tmp_path,
-        ]
-
-        if self.inputs.uatlas is None:
-            uatlas_out = self.inputs.uatlas_parcels
-            copyfile(
+                atlas_name,
+                t1w_brain_tmp_path,
+                t1w_brain_mask_tmp_path,
+                t1_aligned_mni_tmp_path,
+                mni2t1w_warp_tmp_path,
+                mni2t1_xfm_tmp_path,
+                gm_mask_tmp_path,
+                aligned_atlas_t1mni,
+                aligned_atlas_skull,
                 aligned_atlas_gm,
-                f"{os.path.dirname(uatlas_out)}/"
-                f"{os.path.basename(aligned_atlas_gm)}",
-                copy=True,
-                use_hardlink=False,
+                self.inputs.simple,
             )
+
+            # Correct coords and labels
+            [aligned_atlas_gm, coords, labels] = \
+                drop_coords_labels_from_restricted_parcellation(
+                aligned_atlas_gm, self.inputs.coords, self.inputs.labels)
+
+            reg_tmp = [
+                uatlas_parcels_tmp_path,
+                uatlas_tmp_path,
+                gm_mask_tmp_path,
+                t1_aligned_mni_tmp_path,
+                t1w_brain_mask_tmp_path,
+                mni2t1w_warp_tmp_path,
+                mni2t1_xfm_tmp_path,
+                t1w_brain_tmp_path,
+            ]
+
+            if self.inputs.uatlas is None:
+                uatlas_out = self.inputs.uatlas_parcels
+                copyfile(
+                    aligned_atlas_gm,
+                    f"{os.path.dirname(uatlas_out)}/"
+                    f"{os.path.basename(aligned_atlas_gm)}",
+                    copy=True,
+                    use_hardlink=False,
+                )
+            else:
+                uatlas_out = self.inputs.uatlas
+                copyfile(
+                    aligned_atlas_gm,
+                    f"{os.path.dirname(uatlas_out)}/parcellations/"
+                    f"{os.path.basename(aligned_atlas_gm)}",
+                    copy=True,
+                    use_hardlink=False,
+                )
+
+            for j in reg_tmp:
+                if j is not None:
+                    os.remove(j)
+
+            self._results["aligned_atlas_gm"] = aligned_atlas_gm
         else:
-            uatlas_out = self.inputs.uatlas
-            copyfile(
-                aligned_atlas_gm,
-                f"{os.path.dirname(uatlas_out)}/parcellations/"
-                f"{os.path.basename(aligned_atlas_gm)}",
-                copy=True,
-                use_hardlink=False,
-            )
-
-        for j in reg_tmp:
-            if j is not None:
-                os.remove(j)
-
-        self._results["aligned_atlas_gm"] = aligned_atlas_gm
-        self._results["coords"] = self.inputs.coords
-        self._results["labels"] = self.inputs.labels
+            # Correct coords and labels
+            [uatlas_final, coords, labels] = \
+                drop_coords_labels_from_restricted_parcellation(
+                self.inputs.uatlas, self.inputs.coords, self.inputs.labels)
+            self._results["aligned_atlas_gm"] = uatlas_final
+        self._results["coords"] = coords
+        self._results["labels"] = labels
         self._results["node_size"] = self.inputs.node_size
 
         gc.collect()
@@ -2192,7 +2187,7 @@ class RegisterAtlasFunc(SimpleInterface):
         return runtime
 
 
-class _RegisterROIFEPIInputSpec(BaseInterfaceInputSpec):
+class _RegisterROIEPIInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterROIEPI"""
 
     basedir_path = Directory(exists=True, mandatory=True)
@@ -2215,7 +2210,7 @@ class _RegisterROIEPIOutputSpec(TraitedSpec):
 class RegisterROIEPI(SimpleInterface):
     """Interface wrapper for RegisterROIEPI."""
 
-    input_spec = _RegisterROIFEPIInputSpec
+    input_spec = _RegisterROIEPIInputSpec
     output_spec = _RegisterROIEPIOutputSpec
 
     def _run_interface(self, runtime):

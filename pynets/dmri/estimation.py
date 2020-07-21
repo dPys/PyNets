@@ -526,7 +526,6 @@ def streams2graph(
       R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
       Analysis in Diffusion Tensor Imaging. Brain Connectivity.
       https://doi.org/10.1089/brain.2016.0481
-    .. [4] Normalized fiber-density estimation adapted from Sebastian Tourbier.
     """
     import gc
     import time
@@ -712,6 +711,8 @@ def streams2graph(
     gc.collect()
 
     # Add fiber density attributes for each edge
+    # Adapted from the nnormalized fiber-density estimation routines of
+    # Sebastian Tourbier.
     if fiber_density is True:
         print("Weighting edges by fiber density...")
         # Summarize total fibers and total label volumes

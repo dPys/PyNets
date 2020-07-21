@@ -189,7 +189,7 @@ def test_match_target_vox_res():
             anat_success = False
 
     # Orig dMRI image has anisotropic (1.75x1.75x3mm) dimensions.
-    dwi_img_file = f"{test_out}/sub-003_dwi_pre_res.nii.gz"
+    dwi_img_file = f"{test_out}/sub-003_dwi_pre_res_res-1mm.nii.gz"
     dwi_vox_size = '1mm'
     dwi_out_dir = test_out
     dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size, dwi_out_dir)
