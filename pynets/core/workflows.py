@@ -4324,17 +4324,32 @@ def fmri_connectometry(
                  ("dir_path", "dir_path")],
             ),
             (
-                save_nifti_parcels_node,
-                register_atlas_node,
-                [("net_parcels_nii_path", "uatlas_parcels")],
-            ),
-            (
                 register_atlas_node,
                 extract_ts_node,
                 [("aligned_atlas_gm", "net_parcels_nii_path")],
             ),
         ]
     )
+    if k_clustering > 0:
+        fmri_connectometry_wf.connect(
+            [
+                (
+                    clustering_node,
+                    register_atlas_node,
+                    [("uatlas", "uatlas_parcels")],
+                ),
+            ]
+        )
+    else:
+        fmri_connectometry_wf.connect(
+            [
+                (
+                    save_nifti_parcels_node,
+                    register_atlas_node,
+                    [("net_parcels_nii_path", "uatlas_parcels")],
+                ),
+            ]
+        )
 
     # Set extract_ts iterables
     if not smooth_list and hpass_list and extract_strategy_list:
