@@ -589,7 +589,7 @@ class IndividualClustering(SimpleInterface):
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)
 
         if self.inputs.clust_type in clust_list:
-            if c_boot == 1:
+            if float(c_boot) > 1:
                 print(
                     f"Performing circular block bootstrapping with {c_boot}"
                     f" iterations..."
@@ -1979,7 +1979,6 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
-    already_run = traits.Bool(False, usedefault=True)
 
 
 class _RegisterAtlasFuncOutputSpec(TraitedSpec):
@@ -2005,188 +2004,185 @@ class RegisterAtlasFunc(SimpleInterface):
         from pynets.core.utils import missing_elements
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        if self.inputs.already_run is False:
-            if self.inputs.uatlas is None:
-                uatlas_tmp_path = None
-            else:
-                uatlas_tmp_path = fname_presuffix(
-                    self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
-                )
-                copyfile(
-                    self.inputs.uatlas,
-                    uatlas_tmp_path,
-                    copy=True,
-                    use_hardlink=False)
-
-            if self.inputs.uatlas_parcels is None:
-                uatlas_parcels_tmp_path = None
-            else:
-                uatlas_parcels_tmp_path = fname_presuffix(
-                    self.inputs.uatlas_parcels, suffix="_tmp",
-                    newpath=runtime.cwd
-                )
-                copyfile(
-                    self.inputs.uatlas_parcels,
-                    uatlas_parcels_tmp_path,
-                    copy=True,
-                    use_hardlink=False,
-                )
-
-            if self.inputs.network:
-                atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
-            else:
-                atlas_name = f"{self.inputs.atlas}"
-
-            t1w_brain_tmp_path = fname_presuffix(
-                self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.t1w_brain,
-                t1w_brain_tmp_path,
-                copy=True,
-                use_hardlink=False)
-
-            t1w_brain_mask_tmp_path = fname_presuffix(
-                self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.t1w_brain_mask,
-                t1w_brain_mask_tmp_path,
-                copy=True,
-                use_hardlink=False,
-            )
-
-            t1_aligned_mni_tmp_path = fname_presuffix(
-                self.inputs.t1_aligned_mni, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.t1_aligned_mni,
-                t1_aligned_mni_tmp_path,
-                copy=True,
-                use_hardlink=False,
-            )
-
-            gm_mask_tmp_path = fname_presuffix(
-                self.inputs.gm_mask, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.gm_mask,
-                gm_mask_tmp_path,
-                copy=True,
-                use_hardlink=False)
-
-            base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
-            os.makedirs(base_dir_tmp, exist_ok=True)
-
-            aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                                  f"t1w_mni.nii.gz"
-            aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                                  f"t1w_skull.nii.gz"
-            aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
-
-            if self.inputs.node_size is not None:
-                atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
-
-            mni2t1_xfm_tmp_path = fname_presuffix(
-                self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.mni2t1_xfm,
-                mni2t1_xfm_tmp_path,
-                copy=True,
-                use_hardlink=False)
-
-            mni2t1w_warp_tmp_path = fname_presuffix(
-                self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.mni2t1w_warp,
-                mni2t1w_warp_tmp_path,
-                copy=True,
-                use_hardlink=False,
-            )
-
-            aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
-                uatlas_tmp_path,
-                uatlas_parcels_tmp_path,
-                atlas_name,
-                t1w_brain_tmp_path,
-                t1w_brain_mask_tmp_path,
-                t1_aligned_mni_tmp_path,
-                mni2t1w_warp_tmp_path,
-                mni2t1_xfm_tmp_path,
-                gm_mask_tmp_path,
-                aligned_atlas_t1mni,
-                aligned_atlas_skull,
-                aligned_atlas_gm,
-                self.inputs.simple,
-            )
-
-            # Correct coords and labels
-            bad_idxs = missing_elements(
-                list(
-                    np.unique(
-                        np.asarray(
-                            nib.load(aligned_atlas_gm).dataobj).astype("int"))
-                )
-            )
-
-            if len(bad_idxs) > 0:
-                bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-                print(f"Missing parcels: {bad_idxs}")
-                for j in bad_idxs:
-                    print(f"Removing: "
-                          f"{(self.inputs.labels[j], self.inputs.coords[j])}"
-                          f"...")
-                    del self.inputs.labels[j], self.inputs.coords[j]
-            try:
-                intensity_count = len(np.unique(
-                    np.asarray(nib.load(
-                        aligned_atlas_gm).dataobj).astype("int"))[1:])
-                assert len(self.inputs.coords) == len(self.inputs.labels) == \
-                       intensity_count
-            except ValueError as err:
-                print(f"# Coords: {len(self.inputs.coords)}")
-                print(f"# Labels: {len(self.inputs.labels)}")
-                print(f"# Intensities: {intensity_count}")
-
-            reg_tmp = [
-                uatlas_parcels_tmp_path,
-                uatlas_tmp_path,
-                gm_mask_tmp_path,
-                t1_aligned_mni_tmp_path,
-                t1w_brain_mask_tmp_path,
-                mni2t1w_warp_tmp_path,
-                mni2t1_xfm_tmp_path,
-                t1w_brain_tmp_path,
-            ]
-
-            if self.inputs.uatlas is None:
-                uatlas_out = self.inputs.uatlas_parcels
-                copyfile(
-                    aligned_atlas_gm,
-                    f"{os.path.dirname(uatlas_out)}/"
-                    f"{os.path.basename(aligned_atlas_gm)}",
-                    copy=True,
-                    use_hardlink=False,
-                )
-            else:
-                uatlas_out = self.inputs.uatlas
-                copyfile(
-                    aligned_atlas_gm,
-                    f"{os.path.dirname(uatlas_out)}/parcellations/"
-                    f"{os.path.basename(aligned_atlas_gm)}",
-                    copy=True,
-                    use_hardlink=False,
-                )
-
-            for j in reg_tmp:
-                if j is not None:
-                    os.remove(j)
-
-            self._results["aligned_atlas_gm"] = aligned_atlas_gm
+        if self.inputs.uatlas is None:
+            uatlas_tmp_path = None
         else:
-            self._results["aligned_atlas_gm"] = self.inputs.uatlas
+            uatlas_tmp_path = fname_presuffix(
+                self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.uatlas,
+                uatlas_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+        if self.inputs.uatlas_parcels is None:
+            uatlas_parcels_tmp_path = None
+        else:
+            uatlas_parcels_tmp_path = fname_presuffix(
+                self.inputs.uatlas_parcels, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.uatlas_parcels,
+                uatlas_parcels_tmp_path,
+                copy=True,
+                use_hardlink=False,
+            )
+
+        if self.inputs.network:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+        else:
+            atlas_name = f"{self.inputs.atlas}"
+
+        t1w_brain_tmp_path = fname_presuffix(
+            self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w_brain,
+            t1w_brain_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        t1w_brain_mask_tmp_path = fname_presuffix(
+            self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w_brain_mask,
+            t1w_brain_mask_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
+
+        t1_aligned_mni_tmp_path = fname_presuffix(
+            self.inputs.t1_aligned_mni, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1_aligned_mni,
+            t1_aligned_mni_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
+
+        gm_mask_tmp_path = fname_presuffix(
+            self.inputs.gm_mask, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.gm_mask,
+            gm_mask_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
+        os.makedirs(base_dir_tmp, exist_ok=True)
+
+        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                              f"t1w_mni.nii.gz"
+        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                              f"t1w_skull.nii.gz"
+        aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
+
+        if self.inputs.node_size is not None:
+            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+        mni2t1_xfm_tmp_path = fname_presuffix(
+            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1_xfm,
+            mni2t1_xfm_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        mni2t1w_warp_tmp_path = fname_presuffix(
+            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1w_warp,
+            mni2t1w_warp_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
+
+        aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
+            uatlas_tmp_path,
+            uatlas_parcels_tmp_path,
+            atlas_name,
+            t1w_brain_tmp_path,
+            t1w_brain_mask_tmp_path,
+            t1_aligned_mni_tmp_path,
+            mni2t1w_warp_tmp_path,
+            mni2t1_xfm_tmp_path,
+            gm_mask_tmp_path,
+            aligned_atlas_t1mni,
+            aligned_atlas_skull,
+            aligned_atlas_gm,
+            self.inputs.simple,
+        )
+
+        # Correct coords and labels
+        bad_idxs = missing_elements(
+            list(
+                np.unique(
+                    np.asarray(
+                        nib.load(aligned_atlas_gm).dataobj).astype("int"))
+            )
+        )
+
+        if len(bad_idxs) > 0:
+            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+            print(f"Missing parcels: {bad_idxs}")
+            for j in bad_idxs:
+                print(f"Removing: "
+                      f"{(self.inputs.labels[j], self.inputs.coords[j])}"
+                      f"...")
+                del self.inputs.labels[j], self.inputs.coords[j]
+        try:
+            intensity_count = len(np.unique(
+                np.asarray(nib.load(
+                    aligned_atlas_gm).dataobj).astype("int"))[1:])
+            assert len(self.inputs.coords) == len(self.inputs.labels) == \
+                   intensity_count
+        except ValueError as err:
+            print(f"# Coords: {len(self.inputs.coords)}")
+            print(f"# Labels: {len(self.inputs.labels)}")
+            print(f"# Intensities: {intensity_count}")
+
+        reg_tmp = [
+            uatlas_parcels_tmp_path,
+            uatlas_tmp_path,
+            gm_mask_tmp_path,
+            t1_aligned_mni_tmp_path,
+            t1w_brain_mask_tmp_path,
+            mni2t1w_warp_tmp_path,
+            mni2t1_xfm_tmp_path,
+            t1w_brain_tmp_path,
+        ]
+
+        if self.inputs.uatlas is None:
+            uatlas_out = self.inputs.uatlas_parcels
+            copyfile(
+                aligned_atlas_gm,
+                f"{os.path.dirname(uatlas_out)}/"
+                f"{os.path.basename(aligned_atlas_gm)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        else:
+            uatlas_out = self.inputs.uatlas
+            copyfile(
+                aligned_atlas_gm,
+                f"{os.path.dirname(uatlas_out)}/parcellations/"
+                f"{os.path.basename(aligned_atlas_gm)}",
+                copy=True,
+                use_hardlink=False,
+            )
+
+        for j in reg_tmp:
+            if j is not None:
+                os.remove(j)
+
+        self._results["aligned_atlas_gm"] = aligned_atlas_gm
         self._results["coords"] = self.inputs.coords
         self._results["labels"] = self.inputs.labels
         self._results["node_size"] = self.inputs.node_size

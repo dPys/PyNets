@@ -351,7 +351,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     func_img : Nifti1Image
         4D Nifti1Image containing fMRI data.
     clust_mask_img : Nifti1Image
-        3D NIFTI file containing a mask, which restricts the voxels used in the analysis.
+        3D NIFTI file containing a mask, which restricts the voxels used in
+        the analysis.
     thresh : str
         Threshold value, correlation coefficients lower than this value
         will be removed from the matrix (set to zero).
@@ -359,8 +360,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     Returns
     -------
     W : Compressed Sparse Matrix
-        A Scipy sparse matrix, with weights corresponding to the spatial correlation between the time series from
-        voxel i and voxel j
+        A Scipy sparse matrix, with weights corresponding to the spatial
+        correlation between the time series from voxel i and voxel j
 
     References
     ----------
@@ -379,7 +380,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         sorted(
             sorted(
                 sorted(
-                    [list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
+                    [list(x) for x in list(set(product({-1, 0, 1},
+                                                       repeat=3)))],
                     key=lambda k: (k[0]),
                 ),
                 key=lambda k: (k[1]),

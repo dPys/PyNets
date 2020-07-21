@@ -3665,10 +3665,6 @@ def fmri_connectometry(
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
 
-        register_atlas_node = pe.Node(
-            RegisterAtlasFunc(already_run=True),
-            name="register_atlas_node")
-
         clustering_info_node = pe.Node(
             niu.IdentityInterface(fields=["clust_mask", "clust_type", "k"]),
             name="clustering_info_node",
