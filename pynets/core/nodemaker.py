@@ -987,10 +987,12 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     # Correct coords and labels
     # bad_idxs = missing_elements(intensities)
 
-    bad_idxs = []
     if isinstance(labels[0], tuple):
         label_intensities = [i[1] for i in labels]
-        if len(label_intensities) > len(intensities):
+        bad_idxs = []
+        if len(label_intensities) != len(intensities):
+            print('Inconsistent number of intensities and labels. '
+                  'Correcting parcellation...')
             diff = list(set(label_intensities) - set(intensities))
             for val in diff:
                 bad_idxs.append(label_intensities.index(val))
@@ -1003,17 +1005,12 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                     print(f"Removing: {(labels[j], coords[j])}...")
                     del labels[j], coords[j]
 
-            intensity_count = len(np.unique(
-                np.asarray(parcellation_img.dataobj).astype("int"))[1:])
-
-        elif len(label_intensities) < len(intensities):
-            print('Incoonsistent number of intensities andn labels. '
-                  'Correcting parcellation...')
             diff = list(set(intensities) - set(label_intensities))
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
                 print(f"Removing: {str(val)}...")
                 parlist_img_data[np.where(parlist_img_data == val)] = 0
+
             parcellation = fname_presuffix(
             parcellation, suffix="_mod", newpath=os.path.dirname(parcellation))
             nib.save(

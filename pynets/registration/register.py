@@ -54,9 +54,8 @@ def direct_streamline_norm(
     error_margin,
 ):
     """
-    A Function to perform normalization of streamlines tracked in native
-    diffusion space to an MNI-space template.
-
+    A Function to perform normalization of streamlines tracked in native diffusion space
+    to an MNI-space template.
     Parameters
     ----------
     streams : str
@@ -66,8 +65,7 @@ def direct_streamline_norm(
     ap_path : str
         File path to the anisotropic power Nifti1Image.
     dir_path : str
-        Path to directory containing subject derivative data for a given
-        pynets run.
+        Path to directory containing subject derivative data for a given pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     target_samples : int
@@ -78,8 +76,8 @@ def direct_streamline_norm(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based
-        centroids are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -116,8 +114,7 @@ def direct_streamline_norm(
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     basedir_path : str
-        Path to directory to output direct-streamline normalized temp files
-        and outputs.
+        Path to directory to output direct-streamline normalized temp files and outputs.
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -135,14 +132,12 @@ def direct_streamline_norm(
         of any voxel in the ROI, the filtering criterion is set to True for
         this streamline, otherwise False. Defaults to the distance between
         the center of each voxel and the corner of the voxel.
-
     Returns
     -------
     streams_warp : str
         File path to normalized streamline array sequence in .trk format.
     dir_path : str
-        Path to directory containing subject derivative data for a given
-        pynets run.
+        Path to directory containing subject derivative data for a given pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     target_samples : int
@@ -153,8 +148,8 @@ def direct_streamline_norm(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based
-        centroids are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based centroids
+        are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -189,9 +184,8 @@ def direct_streamline_norm(
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     directget : str
-        The statistical approach to tracking. Options are:
-        det (deterministic), closest (clos), boot (bootstrapped), and prob
-        (probabilistic).
+        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
     min_length : int
@@ -207,7 +201,6 @@ def direct_streamline_norm(
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different
       spatial normalization approaches on tractography and structural
       brain networks. Network Neuroscience, 1-19.
-
     """
     import gc
     from dipy.tracking.streamline import transform_streamlines
@@ -267,8 +260,7 @@ def direct_streamline_norm(
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
-                    else ""),
+            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
             conn_model,
             "_",
             target_samples,
@@ -295,8 +287,7 @@ def direct_streamline_norm(
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
-                    else ""),
+            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
             conn_model,
             "_",
             target_samples,
@@ -357,10 +348,10 @@ def direct_streamline_norm(
         streams_in_curr_grid = transform_streamlines(
             streamlines, warped_fa_affine)
 
-        # Create isocenter mapping where we anchor the origin transformation
-        # affine to the corner of the FOV by scaling x, y, z offsets according
-        # to a multiplicative van der Corput sequence with a base value equal
-        # to the voxel resolution
+        # Create isocenter mapping where we anchor the origin transformation affine
+        # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
+        # van der Corput sequence with a base value equal to the voxel
+        # resolution
         [x_mul, y_mul, z_mul] = [vdc(i, vox_size) for i in range(1, 4)]
 
         ref_grid_aff = vox_size * np.eye(4)
@@ -414,9 +405,8 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni,
-        # streams_warp_png) plot_gen.show_template_bundles(streamlines,
-        # fa_path, streams_warp_png)
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
+        # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
 
         # Create and save MNI density map
         nib.save(
@@ -430,8 +420,8 @@ def direct_streamline_norm(
             density_mni,
         )
 
-        # Map parcellation from native space back to MNI-space and create an
-        # 'uncertainty-union' parcellation with original mni-space uatlas
+        # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
+        # with original mni-space uatlas
         warped_uatlas = affine_map.transform_inverse(
             mapping.transform(
                 np.asarray(atlas_img.dataobj).astype("int"),
@@ -484,17 +474,10 @@ def direct_streamline_norm(
 
         assert len(coords) == len(labels)
 
-        # # Correct coords and labels
-        # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
-        # bad_idxs = [i+1 for i in bad_idxs]
-        # if len(bad_idxs) > 0:
-        #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-        #     for j in bad_idxs:
-        #         del labels[j], coords[j]
     else:
         print(
-            "Skipping Direct Streamline Normalization (DSN). Will proceed to"
-            " define fiber connectivity in native diffusion space...")
+            "Skipping Direct Streamline Normalization (DSN). Will proceed to define fiber connectivity "
+            "in native diffusion space...")
         streams_mni = streams
         warped_fa = fa_path
         atlas_mni = labels_im_file
@@ -530,9 +513,7 @@ def direct_streamline_norm(
 
 class DmriReg(object):
     """
-    A Class for Registering an atlas to a subject's MNI-aligned T1w image in
-    native diffusion space.
-
+    A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
     References
     ----------
     .. [1] Adluru, N., Zhang, H., Tromp, D. P. M., & Alexander, A. L. (2013).
@@ -544,7 +525,6 @@ class DmriReg(object):
     .. [3] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
       hidden Markov random field model and the expectation-maximization algorithm.
       IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
-
     """
 
     def __init__(
@@ -701,14 +681,11 @@ class DmriReg(object):
         ):
             print("Existing segmentations detected...")
             wm_mask = regutils.check_orient_and_dims(
-                wm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                wm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
             gm_mask = regutils.check_orient_and_dims(
-                gm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                gm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
             csf_mask = regutils.check_orient_and_dims(
-                csf_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                csf_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -717,8 +694,7 @@ class DmriReg(object):
                 csf_mask = maps["csf_prob"]
             except RuntimeError:
                 print(
-                    "Segmentation failed. Does the input anatomical image "
-                    "still contained skull?"
+                    "Segmentation failed. Does the input anatomical image still contained skull?"
                 )
 
         # Threshold WM to binary in dwi space
@@ -728,8 +704,7 @@ class DmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} "
-            f"{self.wm_edge}"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
         )
 
         shutil.copyfile(wm_mask, self.wm_mask)
@@ -760,8 +735,7 @@ class DmriReg(object):
         if self.simple is False:
             try:
                 print(
-                    f"Learning a non-linear mapping from T1w --> "
-                    f"{self.template_name} ..."
+                    f"Learning a non-linear mapping from T1w --> {self.template_name} ..."
                 )
                 # Use FNIRT to nonlinearly align T1 to MNI template
                 regutils.align_nonlinear(
@@ -780,18 +754,15 @@ class DmriReg(object):
 
                 # Get mat from MNI -> T1
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse "
-                    f"{self.t12mni_xfm_init}"
+                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
                 )
-
-                self.t12mni_xfm = self.t12mni_xfm_init
 
             except BaseException:
                 # Falling back to linear registration
                 regutils.align(
                     self.t1w_brain,
                     self.input_mni_brain,
-                    xfm=self.t12mni_xfm,
+                    xfm=self.mni2t1_xfm,
                     init=self.t12mni_xfm_init,
                     bins=None,
                     dof=12,
@@ -803,8 +774,7 @@ class DmriReg(object):
                 )
                 # Get mat from MNI -> T1
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse "
-                    f"{self.t12mni_xfm}"
+                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
                 )
         else:
             # Falling back to linear registration
@@ -823,16 +793,14 @@ class DmriReg(object):
             )
             # Get mat from MNI -> T1
             os.system(
-                f"convert_xfm -omat {self.mni2t1_xfm} -inverse "
-                f"{self.t12mni_xfm}"
+                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
             )
 
     def t1w2dwi_align(self):
         """
-        A function to perform alignment from T1w_MNI --> DWI. Uses a local
-        optimization cost function to get the two images close, and then uses
-        bbr to obtain a good alignment of brain boundaries. Assumes input dwi
-        is already preprocessed and brain extracted.
+        A function to perform alignment from T1w_MNI --> DWI. Uses a local optimization
+        cost function to get the two images close, and then uses bbr to obtain a good alignment of brain boundaries.
+        Assumes input dwi is already preprocessed and brain extracted.
         """
 
         # Align T1w-->DWI
@@ -871,8 +839,7 @@ class DmriReg(object):
                     sch="${FSLDIR}/etc/flirtsch/bbr.sch",
                 )
                 os.system(
-                    f"convert_xfm -omat {self.t1w2dwi_bbr_xfm} -inverse "
-                    f"{self.dwi2t1w_bbr_xfm}"
+                    f"convert_xfm -omat {self.t1w2dwi_bbr_xfm} -inverse {self.dwi2t1w_bbr_xfm}"
                 )
 
                 # Apply the alignment
@@ -924,12 +891,10 @@ class DmriReg(object):
 
     def tissue2dwi_align(self):
         """
-        A function to perform alignment of ventricle ROI's from MNI space -->
-        dwi and CSF from T1w space --> dwi. First generates and performs dwi
-        space alignment of avoidance/waypoint masks for tractography. First
-        creates ventricle ROI. Then creates transforms from stock MNI template
-        to dwi space. For this to succeed, must first have called both
-        t1w2dwi_align.
+        A function to perform alignment of ventricle ROI's from MNI space --> dwi and CSF from T1w space --> dwi.
+        First generates and performs dwi space alignment of avoidance/waypoint masks for tractography.
+        First creates ventricle ROI. Then creates transforms from stock MNI template to dwi space.
+        For this to succeed, must first have called both t1w2dwi_align.
         """
         import os.path as op
 
@@ -1055,37 +1020,31 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         os.system(
-            f"fslmaths {self.wm_in_dwi} -mas {self.wm_in_dwi_bin}"
-            f" {self.wm_in_dwi}"
+            f"fslmaths {self.wm_in_dwi} -mas {self.wm_in_dwi_bin} {self.wm_in_dwi}"
         )
 
         # Threshold GM to binary in dwi space
         os.system(
-            f"fslmaths {self.gm_in_dwi} -mas {self.gm_in_dwi_bin}"
-            f" {self.gm_in_dwi}"
+            f"fslmaths {self.gm_in_dwi} -mas {self.gm_in_dwi_bin} {self.gm_in_dwi}"
         )
 
         # Threshold CSF to binary in dwi space
         os.system(
-            f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin}"
-            f" {self.csf_mask_dwi}"
+            f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin} {self.csf_mask_dwi}"
         )
 
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
         os.system(
-            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin"
-            f" {self.vent_mask_dwi}"
+            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi}"
         )
         os.system(
-            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin"
-            f" {self.vent_csf_in_dwi}"
+            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi}"
         )
 
         print("Creating Corpus Callosum mask...")
         os.system(
-            f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin}"
-            f" -sub {self.vent_csf_in_dwi} "
+            f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} -sub {self.vent_csf_in_dwi} "
             f"-bin {self.corpuscallosum_dwi}")
 
         # Create gm-wm interface image
@@ -1099,7 +1058,6 @@ class DmriReg(object):
 class FmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native epi space.
-
     References
     ----------
     .. [1] Brett M, Leff AP, Rorden C, Ashburner J (2001) Spatial Normalization
@@ -1108,7 +1066,6 @@ class FmriReg(object):
     .. [2] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
       hidden Markov random field model and the expectation-maximization algorithm.
       IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
-
     """
 
     def __init__(
@@ -1155,8 +1112,7 @@ class FmriReg(object):
             "pynets", f"templates/{self.template_name}_{vox_size}.nii.gz"
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_" f"brain_"
-                      f"{vox_size}.nii.gz"
+            "pynets", f"templates/{self.template_name}_" f"brain_{vox_size}.nii.gz"
         )
         self.input_mni_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{self.template_name}_"
@@ -1198,11 +1154,9 @@ class FmriReg(object):
         ):
             print("Existing segmentations detected...")
             gm_mask = regutils.check_orient_and_dims(
-                gm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                gm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
             wm_mask = regutils.check_orient_and_dims(
-                wm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                wm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -1210,8 +1164,7 @@ class FmriReg(object):
                 wm_mask = maps["wm_prob"]
             except RuntimeError:
                 print(
-                    "Segmentation failed. Does the input anatomical image"
-                    " still contained skull?"
+                    "Segmentation failed. Does the input anatomical image still contained skull?"
                 )
 
         # Threshold GM to binary in func space
@@ -1229,15 +1182,14 @@ class FmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr}"
-            f" {self.wm_edge}"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
         )
 
         return
 
     def t1w2mni_align(self):
         """
-        A function to perform alignment from T1w --> MNI template.
+        A function to perform alignment from T1w --> MNI.
         """
 
         # Create linear transform/ initializer T1w-->MNI
@@ -1257,10 +1209,9 @@ class FmriReg(object):
         if self.simple is False:
             try:
                 print(
-                    f"Learning a non-linear mapping from T1w -->"
-                    f" {self.template_name} ..."
+                    f"Learning a non-linear mapping from T1w --> {self.template_name} ..."
                 )
-                # Use FNIRT to nonlinearly align T1 to MNI template
+                # Use FNIRT to nonlinearly align T1w to MNI template
                 regutils.align_nonlinear(
                     self.t1w_brain,
                     self.input_mni,
@@ -1270,18 +1221,15 @@ class FmriReg(object):
                     ref_mask=self.input_mni_mask,
                 )
 
-                # Get warp from MNI -> T1
+                # Get warp from T1w --> MNI
                 regutils.inverse_warp(
-                    self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni
+                    self.t1w_brain,  self.mni2t1w_warp, self.warp_t1w2mni
                 )
 
-                # Get mat from MNI -> T1
+                # Get mat from MNI -> T1w
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse"
-                    f" {self.t12mni_xfm_init}"
+                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
                 )
-
-                self.t12mni_xfm = self.t12mni_xfm_init
 
             except BaseException:
                 # Falling back to linear registration
@@ -1298,10 +1246,9 @@ class FmriReg(object):
                     out=self.t1_aligned_mni,
                     sch=None,
                 )
-                # Get mat from MNI -> T1
+                # Get mat from MNI -> T1w
                 os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse"
-                    f" {self.t12mni_xfm}"
+                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
                 )
         else:
             # Falling back to linear registration
@@ -1318,9 +1265,9 @@ class FmriReg(object):
                 out=self.t1_aligned_mni,
                 sch=None,
             )
-            # Get mat from MNI -> T1
+            # Get mat from MNI -> T1w
             os.system(
-                f"convert_xfm -omat {self.mni2t1_xfm} -inverse"
-                f" {self.t12mni_xfm}"
+                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
             )
         return
+

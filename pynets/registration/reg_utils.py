@@ -365,31 +365,25 @@ def roi2t1w_align(
 def RegisterParcellation2MNIFunc_align(
     uatlas,
     template,
+    template_mask,
+    t1w_brain,
     t1w2mni_xfm,
+    aligned_atlas_t1w,
     aligned_atlas_mni,
+    t1w2mni_warp,
+    simple
 ):
     """
-    A function to perform atlas alignment from atlas --> MNI.
+    A function to perform atlas alignment from T1w atlas --> MNI.
     """
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
-    regutils.align(
-        uatlas,
-        template,
-        init=t1w2mni_xfm,
-        out=aligned_atlas_mni,
-        dof=6,
-        searchrad=True,
-        interp="nearestneighbour",
-        cost="mutualinfo",
-    )
-
-    atlas_img = nib.load(aligned_atlas_mni)
-    template_img = nib.load(template)
+    atlas_img = nib.load(uatlas)
+    t1w_brain_img = nib.load(t1w_brain)
 
     uatlas_res_template = resample_to_img(
-        atlas_img, template_img, interpolation="nearest"
+        atlas_img, t1w_brain_img, interpolation="nearest"
     )
     uatlas_res_template_data = np.asarray(uatlas_res_template.dataobj)
     uatlas_res_template_data[
@@ -401,10 +395,47 @@ def RegisterParcellation2MNIFunc_align(
         affine=uatlas_res_template.affine,
         header=uatlas_res_template.header,
     )
-    nib.save(uatlas_res_template, aligned_atlas_mni)
+    nib.save(uatlas_res_template, aligned_atlas_t1w)
 
-    template_img.uncache()
-    atlas_img.uncache()
+    if simple is False:
+        try:
+            regutils.apply_warp(
+                template,
+                aligned_atlas_t1w,
+                aligned_atlas_mni,
+                warp=t1w2mni_warp,
+                interp="nn",
+                sup=True,
+                mask=template_mask
+            )
+
+        except BaseException:
+            print(
+                "Warning: Atlas is not in correct dimensions, or input is low "
+                "quality,\nusing linear template registration.")
+
+            regutils.align(
+                aligned_atlas_t1w,
+                template,
+                init=t1w2mni_xfm,
+                out=aligned_atlas_mni,
+                dof=6,
+                searchrad=True,
+                interp="nearestneighbour",
+                cost="mutualinfo",
+            )
+
+    else:
+        regutils.align(
+            aligned_atlas_t1w,
+            template,
+            init=t1w2mni_xfm,
+            out=aligned_atlas_mni,
+            dof=6,
+            searchrad=True,
+            interp="nearestneighbour",
+            cost="mutualinfo",
+        )
 
     return aligned_atlas_mni
 

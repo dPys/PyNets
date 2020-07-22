@@ -3665,10 +3665,6 @@ def fmri_connectometry(
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
 
-        register_atlas_node = pe.Node(
-            RegisterAtlasFunc(already_run=True),
-            name="register_atlas_node")
-
         clustering_info_node = pe.Node(
             niu.IdentityInterface(fields=["clust_mask", "clust_type", "k"]),
             name="clustering_info_node",
@@ -3898,6 +3894,8 @@ def fmri_connectometry(
                     RegisterParcellation2MNIFunc_node,
                     [
                         ("t1w2mni_xfm", "t1w2mni_xfm"),
+                        ("t1w_brain", "t1w_brain"),
+                        ("t1w2mni_warp", "t1w2mni_warp"),
                     ],
                 ),
                 (
@@ -5478,6 +5476,15 @@ def fmri_connectometry(
     )
 
     # Check orientation and resolution
+    check_orient_and_dims_uatlas_node = pe.Node(
+        niu.Function(
+            input_names=["infile", "outdir", "vox_size"],
+            output_names=["outfile"],
+            function=regutils.check_orient_and_dims,
+            imports=import_list,
+        ),
+        name="check_orient_and_dims_uatlas_node",
+    )
     fmri_connectometry_wf.connect(
         [
             (
@@ -5517,6 +5524,18 @@ def fmri_connectometry(
                     ("basedir_path", "basedir_path"),
                 ],
             ),
+            (inputnode, check_orient_and_dims_uatlas_node,
+             [("vox_size", "vox_size")]),
+            (
+                fetch_nodes_and_labels_node,
+                check_orient_and_dims_uatlas_node,
+                [("uatlas", "infile"), ("dir_path", "outdir")],
+            ),
+            (
+                check_orient_and_dims_uatlas_node,
+                register_atlas_node,
+                [("outfile", "uatlas")],
+            ),
             (
                 node_gen_node,
                 register_atlas_node,
@@ -5534,43 +5553,6 @@ def fmri_connectometry(
             ),
         ]
     )
-
-    if k_clustering > 0:
-        fmri_connectometry_wf.connect(
-            [
-                (
-                    clustering_node,
-                    register_atlas_node,
-                    [("uatlas", "uatlas")],
-                ),
-            ]
-        )
-    else:
-        check_orient_and_dims_uatlas_node = pe.Node(
-            niu.Function(
-                input_names=["infile", "outdir", "vox_size"],
-                output_names=["outfile"],
-                function=regutils.check_orient_and_dims,
-                imports=import_list,
-            ),
-            name="check_orient_and_dims_uatlas_node",
-        )
-        fmri_connectometry_wf.connect(
-            [
-                (inputnode, check_orient_and_dims_uatlas_node,
-                 [("vox_size", "vox_size")]),
-                (
-                    fetch_nodes_and_labels_node,
-                    check_orient_and_dims_uatlas_node,
-                    [("uatlas", "infile"), ("dir_path", "outdir")],
-                ),
-                (
-                    check_orient_and_dims_uatlas_node,
-                    register_atlas_node,
-                    [("outfile", "uatlas")],
-                ),
-            ]
-        )
 
     if parc is False:
         # register_node.inputs.simple = True
