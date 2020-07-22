@@ -406,7 +406,6 @@ def RegisterParcellation2MNIFunc_align(
                 warp=t1w2mni_warp,
                 interp="nn",
                 sup=True,
-                mask=template_mask
             )
 
         except BaseException:
@@ -454,6 +453,7 @@ def atlas2t1w_align(
     aligned_atlas_skull,
     aligned_atlas_gm,
     simple,
+    gm_fail_tol=5
 ):
     """
     A function to perform atlas alignment from atlas --> T1w.
@@ -550,9 +550,9 @@ def atlas2t1w_align(
     print(f"Previous label count: {old_count}")
     print(f"New label count: {new_count}")
     print(f"Labels dropped: {diff}")
-    if diff > 1:
-        print('Grey-Matter mask too restrictive for this parcellation. '
-              'Falling back to the T1w mask...')
+    if diff > gm_fail_tol:
+        print(f"Grey-Matter mask too restrictive >{str(gm_fail_tol)} for this "
+              f"parcellation. Falling back to the T1w mask...")
         os.system(
             f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
             f"{aligned_atlas_gm}"

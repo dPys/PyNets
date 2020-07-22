@@ -1028,7 +1028,6 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
 
     try:
         assert len(coords) == len(labels) == intensity_count
-        print('Passed!')
     except ValueError as err:
         print('Failed!')
         print(f"# Coords: {len(coords)}")

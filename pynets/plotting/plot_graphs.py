@@ -32,6 +32,9 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use("agg")
+    import sys
+    import pkg_resources
+    import yaml
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
@@ -40,6 +43,22 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+        except KeyError:
+            print(
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
+
+    labels = [i[0][labeling_atlas] for i in labels]
 
     try:
         plot_matrix(
@@ -57,10 +76,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    if len(labels) > 150:
-        tick_interval = int(np.around(len(labels)/50))
-    else:
-        tick_interval = int(np.around(len(labels)))
+    tick_interval = int(np.around(len(labels)))/20
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig, dpi=dpi_resolution)
@@ -92,6 +108,9 @@ def plot_community_conn_mat(
     """
     import warnings
     warnings.filterwarnings("ignore")
+    import sys
+    import pkg_resources
+    import yaml
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -103,6 +122,22 @@ def plot_community_conn_mat(
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+        except KeyError:
+            print(
+                "ERROR: Plotting configuration not successfully extracted from"
+                " runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
+
+    labels = [i[0][labeling_atlas] for i in labels]
 
     sorting_array = sorted(
         range(
@@ -159,10 +194,7 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    if len(labels) > 150:
-        tick_interval = int(np.around(len(labels)/50))
-    else:
-        tick_interval = int(np.around(len(labels)))
+    tick_interval = int(np.around(len(labels)))/20
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)

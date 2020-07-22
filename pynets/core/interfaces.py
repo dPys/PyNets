@@ -681,6 +681,12 @@ class IndividualClustering(SimpleInterface):
                 "nilearn.regions.Parcellations."
                 "html#nilearn.regions.Parcellations")
 
+        ix = 0
+        while not os.path.isfile(nip.uatlas) and ix < 60:
+            print('Waiting for clustered parcellation...')
+            time.sleep(5)
+            ix += 1
+
         self._results["atlas"] = atlas
         self._results["uatlas"] = nip.uatlas
         self._results["clust_mask"] = self.inputs.clust_mask

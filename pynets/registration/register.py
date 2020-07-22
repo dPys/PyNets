@@ -1089,7 +1089,7 @@ class FmriReg(object):
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
         self.reg_path_img = f"{self.reg_path}{'/imgs'}"
         self.t1w2epi_xfm = f"{self.reg_path_mat}{'/t1w2epi_xfm.mat'}"
-        self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni_init.mat'}"
+        self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.t12mni_xfm = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
@@ -1154,9 +1154,11 @@ class FmriReg(object):
         ):
             print("Existing segmentations detected...")
             gm_mask = regutils.check_orient_and_dims(
-                gm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                gm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
             wm_mask = regutils.check_orient_and_dims(
-                wm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                wm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -1164,12 +1166,13 @@ class FmriReg(object):
                 wm_mask = maps["wm_prob"]
             except RuntimeError:
                 print(
-                    "Segmentation failed. Does the input anatomical image still contained skull?"
+                    "Segmentation failed. Does the input anatomical image "
+                    "still contained skull?"
                 )
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
-        mask = math_img("img > 0.02", img=t_img)
+        mask = math_img("img > 0.01", img=t_img)
         mask.to_filename(self.gm_mask_thr)
         os.system(
             f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask}"
@@ -1182,7 +1185,8 @@ class FmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} "
+            f"{self.wm_edge}"
         )
 
         return
