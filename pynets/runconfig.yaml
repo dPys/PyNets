@@ -7,7 +7,7 @@ StructuralNetworkWeighting:
         - True
     overlap_thr: # ROI-streamline overlap in units of voxels.
         - 1
-step_list: # Ensemble tractography, should never exceed the voxel size.
+step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.5 which encompasses the typical range of values used in human tractography research.
     - 0.1
     - 0.2
     - 0.3
@@ -21,7 +21,7 @@ use_life:  # Filter ensemble tractogram to yield more plausible streamlines
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 1
+    - 50
 nthreads:
     - 4
 graph_file_format:
@@ -32,7 +32,7 @@ tracking_method: # a tracking algorithm for dmri connectome estimation. Options 
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
     - 'act'
-tracking_samples: # Indicates the number of cumulative streamline samples for tractography.
+tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
     - 20000
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
     - True
@@ -203,7 +203,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

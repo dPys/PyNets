@@ -44,21 +44,22 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(0)
-    stream.close()
-
-    labels = [i[0][labeling_atlas] for i in labels]
+    if isinstance(labels[0][0], dict):
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                labeling_atlas = \
+                hardcoded_params["plotting"]["labeling_atlas"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted"
+                    " from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
+        labels = [i[0][labeling_atlas] for i in labels]
 
     try:
         plot_matrix(
@@ -123,22 +124,23 @@ def plot_community_conn_mat(
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(0)
-    stream.close()
-
-    labels = [i[0][labeling_atlas] for i in labels]
-
+    if isinstance(labels[0][0], dict):
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                labeling_atlas = \
+                hardcoded_params["plotting"]["labeling_atlas"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted"
+                    " from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
+        labels = [i[0][labeling_atlas] for i in labels]
+        
     sorting_array = sorted(
         range(
             len(community_aff)),

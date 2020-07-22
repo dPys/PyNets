@@ -2640,6 +2640,7 @@ class Tracking(SimpleInterface):
 
         # Linear Fascicle Evaluation (LiFE)
         if use_life is True:
+            print('Using LiFE to evaluate streamline plausibility...')
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
             dwi_img = nib.load(self.inputs.dwi_file)
             dwi_data = dwi_img.get_fdata()
