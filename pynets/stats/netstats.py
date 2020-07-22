@@ -1135,9 +1135,7 @@ class CleanGraphs(object):
         else:
             print("No graph anti-fragmentation applied...")
 
-        self.in_mat = symmetrize(remove_loops(nx.to_numpy_matrix(self.G)))
-
-        self.in_mat = thresholding.autofix(self.in_mat)
+        struct_mat
 
         self.G = nx.from_numpy_array(self.in_mat)
 

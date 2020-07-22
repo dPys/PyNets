@@ -609,55 +609,60 @@ class IndividualClustering(SimpleInterface):
                 )
                 ts_data, block_size = nip.prep_boot()
 
-                def create_bs_imgs(i, ts_data, block_size, nip, work_dir):
+                def create_bs_imgs(ts_data, block_size, clust_mask_corr_img):
                     import nibabel as nib
                     from nilearn.masking import unmask
                     from pynets.fmri.estimation import timeseries_bootstrap
                     boot_series = timeseries_bootstrap(ts_data, block_size)[0]
-                    out_path = f"{work_dir}/boot_bs_img_tmp_{str(i)}.nii.gz"
-                    nib.save(unmask(boot_series, nip._clust_mask_corr_img),
-                             out_path)
-                    return out_path
+                    return unmask(boot_series, clust_mask_corr_img)
 
-                def run_bs_iteration(i, boot_imgs, parcellate, work_dir):
+                def run_bs_iteration(i, ts_data, work_dir, local_corr,
+                                     clust_type, _local_conn_mat_path,
+                                     num_conn_comps, _clust_mask_corr_img,
+                                     _standardize,
+                                     _detrending, k, _local_conn, conf,
+                                     _dir_path,
+                                     _conn_comps):
                     import os
                     import time
+                    from pynets.fmri.clustools import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
-                    parcellate(boot_imgs[..., i]).to_filename(out_path)
-                    while not os.path.isfile(out_path):
-                        time.sleep(0.1)
+
+                    boot_img = create_bs_imgs(ts_data, block_size,
+                                              _clust_mask_corr_img)
+
+                    parcellation = parcellate(boot_img, local_corr,
+                                              clust_type, _local_conn_mat_path,
+                                              num_conn_comps,
+                                              _clust_mask_corr_img,
+                                              _standardize,
+                                              _detrending, k, _local_conn,
+                                              conf, _dir_path,
+                                              _conn_comps)
+                    parcellation.to_filename(out_path)
                     return out_path
 
-                boot_imgs = []
-                for i in range(c_boot):
-                    boot_imgs.append(create_bs_imgs(i, ts_data,
-                    block_size, nip, runtime.cwd))
-
-                boot_imgs_4d = concat_imgs(boot_imgs)
-                del boot_imgs
-
-                # Use joblib multithreading with memmapping
+                # Use joblib with memmapping
                 folder = f"{runtime.cwd}/joblib_memmap"
                 os.makedirs(folder, exist_ok=True)
 
-                boot_imgs_4d_data = boot_imgs_4d.get_fdata()
                 data_filename_memmap = os.path.join(folder, 'data_memmap')
-                dump(boot_imgs_4d_data, data_filename_memmap)
+                dump(ts_data, data_filename_memmap)
                 data = load(data_filename_memmap, mmap_mode='r')
 
                 boot_parcellations = Parallel(n_jobs=nthreads,
                                               verbose=10,
-                                              backend='threading')(
+                                              backend='loky')(
                     delayed(run_bs_iteration)(
-                        i, data, nip.parcellate, runtime.cwd) for i in
+                        i, data, runtime.cwd, nip.local_corr, nip.clust_type,
+                        nip._local_conn_mat_path,
+                        nip.num_conn_comps, nip._clust_mask_corr_img,
+                        nip._standardize,
+                        nip._detrending, nip.k, nip._local_conn, nip.conf,
+                        nip._dir_path,
+                        nip._conn_comps) for i in
                     range(c_boot))
-
-                # boot_parcellations = []
-                # for i in range(c_boot):
-                #     boot_parcellations.append(run_bs_iteration(i, boot_imgs,
-                #                                                nip.parcellate,
-                #                                                runtime.cwd))
 
                 while len(boot_parcellations) < c_boot:
                     time.sleep(0.5)
@@ -673,7 +678,19 @@ class IndividualClustering(SimpleInterface):
                 print(
                     "Creating spatially-constrained parcellation...")
                 out_path = f"{runtime.cwd}/{atlas}_{str(self.inputs.k)}.nii.gz"
-                nip.parcellate(out_name_func_file).to_filename(out_path)
+                func_img = nib.load(out_name_func_file)
+                parcellation = clustools.parcellate(func_img,
+                                                    self.inputs.local_corr,
+                                                    self.inputs.clust_type,
+                                                    nip._local_conn_mat_path,
+                                                    nip.num_conn_comps,
+                                                    nip._clust_mask_corr_img,
+                                                    nip._standardize,
+                                                    nip._detrending, nip.k,
+                                                    nip._local_conn,
+                                                    nip.conf, nip._dir_path,
+                                                    nip._conn_comps)
+                parcellation.to_filename(out_path)
         else:
             raise ValueError(
                 "Clustering method not recognized. See: "
@@ -681,11 +698,16 @@ class IndividualClustering(SimpleInterface):
                 "nilearn.regions.Parcellations."
                 "html#nilearn.regions.Parcellations")
 
+        # Give it a minute
         ix = 0
         while not os.path.isfile(nip.uatlas) and ix < 60:
             print('Waiting for clustered parcellation...')
-            time.sleep(5)
+            time.sleep(1)
             ix += 1
+
+        if not os.path.isfile(nip.uatlas):
+            raise FileNotFoundError(f"Parcellation clustering failed for"
+                                    f" {nip.uatlas}")
 
         self._results["atlas"] = atlas
         self._results["uatlas"] = nip.uatlas

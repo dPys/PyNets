@@ -969,171 +969,176 @@ class NiParcellate(object):
         ts_data = apply_mask(self._func_img, self._clust_mask_corr_img)
         return ts_data, int(int(np.sqrt(ts_data.shape[0])) * blocklength)
 
-    def parcellate(self, func_boot_img):
-        """
-        API for performing any of a variety of clustering routines available
-        through NiLearn.
-        """
-        import time
-        import os
-        from nilearn.regions import Parcellations
-        from pynets.fmri.estimation import fill_confound_nans
 
-        start = time.time()
+def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
+               num_conn_comps, _clust_mask_corr_img, _standardize,
+               _detrending, k, _local_conn, conf, _dir_path,
+               _conn_comps):
+    """
+    API for performing any of a variety of clustering routines available
+    through NiLearn.
+    """
+    import numpy as np
+    import time
+    import os
+    from nilearn.regions import Parcellations
+    from pynets.fmri.estimation import fill_confound_nans
 
-        if (self.clust_type == "ward") and (self.local_corr != "allcorr"):
-            if self._local_conn_mat_path is not None:
-                if not os.path.isfile(self._local_conn_mat_path):
-                    raise FileNotFoundError(
-                        "File containing sparse matrix of local connectivity"
-                        " structure not found."
-                    )
-            else:
+    start = time.time()
+
+    if (clust_type == "ward") and (local_corr != "allcorr"):
+        if _local_conn_mat_path is not None:
+            if not os.path.isfile(_local_conn_mat_path):
                 raise FileNotFoundError(
                     "File containing sparse matrix of local connectivity"
                     " structure not found."
                 )
+        else:
+            raise FileNotFoundError(
+                "File containing sparse matrix of local connectivity"
+                " structure not found."
+            )
 
-        if (
-            self.clust_type == "complete"
-            or self.clust_type == "average"
-            or self.clust_type == "single"
-            or self.clust_type == "ward"
-            or (self.clust_type == "rena" and self.num_conn_comps == 1)
-            or (self.clust_type == "kmeans" and self.num_conn_comps == 1)
-        ):
+    if (
+        clust_type == "complete"
+        or clust_type == "average"
+        or clust_type == "single"
+        or clust_type == "ward"
+        or (clust_type == "rena" and num_conn_comps == 1)
+        or (clust_type == "kmeans" and num_conn_comps == 1)
+    ):
+        _clust_est = Parcellations(
+            method=clust_type,
+            standardize=_standardize,
+            detrend=_detrending,
+            n_parcels=k,
+            mask=_clust_mask_corr_img,
+            connectivity=_local_conn,
+            mask_strategy="background",
+            memory_level=2,
+            random_state=42,
+        )
+
+        if conf is not None:
+            import pandas as pd
+
+            confounds = pd.read_csv(conf, sep="\t")
+            if confounds.isnull().values.any():
+                conf_corr = fill_confound_nans(confounds, _dir_path)
+                _clust_est.fit(func_boot_img, confounds=conf_corr)
+            else:
+                _clust_est.fit(func_boot_img, confounds=conf)
+        else:
+            _clust_est.fit(func_boot_img)
+
+        _clust_est.labels_img_.set_data_dtype(np.uint16)
+        print(
+            f"{clust_type}{k}"
+            f"{(' clusters: %.2fs' % (time.time() - start))}"
+        )
+        return _clust_est.labels_img_
+
+    elif clust_type == "ncut":
+        out_img = parcellate_ncut(
+            _local_conn, k, _clust_mask_corr_img
+        )
+        out_img.set_data_dtype(np.uint16)
+        print(
+            f"{clust_type}{k}"
+            f"{(' clusters: %.2fs' % (time.time() - start))}"
+        )
+        return out_img
+
+    elif (
+        clust_type == "rena"
+        or clust_type == "kmeans"
+        and num_conn_comps > 1
+    ):
+        from pynets.core import nodemaker
+        from nilearn.regions import connected_regions, Parcellations
+        from nilearn.image import iter_img, new_img_like
+        from pynets.core.utils import flatten, proportional
+
+        mask_img_list = []
+        mask_voxels_dict = dict()
+        for i, mask_img in enumerate(list(iter_img(_conn_comps))):
+            mask_voxels_dict[i] = np.int(
+                np.sum(np.asarray(mask_img.dataobj)))
+            mask_img_list.append(mask_img)
+
+        # Allocate k across connected components using Hagenbach-Bischoff
+        # Quota based on number of voxels
+        k_list = proportional(k, list(mask_voxels_dict.values()))
+
+        conn_comp_atlases = []
+        print(
+            f"Building {len(mask_img_list)} separate atlases with "
+            f"voxel-proportional k clusters for each "
+            f"connected component...")
+        for i, mask_img in enumerate(mask_img_list):
+            if k_list[i] == 0:
+                # print('0 voxels in component. Discarding...')
+                continue
             _clust_est = Parcellations(
-                method=self.clust_type,
-                standardize=self._standardize,
-                detrend=self._detrending,
-                n_parcels=self.k,
-                mask=self._clust_mask_corr_img,
-                connectivity=self._local_conn,
+                method=clust_type,
+                standardize=_standardize,
+                detrend=_detrending,
+                n_parcels=k_list[i],
+                mask=mask_img,
                 mask_strategy="background",
                 memory_level=2,
                 random_state=42,
             )
-
-            if self.conf is not None:
+            if conf is not None:
                 import pandas as pd
 
-                confounds = pd.read_csv(self.conf, sep="\t")
+                confounds = pd.read_csv(conf, sep="\t")
                 if confounds.isnull().values.any():
-                    conf_corr = fill_confound_nans(confounds, self._dir_path)
+                    conf_corr = fill_confound_nans(
+                        confounds, _dir_path)
                     _clust_est.fit(func_boot_img, confounds=conf_corr)
                 else:
-                    _clust_est.fit(func_boot_img, confounds=self.conf)
+                    _clust_est.fit(func_boot_img, confounds=conf)
             else:
                 _clust_est.fit(func_boot_img)
+            conn_comp_atlases.append(_clust_est.labels_img_)
 
-            _clust_est.labels_img_.set_data_dtype(np.uint16)
-            print(
-                f"{self.clust_type}{self.k}"
-                f"{(' clusters: %.2fs' % (time.time() - start))}"
-            )
-            return _clust_est.labels_img_
+        # Then combine the multiple atlases, corresponding to each
+        # connected component, into a single atlas
+        atlas_of_atlases = []
+        for atlas in conn_comp_atlases:
+            bna_data = np.around(
+                np.asarray(
+                    atlas.dataobj)).astype("uint16")
 
-        elif self.clust_type == "ncut":
-            out_img = parcellate_ncut(
-                self._local_conn, self.k, self._clust_mask_corr_img
-            )
-            out_img.set_data_dtype(np.uint16)
-            print(
-                f"{self.clust_type}{self.k}"
-                f"{(' clusters: %.2fs' % (time.time() - start))}"
-            )
-            return out_img
+            # Get an array of unique parcels
+            bna_data_for_coords_uniq = np.unique(bna_data)
 
-        elif (
-            self.clust_type == "rena"
-            or self.clust_type == "kmeans"
-            and self.num_conn_comps > 1
-        ):
-            from pynets.core import nodemaker
-            from nilearn.regions import connected_regions, Parcellations
-            from nilearn.image import iter_img, new_img_like
-            from pynets.core.utils import flatten, proportional
+            # Number of parcels:
+            par_max = len(bna_data_for_coords_uniq) - 1
+            img_stack = []
+            for idx in range(1, par_max + 1):
+                roi_img = bna_data == bna_data_for_coords_uniq[idx].astype(
+                    "uint16")
+                img_stack.append(roi_img.astype("uint16"))
+            img_stack = np.array(img_stack)
 
-            mask_img_list = []
-            mask_voxels_dict = dict()
-            for i, mask_img in enumerate(list(iter_img(self._conn_comps))):
-                mask_voxels_dict[i] = np.int(
-                    np.sum(np.asarray(mask_img.dataobj)))
-                mask_img_list.append(mask_img)
+            img_list = []
+            for idy in range(par_max):
+                img_list.append(new_img_like(atlas, img_stack[idy]))
+            atlas_of_atlases.append(img_list)
+            del img_list, img_stack, bna_data
 
-            # Allocate k across connected components using Hagenbach-Bischoff
-            # Quota based on number of voxels
-            k_list = proportional(self.k, list(mask_voxels_dict.values()))
+        atlas_of_atlases = list(flatten(atlas_of_atlases))
 
-            conn_comp_atlases = []
-            print(
-                f"Building {len(mask_img_list)} separate atlases with "
-                f"voxel-proportional k clusters for each "
-                f"connected component...")
-            for i, mask_img in enumerate(mask_img_list):
-                if k_list[i] == 0:
-                    # print('0 voxels in component. Discarding...')
-                    continue
-                _clust_est = Parcellations(
-                    method=self.clust_type,
-                    standardize=self._standardize,
-                    detrend=self._detrending,
-                    n_parcels=k_list[i],
-                    mask=mask_img,
-                    mask_strategy="background",
-                    memory_level=2,
-                    random_state=42,
-                )
-                if self.conf is not None:
-                    import pandas as pd
+        [super_atlas_ward, _] = nodemaker.create_parcel_atlas(
+            atlas_of_atlases)
+        super_atlas_ward.set_data_dtype(np.uint16)
+        del atlas_of_atlases, conn_comp_atlases, mask_img_list, \
+            mask_voxels_dict
 
-                    confounds = pd.read_csv(self.conf, sep="\t")
-                    if confounds.isnull().values.any():
-                        conf_corr = fill_confound_nans(
-                            confounds, self._dir_path)
-                        _clust_est.fit(func_boot_img, confounds=conf_corr)
-                    else:
-                        _clust_est.fit(func_boot_img, confounds=self.conf)
-                else:
-                    _clust_est.fit(func_boot_img)
-                conn_comp_atlases.append(_clust_est.labels_img_)
-
-            # Then combine the multiple atlases, corresponding to each
-            # connected component, into a single atlas
-            atlas_of_atlases = []
-            for atlas in conn_comp_atlases:
-                bna_data = np.around(
-                    np.asarray(
-                        atlas.dataobj)).astype("uint16")
-
-                # Get an array of unique parcels
-                bna_data_for_coords_uniq = np.unique(bna_data)
-
-                # Number of parcels:
-                par_max = len(bna_data_for_coords_uniq) - 1
-                img_stack = []
-                for idx in range(1, par_max + 1):
-                    roi_img = bna_data == bna_data_for_coords_uniq[idx].astype(
-                        "uint16")
-                    img_stack.append(roi_img.astype("uint16"))
-                img_stack = np.array(img_stack)
-
-                img_list = []
-                for idy in range(par_max):
-                    img_list.append(new_img_like(atlas, img_stack[idy]))
-                atlas_of_atlases.append(img_list)
-                del img_list, img_stack, bna_data
-
-            atlas_of_atlases = list(flatten(atlas_of_atlases))
-
-            [super_atlas_ward, _] = nodemaker.create_parcel_atlas(
-                atlas_of_atlases)
-            super_atlas_ward.set_data_dtype(np.uint16)
-            del atlas_of_atlases, conn_comp_atlases, mask_img_list, \
-                mask_voxels_dict
-
-            print(
-                f"{self.clust_type}{self.k}"
-                f"{(' clusters: %.2fs' % (time.time() - start))}"
-            )
-            return super_atlas_ward
+        print(
+            f"{clust_type}{k}"
+            f"{(' clusters: %.2fs' % (time.time() - start))}"
+        )
+        return super_atlas_ward

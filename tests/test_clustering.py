@@ -115,8 +115,16 @@ def test_ni_parcellate(clust_type):
     atlas = nip.create_clean_mask()
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{str(tmpdir.name)}/parc_tmp.nii.gz"
-    nib.save(nip.parcellate(func_img), out_path)
+    parcellation = clustools.parcellate(func_img, local_corr,
+                              clust_type, nip._local_conn_mat_path,
+                              nip.num_conn_comps,
+                              nip._clust_mask_corr_img,
+                              nip._standardize,
+                              nip._detrending, nip.k, nip._local_conn,
+                              nip.conf, nip._dir_path,
+                              nip._conn_comps)
 
+    nib.save(parcellation, out_path)
     assert out_path is not None
     assert atlas is not None
 
@@ -157,6 +165,16 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     nip._clust_mask_corr_img = nib.load(clust_mask)
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{str(tmpdir.name)}/parc_tmp.nii.gz"
-    nib.save(nip.parcellate(func_img), out_path)
+
+    parcellation = clustools.parcellate(func_img, local_corr,
+                              clust_type, nip._local_conn_mat_path,
+                              nip.num_conn_comps,
+                              nip._clust_mask_corr_img,
+                              nip._standardize,
+                              nip._detrending, nip.k, nip._local_conn,
+                              nip.conf, nip._dir_path,
+                              nip._conn_comps)
+
+    nib.save(parcellation, out_path)
     assert atlas is not None
     assert out_path is not None
