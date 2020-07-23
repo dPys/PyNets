@@ -137,7 +137,7 @@ def test_track_ensemble(directget, target_samples):
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask_data = min_length
+    waymask_data = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')
@@ -168,7 +168,7 @@ def test_track_ensemble(directget, target_samples):
                                        curv_thr_list, step_list, track_type,
                                        maxcrossing, int(roi_neighborhood_tol),
                                        min_length, waymask_data, B0_mask_data,
-                                       gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
     assert len(streamlines) > 1
 
@@ -199,7 +199,7 @@ def test_track_ensemble_particle():
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask_data = min_length
+    waymask_data = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')

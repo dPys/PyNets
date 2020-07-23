@@ -489,6 +489,21 @@ class IndividualClustering(SimpleInterface):
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed, dump, load
         from pynets.registration import reg_utils as regutils
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -541,6 +556,7 @@ class IndividualClustering(SimpleInterface):
             mni2t1_xfm_tmp_path,
             mni2t1w_warp_tmp_path,
             clust_mask_in_t1w_path,
+            template_tmp_path,
             self.inputs.simple,
         )
 
@@ -1603,13 +1619,10 @@ class RegisterAtlasDWI(SimpleInterface):
 
         reg_tmp = [
             B0_mask_tmp_path,
-            ap_tmp_path,
             fa_tmp_path,
             uatlas_parcels_tmp_path,
             uatlas_tmp_path,
-            t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
-            t1wtissue2dwi_xfm_tmp_path,
             mni2t1_xfm_tmp_path,
             t1w_brain_mask_tmp_path,
             t1_aligned_mni_tmp_path,
@@ -2274,7 +2287,6 @@ class RegisterAtlasFunc(SimpleInterface):
             t1w_brain_mask_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
-            t1w_brain_tmp_path,
         ]
 
         if self.inputs.uatlas is None:
@@ -2764,24 +2776,6 @@ class Tracking(SimpleInterface):
             ".trk",
         )
 
-        stf = StatefulTractogram(
-            streamlines.data,
-            fa_img,
-            origin=Origin.NIFTI,
-            space=Space.VOXMM)
-        stf.remove_invalid_streamlines()
-        save_tractogram(
-            stf,
-            streams,
-        )
-
-        copyfile(
-            streams,
-            f"{namer_dir}/{op.basename(streams)}",
-            copy=True,
-            use_hardlink=False,
-        )
-
         # Linear Fascicle Evaluation (LiFE)
         if use_life is True:
             print('Using LiFE to evaluate streamline plausibility...')
@@ -2800,6 +2794,24 @@ class Tracking(SimpleInterface):
                 print(f"Linear Fascicle Evaluation failed. Visually checking "
                       f"streamlines output {namer_dir}/{op.basename(streams)}"
                       f" is recommended.")
+
+        stf = StatefulTractogram(
+            streamlines,
+            fa_img,
+            origin=Origin.NIFTI,
+            space=Space.VOXMM)
+        stf.remove_invalid_streamlines()
+        save_tractogram(
+            stf,
+            streams,
+        )
+
+        copyfile(
+            streams,
+            f"{namer_dir}/{op.basename(streams)}",
+            copy=True,
+            use_hardlink=False,
+        )
 
         # Create streamline density map
         [dir_path, dm_path] = create_density_map(

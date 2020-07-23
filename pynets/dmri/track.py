@@ -410,7 +410,6 @@ def track_ensemble(
 
     """
     import time
-    import nibabel as nib
     import pkg_resources
     import yaml
     from pynets.dmri.track import run_tracking
@@ -446,8 +445,8 @@ def track_ensemble(
                 gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                 B0_mask) for i in all_combs)
         all_streams.append(out_streams)
-        stream_counter = np.sum([np.sum([j.total_nb_rows for j in i]) for
-                                 i in all_streams])
+        stream_counter = len(Streamlines([i for j in all_streams for i in
+                                          j]).data)
         print(
             "%s%s%s%s"
             % (
@@ -462,7 +461,7 @@ def track_ensemble(
 
     print("Tracking Complete:\n", str(time.time() - start))
 
-    return streamlines
+    return streamlines.data
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,

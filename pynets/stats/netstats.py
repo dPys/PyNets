@@ -1135,8 +1135,6 @@ class CleanGraphs(object):
         else:
             print("No graph anti-fragmentation applied...")
 
-        struct_mat
-
         self.G = nx.from_numpy_array(self.in_mat)
 
         # Saved pruned

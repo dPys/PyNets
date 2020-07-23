@@ -165,6 +165,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
 
+    original_count = len(streamlines)
+
     print('Filtering streamlines by length > 10...')
     streamlines_long = nib.streamlines. \
         array_sequence.ArraySequence(
@@ -194,7 +196,6 @@ def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
     streamlines_in_brain = [i for i in streamlines_in_brain]
     del streamlines_positive
     print('Performing Linear Fascicle Evaluation...')
-    original_count = len(streamlines)
     sphere = get_sphere(sphere)
     fiber_model = life.FiberModel(gtab)
     fiber_fit = fiber_model.fit(dwi_data, streamlines_in_brain,
