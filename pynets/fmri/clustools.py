@@ -1058,6 +1058,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         from nilearn.regions import connected_regions, Parcellations
         from nilearn.image import iter_img, new_img_like
         from pynets.core.utils import flatten, proportional
+        from joblib import Memory
 
         mask_img_list = []
         mask_voxels_dict = dict()
@@ -1086,8 +1087,10 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
-                memory_level=2,
+                memory_level=3,
+                memory=Memory(location=_dir_path),
                 random_state=42,
+                n_jobs=1
             )
             if conf is not None:
                 import pandas as pd

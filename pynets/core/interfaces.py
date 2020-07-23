@@ -489,7 +489,6 @@ class IndividualClustering(SimpleInterface):
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed, dump, load
         from pynets.registration import reg_utils as regutils
-        from nilearn.image import concat_imgs
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -625,15 +624,16 @@ class IndividualClustering(SimpleInterface):
                                      _conn_comps):
                     import os
                     import time
+                    import gc
                     from pynets.fmri.clustools import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
                     boot_img = create_bs_imgs(ts_data, block_size,
                                               _clust_mask_corr_img)
-
                     parcellation = parcellate(boot_img, local_corr,
-                                              clust_type, _local_conn_mat_path,
+                                              clust_type,
+                                              _local_conn_mat_path,
                                               num_conn_comps,
                                               _clust_mask_corr_img,
                                               _standardize,
@@ -641,6 +641,8 @@ class IndividualClustering(SimpleInterface):
                                               conf, _dir_path,
                                               _conn_comps)
                     parcellation.to_filename(out_path)
+                    parcellation.uncache()
+                    gc.collect()
                     return out_path
 
                 # Use joblib with memmapping
@@ -649,11 +651,15 @@ class IndividualClustering(SimpleInterface):
 
                 data_filename_memmap = os.path.join(folder, 'data_memmap')
                 dump(ts_data, data_filename_memmap)
-                data = load(data_filename_memmap, mmap_mode='r')
+                data = load(data_filename_memmap, mmap_mode='r+')
 
                 boot_parcellations = Parallel(n_jobs=nthreads,
+                                              max_nbytes=1e6,
                                               verbose=10,
-                                              backend='loky')(
+                                              backend='loky',
+                                              require='sharedmem',
+                                              batch_size=6,
+                                              mmap_mode='r+')(
                     delayed(run_bs_iteration)(
                         i, data, runtime.cwd, nip.local_corr, nip.clust_type,
                         nip._local_conn_mat_path,
