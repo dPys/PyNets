@@ -168,8 +168,9 @@ def test_track_ensemble(directget, target_samples):
                                        curv_thr_list, step_list, track_type,
                                        maxcrossing, int(roi_neighborhood_tol),
                                        min_length, waymask_data, B0_mask_data,
-                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
+                                       gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
+    assert len(streamlines) > 1
 
 def test_track_ensemble_particle():
     """
@@ -230,10 +231,11 @@ def test_track_ensemble_particle():
                                        curv_thr_list, step_list, track_type,
                                        maxcrossing, int(roi_neighborhood_tol),
                                        min_length, waymask_data, B0_mask_data,
-                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
+                                       gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
 
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
                                        space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)
+    assert len(streamlines) > 1
