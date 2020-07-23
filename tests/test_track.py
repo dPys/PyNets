@@ -137,7 +137,7 @@ def test_track_ensemble(directget, target_samples):
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask_data = None
+    waymask_data = min_length
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')
@@ -199,7 +199,7 @@ def test_track_ensemble_particle():
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask_data = None
+    waymask_data = min_length
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')

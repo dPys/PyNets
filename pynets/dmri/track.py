@@ -434,7 +434,7 @@ def track_ensemble(
     start = time.time()
     stream_counter = 0
 
-    while int(stream_counter) < int(target_samples):
+    while float(stream_counter) < float(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
                                mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
             delayed(run_tracking)(
@@ -446,8 +446,8 @@ def track_ensemble(
                 gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                 B0_mask) for i in all_combs)
 
-        stream_counter += len(out_streams)
         streamlines.extend(out_streams)
+        stream_counter = streamlines.total_nb_rows
 
         print(
             "%s%s%s%s"
@@ -630,5 +630,5 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
                    for s in roi_proximal_streamlines]
     del dg, seeds, roi_proximal_streamlines, streamline_generator
     gc.collect()
-    return out_streams
+    return nib.streamlines.array_sequence.ArraySequence(out_streams)
 
