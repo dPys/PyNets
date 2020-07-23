@@ -2577,9 +2577,6 @@ class Tracking(SimpleInterface):
         if self.inputs.waymask:
             waymask_data = np.asarray(nib.load(self.inputs.waymask).dataobj
                                       ).astype("bool")
-            waymask_data_filename_memmap = os.path.join(folder, 'data_memmap')
-            dump(waymask_data, waymask_data_filename_memmap)
-            waymask_data = load(waymask_data_filename_memmap, mmap_mode='r+')
         else:
             waymask_data = None
 
