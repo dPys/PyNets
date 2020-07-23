@@ -170,8 +170,6 @@ def test_track_ensemble(directget, target_samples):
                                        min_length, waymask_data, B0_mask_data,
                                        B0_mask, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
-    assert len(streamlines) > 1
-
 
 def test_track_ensemble_particle():
     """
@@ -239,5 +237,3 @@ def test_track_ensemble_particle():
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
                                        space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)
-
-    assert len(streamlines) > 1

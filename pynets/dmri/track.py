@@ -446,8 +446,9 @@ def track_ensemble(
                 gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                 B0_mask) for i in all_combs)
 
+        stream_counter += len(out_streams)
         streamlines.extend(out_streams)
-        stream_counter += len(streamlines)
+
         print(
             "%s%s%s%s"
             % (
