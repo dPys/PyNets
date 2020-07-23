@@ -447,7 +447,7 @@ def track_ensemble(
                 B0_mask) for i in all_combs)
 
         streamlines.extend(out_streams)
-        stream_counter = len(streamlines)
+        stream_counter += len(streamlines)
         print(
             "%s%s%s%s"
             % (
@@ -584,7 +584,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
             affine=np.eye(4),
             rois=parcels,
             include=parcel_vec,
-            mode="both_end",
+            mode="any",
             tol=roi_neighborhood_tol,
         )
     )
@@ -597,22 +597,20 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         )
     )
 
-    if str(min_length) != "0":
-        roi_proximal_streamlines = nib.streamlines. \
-            array_sequence.ArraySequence(
-            [
-                s
-                for s in roi_proximal_streamlines
-                if len(s) >= float(min_length)
-            ]
-        )
+    roi_proximal_streamlines = nib.streamlines. \
+        array_sequence.ArraySequence(
+        [
+            s for s in roi_proximal_streamlines
+            if len(s) >= float(min_length)
+        ]
+    )
 
-        print(
-            "%s%s" %
-            ("Minimum length criterion: ",
-             len(roi_proximal_streamlines)))
+    print(
+        "%s%s" %
+        ("Minimum length criterion: ",
+         len(roi_proximal_streamlines)))
 
-    if waymask_data:
+    if waymask_data is not None:
         roi_proximal_streamlines = roi_proximal_streamlines[
             utils.near_roi(
                 roi_proximal_streamlines,

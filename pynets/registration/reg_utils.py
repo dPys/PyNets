@@ -318,17 +318,27 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     from pynets.registration import reg_utils as regutils
+    from nilearn.image import resample_to_img
 
     # Apply warp or transformer resulting from the inverse MNI->T1w created
     # earlier
+    waymask_img = nib.load(waymask)
+    t1w_brain_img = nib.load(t1w_brain)
+
+    waymask_img_res = resample_to_img(
+        waymask_img, t1w_brain_img, interpolation="nearest"
+    )
+    waymask_res = f"{waymask.split('.nii')[0]}_res.nii.gz"
+    nib.save(waymask_img_res, waymask_res)
+
     if simple is False:
         regutils.apply_warp(
             t1w_brain,
-            waymask,
+            waymask_res,
             waymask_in_t1w,
             warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, waymask, mni2t1_xfm, waymask_in_t1w)
+        regutils.applyxfm(t1w_brain, waymask_res, mni2t1_xfm, waymask_in_t1w)
 
     # Apply transform from t1w to native dwi space
     regutils.applyxfm(
@@ -351,13 +361,23 @@ def roi2t1w_align(
     A function to perform alignment of a roi from MNI space --> T1w.
     """
     from pynets.registration import reg_utils as regutils
+    from nilearn.image import resample_to_img
+
+    roi_img = nib.load(roi)
+    t1w_brain_img = nib.load(t1w_brain)
+
+    roi_img_res = resample_to_img(
+        roi_img, t1w_brain_img, interpolation="nearest"
+    )
+    roi_res = f"{roi.split('.nii')[0]}_res.nii.gz"
+    nib.save(roi_img_res, roi_res)
 
     # Apply warp or transformer resulting from the inverse MNI->T1w created
     # earlier
     if simple is False:
-        regutils.apply_warp(t1w_brain, roi, roi_in_t1w, warp=mni2t1w_warp)
+        regutils.apply_warp(t1w_brain, roi_res, roi_in_t1w, warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
+        regutils.applyxfm(t1w_brain, roi_res, mni2t1_xfm, roi_in_t1w)
 
     return roi_in_t1w
 
