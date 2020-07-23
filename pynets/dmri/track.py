@@ -584,7 +584,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
             affine=np.eye(4),
             rois=parcels,
             include=parcel_vec,
-            mode="any",
+            mode="%s" % ("any" if waymask_data is not None else "both_end"),
             tol=roi_neighborhood_tol,
         )
     )

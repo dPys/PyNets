@@ -88,15 +88,15 @@ Custom File Inputs
 
 :`-m`: (*fMRI + dMRI*) A binarized brain mask of the T1w image in its native anatomical space. Input images need not be skull-stripped. If brain masking has been applied already, `PyNets` will attempt to detect this, else it will attempt to extract automatically using a deep-learning classifier. See [deepbrain]<https://github.com/iitzco/deepbrain> for more information.
 
-:`-roi`: (*fMRI + dMRI*) A binarized ROI mask used to constrain connectome node-making to restricted brain regions of the parcellation being used.
+:`-roi`: (*fMRI + dMRI*) A binarized ROI mask used to constrain connectome node-making to restricted brain regions of the parcellation being used. ROI inputs should be in MNI space.
 
-:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image (in MNI template space) used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
+:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image (in MNI space) used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
 
 :`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Otherwise, PyNets will attempt to perform automated node labeling via AAL, else sequential numeric labels will be used.
 
-:`-way`: (*dMRI*) A binarized white-matter ROI mask (in MNI template space) used to constrain tractography in native diffusion space such that streamlines are retained only if they pass within the vicinity of the mask.
+:`-way`: (*dMRI*) A binarized white-matter ROI mask (in MNI template space) used to constrain tractography in native diffusion space such that streamlines are retained only if they pass within the vicinity of the mask. Like with ROI inputs, waymasks should be in MNI space.
 
-:`-cm`: (*fMRI*) A binarized ROI mask used to spatially-constrained clustering during parcellation-making. Note that if this flag is used, `-k` and `-ct` must also be included.
+:`-cm`: (*fMRI*) A binarized ROI mask used to spatially-constrained clustering during parcellation-making. Note that if this flag is used, `-k` and `-ct` must also be included. Like with ROI inputs, clustering masks should be in MNI space.
 
 :`-conf`: (*fMRI*) An additional noise confound regressor file for extracting a cleaner time-series.
 

@@ -1318,6 +1318,12 @@ class RegisterAtlasDWI(SimpleInterface):
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
 
         if self.inputs.uatlas is None:
             uatlas_tmp_path = None
@@ -1543,6 +1549,7 @@ class RegisterAtlasDWI(SimpleInterface):
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
                 waymask_in_dwi,
+                template,
                 self.inputs.simple,
             )
         else:
@@ -1652,6 +1659,12 @@ class RegisterROIDWI(SimpleInterface):
         import os
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
 
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
@@ -1727,6 +1740,7 @@ class RegisterROIDWI(SimpleInterface):
                 mni2t1w_warp_tmp_path,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
+                template,
                 self.inputs.simple,
             )
         else:
@@ -2273,7 +2287,12 @@ class RegisterROIEPI(SimpleInterface):
         import os
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
 
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
         roi_file_tmp_path = fname_presuffix(
             self.inputs.roi, suffix="_tmp", newpath=runtime.cwd
         )
@@ -2323,6 +2342,7 @@ class RegisterROIEPI(SimpleInterface):
                 mni2t1_xfm_tmp_path,
                 mni2t1w_warp_tmp_path,
                 roi_in_t1w,
+                template,
                 self.inputs.simple,
             )
         else:
