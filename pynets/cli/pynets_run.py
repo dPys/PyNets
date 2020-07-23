@@ -1812,15 +1812,13 @@ def build_workflow(args, retval):
                       f"{_dwi_file}")
                 print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
-                if waymask is not None:
-                    print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
-            if waymask is not None:
-                print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
+        if waymask is not None:
+            print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         conf = None
         k = None
         clust_mask = None
@@ -1871,13 +1869,13 @@ def build_workflow(args, retval):
                       f"{Fore.BLUE}{_dwi_file}")
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
-                if waymask is not None:
-                    print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
+        if waymask is not None:
+            print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
     else:
         multimodal = False
     if anat_file or anat_file_list:

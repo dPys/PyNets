@@ -1460,7 +1460,8 @@ class RegisterAtlasDWI(SimpleInterface):
 
         if self.inputs.network or self.inputs.waymask:
             if self.inputs.waymask:
-                atlas_name = f"{self.inputs.atlas}_{self.inputs.waymask}"
+                atlas_name = f"{self.inputs.atlas}_" \
+                             f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}"
             else:
                 atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
         else:
@@ -1525,11 +1526,11 @@ class RegisterAtlasDWI(SimpleInterface):
 
             # Align waymask
             waymask_in_t1w = (
-                f"{base_dir_tmp}/waymask-"
+                f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_t1w.nii.gz")
             waymask_in_dwi = (
-                f"{base_dir_tmp}/waymask-"
+                f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_dwi.nii.gz")
 
@@ -2438,7 +2439,6 @@ class Tracking(SimpleInterface):
         import pkg_resources
         import yaml
         from pynets.dmri.track import (
-            prep_tissues,
             reconstruction,
             create_density_map,
             track_ensemble,

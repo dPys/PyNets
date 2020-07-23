@@ -128,34 +128,35 @@ def prep_tissues(
     from nilearn.image import math_img
 
     # Load B0 mask
-    B0_mask_img = nib.load(B0_mask)
+    B0_mask_img = math_img("img > 0.0", img=nib.load(B0_mask))
 
     # Load t1 mask
-    mask_img = nib.load(t1_mask)
+    mask_img = math_img("img > 0.0", img=nib.load(t1_mask))
 
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
+    wm_mask_img = math_img("img > 0.0", img=wm_img)
     gm_img = nib.load(gm_in_dwi)
-    gm_mask_data = np.asarray(gm_img.dataobj, dtype=np.float32)
-    wm_mask_data = np.asarray(wm_img.dataobj, dtype=np.float32)
+    gm_data = np.asarray(gm_img.dataobj, dtype=np.float32)
+    wm_data = np.asarray(wm_img.dataobj, dtype=np.float32)
     vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj,
                                       dtype=np.float32)
     if tiss_class == "act":
         background = np.ones(mask_img.shape)
-        background[(gm_mask_data + wm_mask_data +
+        background[(gm_data + wm_data +
                     vent_csf_in_dwi_data) > 0] = 0
-        gm_mask_data[background > 0] = 1
+        gm_data[background > 0] = 1
         tiss_classifier = ActStoppingCriterion(
-            gm_mask_data, vent_csf_in_dwi_data)
+            gm_data, vent_csf_in_dwi_data)
         del background
     elif tiss_class == "wm":
         tiss_classifier = BinaryStoppingCriterion(
             np.asarray(
                 intersect_masks(
                     [
-                        math_img("img > 0.0", img=mask_img),
-                        math_img("img > 0.0", img=wm_img),
-                        math_img("img > 0.0", img=B0_mask_img),
+                        mask_img,
+                        wm_mask_img,
+                        B0_mask_img,
                     ],
                     threshold=1,
                     connected=False,
@@ -165,8 +166,8 @@ def prep_tissues(
     elif tiss_class == "cmc":
         voxel_size = np.average(mask_img.header["pixdim"][1:4])
         tiss_classifier = CmcStoppingCriterion.from_pve(
-            wm_mask_data,
-            gm_mask_data,
+            wm_data,
+            gm_data,
             vent_csf_in_dwi_data,
             step_size=cmc_step_size,
             average_voxel_size=voxel_size,
@@ -176,8 +177,8 @@ def prep_tissues(
             np.asarray(
                 intersect_masks(
                     [
-                        math_img("img > 0.0", img=mask_img),
-                        math_img("img > 0.0", img=B0_mask_img),
+                        mask_img,
+                        B0_mask_img,
                         nib.Nifti1Image(np.invert(
                             vent_csf_in_dwi_data.astype('bool')).astype('int'),
                                         affine=mask_img.affine),
@@ -190,7 +191,7 @@ def prep_tissues(
     else:
         raise ValueError("Tissue classifier cannot be none.")
 
-    del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
+    del gm_data, wm_data, vent_csf_in_dwi_data
     mask_img.uncache()
     gm_img.uncache()
     wm_img.uncache()
@@ -431,6 +432,7 @@ def track_ensemble(
 
     # Commence Ensemble Tractography
     start = time.time()
+    stream_counter = 0
 
     while int(stream_counter) < int(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
