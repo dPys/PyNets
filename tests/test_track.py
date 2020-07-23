@@ -143,7 +143,7 @@ def test_track_ensemble(directget, target_samples):
     sphere = get_sphere('repulsion724')
     track_type = 'local'
 
-    B0_mask_data = nib.load(B0_mask)
+    B0_mask_data = nib.load(B0_mask).get_fdata()
 
     # Load atlas parcellation (and its wm-gm interface reduced version for
     # seeding)
@@ -212,7 +212,7 @@ def test_track_ensemble_particle():
     atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
     atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj).astype('uint16')
 
-    B0_mask_data = nib.load(B0_mask)
+    B0_mask_data = nib.load(B0_mask).get_fdata()
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
