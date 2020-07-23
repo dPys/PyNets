@@ -2760,7 +2760,7 @@ class Tracking(SimpleInterface):
 
         stf = StatefulTractogram(
             streamlines,
-            atlas_img,
+            fa_img,
             origin=Origin.NIFTI,
             space=Space.VOXMM)
         stf.remove_invalid_streamlines()

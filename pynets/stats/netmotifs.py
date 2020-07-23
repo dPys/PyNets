@@ -575,8 +575,14 @@ def motif_matching(
         name_list.append(name)
         struct_mat = np.maximum(struct_mat, struct_mat.T)
         func_mat = np.maximum(func_mat, func_mat.T)
-        [mldict, g_dict] = compare_motifs(
-            struct_mat, func_mat, name, namer_dir)
+        try:
+            [mldict, g_dict] = compare_motifs(
+                struct_mat, func_mat, name, namer_dir)
+        except BaseException:
+            print(f"Adaptive thresholding by motif comparisons failed "
+                  f"for {name}. This usually happens when no motifs are found")
+            return [], [], [], []
+
         multigraph_list_all.append(list(mldict.values())[0])
         graph_path_list = []
         for thr in list(g_dict.keys()):

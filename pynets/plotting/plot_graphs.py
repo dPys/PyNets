@@ -146,8 +146,7 @@ def plot_community_conn_mat(
         pass
 
     sorting_array = sorted(
-        range(
-            len(community_aff)),
+        range(len(community_aff)),
         key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
