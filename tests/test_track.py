@@ -120,7 +120,6 @@ def test_track_ensemble(directget, target_samples):
     base_dir = str(Path(__file__).parent/"examples")
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
-    t1w2dwi = f"{base_dir}/003/anat/t1w_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
     wm_in_dwi = f"{base_dir}/003/anat/t1w_wm_in_dwi.nii.gz"
     dir_path = f"{base_dir}/003/dmri"
@@ -169,7 +168,7 @@ def test_track_ensemble(directget, target_samples):
                                        curv_thr_list, step_list, track_type,
                                        maxcrossing, int(roi_neighborhood_tol),
                                        min_length, waymask_data, B0_mask_data,
-                                       t1w2dwi, gm_in_dwi, vent_csf_in_dwi,
+                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
     assert len(streamlines) > 1
 
@@ -186,7 +185,6 @@ def test_track_ensemble_particle():
 
     base_dir = str(Path(__file__).parent/"examples")
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    t1w2dwi = f"{base_dir}/003/anat/t1w_in_dwi.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
     wm_in_dwi = f"{base_dir}/003/anat/t1w_wm_in_dwi.nii.gz"
@@ -234,7 +232,7 @@ def test_track_ensemble_particle():
                                        curv_thr_list, step_list, track_type,
                                        maxcrossing, int(roi_neighborhood_tol),
                                        min_length, waymask_data, B0_mask_data,
-                                       t1w2dwi, gm_in_dwi, vent_csf_in_dwi,
+                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
                                        wm_in_dwi, tiss_class, B0_mask)
 
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
