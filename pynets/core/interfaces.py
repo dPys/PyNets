@@ -2552,20 +2552,7 @@ class Tracking(SimpleInterface):
             nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj
         ).astype("uint16")
 
-        atlas_data_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(atlas_data, atlas_data_filename_memmap)
-        atlas_data = load(atlas_data_filename_memmap, mmap_mode='r+')
-
-        atlas_data_wm_gm_int_filename_memmap = os.path.join(folder,
-                                                            'data_memmap')
-        dump(atlas_data_wm_gm_int, atlas_data_wm_gm_int_filename_memmap)
-        atlas_data_wm_gm_int = load(atlas_data_wm_gm_int_filename_memmap,
-                                    mmap_mode='r+')
-
         B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
-        B0_mask_data_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(B0_mask_data, B0_mask_data_filename_memmap)
-        B0_mask_data = load(B0_mask_data_filename_memmap, mmap_mode='r+')
 
         if self.inputs.waymask:
             waymask_data = np.asarray(nib.load(self.inputs.waymask).dataobj
@@ -2627,14 +2614,6 @@ class Tracking(SimpleInterface):
             atlas_data_wm_gm_int,
             parcels,
             model,
-            prep_tissues(
-                self.inputs.t1w2dwi,
-                self.inputs.gm_in_dwi,
-                self.inputs.vent_csf_in_dwi,
-                self.inputs.wm_in_dwi,
-                self.inputs.tiss_class,
-                self.inputs.B0_mask
-            ),
             get_sphere(self.inputs.sphere),
             self.inputs.directget,
             self.inputs.curv_thr_list,
@@ -2644,7 +2623,10 @@ class Tracking(SimpleInterface):
             int(self.inputs.roi_neighborhood_tol),
             self.inputs.min_length,
             waymask_data,
-            B0_mask_data
+            B0_mask_data,
+            self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
+            self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
+            self.inputs.tiss_class, self.inputs.B0_mask
         )
 
         # Save streamlines to trk

@@ -310,7 +310,6 @@ def track_ensemble(
     atlas_data_wm_gm_int,
     parcels,
     mod_fit,
-    tiss_classifier,
     sphere,
     directget,
     curv_thr_list,
@@ -321,7 +320,13 @@ def track_ensemble(
     min_length,
     waymask_data,
     B0_mask_data,
-    n_seeds_per_iter=500,
+    t1w2dwi,
+    gm_in_dwi,
+    vent_csf_in_dwi,
+    wm_in_dwi,
+    tiss_class,
+    B0_mask,
+    n_seeds_per_iter=2000,
     max_length=1000,
     pft_back_tracking_dist=2,
     pft_front_tracking_dist=1,
@@ -405,38 +410,65 @@ def track_ensemble(
     """
     import time
     import nibabel as nib
+    import pkg_resources
+    import yaml
     from pynets.dmri.track import run_tracking
-    start = time.time()
+    from joblib import Parallel, delayed
+    import itertools
+    from colorama import Fore, Style
 
-    # Commence Ensemble Tractography
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        nthreads = hardcoded_params["nthreads"][0]
+    stream.close()
+
     parcel_vec = list(np.ones(len(parcels)).astype("bool"))
     streamlines = nib.streamlines.array_sequence.ArraySequence()
 
-    circuit_ix = 0
-    stream_counter = 0
+    all_combs = list(itertools.product(step_list, curv_thr_list))
+
+    # Commence Ensemble Tractography
+    start = time.time()
+
     while int(stream_counter) < int(target_samples):
-        [streamlines, circuit_ix, stream_counter] = \
-            run_tracking(step_list, curv_thr_list, atlas_data_wm_gm_int,
-                         mod_fit, n_seeds_per_iter, streamlines,
-                         stream_counter, circuit_ix, directget,
-                         tiss_classifier, maxcrossing, max_length,
-                         pft_back_tracking_dist, pft_front_tracking_dist,
-                         particle_count, B0_mask_data, roi_neighborhood_tol,
-                         parcels, parcel_vec, waymask_data, min_length,
-                         track_type, min_separation_angle, sphere)
+        out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
+                               mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
+            delayed(run_tracking)(
+                i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
+                maxcrossing, max_length, pft_back_tracking_dist,
+                pft_front_tracking_dist, particle_count, B0_mask_data,
+                roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
+                min_length, track_type, min_separation_angle, sphere, t1w2dwi,
+                gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                B0_mask) for i in all_combs)
+
+        streamlines.extend(out_streams)
+        stream_counter = len(streamlines)
+        print(
+            "%s%s%s%s"
+            % (
+                "\nCumulative Streamline Count: ",
+                Fore.CYAN,
+                stream_counter,
+                "\n",
+            )
+        )
+        print(Style.RESET_ALL)
 
     print("Tracking Complete:\n", str(time.time() - start))
 
     return streamlines
 
 
-def run_tracking(step_list, curv_thr_list, atlas_data_wm_gm_int, mod_fit,
-                 n_seeds_per_iter, streamlines, stream_counter, circuit_ix,
-                 directget, tiss_classifier, maxcrossing, max_length,
+def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
+                 n_seeds_per_iter, directget, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
                  particle_count, B0_mask_data, roi_neighborhood_tol,
                  parcels, parcel_vec, waymask_data, min_length, track_type,
-                 min_separation_angle, sphere):
+                 min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
+                 vent_csf_in_dwi, wm_in_dwi, tiss_class, B0_mask):
 
     import gc
     from dipy.tracking import utils
@@ -448,167 +480,154 @@ def run_tracking(step_list, curv_thr_list, atlas_data_wm_gm_int, mod_fit,
         ClosestPeakDirectionGetter,
         DeterministicMaximumDirectionGetter,
     )
-    from colorama import Fore, Style
+    from pynets.dmri.track import prep_tissues
 
-    for curv_thr in curv_thr_list:
-        print("%s%s" % ("Curvature: ", curv_thr))
+    tiss_classifier = prep_tissues(
+        t1w2dwi,
+        gm_in_dwi,
+        vent_csf_in_dwi,
+        wm_in_dwi,
+        tiss_class,
+        B0_mask
+    )
 
-        # Instantiate DirectionGetter
-        if directget == "prob" or directget == "probabilistic":
-            dg = ProbabilisticDirectionGetter.from_shcoeff(
-                mod_fit,
-                max_angle=float(curv_thr),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        elif directget == "clos" or directget == "closest":
-            dg = ClosestPeakDirectionGetter.from_shcoeff(
-                mod_fit,
-                max_angle=float(curv_thr),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        elif directget == "det" or directget == "deterministic":
-            maxcrossing = 1
-            dg = DeterministicMaximumDirectionGetter.from_shcoeff(
-                mod_fit,
-                max_angle=float(curv_thr),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        else:
-            raise ValueError(
-                "ERROR: No valid direction getter(s) specified."
-            )
-        for step in step_list:
-            print("%s%s" % ("Step: ", step))
+    print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
+    # Instantiate DirectionGetter
+    if directget == "prob" or directget == "probabilistic":
+        dg = ProbabilisticDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    elif directget == "clos" or directget == "closest":
+        dg = ClosestPeakDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    elif directget == "det" or directget == "deterministic":
+        maxcrossing = 1
+        dg = DeterministicMaximumDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    else:
+        raise ValueError(
+            "ERROR: No valid direction getter(s) specified."
+        )
+    print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
-            # Perform wm-gm interface seeding, using n_seeds at a time
-            seeds = utils.random_seeds_from_mask(
-                atlas_data_wm_gm_int > 0,
-                seeds_count=n_seeds_per_iter,
-                seed_count_per_voxel=False,
-                affine=np.eye(4),
-            )
-            if len(seeds) == 0:
-                raise RuntimeWarning(
-                    "Warning: No valid seed points found in wm-gm "
-                    "interface..."
-                )
+    # Perform wm-gm interface seeding, using n_seeds at a time
+    seeds = utils.random_seeds_from_mask(
+        atlas_data_wm_gm_int > 0,
+        seeds_count=n_seeds_per_iter,
+        seed_count_per_voxel=False,
+        affine=np.eye(4),
+    )
+    if len(seeds) == 0:
+        raise RuntimeWarning(
+            "Warning: No valid seed points found in wm-gm "
+            "interface..."
+        )
 
-            # print(seeds)
+    # print(seeds)
 
-            # Perform tracking
-            if track_type == "local":
-                streamline_generator = LocalTracking(
-                    dg,
-                    tiss_classifier,
-                    seeds,
-                    np.eye(4),
-                    max_cross=int(maxcrossing),
-                    maxlen=int(max_length),
-                    step_size=float(step),
-                    fixedstep=False,
-                    return_all=True,
-                )
-            elif track_type == "particle":
-                streamline_generator = ParticleFilteringTracking(
-                    dg,
-                    tiss_classifier,
-                    seeds,
-                    np.eye(4),
-                    max_cross=int(maxcrossing),
-                    step_size=float(step),
-                    maxlen=int(max_length),
-                    pft_back_tracking_dist=pft_back_tracking_dist,
-                    pft_front_tracking_dist=pft_front_tracking_dist,
-                    particle_count=particle_count,
-                    return_all=True,
-                )
-            else:
-                raise ValueError(
-                    "ERROR: No valid tracking method(s) specified.")
+    # Perform tracking
+    if track_type == "local":
+        streamline_generator = LocalTracking(
+            dg,
+            tiss_classifier,
+            seeds,
+            np.eye(4),
+            max_cross=int(maxcrossing),
+            maxlen=int(max_length),
+            step_size=float(step_curv_combinations[0]),
+            fixedstep=False,
+            return_all=True,
+        )
+    elif track_type == "particle":
+        streamline_generator = ParticleFilteringTracking(
+            dg,
+            tiss_classifier,
+            seeds,
+            np.eye(4),
+            max_cross=int(maxcrossing),
+            step_size=float(step_curv_combinations[0]),
+            maxlen=int(max_length),
+            pft_back_tracking_dist=pft_back_tracking_dist,
+            pft_front_tracking_dist=pft_front_tracking_dist,
+            particle_count=particle_count,
+            return_all=True,
+        )
+    else:
+        raise ValueError(
+            "ERROR: No valid tracking method(s) specified.")
 
-            # Filter resulting streamlines by those that stay entirely
-            # inside the brain
-            roi_proximal_streamlines = utils.target(
-                streamline_generator, np.eye(4),
-                B0_mask_data, include=True
-            )
+    # Filter resulting streamlines by those that stay entirely
+    # inside the brain
+    roi_proximal_streamlines = utils.target(
+        streamline_generator, np.eye(4),
+        B0_mask_data, include=True
+    )
 
-            # Filter resulting streamlines by roi-intersection
-            # characteristics
-            roi_proximal_streamlines = Streamlines(
-                select_by_rois(
-                    roi_proximal_streamlines,
-                    affine=np.eye(4),
-                    rois=parcels,
-                    include=parcel_vec,
-                    mode="both_end",
-                    tol=roi_neighborhood_tol,
-                )
-            )
-
-            print(
-                "%s%s"
-                % (
-                    "Filtering by: \nnode intersection: ",
-                    len(roi_proximal_streamlines),
-                )
-            )
-
-            if str(min_length) != "0":
-                roi_proximal_streamlines = nib.streamlines. \
-                    array_sequence.ArraySequence(
-                    [
-                        s
-                        for s in roi_proximal_streamlines
-                        if len(s) >= float(min_length)
-                    ]
-                )
-
-                print(
-                    "%s%s" %
-                    ("Minimum length criterion: ",
-                     len(roi_proximal_streamlines)))
-
-            if waymask_data:
-                roi_proximal_streamlines = roi_proximal_streamlines[
-                    utils.near_roi(
-                        roi_proximal_streamlines,
-                        np.eye(4),
-                        waymask_data,
-                        tol=roi_neighborhood_tol,
-                        mode="any",
-                    )
-                ]
-                print(
-                    "%s%s" %
-                    ("Waymask proximity: ",
-                     len(roi_proximal_streamlines)))
-
-            out_streams = [s.astype("float32")
-                           for s in roi_proximal_streamlines]
-            streamlines.extend(out_streams)
-            stream_counter = stream_counter + len(out_streams)
-
-            # Cleanup memory
-            del seeds, roi_proximal_streamlines, streamline_generator, \
-                out_streams
-            gc.collect()
-
-    circuit_ix = circuit_ix + 1
-    print(
-        "%s%s%s%s%s%s"
-        % (
-            "Completed Hyperparameter Circuit: ",
-            circuit_ix,
-            "\nCumulative Streamline Count: ",
-            Fore.CYAN,
-            stream_counter,
-            "\n",
+    # Filter resulting streamlines by roi-intersection
+    # characteristics
+    roi_proximal_streamlines = Streamlines(
+        select_by_rois(
+            roi_proximal_streamlines,
+            affine=np.eye(4),
+            rois=parcels,
+            include=parcel_vec,
+            mode="both_end",
+            tol=roi_neighborhood_tol,
         )
     )
-    print(Style.RESET_ALL)
-    del dg
-    return streamlines, circuit_ix, stream_counter
+
+    print(
+        "%s%s"
+        % (
+            "Filtering by: \nnode intersection: ",
+            len(roi_proximal_streamlines),
+        )
+    )
+
+    if str(min_length) != "0":
+        roi_proximal_streamlines = nib.streamlines. \
+            array_sequence.ArraySequence(
+            [
+                s
+                for s in roi_proximal_streamlines
+                if len(s) >= float(min_length)
+            ]
+        )
+
+        print(
+            "%s%s" %
+            ("Minimum length criterion: ",
+             len(roi_proximal_streamlines)))
+
+    if waymask_data:
+        roi_proximal_streamlines = roi_proximal_streamlines[
+            utils.near_roi(
+                roi_proximal_streamlines,
+                np.eye(4),
+                waymask_data,
+                tol=roi_neighborhood_tol,
+                mode="any",
+            )
+        ]
+        print(
+            "%s%s" %
+            ("Waymask proximity: ",
+             len(roi_proximal_streamlines)))
+
+    out_streams = [s.astype("float32")
+                   for s in roi_proximal_streamlines]
+    del dg, seeds, roi_proximal_streamlines, streamline_generator
+    gc.collect()
+    return out_streams
+
