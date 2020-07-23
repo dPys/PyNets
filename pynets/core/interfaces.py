@@ -1325,6 +1325,15 @@ class RegisterAtlasDWI(SimpleInterface):
                       f"{self.inputs.vox_size}.nii.gz"
         )
 
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         if self.inputs.uatlas is None:
             uatlas_tmp_path = None
         else:
@@ -1539,6 +1548,15 @@ class RegisterAtlasDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
 
+            mni2t1w_warp_tmp_path2 = fname_presuffix(
+                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1w_warp,
+                mni2t1w_warp_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align waymask
             waymask_in_t1w = (
                 f"{runtime.cwd}/waymask-"
@@ -1553,12 +1571,12 @@ class RegisterAtlasDWI(SimpleInterface):
                 waymask_tmp_path,
                 t1w_brain_tmp_path2,
                 ap_tmp_path,
-                mni2t1w_warp_tmp_path,
+                mni2t1w_warp_tmp_path2,
                 mni2t1_xfm_tmp_path,
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
                 waymask_in_dwi,
-                template,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
@@ -1675,6 +1693,15 @@ class RegisterROIDWI(SimpleInterface):
                       f"{self.inputs.vox_size}.nii.gz"
         )
 
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
         )
@@ -1748,6 +1775,15 @@ class RegisterROIDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
 
+            mni2t1w_warp_tmp_path2 = fname_presuffix(
+                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1w_warp,
+                mni2t1w_warp_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align roi
             roi_in_dwi = regutils.roi2dwi_align(
                 roi_file_tmp_path,
@@ -1755,10 +1791,10 @@ class RegisterROIDWI(SimpleInterface):
                 roi_in_t1w,
                 roi_in_dwi,
                 ap_tmp_path,
-                mni2t1w_warp_tmp_path,
+                mni2t1w_warp_tmp_path2,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
-                template,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
@@ -2311,6 +2347,15 @@ class RegisterROIEPI(SimpleInterface):
             "pynets", f"templates/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         roi_file_tmp_path = fname_presuffix(
             self.inputs.roi, suffix="_tmp", newpath=runtime.cwd
         )
@@ -2362,14 +2407,23 @@ class RegisterROIEPI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
 
+            mni2t1w_warp_tmp_path2 = fname_presuffix(
+                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1w_warp,
+                mni2t1w_warp_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align roi
             roi_in_t1w = regutils.roi2t1w_align(
                 roi_file_tmp_path,
                 t1w_brain_tmp_path2,
                 mni2t1_xfm_tmp_path,
-                mni2t1w_warp_tmp_path,
+                mni2t1w_warp_tmp_path2,
                 roi_in_t1w,
-                template,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
