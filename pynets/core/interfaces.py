@@ -629,9 +629,9 @@ class IndividualClustering(SimpleInterface):
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
-                    boot_img = create_bs_imgs(ts_data, block_size,
+                    boot_data = create_bs_imgs(ts_data, block_size,
                                               _clust_mask_corr_img)
-                    parcellation = parcellate(boot_img, local_corr,
+                    parcellation = parcellate(boot_data, local_corr,
                                               clust_type,
                                               _local_conn_mat_path,
                                               num_conn_comps,
@@ -657,7 +657,6 @@ class IndividualClustering(SimpleInterface):
                                               max_nbytes=1e6,
                                               verbose=10,
                                               backend='loky',
-                                              require='sharedmem',
                                               batch_size=6,
                                               mmap_mode='r+')(
                     delayed(run_bs_iteration)(
@@ -2448,6 +2447,7 @@ class Tracking(SimpleInterface):
             Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile
+        from joblib import dump, load
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -2467,6 +2467,14 @@ class Tracking(SimpleInterface):
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
         dwi_data = dwi_img.get_fdata()
+
+        # Use joblib with memmapping
+        folder = f"{runtime.cwd}/joblib_memmap"
+        os.makedirs(folder, exist_ok=True)
+
+        data_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(dwi_data, data_filename_memmap)
+        dwi_data = load(data_filename_memmap, mmap_mode='r+')
 
         # Load FA data
         fa_img = nib.load(self.inputs.fa_path)
@@ -2528,6 +2536,10 @@ class Tracking(SimpleInterface):
             )
             model = np.load(recon_path)
 
+        model_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(model, model_filename_memmap)
+        model = load(model_filename_memmap, mmap_mode='r+')
+
         dwi_img.uncache()
         del dwi_data
 
@@ -2539,6 +2551,30 @@ class Tracking(SimpleInterface):
         atlas_data_wm_gm_int = np.asarray(
             nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj
         ).astype("uint16")
+
+        atlas_data_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(atlas_data, atlas_data_filename_memmap)
+        atlas_data = load(atlas_data_filename_memmap, mmap_mode='r+')
+
+        atlas_data_wm_gm_int_filename_memmap = os.path.join(folder,
+                                                            'data_memmap')
+        dump(atlas_data_wm_gm_int, atlas_data_wm_gm_int_filename_memmap)
+        atlas_data_wm_gm_int = load(atlas_data_wm_gm_int_filename_memmap,
+                                    mmap_mode='r+')
+
+        B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
+        B0_mask_data_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(B0_mask_data, B0_mask_data_filename_memmap)
+        B0_mask_data = load(B0_mask_data_filename_memmap, mmap_mode='r+')
+
+        if self.inputs.waymask:
+            waymask_data = np.asarray(nib.load(self.inputs.waymask).dataobj
+                                      ).astype("bool")
+            waymask_data_filename_memmap = os.path.join(folder, 'data_memmap')
+            dump(waymask_data, waymask_data_filename_memmap)
+            waymask_data = load(waymask_data_filename_memmap, mmap_mode='r+')
+        else:
+            waymask_data = None
 
         # Build mask vector from atlas for later roi filtering
         parcels = []
@@ -2607,8 +2643,8 @@ class Tracking(SimpleInterface):
             self.inputs.maxcrossing,
             int(self.inputs.roi_neighborhood_tol),
             self.inputs.min_length,
-            self.inputs.waymask,
-            self.inputs.B0_mask
+            waymask_data,
+            B0_mask_data
         )
 
         # Save streamlines to trk
@@ -2672,7 +2708,10 @@ class Tracking(SimpleInterface):
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
             dwi_img = nib.load(self.inputs.dwi_file)
             dwi_data = dwi_img.get_fdata()
-            B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
+            data_filename_memmap = os.path.join(folder, 'data_memmap')
+            dump(dwi_data, data_filename_memmap)
+            dwi_data = load(data_filename_memmap, mmap_mode='r+')
+
             try:
                 streamlines = evaluate_streamline_plausibility(
                     dwi_data, gtab, B0_mask_data, streamlines,
