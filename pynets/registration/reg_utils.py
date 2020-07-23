@@ -220,11 +220,8 @@ def atlas2t1w2dwi_align(
     wm_gm_mask_img = math_img("img > 0", img=wm_gm_img)
     atlas_mask_img = math_img("img > 0", img=atlas_img)
 
-
-    np.asarray(uatlas_res_template.dataobj).astype('uint16')
-
     atlas_img_corr = nib.Nifti1Image(
-        uatlas_res_template_data.astype("uint32"),
+        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )
@@ -548,10 +545,9 @@ def atlas2t1w_align(
         f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm}")
 
     atlas_img = nib.load(aligned_atlas_gm)
-    np.asarray(uatlas_res_template.dataobj).astype('uint16')
 
     atlas_img_corr = nib.Nifti1Image(
-        uatlas_res_template_data.astype("uint32"),
+        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )

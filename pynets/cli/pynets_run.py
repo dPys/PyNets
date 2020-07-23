@@ -178,7 +178,7 @@ def get_parser():
              "parcellation/atlas Nifti1Image file in MNI space. Labels should"
              "be spatially distinct across hemispheres and ordered with "
              "consecutive integers with a value of 0 as the background label."
-             "If specifying a list of paths to multiple user atlases, "
+             "If specifying a list of paths to multiple parcellations, "
              "separate them by space.\n",
     )
 
@@ -1494,7 +1494,7 @@ def build_workflow(args, retval):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
-            print(f"{Fore.GREEN}Iterating across multiple user atlases:")
+            print(f"{Fore.GREEN}Iterating across multiple parcellations:")
             if func_file_list:
                 for _uatlas in user_atlas_list:
                     atlas_par = _uatlas.split("/")[-1].split(".")[0]
@@ -1731,7 +1731,7 @@ def build_workflow(args, retval):
             return retval
 
         if user_atlas_list:
-            print(f"{Fore.GREEN}Iterating across multiple user atlases:")
+            print(f"{Fore.GREEN}Iterating across multiple parcellations:")
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
                     for _uatlas in user_atlas_list:
