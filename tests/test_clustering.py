@@ -121,7 +121,7 @@ def test_ni_parcellate(clust_type):
                               nip._clust_mask_corr_img,
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, nip._dir_path,
+                              nip.conf, tmpdir,
                               nip._conn_comps)
 
     nib.save(parcellation, out_path)
@@ -172,7 +172,7 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
                               nip._clust_mask_corr_img,
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, nip._dir_path,
+                              nip.conf, tmpdir,
                               nip._conn_comps)
 
     nib.save(parcellation, out_path)

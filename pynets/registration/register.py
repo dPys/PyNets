@@ -476,8 +476,8 @@ def direct_streamline_norm(
 
     else:
         print(
-            "Skipping Direct Streamline Normalization (DSN). Will proceed to define fiber connectivity "
-            "in native diffusion space...")
+            "Skipping Direct Streamline Normalization (DSN). Will proceed to "
+            "define fiber connectivity in native diffusion space...")
         streams_mni = streams
         warped_fa = fa_path
         atlas_mni = labels_im_file

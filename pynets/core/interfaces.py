@@ -1555,24 +1555,6 @@ class RegisterAtlasDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
 
-            t1w_brain_tmp_path2 = fname_presuffix(
-                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.t1w_brain,
-                t1w_brain_tmp_path2,
-                copy=True,
-                use_hardlink=False)
-
-            mni2t1w_warp_tmp_path2 = fname_presuffix(
-                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.mni2t1w_warp,
-                mni2t1w_warp_tmp_path2,
-                copy=True,
-                use_hardlink=False)
-
             # Align waymask
             waymask_in_t1w = (
                 f"{runtime.cwd}/waymask-"
@@ -1585,9 +1567,9 @@ class RegisterAtlasDWI(SimpleInterface):
 
             waymask_in_dwi = regutils.waymask2dwi_align(
                 waymask_tmp_path,
-                t1w_brain_tmp_path2,
+                t1w_brain_tmp_path,
                 ap_tmp_path,
-                mni2t1w_warp_tmp_path2,
+                mni2t1w_warp_tmp_path,
                 mni2t1_xfm_tmp_path,
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
@@ -2410,30 +2392,12 @@ class RegisterROIEPI(SimpleInterface):
             use_hardlink=False)
 
         if self.inputs.roi:
-            t1w_brain_tmp_path2 = fname_presuffix(
-                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.t1w_brain,
-                t1w_brain_tmp_path2,
-                copy=True,
-                use_hardlink=False)
-
-            mni2t1w_warp_tmp_path2 = fname_presuffix(
-                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.mni2t1w_warp,
-                mni2t1w_warp_tmp_path2,
-                copy=True,
-                use_hardlink=False)
-
             # Align roi
             roi_in_t1w = regutils.roi2t1w_align(
                 roi_file_tmp_path,
-                t1w_brain_tmp_path2,
+                t1w_brain_tmp_path,
                 mni2t1_xfm_tmp_path,
-                mni2t1w_warp_tmp_path2,
+                mni2t1w_warp_tmp_path,
                 roi_in_t1w,
                 template_tmp_path,
                 self.inputs.simple,
@@ -2658,9 +2622,8 @@ class Tracking(SimpleInterface):
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
         # seeding)
-        atlas_data = np.array(
-            nib.load(
-                self.inputs.labels_im_file).dataobj).astype("uint16")
+        atlas_img = nib.load(self.inputs.labels_im_file)
+        atlas_data = np.array(atlas_img.dataobj).astype("uint16")
         atlas_data_wm_gm_int = np.asarray(
             nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj
         ).astype("uint16")
@@ -2797,7 +2760,7 @@ class Tracking(SimpleInterface):
 
         stf = StatefulTractogram(
             streamlines,
-            fa_img,
+            atlas_img,
             origin=Origin.NIFTI,
             space=Space.VOXMM)
         stf.remove_invalid_streamlines()
