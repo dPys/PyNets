@@ -1530,6 +1530,15 @@ class RegisterAtlasDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
 
+            t1w_brain_tmp_path2 = fname_presuffix(
+                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1w_brain,
+                t1w_brain_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align waymask
             waymask_in_t1w = (
                 f"{runtime.cwd}/waymask-"
@@ -1542,7 +1551,7 @@ class RegisterAtlasDWI(SimpleInterface):
 
             waymask_in_dwi = regutils.waymask2dwi_align(
                 waymask_tmp_path,
-                t1w_brain_tmp_path,
+                t1w_brain_tmp_path2,
                 ap_tmp_path,
                 mni2t1w_warp_tmp_path,
                 mni2t1_xfm_tmp_path,
@@ -1730,10 +1739,19 @@ class RegisterROIDWI(SimpleInterface):
                      f"_in_dwi.nii.gz"
 
         if self.inputs.roi:
+            t1w_brain_tmp_path2 = fname_presuffix(
+                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1w_brain,
+                t1w_brain_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align roi
             roi_in_dwi = regutils.roi2dwi_align(
                 roi_file_tmp_path,
-                t1w_brain_tmp_path,
+                t1w_brain_tmp_path2,
                 roi_in_t1w,
                 roi_in_dwi,
                 ap_tmp_path,
@@ -2335,10 +2353,19 @@ class RegisterROIEPI(SimpleInterface):
             use_hardlink=False)
 
         if self.inputs.roi:
+            t1w_brain_tmp_path2 = fname_presuffix(
+                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1w_brain,
+                t1w_brain_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align roi
             roi_in_t1w = regutils.roi2t1w_align(
                 roi_file_tmp_path,
-                t1w_brain_tmp_path,
+                t1w_brain_tmp_path2,
                 mni2t1_xfm_tmp_path,
                 mni2t1w_warp_tmp_path,
                 roi_in_t1w,
@@ -2684,7 +2711,7 @@ class Tracking(SimpleInterface):
         )
 
         stf = StatefulTractogram(
-            streamlines,
+            streamlines.data,
             fa_img,
             origin=Origin.NIFTI,
             space=Space.VOXMM)

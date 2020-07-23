@@ -416,8 +416,8 @@ def track_ensemble(
     from pynets.dmri.track import run_tracking
     from joblib import Parallel, delayed
     import itertools
+    from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
-
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
@@ -426,7 +426,6 @@ def track_ensemble(
     stream.close()
 
     parcel_vec = list(np.ones(len(parcels)).astype("bool"))
-    streamlines = nib.streamlines.array_sequence.ArraySequence()
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
@@ -434,6 +433,7 @@ def track_ensemble(
     start = time.time()
     stream_counter = 0
 
+    all_streams = []
     while float(stream_counter) < float(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
                                mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
@@ -445,10 +445,9 @@ def track_ensemble(
                 min_length, track_type, min_separation_angle, sphere, t1w2dwi,
                 gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                 B0_mask) for i in all_combs)
-
-        streamlines.extend(out_streams)
-        stream_counter = streamlines.total_nb_rows
-
+        all_streams.append(out_streams)
+        stream_counter = np.sum([np.sum([j.total_nb_rows for j in i]) for
+                                 i in all_streams])
         print(
             "%s%s%s%s"
             % (
@@ -459,6 +458,7 @@ def track_ensemble(
             )
         )
         print(Style.RESET_ALL)
+    streamlines = Streamlines([i for j in all_streams for i in j])
 
     print("Tracking Complete:\n", str(time.time() - start))
 
@@ -484,7 +484,6 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         DeterministicMaximumDirectionGetter,
     )
     from pynets.dmri.track import prep_tissues
-
     tiss_classifier = prep_tissues(
         t1w2dwi,
         gm_in_dwi,
@@ -628,6 +627,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]
+
     del dg, seeds, roi_proximal_streamlines, streamline_generator
     gc.collect()
     return nib.streamlines.array_sequence.ArraySequence(out_streams)

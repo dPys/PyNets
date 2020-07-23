@@ -2094,10 +2094,8 @@ def dmri_connectometry(
                                             "vox_size")],
                                         ),
                                        (check_orient_and_dims_roi_node,
-                                        register_roi_node,
-                                        [("outfile",
-                                          "roi")],
-                                        ),
+                                        register_roi_node),
+                                        [("outfile",  "roi")]
                                        ])
     save_coords_and_labels_node = pe.Node(
         niu.Function(
