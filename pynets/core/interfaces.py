@@ -480,9 +480,9 @@ class IndividualClustering(SimpleInterface):
 
     def _run_interface(self, runtime):
         import os
+        import gc
         import time
         import nibabel as nib
-        import pkg_resources
         import yaml
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
@@ -729,6 +729,13 @@ class IndividualClustering(SimpleInterface):
         if not os.path.isfile(nip.uatlas):
             raise FileNotFoundError(f"Parcellation clustering failed for"
                                     f" {nip.uatlas}")
+
+        if folder:
+            import shutil
+            shutil.rmtree(folder)
+
+        del boot_parcellations, data, ts_data
+        gc.collect()
 
         self._results["atlas"] = atlas
         self._results["uatlas"] = nip.uatlas
@@ -2793,6 +2800,10 @@ class Tracking(SimpleInterface):
             namer_dir,
         )
 
+        if folder:
+            import shutil
+            shutil.rmtree(folder)
+
         self._results["streams"] = streams
         self._results["track_type"] = self.inputs.track_type
         self._results["target_samples"] = self.inputs.target_samples
@@ -2824,7 +2835,8 @@ class Tracking(SimpleInterface):
             self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
 
-        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
+        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels, \
+            dwi_data
         dwi_img.uncache()
         gc.collect()
 
