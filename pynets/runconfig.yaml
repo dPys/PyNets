@@ -40,8 +40,8 @@ DSN: # Experimental option. Direct Streamline Normalization attempts to normaliz
     - False
 template: # `MNI152_T1` is the default and, along with `colin27` is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates provided by the user should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
 #    - 'colin27'
-#    - 'MNI152_T1'
-    - 'CN200'
+    - 'MNI152_T1'
+#    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
     - 'betweenness'
 nilearn_parc_atlases:
