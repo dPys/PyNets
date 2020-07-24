@@ -973,7 +973,7 @@ class NiParcellate(object):
 def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                num_conn_comps, _clust_mask_corr_img, _standardize,
                _detrending, k, _local_conn, conf, _dir_path,
-               _conn_comps):
+               _conn_comps, cache_dir):
     """
     API for performing any of a variety of clustering routines available
     through NiLearn.
@@ -1080,6 +1080,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             if k_list[i] == 0:
                 # print('0 voxels in component. Discarding...')
                 continue
+            memory = Memory(cache_dir, verbose=0)
             _clust_est = Parcellations(
                 method=clust_type,
                 standardize=_standardize,
@@ -1087,9 +1088,9 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
-                memory_level=3,
-                memory=Memory(location=_dir_path),
-                random_state=42,
+                memory_level=2,
+                memory=memory,
+                random_state=i,
                 n_jobs=1
             )
             if conf is not None:
@@ -1144,4 +1145,5 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{clust_type}{k}"
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
+
         return super_atlas_ward

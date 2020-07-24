@@ -3663,6 +3663,10 @@ def fmri_connectometry(
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
 
+        register_atlas_node = pe.Node(
+            RegisterAtlasFunc(already_run=True),
+            name="register_atlas_node")
+
         clustering_info_node = pe.Node(
             niu.IdentityInterface(fields=["clust_mask", "clust_type", "k"]),
             name="clustering_info_node",
@@ -3885,7 +3889,8 @@ def fmri_connectometry(
                     inputnode,
                     RegisterParcellation2MNIFunc_node,
                     [("vox_size", "vox_size"),
-                     ("template_name", "template_name")],
+                     ("template_name", "template_name"),
+                     ("outdir", "dir_path")],
                 ),
                 (
                     register_node,
@@ -5512,7 +5517,8 @@ def fmri_connectometry(
             (
                 inputnode,
                 register_atlas_node,
-                [("vox_size", "vox_size"), ("template_name", "template_name")],
+                [("vox_size", "vox_size"), ("template_name", "template_name"),
+                 ("outdir", "dir_path")],
             ),
             (
                 register_node,
