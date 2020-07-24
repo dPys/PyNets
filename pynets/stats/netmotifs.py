@@ -442,6 +442,7 @@ def motif_matching(
     from pynets.stats.netmotifs import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
+    from graspy.utils import remove_loops, symmetrize, get_lcc
 
     try:
         import cPickle as pickle
@@ -495,6 +496,28 @@ def motif_matching(
         struct_labels = pickle.load(file_)
     with open(func_labels_path, "rb") as file_:
         func_labels = pickle.load(file_)
+
+    # Find intersecting nodes across modalities (i.e. assuming the same
+    # parcellation, but accomodating for the possibility of dropped nodes)
+    func_label_intensities = [i[1] for i in func_labels]
+    struct_label_intensities = [i[1] for i in struct_labels]
+    diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
+    G_struct = nx.from_numpy_array(struct_mat)
+    for i in diff1:
+        G_struct.remove_node(i)
+        del struct_labels[i], struct_coords[i]
+    diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
+    G_func = nx.from_numpy_array(func_mat)
+    for i in diff2:
+        G_func.remove_node(i)
+        del func_labels[i], func_coords[i]
+
+    struct_mat = nx.to_numpy_array(G_struct)
+    func_mat = nx.to_numpy_array(G_func)
+
+    struct_mat = thresholding.autofix(symmetrize(remove_loops(struct_mat)))
+
+    func_mat = thresholding.autofix(symmetrize(remove_loops(func_mat)))
 
     if func_mat.shape == struct_mat.shape:
         func_mat[~struct_mat.astype("bool")] = 0
@@ -552,8 +575,14 @@ def motif_matching(
         name_list.append(name)
         struct_mat = np.maximum(struct_mat, struct_mat.T)
         func_mat = np.maximum(func_mat, func_mat.T)
-        [mldict, g_dict] = compare_motifs(
-            struct_mat, func_mat, name, namer_dir)
+        try:
+            [mldict, g_dict] = compare_motifs(
+                struct_mat, func_mat, name, namer_dir)
+        except BaseException:
+            print(f"Adaptive thresholding by motif comparisons failed "
+                  f"for {name}. This usually happens when no motifs are found")
+            return [], [], [], []
+
         multigraph_list_all.append(list(mldict.values())[0])
         graph_path_list = []
         for thr in list(g_dict.keys()):

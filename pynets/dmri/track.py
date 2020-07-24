@@ -128,34 +128,35 @@ def prep_tissues(
     from nilearn.image import math_img
 
     # Load B0 mask
-    B0_mask_img = nib.load(B0_mask)
+    B0_mask_img = math_img("img > 0.0", img=nib.load(B0_mask))
 
     # Load t1 mask
-    mask_img = nib.load(t1_mask)
+    mask_img = math_img("img > 0.0", img=nib.load(t1_mask))
 
     # Load tissue maps and prepare tissue classifier
     wm_img = nib.load(wm_in_dwi)
+    wm_mask_img = math_img("img > 0.0", img=wm_img)
     gm_img = nib.load(gm_in_dwi)
-    gm_mask_data = np.asarray(gm_img.dataobj, dtype=np.float32)
-    wm_mask_data = np.asarray(wm_img.dataobj, dtype=np.float32)
+    gm_data = np.asarray(gm_img.dataobj, dtype=np.float32)
+    wm_data = np.asarray(wm_img.dataobj, dtype=np.float32)
     vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj,
                                       dtype=np.float32)
     if tiss_class == "act":
         background = np.ones(mask_img.shape)
-        background[(gm_mask_data + wm_mask_data +
+        background[(gm_data + wm_data +
                     vent_csf_in_dwi_data) > 0] = 0
-        gm_mask_data[background > 0] = 1
+        gm_data[background > 0] = 1
         tiss_classifier = ActStoppingCriterion(
-            gm_mask_data, vent_csf_in_dwi_data)
+            gm_data, vent_csf_in_dwi_data)
         del background
     elif tiss_class == "wm":
         tiss_classifier = BinaryStoppingCriterion(
             np.asarray(
                 intersect_masks(
                     [
-                        math_img("img > 0.0", img=mask_img),
-                        math_img("img > 0.0", img=wm_img),
-                        math_img("img > 0.0", img=B0_mask_img),
+                        mask_img,
+                        wm_mask_img,
+                        B0_mask_img,
                     ],
                     threshold=1,
                     connected=False,
@@ -165,8 +166,8 @@ def prep_tissues(
     elif tiss_class == "cmc":
         voxel_size = np.average(mask_img.header["pixdim"][1:4])
         tiss_classifier = CmcStoppingCriterion.from_pve(
-            wm_mask_data,
-            gm_mask_data,
+            wm_data,
+            gm_data,
             vent_csf_in_dwi_data,
             step_size=cmc_step_size,
             average_voxel_size=voxel_size,
@@ -176,8 +177,8 @@ def prep_tissues(
             np.asarray(
                 intersect_masks(
                     [
-                        math_img("img > 0.0", img=mask_img),
-                        math_img("img > 0.0", img=B0_mask_img),
+                        mask_img,
+                        B0_mask_img,
                         nib.Nifti1Image(np.invert(
                             vent_csf_in_dwi_data.astype('bool')).astype('int'),
                                         affine=mask_img.affine),
@@ -190,7 +191,7 @@ def prep_tissues(
     else:
         raise ValueError("Tissue classifier cannot be none.")
 
-    del gm_mask_data, wm_mask_data, vent_csf_in_dwi_data
+    del gm_data, wm_data, vent_csf_in_dwi_data
     mask_img.uncache()
     gm_img.uncache()
     wm_img.uncache()
@@ -310,7 +311,6 @@ def track_ensemble(
     atlas_data_wm_gm_int,
     parcels,
     mod_fit,
-    tiss_classifier,
     sphere,
     directget,
     curv_thr_list,
@@ -319,9 +319,15 @@ def track_ensemble(
     maxcrossing,
     roi_neighborhood_tol,
     min_length,
-    waymask,
+    waymask_data,
+    B0_mask_data,
+    t1w2dwi,
+    gm_in_dwi,
+    vent_csf_in_dwi,
+    wm_in_dwi,
+    tiss_class,
     B0_mask,
-    n_seeds_per_iter=250,
+    n_seeds_per_iter=2000,
     max_length=1000,
     pft_back_tracking_dist=2,
     pft_front_tracking_dist=1,
@@ -366,11 +372,10 @@ def track_ensemble(
         the center of each voxel and the corner of the voxel.
     min_length : int
         Minimum fiber length threshold in mm.
-    waymask : str
-        Path to a Nifti1Image in native diffusion space to constrain
-        tractography.
-    B0_mask : str
-        File path to B0 brain mask.
+    waymask_data : ndarray
+        Tractography constraint mask array in native diffusion space.
+    B0_mask_data : ndarray
+        B0 brain mask data.
     n_seeds_per_iter : int
         Number of seeds from which to initiate tracking for each unique
         ensemble combination. By default this is set to 250.
@@ -404,9 +409,70 @@ def track_ensemble(
       https://doi.org/10.1371/journal.pcbi.1004692
 
     """
-    import gc
     import time
+    import pkg_resources
+    import yaml
+    from pynets.dmri.track import run_tracking
+    from joblib import Parallel, delayed
+    import itertools
+    from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        nthreads = hardcoded_params["nthreads"][0]
+    stream.close()
+
+    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
+
+    all_combs = list(itertools.product(step_list, curv_thr_list))
+
+    # Commence Ensemble Tractography
+    start = time.time()
+    stream_counter = 0
+
+    all_streams = []
+    while float(stream_counter) < float(target_samples):
+        out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
+                               mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
+            delayed(run_tracking)(
+                i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
+                maxcrossing, max_length, pft_back_tracking_dist,
+                pft_front_tracking_dist, particle_count, B0_mask_data,
+                roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
+                min_length, track_type, min_separation_angle, sphere, t1w2dwi,
+                gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                B0_mask) for i in all_combs)
+        all_streams.append(out_streams)
+        stream_counter = len(Streamlines([i for j in all_streams for i in
+                                          j]).data)
+        print(
+            "%s%s%s%s"
+            % (
+                "\nCumulative Streamline Count: ",
+                Fore.CYAN,
+                stream_counter,
+                "\n",
+            )
+        )
+        print(Style.RESET_ALL)
+    streamlines = Streamlines([i for j in all_streams for i in j])
+
+    print("Tracking Complete:\n", str(time.time() - start))
+
+    return streamlines.data
+
+
+def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
+                 n_seeds_per_iter, directget, maxcrossing, max_length,
+                 pft_back_tracking_dist, pft_front_tracking_dist,
+                 particle_count, B0_mask_data, roi_neighborhood_tol,
+                 parcels, parcel_vec, waymask_data, min_length, track_type,
+                 min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
+                 vent_csf_in_dwi, wm_in_dwi, tiss_class, B0_mask):
+
+    import gc
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines, select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, \
@@ -416,184 +482,152 @@ def track_ensemble(
         ClosestPeakDirectionGetter,
         DeterministicMaximumDirectionGetter,
     )
+    from pynets.dmri.track import prep_tissues
+    tiss_classifier = prep_tissues(
+        t1w2dwi,
+        gm_in_dwi,
+        vent_csf_in_dwi,
+        wm_in_dwi,
+        tiss_class,
+        B0_mask
+    )
 
-    start = time.time()
-
-    B0_mask_data = nib.load(B0_mask).get_fdata()
-
-    if waymask:
-        waymask_data = np.asarray(nib.load(waymask).dataobj).astype("bool")
-
-    # Commence Ensemble Tractography
-    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
-    streamlines = nib.streamlines.array_sequence.ArraySequence()
-
-    circuit_ix = 0
-    stream_counter = 0
-    while int(stream_counter) < int(target_samples):
-        for curv_thr in curv_thr_list:
-            print("%s%s" % ("Curvature: ", curv_thr))
-
-            # Instantiate DirectionGetter
-            if directget == "prob" or directget == "probabilistic":
-                dg = ProbabilisticDirectionGetter.from_shcoeff(
-                    mod_fit,
-                    max_angle=float(curv_thr),
-                    sphere=sphere,
-                    min_separation_angle=min_separation_angle,
-                )
-            elif directget == "clos" or directget == "closest":
-                dg = ClosestPeakDirectionGetter.from_shcoeff(
-                    mod_fit,
-                    max_angle=float(curv_thr),
-                    sphere=sphere,
-                    min_separation_angle=min_separation_angle,
-                )
-            elif directget == "det" or directget == "deterministic":
-                maxcrossing = 1
-                dg = DeterministicMaximumDirectionGetter.from_shcoeff(
-                    mod_fit,
-                    max_angle=float(curv_thr),
-                    sphere=sphere,
-                    min_separation_angle=min_separation_angle,
-                )
-            else:
-                raise ValueError(
-                    "ERROR: No valid direction getter(s) specified."
-                )
-
-            for step in step_list:
-                print("%s%s" % ("Step: ", step))
-
-                # Perform wm-gm interface seeding, using n_seeds at a time
-                seeds = utils.random_seeds_from_mask(
-                    atlas_data_wm_gm_int > 0,
-                    seeds_count=n_seeds_per_iter,
-                    seed_count_per_voxel=False,
-                    affine=np.eye(4),
-                )
-                if len(seeds) == 0:
-                    raise RuntimeWarning(
-                        "Warning: No valid seed points found in wm-gm "
-                        "interface..."
-                    )
-
-                # print(seeds)
-
-                # Perform tracking
-                if track_type == "local":
-                    streamline_generator = LocalTracking(
-                        dg,
-                        tiss_classifier,
-                        seeds,
-                        np.eye(4),
-                        max_cross=int(maxcrossing),
-                        maxlen=int(max_length),
-                        step_size=float(step),
-                        fixedstep=False,
-                        return_all=True,
-                    )
-                elif track_type == "particle":
-                    streamline_generator = ParticleFilteringTracking(
-                        dg,
-                        tiss_classifier,
-                        seeds,
-                        np.eye(4),
-                        max_cross=int(maxcrossing),
-                        step_size=float(step),
-                        maxlen=int(max_length),
-                        pft_back_tracking_dist=pft_back_tracking_dist,
-                        pft_front_tracking_dist=pft_front_tracking_dist,
-                        particle_count=particle_count,
-                        return_all=True,
-                    )
-                else:
-                    raise ValueError(
-                        "ERROR: No valid tracking method(s) specified.")
-
-                # Filter resulting streamlines by those that stay entirely
-                # inside the brain
-                roi_proximal_streamlines = utils.target(
-                    streamline_generator, np.eye(4),
-                    B0_mask_data, include=True
-                )
-
-                # Filter resulting streamlines by roi-intersection
-                # characteristics
-                roi_proximal_streamlines = Streamlines(
-                    select_by_rois(
-                        roi_proximal_streamlines,
-                        affine=np.eye(4),
-                        rois=parcels,
-                        include=parcel_vec,
-                        mode="both_end",
-                        tol=roi_neighborhood_tol,
-                    )
-                )
-
-                print(
-                    "%s%s"
-                    % (
-                        "Filtering by: \nnode intersection: ",
-                        len(roi_proximal_streamlines),
-                    )
-                )
-
-                if str(min_length) != "0":
-                    roi_proximal_streamlines = nib.streamlines.\
-                        array_sequence.ArraySequence(
-                        [
-                            s
-                            for s in roi_proximal_streamlines
-                            if len(s) >= float(min_length)
-                        ]
-                    )
-
-                    print(
-                        "%s%s" %
-                        ("Minimum length criterion: ",
-                         len(roi_proximal_streamlines)))
-
-                if waymask:
-                    roi_proximal_streamlines = roi_proximal_streamlines[
-                        utils.near_roi(
-                            roi_proximal_streamlines,
-                            np.eye(4),
-                            waymask_data,
-                            tol=roi_neighborhood_tol,
-                            mode="any",
-                        )
-                    ]
-                    print(
-                        "%s%s" %
-                        ("Waymask proximity: ",
-                         len(roi_proximal_streamlines)))
-
-                out_streams = [s.astype("float32")
-                               for s in roi_proximal_streamlines]
-                streamlines.extend(out_streams)
-                stream_counter = stream_counter + len(out_streams)
-
-                # Cleanup memory
-                del seeds, roi_proximal_streamlines, streamline_generator, \
-                    out_streams
-                gc.collect()
-            del dg
-
-        circuit_ix = circuit_ix + 1
-        print(
-            "%s%s%s%s%s%s"
-            % (
-                "Completed Hyperparameter Circuit: ",
-                circuit_ix,
-                "\nCumulative Streamline Count: ",
-                Fore.CYAN,
-                stream_counter,
-                "\n",
-            )
+    print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
+    # Instantiate DirectionGetter
+    if directget == "prob" or directget == "probabilistic":
+        dg = ProbabilisticDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
         )
-        print(Style.RESET_ALL)
+    elif directget == "clos" or directget == "closest":
+        dg = ClosestPeakDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    elif directget == "det" or directget == "deterministic":
+        maxcrossing = 1
+        dg = DeterministicMaximumDirectionGetter.from_shcoeff(
+            mod_fit,
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    else:
+        raise ValueError(
+            "ERROR: No valid direction getter(s) specified."
+        )
+    print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
-    print("Tracking Complete:\n", str(time.time() - start))
+    # Perform wm-gm interface seeding, using n_seeds at a time
+    seeds = utils.random_seeds_from_mask(
+        atlas_data_wm_gm_int > 0,
+        seeds_count=n_seeds_per_iter,
+        seed_count_per_voxel=False,
+        affine=np.eye(4),
+    )
+    if len(seeds) == 0:
+        raise RuntimeWarning(
+            "Warning: No valid seed points found in wm-gm "
+            "interface..."
+        )
 
-    return streamlines
+    # print(seeds)
+
+    # Perform tracking
+    if track_type == "local":
+        streamline_generator = LocalTracking(
+            dg,
+            tiss_classifier,
+            seeds,
+            np.eye(4),
+            max_cross=int(maxcrossing),
+            maxlen=int(max_length),
+            step_size=float(step_curv_combinations[0]),
+            fixedstep=False,
+            return_all=True,
+        )
+    elif track_type == "particle":
+        streamline_generator = ParticleFilteringTracking(
+            dg,
+            tiss_classifier,
+            seeds,
+            np.eye(4),
+            max_cross=int(maxcrossing),
+            step_size=float(step_curv_combinations[0]),
+            maxlen=int(max_length),
+            pft_back_tracking_dist=pft_back_tracking_dist,
+            pft_front_tracking_dist=pft_front_tracking_dist,
+            particle_count=particle_count,
+            return_all=True,
+        )
+    else:
+        raise ValueError(
+            "ERROR: No valid tracking method(s) specified.")
+
+    # Filter resulting streamlines by those that stay entirely
+    # inside the brain
+    roi_proximal_streamlines = utils.target(
+        streamline_generator, np.eye(4),
+        B0_mask_data, include=True
+    )
+
+    # Filter resulting streamlines by roi-intersection
+    # characteristics
+    roi_proximal_streamlines = Streamlines(
+        select_by_rois(
+            roi_proximal_streamlines,
+            affine=np.eye(4),
+            rois=parcels,
+            include=parcel_vec,
+            mode="%s" % ("any" if waymask_data is not None else "both_end"),
+            tol=roi_neighborhood_tol,
+        )
+    )
+
+    print(
+        "%s%s"
+        % (
+            "Filtering by: \nnode intersection: ",
+            len(roi_proximal_streamlines),
+        )
+    )
+
+    roi_proximal_streamlines = nib.streamlines. \
+        array_sequence.ArraySequence(
+        [
+            s for s in roi_proximal_streamlines
+            if len(s) >= float(min_length)
+        ]
+    )
+
+    print(
+        "%s%s" %
+        ("Minimum length criterion: ",
+         len(roi_proximal_streamlines)))
+
+    if waymask_data is not None:
+        roi_proximal_streamlines = roi_proximal_streamlines[
+            utils.near_roi(
+                roi_proximal_streamlines,
+                np.eye(4),
+                waymask_data,
+                tol=roi_neighborhood_tol,
+                mode="any",
+            )
+        ]
+        print(
+            "%s%s" %
+            ("Waymask proximity: ",
+             len(roi_proximal_streamlines)))
+
+    out_streams = [s.astype("float32")
+                   for s in roi_proximal_streamlines]
+
+    del dg, seeds, roi_proximal_streamlines, streamline_generator
+    gc.collect()
+    return nib.streamlines.array_sequence.ArraySequence(out_streams)
+

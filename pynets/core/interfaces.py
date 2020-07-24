@@ -93,11 +93,12 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                [uatlas,
-                 labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    uatlas, label_names=labels)
-                [coords, _,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas, label_names=labels)
+                [coords, atlas, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -124,6 +125,7 @@ class FetchNodesLabels(SimpleInterface):
             par_max = None
             atlas = self.inputs.atlas
             uatlas = None
+            label_intensities = None
         elif (
             self.inputs.uatlas is None
             and self.inputs.parc is False
@@ -145,9 +147,10 @@ class FetchNodesLabels(SimpleInterface):
                     nib.save(
                         uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
-                [uatlas,
-                 labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    uatlas, label_names=labels)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas, label_names=labels)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -157,6 +160,7 @@ class FetchNodesLabels(SimpleInterface):
                     f"\nAtlas file for {self.inputs.atlas} not found!")
             par_max = None
             atlas = self.inputs.atlas
+            label_intensities = None
         elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
             from nipype.utils.filemanip import fname_presuffix, copyfile
 
@@ -174,12 +178,13 @@ class FetchNodesLabels(SimpleInterface):
                       "\nCannot load RSN reference image. Do you have git-lfs "
                       "installed?")
             try:
-                [uatlas,
-                 _] = nodemaker.enforce_hem_distinct_consecutive_labels(uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        uatlas)
                 # Fetch user-specified atlas coords
-                [coords, _,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                [coords, _, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -194,6 +199,7 @@ class FetchNodesLabels(SimpleInterface):
                 parcel_list = None
                 par_max = None
                 coords = None
+                label_intensities = None
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -204,16 +210,18 @@ class FetchNodesLabels(SimpleInterface):
                         break
                     else:
                         print("Waiting for atlas file...")
-                        time.sleep(15)
+                        time.sleep(5)
 
             try:
                 # Fetch user-specified atlas coords
-                [uatlas,
-                 _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                    self.inputs.uatlas)
-                [coords, atlas,
-                 par_max] = nodemaker.get_names_and_coords_of_parcels(
-                    uatlas)
+                if self.inputs.clustering is False:
+                    [uatlas,
+                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                        self.inputs.uatlas)
+                else:
+                    uatlas = self.inputs.uatlas
+                [coords, atlas, par_max, label_intensities] = \
+                    nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
                 else:
@@ -234,6 +242,7 @@ class FetchNodesLabels(SimpleInterface):
                 coords = None
                 atlas = None
                 uatlas = None
+                label_intensities = None
             labels = None
             networks_list = None
         else:
@@ -322,7 +331,10 @@ class FetchNodesLabels(SimpleInterface):
 
         assert len(coords) == len(labels)
 
-        self._results["labels"] = labels
+        if label_intensities is not None:
+            self._results["labels"] = list(zip(labels, label_intensities))
+        else:
+            self._results["labels"] = labels
         self._results["coords"] = coords
         self._results["atlas"] = atlas
         self._results["networks_list"] = networks_list
@@ -439,6 +451,13 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
     local_corr = traits.Str("allcorr", mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
     outdir = traits.Str(mandatory=True)
+    basedir_path = Directory(exists=True, mandatory=True)
+    anat_file = File(exists=True, mandatory=True)
+    t1w_brain = File(exists=True, mandatory=True)
+    mni2t1w_warp = File(exists=True, mandatory=True)
+    mni2t1_xfm = File(exists=True, mandatory=True)
+    template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
+    simple = traits.Bool(False, usedefault=True)
 
 
 class _IndividualClusteringOutputSpec(TraitedSpec):
@@ -460,13 +479,31 @@ class IndividualClustering(SimpleInterface):
     output_spec = _IndividualClusteringOutputSpec
 
     def _run_interface(self, runtime):
+        import os
+        import time
         import nibabel as nib
         import pkg_resources
         import yaml
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
-        from joblib import Parallel, delayed
+        from joblib import Parallel, delayed, dump, load
+        from pynets.registration import reg_utils as regutils
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -481,6 +518,56 @@ class IndividualClustering(SimpleInterface):
         clust_mask_temp_path = check_orient_and_dims(
             self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size
         )
+
+        clust_mask_in_t1w_path = f"{runtime.cwd}/clust_mask-" \
+                                 f"{os.path.basename(self.inputs.clust_mask).split('.nii')[0]}_in_t1w.nii.gz"
+
+        t1w_brain_tmp_path = fname_presuffix(
+            self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w_brain,
+            t1w_brain_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        mni2t1w_warp_tmp_path = fname_presuffix(
+            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1w_warp,
+            mni2t1w_warp_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
+
+        mni2t1_xfm_tmp_path = fname_presuffix(
+            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1_xfm,
+            mni2t1_xfm_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        clust_mask_in_t1w = regutils.roi2t1w_align(
+            clust_mask_temp_path,
+            t1w_brain_tmp_path,
+            mni2t1_xfm_tmp_path,
+            mni2t1w_warp_tmp_path,
+            clust_mask_in_t1w_path,
+            template_tmp_path,
+            self.inputs.simple,
+        )
+
+        reg_tmp = [
+            t1w_brain_tmp_path,
+            mni2t1w_warp_tmp_path,
+            mni2t1_xfm_tmp_path,
+        ]
+        for j in reg_tmp:
+            if j is not None:
+                os.remove(j)
 
         if self.inputs.mask:
             out_name_mask = fname_presuffix(
@@ -517,7 +604,7 @@ class IndividualClustering(SimpleInterface):
 
         nip = clustools.NiParcellate(
             func_file=out_name_func_file,
-            clust_mask=clust_mask_temp_path,
+            clust_mask=clust_mask_in_t1w,
             k=int(self.inputs.k),
             clust_type=self.inputs.clust_type,
             local_corr=self.inputs.local_corr,
@@ -530,62 +617,118 @@ class IndividualClustering(SimpleInterface):
         nip.create_local_clustering(overwrite=True, r_thresh=0.4)
 
         if self.inputs.clust_type in clust_list:
-            print(
-                f"Performing circular block bootstrapping with {c_boot}"
-                f" iterations..."
-            )
-            ts_data, block_size = nip.prep_boot()
+            if float(c_boot) > 1:
+                print(
+                    f"Performing circular block bootstrapping with {c_boot}"
+                    f" iterations..."
+                )
+                ts_data, block_size = nip.prep_boot()
 
-            def create_bs_imgs(i, ts_data, block_size, nip, work_dir):
-                import nibabel as nib
-                from nilearn.masking import unmask
-                from pynets.fmri.estimation import timeseries_bootstrap
-                boot_series = timeseries_bootstrap(ts_data, block_size)[0]
-                out_path = f"{work_dir}/boot_bs_img_tmp_{str(i)}.nii.gz"
-                nib.save(unmask(boot_series, nip._clust_mask_corr_img),
-                         out_path)
-                return out_path
+                def create_bs_imgs(ts_data, block_size, clust_mask_corr_img):
+                    import nibabel as nib
+                    from nilearn.masking import unmask
+                    from pynets.fmri.estimation import timeseries_bootstrap
+                    boot_series = timeseries_bootstrap(ts_data, block_size)[0]
+                    return unmask(boot_series, clust_mask_corr_img)
 
-            def run_bs_iteration(i, boot_imgs, parcellate, work_dir):
-                import nibabel as nib
-                print(f"\nBootstrapped iteration: {i}")
-                func_boot_img = nib.load(boot_imgs[i])
-                out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
-                parcellate(func_boot_img).to_filename(out_path)
-                return out_path
+                def run_bs_iteration(i, ts_data, work_dir, local_corr,
+                                     clust_type, _local_conn_mat_path,
+                                     num_conn_comps, _clust_mask_corr_img,
+                                     _standardize,
+                                     _detrending, k, _local_conn, conf,
+                                     _dir_path,
+                                     _conn_comps):
+                    import os
+                    import time
+                    import gc
+                    from pynets.fmri.clustools import parcellate
+                    print(f"\nBootstrapped iteration: {i}")
+                    out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
-            boot_imgs = []
-            for i in range(c_boot):
-                boot_imgs.append(create_bs_imgs(i, ts_data,
-                block_size, nip, runtime.cwd))
+                    boot_data = create_bs_imgs(ts_data, block_size,
+                                              _clust_mask_corr_img)
+                    parcellation = parcellate(boot_data, local_corr,
+                                              clust_type,
+                                              _local_conn_mat_path,
+                                              num_conn_comps,
+                                              _clust_mask_corr_img,
+                                              _standardize,
+                                              _detrending, k, _local_conn,
+                                              conf, _dir_path,
+                                              _conn_comps)
+                    parcellation.to_filename(out_path)
+                    parcellation.uncache()
+                    gc.collect()
+                    return out_path
 
-            # Use joblib multithreading
-            boot_parcellations = Parallel(n_jobs=nthreads,
-                                          verbose=10,
-                                          backend='threading')(
-                delayed(run_bs_iteration)(
-                    i, boot_imgs, nip.parcellate, runtime.cwd) for i in
-                range(c_boot))
+                # Use joblib with memmapping
+                folder = f"{runtime.cwd}/joblib_memmap"
+                os.makedirs(folder, exist_ok=True)
 
-            # boot_parcellations = []
-            # for i in range(c_boot):
-            #     boot_parcellations.append(run_bs_iteration(i, boot_imgs,
-            #                                                nip.parcellate,
-            #                                                runtime.cwd))
+                data_filename_memmap = os.path.join(folder, 'data_memmap')
+                dump(ts_data, data_filename_memmap)
+                data = load(data_filename_memmap, mmap_mode='r+')
 
-            print('Bootstrapped samples complete:')
-            print(boot_parcellations)
-            print("Creating spatially-constrained consensus parcellation...")
-            consensus_parcellation = clustools.ensemble_parcellate(
-                boot_parcellations, int(self.inputs.k)
-            )
-            nib.save(consensus_parcellation, nip.uatlas)
+                boot_parcellations = Parallel(n_jobs=nthreads,
+                                              max_nbytes=1e6,
+                                              verbose=10,
+                                              backend='loky',
+                                              batch_size=6,
+                                              mmap_mode='r+')(
+                    delayed(run_bs_iteration)(
+                        i, data, runtime.cwd, nip.local_corr, nip.clust_type,
+                        nip._local_conn_mat_path,
+                        nip.num_conn_comps, nip._clust_mask_corr_img,
+                        nip._standardize,
+                        nip._detrending, nip.k, nip._local_conn, nip.conf,
+                        nip._dir_path,
+                        nip._conn_comps) for i in
+                    range(c_boot))
+
+                while len(boot_parcellations) < c_boot:
+                    time.sleep(0.5)
+                print('Bootstrapped samples complete:')
+                print(boot_parcellations)
+                print(
+                    "Creating spatially-constrained consensus parcellation...")
+                consensus_parcellation = clustools.ensemble_parcellate(
+                    boot_parcellations, int(self.inputs.k)
+                )
+                nib.save(consensus_parcellation, nip.uatlas)
+            else:
+                print(
+                    "Creating spatially-constrained parcellation...")
+                out_path = f"{runtime.cwd}/{atlas}_{str(self.inputs.k)}.nii.gz"
+                func_img = nib.load(out_name_func_file)
+                parcellation = clustools.parcellate(func_img,
+                                                    self.inputs.local_corr,
+                                                    self.inputs.clust_type,
+                                                    nip._local_conn_mat_path,
+                                                    nip.num_conn_comps,
+                                                    nip._clust_mask_corr_img,
+                                                    nip._standardize,
+                                                    nip._detrending, nip.k,
+                                                    nip._local_conn,
+                                                    nip.conf, nip._dir_path,
+                                                    nip._conn_comps)
+                parcellation.to_filename(out_path)
         else:
             raise ValueError(
                 "Clustering method not recognized. See: "
                 "https://nilearn.github.io/modules/generated/"
                 "nilearn.regions.Parcellations."
                 "html#nilearn.regions.Parcellations")
+
+        # Give it a minute
+        ix = 0
+        while not os.path.isfile(nip.uatlas) and ix < 60:
+            print('Waiting for clustered parcellation...')
+            time.sleep(1)
+            ix += 1
+
+        if not os.path.isfile(nip.uatlas):
+            raise FileNotFoundError(f"Parcellation clustering failed for"
+                                    f" {nip.uatlas}")
 
         self._results["atlas"] = atlas
         self._results["uatlas"] = nip.uatlas
@@ -1188,8 +1331,24 @@ class RegisterAtlasDWI(SimpleInterface):
         import gc
         import os
         from pynets.registration import reg_utils as regutils
-        from pynets.core.utils import missing_elements
+        from pynets.core.nodemaker import \
+            drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
         if self.inputs.uatlas is None:
             uatlas_tmp_path = None
@@ -1332,7 +1491,8 @@ class RegisterAtlasDWI(SimpleInterface):
 
         if self.inputs.network or self.inputs.waymask:
             if self.inputs.waymask:
-                atlas_name = f"{self.inputs.atlas}_{self.inputs.waymask}"
+                atlas_name = f"{self.inputs.atlas}_" \
+                             f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}"
             else:
                 atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
         else:
@@ -1381,27 +1541,9 @@ class RegisterAtlasDWI(SimpleInterface):
         )
 
         # Correct coords and labels
-        bad_idxs = missing_elements(
-            list(
-                np.unique(
-                    np.asarray(
-                        nib.load(dwi_aligned_atlas).dataobj).astype("int"))))
-
-        if len(bad_idxs) > 0:
-            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-            print(f"Missing parcels: {bad_idxs}")
-            for j in bad_idxs:
-                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
-                del self.inputs.labels[j], self.inputs.coords[j]
-        try:
-            intensity_count = len(np.unique(
-                np.asarray(nib.load(
-                    dwi_aligned_atlas).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
-        except ValueError as err:
-            print(f"# Coords: {len(self.inputs.coords)}")
-            print(f"# Labels: {len(self.inputs.labels)}")
-            print(f"# Intensities: {intensity_count}")
+        [dwi_aligned_atlas, coords, labels] = \
+            drop_coords_labels_from_restricted_parcellation(
+            dwi_aligned_atlas, self.inputs.coords, self.inputs.labels)
 
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
@@ -1415,11 +1557,11 @@ class RegisterAtlasDWI(SimpleInterface):
 
             # Align waymask
             waymask_in_t1w = (
-                f"{base_dir_tmp}/waymask-"
+                f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_t1w.nii.gz")
             waymask_in_dwi = (
-                f"{base_dir_tmp}/waymask-"
+                f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
                 f"in_dwi.nii.gz")
 
@@ -1432,6 +1574,7 @@ class RegisterAtlasDWI(SimpleInterface):
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
                 waymask_in_dwi,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
@@ -1458,13 +1601,10 @@ class RegisterAtlasDWI(SimpleInterface):
 
         reg_tmp = [
             B0_mask_tmp_path,
-            ap_tmp_path,
             fa_tmp_path,
             uatlas_parcels_tmp_path,
             uatlas_tmp_path,
-            t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
-            t1wtissue2dwi_xfm_tmp_path,
             mni2t1_xfm_tmp_path,
             t1w_brain_mask_tmp_path,
             t1_aligned_mni_tmp_path,
@@ -1484,8 +1624,8 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["atlas"] = self.inputs.atlas
         self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
         self._results["uatlas"] = uatlas_out
-        self._results["coords"] = self.inputs.coords
-        self._results["labels"] = self.inputs.labels
+        self._results["coords"] = coords
+        self._results["labels"] = labels
         self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
         self._results["gm_in_dwi"] = self.inputs.gm_in_dwi
         self._results["vent_csf_in_dwi"] = self.inputs.vent_csf_in_dwi
@@ -1541,6 +1681,21 @@ class RegisterROIDWI(SimpleInterface):
         import os
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
@@ -1606,16 +1761,35 @@ class RegisterROIDWI(SimpleInterface):
                      f"_in_dwi.nii.gz"
 
         if self.inputs.roi:
+            t1w_brain_tmp_path2 = fname_presuffix(
+                self.inputs.t1w_brain, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1w_brain,
+                t1w_brain_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
+            mni2t1w_warp_tmp_path2 = fname_presuffix(
+                self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.mni2t1w_warp,
+                mni2t1w_warp_tmp_path2,
+                copy=True,
+                use_hardlink=False)
+
             # Align roi
             roi_in_dwi = regutils.roi2dwi_align(
                 roi_file_tmp_path,
-                t1w_brain_tmp_path,
+                t1w_brain_tmp_path2,
                 roi_in_t1w,
                 roi_in_dwi,
                 ap_tmp_path,
-                mni2t1w_warp_tmp_path,
+                mni2t1w_warp_tmp_path2,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
@@ -1663,6 +1837,8 @@ class _RegisterFuncOutputSpec(TraitedSpec):
     mni2t1w_warp = File(exists=True, mandatory=True)
     t1_aligned_mni = File(exists=True, mandatory=True)
     gm_mask = File(exists=True, mandatory=True)
+    t1w2mni_xfm = traits.Any()
+    t1w2mni_warp = traits.Any()
 
 
 class RegisterFunc(SimpleInterface):
@@ -1699,7 +1875,8 @@ class RegisterFunc(SimpleInterface):
         else:
             if len(anat_mask_existing) > 0 and self.inputs.mask is None:
                 mask_tmp_path = fname_presuffix(
-                    anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
+                    anat_mask_existing[0], suffix="_tmp",
+                    newpath=runtime.cwd
                 )
                 copyfile(
                     anat_mask_existing[0],
@@ -1707,7 +1884,7 @@ class RegisterFunc(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path,
+                    mask_tmp_path, self.inputs.in_dir,
                     self.inputs.vox_size)
             else:
                 mask_tmp_path = None
@@ -1716,7 +1893,8 @@ class RegisterFunc(SimpleInterface):
             self.inputs.in_dir +
             "/*_label-GM_probseg.nii.gz")
         if len(gm_mask_existing) > 0:
-            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
+            gm_mask = fname_presuffix(gm_mask_existing[0],
+                                      newpath=runtime.cwd)
             copyfile(
                 gm_mask_existing[0],
                 gm_mask,
@@ -1729,7 +1907,8 @@ class RegisterFunc(SimpleInterface):
             self.inputs.in_dir +
             "/*_label-WM_probseg.nii.gz")
         if len(wm_mask_existing) > 0:
-            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
+            wm_mask = fname_presuffix(wm_mask_existing[0],
+                                      newpath=runtime.cwd)
             copyfile(
                 wm_mask_existing[0],
                 wm_mask,
@@ -1771,7 +1950,144 @@ class RegisterFunc(SimpleInterface):
         self._results["mni2t1_xfm"] = reg.mni2t1_xfm
         self._results["t1_aligned_mni"] = reg.t1_aligned_mni
         self._results["gm_mask"] = reg.gm_mask
+        self._results["t1w2mni_warp"] = reg.warp_t1w2mni
+        self._results["t1w2mni_xfm"] = reg.t12mni_xfm
 
+        gc.collect()
+
+        return runtime
+
+
+class _RegisterParcellation2MNIFuncInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper for RegisterParcellation2MNIFunc"""
+
+    uatlas = traits.Any(mandatory=True)
+    t1w2mni_xfm = File(exists=True, mandatory=True)
+    vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
+    template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
+    t1w_brain = File(exists=True, mandatory=True)
+    t1w2mni_warp = traits.Any(mandatory=True)
+    simple = traits.Bool(False, usedefault=True)
+
+
+class _RegisterParcellation2MNIFuncOutputSpec(TraitedSpec):
+    """Output interface wrapper for RegisterParcellation2MNIFunc"""
+
+    aligned_atlas_mni = File(exists=True, mandatory=True)
+
+
+class RegisterParcellation2MNIFunc(SimpleInterface):
+    """Interface wrapper for RegisterParcellation2MNIFunc."""
+
+    input_spec = _RegisterParcellation2MNIFuncInputSpec
+    output_spec = _RegisterParcellation2MNIFuncOutputSpec
+
+    def _run_interface(self, runtime):
+        import gc
+        import os
+        import pkg_resources
+        from pynets.core.utils import prune_suffices
+        from pynets.registration import reg_utils as regutils
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+        template_mask = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_"
+                      f"brain_mask_{self.inputs.vox_size}.nii.gz"
+        )
+
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        template_mask_tmp_path = fname_presuffix(
+            template_mask, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template_mask,
+            template_mask_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        t1w_brain_tmp_path = fname_presuffix(
+            self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w_brain,
+            t1w_brain_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        uatlas_tmp_path = fname_presuffix(
+            self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.uatlas,
+            uatlas_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        atlas_name = prune_suffices(os.path.basename(self.inputs.uatlas).split('.nii')[0])
+
+        base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
+
+        os.makedirs(base_dir_tmp, exist_ok=True)
+
+        aligned_atlas_t1w = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                            f"t1w_res.nii.gz"
+
+        aligned_atlas_mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                            f"t1w_mni.nii.gz"
+
+        t1w2mni_xfm_tmp_path = fname_presuffix(
+            self.inputs.t1w2mni_xfm, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w2mni_xfm,
+            t1w2mni_xfm_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        t1w2mni_warp_tmp_path = fname_presuffix(
+            self.inputs.t1w2mni_warp, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w2mni_warp,
+            t1w2mni_warp_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        aligned_atlas_mni = regutils.RegisterParcellation2MNIFunc_align(
+            uatlas_tmp_path,
+            template_tmp_path,
+            template_mask_tmp_path,
+            t1w_brain_tmp_path,
+            t1w2mni_xfm_tmp_path,
+            aligned_atlas_t1w,
+            aligned_atlas_mni,
+            t1w2mni_warp_tmp_path,
+            self.inputs.simple
+        )
+
+        reg_tmp = [
+            uatlas_tmp_path,
+            template_tmp_path,
+            t1w2mni_xfm_tmp_path,
+        ]
+
+        for j in reg_tmp:
+            if j is not None:
+                os.remove(j)
+
+        self._results["aligned_atlas_mni"] = aligned_atlas_mni
         gc.collect()
 
         return runtime
@@ -1805,7 +2121,6 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     """Output interface wrapper for RegisterAtlasFunc"""
 
     aligned_atlas_gm = File(exists=True, mandatory=True)
-    roi_in_epi = traits.Any(mandatory=False)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
@@ -1821,7 +2136,8 @@ class RegisterAtlasFunc(SimpleInterface):
         import gc
         import os
         from pynets.registration import reg_utils as regutils
-        from pynets.core.utils import missing_elements
+        from pynets.core.nodemaker import \
+            drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.uatlas is None:
@@ -1840,7 +2156,8 @@ class RegisterAtlasFunc(SimpleInterface):
             uatlas_parcels_tmp_path = None
         else:
             uatlas_parcels_tmp_path = fname_presuffix(
-                self.inputs.uatlas_parcels, suffix="_tmp", newpath=runtime.cwd
+                self.inputs.uatlas_parcels, suffix="_tmp",
+                newpath=runtime.cwd
             )
             copyfile(
                 self.inputs.uatlas_parcels,
@@ -1862,25 +2179,6 @@ class RegisterAtlasFunc(SimpleInterface):
             t1w_brain_tmp_path,
             copy=True,
             use_hardlink=False)
-
-        mni2t1_xfm_tmp_path = fname_presuffix(
-            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.mni2t1_xfm,
-            mni2t1_xfm_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        mni2t1w_warp_tmp_path = fname_presuffix(
-            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.mni2t1w_warp,
-            mni2t1w_warp_tmp_path,
-            copy=True,
-            use_hardlink=False,
-        )
 
         t1w_brain_mask_tmp_path = fname_presuffix(
             self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
@@ -1914,14 +2212,33 @@ class RegisterAtlasFunc(SimpleInterface):
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
         os.makedirs(base_dir_tmp, exist_ok=True)
 
-        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_t1w_mni." \
-                              f"nii.gz"
-        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_t1w_skull." \
-                              f"nii.gz"
+        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                              f"t1w_mni.nii.gz"
+        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
+                              f"t1w_skull.nii.gz"
         aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
 
         if self.inputs.node_size is not None:
             atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+
+        mni2t1_xfm_tmp_path = fname_presuffix(
+            self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1_xfm,
+            mni2t1_xfm_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        mni2t1w_warp_tmp_path = fname_presuffix(
+            self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.mni2t1w_warp,
+            mni2t1w_warp_tmp_path,
+            copy=True,
+            use_hardlink=False,
+        )
 
         aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
             uatlas_tmp_path,
@@ -1940,27 +2257,9 @@ class RegisterAtlasFunc(SimpleInterface):
         )
 
         # Correct coords and labels
-        bad_idxs = missing_elements(
-            list(
-                np.unique(
-                    np.asarray(
-                        nib.load(aligned_atlas_gm).dataobj).astype("int"))))
-
-        if len(bad_idxs) > 0:
-            bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-            print(f"Missing parcels: {bad_idxs}")
-            for j in bad_idxs:
-                print(f"Removing: {(self.inputs.labels[j], self.inputs.coords[j])}...")
-                del self.inputs.labels[j], self.inputs.coords[j]
-        try:
-            intensity_count = len(np.unique(
-                np.asarray(nib.load(
-                    aligned_atlas_gm).dataobj).astype("int"))[1:])
-            assert len(self.inputs.coords) == len(self.inputs.labels) == intensity_count
-        except ValueError as err:
-            print(f"# Coords: {len(self.inputs.coords)}")
-            print(f"# Labels: {len(self.inputs.labels)}")
-            print(f"# Intensities: {intensity_count}")
+        [aligned_atlas_gm, coords, labels] = \
+            drop_coords_labels_from_restricted_parcellation(
+            aligned_atlas_gm, self.inputs.coords, self.inputs.labels)
 
         reg_tmp = [
             uatlas_parcels_tmp_path,
@@ -1970,7 +2269,6 @@ class RegisterAtlasFunc(SimpleInterface):
             t1w_brain_mask_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
-            t1w_brain_tmp_path,
         ]
 
         if self.inputs.uatlas is None:
@@ -1997,8 +2295,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 os.remove(j)
 
         self._results["aligned_atlas_gm"] = aligned_atlas_gm
-        self._results["coords"] = self.inputs.coords
-        self._results["labels"] = self.inputs.labels
+        self._results["coords"] = coords
+        self._results["labels"] = labels
         self._results["node_size"] = self.inputs.node_size
 
         gc.collect()
@@ -2006,7 +2304,7 @@ class RegisterAtlasFunc(SimpleInterface):
         return runtime
 
 
-class _RegisterROIFEPIInputSpec(BaseInterfaceInputSpec):
+class _RegisterROIEPIInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterROIEPI"""
 
     basedir_path = Directory(exists=True, mandatory=True)
@@ -2029,7 +2327,7 @@ class _RegisterROIEPIOutputSpec(TraitedSpec):
 class RegisterROIEPI(SimpleInterface):
     """Interface wrapper for RegisterROIEPI."""
 
-    input_spec = _RegisterROIFEPIInputSpec
+    input_spec = _RegisterROIEPIInputSpec
     output_spec = _RegisterROIEPIOutputSpec
 
     def _run_interface(self, runtime):
@@ -2037,6 +2335,20 @@ class RegisterROIEPI(SimpleInterface):
         import os
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        import pkg_resources
+
+        template = pkg_resources.resource_filename(
+            "pynets", f"templates/{self.inputs.template_name}_brain_"
+                      f"{self.inputs.vox_size}.nii.gz"
+        )
+        template_tmp_path = fname_presuffix(
+            template, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            template,
+            template_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
         roi_file_tmp_path = fname_presuffix(
             self.inputs.roi, suffix="_tmp", newpath=runtime.cwd
@@ -2087,6 +2399,7 @@ class RegisterROIEPI(SimpleInterface):
                 mni2t1_xfm_tmp_path,
                 mni2t1w_warp_tmp_path,
                 roi_in_t1w,
+                template_tmp_path,
                 self.inputs.simple,
             )
         else:
@@ -2200,8 +2513,9 @@ class Tracking(SimpleInterface):
         from colorama import Fore, Style
         from dipy.data import get_sphere
         from pynets.core import utils
+        import pkg_resources
+        import yaml
         from pynets.dmri.track import (
-            prep_tissues,
             reconstruction,
             create_density_map,
             track_ensemble,
@@ -2210,32 +2524,117 @@ class Tracking(SimpleInterface):
             Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile
+        from joblib import dump, load
+
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            use_life = hardcoded_params["use_life"][0]
+        stream.close()
+
+        dir_path = utils.do_dir_path(
+            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
+        )
+
+        namer_dir = "{}/tractography".format(dir_path)
+        if not os.path.isdir(namer_dir):
+            os.mkdir(namer_dir)
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
         dwi_data = dwi_img.get_fdata()
 
+        # Use joblib with memmapping
+        folder = f"{runtime.cwd}/joblib_memmap"
+        os.makedirs(folder, exist_ok=True)
+
+        data_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(dwi_data, data_filename_memmap)
+        dwi_data = load(data_filename_memmap, mmap_mode='r+')
+
         # Load FA data
         fa_img = nib.load(self.inputs.fa_path)
 
         # Fit diffusion model
-        model, mod = reconstruction(
+        # Save reconstruction to .npy
+        recon_path = "%s%s%s%s%s%s%s%s" % (
+            runtime.cwd,
+            "/reconstruction_",
+            "%s"
+            % (self.inputs.network + "_" if self.inputs.network is not None
+               else ""),
+            "%s"
+            % (
+                op.basename(self.inputs.roi).split(".")[0] + "_"
+                if self.inputs.roi is not None
+                else ""
+            ),
             self.inputs.conn_model,
-            load_pickle(self.inputs.gtab_file),
-            dwi_data,
-            self.inputs.B0_mask,
+            "_",
+            "%s"
+            % (
+                "%s%s" % (self.inputs.node_size, "mm_")
+                if (
+                    (self.inputs.node_size != "parc")
+                    and (self.inputs.node_size is not None)
+                )
+                else "parc_"
+            ),
+            ".npy",
         )
 
+        gtab = load_pickle(self.inputs.gtab_file)
+
+        # Only re-run the reconstruction if we have to
+        if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
+            model, _ = reconstruction(
+                self.inputs.conn_model,
+                gtab,
+                dwi_data,
+                self.inputs.B0_mask,
+            )
+            np.save(recon_path, model)
+            copyfile(
+                recon_path,
+                f"{namer_dir}/{op.basename(recon_path)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        else:
+            print(
+                f"Found existing reconstruction with "
+                f"{self.inputs.conn_model}. Loading...")
+            copyfile(
+                f"{namer_dir}/{op.basename(recon_path)}",
+                recon_path,
+                copy=True,
+                use_hardlink=False,
+            )
+            model = np.load(recon_path)
+
+        model_filename_memmap = os.path.join(folder, 'data_memmap')
+        dump(model, model_filename_memmap)
+        model = load(model_filename_memmap, mmap_mode='r+')
+
+        dwi_img.uncache()
         del dwi_data
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
         # seeding)
-        atlas_data = np.array(
-            nib.load(
-                self.inputs.labels_im_file).dataobj).astype("uint16")
+        atlas_img = nib.load(self.inputs.labels_im_file)
+        atlas_data = np.array(atlas_img.dataobj).astype("uint16")
         atlas_data_wm_gm_int = np.asarray(
             nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj
         ).astype("uint16")
+
+        B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
+
+        if self.inputs.waymask:
+            waymask_data = np.asarray(nib.load(self.inputs.waymask).dataobj
+                                      ).astype("bool")
+        else:
+            waymask_data = None
 
         # Build mask vector from atlas for later roi filtering
         parcels = []
@@ -2282,24 +2681,12 @@ class Tracking(SimpleInterface):
             raise ValueError("Direction-getting type not recognized!")
         print(Style.RESET_ALL)
 
-        dir_path = utils.do_dir_path(
-            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
-        )
-
         # Commence Ensemble Tractography
         streamlines = track_ensemble(
             self.inputs.target_samples,
             atlas_data_wm_gm_int,
             parcels,
             model,
-            prep_tissues(
-                self.inputs.t1w2dwi,
-                self.inputs.gm_in_dwi,
-                self.inputs.vent_csf_in_dwi,
-                self.inputs.wm_in_dwi,
-                self.inputs.tiss_class,
-                self.inputs.B0_mask
-            ),
             get_sphere(self.inputs.sphere),
             self.inputs.directget,
             self.inputs.curv_thr_list,
@@ -2308,13 +2695,12 @@ class Tracking(SimpleInterface):
             self.inputs.maxcrossing,
             int(self.inputs.roi_neighborhood_tol),
             self.inputs.min_length,
-            self.inputs.waymask,
-            self.inputs.B0_mask
+            waymask_data,
+            B0_mask_data,
+            self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
+            self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
+            self.inputs.tiss_class, self.inputs.B0_mask
         )
-
-        namer_dir = "{}/tractography".format(dir_path)
-        if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
 
         # Save streamlines to trk
         streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
@@ -2352,6 +2738,25 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             ".trk",
         )
+
+        # Linear Fascicle Evaluation (LiFE)
+        if use_life is True:
+            print('Using LiFE to evaluate streamline plausibility...')
+            from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+            dwi_img = nib.load(self.inputs.dwi_file)
+            dwi_data = dwi_img.get_fdata()
+            data_filename_memmap = os.path.join(folder, 'data_memmap')
+            dump(dwi_data, data_filename_memmap)
+            dwi_data = load(data_filename_memmap, mmap_mode='r+')
+
+            try:
+                streamlines = evaluate_streamline_plausibility(
+                    dwi_data, gtab, B0_mask_data, streamlines,
+                    sphere=self.inputs.sphere)
+            except BaseException:
+                print(f"Linear Fascicle Evaluation failed. Visually checking "
+                      f"streamlines output {namer_dir}/{op.basename(streams)}"
+                      f" is recommended.")
 
         stf = StatefulTractogram(
             streamlines,

@@ -2094,10 +2094,8 @@ def dmri_connectometry(
                                             "vox_size")],
                                         ),
                                        (check_orient_and_dims_roi_node,
-                                        register_roi_node,
-                                        [("outfile",
-                                          "roi")],
-                                        ),
+                                        register_roi_node),
+                                        [("outfile",  "roi")]
                                        ])
     save_coords_and_labels_node = pe.Node(
         niu.Function(
@@ -3428,6 +3426,7 @@ def fmri_connectometry(
         RegisterAtlasFunc,
         FetchNodesLabels,
         RegisterROIEPI,
+        RegisterParcellation2MNIFunc
     )
 
     import_list = [
@@ -3660,9 +3659,6 @@ def fmri_connectometry(
         RegisterAtlasFunc(),
         name="register_atlas_node")
 
-    register_atlas_node._n_procs = runtime_dict["register_atlas_node"][0]
-    register_atlas_node._mem_gb = runtime_dict["register_atlas_node"][1]
-
     # Clustering
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
@@ -3687,7 +3683,7 @@ def fmri_connectometry(
         # clustering_node iterables and names
         if k_clustering == 1:
             mask_name = op.basename(clust_mask).split(".nii")[0]
-            mask_name = atlas = utils.prune_suffices(mask_name)
+            mask_name = utils.prune_suffices(mask_name)
             cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
             cluster_atlas_file = (
                 f"{utils.do_dir_path(cluster_atlas_name, outdir)}/"
@@ -3707,7 +3703,7 @@ def fmri_connectometry(
             cluster_atlas_file_list = []
             for k in k_list:
                 mask_name = op.basename(clust_mask).split(".nii")[0]
-                mask_name = atlas = utils.prune_suffices(mask_name)
+                mask_name = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
@@ -3726,7 +3722,7 @@ def fmri_connectometry(
             cluster_atlas_file_list = []
             for clust_mask in clust_mask_list:
                 mask_name = op.basename(clust_mask).split(".nii")[0]
-                mask_name = atlas = utils.prune_suffices(mask_name)
+                mask_name = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
@@ -3749,7 +3745,7 @@ def fmri_connectometry(
             for clust_mask in clust_mask_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
-                    mask_name = atlas = utils.prune_suffices(mask_name)
+                    mask_name = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}" \
                                          f"{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
@@ -3769,7 +3765,7 @@ def fmri_connectometry(
             cluster_atlas_file_list = []
             for clust_type in clust_type_list:
                 mask_name = op.basename(clust_mask).split(".nii")[0]
-                mask_name = atlas = utils.prune_suffices(mask_name)
+                mask_name = utils.prune_suffices(mask_name)
                 cluster_atlas_name = f"{mask_name}{'_'}{clust_type}{'_k'}{k}"
                 cluster_atlas_name_list.append(cluster_atlas_name)
                 cluster_atlas_file_list.append(
@@ -3792,7 +3788,7 @@ def fmri_connectometry(
             for clust_type in clust_type_list:
                 for k in k_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
-                    mask_name = atlas = utils.prune_suffices(mask_name)
+                    mask_name = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}{clust_type}" \
                                          f"{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
@@ -3816,7 +3812,7 @@ def fmri_connectometry(
             for clust_type in clust_type_list:
                 for clust_mask in clust_mask_list:
                     mask_name = op.basename(clust_mask).split(".nii")[0]
-                    mask_name = atlas = utils.prune_suffices(mask_name)
+                    mask_name = utils.prune_suffices(mask_name)
                     cluster_atlas_name = f"{mask_name}{'_'}" \
                                          f"{clust_type}{'_k'}{k}"
                     cluster_atlas_name_list.append(cluster_atlas_name)
@@ -3842,7 +3838,7 @@ def fmri_connectometry(
                 for clust_mask in clust_mask_list:
                     for k in k_list:
                         mask_name = op.basename(clust_mask).split(".nii")[0]
-                        mask_name = atlas = utils.prune_suffices(mask_name)
+                        mask_name = utils.prune_suffices(mask_name)
                         cluster_atlas_name = f"{mask_name}{'_'}" \
                                              f"{clust_type}{'_k'}{k}"
                         cluster_atlas_name_list.append(cluster_atlas_name)
@@ -3866,50 +3862,43 @@ def fmri_connectometry(
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
-        check_orient_and_dims_clust_mask_node = pe.Node(
-            niu.Function(
-                input_names=["infile", "outdir", "vox_size"],
-                output_names=["outfile"],
-                function=regutils.check_orient_and_dims,
-                imports=import_list,
-            ),
-            name="check_orient_and_dims_clust_mask_node",
-        )
 
-        register_clust_mask_node = pe.Node(
-            RegisterROIEPI(), name="register_clust_mask_node"
+        RegisterParcellation2MNIFunc_node = pe.Node(
+            RegisterParcellation2MNIFunc(),
+            name="RegisterParcellation2MNIFunc_node"
         )
 
         fmri_connectometry_wf.connect(
             [
                 (
-                    inputnode,
-                    check_orient_and_dims_clust_mask_node,
-                    [
-                        ("clust_mask", "infile"),
-                        ("vox_size", "vox_size"),
-                        ("outdir", "outdir"),
-                    ],
-                ),
-                (
-                    check_orient_and_dims_clust_mask_node,
-                    register_clust_mask_node,
-                    [("outfile", "roi")],
-                ),
-                (
                     check_orient_and_dims_anat_node,
-                    register_clust_mask_node,
+                    clustering_node,
                     [("outfile", "anat_file")],
                 ),
                 (
                     inputnode,
-                    register_clust_mask_node,
+                    clustering_node,
+                    [("vox_size", "vox_size"),
+                     ("template_name", "template_name")],
+                ),
+                (
+                    inputnode,
+                    RegisterParcellation2MNIFunc_node,
                     [("vox_size", "vox_size"),
                      ("template_name", "template_name")],
                 ),
                 (
                     register_node,
-                    register_clust_mask_node,
+                    RegisterParcellation2MNIFunc_node,
+                    [
+                        ("t1w2mni_xfm", "t1w2mni_xfm"),
+                        ("t1w_brain", "t1w_brain"),
+                        ("t1w2mni_warp", "t1w2mni_warp"),
+                    ],
+                ),
+                (
+                    register_node,
+                    clustering_node,
                     [
                         ("basedir_path", "basedir_path"),
                         ("t1w_brain", "t1w_brain"),
@@ -3917,11 +3906,6 @@ def fmri_connectometry(
                         ("mni2t1_xfm", "mni2t1_xfm"),
                     ],
                 ),
-            ]
-        )
-
-        fmri_connectometry_wf.connect(
-            [
                 (
                     inputnode,
                     clustering_node,
@@ -3937,25 +3921,34 @@ def fmri_connectometry(
                     clustering_node,
                     [("outfile", "func_file")],
                 ),
-                (inputnode, clustering_node, [("vox_size", "vox_size")]),
                 (
                     clustering_node,
                     fetch_nodes_and_labels_node,
                     [
-                        ("uatlas", "uatlas"),
                         ("atlas", "atlas"),
                         ("clustering", "clustering"),
                     ],
                 ),
                 (
-                    inputnode,
-                    clustering_info_node,
-                    [("clust_type", "clust_type"), ("k", "k")],
+                    clustering_node,
+                    RegisterParcellation2MNIFunc_node,
+                    [
+                        ("uatlas", "uatlas"),
+                    ],
                 ),
                 (
-                    register_clust_mask_node,
+                    RegisterParcellation2MNIFunc_node,
+                    fetch_nodes_and_labels_node,
+                    [
+                        ("aligned_atlas_mni", "uatlas"),
+                    ],
+                ),
+                (
+                    inputnode,
                     clustering_info_node,
-                    [("roi", "clust_mask")],
+                    [("clust_mask", "clust_mask"),
+                     ("clust_type", "clust_type"),
+                     ("k", "k")],
                 ),
                 (
                     clustering_info_node,
@@ -3989,6 +3982,9 @@ def fmri_connectometry(
                 ),
             ]
         )
+
+    register_atlas_node._n_procs = runtime_dict["register_atlas_node"][0]
+    register_atlas_node._mem_gb = runtime_dict["register_atlas_node"][1]
 
     # Set atlas iterables and logic for multiple atlas useage
     if all_clustering is True:
@@ -4083,9 +4079,15 @@ def fmri_connectometry(
                         clustering_node,
                         fetch_nodes_and_labels_node,
                         [
-                            ("uatlas", "uatlas"),
                             ("atlas", "atlas"),
                             ("clustering", "clustering"),
+                        ],
+                    ),
+                    (
+                        RegisterParcellation2MNIFunc_node,
+                        fetch_nodes_and_labels_node,
+                        [
+                            ("aligned_atlas_mni", "uatlas"),
                         ],
                     )
                 ]
@@ -4134,6 +4136,13 @@ def fmri_connectometry(
                 )
             fmri_connectometry_wf.connect(
                 [
+                    (
+                        RegisterParcellation2MNIFunc_node,
+                        flexi_atlas_source,
+                        [
+                            ("aligned_atlas_mni", "uatlas"),
+                        ],
+                    ),
                     (
                         flexi_atlas_source,
                         fetch_nodes_and_labels_node,

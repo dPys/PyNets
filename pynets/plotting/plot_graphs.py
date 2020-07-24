@@ -28,9 +28,13 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     out_path_fig : str
         File path to save the connectivity matrix image as a .png figure.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
     import matplotlib
-
     matplotlib.use("agg")
+    import sys
+    import pkg_resources
+    import yaml
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
@@ -39,6 +43,25 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
+
+    try:
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                labeling_atlas = \
+                hardcoded_params["plotting"]["labeling_atlas"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted"
+                    " from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
+        labels = [i[0][labeling_atlas] for i in labels]
+    except BaseException:
+        pass
 
     try:
         plot_matrix(
@@ -56,10 +79,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    if len(labels) > 40:
-        tick_interval = int(np.around(len(labels)/40))
-    else:
-        tick_interval = int(np.around(len(labels)))
+    tick_interval = int(np.around(len(labels)))/20
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig, dpi=dpi_resolution)
@@ -89,12 +109,16 @@ def plot_community_conn_mat(
     community_aff : array
         Community-affiliation vector.
     """
+    import warnings
+    warnings.filterwarnings("ignore")
+    import sys
+    import pkg_resources
+    import yaml
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     import matplotlib.ticker as mticker
     matplotlib.use("agg")
-    # from pynets import thresholding
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
@@ -102,9 +126,27 @@ def plot_community_conn_mat(
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
+    try:
+        with open(
+            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        ) as stream:
+            hardcoded_params = yaml.load(stream)
+            try:
+                labeling_atlas = \
+                hardcoded_params["plotting"]["labeling_atlas"][0]
+            except KeyError:
+                print(
+                    "ERROR: Plotting configuration not successfully extracted"
+                    " from runconfig.yaml"
+                )
+                sys.exit(0)
+        stream.close()
+        labels = [i[0][labeling_atlas] for i in labels]
+    except BaseException:
+        pass
+
     sorting_array = sorted(
-        range(
-            len(community_aff)),
+        range(len(community_aff)),
         key=lambda k: community_aff[k])
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
@@ -157,10 +199,7 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    if len(labels) > 40:
-        tick_interval = int(np.around(len(labels)/40))
-    else:
-        tick_interval = int(np.around(len(labels)))
+    tick_interval = int(np.around(len(labels)))/20
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)

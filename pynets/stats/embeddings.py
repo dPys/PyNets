@@ -223,7 +223,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
 
     # Adjacency Spectral embedding
     print(
-        f"{'Embedding unimod asetome for atlas: '}{atlas} and "
+        f"{'Embedding unimodal asetome for atlas: '}{atlas} and "
         f"{subgraph_name}{'...'}"
     )
     ase = AdjacencySpectralEmbed()

@@ -36,8 +36,9 @@ def get_conn_matrix(
     extract_strategy,
 ):
     """
-    Computes a functional connectivity matrix based on a node-extracted time-series array.
-    Includes a library of routines across Nilearn, scikit-learn, and skggm packages, among others.
+    Computes a functional connectivity matrix based on a node-extracted
+    time-series array. Includes a library of routines across Nilearn,
+    scikit-learn, and skggm packages, among others.
 
     Parameters
     ----------
@@ -396,10 +397,6 @@ def fill_confound_nans(confounds, dir_path):
     from time import strftime
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    print(
-        "Warning: NaN's detected in confound regressor file. Filling these"
-        " with mean values, but the regressor file should be checked"
-        " manually.")
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
     os.makedirs(f"{dir_path}{'/confounds_tmp'}", exist_ok=True)
     conf_corr = (

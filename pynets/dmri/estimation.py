@@ -526,7 +526,6 @@ def streams2graph(
       R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
       Analysis in Diffusion Tensor Imaging. Brain Connectivity.
       https://doi.org/10.1089/brain.2016.0481
-
     """
     import gc
     import time
@@ -575,6 +574,9 @@ def streams2graph(
 
     start = time.time()
 
+    # Load FA
+    fa_img = nib.load(warped_fa)
+
     # Load parcellation
     roi_img = nib.load(atlas_mni)
     atlas_data = np.around(np.asarray(roi_img.dataobj))
@@ -587,7 +589,7 @@ def streams2graph(
         for i in Streamlines(
             load_tractogram(
                 streams,
-                roi_img,
+                fa_img,
                 to_origin=Origin.NIFTI,
                 to_space=Space.VOXMM
             ).streamlines
@@ -608,7 +610,7 @@ def streams2graph(
 
     if fa_wei is True:
         fa_weights = values_from_volume(
-            np.asarray(nib.load(warped_fa).dataobj, dtype=np.float32),
+            np.asarray(fa_img.dataobj, dtype=np.float32),
             streamlines, np.eye(4)
         )
         global_fa_weights = list(utils.flatten(fa_weights))
@@ -712,6 +714,8 @@ def streams2graph(
     gc.collect()
 
     # Add fiber density attributes for each edge
+    # Adapted from the nnormalized fiber-density estimation routines of
+    # Sebastian Tourbier.
     if fiber_density is True:
         print("Weighting edges by fiber density...")
         # Summarize total fibers and total label volumes

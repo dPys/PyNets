@@ -56,7 +56,6 @@ def direct_streamline_norm(
     """
     A Function to perform normalization of streamlines tracked in native diffusion space
     to an MNI-space template.
-
     Parameters
     ----------
     streams : str
@@ -133,7 +132,6 @@ def direct_streamline_norm(
         of any voxel in the ROI, the filtering criterion is set to True for
         this streamline, otherwise False. Defaults to the distance between
         the center of each voxel and the corner of the voxel.
-
     Returns
     -------
     streams_warp : str
@@ -203,7 +201,6 @@ def direct_streamline_norm(
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different
       spatial normalization approaches on tractography and structural
       brain networks. Network Neuroscience, 1-19.
-
     """
     import gc
     from dipy.tracking.streamline import transform_streamlines
@@ -477,17 +474,10 @@ def direct_streamline_norm(
 
         assert len(coords) == len(labels)
 
-        # # Correct coords and labels
-        # bad_idxs = missing_elements(list(np.unique(np.asarray(nib.load(atlas_mni).dataobj).astype('int'))))
-        # bad_idxs = [i+1 for i in bad_idxs]
-        # if len(bad_idxs) > 0:
-        #     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-        #     for j in bad_idxs:
-        #         del labels[j], coords[j]
     else:
         print(
-            "Skipping Direct Streamline Normalization (DSN). Will proceed to define fiber connectivity "
-            "in native diffusion space...")
+            "Skipping Direct Streamline Normalization (DSN). Will proceed to "
+            "define fiber connectivity in native diffusion space...")
         streams_mni = streams
         warped_fa = fa_path
         atlas_mni = labels_im_file
@@ -524,7 +514,6 @@ def direct_streamline_norm(
 class DmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
-
     References
     ----------
     .. [1] Adluru, N., Zhang, H., Tromp, D. P. M., & Alexander, A. L. (2013).
@@ -536,7 +525,6 @@ class DmriReg(object):
     .. [3] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
       hidden Markov random field model and the expectation-maximization algorithm.
       IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
-
     """
 
     def __init__(
@@ -1070,7 +1058,6 @@ class DmriReg(object):
 class FmriReg(object):
     """
     A Class for Registering an atlas to a subject's MNI-aligned T1w image in native epi space.
-
     References
     ----------
     .. [1] Brett M, Leff AP, Rorden C, Ashburner J (2001) Spatial Normalization
@@ -1079,7 +1066,6 @@ class FmriReg(object):
     .. [2] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
       hidden Markov random field model and the expectation-maximization algorithm.
       IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
-
     """
 
     def __init__(
@@ -1103,7 +1089,7 @@ class FmriReg(object):
         self.reg_path_warp = f"{self.reg_path}{'/warps'}"
         self.reg_path_img = f"{self.reg_path}{'/imgs'}"
         self.t1w2epi_xfm = f"{self.reg_path_mat}{'/t1w2epi_xfm.mat'}"
-        self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni_init.mat'}"
+        self.t12mni_xfm_init = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.t12mni_xfm = f"{self.reg_path_mat}{'/xfm_t1w2mni.mat'}"
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
@@ -1168,9 +1154,11 @@ class FmriReg(object):
         ):
             print("Existing segmentations detected...")
             gm_mask = regutils.check_orient_and_dims(
-                gm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                gm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
             wm_mask = regutils.check_orient_and_dims(
-                wm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                wm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -1178,12 +1166,13 @@ class FmriReg(object):
                 wm_mask = maps["wm_prob"]
             except RuntimeError:
                 print(
-                    "Segmentation failed. Does the input anatomical image still contained skull?"
+                    "Segmentation failed. Does the input anatomical image "
+                    "still contained skull?"
                 )
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
-        mask = math_img("img > 0.02", img=t_img)
+        mask = math_img("img > 0.01", img=t_img)
         mask.to_filename(self.gm_mask_thr)
         os.system(
             f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask}"
@@ -1196,7 +1185,8 @@ class FmriReg(object):
 
         # Extract wm edge
         os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
+            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} "
+            f"{self.wm_edge}"
         )
 
         return
@@ -1237,7 +1227,7 @@ class FmriReg(object):
 
                 # Get warp from T1w --> MNI
                 regutils.inverse_warp(
-                    self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni
+                    self.t1w_brain,  self.mni2t1w_warp, self.warp_t1w2mni
                 )
 
                 # Get mat from MNI -> T1w
@@ -1284,3 +1274,4 @@ class FmriReg(object):
                 f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
             )
         return
+

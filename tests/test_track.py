@@ -137,11 +137,13 @@ def test_track_ensemble(directget, target_samples):
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask = None
+    waymask_data = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')
     track_type = 'local'
+
+    B0_mask_data = nib.load(B0_mask).get_fdata()
 
     # Load atlas parcellation (and its wm-gm interface reduced version for
     # seeding)
@@ -161,19 +163,14 @@ def test_track_ensemble(directget, target_samples):
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                                         wm_in_dwi, tiss_class, B0_mask,
-                                         cmc_step_size=0.2)
-
-    track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model,
-                         tiss_classifier, sphere, directget,
-                         curv_thr_list, step_list, track_type, maxcrossing,
-                         roi_neighborhood_tol, min_length, waymask,
-                         B0_mask, max_length=1000, n_seeds_per_iter=500,
-                         pft_back_tracking_dist=2,
-                         pft_front_tracking_dist=1, particle_count=15,
-                         min_separation_angle=20)
-
+    streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
+                                       parcels, model, sphere, directget,
+                                       curv_thr_list, step_list, track_type,
+                                       maxcrossing, int(roi_neighborhood_tol),
+                                       min_length, waymask_data, B0_mask_data,
+                                       B0_mask, gm_in_dwi, vent_csf_in_dwi,
+                                       wm_in_dwi, tiss_class, B0_mask)
+    assert len(streamlines) > 1
 
 def test_track_ensemble_particle():
     """
@@ -202,7 +199,7 @@ def test_track_ensemble_particle():
     min_length = 10
     maxcrossing = 2
     roi_neighborhood_tol = 6
-    waymask = None
+    waymask_data = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')
@@ -210,9 +207,12 @@ def test_track_ensemble_particle():
     track_type = 'particle'
     target_samples = 1000
 
+
     # Load atlas parcellation (and its wm-gm interface reduced version for seeding)
     atlas_data = np.array(nib.load(labels_im_file).dataobj).astype('uint16')
     atlas_data_wm_gm_int = np.asarray(nib.load(atlas_data_wm_gm_int).dataobj).astype('uint16')
+
+    B0_mask_data = nib.load(B0_mask).get_fdata()
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
@@ -226,16 +226,16 @@ def test_track_ensemble_particle():
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
-    tiss_classifier = track.prep_tissues(gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                                         wm_in_dwi, tiss_class, B0_mask,
-                                         cmc_step_size=0.2)
+    streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
+                                       parcels, model, sphere, directget,
+                                       curv_thr_list, step_list, track_type,
+                                       maxcrossing, int(roi_neighborhood_tol),
+                                       min_length, waymask_data, B0_mask_data,
+                                       gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                                       wm_in_dwi, tiss_class, B0_mask)
 
-    streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int, parcels, model, tiss_classifier, sphere,
-                                       directget, curv_thr_list, step_list, track_type, maxcrossing,
-                                       roi_neighborhood_tol, min_length, waymask, B0_mask, max_length=1000,
-                                       n_seeds_per_iter=500, pft_back_tracking_dist=2, pft_front_tracking_dist=1,
-                                       particle_count=15, min_separation_angle=20)
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
                                        space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)
+    assert len(streamlines) > 1
