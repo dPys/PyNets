@@ -1384,7 +1384,7 @@ def build_workflow(args, retval):
               f"{Fore.BLUE}{str(ID)}")
 
     print(f"{Fore.GREEN}Population template: "
-          f"{Fore.BLUE}{hardcoded_params['template'][0]}\n")
+          f"{Fore.BLUE}{hardcoded_params['template'][0]}")
     if (
         graph is None
         and multi_graph is None
@@ -1807,22 +1807,53 @@ def build_workflow(args, retval):
               f"{Fore.BLUE}{step_list} {Fore.GREEN}and curvature thresholds: "
               f"{Fore.BLUE}{curv_thr_list}")
     if (dwi_file or dwi_file_list) and not (func_file or func_file_list):
-        print(f"\n{Fore.WHITE}Running dmri connectometry only...")
+        print(f"\n{Fore.WHITE}Running {Fore.BLUE}dmri{Fore.WHITE} "
+              f"connectometry only...")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:{Fore.BLUE}\n "
                       f"{_dwi_file}")
+                if not os.path.isfile(_dwi_file):
+                    raise FileNotFoundError(f"{_dwi_file} does not exist. "
+                                            f"Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
                 print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
+                if not os.path.isfile(fbvec):
+                    raise FileNotFoundError(f"{_fbvec} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                if not os.path.isfile(fbval):
+                    raise FileNotFoundError(f"{_fbval} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
+            if not os.path.isfile(dwi_file):
+                raise FileNotFoundError(f"{dwi_file} does not exist. "
+                                        f"Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
+            if not os.path.isfile(fbvec):
+                raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+            if not os.path.isfile(fbval):
+                raise FileNotFoundError(f"{fbval} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
+            if not os.path.isfile(waymask):
+                raise FileNotFoundError(f"{waymask} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         conf = None
         k = None
         clust_mask = None
@@ -1837,64 +1868,156 @@ def build_workflow(args, retval):
         clust_type_list = None
         multimodal = False
     elif (func_file or func_file_list) and not (dwi_file or dwi_file_list):
-        print(f"\n{Fore.WHITE}Running fmri connectometry only...")
+        print(f"\n{Fore.WHITE}Running {Fore.BLUE}fmri{Fore.WHITE} "
+              f"connectometry only...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
+                if not os.path.isfile(_func_file):
+                    raise FileNotFoundError(
+                        f"{_func_file} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
+            if not os.path.isfile(func_file):
+                raise FileNotFoundError(f"{func_file} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
 
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
+                if not os.path.isfile(_conf):
+                    raise FileNotFoundError(f"{_conf} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
+            if not os.path.isfile(conf):
+                raise FileNotFoundError(f"{conf} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
-        print(f"\n{Fore.WHITE}Running joint fMRI-dMRI connectometry...")
+        print(f"\n{Fore.WHITE}Running joint {Fore.BLUE}fMRI-dMRI{Fore.WHITE} "
+              f"connectometry...")
         if func_file_list:
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
+                if not os.path.isfile(_func_file):
+                    raise FileNotFoundError(
+                        f"{_func_file} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
+            if not os.path.isfile(func_file):
+                raise FileNotFoundError(f"{func_file} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
+                if not os.path.isfile(_conf):
+                    raise FileNotFoundError(f"{_conf} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
+            if not os.path.isfile(conf):
+                raise FileNotFoundError(f"{conf} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
             ):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                       f"{Fore.BLUE}{_dwi_file}")
+                if not os.path.isfile(_dwi_file):
+                    raise FileNotFoundError(f"{_dwi_file} does not exist. "
+                                            f"Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
+                if not os.path.isfile(_fbvec):
+                    raise FileNotFoundError(f"{_fbvec} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                if not os.path.isfile(_fbval):
+                    raise FileNotFoundError(f"{_fbval} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
+            if not os.path.isfile(dwi_file):
+                raise FileNotFoundError(f"{dwi_file} does not exist. "
+                                        f"Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
+            if not os.path.isfile(fbvec):
+                raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+            if not os.path.isfile(fbval):
+                raise FileNotFoundError(f"{fbval} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
+            if not os.path.isfile(waymask):
+                raise FileNotFoundError(f"{waymask} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
     else:
         multimodal = False
+
+    if roi is not None:
+        print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
+        if not os.path.isfile(roi):
+            raise FileNotFoundError(f"{roi} does not exist. Ensure "
+                                    f"that you are only specifying "
+                                    f"absolute paths.")
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
                 print(f"{Fore.GREEN}T1-Weighted Image:\n "
                       f"{Fore.BLUE}{anat_file}")
+                if not os.path.isfile(anat_file):
+                    raise FileNotFoundError(
+                        f"{anat_file} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
         else:
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
+            if not os.path.isfile(anat_file):
+                raise FileNotFoundError(f"{anat_file} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+
     if mask or mask_list:
         if mask_list and len(mask_list) > 1:
             for mask in mask_list:
                 print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
+                if not os.path.isfile(mask):
+                    raise FileNotFoundError(
+                        f"{mask} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
         else:
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
+            if not os.path.isfile(mask):
+                raise FileNotFoundError(f"{mask} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"

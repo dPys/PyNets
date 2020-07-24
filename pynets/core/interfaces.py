@@ -2172,11 +2172,15 @@ class RegisterAtlasFunc(SimpleInterface):
             atlas_name = f"{self.inputs.atlas}"
 
         if self.inputs.already_run is True:
-            aligned_atlas_gm = [i for i in glob.glob(f"{self.inputs.dir_path}"
-                                                     f"/t1w_clustered_"
-                                                     f"parcellations/"
-                                                     f"*.nii.gz")[0] if
-                                atlas_name in i][0]
+            try:
+                aligned_atlas_gm = [i for i in
+                                    glob.glob(f"{self.inputs.dir_path}/"
+                                              f"t1w_clustered_parcellations/"
+                                              f"*.nii.gz") if
+                                    atlas_name.strip('_mni') in i][0]
+            except FileNotFoundError:
+                print('T1w-space parcellation not found. Did you delete '
+                      'outputs?')
         else:
             aligned_atlas_gm = None
 
