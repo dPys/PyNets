@@ -1019,6 +1019,7 @@ def build_workflow(args, retval):
             nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
             nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
             local_atlases = hardcoded_params["local_atlases"]
+            template_name = hardcoded_params['template'][0]
 
             if track_type == "particle":
                 tiss_class = "cmc"
@@ -1380,7 +1381,10 @@ def build_workflow(args, retval):
             print(f"{Fore.BLUE}{str(ID)}")
     elif func_file_list is None and dwi_file_list is None:
         print(f"{Fore.YELLOW}Running workflow for single subject: "
-              f"{Fore.BLUE}{str(ID)}\n")
+              f"{Fore.BLUE}{str(ID)}")
+
+    print(f"{Fore.GREEN}Population template: "
+          f"{Fore.BLUE}{hardcoded_params['template'][0]}\n")
     if (
         graph is None
         and multi_graph is None

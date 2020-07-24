@@ -490,6 +490,7 @@ class IndividualClustering(SimpleInterface):
         from joblib import Parallel, delayed, dump, load
         from pynets.registration import reg_utils as regutils
         import pkg_resources
+        from joblib.externals.loky import get_reusable_executor
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -685,9 +686,8 @@ class IndividualClustering(SimpleInterface):
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
 
-                if os.path.isdir(folder):
-                    import shutil
-                    shutil.rmtree(folder)
+                get_reusable_executor().shutdown(wait=True)
+
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
@@ -735,6 +735,10 @@ class IndividualClustering(SimpleInterface):
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
+
+        if os.path.isdir(folder):
+            import shutil
+            shutil.rmtree(folder)
 
         del boot_parcellations, data, ts_data
         gc.collect()

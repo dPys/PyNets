@@ -112,7 +112,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip install --upgrade pip \
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 \
+    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest \
     # Install pynets
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \

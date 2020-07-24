@@ -417,6 +417,8 @@ def track_ensemble(
     import itertools
     from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
+    from joblib.externals.loky import get_reusable_executor
+
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
@@ -457,6 +459,9 @@ def track_ensemble(
             )
         )
         print(Style.RESET_ALL)
+
+    get_reusable_executor().shutdown(wait=True)
+
     streamlines = Streamlines([i for j in all_streams for i in j])
 
     print("Tracking Complete:\n", str(time.time() - start))

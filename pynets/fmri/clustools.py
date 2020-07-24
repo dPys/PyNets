@@ -1076,11 +1076,11 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"Building {len(mask_img_list)} separate atlases with "
             f"voxel-proportional k clusters for each "
             f"connected component...")
+        # memory = Memory(cache_dir, verbose=0)
         for i, mask_img in enumerate(mask_img_list):
             if k_list[i] == 0:
                 # print('0 voxels in component. Discarding...')
                 continue
-            memory = Memory(cache_dir, verbose=0)
             _clust_est = Parcellations(
                 method=clust_type,
                 standardize=_standardize,
@@ -1088,10 +1088,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
-                memory_level=2,
-                memory=memory,
                 random_state=i,
-                n_jobs=1
             )
             if conf is not None:
                 import pandas as pd
@@ -1106,6 +1103,8 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             else:
                 _clust_est.fit(func_boot_img)
             conn_comp_atlases.append(_clust_est.labels_img_)
+
+        # memory.clear(warn=False)
 
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
