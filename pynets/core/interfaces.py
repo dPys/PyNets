@@ -490,7 +490,6 @@ class IndividualClustering(SimpleInterface):
         from joblib import Parallel, delayed, dump, load
         from pynets.registration import reg_utils as regutils
         import pkg_resources
-        from joblib.externals.loky import get_reusable_executor
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -685,8 +684,6 @@ class IndividualClustering(SimpleInterface):
                     boot_parcellations, int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
-
-                get_reusable_executor().shutdown(wait=True)
 
             else:
                 print(

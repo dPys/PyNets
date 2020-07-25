@@ -978,6 +978,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     API for performing any of a variety of clustering routines available
     through NiLearn.
     """
+    import gc
     import numpy as np
     import time
     import os
@@ -1017,20 +1018,55 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             mask_strategy="background",
             memory_level=2,
             random_state=42,
+            n_jobs=1
         )
 
         if conf is not None:
             import pandas as pd
+            import random
+            from nipype.utils.filemanip import fname_presuffix, copyfile
 
-            confounds = pd.read_csv(conf, sep="\t")
+            out_name_conf = fname_presuffix(
+                conf, suffix=f"_tmp{random.randint(1, 1000)}",
+                newpath=cache_dir
+            )
+            copyfile(
+                conf,
+                out_name_conf,
+                copy=True,
+                use_hardlink=False)
+
+            confounds = pd.read_csv(out_name_conf, sep="\t")
             if confounds.isnull().values.any():
                 conf_corr = fill_confound_nans(confounds, _dir_path)
-                _clust_est.fit(func_boot_img, confounds=conf_corr)
+                try:
+                    _clust_est.fit(func_boot_img, confounds=conf_corr)
+                except BaseException:
+                    func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                        func_boot_img.dataobj
+                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    func_boot_img.uncache()
+                    _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
+                os.remove(conf_corr)
             else:
-                _clust_est.fit(func_boot_img, confounds=conf)
+                try:
+                    _clust_est.fit(func_boot_img, confounds=out_name_conf)
+                except BaseException:
+                    func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                        func_boot_img.dataobj
+                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    func_boot_img.uncache()
+                    _clust_est.fit(func_boot_img_corr, confounds=out_name_conf)
+            os.remove(out_name_conf)
         else:
-            _clust_est.fit(func_boot_img)
-
+            try:
+                _clust_est.fit(func_boot_img)
+            except BaseException:
+                func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                    func_boot_img.dataobj).reshape(-1, 1),
+                                                affine=func_boot_img.affine)
+                func_boot_img.uncache()
+                _clust_est.fit(func_boot_img_corr)
         _clust_est.labels_img_.set_data_dtype(np.uint16)
         print(
             f"{clust_type}{k}"
@@ -1076,7 +1112,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"Building {len(mask_img_list)} separate atlases with "
             f"voxel-proportional k clusters for each "
             f"connected component...")
-        # memory = Memory(cache_dir, verbose=0)
+        memory = Memory(cache_dir, verbose=0)
         for i, mask_img in enumerate(mask_img_list):
             if k_list[i] == 0:
                 # print('0 voxels in component. Discarding...')
@@ -1088,23 +1124,56 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
+                memory_level=2,
                 random_state=i,
+                n_jobs=1
             )
             if conf is not None:
                 import pandas as pd
+                import random
+                from nipype.utils.filemanip import fname_presuffix, copyfile
 
-                confounds = pd.read_csv(conf, sep="\t")
+                out_name_conf = fname_presuffix(
+                    conf, suffix=f"_tmp{random.randint(1, 1000)}",
+                    newpath=cache_dir
+                )
+                copyfile(
+                    conf,
+                    out_name_conf,
+                    copy=True,
+                    use_hardlink=False)
+
+                confounds = pd.read_csv(out_name_conf, sep="\t")
                 if confounds.isnull().values.any():
                     conf_corr = fill_confound_nans(
                         confounds, _dir_path)
-                    _clust_est.fit(func_boot_img, confounds=conf_corr)
+                    try:
+                        _clust_est.fit(func_boot_img, confounds=conf_corr)
+                    except BaseException:
+                        func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                            func_boot_img.dataobj
+                        ).reshape(-1, 1), affine=func_boot_img.affine)
+                        func_boot_img.uncache()
+                        _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
                 else:
-                    _clust_est.fit(func_boot_img, confounds=conf)
+                    try:
+                        _clust_est.fit(func_boot_img, confounds=conf)
+                    except BaseException:
+                        func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                            func_boot_img.dataobj
+                        ).reshape(-1, 1), affine=func_boot_img.affine)
+                        func_boot_img.uncache()
+                        _clust_est.fit(func_boot_img_corr, confounds=conf)
             else:
-                _clust_est.fit(func_boot_img)
+                try:
+                    _clust_est.fit(func_boot_img)
+                except BaseException:
+                    func_boot_img_corr = nib.Nifti1Image(np.asarray(
+                        func_boot_img.dataobj
+                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    func_boot_img.uncache()
+                    _clust_est.fit(func_boot_img_corr)
             conn_comp_atlases.append(_clust_est.labels_img_)
-
-        # memory.clear(warn=False)
 
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
@@ -1145,4 +1214,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
+        memory.clear(warn=False)
+
+        gc.collect()
         return super_atlas_ward
