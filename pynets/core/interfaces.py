@@ -738,6 +738,9 @@ class IndividualClustering(SimpleInterface):
             if j is not None:
                 os.remove(j)
 
+        if os.path.isdir(folder):
+            import shutil
+            shutil.rmtree(folder, ignore_errors=True)
         del boot_parcellations
         gc.collect()
 
@@ -2849,6 +2852,10 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             namer_dir,
         )
+
+        if os.path.isdir(folder):
+            import shutil
+            shutil.rmtree(folder, ignore_errors=True)
 
         self._results["streams"] = streams
         self._results["track_type"] = self.inputs.track_type

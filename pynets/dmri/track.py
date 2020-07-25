@@ -417,7 +417,6 @@ def track_ensemble(
     import itertools
     from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
-    from joblib.externals.loky import get_reusable_executor
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"

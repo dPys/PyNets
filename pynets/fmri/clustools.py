@@ -1064,7 +1064,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        memory.clear(warn=False)
         gc.collect()
         return _clust_est.labels_img_
 
@@ -1197,6 +1196,5 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        memory.clear(warn=False)
         gc.collect()
         return super_atlas_ward
