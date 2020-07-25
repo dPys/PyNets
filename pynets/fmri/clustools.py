@@ -984,6 +984,9 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     import os
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
+    from joblib import Memory
+
+    memory = Memory(cache_dir, verbose=0)
 
     start = time.time()
 
@@ -1017,6 +1020,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             connectivity=_local_conn,
             mask_strategy="background",
             memory_level=2,
+            memory=memory,
             random_state=42,
             n_jobs=1
         )
@@ -1044,7 +1048,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 except BaseException:
                     func_boot_img_corr = nib.Nifti1Image(np.asarray(
                         func_boot_img.dataobj
-                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
                 os.remove(conf_corr)
@@ -1054,7 +1058,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 except BaseException:
                     func_boot_img_corr = nib.Nifti1Image(np.asarray(
                         func_boot_img.dataobj
-                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr, confounds=out_name_conf)
             os.remove(out_name_conf)
@@ -1063,7 +1067,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 _clust_est.fit(func_boot_img)
             except BaseException:
                 func_boot_img_corr = nib.Nifti1Image(np.asarray(
-                    func_boot_img.dataobj).reshape(-1, 1),
+                    func_boot_img.dataobj).astype('float32').reshape(-1, 1),
                                                 affine=func_boot_img.affine)
                 func_boot_img.uncache()
                 _clust_est.fit(func_boot_img_corr)
@@ -1094,7 +1098,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         from nilearn.regions import connected_regions, Parcellations
         from nilearn.image import iter_img, new_img_like
         from pynets.core.utils import flatten, proportional
-        from joblib import Memory
 
         mask_img_list = []
         mask_voxels_dict = dict()
@@ -1112,7 +1115,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"Building {len(mask_img_list)} separate atlases with "
             f"voxel-proportional k clusters for each "
             f"connected component...")
-        memory = Memory(cache_dir, verbose=0)
         for i, mask_img in enumerate(mask_img_list):
             if k_list[i] == 0:
                 # print('0 voxels in component. Discarding...')
@@ -1125,6 +1127,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 mask=mask_img,
                 mask_strategy="background",
                 memory_level=2,
+                memory=memory,
                 random_state=i,
                 n_jobs=1
             )
@@ -1152,7 +1155,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     except BaseException:
                         func_boot_img_corr = nib.Nifti1Image(np.asarray(
                             func_boot_img.dataobj
-                        ).reshape(-1, 1), affine=func_boot_img.affine)
+                        ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                         func_boot_img.uncache()
                         _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
                 else:
@@ -1161,7 +1164,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     except BaseException:
                         func_boot_img_corr = nib.Nifti1Image(np.asarray(
                             func_boot_img.dataobj
-                        ).reshape(-1, 1), affine=func_boot_img.affine)
+                        ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                         func_boot_img.uncache()
                         _clust_est.fit(func_boot_img_corr, confounds=conf)
             else:
@@ -1170,7 +1173,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 except BaseException:
                     func_boot_img_corr = nib.Nifti1Image(np.asarray(
                         func_boot_img.dataobj
-                    ).reshape(-1, 1), affine=func_boot_img.affine)
+                    ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr)
             conn_comp_atlases.append(_clust_est.labels_img_)

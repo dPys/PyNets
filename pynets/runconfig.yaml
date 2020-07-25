@@ -129,7 +129,7 @@ plotting:
               - 'Blues_d'
         adjacency:
             color_theme:
-                - 'RdBu'
+                - 'RdBu_r'
     structural:
         glassbrain:
             color_theme:
@@ -165,7 +165,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 16)
+        - (4, 12)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -177,7 +177,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':
-        - (4, 16)
+        - (4, 8)
       - 'thresh_diff_node':
         - (1, 2)
       - 'dsn_node':
