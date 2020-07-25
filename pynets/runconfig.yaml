@@ -21,9 +21,9 @@ use_life:  # Filter ensemble tractogram to yield more plausible streamlines
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 50
+    - 6
 nthreads:
-    - 4
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -41,6 +41,7 @@ DSN: # Experimental option. Direct Streamline Normalization attempts to normaliz
 template: # `MNI152_T1` is the default and, along with `colin27` is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates provided by the user should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
 #    - 'colin27'
     - 'MNI152_T1'
+#    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
     - 'betweenness'
 nilearn_parc_atlases:
@@ -128,7 +129,7 @@ plotting:
               - 'Blues_d'
         adjacency:
             color_theme:
-                - 'RdBu'
+                - 'RdBu_r'
     structural:
         glassbrain:
             color_theme:
@@ -164,7 +165,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 8)
+        - (4, 16)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -176,7 +177,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':
-        - (2, 4)
+        - (4, 8)
       - 'thresh_diff_node':
         - (1, 2)
       - 'dsn_node':

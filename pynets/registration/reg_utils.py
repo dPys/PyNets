@@ -21,6 +21,7 @@ except KeyError:
 
 def gen_mask(t1w_head, t1w_brain, mask):
     import os.path as op
+    from pynets.registration import reg_utils as regutils
     from nilearn.image import math_img
 
     t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
@@ -59,7 +60,8 @@ def gen_mask(t1w_head, t1w_brain, mask):
     img.to_filename(t1w_brain_mask)
     t_img.uncache()
 
-    os.system(f"fslmaths {t1w_head} -mas {t1w_brain_mask} {t1w_brain}")
+    t1w_brain = regutils.apply_mask_to_image(t1w_head, t1w_brain_mask,
+                                             t1w_brain)
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)
@@ -221,7 +223,7 @@ def atlas2t1w2dwi_align(
     atlas_mask_img = math_img("img > 0", img=atlas_img)
 
     atlas_img_corr = nib.Nifti1Image(
-        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
+        np.asarray(atlas_img.dataobj).astype('uint16'),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )
@@ -234,12 +236,12 @@ def atlas2t1w2dwi_align(
     nib.save(atlas_img_corr, dwi_aligned_atlas)
     nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
 
-    os.system(
-        f"fslmaths {dwi_aligned_atlas} -mas {B0_mask} {dwi_aligned_atlas}")
+    dwi_aligned_atlas = regutils.apply_mask_to_image(dwi_aligned_atlas,
+                                                     B0_mask,
+                                                     dwi_aligned_atlas)
 
-    os.system(
-        f"fslmaths {dwi_aligned_atlas_wmgm_int} -mas {B0_mask} "
-        f"{dwi_aligned_atlas_wmgm_int}")
+    dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
+        dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
 
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
@@ -541,13 +543,13 @@ def atlas2t1w_align(
             cost="mutualinfo",
         )
 
-    os.system(
-        f"fslmaths {aligned_atlas_skull} -mas {gm_mask} {aligned_atlas_gm}")
+    aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+                                                    gm_mask, aligned_atlas_gm)
 
     atlas_img = nib.load(aligned_atlas_gm)
 
     atlas_img_corr = nib.Nifti1Image(
-        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
+        np.asarray(atlas_img.dataobj).astype('uint16'),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )
@@ -565,10 +567,10 @@ def atlas2t1w_align(
     if diff > gm_fail_tol:
         print(f"Grey-Matter mask too restrictive >{str(gm_fail_tol)} for this "
               f"parcellation. Falling back to the T1w mask...")
-        os.system(
-            f"fslmaths {aligned_atlas_skull} -mas {t1w_brain_mask} "
-            f"{aligned_atlas_gm}"
-        )
+        aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+                                                        t1w_brain_mask,
+                                                        aligned_atlas_gm)
+
     template_img.uncache()
     atlas_img_orig.uncache()
     atlas_img.uncache()
@@ -859,6 +861,30 @@ def combine_xfms(xfm1, xfm2, xfmout):
     print(cmd)
     os.system(cmd)
     return
+
+
+def invert_xfm(in_mat, out_mat):
+    import os
+    cmd = f"convert_xfm -omat {out_mat} -inverse {in_mat}"
+    print(cmd)
+    os.system(cmd)
+    return out_mat
+
+
+def apply_mask_to_image(input, mask, output):
+    import os
+    cmd = f"fslmaths {input} -mas {mask} {output}"
+    print(cmd)
+    os.system(cmd)
+    return output
+
+
+def get_wm_contour(wm_map, mask, wm_edge):
+    import os
+    cmd = f"fslmaths {wm_map} -edge -bin -mas {mask} {wm_edge}"
+    print(cmd)
+    os.system(cmd)
+    return wm_edge
 
 
 def vdc(n, vox_size):

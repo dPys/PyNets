@@ -553,6 +553,7 @@ class TimeseriesExtraction(object):
         )
         if self.conf is not None:
             import pandas as pd
+            import os
 
             confounds = pd.read_csv(self.conf, sep="\t")
             if confounds.isnull().values.any():
@@ -560,6 +561,7 @@ class TimeseriesExtraction(object):
                 self.ts_within_nodes = self._parcel_masker.fit_transform(
                     self._func_img, confounds=conf_corr
                 )
+                os.remove(conf_corr)
             else:
                 self.ts_within_nodes = self._parcel_masker.fit_transform(
                     self._func_img, confounds=self.conf

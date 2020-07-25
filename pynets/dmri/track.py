@@ -417,6 +417,8 @@ def track_ensemble(
     import itertools
     from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
+    from joblib.externals.loky import get_reusable_executor
+
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
@@ -435,7 +437,7 @@ def track_ensemble(
     all_streams = []
     while float(stream_counter) < float(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                               mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
+                               mmap_mode='r+', max_nbytes=1e6)(
             delayed(run_tracking)(
                 i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
                 maxcrossing, max_length, pft_back_tracking_dist,
@@ -445,8 +447,12 @@ def track_ensemble(
                 gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                 B0_mask) for i in all_combs)
         all_streams.append(out_streams)
-        stream_counter = len(Streamlines([i for j in all_streams for i in
-                                          j]).data)
+        try:
+            stream_counter = len(Streamlines([i for j in all_streams for i in
+                                              j]).data)
+        except BaseException:
+            print('0 or Invalid streamlines encountered. Skipping...')
+
         print(
             "%s%s%s%s"
             % (
@@ -457,11 +463,12 @@ def track_ensemble(
             )
         )
         print(Style.RESET_ALL)
-    streamlines = Streamlines([i for j in all_streams for i in j])
+
+    streamlines = Streamlines([i for j in all_streams for i in j]).data
 
     print("Tracking Complete:\n", str(time.time() - start))
 
-    return streamlines.data
+    return streamlines
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,

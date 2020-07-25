@@ -205,7 +205,7 @@ def direct_streamline_norm(
     import gc
     from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import reg_utils as regutils
-    from pynets.plotting import plot_gen
+    # from pynets.plotting import plot_gen
     import pkg_resources
     import yaml
     import os.path as op
@@ -513,7 +513,9 @@ def direct_streamline_norm(
 
 class DmriReg(object):
     """
-    A Class for Registering an atlas to a subject's MNI-aligned T1w image in native diffusion space.
+    A Class for Registering an atlas to a subject's MNI-aligned T1w image in
+    native diffusion space.
+
     References
     ----------
     .. [1] Adluru, N., Zhang, H., Tromp, D. P. M., & Alexander, A. L. (2013).
@@ -681,11 +683,14 @@ class DmriReg(object):
         ):
             print("Existing segmentations detected...")
             wm_mask = regutils.check_orient_and_dims(
-                wm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                wm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
             gm_mask = regutils.check_orient_and_dims(
-                gm_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                gm_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
             csf_mask = regutils.check_orient_and_dims(
-                csf_mask_existing, self.basedir_path, self.vox_size, overwrite=False)
+                csf_mask_existing, self.basedir_path, self.vox_size,
+                overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -694,7 +699,8 @@ class DmriReg(object):
                 csf_mask = maps["csf_prob"]
             except RuntimeError:
                 print(
-                    "Segmentation failed. Does the input anatomical image still contained skull?"
+                    "Segmentation failed. Does the input anatomical image "
+                    "still contained skull?"
                 )
 
         # Threshold WM to binary in dwi space
@@ -703,9 +709,8 @@ class DmriReg(object):
         mask.to_filename(self.wm_mask_thr)
 
         # Extract wm edge
-        os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} {self.wm_edge}"
-        )
+        self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
+                                               self.wm_edge)
 
         shutil.copyfile(wm_mask, self.wm_mask)
         shutil.copyfile(gm_mask, self.gm_mask)
@@ -735,7 +740,8 @@ class DmriReg(object):
         if self.simple is False:
             try:
                 print(
-                    f"Learning a non-linear mapping from T1w --> {self.template_name} ..."
+                    f"Learning a non-linear mapping from T1w --> "
+                    f"{self.template_name} ..."
                 )
                 # Use FNIRT to nonlinearly align T1 to MNI template
                 regutils.align_nonlinear(
@@ -753,9 +759,8 @@ class DmriReg(object):
                 )
 
                 # Get mat from MNI -> T1
-                os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
-                )
+                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
+                                                      self.mni2t1_xfm)
 
             except BaseException:
                 # Falling back to linear registration
@@ -773,9 +778,8 @@ class DmriReg(object):
                     sch=None,
                 )
                 # Get mat from MNI -> T1
-                os.system(
-                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
-                )
+                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm,
+                                                      self.mni2t1_xfm)
         else:
             # Falling back to linear registration
             regutils.align(
@@ -792,14 +796,14 @@ class DmriReg(object):
                 sch=None,
             )
             # Get mat from MNI -> T1
-            os.system(
-                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
-            )
+            self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
+                                                  self.t12mni_xfm)
 
     def t1w2dwi_align(self):
         """
-        A function to perform alignment from T1w_MNI --> DWI. Uses a local optimization
-        cost function to get the two images close, and then uses bbr to obtain a good alignment of brain boundaries.
+        A function to perform alignment from T1w_MNI --> DWI. Uses a local
+        optimization cost function to get the two images close, and then uses
+        bbr to obtain a good alignment of brain boundaries.
         Assumes input dwi is already preprocessed and brain extracted.
         """
 
@@ -816,9 +820,8 @@ class DmriReg(object):
             searchrad=True,
             sch=None,
         )
-        os.system(
-            f"convert_xfm -omat {self.dwi2t1w_xfm} -inverse {self.t1w2dwi_xfm}"
-        )
+        self.dwi2t1w_xfm = regutils.invert_xfm(self.t1w2dwi_xfm,
+                                               self.dwi2t1w_xfm)
 
         if self.simple is False:
             # Flirt bbr
@@ -838,9 +841,8 @@ class DmriReg(object):
                     cost="bbr",
                     sch="${FSLDIR}/etc/flirtsch/bbr.sch",
                 )
-                os.system(
-                    f"convert_xfm -omat {self.t1w2dwi_bbr_xfm} -inverse {self.dwi2t1w_bbr_xfm}"
-                )
+                self.t1w2dwi_bbr_xfm = regutils.invert_xfm(
+                    self.dwi2t1w_bbr_xfm, self.t1w2dwi_bbr_xfm)
 
                 # Apply the alignment
                 regutils.align(
@@ -1019,19 +1021,19 @@ class DmriReg(object):
         nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
-        os.system(
-            f"fslmaths {self.wm_in_dwi} -mas {self.wm_in_dwi_bin} {self.wm_in_dwi}"
-        )
+        self.wm_in_dwi = regutils.apply_mask_to_image(self.wm_in_dwi,
+                                                      self.wm_in_dwi_bin,
+                                                      self.wm_in_dwi)
 
         # Threshold GM to binary in dwi space
-        os.system(
-            f"fslmaths {self.gm_in_dwi} -mas {self.gm_in_dwi_bin} {self.gm_in_dwi}"
-        )
+        self.gm_in_dwi = regutils.apply_mask_to_image(self.gm_in_dwi,
+                                                      self.gm_in_dwi_bin,
+                                                      self.gm_in_dwi)
 
         # Threshold CSF to binary in dwi space
-        os.system(
-            f"fslmaths {self.csf_mask_dwi} -mas {self.csf_mask_dwi_bin} {self.csf_mask_dwi}"
-        )
+        self.csf_mask = regutils.apply_mask_to_image(self.csf_mask_dwi,
+                                                     self.csf_mask_dwi_bin,
+                                                     self.csf_mask_dwi)
 
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
@@ -1174,20 +1176,20 @@ class FmriReg(object):
         t_img = nib.load(gm_mask)
         mask = math_img("img > 0.01", img=t_img)
         mask.to_filename(self.gm_mask_thr)
-        os.system(
-            f"fslmaths {gm_mask} -mas {self.gm_mask_thr} {self.gm_mask}"
-        )
+        self.gm_mask = regutils.apply_mask_to_image(gm_mask,
+                                                    self.gm_mask_thr,
+                                                    self.gm_mask)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
         mask = math_img("img > 0.50", img=t_img)
         mask.to_filename(self.wm_mask_thr)
-
+        self.wm_mask = regutils.apply_mask_to_image(wm_mask,
+                                                    self.wm_mask_thr,
+                                                    self.wm_mask)
         # Extract wm edge
-        os.system(
-            f"fslmaths {wm_mask} -edge -bin -mas {self.wm_mask_thr} "
-            f"{self.wm_edge}"
-        )
+        self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
+                                               self.wm_edge)
 
         return
 
@@ -1213,7 +1215,8 @@ class FmriReg(object):
         if self.simple is False:
             try:
                 print(
-                    f"Learning a non-linear mapping from T1w --> {self.template_name} ..."
+                    f"Learning a non-linear mapping from T1w --> "
+                    f"{self.template_name} ..."
                 )
                 # Use FNIRT to nonlinearly align T1w to MNI template
                 regutils.align_nonlinear(
@@ -1231,9 +1234,8 @@ class FmriReg(object):
                 )
 
                 # Get mat from MNI -> T1w
-                os.system(
-                    f"convert_xfm -omat {self.mni2t1_xfm} -inverse {self.t12mni_xfm_init}"
-                )
+                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
+                                                      self.mni2t1_xfm)
 
             except BaseException:
                 # Falling back to linear registration
@@ -1251,9 +1253,8 @@ class FmriReg(object):
                     sch=None,
                 )
                 # Get mat from MNI -> T1w
-                os.system(
-                    f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
-                )
+                self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
+                                                      self.t12mni_xfm)
         else:
             # Falling back to linear registration
             regutils.align(
@@ -1270,8 +1271,7 @@ class FmriReg(object):
                 sch=None,
             )
             # Get mat from MNI -> T1w
-            os.system(
-                f"convert_xfm -omat {self.t12mni_xfm} -inverse {self.mni2t1_xfm}"
-            )
+            self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
+                                                  self.t12mni_xfm)
         return
 

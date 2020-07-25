@@ -1377,7 +1377,7 @@ def dmri_connectometry(
     base_dirname = f"dmri_connectometry_{ID}"
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    if template_name == "MNI152_T1" or template_name == "colin27":
+    if template_name == "MNI152_T1" or template_name == "colin27" or template_name == "CN200":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -3441,7 +3441,7 @@ def fmri_connectometry(
     base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    if template_name == "MNI152_T1" or template_name == "colin27":
+    if template_name == "MNI152_T1" or template_name == "colin27" or template_name == "CN200":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -3662,6 +3662,10 @@ def fmri_connectometry(
     # Clustering
     if float(k_clustering) > 0:
         from pynets.core.interfaces import IndividualClustering
+
+        register_atlas_node = pe.Node(
+            RegisterAtlasFunc(already_run=True),
+            name="register_atlas_node")
 
         clustering_info_node = pe.Node(
             niu.IdentityInterface(fields=["clust_mask", "clust_type", "k"]),
@@ -3885,7 +3889,8 @@ def fmri_connectometry(
                     inputnode,
                     RegisterParcellation2MNIFunc_node,
                     [("vox_size", "vox_size"),
-                     ("template_name", "template_name")],
+                     ("template_name", "template_name"),
+                     ("outdir", "dir_path")],
                 ),
                 (
                     register_node,
@@ -5512,7 +5517,8 @@ def fmri_connectometry(
             (
                 inputnode,
                 register_atlas_node,
-                [("vox_size", "vox_size"), ("template_name", "template_name")],
+                [("vox_size", "vox_size"), ("template_name", "template_name"),
+                 ("outdir", "dir_path")],
             ),
             (
                 register_node,
