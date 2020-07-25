@@ -660,7 +660,7 @@ class IndividualClustering(SimpleInterface):
                 data = load(data_filename_memmap, mmap_mode='r+')
 
                 boot_parcellations = Parallel(n_jobs=nthreads,
-                                              max_nbytes=1e6,
+                                              max_nbytes=6*1e9,
                                               verbose=10,
                                               backend='loky',
                                               mmap_mode='r+')(

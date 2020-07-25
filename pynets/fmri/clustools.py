@@ -1019,7 +1019,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             mask=_clust_mask_corr_img,
             connectivity=_local_conn,
             mask_strategy="background",
-            memory_level=2,
+            memory_level=3,
             memory=memory,
             random_state=42,
             n_jobs=1
@@ -1051,6 +1051,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
+                    func_boot_img_corr.uncache()
                 os.remove(conf_corr)
             else:
                 try:
@@ -1061,6 +1062,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr, confounds=out_name_conf)
+                    func_boot_img_corr.uncache()
             os.remove(out_name_conf)
         else:
             try:
@@ -1071,11 +1073,15 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                                                 affine=func_boot_img.affine)
                 func_boot_img.uncache()
                 _clust_est.fit(func_boot_img_corr)
+                func_boot_img_corr.uncache()
         _clust_est.labels_img_.set_data_dtype(np.uint16)
         print(
             f"{clust_type}{k}"
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
+        del func_boot_img
+        memory.clear(warn=False)
+        gc.collect()
         return _clust_est.labels_img_
 
     elif clust_type == "ncut":
@@ -1158,6 +1164,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                         ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                         func_boot_img.uncache()
                         _clust_est.fit(func_boot_img_corr, confounds=conf_corr)
+                        func_boot_img_corr.uncache()
                 else:
                     try:
                         _clust_est.fit(func_boot_img, confounds=conf)
@@ -1167,6 +1174,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                         ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                         func_boot_img.uncache()
                         _clust_est.fit(func_boot_img_corr, confounds=conf)
+                        func_boot_img_corr.uncache()
             else:
                 try:
                     _clust_est.fit(func_boot_img)
@@ -1176,7 +1184,11 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     ).astype('float32').reshape(-1, 1), affine=func_boot_img.affine)
                     func_boot_img.uncache()
                     _clust_est.fit(func_boot_img_corr)
+                    func_boot_img_corr.uncache()
             conn_comp_atlases.append(_clust_est.labels_img_)
+
+        del func_boot_img
+        gc.collect()
 
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
@@ -1218,6 +1230,5 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         )
 
         memory.clear(warn=False)
-
         gc.collect()
         return super_atlas_ward
