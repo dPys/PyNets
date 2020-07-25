@@ -437,7 +437,7 @@ def track_ensemble(
     all_streams = []
     while float(stream_counter) < float(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                               mmap_mode='r+', max_nbytes=1e6, batch_size=6,)(
+                               mmap_mode='r+', max_nbytes=1e6)(
             delayed(run_tracking)(
                 i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
                 maxcrossing, max_length, pft_back_tracking_dist,

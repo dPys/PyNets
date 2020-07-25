@@ -663,7 +663,6 @@ class IndividualClustering(SimpleInterface):
                                               max_nbytes=1e6,
                                               verbose=10,
                                               backend='loky',
-                                              batch_size=6,
                                               mmap_mode='r+')(
                     delayed(run_bs_iteration)(
                         i, data, runtime.cwd, nip.local_corr, nip.clust_type,
