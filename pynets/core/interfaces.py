@@ -619,7 +619,8 @@ class IndividualClustering(SimpleInterface):
                     import nibabel as nib
                     from nilearn.masking import unmask
                     from pynets.fmri.estimation import timeseries_bootstrap
-                    boot_series = timeseries_bootstrap(ts_data, block_size)[0]
+                    boot_series = timeseries_bootstrap(ts_data,
+                                                       block_size)[0].astype('float32')
                     return unmask(boot_series, clust_mask_corr_img)
 
                 def run_bs_iteration(i, ts_data, work_dir, local_corr,
@@ -631,12 +632,15 @@ class IndividualClustering(SimpleInterface):
                     import os
                     import time
                     import gc
+                    import random
                     from pynets.fmri.clustools import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
+                    time.sleep(random.randint(1, 10))
                     boot_data = create_bs_imgs(ts_data, block_size,
                                               _clust_mask_corr_img)
+                    time.sleep(random.randint(1, 10))
                     parcellation = parcellate(boot_data, local_corr,
                                               clust_type,
                                               _local_conn_mat_path,
@@ -648,6 +652,8 @@ class IndividualClustering(SimpleInterface):
                                               _conn_comps, cache_dir)
                     parcellation.to_filename(out_path)
                     parcellation.uncache()
+                    _clust_mask_corr_img.uncache()
+                    del boot_data, ts_data
                     gc.collect()
                     return out_path
 
@@ -660,7 +666,6 @@ class IndividualClustering(SimpleInterface):
                 data = load(data_filename_memmap, mmap_mode='r+')
 
                 boot_parcellations = Parallel(n_jobs=nthreads,
-                                              max_nbytes=6*1e9,
                                               verbose=10,
                                               backend='loky',
                                               mmap_mode='r+')(
@@ -680,7 +685,8 @@ class IndividualClustering(SimpleInterface):
                 print(
                     "Creating spatially-constrained consensus parcellation...")
                 consensus_parcellation = clustools.ensemble_parcellate(
-                    boot_parcellations, int(self.inputs.k)
+                    [i for i in boot_parcellations if i is not None],
+                    int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
 
@@ -732,11 +738,7 @@ class IndividualClustering(SimpleInterface):
             if j is not None:
                 os.remove(j)
 
-        if os.path.isdir(folder):
-            import shutil
-            shutil.rmtree(folder)
-
-        del boot_parcellations, data, ts_data
+        del boot_parcellations
         gc.collect()
 
         self._results["atlas"] = atlas
@@ -2847,10 +2849,6 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             namer_dir,
         )
-
-        if os.path.isdir(folder):
-            import shutil
-            shutil.rmtree(folder)
 
         self._results["streams"] = streams
         self._results["track_type"] = self.inputs.track_type
