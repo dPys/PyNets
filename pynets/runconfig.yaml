@@ -21,9 +21,9 @@ use_life:  # Filter ensemble tractogram to yield more plausible streamlines
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'allcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 4
+    - 6
 nthreads:
-    - 4
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -165,7 +165,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 12)
+        - (4, 16)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -226,7 +226,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 2
+        - 1
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

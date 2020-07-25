@@ -1079,7 +1079,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{clust_type}{k}"
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
-        del func_boot_img
+
         memory.clear(warn=False)
         gc.collect()
         return _clust_est.labels_img_
@@ -1187,7 +1187,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     func_boot_img_corr.uncache()
             conn_comp_atlases.append(_clust_est.labels_img_)
 
-        del func_boot_img
         gc.collect()
 
         # Then combine the multiple atlases, corresponding to each
