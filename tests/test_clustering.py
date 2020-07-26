@@ -124,9 +124,10 @@ def test_ni_parcellate(clust_type):
                               nip.conf, tmpdir,
                               nip._conn_comps, tmpdir)
 
-    nib.save(parcellation, out_path)
-    assert out_path is not None
-    assert atlas is not None
+    if parcellation is not None:
+        nib.save(parcellation, out_path)
+        assert out_path is not None
+        assert atlas is not None
 
 
 @pytest.mark.parametrize("clust_type", ['ward', 'ncut', 'kmeans', 'rena',
@@ -175,6 +176,7 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
                               nip.conf, tmpdir,
                               nip._conn_comps, tmpdir)
 
-    nib.save(parcellation, out_path)
-    assert atlas is not None
-    assert out_path is not None
+    if parcellation is not None:
+        nib.save(parcellation, out_path)
+        assert atlas is not None
+        assert out_path is not None

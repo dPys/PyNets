@@ -2807,10 +2807,7 @@ class Tracking(SimpleInterface):
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
             dwi_img = nib.load(self.inputs.dwi_file)
             dwi_data = dwi_img.get_fdata()
-            data_filename_memmap = os.path.join(folder, 'data_memmap')
-            dump(dwi_data, data_filename_memmap)
-            dwi_data = load(data_filename_memmap, mmap_mode='r+')
-
+            orig_count = len(streamlines)
             try:
                 streamlines = evaluate_streamline_plausibility(
                     dwi_data, gtab, B0_mask_data, streamlines,
@@ -2819,6 +2816,10 @@ class Tracking(SimpleInterface):
                 print(f"Linear Fascicle Evaluation failed. Visually checking "
                       f"streamlines output {namer_dir}/{op.basename(streams)}"
                       f" is recommended.")
+            if len(streamlines) < 0.5*orig_count:
+                raise ValueError('LiFE revealed no plausible streamlines in '
+                                 'the tractogram!')
+            del dwi_data
 
         stf = StatefulTractogram(
             streamlines,
@@ -2890,8 +2891,7 @@ class Tracking(SimpleInterface):
             self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
 
-        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels, \
-            dwi_data
+        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()
         gc.collect()
 
