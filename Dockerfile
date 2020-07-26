@@ -186,6 +186,9 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
 ENV PATH="/opt/conda/bin":$PATH
+ENV OPENBLAS_NUM_THREADS=4 \
+    GOTO_NUM_THREADS=4 \
+    OMP_NUM_THREADS=4
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets"]

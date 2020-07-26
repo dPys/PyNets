@@ -434,6 +434,7 @@ def track_ensemble(
     stream_counter = 0
 
     all_streams = []
+    ix = 0
     while float(stream_counter) < float(target_samples):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
                                mmap_mode='r+', max_nbytes=1e6)(
@@ -450,8 +451,12 @@ def track_ensemble(
             stream_counter = len(Streamlines([i for j in all_streams for i in
                                               j]).data)
         except BaseException:
-            print('0 or Invalid streamlines encountered. Skipping...')
-
+            if ix > 10:
+                raise ValueError('No streamlines identified for consecutive'
+                                 ' sampling iterations...')
+            else:
+                print('0 or Invalid streamlines encountered. Skipping...')
+                ix += 1
         print(
             "%s%s%s%s"
             % (

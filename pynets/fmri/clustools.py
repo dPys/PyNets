@@ -978,15 +978,20 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     API for performing any of a variety of clustering routines available
     through NiLearn.
     """
-    import gc
     import time
     import os
     import numpy as np
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
     from joblib import Memory
+    import uuid
+    from time import strftime
 
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    cache_dir = f"{cache_dir}/{run_uuid}"
+    os.makedirs(cache_dir, exist_ok=True)
     memory = Memory(cache_dir, verbose=0)
+
     start = time.time()
 
     if (clust_type == "ward") and (local_corr != "allcorr"):
@@ -1018,7 +1023,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             mask=_clust_mask_corr_img,
             connectivity=_local_conn,
             mask_strategy="background",
-            memory_level=3,
+            memory_level=1,
             memory=memory,
             random_state=42,
             n_jobs=1
@@ -1064,7 +1069,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        gc.collect()
         return _clust_est.labels_img_
 
     elif clust_type == "ncut":
@@ -1155,8 +1159,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                     continue
             conn_comp_atlases.append(_clust_est.labels_img_)
 
-        gc.collect()
-
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
         atlas_of_atlases = []
@@ -1196,5 +1198,4 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        gc.collect()
         return super_atlas_ward

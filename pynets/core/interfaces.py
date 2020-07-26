@@ -626,56 +626,59 @@ class IndividualClustering(SimpleInterface):
                 def run_bs_iteration(i, ts_data, work_dir, local_corr,
                                      clust_type, _local_conn_mat_path,
                                      num_conn_comps, _clust_mask_corr_img,
-                                     _standardize,
-                                     _detrending, k, _local_conn, conf,
-                                     _dir_path, _conn_comps, cache_dir):
+                                     _standardize, _detrending, k,
+                                     _local_conn, conf, _dir_path,
+                                     _conn_comps, cache_dir):
                     import os
                     import time
                     import gc
-                    import random
                     from pynets.fmri.clustools import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
-                    time.sleep(random.randint(1, 10))
-                    boot_data = create_bs_imgs(ts_data, block_size,
+                    boot_img = create_bs_imgs(ts_data, block_size,
                                               _clust_mask_corr_img)
-                    time.sleep(random.randint(1, 10))
-                    parcellation = parcellate(boot_data, local_corr,
-                                              clust_type,
-                                              _local_conn_mat_path,
-                                              num_conn_comps,
-                                              _clust_mask_corr_img,
-                                              _standardize,
-                                              _detrending, k, _local_conn,
-                                              conf, _dir_path,
-                                              _conn_comps, cache_dir)
-                    parcellation.to_filename(out_path)
-                    parcellation.uncache()
+                    try:
+                        parcellation = parcellate(boot_img, local_corr,
+                                                  clust_type,
+                                                  _local_conn_mat_path,
+                                                  num_conn_comps,
+                                                  _clust_mask_corr_img,
+                                                  _standardize,
+                                                  _detrending, k, _local_conn,
+                                                  conf, _dir_path,
+                                                  _conn_comps, cache_dir)
+                        parcellation.to_filename(out_path)
+                        parcellation.uncache()
+                        boot_img.uncache()
+                        gc.collect()
+                    except BaseException:
+                        boot_img.uncache()
+                        gc.collect()
+                        return None
                     _clust_mask_corr_img.uncache()
-                    del boot_data, ts_data
-                    gc.collect()
                     return out_path
 
                 # Use joblib with memmapping
                 folder = f"{runtime.cwd}/joblib_memmap"
                 os.makedirs(folder, exist_ok=True)
-
-                data_filename_memmap = os.path.join(folder, 'data_memmap')
-                dump(ts_data, data_filename_memmap)
-                data = load(data_filename_memmap, mmap_mode='r+')
-
+                # data_filename_memmap = os.path.join(folder, 'data_memmap')
+                # dump(ts_data, data_filename_memmap)
+                # data = load(data_filename_memmap, mmap_mode='r+')
+                import random
+                time.sleep(random.randint(1, 10))
                 boot_parcellations = Parallel(n_jobs=nthreads,
+                                              max_nbytes=1e9,
                                               verbose=10,
                                               backend='loky',
                                               mmap_mode='r+')(
                     delayed(run_bs_iteration)(
-                        i, data, runtime.cwd, nip.local_corr, nip.clust_type,
-                        nip._local_conn_mat_path,
+                        i, ts_data, runtime.cwd, nip.local_corr,
+                        nip.clust_type, nip._local_conn_mat_path,
                         nip.num_conn_comps, nip._clust_mask_corr_img,
-                        nip._standardize,
-                        nip._detrending, nip.k, nip._local_conn, nip.conf,
-                        nip._dir_path, nip._conn_comps, folder) for i in
+                        nip._standardize, nip._detrending, nip.k,
+                        nip._local_conn, nip.conf, nip._dir_path,
+                        nip._conn_comps, folder) for i in
                     range(c_boot))
 
                 while len(boot_parcellations) < c_boot:
@@ -689,7 +692,6 @@ class IndividualClustering(SimpleInterface):
                     int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
-
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
