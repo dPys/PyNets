@@ -983,14 +983,14 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     import numpy as np
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
-    from joblib import Memory
+    # from joblib import Memory
     import uuid
     from time import strftime
 
-    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    cache_dir = f"{cache_dir}/{run_uuid}"
-    os.makedirs(cache_dir, exist_ok=True)
-    memory = Memory(cache_dir, verbose=0)
+    # run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    # cache_dir = f"{cache_dir}/{run_uuid}"
+    # os.makedirs(cache_dir, exist_ok=True)
+    # memory = Memory(cache_dir, verbose=0)
 
     start = time.time()
 
@@ -1023,8 +1023,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             mask=_clust_mask_corr_img,
             connectivity=_local_conn,
             mask_strategy="background",
-            memory_level=1,
-            memory=memory,
             random_state=42,
             n_jobs=1
         )
@@ -1110,7 +1108,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"connected component...")
         for i, mask_img in enumerate(mask_img_list):
             if k_list[i] < 5:
-                print('<5 voxels in component. Discarding...')
+                print(f"Only {k_list[i]} voxels in component. Discarding...")
                 continue
             _clust_est = Parcellations(
                 method=clust_type,
@@ -1119,8 +1117,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
-                memory_level=3,
-                memory=memory,
                 random_state=i,
                 n_jobs=1
             )

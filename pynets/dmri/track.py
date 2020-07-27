@@ -435,10 +435,9 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < \
-        len(all_combs):
+    while float(stream_counter) < float(target_samples) and float(ix) < 3:
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                               mmap_mode='r+', max_nbytes=1e6)(
+                               mmap_mode='r+', max_nbytes=1e9)(
             delayed(run_tracking)(
                 i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
                 maxcrossing, max_length, pft_back_tracking_dist,
@@ -450,9 +449,11 @@ def track_ensemble(
         all_streams.append(out_streams)
         try:
             stream_counter = len(Streamlines([i for j in all_streams for i in
-                                              j]).data)
-            if stream_counter > 10:
+                                              j if j is not None]).data)
+            if stream_counter > 20:
                 ix = 0
+            else:
+                ix += 1
         except BaseException:
             print('0 or Invalid streamlines encountered for consecutive '
                   'sweeps. Skipping...')
@@ -468,11 +469,10 @@ def track_ensemble(
         )
         print(Style.RESET_ALL)
 
-    streamlines = Streamlines([i for j in all_streams for i in j]).data
-
     print("Tracking Complete:\n", str(time.time() - start))
 
-    return streamlines
+    return Streamlines([i for j in all_streams for i in j if j is not
+                        None]).data
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
@@ -611,8 +611,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         ]
     )
 
-    print("%s%s" % ("Minimum length criterion: ",
-                    len(roi_proximal_streamlines)))
+    print(f"Minimum length criterion >{min_length}mm: "
+          f"{len(roi_proximal_streamlines)}")
 
     if waymask_data is not None:
         roi_proximal_streamlines = roi_proximal_streamlines[

@@ -2523,7 +2523,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(6, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(8, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 

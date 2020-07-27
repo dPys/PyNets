@@ -561,8 +561,16 @@ def motif_matching(
             func_comms.append(func_node_comm_aff_mat == i)
 
         sims = cosine_similarity(struct_comms, func_comms)
-        struct_comm = struct_comms[np.argmax(sims, axis=0)[0]]
-        func_comm = func_comms[np.argmax(sims, axis=0)[0]]
+        try:
+            struct_comm = struct_comms[np.argmax(sims, axis=0)[0]]
+        except BaseException:
+            print('Matching by structural communities failed...')
+            struct_comm = struct_mat
+        try:
+            func_comm = func_comms[np.argmax(sims, axis=0)[0]]
+        except BaseException:
+            print('Matching by functional communities failed...')
+            func_comm = func_mat
 
         comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
         struct_mat[~comm_mask] = 0
