@@ -409,6 +409,7 @@ def track_ensemble(
       https://doi.org/10.1371/journal.pcbi.1004692
 
     """
+    import gc
     import time
     import pkg_resources
     import yaml
@@ -467,6 +468,8 @@ def track_ensemble(
                 "\n",
             )
         )
+        del out_streams
+        gc.collect()
         print(Style.RESET_ALL)
 
     print("Tracking Complete:\n", str(time.time() - start))
@@ -611,7 +614,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         ]
     )
 
-    print(f"Minimum length criterion >{min_length}mm: "
+    print(f"Minimum fiber length >{min_length}mm: "
           f"{len(roi_proximal_streamlines)}")
 
     if waymask_data is not None:
