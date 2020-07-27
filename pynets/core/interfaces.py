@@ -667,28 +667,33 @@ class IndividualClustering(SimpleInterface):
                 # data = load(data_filename_memmap, mmap_mode='r+')
                 import random
                 time.sleep(random.randint(1, 10))
-                boot_parcellations = Parallel(n_jobs=nthreads,
-                                              max_nbytes=1e9,
-                                              verbose=10,
-                                              backend='loky',
-                                              mmap_mode='r+')(
-                    delayed(run_bs_iteration)(
-                        i, ts_data, runtime.cwd, nip.local_corr,
-                        nip.clust_type, nip._local_conn_mat_path,
-                        nip.num_conn_comps, nip._clust_mask_corr_img,
-                        nip._standardize, nip._detrending, nip.k,
-                        nip._local_conn, nip.conf, nip._dir_path,
-                        nip._conn_comps, folder) for i in
-                    range(c_boot))
+                counter = 0
+                boot_parcellations = []
+                while float(counter) < float(c_boot):
+                    iter_bootedparcels = Parallel(n_jobs=nthreads,
+                                                  max_nbytes=1e9,
+                                                  verbose=10,
+                                                  backend='loky',
+                                                  mmap_mode='r+')(
+                        delayed(run_bs_iteration)(
+                            i, ts_data, runtime.cwd, nip.local_corr,
+                            nip.clust_type, nip._local_conn_mat_path,
+                            nip.num_conn_comps, nip._clust_mask_corr_img,
+                            nip._standardize, nip._detrending, nip.k,
+                            nip._local_conn, nip.conf, nip._dir_path,
+                            nip._conn_comps, folder) for i in
+                        range(c_boot))
 
-                while len(boot_parcellations) < c_boot:
-                    time.sleep(0.5)
+                    boot_parcellations.extend([i for i in iter_bootedparcels if
+                                               i is not None])
+                    counter = len(boot_parcellations)
+
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
-                print(
-                    "Creating spatially-constrained consensus parcellation...")
+                print("Creating spatially-constrained consensus "
+                      "parcellation...")
                 consensus_parcellation = clustools.ensemble_parcellate(
-                    [i for i in boot_parcellations if i is not None],
+                    boot_parcellations,
                     int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)

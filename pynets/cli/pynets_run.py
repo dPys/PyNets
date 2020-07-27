@@ -370,9 +370,10 @@ def get_parser():
         metavar="Clustering type",
         default="ward",
         nargs="+",
-        choices=["ward", "rena", "kmeans", "complete", "average", "single"],
+        choices=["ward", "rena", "kmeans", "complete", "average", "single",
+                 "ncut"],
         help="(Hyperparameter): Specify the types of clustering to use. "
-             "Recommended options are: ward, rena or kmeans. Note that "
+             "Recommended options are: ward, rena, kmeans, or ncut. Note that "
              "imposing spatial constraints with a mask consisting of "
              "disconnected components will leading to clustering instability "
              "in the case of complete, average, or single clustering. If "

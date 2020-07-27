@@ -19,9 +19,9 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
 use_life:  # Filter ensemble tractogram to yield more plausible streamlines
     - False
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
-    - 'allcorr'
+    - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 4
+    - 16
 nthreads:
     - 4
 graph_file_format:
