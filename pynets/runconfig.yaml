@@ -107,6 +107,7 @@ available_models:
       - 'csa'
       - 'csd'
       - 'ten'
+      - 'sfm'
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.

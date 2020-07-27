@@ -502,15 +502,31 @@ def motif_matching(
     func_label_intensities = [i[1] for i in func_labels]
     struct_label_intensities = [i[1] for i in struct_labels]
     diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
-    G_struct = nx.from_numpy_array(struct_mat)
-    for i in diff1:
-        G_struct.remove_node(i)
-        del struct_labels[i], struct_coords[i]
     diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
+    G_struct = nx.from_numpy_array(struct_mat)
     G_func = nx.from_numpy_array(func_mat)
-    for i in diff2:
-        G_func.remove_node(i)
-        del func_labels[i], func_coords[i]
+
+    bad_idxs = []
+    for val in diff1:
+        bad_idxs.append(struct_label_intensities.index(val))
+        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+        if type(struct_coords) is np.ndarray:
+            struct_coords = list(tuple(x) for x in struct_coords)
+    for j in bad_idxs:
+        G_struct.remove_node(j)
+        print(f"Removing: {(struct_labels[j], struct_coords[j])}...")
+        del struct_labels[j], struct_coords[j]
+
+    bad_idxs = []
+    for val in diff2:
+        bad_idxs.append(func_label_intensities.index(val))
+        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+        if type(func_coords) is np.ndarray:
+            func_coords = list(tuple(x) for x in func_coords)
+    for j in bad_idxs:
+        G_func.remove_node(j)
+        print(f"Removing: {(func_labels[j], func_coords[j])}...")
+        del func_labels[j], func_coords[j]
 
     struct_mat = nx.to_numpy_array(G_struct)
     func_mat = nx.to_numpy_array(G_func)

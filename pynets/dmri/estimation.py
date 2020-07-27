@@ -302,9 +302,7 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         init_fa=0.08,
         init_trace=0.0021,
         iter=8,
-        convergence=0.001,
-        parallel=False,
-        nbr_processes=nthreads
+        convergence=0.001
     )
     print("CSD Reponse: " + str(response))
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
