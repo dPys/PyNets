@@ -182,7 +182,7 @@ def get_parser():
              "separate them by space.\n",
     )
 
-    # Modality-independent hyperparameters
+    # Modality-pervasive hyperparameters
     parser.add_argument(
         "-mod",
         metavar="Connectivity estimation/reconstruction method",

@@ -3441,7 +3441,8 @@ def fmri_connectometry(
     base_dirname = f"fmri_connectometry_{ID}"
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
-    if template_name == "MNI152_T1" or template_name == "colin27" or template_name == "CN200":
+    if template_name == "MNI152_T1" or template_name == "colin27" or \
+        template_name == "CN200":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )

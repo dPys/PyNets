@@ -435,7 +435,8 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < 5:
+    while float(stream_counter) < float(target_samples) and float(ix) < \
+        len(all_combs):
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
                                mmap_mode='r+', max_nbytes=1e6)(
             delayed(run_tracking)(
@@ -490,9 +491,10 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
     from dipy.direction import (
         ProbabilisticDirectionGetter,
         ClosestPeakDirectionGetter,
-        DeterministicMaximumDirectionGetter,
+        DeterministicMaximumDirectionGetter
     )
     from pynets.dmri.track import prep_tissues
+
     tiss_classifier = prep_tissues(
         t1w2dwi,
         gm_in_dwi,
@@ -598,13 +600,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         )
     )
 
-    print(
-        "%s%s"
-        % (
-            "Filtering by: \nnode intersection: ",
-            len(roi_proximal_streamlines),
-        )
-    )
+    print("%s%s" % ("Filtering by: \nnode intersection: ",
+                    len(roi_proximal_streamlines)))
 
     roi_proximal_streamlines = nib.streamlines. \
         array_sequence.ArraySequence(
@@ -614,10 +611,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         ]
     )
 
-    print(
-        "%s%s" %
-        ("Minimum length criterion: ",
-         len(roi_proximal_streamlines)))
+    print("%s%s" % ("Minimum length criterion: ",
+                    len(roi_proximal_streamlines)))
 
     if waymask_data is not None:
         roi_proximal_streamlines = roi_proximal_streamlines[
@@ -629,10 +624,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
                 mode="any",
             )
         ]
-        print(
-            "%s%s" %
-            ("Waymask proximity: ",
-             len(roi_proximal_streamlines)))
+        print("%s%s" % ("Waymask proximity: ",
+                        len(roi_proximal_streamlines)))
 
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]
