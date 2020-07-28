@@ -626,70 +626,77 @@ class IndividualClustering(SimpleInterface):
                 def run_bs_iteration(i, ts_data, work_dir, local_corr,
                                      clust_type, _local_conn_mat_path,
                                      num_conn_comps, _clust_mask_corr_img,
-                                     _standardize,
-                                     _detrending, k, _local_conn, conf,
-                                     _dir_path, _conn_comps, cache_dir):
+                                     _standardize, _detrending, k,
+                                     _local_conn, conf, _dir_path,
+                                     _conn_comps, cache_dir):
                     import os
                     import time
                     import gc
-                    import random
                     from pynets.fmri.clustools import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
-                    time.sleep(random.randint(1, 10))
-                    boot_data = create_bs_imgs(ts_data, block_size,
+                    boot_img = create_bs_imgs(ts_data, block_size,
                                               _clust_mask_corr_img)
-                    time.sleep(random.randint(1, 10))
-                    parcellation = parcellate(boot_data, local_corr,
-                                              clust_type,
-                                              _local_conn_mat_path,
-                                              num_conn_comps,
-                                              _clust_mask_corr_img,
-                                              _standardize,
-                                              _detrending, k, _local_conn,
-                                              conf, _dir_path,
-                                              _conn_comps, cache_dir)
-                    parcellation.to_filename(out_path)
-                    parcellation.uncache()
+                    try:
+                        parcellation = parcellate(boot_img, local_corr,
+                                                  clust_type,
+                                                  _local_conn_mat_path,
+                                                  num_conn_comps,
+                                                  _clust_mask_corr_img,
+                                                  _standardize,
+                                                  _detrending, k, _local_conn,
+                                                  conf, _dir_path,
+                                                  _conn_comps, cache_dir)
+                        parcellation.to_filename(out_path)
+                        parcellation.uncache()
+                        boot_img.uncache()
+                        gc.collect()
+                    except BaseException:
+                        boot_img.uncache()
+                        gc.collect()
+                        return None
                     _clust_mask_corr_img.uncache()
-                    del boot_data, ts_data
-                    gc.collect()
                     return out_path
 
                 # Use joblib with memmapping
                 folder = f"{runtime.cwd}/joblib_memmap"
                 os.makedirs(folder, exist_ok=True)
+                # data_filename_memmap = os.path.join(folder, 'data_memmap')
+                # dump(ts_data, data_filename_memmap)
+                # data = load(data_filename_memmap, mmap_mode='r+')
+                import random
+                time.sleep(random.randint(1, 10))
+                counter = 0
+                boot_parcellations = []
+                while float(counter) < float(c_boot):
+                    iter_bootedparcels = Parallel(n_jobs=nthreads,
+                                                  max_nbytes=1e9,
+                                                  verbose=10,
+                                                  backend='loky',
+                                                  mmap_mode='r+')(
+                        delayed(run_bs_iteration)(
+                            i, ts_data, runtime.cwd, nip.local_corr,
+                            nip.clust_type, nip._local_conn_mat_path,
+                            nip.num_conn_comps, nip._clust_mask_corr_img,
+                            nip._standardize, nip._detrending, nip.k,
+                            nip._local_conn, nip.conf, nip._dir_path,
+                            nip._conn_comps, folder) for i in
+                        range(c_boot))
 
-                data_filename_memmap = os.path.join(folder, 'data_memmap')
-                dump(ts_data, data_filename_memmap)
-                data = load(data_filename_memmap, mmap_mode='r+')
+                    boot_parcellations.extend([i for i in iter_bootedparcels if
+                                               i is not None])
+                    counter = len(boot_parcellations)
 
-                boot_parcellations = Parallel(n_jobs=nthreads,
-                                              verbose=10,
-                                              backend='loky',
-                                              mmap_mode='r+')(
-                    delayed(run_bs_iteration)(
-                        i, data, runtime.cwd, nip.local_corr, nip.clust_type,
-                        nip._local_conn_mat_path,
-                        nip.num_conn_comps, nip._clust_mask_corr_img,
-                        nip._standardize,
-                        nip._detrending, nip.k, nip._local_conn, nip.conf,
-                        nip._dir_path, nip._conn_comps, folder) for i in
-                    range(c_boot))
-
-                while len(boot_parcellations) < c_boot:
-                    time.sleep(0.5)
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
-                print(
-                    "Creating spatially-constrained consensus parcellation...")
+                print("Creating spatially-constrained consensus "
+                      "parcellation...")
                 consensus_parcellation = clustools.ensemble_parcellate(
-                    [i for i in boot_parcellations if i is not None],
+                    boot_parcellations,
                     int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
-
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
@@ -2521,7 +2528,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(6, mandatory=True, usedefault=True)
+    roi_neighborhood_tol = traits.Any(10, mandatory=True, usedefault=True)
     sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
@@ -2805,10 +2812,7 @@ class Tracking(SimpleInterface):
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
             dwi_img = nib.load(self.inputs.dwi_file)
             dwi_data = dwi_img.get_fdata()
-            data_filename_memmap = os.path.join(folder, 'data_memmap')
-            dump(dwi_data, data_filename_memmap)
-            dwi_data = load(data_filename_memmap, mmap_mode='r+')
-
+            orig_count = len(streamlines)
             try:
                 streamlines = evaluate_streamline_plausibility(
                     dwi_data, gtab, B0_mask_data, streamlines,
@@ -2817,6 +2821,10 @@ class Tracking(SimpleInterface):
                 print(f"Linear Fascicle Evaluation failed. Visually checking "
                       f"streamlines output {namer_dir}/{op.basename(streams)}"
                       f" is recommended.")
+            if len(streamlines) < 0.5*orig_count:
+                raise ValueError('LiFE revealed no plausible streamlines in '
+                                 'the tractogram!')
+            del dwi_data
 
         stf = StatefulTractogram(
             streamlines,
@@ -2888,8 +2896,7 @@ class Tracking(SimpleInterface):
             self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
 
-        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels, \
-            dwi_data
+        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()
         gc.collect()
 

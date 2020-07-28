@@ -321,7 +321,7 @@ def parcellate_ncut(W, k, mask_img):
 
     unique_a = sorted(set(np.array(a.flatten().tolist()[0])))
 
-    # Renumber clusters to make the contiguous
+    # Renumber clusters to make them contiguous
     b = np.zeros((len(a), 1))
     for i in range(0, len(unique_a)):
         b[a == unique_a[i]] = i + 1
@@ -978,15 +978,20 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     API for performing any of a variety of clustering routines available
     through NiLearn.
     """
-    import gc
     import time
     import os
     import numpy as np
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
-    from joblib import Memory
+    # from joblib import Memory
+    # import uuid
+    # from time import strftime
 
-    memory = Memory(cache_dir, verbose=0)
+    # run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    # cache_dir = f"{cache_dir}/{run_uuid}"
+    # os.makedirs(cache_dir, exist_ok=True)
+    # memory = Memory(cache_dir, verbose=0)
+
     start = time.time()
 
     if (clust_type == "ward") and (local_corr != "allcorr"):
@@ -1018,10 +1023,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             mask=_clust_mask_corr_img,
             connectivity=_local_conn,
             mask_strategy="background",
-            memory_level=3,
-            memory=memory,
-            random_state=42,
-            n_jobs=1
+            random_state=42
         )
 
         if conf is not None:
@@ -1044,19 +1046,19 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 conf_corr = fill_confound_nans(confounds, _dir_path)
                 try:
                     _clust_est.fit(func_boot_img, confounds=conf_corr)
-                except BaseException:
+                except UserWarning:
                     return None
                 os.remove(conf_corr)
             else:
                 try:
                     _clust_est.fit(func_boot_img, confounds=out_name_conf)
-                except BaseException:
+                except UserWarning:
                     return None
             os.remove(out_name_conf)
         else:
             try:
                 _clust_est.fit(func_boot_img)
-            except BaseException:
+            except UserWarning:
                 return None
         _clust_est.labels_img_.set_data_dtype(np.uint16)
         print(
@@ -1064,7 +1066,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        gc.collect()
         return _clust_est.labels_img_
 
     elif clust_type == "ncut":
@@ -1106,7 +1107,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"connected component...")
         for i, mask_img in enumerate(mask_img_list):
             if k_list[i] < 5:
-                print('<5 voxels in component. Discarding...')
+                print(f"Only {k_list[i]} voxels in component. Discarding...")
                 continue
             _clust_est = Parcellations(
                 method=clust_type,
@@ -1115,10 +1116,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 n_parcels=k_list[i],
                 mask=mask_img,
                 mask_strategy="background",
-                memory_level=3,
-                memory=memory,
-                random_state=i,
-                n_jobs=1
+                random_state=i
             )
             if conf is not None:
                 import pandas as pd
@@ -1141,21 +1139,19 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                         confounds, _dir_path)
                     try:
                         _clust_est.fit(func_boot_img, confounds=conf_corr)
-                    except BaseException:
+                    except UserWarning:
                         continue
                 else:
                     try:
                         _clust_est.fit(func_boot_img, confounds=conf)
-                    except BaseException:
+                    except UserWarning:
                         continue
             else:
                 try:
                     _clust_est.fit(func_boot_img)
-                except BaseException:
+                except UserWarning:
                     continue
             conn_comp_atlases.append(_clust_est.labels_img_)
-
-        gc.collect()
 
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
@@ -1196,5 +1192,4 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
-        gc.collect()
         return super_atlas_ward

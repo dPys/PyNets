@@ -121,8 +121,8 @@ def test_ni_parcellate(clust_type):
                               nip._clust_mask_corr_img,
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, tmpdir,
-                              nip._conn_comps, tmpdir)
+                              nip.conf, tmpdir.name,
+                              nip._conn_comps, tmpdir.name)
 
     nib.save(parcellation, out_path)
     assert out_path is not None
@@ -149,16 +149,20 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     else:
         local_corr = 'tcorr'
     clust_mask = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
-    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-MNI152NLin6Asym_desc-" \
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-" \
+                f"rest_space-MNI152NLin6Asym_desc-" \
         f"smoothAROMAnonaggr_bold_short.nii.gz"
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/" \
+           f"sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_img = nib.load(func_file)
-    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
-                                 local_corr=local_corr, outdir=out_dir, conf=None, mask=mask)
+    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask,
+                                 k=k, clust_type=clust_type,
+                                 local_corr=local_corr, outdir=out_dir,
+                                 conf=conf, mask=mask)
 
     atlas = nip.create_clean_mask()
-    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask, k=k, clust_type=clust_type,
-                                 local_corr=local_corr, outdir=out_dir, conf=None, mask=mask)
 
     if not nip.uatlas:
         nip.uatlas = f"{tmpdir.name}/clust-{clust_type}_k{str(k)}.nii.gz"
@@ -172,9 +176,9 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
                               nip._clust_mask_corr_img,
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, tmpdir,
-                              nip._conn_comps, tmpdir)
+                              nip.conf, tmpdir.name,
+                              nip._conn_comps, tmpdir.name)
 
     nib.save(parcellation, out_path)
     assert atlas is not None
-    assert out_path is not None
+    assert os.path.isfile(out_path)

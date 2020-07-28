@@ -17,11 +17,11 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
     - 40
     - 30
 use_life:  # Filter ensemble tractogram to yield more plausible streamlines
-    - True
+    - False
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
-    - 'allcorr'
+    - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
-    - 1
+    - 16
 nthreads:
     - 4
 graph_file_format:
@@ -31,7 +31,7 @@ low_pass:
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'act'
+    - 'wm'
 tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
     - 20000
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
@@ -107,6 +107,7 @@ available_models:
       - 'csa'
       - 'csd'
       - 'ten'
+      - 'sfm'
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
@@ -165,7 +166,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 16)
+        - (4, 8)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -204,7 +205,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

@@ -393,8 +393,8 @@ def timeseries_bootstrap(tseries, block_size):
 def fill_confound_nans(confounds, dir_path):
     """Fill the NaN values of a confounds dataframe with mean values"""
     import uuid
-    import os
     from time import strftime
+    import os
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
