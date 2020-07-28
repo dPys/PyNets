@@ -748,7 +748,10 @@ class IndividualClustering(SimpleInterface):
         if os.path.isdir(folder):
             import shutil
             shutil.rmtree(folder, ignore_errors=True)
-        del boot_parcellations
+
+        for i in boot_parcellations:
+            os.remove(i)
+
         gc.collect()
 
         self._results["atlas"] = atlas
@@ -1173,7 +1176,7 @@ class RegisterDWI(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path,
+                    mask_tmp_path, runtime.cwd,
                     self.inputs.vox_size)
             else:
                 mask_tmp_path = None
@@ -2606,19 +2609,15 @@ class Tracking(SimpleInterface):
 
         namer_dir = "{}/tractography".format(dir_path)
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         # Load diffusion data
         dwi_img = nib.load(self.inputs.dwi_file)
-        dwi_data = dwi_img.get_fdata()
+        dwi_data = dwi_img.get_fdata().astype('float32')
 
         # Use joblib with memmapping
         folder = f"{runtime.cwd}/joblib_memmap"
         os.makedirs(folder, exist_ok=True)
-
-        data_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(dwi_data, data_filename_memmap)
-        dwi_data = load(data_filename_memmap, mmap_mode='r+')
 
         # Load FA data
         fa_img = nib.load(self.inputs.fa_path)
@@ -2678,11 +2677,7 @@ class Tracking(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-            model = np.load(recon_path)
-
-        model_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(model, model_filename_memmap)
-        model = load(model_filename_memmap, mmap_mode='r+')
+            model = np.memmap(recon_path, dtype='float32', mode='r+')
 
         dwi_img.uncache()
         del dwi_data
@@ -2811,7 +2806,7 @@ class Tracking(SimpleInterface):
             print('Using LiFE to evaluate streamline plausibility...')
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
             dwi_img = nib.load(self.inputs.dwi_file)
-            dwi_data = dwi_img.get_fdata()
+            dwi_data = dwi_img.get_fdata().astype('float32')
             orig_count = len(streamlines)
             try:
                 streamlines = evaluate_streamline_plausibility(

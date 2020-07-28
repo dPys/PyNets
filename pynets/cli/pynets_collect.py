@@ -24,8 +24,7 @@ def get_parser():
     # Parse args
     parser = argparse.ArgumentParser(
         description="PyNets: A Fully-Automated Workflow for Reproducible"
-                    " Ensemble Sampling of Functional and Structural"
-                    " Connectomes")
+                    " Functional and Structural Connectome Ensemble Learning")
     parser.add_argument(
         "-basedir",
         metavar="Output directory",

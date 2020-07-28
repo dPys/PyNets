@@ -438,16 +438,12 @@ def motif_matching(
     import networkx as nx
     import numpy as np
     import glob
+    import pickle
     from pynets.core import thresholding
     from pynets.stats.netmotifs import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
     from graspy.utils import remove_loops, symmetrize, get_lcc
-
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
 
     [struct_graph_path, func_graph_path] = paths
     struct_mat = np.load(struct_graph_path)

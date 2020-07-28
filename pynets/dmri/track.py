@@ -43,10 +43,6 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
       Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
 
     """
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
     from pynets.dmri.estimation import (
         csa_mod_est,
         csd_mod_est,
@@ -115,10 +111,6 @@ def prep_tissues(
       evaluation on public data. Neuroinformatics, 9(4): 381-400, 2011.
 
     """
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
     from dipy.tracking.stopping_criterion import (
         ActStoppingCriterion,
         CmcStoppingCriterion,
@@ -438,7 +430,7 @@ def track_ensemble(
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < 3:
         out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                               mmap_mode='r+', max_nbytes=1e9)(
+                               mmap_mode='r+', max_nbytes=1e6)(
             delayed(run_tracking)(
                 i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
                 maxcrossing, max_length, pft_back_tracking_dist,
@@ -635,5 +627,11 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     del dg, seeds, roi_proximal_streamlines, streamline_generator
     gc.collect()
-    return nib.streamlines.array_sequence.ArraySequence(out_streams)
+
+    try:
+        streamlines = nib.streamlines.array_sequence.ArraySequence(out_streams)
+    except BaseException:
+        streamlines = None
+
+    return streamlines
 

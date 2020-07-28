@@ -685,15 +685,9 @@ def plot_all_func(
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
-    import networkx as nx
-    from pynets.core import nodemaker
+    import pickle
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
-
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/ch2better.nii.gz"
@@ -993,15 +987,9 @@ def plot_all_struct(
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     import pkg_resources
-    import networkx as nx
-    from pynets.core import nodemaker
+    import pickle
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
-
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/ch2better.nii.gz"

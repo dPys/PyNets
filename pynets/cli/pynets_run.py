@@ -747,7 +747,7 @@ def build_workflow(args, retval):
         import psutil
         nthreads = cpu_count() - 1
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000)]
+                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
     else:
         procmem = list(eval(str(resources)))
     if args.thr is None:
@@ -3344,7 +3344,6 @@ def main():
     """Initializes main script from command-line call to generate
     single-subject or multi-subject workflow(s)"""
     import gc
-    import os
     import sys
     import multiprocessing as mp
 
@@ -3400,7 +3399,6 @@ def main():
 
 if __name__ == "__main__":
     import warnings
-
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen" \
                "_importlib.BuiltinImporter'>)"

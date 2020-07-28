@@ -67,7 +67,9 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
     omni_fit = omni.fit_transform(pop_array)
 
     # Transform omnibus tensor into dissimilarity feature
-    mds_fit = mds.fit_transform(omni_fit)
+    mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
+                                                 omni_fit.shape[2],
+                                                 omni_fit.shape[0]))
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 
