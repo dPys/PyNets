@@ -17,7 +17,7 @@ curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
     - 40
     - 30
 use_life:  # Filter ensemble tractogram to yield more plausible streamlines
-    - False
+    - True
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
@@ -31,7 +31,7 @@ low_pass:
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
     - 'local'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'wm'
+    - 'act'
 tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
     - 20000
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.

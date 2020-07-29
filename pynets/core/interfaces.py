@@ -168,7 +168,7 @@ class FetchNodesLabels(SimpleInterface):
                 f"{self.inputs.atlas}.nii.gz"
             )
             uatlas = fname_presuffix(
-                uatlas_pre, suffix="_tmp", newpath=runtime.cwd)
+                uatlas_pre, newpath=runtime.cwd)
             copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
             try:
                 par_img = nib.load(uatlas)
@@ -213,7 +213,7 @@ class FetchNodesLabels(SimpleInterface):
 
             try:
                 uatlas_tmp_path = fname_presuffix(
-                    self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+                    self.inputs.uatlas, newpath=runtime.cwd
                 )
                 copyfile(
                     self.inputs.uatlas,
@@ -496,6 +496,7 @@ class IndividualClustering(SimpleInterface):
         from joblib import Parallel, delayed
         from pynets.registration import reg_utils as regutils
         import pkg_resources
+        from joblib.externals.loky import get_reusable_executor
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -758,6 +759,7 @@ class IndividualClustering(SimpleInterface):
         for i in boot_parcellations:
             os.remove(i)
 
+        get_reusable_executor().shutdown(wait=True)
         gc.collect()
 
         self._results["atlas"] = atlas
@@ -843,6 +845,7 @@ class ExtractTimeseries(SimpleInterface):
                 use_hardlink=False)
         else:
             out_name_mask = None
+
         out_name_func_file = fname_presuffix(
             self.inputs.func_file, suffix="_tmp", newpath=runtime.cwd
         )
@@ -2196,13 +2199,17 @@ class RegisterAtlasFunc(SimpleInterface):
                                               f"t1w_clustered_parcellations/"
                                               f"*.nii.gz") if
                                     atlas_name.strip('_mni') in i][0]
+
+                # Correct coords and labels
+                [aligned_atlas_gm, coords, labels] = \
+                    drop_coords_labels_from_restricted_parcellation(
+                        aligned_atlas_gm, self.inputs.coords,
+                        self.inputs.labels)
+
             except FileNotFoundError:
                 print('T1w-space parcellation not found. Did you delete '
                       'outputs?')
         else:
-            aligned_atlas_gm = None
-
-        if aligned_atlas_gm is None:
             if self.inputs.uatlas is None:
                 uatlas_tmp_path = None
             else:
@@ -2351,18 +2358,13 @@ class RegisterAtlasFunc(SimpleInterface):
             for j in reg_tmp:
                 if j is not None:
                     os.remove(j)
-        else:
-            # Correct coords and labels
-            [aligned_atlas_gm, coords, labels] = \
-                drop_coords_labels_from_restricted_parcellation(
-                aligned_atlas_gm, self.inputs.coords, self.inputs.labels)
 
         # Use for debugging check
         parcellation_img = nib.load(aligned_atlas_gm)
-        intensities = list(np.unique(
+        intensities = [i for i in list(np.unique(
             np.asarray(
-                parcellation_img.dataobj).astype("int"))[1:]
-                           )
+                parcellation_img.dataobj).astype("int"))
+                           ) if i != 0]
         try:
             assert len(coords) == len(labels) == len(intensities)
         except ValueError as err:
@@ -2601,6 +2603,7 @@ class Tracking(SimpleInterface):
             Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
+        from joblib.externals.loky import get_reusable_executor
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -2717,7 +2720,7 @@ class Tracking(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-            model = np.load(recon_path).astype('float32')
+            model = np.load(recon_path, mmap_mode='r+').astype('float32')
 
         dwi_img.uncache()
         del dwi_data
@@ -2767,7 +2770,8 @@ class Tracking(SimpleInterface):
         # Build mask vector from atlas for later roi filtering
         parcels = []
         i = 0
-        for roi_val in np.unique(atlas_data)[1:]:
+        intensities = [i for i in np.unique(atlas_data) if i != 0]
+        for roi_val in intensities:
             parcels.append(atlas_data == roi_val)
             i = i + 1
 
@@ -2962,6 +2966,7 @@ class Tracking(SimpleInterface):
 
         del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()
+        get_reusable_executor().shutdown(wait=True)
         gc.collect()
 
         return runtime
