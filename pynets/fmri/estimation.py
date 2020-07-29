@@ -535,7 +535,7 @@ class TimeseriesExtraction(object):
         from pynets.fmri.estimation import fill_confound_nans
 
         self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
-        self._net_parcels_map_nifti.set_data_dtype(np.uint16)
+        self._net_parcels_map_nifti.set_data_dtype(np.int16)
         self._parcel_masker = input_data.NiftiLabelsMasker(
             labels_img=self._net_parcels_map_nifti,
             background_label=0,
