@@ -351,10 +351,7 @@ def get_node_membership(
     import sys
     from nilearn.image import resample_to_img, resample_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle
 
     try:
         template_img = nib.load(infile)
@@ -1465,10 +1462,7 @@ def node_gen_masking(
     """
     from pynets.core import nodemaker
     import os
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle
 
     if isinstance(parcel_list, str):
         parcel_pkl_file = parcel_list
@@ -1546,10 +1540,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle
     from pynets.core import nodemaker
     import os
 

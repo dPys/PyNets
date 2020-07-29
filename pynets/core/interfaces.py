@@ -57,6 +57,7 @@ class FetchNodesLabels(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.core import utils, nodemaker
+        from nipype.utils.filemanip import fname_presuffix, copyfile
         import pandas as pd
         import time
         from pathlib import Path
@@ -162,8 +163,6 @@ class FetchNodesLabels(SimpleInterface):
             atlas = self.inputs.atlas
             label_intensities = None
         elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
-            from nipype.utils.filemanip import fname_presuffix, copyfile
-
             uatlas_pre = (
                 f"{str(Path(base_path).parent)}/atlases/"
                 f"{self.inputs.atlas}.nii.gz"
@@ -213,13 +212,21 @@ class FetchNodesLabels(SimpleInterface):
                         time.sleep(5)
 
             try:
+                uatlas_tmp_path = fname_presuffix(
+                    self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+                )
+                copyfile(
+                    self.inputs.uatlas,
+                    uatlas_tmp_path,
+                    copy=True,
+                    use_hardlink=False)
                 # Fetch user-specified atlas coords
                 if self.inputs.clustering is False:
                     [uatlas,
                      _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                        self.inputs.uatlas)
+                        uatlas_tmp_path)
                 else:
-                    uatlas = self.inputs.uatlas
+                    uatlas = uatlas_tmp_path
                 [coords, atlas, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(uatlas)
                 if self.inputs.parc is True:
@@ -228,7 +235,6 @@ class FetchNodesLabels(SimpleInterface):
                     parcel_list = None
 
                 atlas = utils.prune_suffices(atlas)
-                uatlas = self.inputs.uatlas
 
                 # Describe user atlas coords
                 print(f"\n{atlas} comes with {par_max} parcels\n")
@@ -487,7 +493,7 @@ class IndividualClustering(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
-        from joblib import Parallel, delayed, dump, load
+        from joblib import Parallel, delayed
         from pynets.registration import reg_utils as regutils
         import pkg_resources
 
@@ -748,7 +754,10 @@ class IndividualClustering(SimpleInterface):
         if os.path.isdir(folder):
             import shutil
             shutil.rmtree(folder, ignore_errors=True)
-        del boot_parcellations
+
+        for i in boot_parcellations:
+            os.remove(i)
+
         gc.collect()
 
         self._results["atlas"] = atlas
@@ -1173,7 +1182,7 @@ class RegisterDWI(SimpleInterface):
                     copy=True,
                     use_hardlink=False)
                 mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.basedir_path,
+                    mask_tmp_path, runtime.cwd,
                     self.inputs.vox_size)
             else:
                 mask_tmp_path = None
@@ -2058,7 +2067,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        atlas_name = prune_suffices(os.path.basename(self.inputs.uatlas).split('.nii')[0])
+        atlas_name = prune_suffices(os.path.basename(self.inputs.uatlas
+                                                     ).split('.nii')[0])
 
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
 
@@ -2590,8 +2600,7 @@ class Tracking(SimpleInterface):
         from dipy.io.stateful_tractogram import Space, StatefulTractogram, \
             Origin
         from dipy.io.streamline import save_tractogram
-        from nipype.utils.filemanip import copyfile
-        from joblib import dump, load
+        from nipype.utils.filemanip import copyfile, fname_presuffix
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -2606,22 +2615,43 @@ class Tracking(SimpleInterface):
 
         namer_dir = "{}/tractography".format(dir_path)
         if not os.path.isdir(namer_dir):
-            os.mkdir(namer_dir)
+            os.makedirs(namer_dir, exist_ok=True)
 
         # Load diffusion data
-        dwi_img = nib.load(self.inputs.dwi_file)
-        dwi_data = dwi_img.get_fdata()
+        dwi_file_tmp_path = fname_presuffix(
+            self.inputs.dwi_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.dwi_file,
+            dwi_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
 
-        # Use joblib with memmapping
-        folder = f"{runtime.cwd}/joblib_memmap"
-        os.makedirs(folder, exist_ok=True)
-
-        data_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(dwi_data, data_filename_memmap)
-        dwi_data = load(data_filename_memmap, mmap_mode='r+')
+        dwi_img = nib.load(dwi_file_tmp_path)
+        dwi_data = dwi_img.get_fdata().astype('float32')
 
         # Load FA data
-        fa_img = nib.load(self.inputs.fa_path)
+        fa_file_tmp_path = fname_presuffix(
+            self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.fa_path,
+            fa_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+        fa_img = nib.load(fa_file_tmp_path)
+
+        # Load B0 mask
+        B0_mask_tmp_path = fname_presuffix(
+            self.inputs.B0_mask, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.B0_mask,
+            B0_mask_tmp_path,
+            copy=True,
+            use_hardlink=False)
+        B0_mask_data = nib.load(B0_mask_tmp_path).get_fdata()
 
         # Fit diffusion model
         # Save reconstruction to .npy
@@ -2651,7 +2681,16 @@ class Tracking(SimpleInterface):
             ".npy",
         )
 
-        gtab = load_pickle(self.inputs.gtab_file)
+        gtab_file_tmp_path = fname_presuffix(
+            self.inputs.gtab_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.gtab_file,
+            gtab_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        gtab = load_pickle(gtab_file_tmp_path)
 
         # Only re-run the reconstruction if we have to
         if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
@@ -2659,7 +2698,7 @@ class Tracking(SimpleInterface):
                 self.inputs.conn_model,
                 gtab,
                 dwi_data,
-                self.inputs.B0_mask,
+                B0_mask_tmp_path,
             )
             np.save(recon_path, model)
             copyfile(
@@ -2678,27 +2717,49 @@ class Tracking(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-            model = np.load(recon_path)
-
-        model_filename_memmap = os.path.join(folder, 'data_memmap')
-        dump(model, model_filename_memmap)
-        model = load(model_filename_memmap, mmap_mode='r+')
+            model = np.load(recon_path).astype('float32')
 
         dwi_img.uncache()
         del dwi_data
 
         # Load atlas parcellation (and its wm-gm interface reduced version for
         # seeding)
-        atlas_img = nib.load(self.inputs.labels_im_file)
+        labels_im_file_tmp_path = fname_presuffix(
+            self.inputs.labels_im_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.labels_im_file,
+            labels_im_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        labels_im_file_tmp_path_wm_gm_int = fname_presuffix(
+            self.inputs.labels_im_file_wm_gm_int, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.labels_im_file_wm_gm_int,
+            labels_im_file_tmp_path_wm_gm_int,
+            copy=True,
+            use_hardlink=False)
+
+        atlas_img = nib.load(labels_im_file_tmp_path)
         atlas_data = np.array(atlas_img.dataobj).astype("uint16")
         atlas_data_wm_gm_int = np.asarray(
-            nib.load(self.inputs.labels_im_file_wm_gm_int).dataobj
+            nib.load(labels_im_file_tmp_path_wm_gm_int).dataobj
         ).astype("uint16")
 
-        B0_mask_data = nib.load(self.inputs.B0_mask).get_fdata()
-
         if self.inputs.waymask:
-            waymask_data = np.asarray(nib.load(self.inputs.waymask).dataobj
+            waymask_tmp_path = fname_presuffix(
+                self.inputs.waymask, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.waymask,
+                waymask_tmp_path,
+                copy=True,
+                use_hardlink=False)
+            waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj
                                       ).astype("bool")
         else:
             waymask_data = None
@@ -2766,7 +2827,7 @@ class Tracking(SimpleInterface):
             B0_mask_data,
             self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
             self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
-            self.inputs.tiss_class, self.inputs.B0_mask
+            self.inputs.tiss_class, B0_mask_tmp_path
         )
 
         # Save streamlines to trk
@@ -2810,8 +2871,8 @@ class Tracking(SimpleInterface):
         if use_life is True:
             print('Using LiFE to evaluate streamline plausibility...')
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-            dwi_img = nib.load(self.inputs.dwi_file)
-            dwi_data = dwi_img.get_fdata()
+            dwi_img = nib.load(dwi_file_tmp_path)
+            dwi_data = dwi_img.get_fdata().astype('float32')
             orig_count = len(streamlines)
             try:
                 streamlines = evaluate_streamline_plausibility(
@@ -2861,10 +2922,6 @@ class Tracking(SimpleInterface):
             namer_dir,
         )
 
-        if os.path.isdir(folder):
-            import shutil
-            shutil.rmtree(folder, ignore_errors=True)
-
         self._results["streams"] = streams
         self._results["track_type"] = self.inputs.track_type
         self._results["target_samples"] = self.inputs.target_samples
@@ -2895,6 +2952,13 @@ class Tracking(SimpleInterface):
         self._results["roi_neighborhood_tol"] = \
             self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
+
+        tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path, fa_file_tmp_path,
+                     labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path,
+                     labels_im_file_tmp_path]
+        for j in tmp_files:
+            if j is not None:
+                os.remove(j)
 
         del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()

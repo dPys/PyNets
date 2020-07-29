@@ -1323,10 +1323,7 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
         Path to pickled labels list.
 
     """
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle
     import os
 
     namer_dir = f"{dir_path}/nodes"
@@ -1580,10 +1577,7 @@ def merge_dicts(x, y):
 
 
 def pkl_parcel_list(working_dir, parcel_list):
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle
 
     if isinstance(parcel_list, list):
         out_path = f"{working_dir}/parcel_list.pkl"
