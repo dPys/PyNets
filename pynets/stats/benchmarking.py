@@ -257,47 +257,28 @@ if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
 
-    working_dir = "/scratch/04171/dpisner/HNU/HNU_outs"
+    working_dir = '/Users/derekpisner/Downloads'
     thr_type = "MST"
     icc = True
     disc = True
+    modality = 'func'
 
     mets = [
         "global_efficiency",
-        "average_shortmodel_path_length",
+        "average_shortest_path_length",
+        "transitivity",
+        "average_clustering",
         "average_betweenness_centrality",
         "average_eigenvector_centrality",
         "average_degree_centrality",
-        "modularity",
+        "louvain_modularity",
+        "average_local_clustering",
+        "average_diversity_coefficient",
+        "average_participation_coefficient"
     ]
-    modality = "func"
 
-    if modality == "dwi":
-        naughty_list = ["fwhm", "partcorr"]
-    else:
-        naughty_list = ["triple_net_ICA_overlap_3", "streams", "PROP"]
-    df = pd.read_csv(working_dir + "/all_subs_neat.csv")
-    for bad_col in naughty_list:
-        df = df.loc[:, ~df.columns.str.contains(bad_col, regex=True)]
-
-    df = df[df["id"].str.contains("run")]
-    # df = df.loc[:, df.columns.str.contains('MST', regex=True)]
-
-    if modality == "func":
-        df = df.rename(
-            columns=lambda x: re.sub(
-                "_partcorr_",
-                "_model-partcorr_",
-                x))
-        df = df.rename(columns=lambda x: re.sub("_sps_", "_model-sps_", x))
-        df = df.rename(columns=lambda x: re.sub("_sig_bin_nores-2mm", "", x))
-    elif modality == "dwi":
-        df = df.rename(columns=lambda x: re.sub("csa_", "model-csa_", x))
-        df = df.rename(columns=lambda x: re.sub("csd_", "model-csd_", x))
-    df = df.rename(columns=lambda x: re.sub("_k", "_k-", x))
-    df = df.rename(columns=lambda x: re.sub("_thr_", "", x))
-    df = df.rename(columns=lambda x: re.sub("_model-model-", "_model-", x))
-    df = df.rename(columns=lambda x: re.sub("__", "_", x))
+    df = pd.read_csv(working_dir + f"/all_subs_neat_{modality}.csv")
+    df = df.loc[:, df.columns.str.contains(thr_type, regex=True)]
     df = df.dropna(subset=["id"])
 
     cols = [
@@ -330,6 +311,7 @@ if __name__ == "__main__":
         df_summary = pd.DataFrame(columns=["grid", "discriminability", "icc"])
 
     if modality == "func":
+        #gen_hyperparams = ["model", "clust", "_k"]
         gen_hyperparams = ["model", "clust", "_k"]
         for col in cols:
             build_hp_dict(
