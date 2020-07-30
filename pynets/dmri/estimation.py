@@ -604,7 +604,7 @@ def streams2graph(
             streamlines, np.eye(4)
         )
         global_fa_weights = list(utils.flatten(fa_weights))
-        min_global_fa_wei = min(i for i in global_fa_weights if i > 0)
+        min_global_fa_wei = min([i for i in global_fa_weights if i > 0])
         max_global_fa_wei = max(global_fa_weights)
         fa_weights_norm = []
         # Here we normalize by global FA
