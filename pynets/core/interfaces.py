@@ -497,7 +497,7 @@ class IndividualClustering(SimpleInterface):
         from pynets.registration import reg_utils as regutils
         import pkg_resources
         import warnings
-        warnings.filterwarnings("ignore", category='UserWarning')
+        warnings.filterwarnings("ignore", category=UserWarning)
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -2604,7 +2604,7 @@ class Tracking(SimpleInterface):
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
         import warnings
-        warnings.filterwarnings("ignore", category='UserWarning')
+        warnings.filterwarnings("ignore", category=UserWarning)
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"

@@ -585,6 +585,13 @@ def motif_matching(
             func_comm = func_mat
 
         comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
+
+        try:
+            assert comm_mask.shape == struct_mat.shape == func_mat.shape
+        except AssertionError as e:
+            e.args += (comm_mask, comm_mask.shape, struct_mat,
+                       struct_mat.shape, func_mat, func_mat.shape)
+
         struct_mat[~comm_mask] = 0
         func_mat[~comm_mask] = 0
         struct_name = struct_graph_path.split("/rawgraph_"

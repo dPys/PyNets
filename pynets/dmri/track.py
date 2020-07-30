@@ -411,7 +411,7 @@ def track_ensemble(
     from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
     import warnings
-    warnings.filterwarnings("ignore", category='UserWarning')
+    warnings.filterwarnings("ignore", category=UserWarning)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
