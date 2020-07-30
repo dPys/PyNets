@@ -118,6 +118,7 @@ def atlas2t1w2dwi_align(
     registration instead. For this to succeed, must first have called
     t1w2dwi_align.
     """
+    import time
     from nilearn.image import resample_to_img
     from pynets.core.utils import checkConsecutive
     from pynets.registration import reg_utils as regutils
@@ -240,9 +241,11 @@ def atlas2t1w2dwi_align(
                                                      B0_mask,
                                                      dwi_aligned_atlas)
 
+    time.sleep(5)
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
         dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
 
+    time.sleep(5)
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
 
@@ -480,9 +483,10 @@ def atlas2t1w_align(
     """
     A function to perform atlas alignment from atlas --> T1w.
     """
+    import time
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
-    from pynets.core.utils import checkConsecutive
+    # from pynets.core.utils import checkConsecutive
 
     template_img = nib.load(t1_aligned_mni)
     if uatlas_parcels:
@@ -490,7 +494,7 @@ def atlas2t1w_align(
     else:
         atlas_img_orig = nib.load(uatlas)
 
-    old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
+    # old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
 
     uatlas_res_template = resample_to_img(
         atlas_img_orig, template_img, interpolation="nearest"
@@ -543,9 +547,14 @@ def atlas2t1w_align(
             cost="mutualinfo",
         )
 
+    # aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+    #                                                 gm_mask,
+    #                                                 aligned_atlas_gm)
     aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
-                                                    gm_mask, aligned_atlas_gm)
+                                                    t1w_brain_mask,
+                                                    aligned_atlas_gm)
 
+    time.sleep(5)
     atlas_img = nib.load(aligned_atlas_gm)
 
     atlas_img_corr = nib.Nifti1Image(
@@ -554,23 +563,23 @@ def atlas2t1w_align(
         header=atlas_img.header,
     )
     nib.save(atlas_img_corr, aligned_atlas_gm)
-    final_dat = atlas_img_corr.get_fdata()
-    unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
-
-    if not checkConsecutive(unique_a):
-        print("\nWarning! non-consecutive integers found in parcellation...")
-    new_count = len(unique_a)
-    diff = np.abs(np.int(float(new_count) - float(old_count)))
-    print(f"Previous label count: {old_count}")
-    print(f"New label count: {new_count}")
-    print(f"Labels dropped: {diff}")
-    if diff > gm_fail_tol:
-        print(f"Grey-Matter mask too restrictive >{str(gm_fail_tol)} for this "
-              f"parcellation. Falling back to the T1w mask...")
-        aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
-                                                        t1w_brain_mask,
-                                                        aligned_atlas_gm)
-
+    # final_dat = atlas_img_corr.get_fdata()
+    # unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
+    #
+    # if not checkConsecutive(unique_a):
+    #     print("\nWarning! non-consecutive integers found in parcellation...")
+    # new_count = len(unique_a)
+    # diff = np.abs(np.int(float(new_count) - float(old_count)))
+    # print(f"Previous label count: {old_count}")
+    # print(f"New label count: {new_count}")
+    # print(f"Labels dropped: {diff}")
+    # if diff > gm_fail_tol:
+    #     print(f"Grey-Matter mask too restrictive >{str(gm_fail_tol)} for this "
+    #           f"parcellation. Falling back to the T1w mask...")
+    #     aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+    #                                                     t1w_brain_mask,
+    #                                                     aligned_atlas_gm)
+    #     time.sleep(5)
     template_img.uncache()
     atlas_img_orig.uncache()
     atlas_img.uncache()

@@ -976,10 +976,8 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     print('Checking parcellation for consistency...')
 
     parcellation_img = nib.load(parcellation)
-    intensities = list(np.unique(
-        np.asarray(
-            parcellation_img.dataobj).astype("int"))[1:]
-    )
+    intensities = [i for i in list(np.unique(
+        np.asarray(parcellation_img.dataobj).astype("int"))) if i != 0]
 
     # Correct coords and labels
     # bad_idxs = missing_elements(intensities)
@@ -990,7 +988,8 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
         if len(label_intensities) != len(intensities):
             print('Inconsistent number of intensities and labels. '
                   'Correcting parcellation...')
-            diff = list(set(label_intensities) - set(intensities))
+            diff = [i for i in list(set(label_intensities) - set(intensities))
+                    if i != 0]
             for val in diff:
                 bad_idxs.append(label_intensities.index(val))
             if len(bad_idxs) > 0:
@@ -1002,7 +1001,8 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                     print(f"Removing: {(labels[j], coords[j])}...")
                     del labels[j], coords[j]
 
-            diff = list(set(intensities) - set(label_intensities))
+            diff = [i for i in list(set(intensities) -
+                                    set(label_intensities)) if i != 0]
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
                 print(f"Removing: {str(val)}...")
@@ -1015,8 +1015,8 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                                 affine=parcellation_img.affine),
                 parcellation)
 
-            intensity_count = len(np.unique(
-                parlist_img_data.astype("int"))[1:])
+            intensity_count = len([i for i in np.unique(
+                parlist_img_data.astype("int")) if i != 0])
         else:
             intensity_count = len(intensities)
     else:
@@ -1482,7 +1482,8 @@ def node_gen_masking(
     assert (
         len(coords)
         == len(labels)
-        == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
+        == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
+                                     ) if i != 0])
     )
 
     if parcel_pkl_file:
@@ -1559,7 +1560,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     assert (
         len(coords)
         == len(labels)
-        == len(np.unique(np.asarray(net_parcels_map_nifti.dataobj))[1:])
+        == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
+                                     ) if i != 0])
     )
 
     if parcel_pkl_file:
