@@ -14,24 +14,25 @@ step_list: # For ensemble tractography, step-sizes should never exceed the voxel
     - 0.4
     - 0.5
 curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
+    - 50
     - 40
     - 30
 use_life:  # Filter ensemble tractogram to yield more plausible streamlines
-    - True
+    - False
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 4
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
     - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
 tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
-    - 'local'
+    - 'particle'
 tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'act'
+    - 'cmc'
 tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
     - 50000
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
@@ -166,7 +167,7 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (2, 4)
       - 'clustering_node':
-        - (4, 8)
+        - (2, 8)
       - 'get_conn_matrix_node':
         - (1, 2)
       - 'thresh_func_node':
@@ -178,7 +179,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (1, 1)
       - 'run_tracking_node':
-        - (4, 8)
+        - (2, 8)
       - 'thresh_diff_node':
         - (1, 2)
       - 'dsn_node':

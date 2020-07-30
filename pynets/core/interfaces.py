@@ -2985,7 +2985,8 @@ class Tracking(SimpleInterface):
         self._results["coords"] = self.inputs.coords
         self._results["norm"] = self.inputs.norm
         self._results["binary"] = self.inputs.binary
-        self._results["atlas_mni"] = self.inputs.atlas_mni
+        self._results["atlas_mni"] = labels_im_file_tmp_path # TODO: Change
+        # this to self.inputs.atlas_mni when DSN is True
         self._results["curv_thr_list"] = self.inputs.curv_thr_list
         self._results["step_list"] = self.inputs.step_list
         self._results["fa_path"] = fa_file_tmp_path

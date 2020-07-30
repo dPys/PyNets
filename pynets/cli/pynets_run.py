@@ -3300,6 +3300,7 @@ def build_workflow(args, retval):
         retval["workflow"] = wf
         wf.run(plugin=plugin_type, plugin_args=plugin_args)
         retval["return_code"] = 0
+
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
 

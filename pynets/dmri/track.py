@@ -470,7 +470,12 @@ def track_ensemble(
     print("Tracking Complete:\n", str(time.time() - start))
     streams = [i for j in all_streams for i in j if j is not None]
 
-    streams_data = Streamlines(streams).data
+    if len(streams) == 0:
+        streams_data = None
+        print('No streamlines generated!')
+    else:
+        streams_data = Streamlines(streams).data
+
     del streams
 
     return streams_data
