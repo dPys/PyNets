@@ -1263,7 +1263,7 @@ def workflow_selector(
                     meta_wf.get_node(
                         f"{wf_selected}{'.'}{node_name}"
                     ).interface.mem_gb = runtime_dict[node_name][1]
-                except:
+                except BaseException:
                     continue
 
     if dwi_file:
@@ -1283,7 +1283,7 @@ def workflow_selector(
                     meta_wf.get_node(
                         f"{wf_selected}{'.'}{node_name}"
                     ).interface.mem_gb = runtime_dict[node_name][1]
-                except:
+                except BaseException:
                     continue
 
     gc.collect()

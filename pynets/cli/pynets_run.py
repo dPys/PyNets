@@ -747,9 +747,10 @@ def build_workflow(args, retval):
         import psutil
         nthreads = cpu_count() - 1
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
+                   int(list(psutil.virtual_memory())[4]/1000000000) - 2]
     else:
         procmem = list(eval(str(resources)))
+        procmem[1] = procmem[1] - 2
     if args.thr is None:
         thr = float(1.0)
     else:
@@ -3026,10 +3027,6 @@ def build_workflow(args, retval):
             extract_strategy_list,
             outdir,
         )
-        import warnings
-
-        warnings.filterwarnings("ignore")
-        import shutil
 
         os.makedirs(
             f"{work_dir}/wf_multi_subject_{'_'.join(ID)}",
@@ -3110,6 +3107,7 @@ def build_workflow(args, retval):
 
         # Clean up temporary directories
         print("Cleaning up...")
+        import shutil
         for dir in dir_list:
             if "func" in dir:
                 for cnfnd_tmp_dir in glob.glob(f"{dir}/*/confounds_tmp"):

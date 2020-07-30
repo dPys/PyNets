@@ -742,11 +742,18 @@ class IndividualClustering(SimpleInterface):
             raise FileNotFoundError(f"Parcellation clustering failed for"
                                     f" {nip.uatlas}")
 
+        self._results["atlas"] = atlas
+        self._results["uatlas"] = nip.uatlas
+        self._results["clust_mask"] = clust_mask_in_t1w_path
+        self._results["k"] = self.inputs.k
+        self._results["clust_type"] = self.inputs.clust_type
+        self._results["clustering"] = True
+        self._results["func_file"] = out_name_func_file
+
         reg_tmp = [
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
-            clust_mask_in_t1w_path,
             template_tmp_path
         ]
         for j in reg_tmp:
@@ -761,14 +768,6 @@ class IndividualClustering(SimpleInterface):
             os.remove(i)
 
         gc.collect()
-
-        self._results["atlas"] = atlas
-        self._results["uatlas"] = nip.uatlas
-        self._results["clust_mask"] = self.inputs.clust_mask
-        self._results["k"] = self.inputs.k
-        self._results["clust_type"] = self.inputs.clust_type
-        self._results["clustering"] = True
-        self._results["func_file"] = self.inputs.func_file
 
         return runtime
 
@@ -1275,8 +1274,8 @@ class RegisterDWI(SimpleInterface):
         self._results["csf_mask_dwi"] = reg.csf_mask_dwi
         self._results["anat_file"] = self.inputs.anat_file
         self._results["t1w2dwi"] = reg.t1w2dwi
-        self._results["B0_mask"] = self.inputs.B0_mask
-        self._results["ap_path"] = self.inputs.ap_path
+        self._results["B0_mask"] = B0_mask_tmp_path
+        self._results["ap_path"] = ap_tmp_path
         self._results["gtab_file"] = self.inputs.gtab_file
         self._results["dwi_file"] = self.inputs.dwi_file
         self._results["basedir_path"] = runtime.cwd
@@ -1633,23 +1632,6 @@ class RegisterAtlasDWI(SimpleInterface):
                 use_hardlink=False,
             )
 
-        reg_tmp = [
-            B0_mask_tmp_path,
-            fa_tmp_path,
-            ap_tmp_path,
-            uatlas_tmp_path,
-            mni2t1w_warp_tmp_path,
-            mni2t1_xfm_tmp_path,
-            t1w_brain_mask_tmp_path,
-            t1_aligned_mni_tmp_path,
-            t1w2dwi_bbr_xfm_tmp_path,
-            t1w2dwi_xfm_tmp_path,
-            wm_gm_int_in_dwi_tmp_path,
-        ]
-        for j in reg_tmp:
-            if j is not None:
-                os.remove(j)
-
         self._results["dwi_aligned_atlas_wmgm_int"] = \
             dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
@@ -1663,11 +1645,27 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
         self._results["gm_in_dwi"] = self.inputs.gm_in_dwi
         self._results["vent_csf_in_dwi"] = self.inputs.vent_csf_in_dwi
-        self._results["B0_mask"] = self.inputs.B0_mask
-        self._results["ap_path"] = self.inputs.ap_path
+        self._results["B0_mask"] = B0_mask_tmp_path
+        self._results["ap_path"] = ap_tmp_path
         self._results["gtab_file"] = self.inputs.gtab_file
         self._results["dwi_file"] = self.inputs.dwi_file
         self._results["waymask_in_dwi"] = waymask_in_dwi
+
+        reg_tmp = [
+            fa_tmp_path,
+            uatlas_tmp_path,
+            mni2t1w_warp_tmp_path,
+            mni2t1_xfm_tmp_path,
+            t1w_brain_mask_tmp_path,
+            t1_aligned_mni_tmp_path,
+            t1w2dwi_bbr_xfm_tmp_path,
+            t1w2dwi_xfm_tmp_path,
+            wm_gm_int_in_dwi_tmp_path,
+        ]
+        for j in reg_tmp:
+            if j is not None:
+                os.remove(j)
+
         gc.collect()
 
         return runtime
@@ -1829,6 +1827,8 @@ class RegisterROIDWI(SimpleInterface):
         else:
             roi_in_dwi = None
 
+        self._results["roi"] = roi_in_dwi
+
         reg_tmp = [
             ap_tmp_path,
             t1w_brain_tmp_path,
@@ -1839,8 +1839,6 @@ class RegisterROIDWI(SimpleInterface):
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
-
-        self._results["roi"] = roi_in_dwi
 
         gc.collect()
 
@@ -2121,6 +2119,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
+        self._results["aligned_atlas_mni"] = aligned_atlas_mni
+
         reg_tmp = [
             uatlas_tmp_path,
             template_tmp_path,
@@ -2131,7 +2131,6 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             if j is not None:
                 os.remove(j)
 
-        self._results["aligned_atlas_mni"] = aligned_atlas_mni
         gc.collect()
 
         return runtime
@@ -2484,6 +2483,8 @@ class RegisterROIEPI(SimpleInterface):
         else:
             roi_in_t1w = None
 
+        self._results["roi"] = roi_in_t1w
+
         reg_tmp = [
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
@@ -2493,9 +2494,6 @@ class RegisterROIEPI(SimpleInterface):
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
-
-        self._results["roi"] = roi_in_t1w
-
         gc.collect()
 
         return runtime
@@ -2753,6 +2751,46 @@ class Tracking(SimpleInterface):
             nib.load(labels_im_file_tmp_path_wm_gm_int).dataobj
         ).astype("uint16")
 
+        t1w2dwi_tmp_path = fname_presuffix(
+            self.inputs.t1w2dwi, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.t1w2dwi,
+            t1w2dwi_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        gm_in_dwi_tmp_path = fname_presuffix(
+            self.inputs.gm_in_dwi, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.gm_in_dwi,
+            gm_in_dwi_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        vent_csf_in_dwi_tmp_path = fname_presuffix(
+            self.inputs.vent_csf_in_dwi, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.vent_csf_in_dwi,
+            vent_csf_in_dwi_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        wm_in_dwi_tmp_path = fname_presuffix(
+            self.inputs.wm_in_dwi, suffix="_tmp",
+            newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.wm_in_dwi,
+            wm_in_dwi_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
                 self.inputs.waymask, suffix="_tmp",
@@ -2830,8 +2868,8 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             waymask_data,
             B0_mask_data,
-            self.inputs.t1w2dwi, self.inputs.gm_in_dwi,
-            self.inputs.vent_csf_in_dwi, self.inputs.wm_in_dwi,
+            t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
+            vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
             self.inputs.tiss_class, B0_mask_tmp_path
         )
 
@@ -2950,17 +2988,16 @@ class Tracking(SimpleInterface):
         self._results["atlas_mni"] = self.inputs.atlas_mni
         self._results["curv_thr_list"] = self.inputs.curv_thr_list
         self._results["step_list"] = self.inputs.step_list
-        self._results["fa_path"] = self.inputs.fa_path
+        self._results["fa_path"] = fa_file_tmp_path
         self._results["dm_path"] = dm_path
         self._results["directget"] = self.inputs.directget
-        self._results["labels_im_file"] = self.inputs.labels_im_file
+        self._results["labels_im_file"] = labels_im_file_tmp_path
         self._results["roi_neighborhood_tol"] = \
             self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
 
-        tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path, fa_file_tmp_path,
-                     labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path,
-                     labels_im_file_tmp_path]
+        tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path,
+                     labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path]
         for j in tmp_files:
             if j is not None:
                 os.remove(j)
