@@ -496,7 +496,8 @@ class IndividualClustering(SimpleInterface):
         from joblib import Parallel, delayed
         from pynets.registration import reg_utils as regutils
         import pkg_resources
-        from joblib.externals.loky import get_reusable_executor
+        import warnings
+        warnings.filterwarnings("ignore", category='UserWarning')
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -759,7 +760,6 @@ class IndividualClustering(SimpleInterface):
         for i in boot_parcellations:
             os.remove(i)
 
-        get_reusable_executor().shutdown(wait=True)
         gc.collect()
 
         self._results["atlas"] = atlas
@@ -2603,7 +2603,8 @@ class Tracking(SimpleInterface):
             Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
-        from joblib.externals.loky import get_reusable_executor
+        import warnings
+        warnings.filterwarnings("ignore", category='UserWarning')
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -2966,7 +2967,6 @@ class Tracking(SimpleInterface):
 
         del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
         dwi_img.uncache()
-        get_reusable_executor().shutdown(wait=True)
         gc.collect()
 
         return runtime

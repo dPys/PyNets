@@ -546,7 +546,7 @@ class TimeseriesExtraction(object):
             detrend=self._detrending,
             t_r=self._t_r,
             verbose=2,
-            resampling_target="data",
+            resampling_target="labels",
             dtype="auto",
             mask_img=self._mask_img,
             strategy=self.extract_strategy,

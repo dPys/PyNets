@@ -3346,6 +3346,8 @@ def main():
     import gc
     import sys
     import multiprocessing as mp
+    import warnings
+    warnings.filterwarnings("ignore")
 
     try:
         import pynets
