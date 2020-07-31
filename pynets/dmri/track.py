@@ -410,8 +410,7 @@ def track_ensemble(
     import itertools
     from dipy.tracking.streamline import Streamlines
     from colorama import Fore, Style
-    import warnings
-    warnings.filterwarnings("ignore", category=UserWarning)
+    from joblib.externals.loky import get_reusable_executor
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -431,41 +430,46 @@ def track_ensemble(
     all_streams = []
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < 3:
-        out_streams = Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                               mmap_mode='r+', max_nbytes=1e9)(
-            delayed(run_tracking)(
-                i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter, directget,
-                maxcrossing, max_length, pft_back_tracking_dist,
-                pft_front_tracking_dist, particle_count, B0_mask_data,
-                roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
-                min_length, track_type, min_separation_angle, sphere, t1w2dwi,
-                gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
-                B0_mask) for i in all_combs)
-        all_streams.append(out_streams)
-        try:
-            streams = [i for j in all_streams for i in j if j is not None]
-            stream_counter = len(Streamlines(streams).data)
-            del streams
-            if stream_counter > 20:
-                ix = 0
-            else:
+        with Parallel(n_jobs=nthreads, verbose=10, backend='loky',
+                      mmap_mode='r+', max_nbytes=1e6) as parallel:
+            out_streams = parallel(
+                delayed(run_tracking)(
+                    i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter,
+                    directget,
+                    maxcrossing, max_length, pft_back_tracking_dist,
+                    pft_front_tracking_dist, particle_count, B0_mask_data,
+                    roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
+                    min_length, track_type, min_separation_angle, sphere,
+                    t1w2dwi,
+                    gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                    B0_mask) for i in all_combs)
+            all_streams.append(out_streams)
+            try:
+                streams = [i for j in all_streams for i in j if j is not None]
+                stream_counter = len(Streamlines(streams).data)
+                del streams
+                if stream_counter > 20:
+                    ix = 0
+                else:
+                    ix += 1
+            except BaseException:
+                print('0 or Invalid streamlines encountered for consecutive '
+                      'sweeps. Skipping...')
                 ix += 1
-        except BaseException:
-            print('0 or Invalid streamlines encountered for consecutive '
-                  'sweeps. Skipping...')
-            ix += 1
-        print(
-            "%s%s%s%s"
-            % (
-                "\nCumulative Streamline Count: ",
-                Fore.CYAN,
-                stream_counter,
-                "\n",
+            print(
+                "%s%s%s%s"
+                % (
+                    "\nCumulative Streamline Count: ",
+                    Fore.CYAN,
+                    stream_counter,
+                    "\n",
+                )
             )
-        )
-        del out_streams
-        gc.collect()
-        print(Style.RESET_ALL)
+            del out_streams
+            gc.collect()
+            print(Style.RESET_ALL)
+
+        get_reusable_executor().shutdown(wait=False)
 
     print("Tracking Complete:\n", str(time.time() - start))
     streams = [i for j in all_streams for i in j if j is not None]

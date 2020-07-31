@@ -494,10 +494,9 @@ class IndividualClustering(SimpleInterface):
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed
+        from joblib.externals.loky import get_reusable_executor
         from pynets.registration import reg_utils as regutils
         import pkg_resources
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning)
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -678,24 +677,24 @@ class IndividualClustering(SimpleInterface):
                 counter = 0
                 boot_parcellations = []
                 while float(counter) < float(c_boot):
-                    iter_bootedparcels = Parallel(n_jobs=nthreads,
-                                                  max_nbytes=1e9,
-                                                  verbose=10,
-                                                  backend='loky',
-                                                  mmap_mode='r+')(
-                        delayed(run_bs_iteration)(
-                            i, ts_data, runtime.cwd, nip.local_corr,
-                            nip.clust_type, nip._local_conn_mat_path,
-                            nip.num_conn_comps, nip._clust_mask_corr_img,
-                            nip._standardize, nip._detrending, nip.k,
-                            nip._local_conn, nip.conf, nip._dir_path,
-                            nip._conn_comps, folder) for i in
-                        range(c_boot))
+                    with Parallel(n_jobs=nthreads, verbose=10, backend='loky',
+                                  mmap_mode='r+', max_nbytes=1e6) as parallel:
+                        iter_bootedparcels = parallel(
+                            delayed(run_bs_iteration)(
+                                i, ts_data, runtime.cwd, nip.local_corr,
+                                nip.clust_type, nip._local_conn_mat_path,
+                                nip.num_conn_comps, nip._clust_mask_corr_img,
+                                nip._standardize, nip._detrending, nip.k,
+                                nip._local_conn, nip.conf, nip._dir_path,
+                                nip._conn_comps, folder) for i in
+                            range(c_boot))
 
-                    boot_parcellations.extend([i for i in iter_bootedparcels if
-                                               i is not None])
-                    counter = len(boot_parcellations)
+                        boot_parcellations.extend([i for i in
+                                                   iter_bootedparcels if
+                                                   i is not None])
+                        counter = len(boot_parcellations)
 
+                    get_reusable_executor().shutdown(wait=False)
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
                 print("Creating spatially-constrained consensus "
@@ -2601,8 +2600,6 @@ class Tracking(SimpleInterface):
             Origin
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning)
 
         with open(
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
