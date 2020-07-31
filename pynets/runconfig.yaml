@@ -141,7 +141,7 @@ plotting:
                 - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
-        - (4, 8)
+        - (6, 8)
       - 'save_nifti_parcels_node':
         - (4, 1)
       - 'gtab_node':
@@ -157,7 +157,7 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_anat_node':
         - (2, 0.5)
       - 'node_gen_node':
-        - (2, 6)
+        - (4, 8)
       - 'get_node_membership_node':
         - (2, 6)
       - 'check_orient_and_dims_dwi_node':
@@ -165,7 +165,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_anisopwr_node':
         - (2, 1)
       - 'extract_ts_node':
-        - (4, 4)
+        - (4, 8)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
@@ -179,7 +179,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 1)
       - 'run_tracking_node':
-        - (6, 4)
+        - (4, 8)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':
@@ -187,9 +187,9 @@ resource_dict: # Nipype workflow resource settings
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (4, 1)
+        - (4, 2)
       - 'build_multigraphs_node':
-        - (2, 6)
+        - (4, 8)
       - 'plot_all_struct_func_node':
         - (1, 2)
       - 'mase_embedding_node':
