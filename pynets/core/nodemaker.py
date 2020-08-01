@@ -79,7 +79,11 @@ def create_parcel_atlas(parcel_list):
         to ROI masks, prepended with a background image of zeros.
     """
     import gc
+    import types
     from nilearn.image import new_img_like, concat_imgs
+
+    if isinstance(parcel_list, types.GeneratorType):
+        parcel_list = [i for i in parcel_list]
 
     parcel_list_exp = [
         new_img_like(
@@ -97,11 +101,13 @@ def create_parcel_atlas(parcel_list):
         dtype=np.uint16)
     par_max = np.max(parcel_list_exp)
     outs = np.unique(parcel_sum[parcel_sum > par_max])
+
     # Set overlapping cases to zero.
     for out in outs:
         parcel_sum[parcel_sum == out] = 0
     net_parcels_map_nifti = nib.Nifti1Image(
         parcel_sum, affine=parcel_list[0].affine)
+
     del concatted_parcels, parcel_sum, parcel_list
     gc.collect()
 
@@ -349,9 +355,8 @@ def get_node_membership(
     import pkg_resources
     import pandas as pd
     import sys
-    from nilearn.image import resample_to_img, resample_img
+    from nilearn.image import resample_to_img, resample_img, index_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
-    import pickle
 
     try:
         template_img = nib.load(infile)
@@ -367,12 +372,9 @@ def get_node_membership(
     z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
     if isinstance(parcel_list, str):
-        parcel_pkl_file = parcel_list
-        with open(parcel_pkl_file, "rb") as file_:
-            parcel_list = pickle.load(file_)
-        file_.close()
-    else:
-        parcel_pkl_file = None
+        parcel_list_img = nib.load(parcel_list)
+        parcel_list = [index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])]
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = [
@@ -623,11 +625,15 @@ def parcel_masker(
     from nilearn.image import resample_img
     from nilearn import masking
     import os.path as op
+    import types
 
     mask_img = nib.load(roi)
     mask_aff = mask_img.affine
     mask_data, _ = masking._load_mask_img(roi)
     mask_img.uncache()
+
+    if isinstance(parcel_list, types.GeneratorType):
+        parcel_list = [i for i in parcel_list]
 
     i = 0
     indices = []
@@ -856,11 +862,12 @@ def gen_img_list(uatlas):
 
     Returns
     -------
-    img_list : list
+    img_list : Iterator of NiftiImages
         List of binarized Nifti1Images corresponding to ROI masks for each
         unique atlas label.
     """
     import gc
+    from nilearn.image import iter_img
     import os.path as op
     from nilearn.image import new_img_like
 
@@ -892,7 +899,7 @@ def gen_img_list(uatlas):
     bna_img.uncache()
     gc.collect()
 
-    return img_list
+    return iter_img(img_list)
 
 
 def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
@@ -1460,17 +1467,13 @@ def node_gen_masking(
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
+    from nilearn.image import index_img
     from pynets.core import nodemaker
-    import os
-    import pickle
 
     if isinstance(parcel_list, str):
-        parcel_pkl_file = parcel_list
-        with open(parcel_pkl_file, "rb") as file_:
-            parcel_list = pickle.load(file_)
-        file_.close()
-    else:
-        parcel_pkl_file = None
+        parcel_list_img = nib.load(parcel_list)
+        parcel_list = [index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])]
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
@@ -1485,9 +1488,6 @@ def node_gen_masking(
         == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
                                      ) if i != 0])
     )
-
-    if parcel_pkl_file:
-        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1541,17 +1541,13 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    import pickle
+    from nilearn.image import index_img
     from pynets.core import nodemaker
-    import os
 
     if isinstance(parcel_list, str):
-        parcel_pkl_file = parcel_list
-        with open(parcel_pkl_file, "rb") as file_:
-            parcel_list = pickle.load(file_)
-        file_.close()
-    else:
-        parcel_pkl_file = None
+        parcel_list_img = nib.load(parcel_list)
+        parcel_list = [index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])]
 
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
 
@@ -1563,9 +1559,6 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
                                      ) if i != 0])
     )
-
-    if parcel_pkl_file:
-        os.remove(parcel_pkl_file)
 
     return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
 
@@ -1661,6 +1654,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     """
     from pynets.core.nodemaker import get_sphere, mmToVox
     from nilearn.masking import intersect_masks
+    from nilearn.image import iter_img
 
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
@@ -1716,4 +1710,4 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     else:
         raise ValueError("Number of nodes is zero.")
 
-    return parcel_list, par_max, node_size, parc
+    return iter_img(parcel_list), par_max, node_size, parc

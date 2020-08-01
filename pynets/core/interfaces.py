@@ -58,6 +58,7 @@ class FetchNodesLabels(SimpleInterface):
     def _run_interface(self, runtime):
         from pynets.core import utils, nodemaker
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        from nilearn.image import concat_imgs
         import pandas as pd
         import time
         from pathlib import Path
@@ -345,8 +346,11 @@ class FetchNodesLabels(SimpleInterface):
         self._results["atlas"] = atlas
         self._results["networks_list"] = networks_list
         # TODO: Optimize this with 4d array concatenation and .npyz
-        self._results["parcel_list"] = utils.pkl_parcel_list(runtime.cwd,
-                                                             parcel_list)
+
+        parcel_list_4d = concat_imgs([i for i in parcel_list])
+        out_path = f"{runtime.cwd}/parcel_list.nii.gz"
+        nib.save(parcel_list_4d, out_path)
+        self._results["parcel_list"] = out_path
         self._results["par_max"] = par_max
         self._results["uatlas"] = uatlas
         self._results["dir_path"] = dir_path
@@ -494,9 +498,11 @@ class IndividualClustering(SimpleInterface):
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed
-        from joblib.externals.loky import get_reusable_executor
         from pynets.registration import reg_utils as regutils
+        from pynets.core.utils import decompress_nifti
         import pkg_resources
+        import shutil
+        import tempfile
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -587,6 +593,7 @@ class IndividualClustering(SimpleInterface):
             out_name_func_file,
             copy=True,
             use_hardlink=False)
+        out_name_func_file = decompress_nifti(out_name_func_file)
 
         if self.inputs.conf:
             out_name_conf = fname_presuffix(
@@ -616,17 +623,23 @@ class IndividualClustering(SimpleInterface):
 
         if self.inputs.clust_type in clust_list:
             if float(c_boot) > 1:
+                import random
+                from joblib import Memory
                 print(
                     f"Performing circular block bootstrapping with {c_boot}"
                     f" iterations..."
                 )
                 ts_data, block_size = nip.prep_boot()
 
+                cache_dir = tempfile.mkdtemp()
+                memory = Memory(cache_dir, verbose=0)
+                ts_data = memory.cache(ts_data)
+
                 def create_bs_imgs(ts_data, block_size, clust_mask_corr_img):
                     import nibabel as nib
                     from nilearn.masking import unmask
                     from pynets.fmri.estimation import timeseries_bootstrap
-                    boot_series = timeseries_bootstrap(ts_data,
+                    boot_series = timeseries_bootstrap(ts_data.func,
                                                        block_size)[0].astype('float32')
                     return unmask(boot_series, clust_mask_corr_img)
 
@@ -635,7 +648,7 @@ class IndividualClustering(SimpleInterface):
                                      num_conn_comps, _clust_mask_corr_img,
                                      _standardize, _detrending, k,
                                      _local_conn, conf, _dir_path,
-                                     _conn_comps, cache_dir):
+                                     _conn_comps):
                     import os
                     import time
                     import gc
@@ -654,7 +667,7 @@ class IndividualClustering(SimpleInterface):
                                                   _standardize,
                                                   _detrending, k, _local_conn,
                                                   conf, _dir_path,
-                                                  _conn_comps, cache_dir)
+                                                  _conn_comps)
                         parcellation.to_filename(out_path)
                         parcellation.uncache()
                         boot_img.uncache()
@@ -666,19 +679,14 @@ class IndividualClustering(SimpleInterface):
                     _clust_mask_corr_img.uncache()
                     return out_path
 
-                # Use joblib with memmapping
-                folder = f"{runtime.cwd}/joblib_memmap"
-                os.makedirs(folder, exist_ok=True)
-                # data_filename_memmap = os.path.join(folder, 'data_memmap')
-                # dump(ts_data, data_filename_memmap)
-                # data = load(data_filename_memmap, mmap_mode='r+')
-                import random
-                time.sleep(random.randint(1, 10))
+                time.sleep(random.randint(1, 5))
                 counter = 0
                 boot_parcellations = []
                 while float(counter) < float(c_boot):
-                    with Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                                  mmap_mode='r+', max_nbytes=1e6) as parallel:
+                    with Parallel(n_jobs=nthreads, max_nbytes='1000M',
+                                  backend='loky', mmap_mode='r+',
+                                  temp_folder=cache_dir,
+                                  verbose=10) as parallel:
                         iter_bootedparcels = parallel(
                             delayed(run_bs_iteration)(
                                 i, ts_data, runtime.cwd, nip.local_corr,
@@ -686,7 +694,7 @@ class IndividualClustering(SimpleInterface):
                                 nip.num_conn_comps, nip._clust_mask_corr_img,
                                 nip._standardize, nip._detrending, nip.k,
                                 nip._local_conn, nip.conf, nip._dir_path,
-                                nip._conn_comps, folder) for i in
+                                nip._conn_comps) for i in
                             range(c_boot))
 
                         boot_parcellations.extend([i for i in
@@ -694,7 +702,6 @@ class IndividualClustering(SimpleInterface):
                                                    i is not None])
                         counter = len(boot_parcellations)
 
-                    get_reusable_executor().shutdown(wait=False)
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
                 print("Creating spatially-constrained consensus "
@@ -704,6 +711,8 @@ class IndividualClustering(SimpleInterface):
                     int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
+                memory.clear(warn=False)
+                shutil.rmtree(cache_dir, ignore_errors=True)
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
@@ -719,8 +728,7 @@ class IndividualClustering(SimpleInterface):
                                                     nip._detrending, nip.k,
                                                     nip._local_conn,
                                                     nip.conf, nip._dir_path,
-                                                    nip._conn_comps,
-                                                    runtime.cwd)
+                                                    nip._conn_comps)
                 parcellation.to_filename(out_path)
 
         else:
@@ -747,21 +755,18 @@ class IndividualClustering(SimpleInterface):
         self._results["k"] = self.inputs.k
         self._results["clust_type"] = self.inputs.clust_type
         self._results["clustering"] = True
-        self._results["func_file"] = out_name_func_file
+        self._results["func_file"] = self.inputs.func_file
 
         reg_tmp = [
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
-            template_tmp_path
+            template_tmp_path,
+            out_name_func_file
         ]
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
-
-        if os.path.isdir(folder):
-            import shutil
-            shutil.rmtree(folder, ignore_errors=True)
 
         for i in boot_parcellations:
             os.remove(i)
@@ -819,7 +824,9 @@ class ExtractTimeseries(SimpleInterface):
         import gc
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import estimation
+        from pynets.core.utils import decompress_nifti
 
+        # Decompressing each image to facilitate more seamless memory mapping
         if self.inputs.net_parcels_nii_path:
             out_name_net_parcels_nii_path = fname_presuffix(
                 self.inputs.net_parcels_nii_path, suffix="_tmp",
@@ -830,8 +837,11 @@ class ExtractTimeseries(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
+            out_name_net_parcels_nii_path = decompress_nifti(
+                out_name_net_parcels_nii_path)
         else:
             out_name_net_parcels_nii_path = None
+
         if self.inputs.mask:
             out_name_mask = fname_presuffix(
                 self.inputs.mask, suffix="_tmp", newpath=runtime.cwd
@@ -841,6 +851,7 @@ class ExtractTimeseries(SimpleInterface):
                 out_name_mask,
                 copy=True,
                 use_hardlink=False)
+            out_name_mask = decompress_nifti(out_name_mask)
         else:
             out_name_mask = None
 
@@ -852,6 +863,7 @@ class ExtractTimeseries(SimpleInterface):
             out_name_func_file,
             copy=True,
             use_hardlink=False)
+        out_name_func_file = decompress_nifti(out_name_func_file)
 
         if self.inputs.conf:
             out_name_conf = fname_presuffix(
@@ -2626,7 +2638,7 @@ class Tracking(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        dwi_img = nib.load(dwi_file_tmp_path)
+        dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
         dwi_data = dwi_img.get_fdata().astype('float32')
 
         # Load FA data
@@ -2638,7 +2650,7 @@ class Tracking(SimpleInterface):
             fa_file_tmp_path,
             copy=True,
             use_hardlink=False)
-        fa_img = nib.load(fa_file_tmp_path)
+        fa_img = nib.load(fa_file_tmp_path, mmap=True)
 
         # Load B0 mask
         B0_mask_tmp_path = fname_presuffix(
@@ -2650,7 +2662,7 @@ class Tracking(SimpleInterface):
             B0_mask_tmp_path,
             copy=True,
             use_hardlink=False)
-        B0_mask_data = nib.load(B0_mask_tmp_path).get_fdata()
+        B0_mask_data = nib.load(B0_mask_tmp_path, mmap=True).get_fdata()
 
         # Fit diffusion model
         # Save reconstruction to .npy
@@ -2742,10 +2754,10 @@ class Tracking(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        atlas_img = nib.load(labels_im_file_tmp_path)
+        atlas_img = nib.load(labels_im_file_tmp_path, mmap=True)
         atlas_data = np.array(atlas_img.dataobj).astype("uint16")
         atlas_data_wm_gm_int = np.asarray(
-            nib.load(labels_im_file_tmp_path_wm_gm_int).dataobj
+            nib.load(labels_im_file_tmp_path_wm_gm_int, mmap=True).dataobj
         ).astype("uint16")
 
         t1w2dwi_tmp_path = fname_presuffix(
@@ -2798,7 +2810,8 @@ class Tracking(SimpleInterface):
                 waymask_tmp_path,
                 copy=True,
                 use_hardlink=False)
-            waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj
+            waymask_data = np.asarray(nib.load(waymask_tmp_path,
+                                               mmap=True).dataobj
                                       ).astype("bool")
         else:
             waymask_data = None
@@ -2809,13 +2822,10 @@ class Tracking(SimpleInterface):
         intensities = [i for i in np.unique(atlas_data) if i != 0]
         for roi_val in intensities:
             parcels.append(atlas_data == roi_val)
-            i = i + 1
+            i += 1
 
-        if np.sum(atlas_data) == 0:
-            raise ValueError(
-                "ERROR: No non-zero voxels found in atlas. Check any roi masks"
-                " and/or wm-gm interface images "
-                "to verify overlap with dwi-registered atlas.")
+        del atlas_data
+        gc.collect()
 
         # Iteratively build a list of streamlines for each ROI while tracking
         print(
@@ -2870,6 +2880,9 @@ class Tracking(SimpleInterface):
             self.inputs.tiss_class, B0_mask_tmp_path
         )
 
+        del model, parcels, atlas_data_wm_gm_int, waymask_data
+        gc.collect()
+
         # Save streamlines to trk
         streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             runtime.cwd,
@@ -2911,7 +2924,7 @@ class Tracking(SimpleInterface):
         if use_life is True:
             print('Using LiFE to evaluate streamline plausibility...')
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-            dwi_img = nib.load(dwi_file_tmp_path)
+            dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
             dwi_data = dwi_img.get_fdata().astype('float32')
             orig_count = len(streamlines)
             try:
@@ -2927,6 +2940,8 @@ class Tracking(SimpleInterface):
                                  'the tractogram!')
             del dwi_data
 
+        del B0_mask_data
+
         stf = StatefulTractogram(
             streamlines,
             fa_img,
@@ -2937,6 +2952,8 @@ class Tracking(SimpleInterface):
             stf,
             streams,
         )
+
+        del stf
 
         copyfile(
             streams,
@@ -2961,6 +2978,10 @@ class Tracking(SimpleInterface):
             self.inputs.min_length,
             namer_dir,
         )
+
+        del streamlines
+        dwi_img.uncache()
+        gc.collect()
 
         self._results["streams"] = streams
         self._results["track_type"] = self.inputs.track_type
@@ -2996,13 +3017,10 @@ class Tracking(SimpleInterface):
 
         tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path,
                      labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path]
+
         for j in tmp_files:
             if j is not None:
                 os.remove(j)
-
-        del streamlines, atlas_data_wm_gm_int, atlas_data, model, parcels
-        dwi_img.uncache()
-        gc.collect()
 
         return runtime
 

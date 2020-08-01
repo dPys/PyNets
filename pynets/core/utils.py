@@ -1103,6 +1103,22 @@ def flatten(l):
             yield el
 
 
+def decompress_nifti(infile):
+    from nipype.utils.filemanip import split_filename
+    import gzip
+    import os
+    import shutil
+    _, base, ext = split_filename(infile)
+    if ext[-3:].lower() == ".gz":
+        ext = ext[:-3]
+
+    with gzip.open(infile, "rb") as in_file:
+        with open(os.path.abspath(base + ext), "wb") as out_file:
+            shutil.copyfileobj(in_file, out_file)
+    os.remove(infile)
+    return out_file
+
+
 def proportional(k, voxels_list):
     """Hagenbach-Bischoff Quota"""
     quota = sum(voxels_list) / (1.0 + k)
@@ -1574,19 +1590,6 @@ def merge_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
-
-
-def pkl_parcel_list(working_dir, parcel_list):
-    import pickle
-
-    if isinstance(parcel_list, list):
-        out_path = f"{working_dir}/parcel_list.pkl"
-        with open(out_path, 'wb') as f:
-            pickle.dump(parcel_list, f, protocol=2)
-        f.close()
-        return out_path
-    else:
-        return parcel_list
 
 
 def timeout(seconds):
