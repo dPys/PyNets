@@ -141,7 +141,7 @@ plotting:
                 - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
-        - (6, 8)
+        - (4, 6)
       - 'save_nifti_parcels_node':
         - (4, 1)
       - 'gtab_node':

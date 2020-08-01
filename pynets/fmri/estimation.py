@@ -534,7 +534,8 @@ class TimeseriesExtraction(object):
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
-        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path)
+        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path,
+                                               mmap=True)
         self._net_parcels_map_nifti.set_data_dtype(np.int16)
         self._parcel_masker = input_data.NiftiLabelsMasker(
             labels_img=self._net_parcels_map_nifti,
@@ -549,8 +550,9 @@ class TimeseriesExtraction(object):
             resampling_target="labels",
             dtype="auto",
             mask_img=self._mask_img,
-            strategy=self.extract_strategy,
+            strategy=self.extract_strategy
         )
+
         if self.conf is not None:
             import pandas as pd
             import os

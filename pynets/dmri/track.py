@@ -70,13 +70,13 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
 
 def prep_tissues(
-        t1_mask,
-        gm_in_dwi,
-        vent_csf_in_dwi,
-        wm_in_dwi,
-        tiss_class,
-        B0_mask,
-        cmc_step_size=0.2):
+    t1_mask,
+    gm_in_dwi,
+    vent_csf_in_dwi,
+    wm_in_dwi,
+    tiss_class,
+    B0_mask,
+    cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
 
@@ -120,18 +120,19 @@ def prep_tissues(
     from nilearn.image import math_img
 
     # Load B0 mask
-    B0_mask_img = math_img("img > 0.0", img=nib.load(B0_mask))
+    B0_mask_img = math_img("img > 0.0", img=nib.load(B0_mask, mmap=True))
 
     # Load t1 mask
-    mask_img = math_img("img > 0.0", img=nib.load(t1_mask))
+    mask_img = math_img("img > 0.0", img=nib.load(t1_mask, mmap=True))
 
     # Load tissue maps and prepare tissue classifier
-    wm_img = nib.load(wm_in_dwi)
+    wm_img = nib.load(wm_in_dwi, mmap=True)
     wm_mask_img = math_img("img > 0.0", img=wm_img)
-    gm_img = nib.load(gm_in_dwi)
+    gm_img = nib.load(gm_in_dwi, mmap=True)
     gm_data = np.asarray(gm_img.dataobj, dtype=np.float32)
     wm_data = np.asarray(wm_img.dataobj, dtype=np.float32)
-    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi).dataobj,
+    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi,
+                                               mmap=True).dataobj,
                                       dtype=np.float32)
     if tiss_class == "act":
         background = np.ones(mask_img.shape)
@@ -172,7 +173,8 @@ def prep_tissues(
                         mask_img,
                         B0_mask_img,
                         nib.Nifti1Image(np.invert(
-                            vent_csf_in_dwi_data.astype('bool')).astype('int'),
+                            vent_csf_in_dwi_data.astype('bool')).astype(
+                            'int'),
                                         affine=mask_img.affine),
                     ],
                     threshold=1,
@@ -405,12 +407,17 @@ def track_ensemble(
     import time
     import pkg_resources
     import yaml
-    from pynets.dmri.track import run_tracking
     from joblib import Parallel, delayed
     import itertools
     from dipy.tracking.streamline import Streamlines
+    from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from joblib.externals.loky import get_reusable_executor
+    from joblib import Memory
+    import tempfile
+    from pynets.dmri.dmri_utils import generate_sl
+
+    cache_dir = tempfile.mkdtemp()
+    memory = Memory(cache_dir, verbose=0)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -423,15 +430,19 @@ def track_ensemble(
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
+    atlas_data_wm_gm_int = memory.cache(atlas_data_wm_gm_int)
+    parcels = memory.cache(parcels)
+
     # Commence Ensemble Tractography
     start = time.time()
     stream_counter = 0
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < 3:
-        with Parallel(n_jobs=nthreads, verbose=10, backend='loky',
-                      mmap_mode='r+', max_nbytes=1e6) as parallel:
+    while float(stream_counter) < float(target_samples) and float(ix) < 5:
+        with Parallel(n_jobs=nthreads, max_nbytes='1000M', backend='loky',
+                      mmap_mode='r+', temp_folder=cache_dir,
+                      verbose=10) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
                     i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter,
@@ -440,22 +451,22 @@ def track_ensemble(
                     pft_front_tracking_dist, particle_count, B0_mask_data,
                     roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
                     min_length, track_type, min_separation_angle, sphere,
-                    t1w2dwi,
-                    gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
+                    t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                     B0_mask) for i in all_combs)
-            all_streams.append(out_streams)
-            try:
-                streams = [i for j in all_streams for i in j if j is not None]
-                stream_counter = len(Streamlines(streams).data)
-                del streams
-                if stream_counter > 20:
-                    ix = 0
-                else:
-                    ix += 1
-            except BaseException:
-                print('0 or Invalid streamlines encountered for consecutive '
-                      'sweeps. Skipping...')
+
+            out_streams = Streamlines([i for i in out_streams if i is not
+                                       None]).get_data()
+
+            if len(out_streams) > 0:
+                # Append streamline generators to prevent exponential growth
+                # in memory consumption
+                all_streams.extend([generate_sl(i) for i in out_streams])
+                stream_counter += len(out_streams)
+                del out_streams
+            else:
                 ix += 1
+                continue
+
             print(
                 "%s%s%s%s"
                 % (
@@ -465,24 +476,23 @@ def track_ensemble(
                     "\n",
                 )
             )
-            del out_streams
             gc.collect()
             print(Style.RESET_ALL)
 
-        get_reusable_executor().shutdown(wait=False)
+    memory.clear(warn=False)
 
-    print("Tracking Complete:\n", str(time.time() - start))
-    streams = [i for j in all_streams for i in j if j is not None]
-
-    if len(streams) == 0:
-        streams_data = None
-        print('No streamlines generated!')
+    if ix >= 5:
+        raise ValueError('Tractography failed. '
+                         '>5 consecutive sampling iterations '
+                         'with 0 streamlines. Are you using a waymask? '
+                         'If so, it may be too restrictive.')
     else:
-        streams_data = Streamlines(streams).data
+        print("Tracking Complete:\n", str(time.time() - start))
 
-    del streams
-
-    return streams_data
+    if stream_counter != 0:
+        return Streamlines([Streamlines(i) for i in all_streams])
+    else:
+        raise ValueError('No streamlines generated!')
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
@@ -511,10 +521,10 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         vent_csf_in_dwi,
         wm_in_dwi,
         tiss_class,
-        B0_mask
-    )
+        B0_mask)
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
+
     # Instantiate DirectionGetter
     if directget == "prob" or directget == "probabilistic":
         dg = ProbabilisticDirectionGetter.from_shcoeff(
@@ -546,7 +556,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     # Perform wm-gm interface seeding, using n_seeds at a time
     seeds = utils.random_seeds_from_mask(
-        atlas_data_wm_gm_int > 0,
+        atlas_data_wm_gm_int.func > 0,
         seeds_count=n_seeds_per_iter,
         seed_count_per_voxel=False,
         affine=np.eye(4),
@@ -603,7 +613,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         select_by_rois(
             roi_proximal_streamlines,
             affine=np.eye(4),
-            rois=parcels,
+            rois=parcels.func,
             include=parcel_vec,
             mode="%s" % ("any" if waymask_data is not None else "both_end"),
             tol=roi_neighborhood_tol,
@@ -644,9 +654,6 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
     gc.collect()
 
     try:
-        streamlines = nib.streamlines.array_sequence.ArraySequence(out_streams)
+        return nib.streamlines.array_sequence.ArraySequence(out_streams)
     except BaseException:
-        streamlines = None
-
-    return streamlines
-
+        return None

@@ -122,7 +122,7 @@ def test_ni_parcellate(clust_type):
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
                               nip.conf, tmpdir.name,
-                              nip._conn_comps, tmpdir.name)
+                              nip._conn_comps)
 
     nib.save(parcellation, out_path)
     assert out_path is not None
@@ -177,7 +177,7 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
                               nip._standardize,
                               nip._detrending, nip.k, nip._local_conn,
                               nip.conf, tmpdir.name,
-                              nip._conn_comps, tmpdir.name)
+                              nip._conn_comps)
 
     nib.save(parcellation, out_path)
     assert atlas is not None

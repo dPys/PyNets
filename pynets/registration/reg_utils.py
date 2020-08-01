@@ -20,6 +20,7 @@ except KeyError:
 
 
 def gen_mask(t1w_head, t1w_brain, mask):
+    import time
     import os.path as op
     from pynets.registration import reg_utils as regutils
     from nilearn.image import math_img
@@ -59,6 +60,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     img = math_img("img > 0.0", img=t_img)
     img.to_filename(t1w_brain_mask)
     t_img.uncache()
+    time.sleep(0.5)
 
     t1w_brain = regutils.apply_mask_to_image(t1w_head, t1w_brain_mask,
                                              t1w_brain)
@@ -155,6 +157,7 @@ def atlas2t1w2dwi_align(
                 sup=True,
                 mask=t1w_brain_mask,
             )
+            time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
             regutils.align(
@@ -183,6 +186,7 @@ def atlas2t1w2dwi_align(
                 interp="nearestneighbour",
                 cost="mutualinfo",
             )
+            time.sleep(0.5)
 
             regutils.align(
                 aligned_atlas_skull,
@@ -206,6 +210,7 @@ def atlas2t1w2dwi_align(
             interp="nearestneighbour",
             cost="mutualinfo",
         )
+        time.sleep(0.5)
 
         regutils.align(
             aligned_atlas_skull,
@@ -229,6 +234,7 @@ def atlas2t1w2dwi_align(
         header=atlas_img.header,
     )
 
+    # Get the union of masks
     dwi_aligned_atlas_wmgm_int_img = intersect_masks(
         [wm_gm_mask_img, atlas_mask_img], threshold=0,
         connected=False
@@ -241,11 +247,11 @@ def atlas2t1w2dwi_align(
                                                      B0_mask,
                                                      dwi_aligned_atlas)
 
-    time.sleep(5)
+    time.sleep(0.5)
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
         dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
 
-    time.sleep(5)
+    time.sleep(0.5)
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
 
@@ -284,6 +290,7 @@ def roi2dwi_align(
     A function to perform alignment of a waymask from
     MNI space --> T1w --> dwi.
     """
+    import time
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -303,6 +310,7 @@ def roi2dwi_align(
     else:
         regutils.applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
 
+    time.sleep(0.5)
     # Apply transform from t1w to native dwi space
     regutils.applyxfm(ap_path, roi_in_t1w, t1wtissue2dwi_xfm, roi_in_dwi)
 
@@ -325,6 +333,7 @@ def waymask2dwi_align(
     A function to perform alignment of a waymask from
     MNI space --> T1w --> dwi.
     """
+    import time
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -348,6 +357,7 @@ def waymask2dwi_align(
     else:
         regutils.applyxfm(t1w_brain, waymask_res, mni2t1_xfm, waymask_in_t1w)
 
+    time.sleep(0.5)
     # Apply transform from t1w to native dwi space
     regutils.applyxfm(
         ap_path,
@@ -554,7 +564,7 @@ def atlas2t1w_align(
                                                     t1w_brain_mask,
                                                     aligned_atlas_gm)
 
-    time.sleep(5)
+    time.sleep(0.5)
     atlas_img = nib.load(aligned_atlas_gm)
 
     atlas_img_corr = nib.Nifti1Image(

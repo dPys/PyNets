@@ -280,16 +280,19 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
+    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
     [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list)
     print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
+    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
      _, _, _] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
                                            parlistfile)
 
-    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords_masked, WB_parcel_list, WB_labels_masked,
+    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
+    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_labels,
                                                             dir_path, ID, perc_overlap)
     print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
@@ -463,7 +466,7 @@ def test_create_spherical_roi_volumes():
     node_size = 2
     template_mask = pkg_resources.resource_filename("pynets", "templates/MNI152_T1_brain_mask_2mm.nii.gz")
     [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(node_size, [(0, 0, 0), (5, 5, 5)], template_mask)
-    assert len(parcel_list) > 0
+    assert len([i for i in parcel_list]) > 0
 
 
 def test_get_sphere():

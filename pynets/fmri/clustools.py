@@ -972,8 +972,7 @@ class NiParcellate(object):
 
 def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                num_conn_comps, _clust_mask_corr_img, _standardize,
-               _detrending, k, _local_conn, conf, _dir_path,
-               _conn_comps, cache_dir):
+               _detrending, k, _local_conn, conf, _dir_path, _conn_comps):
     """
     API for performing any of a variety of clustering routines available
     through NiLearn.
@@ -984,12 +983,9 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
     # from joblib import Memory
-    # import uuid
-    # from time import strftime
+    import tempfile
 
-    # run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    # cache_dir = f"{cache_dir}/{run_uuid}"
-    # os.makedirs(cache_dir, exist_ok=True)
+    cache_dir = tempfile.mkdtemp()
     # memory = Memory(cache_dir, verbose=0)
 
     start = time.time()
@@ -1091,7 +1087,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
 
         mask_img_list = []
         mask_voxels_dict = dict()
-        for i, mask_img in enumerate(list(iter_img(_conn_comps))):
+        for i, mask_img in enumerate(iter_img(_conn_comps)):
             mask_voxels_dict[i] = np.int(
                 np.sum(np.asarray(mask_img.dataobj)))
             mask_img_list.append(mask_img)
@@ -1105,7 +1101,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"Building {len(mask_img_list)} separate atlases with "
             f"voxel-proportional k clusters for each "
             f"connected component...")
-        for i, mask_img in enumerate(mask_img_list):
+        for i, mask_img in enumerate(iter_img(mask_img_list)):
             if k_list[i] < 5:
                 print(f"Only {k_list[i]} voxels in component. Discarding...")
                 continue
@@ -1156,7 +1152,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
         atlas_of_atlases = []
-        for atlas in conn_comp_atlases:
+        for atlas in iter_img(conn_comp_atlases):
             bna_data = np.around(
                 np.asarray(
                     atlas.dataobj)).astype("uint16")
@@ -1191,5 +1187,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             f"{clust_type}{k}"
             f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
+
+        # memory.clear(warn=False)
 
         return super_atlas_ward
