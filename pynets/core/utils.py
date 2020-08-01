@@ -1115,8 +1115,9 @@ def decompress_nifti(infile):
     with gzip.open(infile, "rb") as in_file:
         with open(os.path.abspath(base + ext), "wb") as out_file:
             shutil.copyfileobj(in_file, out_file)
+
     os.remove(infile)
-    return out_file
+    return out_file.name
 
 
 def proportional(k, voxels_list):
