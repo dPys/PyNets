@@ -1108,7 +1108,9 @@ def decompress_nifti(infile):
     import gzip
     import os
     import shutil
+
     _, base, ext = split_filename(infile)
+
     if ext[-3:].lower() == ".gz":
         ext = ext[:-3]
 

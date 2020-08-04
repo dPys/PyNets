@@ -713,6 +713,9 @@ class IndividualClustering(SimpleInterface):
                 nib.save(consensus_parcellation, nip.uatlas)
                 memory.clear(warn=False)
                 shutil.rmtree(cache_dir, ignore_errors=True)
+                for i in boot_parcellations:
+                    if os.path.isfile(i):
+                        os.remove(i)
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
@@ -767,9 +770,6 @@ class IndividualClustering(SimpleInterface):
         for j in reg_tmp:
             if j is not None:
                 os.remove(j)
-
-        for i in boot_parcellations:
-            os.remove(i)
 
         gc.collect()
 

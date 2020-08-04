@@ -414,6 +414,7 @@ def track_ensemble(
     from colorama import Fore, Style
     from joblib import Memory
     import tempfile
+    import shutil
     from pynets.dmri.dmri_utils import generate_sl
 
     cache_dir = tempfile.mkdtemp()
@@ -454,18 +455,19 @@ def track_ensemble(
                     t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
                     B0_mask) for i in all_combs)
 
-            out_streams = Streamlines([i for i in out_streams if i is not
-                                       None]).get_data()
-
-            if len(out_streams) > 0:
-                # Append streamline generators to prevent exponential growth
-                # in memory consumption
-                all_streams.extend([generate_sl(i) for i in out_streams])
-                stream_counter += len(out_streams)
-                del out_streams
-            else:
+            out_streams = [i for i in out_streams if i is not None and
+                           len(i) > 0]
+            if len(out_streams) == 0:
                 ix += 1
                 continue
+            else:
+                out_streams = Streamlines(out_streams).get_data()
+
+            # Append streamline generators to prevent exponential growth
+            # in memory consumption
+            all_streams.extend([generate_sl(i) for i in out_streams])
+            stream_counter += len(out_streams)
+            del out_streams
 
             print(
                 "%s%s%s%s"
@@ -488,6 +490,8 @@ def track_ensemble(
                          'If so, it may be too restrictive.')
     else:
         print("Tracking Complete:\n", str(time.time() - start))
+
+    shutil.rmtree(cache_dir, ignore_errors=True)
 
     if stream_counter != 0:
         return Streamlines([Streamlines(i) for i in all_streams])

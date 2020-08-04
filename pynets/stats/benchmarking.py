@@ -25,16 +25,11 @@ from scipy import stats
 warnings.filterwarnings("ignore")
 
 
-def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
+def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
     """
     A function to build a hyperparameter dictionary by parsing a given
     topology file path.
     """
-
-    if "atlas" not in hyperparam_dict.keys():
-        hyperparam_dict["atlas"] = [atlas]
-    else:
-        hyperparam_dict["atlas"].append(atlas)
 
     for hyperparam in hyperparams:
         if (
@@ -114,6 +109,10 @@ def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
                     file_renamed.split("minlength-")[1].split("_")[0]
                 )
             hyperparams.append("min_length")
+
+    for key in hyperparam_dict:
+        hyperparam_dict[key] = list(set(hyperparam_dict[key]))
+
     return hyperparam_dict, hyperparams
 
 
@@ -265,21 +264,25 @@ if __name__ == "__main__":
 
     mets = [
         "global_efficiency",
-        "average_shortest_path_length",
         "transitivity",
         "average_clustering",
+        "average_shortest_path_length",
         "average_betweenness_centrality",
         "average_eigenvector_centrality",
         "average_degree_centrality",
-        "louvain_modularity",
-        "average_local_clustering",
         "average_diversity_coefficient",
         "average_participation_coefficient"
     ]
 
     df = pd.read_csv(working_dir + f"/all_subs_neat_{modality}.csv")
-    df = df.loc[:, df.columns.str.contains(thr_type, regex=True)]
     df = df.dropna(subset=["id"])
+    df['id'] = df['id'].str.replace('topology_auc_sub-', '')
+    df['id'] = df['id'].str.replace("_ses-ses-", "_ses-")
+    df['id'] = df['id'].str.replace(".csv", "")
+
+    df = df.rename(columns=lambda x: re.sub("partcorr", "model-partcorr", x))
+    df = df.rename(columns=lambda x: re.sub("corr", "model-corr", x))
+    df = df.rename(columns=lambda x: re.sub("cov", "model-cov", x))
 
     cols = [
         j
@@ -296,10 +299,10 @@ if __name__ == "__main__":
         df[col] = df[col][df[col] < 1]
         # df[col] = df[col][(np.abs(stats.zscore(df[col])) < 3)]
 
-    df = df.drop(
-        df.loc[:, list((100 * (df.isnull().sum() /
-                               len(df.index)) > 20))].columns, 1
-    )
+    # df = df.drop(
+    #     df.loc[:, list((100 * (df.isnull().sum() /
+    #                            len(df.index)) > 20))].columns, 1
+    # )
 
     hyperparam_dict = {}
 
@@ -312,17 +315,14 @@ if __name__ == "__main__":
 
     if modality == "func":
         #gen_hyperparams = ["model", "clust", "_k"]
-        gen_hyperparams = ["model", "clust", "_k"]
+        hyperparams = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+
         for col in cols:
             build_hp_dict(
                 col,
-                col.split("_clust")[0],
                 "func",
                 hyperparam_dict,
-                gen_hyperparams)
-
-        for key in hyperparam_dict:
-            hyperparam_dict[key] = list(set(hyperparam_dict[key]))
+                hyperparams)
 
         grid = list(
             itertools.product(
@@ -331,6 +331,7 @@ if __name__ == "__main__":
         )
 
         subject_dict = {}
+        columns = df.columns
         for id in df["id"]:
             print(id)
             ID = id.split("_")[0].split("sub-")[1]
@@ -338,58 +339,101 @@ if __name__ == "__main__":
             if ID not in subject_dict.keys():
                 subject_dict[ID] = {}
             subject_dict[ID][ses] = dict.fromkeys(grid, np.nan)
-            for atlas, model, clust, _k, smooth, hpass in \
+
+            for atlas, res, model, extract, hpass, smooth in \
                 subject_dict[ID][ses]:
                 subject_dict[ID][ses][(
-                    atlas, model, clust, _k, smooth, hpass)] = {}
+                    atlas, res, model, extract, hpass, smooth)] = {}
+
+            # for atlas, model, clust, _k, smooth, hpass in \
+            #     subject_dict[ID][ses]:
+            #     subject_dict[ID][ses][(
+            #         atlas, model, clust, _k, smooth, hpass)] = {}
                 met_vals = np.empty([len(mets), 1], dtype=np.float32)
                 met_vals[:] = np.nan
                 i = 0
                 for met in mets:
+                    # col = (
+                    #     atlas
+                    #     + "_clust-"
+                    #     + clust
+                    #     + "_k-"
+                    #     + str(_k)
+                    #     + "_model-"
+                    #     + model
+                    #     + "_nodetype-parc_"
+                    #     + "smooth-"
+                    #     + str(smooth)
+                    #     + "fwhm_hpass-"
+                    #     + str(hpass)
+                    #     + "Hz_"
+                    #     + "thrtype-"
+                    #     + thr_type
+                    #     + "_topology_"
+                    #     + met
+                    #     + "_auc"
+                    # )
                     col = (
-                        atlas
-                        + "_clust-"
-                        + clust
-                        + "_k-"
-                        + str(_k)
+                        'rsn-'
+                        + atlas
+                        + "_res-"
+                        + res
                         + "_model-"
                         + model
-                        + "_nodetype-parc_"
+                        + '_template-MNI152_T1_nodetype-parc_'
                         + "smooth-"
                         + str(smooth)
                         + "fwhm_hpass-"
                         + str(hpass)
-                        + "Hz_"
-                        + "thrtype-"
+                        + "Hz_extract-"
+                        + extract
+                        + "_thrtype-"
                         + thr_type
-                        + "_topology_"
+                        + "_auc_"
                         + met
                         + "_auc"
                     )
-                    try:
-                        met_vals[i] = df[df["id"] == "sub-" +
-                                         ID + "_ses-" + ses][col].values[0]
-                    except BaseException:
-                        print(
-                            "No values found for: " +
-                            met +
-                            " in column: " +
-                            col +
-                            "\n")
+                    if col in columns:
+                        out = df[df["id"] == "sub-" + ID + "_ses-" +
+                                 ses][col].values[0]
+                        print(out)
+                    else:
+                        out = None
+                        # print(
+                        #     "No values found for: " +
+                        #     met +
+                        #     " in column: " +
+                        #     col +
+                        #     "\n")
+                        met_vals[i] = np.nan
+                    if str(out) != 'nan':
+                        #print(col)
+                        met_vals[i] = out
+                    else:
+                        # print(
+                        #     "No values found for: " +
+                        #     met +
+                        #     " in column: " +
+                        #     col +
+                        #     "\n")
                         met_vals[i] = np.nan
                     del col
                     i += 1
-                subject_dict[ID][ses][(atlas, model, clust, _k, smooth,
-                                       hpass)]["topology"] = met_vals
-                del i, atlas, model, clust, _k, smooth, hpass
+
+                if np.sum(np.isnan(met_vals)) != len(met_vals):
+                    subject_dict[ID][ses][(
+                        atlas, res, model, extract, hpass, smooth)
+                    ]["topology"] = met_vals
+                del i, atlas, model, hpass, smooth, extract
             del ID, ses
+
 
         if icc is True:
             i = 0
-            for atlas, model, clust, _k, smooth, hpass in grid:
+            for atlas, res, model, extract, hpass, smooth in grid:
                 df_summary.at[i, "grid"] = (
-                    atlas, model, clust, _k, smooth, hpass)
-                print(atlas, model, clust, _k, smooth, hpass)
+                    atlas, res, model, extract, hpass, smooth)
+                print(atlas, res, model, extract, hpass, smooth)
                 id_list = []
                 icc_list = []
                 for ID in subject_dict.keys():
@@ -398,7 +442,7 @@ if __name__ == "__main__":
                         id_list.append(ID)
                         ses_list.append(
                             subject_dict[ID][ses][
-                                (atlas, model, clust, _k, smooth, hpass)
+                                (atlas, res, model, extract, hpass, smooth)
                             ]["topology"]
                         )
                     meas = np.hstack(ses_list)
@@ -414,8 +458,8 @@ if __name__ == "__main__":
 
         if disc is True:
             i = 0
-            for atlas, model, clust, _k, smooth, hpass in grid:
-                print(atlas, model, clust, _k, smooth, hpass)
+            for atlas, res, model, extract, hpass, smooth in grid:
+                print(atlas, res, model, extract, hpass, smooth)
                 id_list = []
                 vect_all = []
                 for ID in subject_dict.keys():
@@ -424,7 +468,7 @@ if __name__ == "__main__":
                         id_list.append(ID)
                         vects.append(
                             subject_dict[ID][ses][
-                                (atlas, model, clust, _k, smooth, hpass)
+                                (atlas, res, model, extract, hpass, smooth)
                             ]["topology"]
                         )
                     vect_all.append(np.concatenate(vects, axis=1))
@@ -434,7 +478,7 @@ if __name__ == "__main__":
                 Y = np.array(id_list)
                 try:
                     df_summary.at[i, "grid"] = (
-                        atlas, model, clust, _k, smooth, hpass)
+                        atlas, res, model, extract, hpass, smooth)
                     bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
                     for m in set(bad_ixs):
                         if (X_top.shape[0] - bad_ixs.count(m)

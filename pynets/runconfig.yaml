@@ -109,6 +109,9 @@ available_models:
       - 'csd'
       - 'ten'
       - 'sfm'
+gradients:
+    n_components:
+        - null
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
@@ -199,6 +202,20 @@ resource_dict: # Nipype workflow resource settings
       - 'join_iters_node_thr':
         - (1, 1)
       - 'join_iters_node_nets':
+        - (1, 1)
+      - 'join_iters_node_atlas':
+        - (1, 1)
+      - 'join_iters_node_ext_ts':
+        - (1, 1)
+      - 'join_iters_extract_ts_node':
+        - (1, 1)
+      - 'join_iters_node':
+        - (1, 1)
+      - 'join_iters_prep_spheres_node':
+        - (1, 1)
+      - 'join_iters_get_conn_matrix_node':
+        - (1, 1)
+      - 'join_iters_run_track_node':
         - (1, 1)
       - 'clust_join_node':
         - (1, 1)

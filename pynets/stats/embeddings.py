@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
+def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
     sets.
@@ -62,8 +62,8 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
         f"{subgraph_name}{'...'}"
     )
-    omni = OmnibusEmbed(check_lcc=False)
-    mds = ClassicalMDS()
+    omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
+    mds = ClassicalMDS(n_components=n_components)
     omni_fit = omni.fit_transform(pop_array)
 
     # Transform omnibus tensor into dissimilarity feature
@@ -78,13 +78,18 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/gradients-OMNI_{atlas}_{subgraph_name}.npy"
+        f"{namer_dir}/gradients-OMNI_{atlas}_{subgraph_name}_"
+        f"{os.path.basename(graph_path).split('_thrtype')[0]}.npy"
     )
 
-    out_path_est_omni = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_" \
-                        f"{subgraph_name}.joblib"
-    out_path_est_mds = f"{namer_dir}/estimator_embedding-OMNI_{atlas}_" \
-                       f"{subgraph_name}_MDS.joblib"
+    out_path_est_omni = f"{namer_dir}/gradientestimator-OMNI_{atlas}_" \
+                        f"{subgraph_name}_" \
+                        f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+                        f"_MDS.joblib"
+    out_path_est_mds = f"{namer_dir}/gradientestimator-OMNI_{atlas}_" \
+                       f"{subgraph_name}_" \
+                       f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+                       f"_MDS.joblib"
 
     dump(omni, out_path_est_omni)
     dump(omni, out_path_est_mds)
@@ -95,7 +100,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
     return out_path
 
 
-def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
+def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
     """
     Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of input
     graphs with matched vertex sets.
@@ -149,7 +154,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         f"{'Embedding multimodal masetome for atlas: '}{atlas} and "
         f"{subgraph_name}{'...'}"
     )
-    mase = MultipleASE()
+    mase = MultipleASE(n_components=n_components)
     mase_fit = mase.fit_transform(pop_array)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
@@ -158,10 +163,12 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/gradients_embedding-MASE_{atlas}_{subgraph_name}.npy"
+        f"{namer_dir}/gradients-MASE_{atlas}_{subgraph_name}"
+        f"_{os.path.basename(graph_path)}"
     )
-    out_path_est = f"{namer_dir}/estimator_embedding-MASE_{atlas}_" \
-                   f"{subgraph_name}.joblib"
+    out_path_est = f"{namer_dir}/gradientestimator-MASE_{atlas}_" \
+                   f"{subgraph_name}" \
+                   f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
     dump(mase, out_path_est)
 
@@ -172,7 +179,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="whole_brain"):
     return out_path
 
 
-def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
+def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
     """
 
     Class for computing the adjacency spectral embedding of a graph.
@@ -228,7 +235,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
         f"{'Embedding unimodal asetome for atlas: '}{atlas} and "
         f"{subgraph_name}{'...'}"
     )
-    ase = AdjacencySpectralEmbed()
+    ase = AdjacencySpectralEmbed(n_components=n_components)
     ase_fit = ase.fit_transform(get_lcc(mat))
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
@@ -237,10 +244,11 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="whole_brain"):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/gradients_embedding-ASE_{atlas}_{subgraph_name}" \
-               f".npy"
-    out_path_est = f"{namer_dir}/estimator_embedding-ASE_{atlas}" \
-                   f"_{subgraph_name}.joblib"
+    out_path = f"{namer_dir}/gradientestimator-ASE" \
+               f"_{atlas}_{subgraph_name}_{os.path.basename(graph_path)}"
+    out_path_est = f"{namer_dir}/gradientestimator-ASE_{atlas}" \
+                   f"_{subgraph_name}" \
+                   f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
     dump(ase, out_path_est)
 
@@ -266,6 +274,23 @@ def build_asetomes(est_path_iterlist, ID):
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
+    import yaml
+    import pkg_resources
+
+    # Available functional and structural connectivity models
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            n_components = hardcoded_params["gradients"][
+                "n_components"][0]
+        except KeyError:
+            print(
+                "ERROR: available gradient dimensionality presets not "
+                "sucessfully extracted from runconfig.yaml"
+            )
+    stream.close()
 
     if isinstance(est_path_iterlist, list):
         est_path_iterlist = list(flatten(est_path_iterlist))
@@ -281,8 +306,9 @@ def build_asetomes(est_path_iterlist, ID):
         if "rsn" in res:
             subgraph = res.split("rsn-")[1]
         else:
-            subgraph = "whole_brain"
-        out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph)
+            subgraph = "all_nodes"
+        out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
+                              n_components=n_components)
         out_paths.append(out_path)
 
     return out_paths
@@ -312,6 +338,23 @@ def build_masetome(est_path_iterlist, ID):
     import numpy as np
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
+    import yaml
+    import pkg_resources
+
+    # Available functional and structural connectivity models
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            n_components = hardcoded_params["gradients"][
+                "n_components"][0]
+        except KeyError:
+            print(
+                "ERROR: available gradient dimensionality presets not "
+                "sucessfully extracted from runconfig.yaml"
+            )
+    stream.close()
 
     out_paths = []
     for pairs in est_path_iterlist:
@@ -324,13 +367,13 @@ def build_masetome(est_path_iterlist, ID):
         if "rsn" in res:
             subgraph = res.split("rsn-")[1]
         else:
-            subgraph = "whole_brain"
+            subgraph = "all_nodes"
         out_path = _mase_embed(
             pop_list,
             atlas,
             pairs[0],
             ID,
-            subgraph_name=subgraph)
+            subgraph_name=subgraph, n_components=n_components)
         out_paths.append(out_path)
 
     return out_paths
@@ -384,6 +427,14 @@ def build_omnetome(est_path_iterlist, ID):
             print(
                 "ERROR: available structural models not sucessfully extracted"
                 " from runconfig.yaml"
+            )
+        try:
+            n_components = hardcoded_params["gradients"][
+                "n_components"][0]
+        except KeyError:
+            print(
+                "ERROR: available gradient dimensionality presets not "
+                "sucessfully extracted from runconfig.yaml"
             )
     stream.close()
 
@@ -484,7 +535,8 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path, ID, rsn
+                                pop_rsn_list, atlas, graph_path, ID, rsn,
+                                n_components
                             )
                             out_paths_func.append(out_path)
                         else:
@@ -502,7 +554,9 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "ERROR: Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas, graph_path, ID)
+                        out_path = _omni_embed(pop_list, atlas,
+                                               graph_path, ID,
+                                               n_components=n_components)
                         out_paths_func.append(out_path)
                     else:
                         print(
@@ -527,7 +581,8 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path, ID, rsn
+                                pop_rsn_list, atlas, graph_path, ID,
+                                rsn, n_components
                             )
                             out_paths_dwi.append(out_path)
                         else:
@@ -545,7 +600,8 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "ERROR: Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas, graph_path, ID)
+                        out_path = _omni_embed(pop_list, atlas, graph_path,
+                                               ID, n_components=n_components)
                         out_paths_dwi.append(out_path)
                     else:
                         print(
