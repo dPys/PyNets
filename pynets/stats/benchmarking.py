@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore")
 def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
     """
     A function to build a hyperparameter dictionary by parsing a given
-    topology file path.
+    file path.
     """
 
     for hyperparam in hyperparams:
@@ -37,7 +37,11 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
             and hyperparam != "hpass"
             and hyperparam != "track_type"
             and hyperparam != "directget"
-            and hyperparam != "min_length"
+            and hyperparam != "minlength"
+            and hyperparam != "samples"
+            and hyperparam != "nodetype"
+            and hyperparam != "template"
+
         ):
             if hyperparam not in hyperparam_dict.keys():
                 hyperparam_dict[hyperparam] = [
@@ -79,16 +83,6 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
             hyperparams.append("extract")
 
     elif modality == "dwi":
-        if "tracktype-" in file_renamed:
-            if "track_type" not in hyperparam_dict.keys():
-                hyperparam_dict["track_type"] = [
-                    file_renamed.split("tracktype-")[1].split("_")[0]
-                ]
-            else:
-                hyperparam_dict["track_type"].append(
-                    file_renamed.split("tracktype-")[1].split("_")[0]
-                )
-            hyperparams.append("track_type")
         if "directget-" in file_renamed:
             if "directget" not in hyperparam_dict.keys():
                 hyperparam_dict["directget"] = [
@@ -100,15 +94,15 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 )
             hyperparams.append("directget")
         if "minlength-" in file_renamed:
-            if "min_length" not in hyperparam_dict.keys():
-                hyperparam_dict["min_length"] = [
+            if "minlength" not in hyperparam_dict.keys():
+                hyperparam_dict["minlength"] = [
                     file_renamed.split("minlength-")[1].split("_")[0]
                 ]
             else:
-                hyperparam_dict["min_length"].append(
+                hyperparam_dict["minlength"].append(
                     file_renamed.split("minlength-")[1].split("_")[0]
                 )
-            hyperparams.append("min_length")
+            hyperparams.append("minlength")
 
     for key in hyperparam_dict:
         hyperparam_dict[key] = list(set(hyperparam_dict[key]))

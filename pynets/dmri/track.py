@@ -441,7 +441,7 @@ def track_ensemble(
     all_streams = []
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < 5:
-        with Parallel(n_jobs=nthreads, max_nbytes='1000M', backend='loky',
+        with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
@@ -461,7 +461,8 @@ def track_ensemble(
                 ix += 1
                 continue
             else:
-                out_streams = Streamlines(out_streams).get_data()
+                out_streams = nib.streamlines.array_sequence.concatenate(
+                    out_streams, axis=0)
 
             # Append streamline generators to prevent exponential growth
             # in memory consumption

@@ -78,15 +78,15 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/gradients-OMNI_{atlas}_{subgraph_name}_"
+        f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
         f"{os.path.basename(graph_path).split('_thrtype')[0]}.npy"
     )
 
-    out_path_est_omni = f"{namer_dir}/gradientestimator-OMNI_{atlas}_" \
+    out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
                         f"{subgraph_name}_" \
                         f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
                         f"_MDS.joblib"
-    out_path_est_mds = f"{namer_dir}/gradientestimator-OMNI_{atlas}_" \
+    out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
                        f"{subgraph_name}_" \
                        f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
                        f"_MDS.joblib"
@@ -163,10 +163,10 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
-        f"{namer_dir}/gradients-MASE_{atlas}_{subgraph_name}"
+        f"{namer_dir}/gradient-MASE_{atlas}_{subgraph_name}"
         f"_{os.path.basename(graph_path)}"
     )
-    out_path_est = f"{namer_dir}/gradientestimator-MASE_{atlas}_" \
+    out_path_est = f"{namer_dir}/gradient-MASE_{atlas}_" \
                    f"{subgraph_name}" \
                    f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
@@ -244,9 +244,9 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/gradientestimator-ASE" \
+    out_path = f"{namer_dir}/gradient-ASE" \
                f"_{atlas}_{subgraph_name}_{os.path.basename(graph_path)}"
-    out_path_est = f"{namer_dir}/gradientestimator-ASE_{atlas}" \
+    out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
                    f"_{subgraph_name}" \
                    f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 

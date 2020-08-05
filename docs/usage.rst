@@ -59,12 +59,12 @@ Required
 
     :`anat`: The T1w can be preprocessed using any method, but should be in its native scanner anatomical space.
 
-    :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same scanner anatomical space as the T1w (i.e. cleanly coregistered to the T1w anat).
+    :`func`: A BOLD/EPI series can be preprocessed using any method, but should in the same scanner anatomical space as the T1w (i.e. coregistered to the T1w anat and not yet normalized to a standard-space template since PyNets must do this in order that it can accurately map parcellations to individual subject anatomy).
 
-    :`dwi`: A DWI series should ideally be in its native diffusion MRI (dMRI) space (but can also be co-registered to the T1w image) and contain at least one B0 for reference. If `-dwi` is specified, then `-bvec` and `-bval` must also be.
+    :`dwi`: A DWI series should ideally be in its native diffusion MRI (dMRI) space (though can also be co-registered to the T1w image) and must contain at least one B0 for reference. If `-dwi` is specified, then `-bvec` and `-bval` must also be. Note that the choice of models specified with `-mod` also depends on the sampling scheme of your dwi data (e.g. CSD will likely overfit your data in the case of too few directional volumes).
 
     .. note::
-        Native-space DWI is preferred because resampling raw diffusion signal to a different modality (e.g. T1w) with different white-matter/grey-matter contrast (and lower spatial specificity for the former) may lead to spatial misalignment of reconstructed fiber models and SNR-loss that can increase the likelihood of tractographic error. Note that this is unlike the case of BOLD EPI -- an inherently noisy, temporal (i.e. non-structural) modality -- which benefits from being co-registered to T1w images of significantly higher spatial resolution, particularly in grey-matter tissue where BOLD signal is most-often observed.
+        Native-space DWI images are preferred for several reasons. Even when rigidly applied, intermodal registration of the diffusion signal to T1-weighted space, for instance, which has considerably different white-matter/grey-matter signal contrast (and lower specificity for the former), will inevitably result in some degree of spatial misalignment and signal loss. Note that this is unlike the case of BOLD EPI -- an inherently noisy, temporal (i.e. non-structural) modality -- which benefits from being co-registered to T1w images of significantly higher spatial resolution, particularly in grey-matter tissue where BOLD signal is typically observed. To ensure minimal within-subject variance and maximal between-subject variance as a function of numerous hyperparameters used to sample connectome ensembles with PyNets, input DWI data should ideally carry maximal SNR and have undergone the least amount of resampling necessary (e.g. minimally eddy/motion correction).
 
     :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
 
@@ -147,7 +147,7 @@ Example: ::
 
 A similar CLI, `pynets_cloud` has also been made available using AWS Batch and S3, which require a AWS credentials and configuration of job queues and definitions using cloud_config.json: ::
 
-    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/0025427_triple_network_masks_1/triple_net_ICA_overlap_9_sig_bin.nii.gz' -pm '30,110'
+    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/MyClusteringROI.nii.gz' -pm '30,110'
 
 
 Manual Execution Using the `pynets` CLI
@@ -193,7 +193,7 @@ Building upon the previous examples, let's say you now wish to create a subject-
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -mod 'partcorr' 'sps' \ # The connectivity models.
-    -cm '/Users/dPys/PyNets/tests/examples/pDMN_3_bin.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
+    -cm '/Users/dPys/PyNets/tests/examples/MyClusteringROI.nii.gz' -k 50 100 150 -ct 'ward' \ # Node-making specification with spatially-constrained clustering.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
     -plt # Activate plotting.
 
@@ -236,7 +236,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
      '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
      pynets /outputs \
      -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
-     -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+     -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \
      -pm '24,48' \
      -norm 6 \
      -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
@@ -257,7 +257,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
       singularity exec --cleanenv --no-home_clust_est '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
-        -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \
         -norm 6 \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
@@ -270,7 +270,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
       unset PYTHONPATH; singularity exec ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
-        -ct 'ward' -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' -k 100 200 \
+        -ct 'ward' -cm '/working/MyClusteringROI.nii.gz' -k 100 200 \
         -norm 6 \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
@@ -290,7 +290,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
         -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 \
-        -ct 'ward' -k 100 200 -cm '/outputs/triple_net_ICA_overlap_3_sig_bin.nii.gz' \
+        -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \
         -norm 6 \
         -anat '/inputs/sub-PARTICIPANT/ses-SESSION/anat/sub-PARTICIPANT_space-anat_desc-preproc_T1w_brain.nii.gz' \
         -func '/inputs/sub-PARTICIPANT/ses-SESSION/func/sub-PARTICIPANT_ses-SESSION_task-rest_space-anat_desc-smoothAROMAnonaggr_bold_masked.nii.gz' \
