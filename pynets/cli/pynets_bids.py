@@ -2,6 +2,7 @@
 PyNets BIDS cli
 """
 import bids
+
 from pynets.core.utils import as_list, merge_dicts
 
 
@@ -440,7 +441,6 @@ def main():
     import yaml
     import itertools
     from types import SimpleNamespace
-    from pathlib import Path
     import pkg_resources
     from pynets.core.utils import flatten
     from pynets.cli.pynets_run import build_workflow

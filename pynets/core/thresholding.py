@@ -1096,6 +1096,7 @@ def thresh_struct(
     streams,
     directget,
     min_length,
+    error_margin,
     check_consistency=True,
 ):
     """
@@ -1252,6 +1253,7 @@ def thresh_struct(
             parc,
             directget,
             min_length,
+            error_margin
         ),
     )
 
@@ -1277,6 +1279,7 @@ def thresh_struct(
         parc,
         directget,
         min_length,
+        error_margin
     )
 
     utils.save_mat(conn_matrix_thr, est_path)
@@ -1309,6 +1312,7 @@ def thresh_struct(
         streams,
         directget,
         min_length,
+        error_margin
     )
 
 

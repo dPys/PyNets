@@ -50,12 +50,13 @@ def direct_streamline_norm(
     step_list,
     directget,
     min_length,
-    t1_aligned_mni,
     error_margin,
+    t1_aligned_mni
 ):
     """
     A Function to perform normalization of streamlines tracked in native diffusion space
     to an MNI-space template.
+
     Parameters
     ----------
     streams : str
@@ -126,18 +127,14 @@ def direct_streamline_norm(
         Minimum fiber length threshold in mm to restrict tracking.
     t1_aligned_mni : str
         File path to the T1w Nifti1Image in template MNI space.
-    error_margin : int
-        Distance (in the units of the streamlines, usually mm). If any
-        coordinate in the streamline is within this distance from the center
-        of any voxel in the ROI, the filtering criterion is set to True for
-        this streamline, otherwise False. Defaults to the distance between
-        the center of each voxel and the corner of the voxel.
+
     Returns
     -------
     streams_warp : str
         File path to normalized streamline array sequence in .trk format.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     target_samples : int
@@ -148,8 +145,8 @@ def direct_streamline_norm(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -184,18 +181,14 @@ def direct_streamline_norm(
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are: det
+        (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
-    error_margin : int
-        Distance (in the units of the streamlines, usually mm). If any
-        coordinate in the streamline is within this distance from the center
-        of any voxel in the ROI, the filtering criterion is set to True for
-        this streamline, otherwise False. Defaults to the distance between
-        the center of each voxel and the corner of the voxel.
+
     References
     ----------
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different
@@ -224,7 +217,7 @@ def direct_streamline_norm(
     ) as stream:
         try:
             hardcoded_params = yaml.load(stream)
-            run_dsn = hardcoded_params["DSN"][0]
+            run_dsn = hardcoded_params['tracking']["DSN"][0]
         except FileNotFoundError:
             print("Failed to parse runconfig.yaml")
     stream.close()
@@ -256,7 +249,7 @@ def direct_streamline_norm(
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -280,10 +273,12 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
+            "_tol-",
+            error_margin,
             ".trk",
         )
 
-        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -307,6 +302,8 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
+            "_tol-",
+            error_margin,
             ".nii.gz",
         )
 
@@ -507,7 +504,7 @@ def direct_streamline_norm(
         directget,
         warped_fa,
         min_length,
-        error_margin,
+        error_margin
     )
 
 

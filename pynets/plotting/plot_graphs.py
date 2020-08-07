@@ -390,6 +390,7 @@ def plot_conn_mat_struct(
     track_type,
     directget,
     min_length,
+    error_margin
 ):
     """
     API for selecting among various structural connectivity matrix plotting
@@ -441,7 +442,7 @@ def plot_conn_mat_struct(
     import networkx as nx
     import os.path as op
 
-    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+    out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
                                                                  "/adjacency_",
                                                                  ID,
                                                                  "_modality-dwi_",
@@ -468,6 +469,8 @@ def plot_conn_mat_struct(
                                                                  directget,
                                                                  "_minlength-",
                                                                  min_length,
+                                                                 "_tol-",
+                                                                 error_margin,
                                                                  "_thr-",
                                                                  thr,
                                                                  ".png",
@@ -499,7 +502,7 @@ def plot_conn_mat_struct(
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = \
             community_resolution_selection(G)
-        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
+        out_path_fig_comm = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dir_path,
                                                                           "/adjacency-communities_",
                                                                           ID,
                                                                           "_modality-dwi_",
@@ -526,6 +529,8 @@ def plot_conn_mat_struct(
                                                                           directget,
                                                                           "_minlength-",
                                                                           min_length,
+                                                                          "_tol-",
+                                                                          error_margin,
                                                                           "_thr-",
                                                                           thr,
                                                                           ".png",

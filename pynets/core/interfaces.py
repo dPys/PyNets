@@ -952,7 +952,7 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     track_type = traits.Any(mandatory=True)
     directget = traits.Any(mandatory=True)
     min_length = traits.Any(mandatory=True)
-
+    error_margin = traits.Any(mandatory=True)
 
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
     """Output interface wrapper for PlotStruct"""
@@ -998,6 +998,7 @@ class PlotStruct(SimpleInterface):
                 self.inputs.track_type,
                 self.inputs.directget,
                 self.inputs.min_length,
+                self.inputs.error_margin
             )
 
         self._results["out"] = "None"
@@ -2525,6 +2526,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     step_list = traits.List(mandatory=True)
     track_type = traits.Str(mandatory=True)
     min_length = traits.Any(mandatory=True)
+    error_margin = traits.Any(mandatory=True)
     maxcrossing = traits.Any(mandatory=True)
     directget = traits.Str(mandatory=True)
     conn_model = traits.Str(mandatory=True)
@@ -2549,8 +2551,6 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any(10, mandatory=True, usedefault=True)
-    sphere = traits.Str('repulsion724', mandatory=True, usedefault=True)
 
 
 class _TrackingOutputSpec(TraitedSpec):
@@ -2583,9 +2583,8 @@ class _TrackingOutputSpec(TraitedSpec):
     dm_path = File(exists=True, mandatory=True)
     directget = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
-    roi_neighborhood_tol = traits.Any()
     min_length = traits.Any()
-
+    error_margin = traits.Any()
 
 class Tracking(SimpleInterface):
     """Interface wrapper for Tracking"""
@@ -2617,7 +2616,10 @@ class Tracking(SimpleInterface):
             pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
         ) as stream:
             hardcoded_params = yaml.load(stream)
-            use_life = hardcoded_params["use_life"][0]
+            use_life = hardcoded_params['tracking']["use_life"][0]
+            roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+            sphere = hardcoded_params['tracking']["sphere"][0]
+
         stream.close()
 
         dir_path = utils.do_dir_path(
@@ -2682,12 +2684,12 @@ class Tracking(SimpleInterface):
             "_",
             "%s"
             % (
-                "%s%s" % (self.inputs.node_size, "mm_")
+                "%s%s" % (self.inputs.node_size, "mm")
                 if (
                     (self.inputs.node_size != "parc")
                     and (self.inputs.node_size is not None)
                 )
-                else "parc_"
+                else "parc"
             ),
             ".npy",
         )
@@ -2829,16 +2831,17 @@ class Tracking(SimpleInterface):
 
         # Iteratively build a list of streamlines for each ROI while tracking
         print(
-            f"{Fore.GREEN}Target number of samples: {Fore.BLUE} "
+            f"{Fore.GREEN}Target number of cumulative streamlines: "
+            f"{Fore.BLUE} "
             f"{self.inputs.target_samples}"
         )
         print(Style.RESET_ALL)
         print(
-            f"{Fore.GREEN}Using curvature threshold(s): {Fore.BLUE} "
+            f"{Fore.GREEN}Curvature threshold(s): {Fore.BLUE} "
             f"{self.inputs.curv_thr_list}"
         )
         print(Style.RESET_ALL)
-        print(f"{Fore.GREEN}Using step size(s): {Fore.BLUE} "
+        print(f"{Fore.GREEN}Step size(s): {Fore.BLUE} "
               f"{self.inputs.step_list}")
         print(Style.RESET_ALL)
         print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} "
@@ -2865,13 +2868,13 @@ class Tracking(SimpleInterface):
             atlas_data_wm_gm_int,
             parcels,
             model,
-            get_sphere(self.inputs.sphere),
+            get_sphere(sphere),
             self.inputs.directget,
             self.inputs.curv_thr_list,
             self.inputs.step_list,
             self.inputs.track_type,
             self.inputs.maxcrossing,
-            int(self.inputs.roi_neighborhood_tol),
+            int(roi_neighborhood_tol),
             self.inputs.min_length,
             waymask_data,
             B0_mask_data,
@@ -2880,7 +2883,7 @@ class Tracking(SimpleInterface):
             self.inputs.tiss_class, B0_mask_tmp_path
         )
 
-        del model, parcels, atlas_data_wm_gm_int, waymask_data
+        del model, parcels, atlas_data_wm_gm_int
         gc.collect()
 
         # Save streamlines to trk
@@ -2927,10 +2930,16 @@ class Tracking(SimpleInterface):
             dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
             dwi_data = dwi_img.get_fdata().astype('float32')
             orig_count = len(streamlines)
+
+            if self.inputs.waymask:
+                mask_data = waymask_data
+            else:
+                mask_data = nib.load(wm_in_dwi_tmp_path
+                                     ).get_fdata().astype('float32')
             try:
                 streamlines = evaluate_streamline_plausibility(
-                    dwi_data, gtab, B0_mask_data, streamlines,
-                    sphere=self.inputs.sphere)
+                    dwi_data, gtab, mask_data, streamlines,
+                    sphere=sphere)
             except BaseException:
                 print(f"Linear Fascicle Evaluation failed. Visually checking "
                       f"streamlines output {namer_dir}/{op.basename(streams)}"
@@ -2940,7 +2949,7 @@ class Tracking(SimpleInterface):
                                  'the tractogram!')
             del dwi_data
 
-        del B0_mask_data
+        del B0_mask_data, waymask_data
 
         stf = StatefulTractogram(
             streamlines,
@@ -3011,9 +3020,8 @@ class Tracking(SimpleInterface):
         self._results["dm_path"] = dm_path
         self._results["directget"] = self.inputs.directget
         self._results["labels_im_file"] = labels_im_file_tmp_path
-        self._results["roi_neighborhood_tol"] = \
-            self.inputs.roi_neighborhood_tol
         self._results["min_length"] = self.inputs.min_length
+        self._results["error_margin"] = self.inputs.error_margin
 
         tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path,
                      labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path]

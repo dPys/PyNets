@@ -401,6 +401,18 @@ def get_parser():
              "minimums, separate the list by space (e.g. 10 30 50).\n",
     )
     parser.add_argument(
+        "-em",
+        metavar="Error margin",
+        default=12,
+        nargs="+",
+        help="(Hyperparameter): Distance (in the units of the streamlines, "
+             "usually mm). If any coordinate in the streamline is within this "
+             "distance from the center of any voxel in the ROI, the filtering "
+             "criterion is set to True for this streamline, otherwise False. "
+             "Defaults to the distance between the center of each voxel and "
+             "the corner of the voxel.\n",
+    )
+    parser.add_argument(
         "-dg",
         metavar="Direction getter",
         default="det",
@@ -973,6 +985,20 @@ def build_workflow(args, retval):
             min_length_list = None
     else:
         min_length_list = None
+    error_margin = args.em
+    if error_margin:
+        if (isinstance(error_margin, list)) and (len(error_margin) > 1):
+            error_margin_list = error_margin
+            error_margin = None
+        elif error_margin == ["None"]:
+            error_margin_list = None
+        elif isinstance(error_margin, list):
+            error_margin = error_margin[0]
+            error_margin_list = None
+        else:
+            error_margin_list = None
+    else:
+        error_margin_list = None
     directget = args.dg
     if directget:
         if (isinstance(directget, list)) and (len(directget) > 1):
@@ -1008,19 +1034,21 @@ def build_workflow(args, retval):
     ) as stream:
         try:
             hardcoded_params = yaml.load(stream)
-            maxcrossing = hardcoded_params["maxcrossing"][0]
+            maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
             local_corr = hardcoded_params["clustering_local_conn"][0]
-            track_type = hardcoded_params["tracking_method"][0]
-            tiss_class = hardcoded_params["tissue_classifier"][0]
-            target_samples = hardcoded_params["tracking_samples"][0]
+            track_type = hardcoded_params['tracking']["tracking_method"][0]
+            tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+            target_samples = hardcoded_params['tracking']["tracking_samples"][0]
             use_parcel_naming = hardcoded_params["parcel_naming"][0]
-            step_list = hardcoded_params["step_list"]
-            curv_thr_list = hardcoded_params["curv_thr_list"]
+            step_list = hardcoded_params['tracking']["step_list"]
+            curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
             nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
             nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
             nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
             local_atlases = hardcoded_params["local_atlases"]
             template_name = hardcoded_params['template'][0]
+            roi_neighborhood_tol = \
+                hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
             if track_type == "particle":
                 tiss_class = "cmc"
@@ -1800,6 +1828,24 @@ def build_workflow(args, retval):
         else:
             print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
             print(f"{Fore.BLUE}{', '.join(min_length_list)}")
+        if error_margin:
+            if float(roi_neighborhood_tol) <= float(error_margin):
+                raise ValueError(
+                    'roi_neighborhood_tol preset cannot be less than '
+                    'the value of the structural connectome error_margin'
+                    ' parameter.')
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{error_margin}"
+                  f"mm{Fore.GREEN} error margin...")
+        else:
+            for em in error_margin_list:
+                if float(roi_neighborhood_tol) <= float(em):
+                    raise ValueError(
+                        'roi_neighborhood_tol preset cannot be less than '
+                        'the value of the structural connectome error_margin'
+                        ' parameter.')
+            print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
+            print(f"{Fore.BLUE}{', '.join(error_margin_list)}")
+
         if target_samples:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{target_samples} "
                   f"{Fore.GREEN}streamline samples...")
@@ -2217,6 +2263,7 @@ def build_workflow(args, retval):
         track_type,
         min_length,
         maxcrossing,
+        error_margin,
         directget,
         tiss_class,
         runtime_dict,
@@ -2231,6 +2278,7 @@ def build_workflow(args, retval):
         waymask,
         local_corr,
         min_length_list,
+        error_margin_list,
         extract_strategy,
         extract_strategy_list,
         outdir,
@@ -2384,6 +2432,7 @@ def build_workflow(args, retval):
                 track_type,
                 min_length,
                 maxcrossing,
+                error_margin,
                 directget,
                 tiss_class,
                 runtime_dict,
@@ -2398,6 +2447,7 @@ def build_workflow(args, retval):
                 waymask,
                 local_corr,
                 min_length_list,
+                error_margin_list,
                 extract_strategy,
                 extract_strategy_list,
                 outdir,
@@ -2650,6 +2700,7 @@ def build_workflow(args, retval):
         track_type,
         min_length,
         maxcrossing,
+        error_margin,
         directget,
         tiss_class,
         runtime_dict,
@@ -2664,6 +2715,7 @@ def build_workflow(args, retval):
         waymask,
         local_corr,
         min_length_list,
+        error_margin_list,
         extract_strategy,
         extract_strategy_list,
         outdir,
@@ -2776,6 +2828,7 @@ def build_workflow(args, retval):
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
+                    error_margin=error_margin,
                     directget=directget,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
@@ -2790,6 +2843,7 @@ def build_workflow(args, retval):
                     waymask=waymask,
                     local_corr=local_corr,
                     min_length_list=min_length_list,
+                    error_margin_list=error_margin_list,
                     extract_strategy=extract_strategy,
                     extract_strategy_list=extract_strategy_list,
                     outdir=subj_dir,
@@ -2893,6 +2947,7 @@ def build_workflow(args, retval):
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
+                    error_margin=error_margin,
                     directget=directget,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
@@ -2907,6 +2962,7 @@ def build_workflow(args, retval):
                     waymask=waymask,
                     local_corr=local_corr,
                     min_length_list=min_length_list,
+                    error_margin_list=error_margin_list,
                     extract_strategy=extract_strategy,
                     extract_strategy_list=extract_strategy_list,
                     outdir=subj_dir,
@@ -3008,6 +3064,7 @@ def build_workflow(args, retval):
             track_type,
             min_length,
             maxcrossing,
+            error_margin,
             directget,
             tiss_class,
             runtime_dict,
@@ -3022,6 +3079,7 @@ def build_workflow(args, retval):
             waymask,
             local_corr,
             min_length_list,
+            error_margin_list,
             extract_strategy,
             extract_strategy_list,
             outdir,
@@ -3195,6 +3253,7 @@ def build_workflow(args, retval):
             track_type,
             min_length,
             maxcrossing,
+            error_margin,
             directget,
             tiss_class,
             runtime_dict,
@@ -3209,6 +3268,7 @@ def build_workflow(args, retval):
             waymask,
             local_corr,
             min_length_list,
+            error_margin_list,
             extract_strategy,
             extract_strategy_list,
             subj_dir,

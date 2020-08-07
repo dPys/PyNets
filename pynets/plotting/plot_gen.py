@@ -922,6 +922,7 @@ def plot_all_struct(
     track_type,
     directget,
     min_length,
+    error_margin
 ):
     """
     Plot adjacency matrix, connectogram, and glass brain for functional
@@ -1074,12 +1075,13 @@ def plot_all_struct(
                 track_type,
                 directget,
                 min_length,
+                error_margin
             )
 
         if glassbrain is True:
             views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
                                                                          "/glassbrain_",
                                                                          ID,
                                                                          "_modality-dwi_",
@@ -1106,6 +1108,8 @@ def plot_all_struct(
                                                                          directget,
                                                                          "_minlength-",
                                                                          min_length,
+                                                                         "_tol-",
+                                                                         error_margin,
                                                                          "_thr-",
                                                                          thr,
                                                                          ".png",

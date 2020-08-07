@@ -592,8 +592,15 @@ def motif_matching(
             e.args += (comm_mask, comm_mask.shape, struct_mat,
                        struct_mat.shape, func_mat, func_mat.shape)
 
-        struct_mat[~comm_mask] = 0
-        func_mat[~comm_mask] = 0
+        try:
+            struct_mat[~comm_mask] = 0
+        except BaseException:
+            print('Skipping community masking...')
+        try:
+            func_mat[~comm_mask] = 0
+        except BaseException:
+            print('Skipping community masking...')
+
         struct_name = struct_graph_path.split("/rawgraph_"
                                               )[-1].split(".npy")[0]
         func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
