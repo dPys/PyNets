@@ -158,17 +158,18 @@ def test_create_est_path_diff(node_size, parc):
     ID = '002'
     roi = None
     directget = 'prob'
-    max_length = 200
+    min_length = 20
     conn_model = 'corr'
     thr_type = 'prop'
     target_samples = 10
     track_type = 'local'
     thr = 0.75
-
+    error_margin = 6
+    
     est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, target_samples,
                                           track_type, thr_type, parc,
-                                          directget, max_length)
+                                          directget, min_length, error_margin)
     assert est_path is not None
 
 
@@ -250,12 +251,14 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
     conn_model = 'csd'
     roi = None
     directget = 'prob'
-    max_length = 200
+    min_length = 20
+    error_margin = 6
 
     unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi,
                                                  dir_path, node_size,
                                                  target_samples, track_type,
-                                                 parc, directget, max_length)
+                                                 parc, directget, min_length,
+                                                 error_margin)
     assert unthr_path_diff is not None
 
 
