@@ -627,6 +627,7 @@ class IndividualClustering(SimpleInterface):
             if float(c_boot) > 1:
                 import random
                 from joblib import Memory
+                from joblib.externals.loky import get_reusable_executor
                 print(
                     f"Performing circular block bootstrapping with {c_boot}"
                     f" iterations..."
@@ -706,8 +707,6 @@ class IndividualClustering(SimpleInterface):
                         del iter_bootedparcels
                         gc.collect()
 
-                del parallel
-
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
                 print("Creating spatially-constrained consensus "
@@ -718,9 +717,10 @@ class IndividualClustering(SimpleInterface):
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
                 memory.clear(warn=False)
-                del memory
                 shutil.rmtree(cache_dir, ignore_errors=True)
-                del cache_dir
+                del parallel, memory, cache_dir
+                get_reusable_executor().shutdown(wait=True)
+                gc.collect()
 
                 for i in boot_parcellations:
                     if os.path.isfile(i):

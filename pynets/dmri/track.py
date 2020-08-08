@@ -407,11 +407,10 @@ def track_ensemble(
     from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from joblib.externals.loky.backend import resource_tracker
+    from joblib.externals.loky import get_reusable_executor
     import tempfile
     import shutil
     from pynets.dmri.dmri_utils import generate_sl
-    resource_tracker.warnings = None
 
     cache_dir = tempfile.mkdtemp()
     memory = Memory(cache_dir, verbose=0)
@@ -443,7 +442,7 @@ def track_ensemble(
     all_streams = []
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < 5:
-        with Parallel(n_jobs=nthreads, backend='loky',
+        with Parallel(n_jobs=nthreads, backend='loky', max_nbytes='1000M',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
@@ -497,6 +496,7 @@ def track_ensemble(
 
     shutil.rmtree(cache_dir, ignore_errors=True)
     del cache_dir, parallel, memory
+    get_reusable_executor().shutdown(wait=True)
     gc.collect()
 
     if stream_counter != 0:

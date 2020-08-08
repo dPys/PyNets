@@ -191,10 +191,10 @@ def get_conn_matrix(
             estimator.fit(time_series)
         except BaseException:
             ix = 0
+            print("\nModel did not converge on first attempt. "
+                  "Varying tolerance and switching to LARS mode...\n")
             while not hasattr(estimator, 'covariance_') \
                 and not hasattr(estimator, 'precision_') and ix < 6:
-                print("\nModel did not converge on first attempt. "
-                      "Varying tolerance and switching to LARS mode...\n")
                 for tol in [0.000001, 0.00001, 0.001, 0.01, 0.1, 1, 10]:
                     try:
                         estimator = GraphicalLassoCV(cv=5, max_iter=200,

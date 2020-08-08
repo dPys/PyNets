@@ -3114,9 +3114,6 @@ def build_workflow(args, retval):
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-
-            import logging
-
             callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
@@ -3319,9 +3316,6 @@ def build_workflow(args, retval):
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-
-            import logging
-
             callback_log_path = f"{wf.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
