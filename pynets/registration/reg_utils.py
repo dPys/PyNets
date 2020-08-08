@@ -1439,10 +1439,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
-    orig_img = img_file
-
+    # orig_img = img_file
     img = nib.load(img_file)
-    data = img.get_fdata()
 
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
@@ -1460,6 +1458,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             img_file = img_file_res
             pass
         else:
+            data = img.get_fdata()
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(
                 data, img.affine, zooms, new_zooms
@@ -1470,7 +1469,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
                     affine=affine2),
                 img_file_res)
             img_file = img_file_res
-            del data2
+            del data2, data
+            img.uncache()
     else:
         img_file_nores = (
             f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
@@ -1483,9 +1483,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             nib.save(img, img_file_nores)
             img_file = img_file_nores
 
-    img.uncache()
-    del img
-    if os.path.isfile(orig_img):
-        os.remove(orig_img)
+    # if os.path.isfile(orig_img):
+    #     os.remove(orig_img)
 
     return img_file

@@ -220,6 +220,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
                           'LiFE model. Is your acquisition hemispheric? '
                           'Also check the gradient table for errors. \n'))
         return streamlines_in_brain
+    else:
+        del streamlines_in_brain
 
     model_predict = fiber_fit.predict()
     model_error = model_predict - fiber_fit.data

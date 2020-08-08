@@ -498,11 +498,13 @@ class IndividualClustering(SimpleInterface):
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
         from joblib import Parallel, delayed
+        from joblib.externals.loky.backend import resource_tracker
         from pynets.registration import reg_utils as regutils
         from pynets.core.utils import decompress_nifti
         import pkg_resources
         import shutil
         import tempfile
+        resource_tracker.warnings = None
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -701,6 +703,10 @@ class IndividualClustering(SimpleInterface):
                                                    iter_bootedparcels if
                                                    i is not None])
                         counter = len(boot_parcellations)
+                        del iter_bootedparcels
+                        gc.collect()
+
+                del parallel
 
                 print('Bootstrapped samples complete:')
                 print(boot_parcellations)
@@ -712,7 +718,10 @@ class IndividualClustering(SimpleInterface):
                 )
                 nib.save(consensus_parcellation, nip.uatlas)
                 memory.clear(warn=False)
+                del memory
                 shutil.rmtree(cache_dir, ignore_errors=True)
+                del cache_dir
+
                 for i in boot_parcellations:
                     if os.path.isfile(i):
                         os.remove(i)
@@ -1241,12 +1250,21 @@ class RegisterDWI(SimpleInterface):
         else:
             csf_mask = None
 
+        anat_file_tmp_path = fname_presuffix(
+            self.inputs.anat_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.anat_file,
+            anat_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         reg = register.DmriReg(
             basedir_path=runtime.cwd,
             fa_path=fa_tmp_path,
             ap_path=ap_tmp_path,
             B0_mask=B0_mask_tmp_path,
-            anat_file=self.inputs.anat_file,
+            anat_file=anat_file_tmp_path,
             vox_size=self.inputs.vox_size,
             template_name=self.inputs.template_name,
             simple=self.inputs.simple,
@@ -1284,7 +1302,7 @@ class RegisterDWI(SimpleInterface):
         self._results["gm_in_dwi"] = reg.gm_in_dwi
         self._results["vent_csf_in_dwi"] = reg.vent_csf_in_dwi
         self._results["csf_mask_dwi"] = reg.csf_mask_dwi
-        self._results["anat_file"] = self.inputs.anat_file
+        self._results["anat_file"] = anat_file_tmp_path
         self._results["t1w2dwi"] = reg.t1w2dwi
         self._results["B0_mask"] = B0_mask_tmp_path
         self._results["ap_path"] = ap_tmp_path
@@ -1961,9 +1979,18 @@ class RegisterFunc(SimpleInterface):
         else:
             wm_mask = None
 
+        anat_file_tmp_path = fname_presuffix(
+            self.inputs.anat_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.anat_file,
+            anat_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         reg = register.FmriReg(
             basedir_path=runtime.cwd,
-            anat_file=self.inputs.anat_file,
+            anat_file=anat_file_tmp_path,
             vox_size=self.inputs.vox_size,
             template_name=self.inputs.template_name,
             simple=self.inputs.simple,
@@ -3063,7 +3090,7 @@ class MakeGtabBmask(SimpleInterface):
         from dipy.io import save_pickle
         from dipy.io import read_bvals_bvecs
         from dipy.core.gradients import gradient_table
-
+        from nipype.utils.filemanip import copyfile, fname_presuffix
         # from dipy.segment.mask import median_otsu
         from pynets.registration.reg_utils import median
         from pynets.dmri.dmri_utils import normalize_gradients, extract_b0
@@ -3075,8 +3102,26 @@ class MakeGtabBmask(SimpleInterface):
         gtab_file = f"{runtime.cwd}/gtab.pkl"
         all_b0s_file = f"{runtime.cwd}/all_b0s.nii.gz"
 
+        fbval_tmp_path = fname_presuffix(
+            self.inputs.fbval, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.fbval,
+            fbval_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
+        fbvec_tmp_path = fname_presuffix(
+            self.inputs.fbvec, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.fbvec,
+            fbvec_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         # loading bvecs/bvals
-        bvals, bvecs = read_bvals_bvecs(self.inputs.fbval, self.inputs.fbvec)
+        bvals, bvecs = read_bvals_bvecs(fbval_tmp_path, fbvec_tmp_path)
         bvecs_norm, bvals_norm = normalize_gradients(
             bvecs, bvals, b0_threshold=self.inputs.b0_thr
         )
@@ -3103,10 +3148,19 @@ class MakeGtabBmask(SimpleInterface):
         # Save gradient table to pickle
         save_pickle(gtab_file, gtab)
 
+        dwi_file_tmp_path = fname_presuffix(
+            self.inputs.dwi_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.dwi_file,
+            dwi_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         # Extract and Combine all b0s collected, make mean b0
         print("Extracting b0's...")
         all_b0s_file = extract_b0(
-            self.inputs.dwi_file,
+            dwi_file_tmp_path,
             b0_thr_ixs,
             all_b0s_file)
         med_b0_file = median(all_b0s_file)
@@ -3130,11 +3184,16 @@ class MakeGtabBmask(SimpleInterface):
         # Get mean B0 brain mask
         cmd = f"bet {med_b0_file} {B0_bet} -m -f 0.2"
         os.system(cmd)
-        time.sleep(1)
+        time.sleep(2)
 
         self._results["gtab_file"] = gtab_file
         self._results["B0_bet"] = B0_bet
         self._results["B0_mask"] = B0_mask
         self._results["dwi_file"] = self.inputs.dwi_file
+
+        tmp_files = [fbval_tmp_path, fbvec_tmp_path, dwi_file_tmp_path]
+        for j in tmp_files:
+            if j is not None:
+                os.remove(j)
 
         return runtime

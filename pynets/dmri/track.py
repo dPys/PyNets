@@ -402,15 +402,16 @@ def track_ensemble(
     import time
     import pkg_resources
     import yaml
-    from joblib import Parallel, delayed
+    from joblib import Parallel, delayed, Memory
     import itertools
     from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from joblib import Memory
+    from joblib.externals.loky.backend import resource_tracker
     import tempfile
     import shutil
     from pynets.dmri.dmri_utils import generate_sl
+    resource_tracker.warnings = None
 
     cache_dir = tempfile.mkdtemp()
     memory = Memory(cache_dir, verbose=0)
@@ -495,6 +496,8 @@ def track_ensemble(
         print("Tracking Complete: ", str(time.time() - start))
 
     shutil.rmtree(cache_dir, ignore_errors=True)
+    del cache_dir, parallel, memory
+    gc.collect()
 
     if stream_counter != 0:
         return Streamlines([Streamlines(i) for i in all_streams])

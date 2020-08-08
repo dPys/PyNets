@@ -110,7 +110,7 @@ def adaptivethresh(in_mat, thr, mlib, N):
     try:
         mf = np.array([mf[k] for k in mlib])
     except BaseException:
-        print('Zero motifs detected...')
+        print('0 motifs...')
         mf = np.zeros(len(mlib))
     return mf
 
@@ -535,7 +535,7 @@ def motif_matching(
         func_mat[~struct_mat.astype("bool")] = 0
         struct_mat[~func_mat.astype("bool")] = 0
         print(
-            "Number of edge disagreements after matching: ",
+            "Edge disagreements after matching: ",
             sum(sum(abs(func_mat - struct_mat))),
         )
 

@@ -159,7 +159,8 @@ def get_conn_matrix(
     from sklearn.covariance import GraphicalLassoCV
 
     conn_matrix = None
-    if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
+    if conn_model == "corr" or conn_model == "cor" or \
+        conn_model == "correlation":
         # credit: nilearn
         print("\nComputing correlation matrix...\n")
         conn_measure = ConnectivityMeasure(kind="correlation")
@@ -183,16 +184,34 @@ def get_conn_matrix(
     ):
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
-        estimator = GraphicalLassoCV(cv=5)
+        estimator = GraphicalLassoCV(cv=5, max_iter=200,
+                                     assume_centered=True)
+        print("\nComputing covariance...\n")
         try:
-            print("\nComputing covariance...\n")
             estimator.fit(time_series)
         except BaseException:
+            ix = 0
+            while not hasattr(estimator, 'covariance_') \
+                and not hasattr(estimator, 'precision_') and ix < 6:
+                print("\nModel did not converge on first attempt. "
+                      "Varying tolerance and switching to LARS mode...\n")
+                for tol in [0.000001, 0.00001, 0.001, 0.01, 0.1, 1, 10]:
+                    try:
+                        estimator = GraphicalLassoCV(cv=5, max_iter=200,
+                                                     assume_centered=True,
+                                                     tol=tol, mode='lars')
+                        estimator.fit(time_series)
+                    except BaseException:
+                        continue
+                    ix += 1
+
+        if not hasattr(estimator, 'covariance_') and not hasattr(estimator,
+                                                                 'precision_'):
             print(
-                "Unstable Lasso estimation--Attempting to re-run by first"
-                " applying shrinkage..."
+                "Unstable Lasso estimation. Applying shrinkage..."
             )
             try:
+                estimator = None
                 from sklearn.covariance import (
                     GraphicalLasso,
                     empirical_covariance,
@@ -200,6 +219,7 @@ def get_conn_matrix(
                 )
 
                 emp_cov = empirical_covariance(time_series)
+                # Iterate across different levels of alpha
                 for i in np.arange(0.8, 0.99, 0.01):
                     shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
                     alphaRange = 10.0 ** np.arange(-8, 0)
@@ -222,13 +242,16 @@ def get_conn_matrix(
                             )
                             continue
             except ValueError:
+                estimator = None
                 print(
-                    "Unstable Lasso estimation! Shrinkage failed. A different"
-                    " connectivity model may be needed."
+                    "Covariance estimation failed. Check time-series data "
+                    "for errors."
                 )
+
         if estimator is None and estimator_shrunk is None:
             raise RuntimeError("\nERROR: Covariance estimation failed.")
-        if conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
+        if conn_model == "sps" or conn_model == "sparse" or \
+            conn_model == "precision":
             if estimator_shrunk is None:
                 print("\nFetching precision matrix from covariance "
                       "estimator...\n")
@@ -239,7 +262,8 @@ def get_conn_matrix(
                     "estimator...\n"
                 )
                 conn_matrix = estimator_shrunk.precision_
-        elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
+        elif conn_model == "cov" or conn_model == "covariance" or \
+            conn_model == "covar":
             if estimator_shrunk is None:
                 print("\nFetching covariance matrix from covariance"
                       " estimator...\n")
@@ -312,7 +336,7 @@ def get_conn_matrix(
             " valid estimator using the -mod flag.")
 
     # Enforce symmetry
-    conn_matrix = np.maximum(conn_matrix, conn_matrix.T)
+    conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
 
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
