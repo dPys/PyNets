@@ -1195,7 +1195,8 @@ class RegisterDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
         else:
-            if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+            if len(anat_mask_existing) > 0 and \
+                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]):
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
@@ -1204,9 +1205,6 @@ class RegisterDWI(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
-                mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, runtime.cwd,
-                    self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 
@@ -1912,6 +1910,7 @@ class RegisterFunc(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import glob
+        import os.path as op
         from pynets.registration import register
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -1935,7 +1934,8 @@ class RegisterFunc(SimpleInterface):
                 copy=True,
                 use_hardlink=False)
         else:
-            if len(anat_mask_existing) > 0 and self.inputs.mask is None:
+            if len(anat_mask_existing) > 0 and \
+                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]):
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp",
                     newpath=runtime.cwd
@@ -1945,9 +1945,6 @@ class RegisterFunc(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
-                mask_tmp_path = regutils.check_orient_and_dims(
-                    mask_tmp_path, self.inputs.in_dir,
-                    self.inputs.vox_size)
             else:
                 mask_tmp_path = None
 

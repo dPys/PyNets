@@ -3168,7 +3168,7 @@ def build_workflow(args, retval):
                     shutil.rmtree(cnfnd_tmp_dir)
                 shutil.rmtree(f"{dir}/reg_fmri", ignore_errors=True)
                 for file_ in [i for i in glob.glob(
-                        f"{dir}/*/*") if os.path.isfile(i)]:
+                        f"{dir}/func/*") if os.path.isfile(i)]:
                     if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
@@ -3178,7 +3178,7 @@ def build_workflow(args, retval):
                 shutil.rmtree(f"{dir}/dmri_tmp", ignore_errors=True)
                 shutil.rmtree(f"{dir}/reg_dmri", ignore_errors=True)
                 for file_ in [i for i in glob.glob(
-                        f"{dir}/*/*") if os.path.isfile(i)]:
+                        f"{dir}/dwi/*") if os.path.isfile(i)]:
                     if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
@@ -3366,7 +3366,7 @@ def build_workflow(args, retval):
         print("Cleaning up...")
         if func_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3374,7 +3374,7 @@ def build_workflow(args, retval):
                         continue
         if dwi_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:

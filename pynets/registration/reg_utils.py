@@ -44,6 +44,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
         except RuntimeError:
             print('Deepbrain extraction failed...')
+        del t1w_data
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
