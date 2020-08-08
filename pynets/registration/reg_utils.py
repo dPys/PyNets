@@ -1339,7 +1339,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
                 nib.orientations.axcodes2ornt(input_axcodes),
                 nib.orientations.axcodes2ornt(new_axcodes),
             )
-            bvec_array = np.loadtxt(bvec_fname)
+            bvec_array = np.genfromtxt(bvec_fname)
             if bvec_array.shape[0] != 3:
                 bvec_array = bvec_array.T
             if not bvec_array.shape[0] == transform_orientation.shape[0]:

@@ -18,7 +18,7 @@ tracking:
     use_life:  # Filter ensemble tractogram to yield more plausible streamlines.
         - True
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
-        - 'local'
+        - 'particle'
     tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
         - 50000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
@@ -30,11 +30,11 @@ tracking:
     sphere:
         - 'repulsion724'
     n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
-        - 2000
+        - 1000
     max_length:
         - 500
     tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-        - 'wm'
+        - 'cmc'
     pft_back_tracking_dist: # For particle tracking
         - 2
     pft_front_tracking_dist: # For particle tracking
