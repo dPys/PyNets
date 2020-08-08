@@ -184,8 +184,7 @@ def get_conn_matrix(
     ):
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
-        estimator = GraphicalLassoCV(cv=5, max_iter=200,
-                                     assume_centered=True)
+        estimator = GraphicalLassoCV(cv=5, max_iter=200)
         print("\nComputing covariance...\n")
         try:
             estimator.fit(time_series)
@@ -198,7 +197,6 @@ def get_conn_matrix(
                 for tol in [0.000001, 0.00001, 0.001, 0.01, 0.1, 1, 10]:
                     try:
                         estimator = GraphicalLassoCV(cv=5, max_iter=200,
-                                                     assume_centered=True,
                                                      tol=tol, mode='lars')
                         estimator.fit(time_series)
                     except BaseException:

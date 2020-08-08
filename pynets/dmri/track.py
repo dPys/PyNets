@@ -442,7 +442,7 @@ def track_ensemble(
     all_streams = []
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < 5:
-        with Parallel(n_jobs=nthreads, backend='loky', max_nbytes='1000M',
+        with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
@@ -484,8 +484,6 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-    memory.clear(warn=False)
-
     if ix >= len(all_combs):
         raise ValueError(f"Tractography failed. "
                          f">{len(all_combs)} consecutive sampling iterations "
@@ -494,10 +492,7 @@ def track_ensemble(
     else:
         print("Tracking Complete: ", str(time.time() - start))
 
-    shutil.rmtree(cache_dir, ignore_errors=True)
-    del cache_dir, parallel, memory
-    get_reusable_executor().shutdown(wait=True)
-    gc.collect()
+    del parallel
 
     if stream_counter != 0:
         return Streamlines([Streamlines(i) for i in all_streams])
