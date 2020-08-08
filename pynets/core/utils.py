@@ -245,6 +245,7 @@ def create_est_path_diff(
     parc,
     directget,
     min_length,
+    error_margin,
 ):
     """
     Name the thresholded structural connectivity matrix file based on relevant graph-generating parameters.
@@ -314,7 +315,7 @@ def create_est_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
                                                                  "/graph_sub-",
                                                                  ID,
                                                                  "_modality-dwi_",
@@ -343,6 +344,8 @@ def create_est_path_diff(
                                                                  directget,
                                                                  "_minlength-",
                                                                  min_length,
+                                                                 "_tol-",
+                                                                 error_margin,
                                                                  "_thrtype-",
                                                                  thr_type,
                                                                  "_thr-",
@@ -476,6 +479,7 @@ def create_raw_path_diff(
     parc,
     directget,
     min_length,
+    error_margin
 ):
     """
     Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
@@ -540,7 +544,7 @@ def create_raw_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
+    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
                                                          "/rawgraph_sub-",
                                                          ID,
                                                          "_modality-dwi_",
@@ -569,6 +573,8 @@ def create_raw_path_diff(
                                                          directget,
                                                          "_minlength-",
                                                          min_length,
+                                                         "_tol-",
+                                                         error_margin,
                                                          ".npy",
                                                          )
     return est_path

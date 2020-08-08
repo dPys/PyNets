@@ -56,7 +56,8 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "ten" or conn_model == "tensor":
+    elif conn_model == "ten" or conn_model == "tensor" or \
+        conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
@@ -320,13 +321,7 @@ def track_ensemble(
     vent_csf_in_dwi,
     wm_in_dwi,
     tiss_class,
-    B0_mask,
-    n_seeds_per_iter=2000,
-    max_length=1000,
-    pft_back_tracking_dist=2,
-    pft_front_tracking_dist=1,
-    particle_count=15,
-    min_separation_angle=20,
+    B0_mask
 ):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
@@ -425,6 +420,12 @@ def track_ensemble(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         nthreads = hardcoded_params["nthreads"][0]
+        n_seeds_per_iter = hardcoded_params['tracking']["n_seeds_per_iter"][0]
+        max_length = hardcoded_params['tracking']["max_length"][0]
+        pft_back_tracking_dist = hardcoded_params['tracking']["pft_back_tracking_dist"][0]
+        pft_front_tracking_dist = hardcoded_params['tracking']["pft_front_tracking_dist"][0]
+        particle_count = hardcoded_params['tracking']["particle_count"][0]
+        min_separation_angle = hardcoded_params['tracking']["min_separation_angle"][0]
     stream.close()
 
     parcel_vec = list(np.ones(len(parcels)).astype("bool"))
@@ -457,7 +458,8 @@ def track_ensemble(
 
             out_streams = [i for i in out_streams if i is not None and
                            len(i) > 0]
-            if len(out_streams) == 0:
+
+            if len(out_streams) < 10:
                 ix += 1
                 continue
             else:
@@ -484,13 +486,13 @@ def track_ensemble(
 
     memory.clear(warn=False)
 
-    if ix >= 5:
-        raise ValueError('Tractography failed. '
-                         '>5 consecutive sampling iterations '
-                         'with 0 streamlines. Are you using a waymask? '
-                         'If so, it may be too restrictive.')
+    if ix >= len(all_combs):
+        raise ValueError(f"Tractography failed. "
+                         f">{len(all_combs)} consecutive sampling iterations "
+                         f"with <10 streamlines. Are you using a waymask? "
+                         f"If so, it may be too restrictive.")
     else:
-        print("Tracking Complete:\n", str(time.time() - start))
+        print("Tracking Complete: ", str(time.time() - start))
 
     shutil.rmtree(cache_dir, ignore_errors=True)
 
@@ -567,10 +569,11 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         affine=np.eye(4),
     )
     if len(seeds) == 0:
-        raise RuntimeWarning(
-            "Warning: No valid seed points found in wm-gm "
+        print(UserWarning(
+            "No valid seed points found in wm-gm "
             "interface..."
-        )
+        ))
+        return None
 
     # print(seeds)
 
@@ -607,50 +610,67 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain
-    roi_proximal_streamlines = utils.target(
-        streamline_generator, np.eye(4),
-        B0_mask_data, include=True
-    )
+    try:
+        roi_proximal_streamlines = utils.target(
+            streamline_generator, np.eye(4),
+            B0_mask_data, include=True
+        )
+    except BaseException:
+        print('No streamlines found inside the brain! '
+              'Check registrations.')
+        return None
 
     # Filter resulting streamlines by roi-intersection
     # characteristics
-    roi_proximal_streamlines = Streamlines(
-        select_by_rois(
-            roi_proximal_streamlines,
-            affine=np.eye(4),
-            rois=parcels.func,
-            include=parcel_vec,
-            mode="%s" % ("any" if waymask_data is not None else "both_end"),
-            tol=roi_neighborhood_tol,
+    try:
+        roi_proximal_streamlines = Streamlines(
+            select_by_rois(
+                roi_proximal_streamlines,
+                affine=np.eye(4),
+                rois=parcels.func,
+                include=parcel_vec,
+                mode="%s" % ("any" if waymask_data is not None else
+                             "both_end"),
+                tol=roi_neighborhood_tol,
+            )
         )
-    )
+        print("%s%s" % ("Filtering by: \nnode intersection: ",
+                        len(roi_proximal_streamlines)))
+    except BaseException:
+        print('No streamlines found to connect any parcels! '
+              'Check registrations.')
+        return None
 
-    print("%s%s" % ("Filtering by: \nnode intersection: ",
-                    len(roi_proximal_streamlines)))
-
-    roi_proximal_streamlines = nib.streamlines. \
-        array_sequence.ArraySequence(
-        [
-            s for s in roi_proximal_streamlines
-            if len(s) >= float(min_length)
-        ]
-    )
-
-    print(f"Minimum fiber length >{min_length}mm: "
-          f"{len(roi_proximal_streamlines)}")
+    try:
+        roi_proximal_streamlines = nib.streamlines. \
+            array_sequence.ArraySequence(
+            [
+                s for s in roi_proximal_streamlines
+                if len(s) >= float(min_length)
+            ]
+        )
+        print(f"Minimum fiber length >{min_length}mm: "
+              f"{len(roi_proximal_streamlines)}")
+    except BaseException:
+        print('No streamlines remaining after minimal length criterion.')
+        return None
 
     if waymask_data is not None:
-        roi_proximal_streamlines = roi_proximal_streamlines[
-            utils.near_roi(
-                roi_proximal_streamlines,
-                np.eye(4),
-                waymask_data,
-                tol=roi_neighborhood_tol,
-                mode="any",
-            )
-        ]
-        print("%s%s" % ("Waymask proximity: ",
-                        len(roi_proximal_streamlines)))
+        try:
+            roi_proximal_streamlines = roi_proximal_streamlines[
+                utils.near_roi(
+                    roi_proximal_streamlines,
+                    np.eye(4),
+                    waymask_data,
+                    tol=roi_neighborhood_tol,
+                    mode="any",
+                )
+            ]
+            print("%s%s" % ("Waymask proximity: ",
+                            len(roi_proximal_streamlines)))
+        except BaseException:
+            print('No streamlines remaining in waymask\'s vacinity.')
+            return None
 
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]

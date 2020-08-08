@@ -119,12 +119,12 @@ Command-Line Arguments
 **********************
 
 .. argparse::
-    :module: pynets.cli.pynets_bids
+    :module: pynets.cli.pynets_run
     :func: get_bids_parser
     :prog: pynets
 
 .. argparse::
-    :module: pynets.cli.pynets_run
+    :module: pynets.cli.pynets_bids
     :func: get_parser
     :prog: pynets
 

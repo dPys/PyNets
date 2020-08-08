@@ -1,5 +1,3 @@
-maxcrossing: # Maximum crossing fibers per voxel in tractography
-    - 2
 StructuralNetworkWeighting:
     fiber_density: # If set to True, scale fiber count by mean length relative to the volume of roi node pairs. If false, raw streamline counts will be used.
         - True
@@ -7,38 +5,56 @@ StructuralNetworkWeighting:
         - True
     overlap_thr: # ROI-streamline overlap in units of voxels.
         - 1
-step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.5 which encompasses the typical range of values used in human tractography research.
-    - 0.1
-    - 0.2
-    - 0.3
-    - 0.4
-    - 0.5
-curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
-    - 50
-    - 40
-    - 30
-use_life:  # Filter ensemble tractogram to yield more plausible streamlines
-    - True
+tracking:
+    step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.2-0.8 which encompasses the typical range of values used in human tractography.
+        - 0.2
+        - 0.4
+        - 0.6
+        - 0.8
+    curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
+        - 60
+        - 40
+        - 20
+    use_life:  # Filter ensemble tractogram to yield more plausible streamlines.
+        - True
+    tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
+        - 'local'
+    tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
+        - 50000
+    DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
+        - False
+    maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
+        - 3
+    roi_neighborhood_tol:
+        - 16
+    sphere:
+        - 'repulsion724'
+    n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
+        - 2000
+    max_length:
+        - 500
+    tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
+        - 'wm'
+    pft_back_tracking_dist: # For particle tracking
+        - 2
+    pft_front_tracking_dist: # For particle tracking
+        - 1
+    particle_count: # For particle tracking
+        - 15
+    min_separation_angle: # For particle tracking
+        - 20
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 2
+    - 4
 graph_file_format:
     - 'npy'
 low_pass:
     - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
-tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
-    - 'local'
-tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-    - 'wm'
-tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines)
-    - 20000
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
     - True
-DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used.
-    - False
 template: # `MNI152_T1` is the default and, along with `colin27` is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates provided by the user should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
 #    - 'colin27'
     - 'MNI152_T1'
@@ -182,7 +198,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 1)
       - 'run_tracking_node':
-        - (4, 8)
+        - (6, 12)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':

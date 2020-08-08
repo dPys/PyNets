@@ -426,14 +426,15 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     target_samples = 1000
+    error_margin = 6
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
         hardcoded_params = yaml.load(stream)
         runtime_dict = {}
         execution_dict = {}
-        maxcrossing = hardcoded_params['maxcrossing'][0]
-        step_list = hardcoded_params['step_list']
-        curv_thr_list = hardcoded_params['curv_thr_list']
+        maxcrossing = hardcoded_params['tracking']['maxcrossing'][0]
+        step_list = hardcoded_params['tracking']['step_list']
+        curv_thr_list = hardcoded_params['tracking']['curv_thr_list']
         for i in range(len(hardcoded_params['resource_dict'])):
             runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
                 hardcoded_params['resource_dict'][i].values())[0][0])
@@ -476,15 +477,21 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     else:
         multi_directget = None
 
+    if isinstance(error_margin, list) and len(error_margin) > 1:
+        error_margin_list = error_margin
+        error_margin = None
+    else:
+        error_margin_list = None
+
     dmri_connectometry_wf = dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, parc, ref_txt,
                                                procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
                                                conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
                                                step_thr, node_size_list, conn_model_list, min_span_tree,
                                                use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
                                                binary, target_samples, curv_thr_list, step_list,
-                                               track_type, min_length, maxcrossing, directget, tiss_class,
+                                               track_type, min_length, error_margin, maxcrossing, directget, tiss_class,
                                                runtime_dict, execution_dict, multi_directget, template_name,
-                                               vox_size, waymask, min_length_list, outdir)
+                                               vox_size, waymask, min_length_list, error_margin_list, outdir)
 
 #    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True

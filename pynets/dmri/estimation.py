@@ -375,8 +375,8 @@ def streams2graph(
     binary,
     directget,
     warped_fa,
-    error_margin,
     min_length,
+    error_margin
 ):
     """
     Use tracked streamlines as a basis for estimating a structural connectome.
@@ -439,11 +439,11 @@ def streams2graph(
         and prob (probabilistic).
     warped_fa : str
         File path to MNI-space warped FA Nifti1Image.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
     error_margin : int
         Euclidean margin of error for classifying a streamline as a connection
          to an ROI. Default is 2 voxels.
-    min_length : int
-        Minimum fiber length threshold in mm to restrict tracking.
 
     Returns
     -------
@@ -503,6 +503,9 @@ def streams2graph(
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+    error_margin : int
+        Euclidean margin of error for classifying a streamline as a connection
+         to an ROI. Default is 2 voxels.
 
     References
     ----------
@@ -536,33 +539,22 @@ def streams2graph(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
     ) as stream:
         hardcoded_params = yaml.load(stream)
-        try:
-            fa_wei = hardcoded_params[
-                "StructuralNetworkWeighting"]["fa_weighting"][0]
-        except KeyError:
-            print(
-                "No fa_weighting parameter listed in runconfig.yaml"
-            )
-            sys.exit(0)
-        try:
-            fiber_density = hardcoded_params[
-                "StructuralNetworkWeighting"]["fiber_density"][0]
-        except KeyError:
-            print(
-                "No fiber_density parameter specified in runconfig.yaml"
-            )
-            sys.exit(0)
-        try:
-            overlap_thr = hardcoded_params[
-                "StructuralNetworkWeighting"]["overlap_thr"][0]
-        except KeyError:
-            print(
-                "No overlap_thr parameter specified in runconfig.yaml"
-            )
-            sys.exit(0)
+        fa_wei = hardcoded_params[
+            "StructuralNetworkWeighting"]["fa_weighting"][0]
+        fiber_density = hardcoded_params[
+            "StructuralNetworkWeighting"]["fiber_density"][0]
+        overlap_thr = hardcoded_params[
+            "StructuralNetworkWeighting"]["overlap_thr"][0]
+        roi_neighborhood_tol = \
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
     stream.close()
 
     start = time.time()
+
+    if float(roi_neighborhood_tol) <= float(error_margin):
+        raise ValueError('roi_neighborhood_tol preset cannot be less than '
+                         'the value of the structural connectome error_margin'
+                         ' parameter.')
 
     # Load FA
     fa_img = nib.load(warped_fa)
@@ -766,7 +758,7 @@ def streams2graph(
     # Enforce symmetry
     conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
 
-    print("Graph Building Complete:\n", str(time.time() - start))
+    print("Structural graph completed:\n", str(time.time() - start))
 
     if len(bad_idxs) > 0:
         bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
@@ -803,4 +795,5 @@ def streams2graph(
         binary,
         directget,
         min_length,
+        error_margin
     )

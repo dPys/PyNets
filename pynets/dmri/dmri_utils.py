@@ -128,7 +128,7 @@ def extract_b0(in_file, b0_ixs, out_path=None):
     return out_path
 
 
-def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
+def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
                                      affine=np.eye(4),
                                      sphere='repulsion724'):
     """
@@ -142,8 +142,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
         4D array of dwi data.
     gtab : Obj
         DiPy object storing diffusion gradient information.
-    B0_mask_data : array
-       B0 brain mask 3d data.
+    mask_data : array
+       3D Brain mask.
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
 
@@ -167,7 +167,6 @@ def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
 
     original_count = len(streamlines)
 
-    print('Filtering streamlines by length > 10...')
     streamlines_long = nib.streamlines. \
         array_sequence.ArraySequence(
         [
@@ -188,30 +187,50 @@ def evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data, streamlines,
     del streamlines_long
 
     # Filter resulting streamlines by those that stay entirely
-    # inside the brain
+    # inside the ROI of interest
+    mask_data = np.array(mask_data, dtype=bool, copy=False)
     streamlines_in_brain = Streamlines(utils.target(
         streamlines_positive, np.eye(4),
-        B0_mask_data.astype('bool'), include=True
+        mask_data, include=True
     ))
     streamlines_in_brain = [i for i in streamlines_in_brain]
     del streamlines_positive
-    print('Performing Linear Fascicle Evaluation...')
+    print('Fitting fiber model...')
+
+    # ! Remember this 4d masking function !
+    data_in_mask = np.nan_to_num(np.broadcast_to(mask_data[..., None],
+                    dwi_data.shape).astype('bool') * dwi_data)
+    # ! Remember this 4d masking function !
+
     sphere = get_sphere(sphere)
     fiber_model = life.FiberModel(gtab)
-    fiber_fit = fiber_model.fit(dwi_data, streamlines_in_brain,
+    fiber_fit = fiber_model.fit(data_in_mask, streamlines_in_brain,
                                 affine=affine,
                                 sphere=sphere)
     streamlines = list(np.array(streamlines_in_brain)[
                            np.where(fiber_fit.beta > 0)[0]])
     pruned_count = len(streamlines)
+    if pruned_count == 0:
+        print(UserWarning('\nWarning LiFE skipped due to implausible values '
+                          'detected in model betas. This does not '
+                          'necessarily invalidate the '
+                          'tractography. Rather it could indicate that '
+                          'you\'ve sampled too few streamlines, or that the '
+                          'sampling scheme is simply incompatible with the '
+                          'LiFE model. Is your acquisition hemispheric? '
+                          'Also check the gradient table for errors. \n'))
+        return streamlines_in_brain
+
     model_predict = fiber_fit.predict()
     model_error = model_predict - fiber_fit.data
     model_rmse = np.sqrt(np.mean(model_error[:, 10:] ** 2, -1))
     beta_baseline = np.zeros(fiber_fit.beta.shape[0])
-    pred_weighted = np.reshape(opt.spdot(fiber_fit.life_matrix, beta_baseline),
+    pred_weighted = np.reshape(opt.spdot(fiber_fit.life_matrix,
+                                         beta_baseline),
                                (fiber_fit.vox_coords.shape[0],
                                 np.sum(~gtab.b0s_mask)))
-    mean_pred = np.empty((fiber_fit.vox_coords.shape[0], gtab.bvals.shape[0]))
+    mean_pred = np.empty((fiber_fit.vox_coords.shape[0],
+                          gtab.bvals.shape[0]))
     S0 = fiber_fit.b0_signal
     mean_pred[..., gtab.b0s_mask] = S0[:, None]
     mean_pred[..., ~gtab.b0s_mask] = (pred_weighted +

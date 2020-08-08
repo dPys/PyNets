@@ -328,10 +328,11 @@ def test_plot_all_struct(plotting_data, roi):
     directget = 'prob'
     track_type = 'particle'
     min_length = 10
+    error_margin = 2
 
     plot_gen.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
                              coords, thr, node_size, edge_threshold, prune, uatlas, target_samples,
-                             norm, binary, track_type, directget, min_length)
+                             norm, binary, track_type, directget, min_length, error_margin)
 
     temp_dir.cleanup()
 

@@ -66,6 +66,7 @@ def workflow_selector(
     track_type,
     min_length,
     maxcrossing,
+    error_margin,
     directget,
     tiss_class,
     runtime_dict,
@@ -80,6 +81,7 @@ def workflow_selector(
     waymask,
     local_corr,
     min_length_list,
+    error_margin_list,
     extract_strategy,
     extract_strategy_list,
     outdir,
@@ -238,6 +240,7 @@ def workflow_selector(
             track_type,
             min_length,
             maxcrossing,
+            error_margin,
             directget,
             tiss_class,
             runtime_dict,
@@ -247,6 +250,7 @@ def workflow_selector(
             vox_size,
             waymask,
             min_length_list,
+            error_margin_list,
             outdir_mod_struct,
         )
         if func_file is None:
@@ -420,6 +424,7 @@ def workflow_selector(
                 "track_type",
                 "min_length",
                 "maxcrossing",
+                "error_margin",
                 "directget",
                 "tiss_class",
                 "embed",
@@ -433,6 +438,7 @@ def workflow_selector(
                 "waymask",
                 "local_corr",
                 "min_length_list",
+                "error_margin_list",
                 "extract_strategy",
                 "extract_strategy_list",
                 "outdir_mod_func",
@@ -497,6 +503,7 @@ def workflow_selector(
     meta_inputnode.inputs.track_type = track_type
     meta_inputnode.inputs.min_length = min_length
     meta_inputnode.inputs.maxcrossing = maxcrossing
+    meta_inputnode.inputs.error_margin = error_margin
     meta_inputnode.inputs.directget = directget
     meta_inputnode.inputs.tiss_class = tiss_class
     meta_inputnode.inputs.embed = embed
@@ -508,6 +515,7 @@ def workflow_selector(
     meta_inputnode.inputs.waymask = waymask
     meta_inputnode.inputs.local_corr = local_corr
     meta_inputnode.inputs.min_length_list = min_length_list
+    meta_inputnode.inputs.error_margin_list = error_margin_list
     meta_inputnode.inputs.extract_strategy = extract_strategy
     meta_inputnode.inputs.extract_strategy_list = extract_strategy_list
     meta_inputnode.inputs.outdir_mod_func = outdir_mod_func
@@ -608,6 +616,7 @@ def workflow_selector(
                         ("track_type", "inputnode.track_type"),
                         ("min_length", "inputnode.min_length"),
                         ("maxcrossing", "inputnode.maxcrossing"),
+                        ("error_margin", "inputnode.error_margin"),
                         ("directget", "inputnode.directget"),
                         ("tiss_class", "inputnode.tiss_class"),
                         ("multi_directget", "inputnode.multi_directget"),
@@ -615,6 +624,7 @@ def workflow_selector(
                         ("vox_size", "inputnode.vox_size"),
                         ("waymask", "inputnode.waymask"),
                         ("min_length_list", "inputnode.min_length_list"),
+                        ("error_margin_list", "inputnode.error_margin_list"),
                         ("outdir_mod_struct", "inputnode.outdir"),
                     ],
                 )
@@ -838,6 +848,7 @@ def workflow_selector(
                             ("track_type", "inputnode.track_type"),
                             ("min_length", "inputnode.min_length"),
                             ("maxcrossing", "inputnode.maxcrossing"),
+                            ("error_margin", "inputnode.error_margin"),
                             ("directget", "inputnode.directget"),
                             ("tiss_class", "inputnode.tiss_class"),
                             ("multi_directget", "inputnode.multi_directget"),
@@ -845,6 +856,8 @@ def workflow_selector(
                             ("vox_size", "inputnode.vox_size"),
                             ("waymask", "inputnode.waymask"),
                             ("min_length_list", "inputnode.min_length_list"),
+                            ("error_margin_list",
+                             "inputnode.error_margin_list"),
                             ("outdir_mod_struct", "inputnode.outdir"),
                         ],
                     )
@@ -1331,6 +1344,7 @@ def dmri_connectometry(
     track_type,
     min_length,
     maxcrossing,
+    error_margin,
     directget,
     tiss_class,
     runtime_dict,
@@ -1340,6 +1354,7 @@ def dmri_connectometry(
     vox_size,
     waymask,
     min_length_list,
+    error_margin_list,
     outdir,
 ):
     """
@@ -1442,12 +1457,14 @@ def dmri_connectometry(
                 "track_type",
                 "min_length",
                 "maxcrossing",
+                "error_margin",
                 "directget",
                 "tiss_class",
                 "vox_size",
                 "multi_directget",
                 "waymask",
                 "min_length_list",
+                "error_margin_list",
                 "outdir",
             ]
         ),
@@ -1497,6 +1514,7 @@ def dmri_connectometry(
     inputnode.inputs.track_type = track_type
     inputnode.inputs.min_length = min_length
     inputnode.inputs.maxcrossing = maxcrossing
+    inputnode.inputs.error_margin = error_margin
     inputnode.inputs.directget = directget
     inputnode.inputs.tiss_class = tiss_class
     inputnode.inputs.plugin_type = plugin_type
@@ -1504,6 +1522,7 @@ def dmri_connectometry(
     inputnode.inputs.multi_directget = multi_directget
     inputnode.inputs.waymask = waymask
     inputnode.inputs.min_length_list = min_length_list
+    inputnode.inputs.error_margin_list = error_margin_list
     inputnode.inputs.outdir = outdir
 
     # print('\n\n\n\n\n')
@@ -1543,6 +1562,7 @@ def dmri_connectometry(
     # print("%s%s" % ('template_mask: ', template_mask))
     # print("%s%s" % ('multi_directget: ', multi_directget))
     # print("%s%s" % ('min_length_list: ', min_length_list))
+    # print("%s%s" % ('error_margin_list: ', error_margin_list))
     # print('\n\n\n\n\n')
 
     # Create function nodes
@@ -1849,8 +1869,8 @@ def dmri_connectometry(
                 "step_list",
                 "directget",
                 "min_length",
-                "t1_aligned_mni",
                 "error_margin",
+                "t1_aligned_mni"
             ],
             output_names=[
                 "streams_mni",
@@ -1877,7 +1897,7 @@ def dmri_connectometry(
                 "directget",
                 "warped_fa",
                 "min_length",
-                "error_margin",
+                "error_margin"
             ],
             function=register.direct_streamline_norm,
             imports=import_list,
@@ -1912,8 +1932,8 @@ def dmri_connectometry(
                 "binary",
                 "directget",
                 "warped_fa",
-                "error_margin",
                 "min_length",
+                "error_margin",
             ],
             output_names=[
                 "atlas_mni",
@@ -1940,6 +1960,7 @@ def dmri_connectometry(
                 "binary",
                 "directget",
                 "min_length",
+                "error_margin"
             ],
             function=estimation.streams2graph,
             imports=import_list,
@@ -1949,6 +1970,9 @@ def dmri_connectometry(
     streams2graph_node.synchronize = True
     streams2graph_node._n_procs = runtime_dict["streams2graph_node"][0]
     streams2graph_node._mem_gb = runtime_dict["streams2graph_node"][1]
+
+    if error_margin_list:
+        streams2graph_node.iterables = [("error_margin", error_margin_list)]
 
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(
@@ -2349,6 +2373,7 @@ def dmri_connectometry(
         "streams",
         "directget",
         "min_length",
+        "error_margin",
     ]
 
     map_connects = [
@@ -2377,6 +2402,7 @@ def dmri_connectometry(
         ("streams", "streams"),
         ("directget", "directget"),
         ("min_length", "min_length"),
+        ("error_margin", "error_margin")
     ]
 
     # Create a "thr_info" node for iterating iterfields across thresholds
@@ -2574,6 +2600,7 @@ def dmri_connectometry(
         "streams",
         "directget",
         "min_length",
+        "error_margin"
     ]
     thr_struct_iter_fields = [
         "conn_matrix_thr",
@@ -2599,6 +2626,7 @@ def dmri_connectometry(
         "streams",
         "directget",
         "min_length",
+        "error_margin"
     ]
 
     if no_iters is True:
@@ -2629,6 +2657,7 @@ def dmri_connectometry(
                     "streams",
                     "directget",
                     "min_length",
+                    "error_margin"
                 ],
                 function=thresholding.thresh_struct,
                 imports=import_list,
@@ -2663,6 +2692,7 @@ def dmri_connectometry(
                     "streams",
                     "directget",
                     "min_length",
+                    "error_margin"
                 ],
                 function=thresholding.thresh_struct,
                 imports=import_list,
@@ -2704,6 +2734,7 @@ def dmri_connectometry(
                     ("streams", "streams"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
+                    ("error_margin", "error_margin")
                 ],
             )
         ]
@@ -2745,6 +2776,7 @@ def dmri_connectometry(
                         ("streams", "streams"),
                         ("directget", "directget"),
                         ("min_length", "min_length"),
+                        ("error_margin", "error_margin")
                     ],
                 )
             ]
@@ -2776,6 +2808,7 @@ def dmri_connectometry(
             "track_type",
             "directget",
             "min_length",
+            "error_margin"
         ]
 
         # Plotting iterable graph solutions
@@ -2825,6 +2858,7 @@ def dmri_connectometry(
                         ("track_type", "track_type"),
                         ("directget", "directget"),
                         ("min_length", "min_length"),
+                        ("error_margin", "error_margin")
                     ],
                 )
             ]
@@ -3031,6 +3065,7 @@ def dmri_connectometry(
                     ("step_list", "step_list"),
                     ("track_type", "track_type"),
                     ("maxcrossing", "maxcrossing"),
+                    ("error_margin", "error_margin")
                 ],
             ),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
@@ -3071,8 +3106,8 @@ def dmri_connectometry(
                     ("fa_path", "fa_path"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
-                    ("network", "network"),
-                    ("roi_neighborhood_tol", "error_margin"),
+                    ("error_margin", "error_margin"),
+                    ("network", "network")
                 ],
             ),
             (
@@ -3102,8 +3137,8 @@ def dmri_connectometry(
                     ("directget", "directget"),
                     ("warped_fa", "warped_fa"),
                     ("min_length", "min_length"),
-                    ("network", "network"),
                     ("error_margin", "error_margin"),
+                    ("network", "network"),
                 ],
             ),
         ]
@@ -3243,6 +3278,7 @@ def dmri_connectometry(
                     "streams",
                     "directget",
                     "min_length",
+                    "error_margin"
                 ]
             ),
             name="join_iters_node_nets",
@@ -3264,6 +3300,7 @@ def dmri_connectometry(
                 "streams",
                 "directget",
                 "min_length",
+                "error_margin"
             ],
         )
         dmri_connectometry_wf.connect(
@@ -3288,6 +3325,7 @@ def dmri_connectometry(
                         ("streams", "streams"),
                         ("directget", "directget"),
                         ("min_length", "min_length"),
+                        ("error_margin", "error_margin")
                     ],
                 ),
                 (

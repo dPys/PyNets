@@ -448,6 +448,6 @@ def test_streams2graph(fa_wei, dsn):
     conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type, target_samples,
                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
                                 disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
-                                directget, fa_path, error_margin, min_length)[2]
+                                directget, fa_path, min_length, error_margin)[2]
 
     assert conn_matrix is not None
