@@ -403,14 +403,14 @@ def get_parser():
     parser.add_argument(
         "-em",
         metavar="Error margin",
-        default=12,
+        default=10,
         nargs="+",
         help="(Hyperparameter): Distance (in the units of the streamlines, "
              "usually mm). If any coordinate in the streamline is within this "
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
              "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel.\n",
+             "the corner of the voxel. Default is 10.\n",
     )
     parser.add_argument(
         "-dg",
@@ -3114,9 +3114,6 @@ def build_workflow(args, retval):
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-
-            import logging
-
             callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
@@ -3171,7 +3168,7 @@ def build_workflow(args, retval):
                     shutil.rmtree(cnfnd_tmp_dir)
                 shutil.rmtree(f"{dir}/reg_fmri", ignore_errors=True)
                 for file_ in [i for i in glob.glob(
-                        f"{dir}/*/*") if os.path.isfile(i)]:
+                        f"{dir}/func/*") if os.path.isfile(i)]:
                     if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
@@ -3181,7 +3178,7 @@ def build_workflow(args, retval):
                 shutil.rmtree(f"{dir}/dmri_tmp", ignore_errors=True)
                 shutil.rmtree(f"{dir}/reg_dmri", ignore_errors=True)
                 for file_ in [i for i in glob.glob(
-                        f"{dir}/*/*") if os.path.isfile(i)]:
+                        f"{dir}/dwi/*") if os.path.isfile(i)]:
                     if ("reor-RAS" in file_) or ("res-" in file_):
                         try:
                             os.remove(file_)
@@ -3319,9 +3316,6 @@ def build_workflow(args, retval):
             config.update_config(cfg_v)
             config.enable_debug_mode()
             config.enable_resource_monitor()
-
-            import logging
-
             callback_log_path = f"{wf.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
@@ -3372,7 +3366,7 @@ def build_workflow(args, retval):
         print("Cleaning up...")
         if func_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3380,7 +3374,7 @@ def build_workflow(args, retval):
                         continue
         if dwi_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:

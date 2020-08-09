@@ -402,16 +402,13 @@ def track_ensemble(
     import time
     import pkg_resources
     import yaml
-    from joblib import Parallel, delayed
+    from joblib import Parallel, delayed, Memory
     import itertools
-    from dipy.tracking.streamline import Streamlines
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from joblib import Memory
     import tempfile
-    import shutil
     from pynets.dmri.dmri_utils import generate_sl
-
+    from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     cache_dir = tempfile.mkdtemp()
     memory = Memory(cache_dir, verbose=0)
 
@@ -441,15 +438,15 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < 5:
+    while float(stream_counter) < float(target_samples) and float(ix) < \
+        len(all_combs):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
                     i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter,
-                    directget,
-                    maxcrossing, max_length, pft_back_tracking_dist,
+                    directget, maxcrossing, max_length, pft_back_tracking_dist,
                     pft_front_tracking_dist, particle_count, B0_mask_data,
                     roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
                     min_length, track_type, min_separation_angle, sphere,
@@ -463,8 +460,8 @@ def track_ensemble(
                 ix += 1
                 continue
             else:
-                out_streams = nib.streamlines.array_sequence.concatenate(
-                    out_streams, axis=0)
+                ix = 0
+                out_streams = concatenate(out_streams, axis=0)
 
             # Append streamline generators to prevent exponential growth
             # in memory consumption
@@ -484,8 +481,6 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-    memory.clear(warn=False)
-
     if ix >= len(all_combs):
         raise ValueError(f"Tractography failed. "
                          f">{len(all_combs)} consecutive sampling iterations "
@@ -494,10 +489,12 @@ def track_ensemble(
     else:
         print("Tracking Complete: ", str(time.time() - start))
 
-    shutil.rmtree(cache_dir, ignore_errors=True)
+    del parallel, parcel_vec, atlas_data_wm_gm_int, parcels
+    memory.clear(warn=False)
 
     if stream_counter != 0:
-        return Streamlines([Streamlines(i) for i in all_streams])
+        print('Generating final ArraySequence...')
+        return ArraySequence([ArraySequence(i) for i in all_streams])
     else:
         raise ValueError('No streamlines generated!')
 
@@ -521,6 +518,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         DeterministicMaximumDirectionGetter
     )
     from pynets.dmri.track import prep_tissues
+    from nibabel.streamlines.array_sequence import ArraySequence
 
     tiss_classifier = prep_tissues(
         t1w2dwi,
@@ -679,6 +677,6 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
     gc.collect()
 
     try:
-        return nib.streamlines.array_sequence.ArraySequence(out_streams)
+        return ArraySequence(out_streams)
     except BaseException:
         return None

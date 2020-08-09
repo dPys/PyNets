@@ -1569,9 +1569,8 @@ def save_ts_to_file(
                                               "%s" % ("%s%s%s" % ("hpass-",
                                                                   hpass,
                                                                   "Hz_") if hpass is not None else ""),
-                                              "%s" % ("%s%s%s" % ("extract-",
-                                                                  extract_strategy,
-                                                                  "_") if extract_strategy is not None else ""),
+                                              "%s" % ("%s%s" % ("extract-",
+                                                                  extract_strategy) if extract_strategy is not None else ""),
                                               ".npy",
                                               )
 

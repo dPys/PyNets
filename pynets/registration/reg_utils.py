@@ -27,7 +27,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
     t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
 
-    if mask is not None:
+    if mask is not None and op.isfile(mask):
         from nilearn.image import resample_to_img
 
         print(f"Using {mask}...")
@@ -37,23 +37,14 @@ def gen_mask(t1w_head, t1w_brain, mask):
                 nib.load(t1w_head)),
             t1w_brain_mask)
     else:
-        # Check if already skull-stripped. If not, strip it.
-        img = nib.load(t1w_head)
-        t1w_data = img.get_fdata()
-        perc_zero = np.count_nonzero(np.nan_to_num(np.array(
-            t1w_data < 10).astype('int'))) / np.count_nonzero(
-            np.nan_to_num(t1w_data.astype('bool').astype('int')))
-        # TODO: find a better heuristic for determining whether a t1w image has
-        # already been skull-stripped
-        if perc_zero < 0.75:
-            try:
-                t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask,
-                                                  img)
-            except RuntimeError:
-                print('Deepbrain extraction failed...')
-        else:
-            print('Your T1w data appears to already be skull-stripped? '
-                  'Skipping...')
+        # Perform skull-stripping if mask not provided.
+        img = nib.load(t1w_head, mmap=False)
+        t1w_data = img.get_fdata().astype('float32')
+        try:
+            t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
+        except RuntimeError:
+            print('Deepbrain extraction failed...')
+        del t1w_data
 
     # Threshold T1w brain to binary in anat space
     t_img = nib.load(t1w_brain_mask)
@@ -1339,7 +1330,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
                 nib.orientations.axcodes2ornt(input_axcodes),
                 nib.orientations.axcodes2ornt(new_axcodes),
             )
-            bvec_array = np.loadtxt(bvec_fname)
+            bvec_array = np.genfromtxt(bvec_fname)
             if bvec_array.shape[0] != 3:
                 bvec_array = bvec_array.T
             if not bvec_array.shape[0] == transform_orientation.shape[0]:
@@ -1439,10 +1430,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
-    orig_img = img_file
-
-    img = nib.load(img_file)
-    data = img.get_fdata()
+    # orig_img = img_file
+    img = nib.load(img_file, mmap=False)
 
     hdr = img.header
     zooms = hdr.get_zooms()[:3]
@@ -1460,6 +1449,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             img_file = img_file_res
             pass
         else:
+            import gc
+            data = img.get_fdata().astype('float32')
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(
                 data, img.affine, zooms, new_zooms
@@ -1470,7 +1461,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
                     affine=affine2),
                 img_file_res)
             img_file = img_file_res
-            del data2
+            del data2, data
+            gc.collect()
     else:
         img_file_nores = (
             f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
@@ -1483,9 +1475,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             nib.save(img, img_file_nores)
             img_file = img_file_nores
 
-    img.uncache()
-    del img
-    if os.path.isfile(orig_img):
-        os.remove(orig_img)
+    # if os.path.isfile(orig_img):
+    #     os.remove(orig_img)
 
     return img_file

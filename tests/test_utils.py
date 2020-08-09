@@ -165,7 +165,7 @@ def test_create_est_path_diff(node_size, parc):
     track_type = 'local'
     thr = 0.75
     error_margin = 6
-    
+
     est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, target_samples,
                                           track_type, thr_type, parc,

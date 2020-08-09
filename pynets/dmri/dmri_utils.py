@@ -161,7 +161,7 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     from dipy.tracking._utils import _mapping_to_voxel
-    from dipy.data import get_sphere
+    # from dipy.data import get_sphere
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
 
@@ -202,11 +202,14 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
                     dwi_data.shape).astype('bool') * dwi_data)
     # ! Remember this 4d masking function !
 
-    sphere = get_sphere(sphere)
     fiber_model = life.FiberModel(gtab)
     fiber_fit = fiber_model.fit(data_in_mask, streamlines_in_brain,
                                 affine=affine,
-                                sphere=sphere)
+                                sphere=False)
+    # sphere = get_sphere(sphere)
+    # fiber_fit = fiber_model.fit(data_in_mask, streamlines_in_brain,
+    #                             affine=affine,
+    #                             sphere=sphere)
     streamlines = list(np.array(streamlines_in_brain)[
                            np.where(fiber_fit.beta > 0)[0]])
     pruned_count = len(streamlines)
@@ -220,6 +223,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
                           'LiFE model. Is your acquisition hemispheric? '
                           'Also check the gradient table for errors. \n'))
         return streamlines_in_brain
+    else:
+        del streamlines_in_brain
 
     model_predict = fiber_fit.predict()
     model_error = model_predict - fiber_fit.data
