@@ -184,22 +184,23 @@ def get_conn_matrix(
     ):
         # Fit estimator to matrix to get sparse matrix
         estimator_shrunk = None
-        estimator = GraphicalLassoCV(cv=5, max_iter=200,
-                                     assume_centered=True)
+        estimator = GraphicalLassoCV(cv=5)
         print("\nComputing covariance...\n")
         try:
             estimator.fit(time_series)
         except BaseException:
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            time_series = scaler.fit_transform(time_series)
             ix = 0
             print("\nModel did not converge on first attempt. "
-                  "Varying tolerance and switching to LARS mode...\n")
-            while not hasattr(estimator, 'covariance_') \
-                and not hasattr(estimator, 'precision_') and ix < 6:
-                for tol in [0.000001, 0.00001, 0.001, 0.01, 0.1, 1, 10]:
+                  "Varying tolerance...\n")
+            while not hasattr(estimator, 'covariance_') and \
+                not hasattr(estimator, 'precision_') and ix < 2:
+                for tol in [0.001, 0.01, 0.1]:
+                    print(tol)
+                    estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol)
                     try:
-                        estimator = GraphicalLassoCV(cv=5, max_iter=200,
-                                                     assume_centered=True,
-                                                     tol=tol, mode='lars')
                         estimator.fit(time_series)
                     except BaseException:
                         continue

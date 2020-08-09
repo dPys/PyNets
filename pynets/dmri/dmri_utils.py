@@ -161,7 +161,7 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     from dipy.tracking._utils import _mapping_to_voxel
-    from dipy.data import get_sphere
+    # from dipy.data import get_sphere
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
 

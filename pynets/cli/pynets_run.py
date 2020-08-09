@@ -403,14 +403,14 @@ def get_parser():
     parser.add_argument(
         "-em",
         metavar="Error margin",
-        default=12,
+        default=10,
         nargs="+",
         help="(Hyperparameter): Distance (in the units of the streamlines, "
              "usually mm). If any coordinate in the streamline is within this "
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
              "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel.\n",
+             "the corner of the voxel. Default is 10.\n",
     )
     parser.add_argument(
         "-dg",
