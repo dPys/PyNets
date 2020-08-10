@@ -203,8 +203,8 @@ def get_conn_matrix(
                     try:
                         estimator.fit(time_series)
                     except BaseException:
+                        ix += 1
                         continue
-                    ix += 1
 
         if not hasattr(estimator, 'covariance_') and not hasattr(estimator,
                                                                  'precision_'):
