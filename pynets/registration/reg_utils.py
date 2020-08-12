@@ -27,18 +27,21 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
     t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
 
+    img = nib.load(t1w_head)
+
     if mask is not None and op.isfile(mask):
         from nilearn.image import resample_to_img
 
         print(f"Using {mask}...")
+        mask_img = nib.load(mask)
         nib.save(
             resample_to_img(
-                nib.load(mask),
-                nib.load(t1w_head)),
+                mask_img,
+                img),
             t1w_brain_mask)
     else:
         # Perform skull-stripping if mask not provided.
-        img = nib.load(t1w_head, mmap=False)
+        img = nib.load(t1w_head)
         t1w_data = img.get_fdata().astype('float32')
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
@@ -55,6 +58,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
     t1w_brain = regutils.apply_mask_to_image(t1w_head, t1w_brain_mask,
                                              t1w_brain)
+    time.sleep(0.5)
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)
@@ -103,6 +107,7 @@ def atlas2t1w2dwi_align(
     dwi_aligned_atlas,
     dwi_aligned_atlas_wmgm_int,
     B0_mask,
+    mni2dwi_xfm,
     simple,
 ):
     """
@@ -151,68 +156,25 @@ def atlas2t1w2dwi_align(
             time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
-            regutils.align(
-                aligned_atlas_skull,
-                ap_path,
-                init=t1w2dwi_bbr_xfm,
-                out=dwi_aligned_atlas,
-                dof=6,
-                searchrad=True,
-                interp="nearestneighbour",
-                cost="mutualinfo",
-            )
-
+            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_bbr_xfm,
+                              dwi_aligned_atlas, interp="nearestneighbour")
+            time.sleep(0.5)
         except BaseException:
             print(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
-            regutils.align(
-                aligned_atlas_t1mni,
-                t1w_brain,
-                init=mni2t1_xfm,
-                out=aligned_atlas_skull,
-                dof=6,
-                searchrad=True,
-                interp="nearestneighbour",
-                cost="mutualinfo",
-            )
+            combine_xfms(mni2t1_xfm, t1w2dwi_bbr_xfm, mni2dwi_xfm)
             time.sleep(0.5)
-
-            regutils.align(
-                aligned_atlas_skull,
-                ap_path,
-                init=t1w2dwi_bbr_xfm,
-                out=dwi_aligned_atlas,
-                dof=6,
-                searchrad=True,
-                interp="nearestneighbour",
-                cost="mutualinfo",
-            )
-
+            regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
+                              dwi_aligned_atlas, interp="nearestneighbour")
+            time.sleep(0.5)
     else:
-        regutils.align(
-            aligned_atlas_t1mni,
-            t1w_brain,
-            init=mni2t1_xfm,
-            out=aligned_atlas_skull,
-            dof=6,
-            searchrad=True,
-            interp="nearestneighbour",
-            cost="mutualinfo",
-        )
+        combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
         time.sleep(0.5)
-
-        regutils.align(
-            aligned_atlas_skull,
-            ap_path,
-            init=t1w2dwi_xfm,
-            out=dwi_aligned_atlas,
-            dof=6,
-            searchrad=True,
-            interp="nearestneighbour",
-            cost="mutualinfo",
-        )
+        regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
+                          dwi_aligned_atlas, interp="nearestneighbour")
+        time.sleep(0.5)
 
     atlas_img = nib.load(dwi_aligned_atlas)
     wm_gm_img = nib.load(wm_gm_int_in_dwi)
@@ -239,6 +201,7 @@ def atlas2t1w2dwi_align(
                                                      dwi_aligned_atlas)
 
     time.sleep(0.5)
+
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
         dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
 
@@ -356,6 +319,8 @@ def waymask2dwi_align(
         t1wtissue2dwi_xfm,
         waymask_in_dwi)
 
+    time.sleep(0.5)
+
     return waymask_in_dwi
 
 
@@ -370,6 +335,7 @@ def roi2t1w_align(
     """
     A function to perform alignment of a roi from MNI space --> T1w.
     """
+    import time
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -389,6 +355,8 @@ def roi2t1w_align(
     else:
         regutils.applyxfm(t1w_brain, roi_res, mni2t1_xfm, roi_in_t1w)
 
+    time.sleep(0.5)
+
     return roi_in_t1w
 
 
@@ -406,6 +374,7 @@ def RegisterParcellation2MNIFunc_align(
     """
     A function to perform atlas alignment from T1w atlas --> MNI.
     """
+    import time
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -433,11 +402,11 @@ def RegisterParcellation2MNIFunc_align(
                 interp="nn",
                 sup=True,
             )
-
+            time.sleep(0.5)
         except BaseException:
             print(
-                "Warning: Atlas is not in correct dimensions, or input is low "
-                "quality,\nusing linear template registration.")
+                "Warning: Atlas is not in correct dimensions, or input is "
+                "low quality,\nusing linear template registration.")
 
             regutils.align(
                 aligned_atlas_t1w,
@@ -449,7 +418,7 @@ def RegisterParcellation2MNIFunc_align(
                 interp="nearestneighbour",
                 cost="mutualinfo",
             )
-
+            time.sleep(0.5)
     else:
         regutils.align(
             aligned_atlas_t1w,
@@ -461,7 +430,7 @@ def RegisterParcellation2MNIFunc_align(
             interp="nearestneighbour",
             cost="mutualinfo",
         )
-
+        time.sleep(0.5)
     return aligned_atlas_mni
 
 
@@ -519,34 +488,19 @@ def atlas2t1w_align(
                 sup=True,
                 mask=t1w_brain_mask,
             )
-
+            time.sleep(0.5)
         except BaseException:
             print(
                 "Warning: Atlas is not in correct dimensions, or input is low "
                 "quality,\nusing linear template registration.")
 
-            regutils.align(
-                aligned_atlas_t1mni,
-                t1w_brain,
-                init=mni2t1_xfm,
-                out=aligned_atlas_skull,
-                dof=6,
-                searchrad=True,
-                interp="nearestneighbour",
-                cost="mutualinfo",
-            )
-
+            regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                              aligned_atlas_skull, interp="nearestneighbour")
+            time.sleep(0.5)
     else:
-        regutils.align(
-            aligned_atlas_t1mni,
-            t1w_brain,
-            init=mni2t1_xfm,
-            out=aligned_atlas_skull,
-            dof=6,
-            searchrad=True,
-            interp="nearestneighbour",
-            cost="mutualinfo",
-        )
+        regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                          aligned_atlas_skull, interp="nearestneighbour")
+        time.sleep(0.5)
 
     # aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
     #                                                 gm_mask,

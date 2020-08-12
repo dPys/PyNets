@@ -671,6 +671,7 @@ class DmriReg(object):
         """
         A function to segment and threshold tissue types from T1w.
         """
+        import time
         import shutil
 
         # Segment the t1w brain into probability maps
@@ -693,6 +694,7 @@ class DmriReg(object):
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
+                time.sleep(0.5)
                 wm_mask = maps["wm_prob"]
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
@@ -710,7 +712,7 @@ class DmriReg(object):
         # Extract wm edge
         self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
                                                self.wm_edge)
-
+        time.sleep(0.5)
         shutil.copyfile(wm_mask, self.wm_mask)
         shutil.copyfile(gm_mask, self.gm_mask)
         shutil.copyfile(csf_mask, self.csf_mask)
@@ -722,6 +724,7 @@ class DmriReg(object):
         A function to perform alignment from T1w --> MNI template.
         """
         import time
+
         # Create linear transform/ initializer T1w-->MNI
         regutils.align(
             self.t1w_brain,
@@ -760,7 +763,7 @@ class DmriReg(object):
                 # Get mat from MNI -> T1
                 self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
                                                       self.mni2t1_xfm)
-
+                time.sleep(0.5)
             except BaseException:
                 # Falling back to linear registration
                 regutils.align(
@@ -780,6 +783,7 @@ class DmriReg(object):
                 # Get mat from MNI -> T1
                 self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm,
                                                       self.mni2t1_xfm)
+                time.sleep(0.5)
         else:
             # Falling back to linear registration
             regutils.align(
@@ -799,6 +803,7 @@ class DmriReg(object):
             # Get mat from MNI -> T1
             self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
                                                   self.t12mni_xfm)
+            time.sleep(0.5)
 
     def t1w2dwi_align(self):
         """
@@ -862,6 +867,7 @@ class DmriReg(object):
                     searchrad=True,
                     sch=None,
                 )
+                time.sleep(0.5)
             except BaseException:
                 # Apply the alignment
                 regutils.align(
@@ -877,6 +883,7 @@ class DmriReg(object):
                     searchrad=True,
                     sch=None,
                 )
+                time.sleep(0.5)
         else:
             # Apply the alignment
             regutils.align(
@@ -892,6 +899,7 @@ class DmriReg(object):
                 searchrad=True,
                 sch=None,
             )
+            time.sleep(0.5)
 
         return
 
@@ -1054,21 +1062,21 @@ class DmriReg(object):
         os.system(
             f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi}"
         )
-        time.sleep(0.5)
+        time.sleep(1)
         os.system(
             f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi}"
         )
-        time.sleep(0.5)
+        time.sleep(1)
         print("Creating Corpus Callosum mask...")
         os.system(
             f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} -sub {self.vent_csf_in_dwi} "
             f"-bin {self.corpuscallosum_dwi}")
-        time.sleep(0.5)
+        time.sleep(1)
         # Create gm-wm interface image
         os.system(
             f"fslmaths {self.gm_in_dwi_bin} -mul {self.wm_in_dwi_bin} -add {self.corpuscallosum_dwi} "
             f"-mas {self.B0_mask} -bin {self.wm_gm_int_in_dwi}")
-
+        time.sleep(1)
         return
 
 

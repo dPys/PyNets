@@ -16,7 +16,7 @@ tracking:
         - 40
         - 20
     use_life:  # Filter ensemble tractogram to yield more plausible streamlines.
-        - True
+        - False
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'particle'
     tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 50,000 = 5 million streamlines!)
@@ -48,7 +48,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 4
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -168,7 +168,7 @@ resource_dict: # Nipype workflow resource settings
       - 'save_coords_and_labels_node':
         - (1, 0.5)
       - 'check_orient_and_dims_func_node':
-        - (2, 2)
+        - (2, 4)
       - 'check_orient_and_dims_mask_node':
         - (1, 0.5)
       - 'check_orient_and_dims_uatlas_node':
@@ -180,7 +180,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_node_membership_node':
         - (2, 6)
       - 'check_orient_and_dims_dwi_node':
-        - (2, 3)
+        - (2, 4)
       - 'get_anisopwr_node':
         - (2, 1)
       - 'extract_ts_node':
@@ -198,7 +198,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 1)
       - 'run_tracking_node':
-        - (6, 12)
+        - (2, 8)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':
@@ -206,9 +206,9 @@ resource_dict: # Nipype workflow resource settings
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (4, 2)
+        - (4, 4)
       - 'build_multigraphs_node':
-        - (4, 8)
+        - (2, 8)
       - 'plot_all_struct_func_node':
         - (1, 2)
       - 'mase_embedding_node':

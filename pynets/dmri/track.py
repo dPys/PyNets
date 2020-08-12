@@ -304,8 +304,8 @@ def create_density_map(
 def track_ensemble(
     target_samples,
     atlas_data_wm_gm_int,
-    parcels,
-    mod_fit,
+    labels_im_file,
+    recon_path,
     sphere,
     directget,
     curv_thr_list,
@@ -314,14 +314,14 @@ def track_ensemble(
     maxcrossing,
     roi_neighborhood_tol,
     min_length,
-    waymask_data,
-    B0_mask_data,
+    waymask,
+    B0_mask,
     t1w2dwi,
     gm_in_dwi,
     vent_csf_in_dwi,
     wm_in_dwi,
     tiss_class,
-    B0_mask
+    cache_dir
 ):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
@@ -335,8 +335,8 @@ def track_ensemble(
     parcels : list
         List of 3D boolean numpy arrays of atlas parcellation ROI masks from a
         Nifti1Image in T1w-warped native diffusion space.
-    mod : obj
-        Connectivity reconstruction model.
+    recon_path : str
+        File path to diffusion reconstruction model.
     tiss_classifier : str
         Tissue classification method.
     sphere : obj
@@ -398,19 +398,21 @@ def track_ensemble(
       https://doi.org/10.1371/journal.pcbi.1004692
 
     """
+    import os
     import gc
     import time
     import pkg_resources
     import yaml
-    from joblib import Parallel, delayed, Memory
+    import shutil
+    from joblib import Parallel, delayed
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    import tempfile
     from pynets.dmri.dmri_utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
-    cache_dir = tempfile.mkdtemp()
-    memory = Memory(cache_dir, verbose=0)
+
+    cache_dir = f"{cache_dir}/joblib_tracking"
+    os.makedirs(cache_dir, exist_ok=True)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -425,12 +427,7 @@ def track_ensemble(
         min_separation_angle = hardcoded_params['tracking']["min_separation_angle"][0]
     stream.close()
 
-    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
-
     all_combs = list(itertools.product(step_list, curv_thr_list))
-
-    atlas_data_wm_gm_int = memory.cache(atlas_data_wm_gm_int)
-    parcels = memory.cache(parcels)
 
     # Commence Ensemble Tractography
     start = time.time()
@@ -445,13 +442,14 @@ def track_ensemble(
                       verbose=10) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
-                    i, atlas_data_wm_gm_int, mod_fit, n_seeds_per_iter,
-                    directget, maxcrossing, max_length, pft_back_tracking_dist,
-                    pft_front_tracking_dist, particle_count, B0_mask_data,
-                    roi_neighborhood_tol, parcels, parcel_vec, waymask_data,
-                    min_length, track_type, min_separation_angle, sphere,
-                    t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi, tiss_class,
-                    B0_mask) for i in all_combs)
+                    i, atlas_data_wm_gm_int, recon_path,
+                    n_seeds_per_iter, directget, maxcrossing, max_length,
+                    pft_back_tracking_dist, pft_front_tracking_dist,
+                    particle_count, B0_mask, roi_neighborhood_tol,
+                    labels_im_file, waymask, min_length, track_type,
+                    min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
+                    vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir) for i in
+                all_combs)
 
             out_streams = [i for i in out_streams if i is not None and
                            len(i) > 0]
@@ -489,8 +487,8 @@ def track_ensemble(
     else:
         print("Tracking Complete: ", str(time.time() - start))
 
-    del parallel, parcel_vec, atlas_data_wm_gm_int, parcels
-    memory.clear(warn=False)
+    del parallel, all_combs
+    shutil.rmtree(cache_dir, ignore_errors=True)
 
     if stream_counter != 0:
         print('Generating final ArraySequence...')
@@ -499,17 +497,17 @@ def track_ensemble(
         raise ValueError('No streamlines generated!')
 
 
-def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
+def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                  n_seeds_per_iter, directget, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
-                 particle_count, B0_mask_data, roi_neighborhood_tol,
-                 parcels, parcel_vec, waymask_data, min_length, track_type,
+                 particle_count, B0_mask, roi_neighborhood_tol,
+                 labels_im_file, waymask, min_length, track_type,
                  min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
-                 vent_csf_in_dwi, wm_in_dwi, tiss_class, B0_mask):
+                 vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir):
 
     import gc
     from dipy.tracking import utils
-    from dipy.tracking.streamline import Streamlines, select_by_rois
+    from dipy.tracking.streamline import select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, \
         ParticleFilteringTracking
     from dipy.direction import (
@@ -519,14 +517,116 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
     )
     from pynets.dmri.track import prep_tissues
     from nibabel.streamlines.array_sequence import ArraySequence
+    from nipype.utils.filemanip import copyfile, fname_presuffix
+
+    B0_mask_tmp_path = fname_presuffix(
+        B0_mask, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        B0_mask,
+        B0_mask_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    labels_im_file_tmp_path = fname_presuffix(
+        labels_im_file, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        labels_im_file,
+        labels_im_file_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    atlas_data_wm_gm_int_tmp_path = fname_presuffix(
+        atlas_data_wm_gm_int, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        atlas_data_wm_gm_int,
+        atlas_data_wm_gm_int_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    t1w2dwi_tmp_path = fname_presuffix(
+        t1w2dwi, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        t1w2dwi,
+        t1w2dwi_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    gm_in_dwi_tmp_path = fname_presuffix(
+        gm_in_dwi, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        gm_in_dwi,
+        gm_in_dwi_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    vent_csf_in_dwi_tmp_path = fname_presuffix(
+        vent_csf_in_dwi, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        vent_csf_in_dwi,
+        vent_csf_in_dwi_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    wm_in_dwi_tmp_path = fname_presuffix(
+        wm_in_dwi, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        wm_in_dwi,
+        wm_in_dwi_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
+    recon_path_tmp_path = fname_presuffix(
+        recon_path, suffix=f"_{step_curv_combinations}",
+        newpath=cache_dir
+    )
+    copyfile(
+        recon_path,
+        recon_path_tmp_path,
+        copy=True,
+        use_hardlink=False)
 
     tiss_classifier = prep_tissues(
-        t1w2dwi,
-        gm_in_dwi,
-        vent_csf_in_dwi,
-        wm_in_dwi,
+        t1w2dwi_tmp_path,
+        gm_in_dwi_tmp_path,
+        vent_csf_in_dwi_tmp_path,
+        wm_in_dwi_tmp_path,
         tiss_class,
-        B0_mask)
+        B0_mask_tmp_path)
+
+    B0_mask_data = np.asarray(nib.load(B0_mask_tmp_path).dataobj
+                              ).astype("bool")
+    mod_fit = np.load(recon_path_tmp_path).astype('float32')
+    atlas_img = nib.load(labels_im_file_tmp_path)
+    atlas_data = np.array(atlas_img.dataobj).astype("uint16")
+    atlas_data_wm_gm_int_data = np.asarray(
+        nib.load(atlas_data_wm_gm_int_tmp_path).dataobj
+    ).astype("bool").astype("int16")
+
+    # Build mask vector from atlas for later roi filtering
+    parcels = []
+    i = 0
+    intensities = [i for i in np.unique(atlas_data) if i != 0]
+    for roi_val in intensities:
+        parcels.append(atlas_data == roi_val)
+        i += 1
+
+    del atlas_data
+
+    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
@@ -561,7 +661,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     # Perform wm-gm interface seeding, using n_seeds at a time
     seeds = utils.random_seeds_from_mask(
-        atlas_data_wm_gm_int.func > 0,
+        atlas_data_wm_gm_int_data > 0,
         seeds_count=n_seeds_per_iter,
         seed_count_per_voxel=False,
         affine=np.eye(4),
@@ -620,18 +720,20 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
 
     # Filter resulting streamlines by roi-intersection
     # characteristics
+
     try:
-        roi_proximal_streamlines = Streamlines(
-            select_by_rois(
-                roi_proximal_streamlines,
-                affine=np.eye(4),
-                rois=parcels.func,
-                include=parcel_vec,
-                mode="%s" % ("any" if waymask_data is not None else
-                             "both_end"),
-                tol=roi_neighborhood_tol,
+        roi_proximal_streamlines = \
+            nib.streamlines.array_sequence.ArraySequence(
+                select_by_rois(
+                    roi_proximal_streamlines,
+                    affine=np.eye(4),
+                    rois=parcels,
+                    include=parcel_vec,
+                    mode="%s" % ("any" if waymask is not None else
+                                 "both_end"),
+                    tol=roi_neighborhood_tol,
+                )
             )
-        )
         print("%s%s" % ("Filtering by: \nnode intersection: ",
                         len(roi_proximal_streamlines)))
     except BaseException:
@@ -653,7 +755,18 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
         print('No streamlines remaining after minimal length criterion.')
         return None
 
-    if waymask_data is not None:
+    if waymask is not None:
+        waymask_tmp_path = fname_presuffix(
+            waymask, suffix=f"_{step_curv_combinations}",
+            newpath=cache_dir
+        )
+        copyfile(
+            waymask,
+            waymask_tmp_path,
+            copy=True,
+            use_hardlink=False)
+        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj).astype(
+            "bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(
@@ -673,7 +786,9 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, mod_fit,
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]
 
-    del dg, seeds, roi_proximal_streamlines, streamline_generator
+    del dg, seeds, roi_proximal_streamlines, streamline_generator, parcel_vec,\
+        parcels, atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
+    atlas_img.uncache()
     gc.collect()
 
     try:
