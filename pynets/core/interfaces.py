@@ -574,6 +574,7 @@ class IndividualClustering(SimpleInterface):
             template_tmp_path,
             self.inputs.simple,
         )
+        time.sleep(0.5)
 
         if self.inputs.mask:
             out_name_mask = fname_presuffix(
@@ -1143,11 +1144,12 @@ class RegisterDWI(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import time
         import glob
         import os.path as op
         from pynets.registration import register
-        from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        from pynets.registration.reg_utils import check_orient_and_dims
 
         fa_tmp_path = fname_presuffix(
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
@@ -1205,6 +1207,9 @@ class RegisterDWI(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
+                mask_tmp_path = check_orient_and_dims(
+                    mask_tmp_path, runtime.cwd, self.inputs.vox_size
+                )
             else:
                 mask_tmp_path = None
 
@@ -1218,6 +1223,9 @@ class RegisterDWI(SimpleInterface):
                 gm_mask,
                 copy=True,
                 use_hardlink=False)
+            gm_mask = check_orient_and_dims(
+                gm_mask, runtime.cwd, self.inputs.vox_size
+            )
         else:
             gm_mask = None
 
@@ -1231,6 +1239,9 @@ class RegisterDWI(SimpleInterface):
                 wm_mask,
                 copy=True,
                 use_hardlink=False)
+            wm_mask = check_orient_and_dims(
+                wm_mask, runtime.cwd, self.inputs.vox_size
+            )
         else:
             wm_mask = None
 
@@ -1245,6 +1256,9 @@ class RegisterDWI(SimpleInterface):
                 csf_mask,
                 copy=True,
                 use_hardlink=False)
+            csf_mask = check_orient_and_dims(
+                csf_mask, runtime.cwd, self.inputs.vox_size
+            )
         else:
             csf_mask = None
 
@@ -1270,9 +1284,11 @@ class RegisterDWI(SimpleInterface):
 
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
+        time.sleep(0.5)
 
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
+        time.sleep(0.5)
 
         # Align t1w to mni template
         # from joblib import Memory
@@ -1284,17 +1300,20 @@ class RegisterDWI(SimpleInterface):
         # t1w2mni_align = memory.cache(reg.t1w2mni_align)
         # t1w2mni_align()
         reg.t1w2mni_align()
+        time.sleep(0.5)
 
         if (self.inputs.overwrite is True) or (
                 op.isfile(reg.t1w2dwi) is False):
             # Align t1w to dwi
             reg.t1w2dwi_align()
+            time.sleep(0.5)
 
         if (self.inputs.overwrite is True) or (
             op.isfile(reg.wm_gm_int_in_dwi) is False
         ):
             # Align tissue
             reg.tissue2dwi_align()
+            time.sleep(0.5)
 
         self._results["wm_in_dwi"] = reg.wm_in_dwi
         self._results["gm_in_dwi"] = reg.gm_in_dwi
@@ -1389,6 +1408,7 @@ class RegisterAtlasDWI(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import time
         import os
         from pynets.registration import reg_utils as regutils
         from pynets.core.nodemaker import \
@@ -1641,6 +1661,7 @@ class RegisterAtlasDWI(SimpleInterface):
                 template_tmp_path,
                 self.inputs.simple,
             )
+            time.sleep(0.5)
             os.remove(waymask_tmp_path)
         else:
             waymask_in_dwi = None
@@ -1743,6 +1764,7 @@ class RegisterROIDWI(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import time
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
@@ -1856,6 +1878,7 @@ class RegisterROIDWI(SimpleInterface):
                 template_tmp_path,
                 self.inputs.simple,
             )
+            time.sleep(0.5)
         else:
             roi_in_dwi = None
 
@@ -1914,10 +1937,11 @@ class RegisterFunc(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import glob
+        import time
         import os.path as op
         from pynets.registration import register
-        from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        from pynets.registration.reg_utils import check_orient_and_dims
 
         anat_mask_existing = [
             i
@@ -1949,6 +1973,9 @@ class RegisterFunc(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
+                mask_tmp_path = check_orient_and_dims(
+                    mask_tmp_path, runtime.cwd, self.inputs.vox_size
+                )
             else:
                 mask_tmp_path = None
 
@@ -1963,6 +1990,9 @@ class RegisterFunc(SimpleInterface):
                 gm_mask,
                 copy=True,
                 use_hardlink=False)
+            gm_mask = check_orient_and_dims(
+                gm_mask, runtime.cwd, self.inputs.vox_size
+            )
         else:
             gm_mask = None
 
@@ -1977,6 +2007,9 @@ class RegisterFunc(SimpleInterface):
                 wm_mask,
                 copy=True,
                 use_hardlink=False)
+            wm_mask = check_orient_and_dims(
+                wm_mask, runtime.cwd, self.inputs.vox_size
+            )
         else:
             wm_mask = None
 
@@ -1999,9 +2032,11 @@ class RegisterFunc(SimpleInterface):
 
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
+        time.sleep(0.5)
 
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
+        time.sleep(0.5)
 
         # Align t1w to mni template
         # from joblib import Memory
@@ -2013,6 +2048,7 @@ class RegisterFunc(SimpleInterface):
         # t1w2mni_align = memory.cache(reg.t1w2mni_align)
         # t1w2mni_align()
         reg.t1w2mni_align()
+        time.sleep(0.5)
 
         self._results["reg_fmri_complete"] = True
         self._results["basedir_path"] = runtime.cwd
@@ -2059,6 +2095,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         import gc
         import os
         import pkg_resources
+        import time
         from pynets.core.utils import prune_suffices
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -2150,6 +2187,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             t1w2mni_warp_tmp_path,
             self.inputs.simple
         )
+        time.sleep(0.5)
 
         out_dir = f"{self.inputs.dir_path}/t1w_clustered_parcellations/"
         os.makedirs(out_dir, exist_ok=True)
@@ -2220,6 +2258,7 @@ class RegisterAtlasFunc(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import time
         import glob
         from pynets.registration import reg_utils as regutils
         from pynets.core.nodemaker import \
@@ -2359,6 +2398,7 @@ class RegisterAtlasFunc(SimpleInterface):
                 aligned_atlas_gm,
                 self.inputs.simple,
             )
+            time.sleep(0.5)
 
             # Correct coords and labels
             [aligned_atlas_gm, coords, labels] = \
@@ -2451,6 +2491,7 @@ class RegisterROIEPI(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import time
         from pynets.registration import reg_utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
@@ -2520,6 +2561,7 @@ class RegisterROIEPI(SimpleInterface):
                 template_tmp_path,
                 self.inputs.simple,
             )
+            time.sleep(0.5)
         else:
             roi_in_t1w = None
 

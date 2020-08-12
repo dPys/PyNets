@@ -520,7 +520,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     from nipype.utils.filemanip import copyfile, fname_presuffix
 
     B0_mask_tmp_path = fname_presuffix(
-        B0_mask,
+        B0_mask, suffix=f"_{step_curv_combinations}",
         newpath=cache_dir
     )
     copyfile(
