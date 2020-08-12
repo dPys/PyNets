@@ -1561,6 +1561,9 @@ class RegisterAtlasDWI(SimpleInterface):
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
         os.makedirs(base_dir_tmp, exist_ok=True)
 
+        mni2dwi_xfm = f"{base_dir_tmp}{'/'}{atlas_name}" \
+                              f"{'_mni2dwi_xfm.mat'}"
+
         aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}" \
                               f"{'_t1w_mni.nii.gz'}"
         aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}" \
@@ -1597,6 +1600,7 @@ class RegisterAtlasDWI(SimpleInterface):
             dwi_aligned_atlas,
             dwi_aligned_atlas_wmgm_int,
             B0_mask_tmp_path,
+            mni2dwi_xfm,
             self.inputs.simple,
         )
 
@@ -2688,7 +2692,6 @@ class Tracking(SimpleInterface):
             B0_mask_tmp_path,
             copy=True,
             use_hardlink=False)
-        B0_mask_data = nib.load(B0_mask_tmp_path, mmap=True).get_fdata()
 
         # Fit diffusion model
         # Save reconstruction to .npy
@@ -2744,6 +2747,7 @@ class Tracking(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
+            del model
         else:
             print(
                 f"Found existing reconstruction with "
@@ -2754,7 +2758,6 @@ class Tracking(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-            model = np.load(recon_path, mmap_mode='r+').astype('float32')
 
         dwi_img.uncache()
         del dwi_data
@@ -2779,12 +2782,6 @@ class Tracking(SimpleInterface):
             labels_im_file_tmp_path_wm_gm_int,
             copy=True,
             use_hardlink=False)
-
-        atlas_img = nib.load(labels_im_file_tmp_path, mmap=True)
-        atlas_data = np.array(atlas_img.dataobj).astype("uint16")
-        atlas_data_wm_gm_int = np.asarray(
-            nib.load(labels_im_file_tmp_path_wm_gm_int, mmap=True).dataobj
-        ).astype("uint16")
 
         t1w2dwi_tmp_path = fname_presuffix(
             self.inputs.t1w2dwi, suffix="_tmp",
@@ -2836,22 +2833,8 @@ class Tracking(SimpleInterface):
                 waymask_tmp_path,
                 copy=True,
                 use_hardlink=False)
-            waymask_data = np.asarray(nib.load(waymask_tmp_path,
-                                               mmap=True).dataobj
-                                      ).astype("bool")
         else:
-            waymask_data = None
-
-        # Build mask vector from atlas for later roi filtering
-        parcels = []
-        i = 0
-        intensities = [i for i in np.unique(atlas_data) if i != 0]
-        for roi_val in intensities:
-            parcels.append(atlas_data == roi_val)
-            i += 1
-
-        del atlas_data
-        gc.collect()
+            waymask_tmp_path = None
 
         # Iteratively build a list of streamlines for each ROI while tracking
         print(
@@ -2889,9 +2872,9 @@ class Tracking(SimpleInterface):
         # Commence Ensemble Tractography
         streamlines = track_ensemble(
             self.inputs.target_samples,
-            atlas_data_wm_gm_int,
-            parcels,
-            model,
+            labels_im_file_tmp_path_wm_gm_int,
+            labels_im_file_tmp_path,
+            recon_path,
             get_sphere(sphere),
             self.inputs.directget,
             self.inputs.curv_thr_list,
@@ -2900,14 +2883,13 @@ class Tracking(SimpleInterface):
             self.inputs.maxcrossing,
             int(roi_neighborhood_tol),
             self.inputs.min_length,
-            waymask_data,
-            B0_mask_data,
+            waymask_tmp_path,
+            B0_mask_tmp_path,
             t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
             vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-            self.inputs.tiss_class, B0_mask_tmp_path
+            self.inputs.tiss_class
         )
 
-        del model, parcels, atlas_data_wm_gm_int
         gc.collect()
 
         # Save streamlines to trk
@@ -2951,15 +2933,16 @@ class Tracking(SimpleInterface):
         if use_life is True:
             print('Using LiFE to evaluate streamline plausibility...')
             from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-            dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
+            dwi_img = nib.load(dwi_file_tmp_path)
             dwi_data = dwi_img.get_fdata().astype('float32')
             orig_count = len(streamlines)
 
             if self.inputs.waymask:
-                mask_data = waymask_data
+                mask_data = nib.load(waymask_tmp_path
+                                     ).get_fdata().astype('bool').astype('int')
             else:
                 mask_data = nib.load(wm_in_dwi_tmp_path
-                                     ).get_fdata().astype('float32')
+                                     ).get_fdata().astype('bool').astype('int')
             try:
                 streamlines = evaluate_streamline_plausibility(
                     dwi_data, gtab, mask_data, streamlines,
@@ -2971,9 +2954,7 @@ class Tracking(SimpleInterface):
             if len(streamlines) < 0.5*orig_count:
                 raise ValueError('LiFE revealed no plausible streamlines in '
                                  'the tractogram!')
-            del dwi_data
-
-        del B0_mask_data, waymask_data
+            del dwi_data, mask_data
 
         stf = StatefulTractogram(
             streamlines,
