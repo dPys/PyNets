@@ -143,11 +143,11 @@ The `runconfig.yml` file in the base directory includes parameter presets, but a
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
 
-    pynets_bids '/hnu/fMRIprep/fmriprep' '~/outputs' func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
+    pynets_bids '/hnu/fMRIprep/fmriprep' '~/outputs' participant func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
 
 A similar CLI, `pynets_cloud` has also been made available using AWS Batch and S3, which require a AWS credentials and configuration of job queues and definitions using cloud_config.json: ::
 
-    pynets_cloud --bucket 'hnu' --dataset 'HNU' func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/MyClusteringROI.nii.gz' -pm '30,110'
+    pynets_cloud --bucket 'hnu' --dataset 'HNU' participant func --participant_label 0025427 --session_label 1 --push_location 's3://hnu/outputs' --jobdir '/Users/derekpisner/.pynets/jobs' -cm 's3://hnu/HNU/masks/MyClusteringROI.nii.gz' -pm '30,110'
 
 
 Manual Execution Using the `pynets` CLI
@@ -224,7 +224,7 @@ Docker and AWS
 PyNets includes an API for running `pynets_bids` or `pynets` in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
 Docker Example: ::
 
-    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest pynets_bids 's3://hnu/HNU' '/outputs' func --participant_label 0025427 --session_label 1 -plug 'MultiProc' -pm '8,12' -work '/working' -config pynets/config/bids_config.json
+    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest pynets_bids 's3://hnu/HNU' '/outputs' participant func --participant_label 0025427 --session_label 1 -plug 'MultiProc' -pm '8,12' -work '/working' -config pynets/config/bids_config.json
 
 Running a Singularity Image
 ===========================
