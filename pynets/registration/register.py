@@ -694,7 +694,7 @@ class DmriReg(object):
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                time.sleep(0.5)
+                time.sleep(1)
                 wm_mask = maps["wm_prob"]
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
@@ -712,7 +712,7 @@ class DmriReg(object):
         # Extract wm edge
         self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
                                                self.wm_edge)
-        time.sleep(0.5)
+        time.sleep(1)
         shutil.copyfile(wm_mask, self.wm_mask)
         shutil.copyfile(gm_mask, self.gm_mask)
         shutil.copyfile(csf_mask, self.csf_mask)
@@ -737,7 +737,7 @@ class DmriReg(object):
             cost="mutualinfo",
             searchrad=True,
         )
-        time.sleep(0.5)
+        time.sleep(1)
         # Attempt non-linear registration of T1 to MNI template
         if self.simple is False:
             try:
@@ -754,16 +754,16 @@ class DmriReg(object):
                     warp=self.warp_t1w2mni,
                     ref_mask=self.input_mni_mask,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get warp from MNI -> T1
                 regutils.inverse_warp(
                     self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get mat from MNI -> T1
                 self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
                                                       self.mni2t1_xfm)
-                time.sleep(0.5)
+                time.sleep(1)
             except BaseException:
                 # Falling back to linear registration
                 regutils.align(
@@ -779,11 +779,11 @@ class DmriReg(object):
                     out=self.t1_aligned_mni,
                     sch=None,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get mat from MNI -> T1
                 self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm,
                                                       self.mni2t1_xfm)
-                time.sleep(0.5)
+                time.sleep(1)
         else:
             # Falling back to linear registration
             regutils.align(
@@ -799,11 +799,11 @@ class DmriReg(object):
                 out=self.t1_aligned_mni,
                 sch=None,
             )
-            time.sleep(0.5)
+            time.sleep(1)
             # Get mat from MNI -> T1
             self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
                                                   self.t12mni_xfm)
-            time.sleep(0.5)
+            time.sleep(1)
 
     def t1w2dwi_align(self):
         """
@@ -827,10 +827,10 @@ class DmriReg(object):
             searchrad=True,
             sch=None,
         )
-        time.sleep(0.5)
+        time.sleep(1)
         self.dwi2t1w_xfm = regutils.invert_xfm(self.t1w2dwi_xfm,
                                                self.dwi2t1w_xfm)
-        time.sleep(0.5)
+        time.sleep(1)
         if self.simple is False:
             # Flirt bbr
             try:
@@ -849,10 +849,10 @@ class DmriReg(object):
                     cost="bbr",
                     sch="${FSLDIR}/etc/flirtsch/bbr.sch",
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 self.t1w2dwi_bbr_xfm = regutils.invert_xfm(
                     self.dwi2t1w_bbr_xfm, self.t1w2dwi_bbr_xfm)
-                time.sleep(0.5)
+                time.sleep(1)
                 # Apply the alignment
                 regutils.align(
                     self.t1w_brain,
@@ -867,7 +867,7 @@ class DmriReg(object):
                     searchrad=True,
                     sch=None,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
             except BaseException:
                 # Apply the alignment
                 regutils.align(
@@ -883,7 +883,7 @@ class DmriReg(object):
                     searchrad=True,
                     sch=None,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
         else:
             # Apply the alignment
             regutils.align(
@@ -899,7 +899,7 @@ class DmriReg(object):
                 searchrad=True,
                 sch=None,
             )
-            time.sleep(0.5)
+            time.sleep(1)
 
         return
 
@@ -931,7 +931,7 @@ class DmriReg(object):
             interp="spline",
             out=None,
         )
-        time.sleep(0.5)
+        time.sleep(1)
         try:
             nib.load(self.mni_vent_loc)
         except indexed_gzip.ZranError as e:
@@ -946,7 +946,7 @@ class DmriReg(object):
             self.xfm_roi2mni_init,
             self.vent_mask_mni,
         )
-        time.sleep(0.5)
+        time.sleep(1)
         if self.simple is False:
             # Apply warp resulting from the inverse MNI->T1w created earlier
             regutils.apply_warp(
@@ -957,7 +957,7 @@ class DmriReg(object):
                 interp="nn",
                 sup=True,
             )
-            time.sleep(0.5)
+            time.sleep(1)
             try:
                 nib.load(self.corpuscallosum)
             except indexed_gzip.ZranError as e:
@@ -980,14 +980,14 @@ class DmriReg(object):
                 self.t1w_brain,
                 self.mni2t1_xfm,
                 self.vent_mask_t1w)
-            time.sleep(0.5)
+            time.sleep(1)
             regutils.applyxfm(
                 self.corpuscallosum,
                 self.t1w_brain,
                 self.mni2t1_xfm,
                 self.corpuscallosum_mask_t1w,
             )
-            time.sleep(0.5)
+            time.sleep(1)
 
         # Applyxfm tissue maps to dwi space
         if self.t1w_brain_mask is not None:
@@ -997,27 +997,27 @@ class DmriReg(object):
                 self.t1wtissue2dwi_xfm,
                 self.t1w_brain_mask_in_dwi,
             )
-            time.sleep(0.5)
+            time.sleep(1)
         regutils.applyxfm(
             self.ap_path,
             self.vent_mask_t1w,
             self.t1wtissue2dwi_xfm,
             self.vent_mask_dwi)
-        time.sleep(0.5)
+        time.sleep(1)
         regutils.applyxfm(
             self.ap_path,
             self.csf_mask,
             self.t1wtissue2dwi_xfm,
             self.csf_mask_dwi)
-        time.sleep(0.5)
+        time.sleep(1)
         regutils.applyxfm(
             self.ap_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi
         )
-        time.sleep(0.5)
+        time.sleep(1)
         regutils.applyxfm(
             self.ap_path, self.wm_mask, self.t1wtissue2dwi_xfm, self.wm_in_dwi
         )
-        time.sleep(0.5)
+        time.sleep(1)
 
         regutils.applyxfm(
             self.ap_path,
@@ -1025,7 +1025,7 @@ class DmriReg(object):
             self.t1wtissue2dwi_xfm,
             self.corpuscallosum_dwi,
         )
-        time.sleep(0.5)
+        time.sleep(1)
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
@@ -1046,17 +1046,17 @@ class DmriReg(object):
         self.wm_in_dwi = regutils.apply_mask_to_image(self.wm_in_dwi,
                                                       self.wm_in_dwi_bin,
                                                       self.wm_in_dwi)
-        time.sleep(0.5)
+        time.sleep(1)
         # Threshold GM to binary in dwi space
         self.gm_in_dwi = regutils.apply_mask_to_image(self.gm_in_dwi,
                                                       self.gm_in_dwi_bin,
                                                       self.gm_in_dwi)
-        time.sleep(0.5)
+        time.sleep(1)
         # Threshold CSF to binary in dwi space
         self.csf_mask = regutils.apply_mask_to_image(self.csf_mask_dwi,
                                                      self.csf_mask_dwi_bin,
                                                      self.csf_mask_dwi)
-        time.sleep(0.5)
+        time.sleep(1)
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
         os.system(
@@ -1202,17 +1202,17 @@ class FmriReg(object):
         self.gm_mask = regutils.apply_mask_to_image(gm_mask,
                                                     self.gm_mask_thr,
                                                     self.gm_mask)
-        time.sleep(0.5)
+        time.sleep(1)
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
         mask = math_img("img > 0.50", img=t_img)
         mask.to_filename(self.wm_mask_thr)
-        time.sleep(0.5)
+        time.sleep(1)
         self.wm_mask = regutils.apply_mask_to_image(wm_mask,
                                                     self.wm_mask_thr,
                                                     self.wm_mask)
         # Extract wm edge
-        time.sleep(0.5)
+        time.sleep(1)
         self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
                                                self.wm_edge)
 
@@ -1236,7 +1236,7 @@ class FmriReg(object):
             cost="mutualinfo",
             searchrad=True,
         )
-        time.sleep(0.5)
+        time.sleep(1)
         # Attempt non-linear registration of T1 to MNI template
         if self.simple is False:
             try:
@@ -1253,12 +1253,12 @@ class FmriReg(object):
                     warp=self.warp_t1w2mni,
                     ref_mask=self.input_mni_mask,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get warp from T1w --> MNI
                 regutils.inverse_warp(
                     self.t1w_brain,  self.mni2t1w_warp, self.warp_t1w2mni
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get mat from MNI -> T1w
                 self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
                                                       self.mni2t1_xfm)
@@ -1278,7 +1278,7 @@ class FmriReg(object):
                     out=self.t1_aligned_mni,
                     sch=None,
                 )
-                time.sleep(0.5)
+                time.sleep(1)
                 # Get mat from MNI -> T1w
                 self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
                                                       self.t12mni_xfm)
@@ -1297,7 +1297,7 @@ class FmriReg(object):
                 out=self.t1_aligned_mni,
                 sch=None,
             )
-            time.sleep(0.5)
+            time.sleep(1)
             # Get mat from MNI -> T1w
             self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
                                                   self.t12mni_xfm)

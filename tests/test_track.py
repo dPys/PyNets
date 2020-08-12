@@ -157,7 +157,7 @@ def test_track_ensemble(directget, target_samples):
                    recon_path, sphere, directget, curv_thr_list, step_list,
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                   wm_in_dwi, tiss_class, temp_dir.name)
+                   wm_in_dwi, tiss_class, base_dir)
 
     assert len(streamlines) > 1
 
@@ -211,7 +211,7 @@ def test_track_ensemble_particle():
                    recon_path, sphere, directget, curv_thr_list, step_list,
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                   wm_in_dwi, tiss_class, temp_dir.name)
+                   wm_in_dwi, tiss_class, base_dir)
 
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,

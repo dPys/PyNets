@@ -614,7 +614,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
     atlas_data_wm_gm_int_data = np.asarray(
         nib.load(atlas_data_wm_gm_int_tmp_path).dataobj
-    ).astype("bool")
+    ).astype("bool").astype("int16")
 
     # Build mask vector from atlas for later roi filtering
     parcels = []
