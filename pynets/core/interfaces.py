@@ -2887,7 +2887,8 @@ class Tracking(SimpleInterface):
             B0_mask_tmp_path,
             t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
             vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-            self.inputs.tiss_class
+            self.inputs.tiss_class,
+            runtime.cwd
         )
 
         gc.collect()

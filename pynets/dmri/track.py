@@ -320,7 +320,8 @@ def track_ensemble(
     gm_in_dwi,
     vent_csf_in_dwi,
     wm_in_dwi,
-    tiss_class
+    tiss_class,
+    cache_dir
 ):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
@@ -397,6 +398,7 @@ def track_ensemble(
       https://doi.org/10.1371/journal.pcbi.1004692
 
     """
+    import os
     import gc
     import time
     import pkg_resources
@@ -406,11 +408,11 @@ def track_ensemble(
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    import tempfile
     from pynets.dmri.dmri_utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
 
-    cache_dir = tempfile.mkdtemp()
+    cache_dir = f"{cache_dir}/joblib_tracking"
+    os.makedirs(cache_dir, exist_ok=True)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
