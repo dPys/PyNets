@@ -124,6 +124,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         libgfortran \
         matplotlib \
         openblas \
+    && pip install certifi -U --ignore-installed \
     && pip install skggm python-dateutil==2.8.0 \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
     && python -c "from matplotlib import font_manager" \

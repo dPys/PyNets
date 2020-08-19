@@ -1615,3 +1615,45 @@ def plot_graph_measure_hists(csv_all_metrics):
     plt.tight_layout()
     return plt
 
+# import seaborn as sns
+# from pynets.core.utils import flatten
+# frame = pd.read_csv('/private/tmp/pynets_ml/final_df.csv', index_col=False)
+#
+# df_summary = frame[np.abs(frame['Rsquared'])>0].sort_values(
+#     "Rsquared", ascending=True)
+#
+# df_summary['Rsquared'] = np.abs(df_summary['Rsqu'lp_importance'ared'].astype('float64'))
+# df_summary['MSE'] = df_summary['MSE'].astype('float64')
+# df_summary['alg'] = df_summary['alg'].astype('str')
+# df_summary['best_estimator'] = df_summary['best_estimator'].astype('str')
+#
+# all_nodes = list(set(list(flatten([eval(i) for i in df_summary['lp_importance']]))))
+#
+# sns.set(style="whitegrid")
+# ax = sns.violinplot(x='alg', y="Rsquared", data=df_summary, palette="Pastel1")
+# ax = sns.violinplot(x='alg', y="MSE", data=df_summary, palette="Pastel1")
+#
+# df_grid = df_summary.copy()
+# df_grid[['extract', 'hpass', 'model', 'res', 'smooth']] = \
+#     pd.DataFrame([eval(i) for i in df_summary['grid'].tolist()], index=df_summary.index)
+# df_grid = df_grid[['extract', 'hpass', 'model', 'res', 'smooth', 'Rsquared']]
+#
+# fig = px.parallel_categories(df_grid, color="Rsquared",
+#                              labels={"res": "Node Resolution",
+#                                      "model": "Estimator",
+#                                      "extract": "Extraction Method",
+#                                      "hpass": "High-Pass (Hz)",
+#                                      "smooth": "Smooth (FWHM)"},
+#                              dimensions=['res', 'model', 'extract', 'hpass',
+#                                          'smooth'],
+#                              color_continuous_scale=px.colors.sequential.Inferno)
+# fig.update_layout(
+#     autosize=False,
+#     height=1000,
+#     width=2000,
+#     margin=dict(r=200, l=200, b=75, t=75),
+# )
+# fig.update_traces(labelfont=dict(size=24, color='black'),
+#                   tickfont=dict(family="Arial, sans-serif",
+#                                 size=20, color='black'))
+# fig.write_image('func_rsquared_parallel_all.png')
