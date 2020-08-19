@@ -143,7 +143,7 @@ The `runconfig.yml` file in the base directory includes parameter presets, but a
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
 
-    pynets_bids '/hnu/fMRIprep/fmriprep' '~/outputs' participant func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
+    pynets_bids '/hnu/fMRIprep/fmriprep' '/Users/dPys/outputs/pynets' participant func --participant_label 0025427 0025428 --session_label 1 2 3 -config pynets/config/bids_config.json
 
 A similar CLI, `pynets_cloud` has also been made available using AWS Batch and S3, which require a AWS credentials and configuration of job queues and definitions using cloud_config.json: ::
 
@@ -155,7 +155,7 @@ Manual Execution Using the `pynets` CLI
 
 You have a preprocessed EPI bold dataset from the first session for subject 002, and you wish to analyze a whole-brain network using the nilearn atlas 'coords_dosenbach_2010', thresholding the connectivity graph proportionally to retain 0.20% of the strongest connections, and you wish to use partial correlation model estimation: ::
 
-    pynets -id '002_1' '/Users/dPys/outputs' \
+    pynets -id '002_1' '/absolute/path/to/an/arbitrary/output/directory/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -a 'coords_dosenbach_2010' \ # A spherical atlas.
@@ -165,7 +165,7 @@ You have a preprocessed EPI bold dataset from the first session for subject 002,
 
 Building upon the previous example, let's say you now wish to analyze the Default network for this same subject's data, but based on the 95-node atlas parcellation scheme from Desikan-Klein 2012 called 'DesikanKlein2012' and the Brainnetome Atlas from Fan 2016 called 'BrainnetomeAtlasFan2016', you wish to threshold the graph to achieve a target density of 0.3, and you wish to fit a sparse inverse covariance model in addition to partial correlation, and you wish to plot the results: ::
 
-    pynets -id '002_1' '/Users/dPys/outputs' \
+    pynets -id '002_1' '/absolute/path/to/an/arbitrary/output/directory/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -a 'DesikanKlein2012' 'BrainnetomeAtlasFan2016' # Multiple spherical atlases.
@@ -176,7 +176,7 @@ Building upon the previous example, let's say you now wish to analyze the Defaul
 
 Building upon the previous examples, let's say you now wish to analyze the Default and Executive Control Networks for this subject, but this time based on a custom atlas (DesikanKlein2012.nii.gz), this time defining your nodes as parcels (as opposed to spheres), you wish to fit a partial correlation model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), and you wish to prune disconnected nodes: ::
 
-    pynets -id '002_1' '/Users/dPys/outputs' \
+    pynets -id '002_1' '/absolute/path/to/an/arbitrary/output/directory/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -ua '/Users/dPys/PyNets/pynets/atlases/MyCustomAtlas.nii.gz' \ # A user-supplied atlas parcellation.
@@ -189,7 +189,7 @@ Building upon the previous examples, let's say you now wish to analyze the Defau
 
 Building upon the previous examples, let's say you now wish to create a subject-specific atlas based on the subject's unique spatial-temporal profile. In this case, you can specify the path to a binarized mask within which to performed spatially-constrained spectral clustering, and you want to try this at multiple resolutions of k clusters/nodes (i.e. k=50,100,150). You again also wish to define your nodes spherically with radii at both 2 and 4 mm, fitting a partial correlation and sparse inverse covariance model, you wish to iterate the pipeline over a range of densities (i.e. 0.05-0.10 with 1% step), you wish to prune disconnected nodes, and you wish to plot your results: ::
 
-    pynets -id '002_1' '/Users/dPys/outputs' \
+    pynets -id '002_1' '/absolute/path/to/an/arbitrary/output/directory/outputs' \
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -mod 'partcorr' 'sps' \ # The connectivity models.
@@ -199,12 +199,12 @@ Building upon the previous examples, let's say you now wish to create a subject-
 
 You wish to generate a structural connectome, using deterministic and probabilistic ensemble tractography, based on both constrained-spherical deconvolution (csd) and tensor models. You wish to use atlas parcels as defined by both DesikanKlein2012, and AALTzourioMazoyer2002, exploring only those nodes belonging to the Default Mode Network, iterate over a range of graph densities (i.e. 0.05-0.10 with 1% step), and prune disconnected nodes: ::
 
-    pynets -id '002_1' '/Users/dPys/outputs' \
+    pynets -id '002_1' '/absolute/path/to/an/arbitrary/output/directory/outputs' \
     -dwi '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/DWI_PREPROCESSED_NATIVE.nii.gz' \ # The dMRI diffusion-weighted image data.
     -bval '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVAL.bval' \ # The b-values.
     -bvec '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVEC.bvec' \ # The b-vectors.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
-    -ua '~/.atlases/DesikanKlein2012.nii.gz' '~/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
+    -ua '/Users/dPys/.atlases/DesikanKlein2012.nii.gz' '/Users/dPys/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
     -mod 'csd' 'tensor' \ # The connectivity model.
     -dg 'prob' 'det'  \ # The tractography settings.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
@@ -224,7 +224,7 @@ Docker and AWS
 PyNets includes an API for running `pynets_bids` or `pynets` in a Docker container as well as using AWS Batch. The latter assumes a dataset with BIDS derivatives is stored in an S3 bucket.
 Docker Example: ::
 
-    docker run -ti --rm --privileged -v '~/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest pynets_bids 's3://hnu/HNU' '/outputs' participant func --participant_label 0025427 --session_label 1 -plug 'MultiProc' -pm '8,12' -work '/working' -config pynets/config/bids_config.json
+    docker run -ti --rm --privileged -v '/home/dPys/.aws/credentials:/home/neuro/.aws/credentials' dpys/pynets:latest pynets_bids 's3://hnu/HNU' '/outputs' participant func --participant_label 0025427 --session_label 1 -plug 'MultiProc' -pm '8,12' -work '/working' -config pynets/config/bids_config.json
 
 Running a Singularity Image
 ===========================
@@ -233,7 +233,7 @@ If the data to be preprocessed is also on an HPC server, you are ready to run py
 For example, where PARTICIPANT is a subject identifier and SESSION is a given scan session, we could sample an ensemble of connectomes manually as follows ::
 
     singularity exec -w \
-     '/scratch/04171/dpisner/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
+     '/scratch/04171/dPys/pynets_singularity_latest-2020-02-07-eccf145ea766.img' \
      pynets /outputs \
      -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
      -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \
@@ -254,7 +254,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    To avoid such situation we sometimes recommend using the ``--cleanenv`` singularity flag
    in production use. For example: ::
 
-      singularity exec --cleanenv --no-home_clust_est '~/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
+      singularity exec --cleanenv --no-home_clust_est '/scratch/04171/dPys/pynets_latest-2016-12-04-5b74ad9a4c4d.img' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
         -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \
@@ -267,7 +267,7 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
 
    or, unset the ``PYTHONPATH`` variable before running: ::
 
-      unset PYTHONPATH; singularity exec ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+      unset PYTHONPATH; singularity exec /scratch/04171/dPys/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080
         -ct 'ward' -cm '/working/MyClusteringROI.nii.gz' -k 100 200 \
@@ -286,8 +286,8 @@ For example, where PARTICIPANT is a subject identifier and SESSION is a given sc
    the ``-B <host_folder>:<container_folder>`` Singularity argument.
    For example: ::
 
-      singularity exec_clust_est -B /work:/work ~/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
-        -B '/scratch/04171/dpisner/pynets_out:/inputs,/scratch/04171/dpisner/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
+      singularity exec_clust_est -B /work:/work /scratch/04171/dPys/pynets_latest-2016-12-04-5b74ad9a4c4d.img \
+        -B '/scratch/04171/dPys/pynets_out:/inputs,/scratch/04171/dPys/masks/PARTICIPANT_triple_network_masks_SESSION':'/outputs' \
         pynets /outputs \
         -p 1 -mod 'partcorr' 'corr' -min_thr 0.20 -max_thr 1.00 -step_thr 0.10 -sm 0 2 4 -hp 0 0.028 0.080 \
         -ct 'ward' -k 100 200 -cm '/working/MyClusteringROI.nii.gz' \

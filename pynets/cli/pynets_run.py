@@ -3452,8 +3452,11 @@ def main():
 
 
 if __name__ == "__main__":
+    from pynets.core.utils import watchdog
+    import sys
     import warnings
     warnings.filterwarnings("ignore")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen" \
                "_importlib.BuiltinImporter'>)"
-    main()
+
+    sys.exit(watchdog().run())

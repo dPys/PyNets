@@ -12,8 +12,15 @@ import os.path as op
 import indexed_gzip
 import nibabel as nib
 import numpy as np
-
+import sys
+import time
+import logging
+import threading
 warnings.filterwarnings("ignore")
+
+WATCHDOG_HARD_KILL_TIMEOUT = 90
+
+log = logging.getLogger(__name__)
 
 
 def get_file():
@@ -1122,7 +1129,9 @@ def decompress_nifti(infile):
 
     with gzip.open(infile, "rb") as in_file:
         with open(os.path.abspath(base + ext), "wb") as out_file:
-            shutil.copyfileobj(in_file, out_file)
+            shutil.copyfileobj(in_file, out_file, 128*1024)
+        out_file.close()
+    in_file.close()
 
     os.remove(infile)
     return out_file.name
@@ -1747,3 +1756,46 @@ class build_sql_db(object):
             if_exists="replace",
         )
         return
+
+
+class watchdog(object):
+    def run(self):
+        self.shutdown = threading.Event()
+        watchdog_thread = threading.Thread(target=self._watchdog,
+                                           name="watchdog")
+        try:
+            watchdog_thread.start()
+            self._run()
+        finally:
+            self.shutdown.set()
+            watchdog_thread.join()
+        return 0
+
+    def _watchdog(self):
+        self.last_progress_time = time.time()
+        while True:
+            if self.shutdown.wait(timeout=5):
+                return
+            last_progress_delay = time.time() - self.last_progress_time
+            if last_progress_delay < WATCHDOG_HARD_KILL_TIMEOUT:
+                continue
+            try:
+                stacks = self._get_thread_stack_traces()
+                log.error(
+                    "no progress in %0.01f seconds\n"
+                    "kill -9 time...\n\n%s",
+                    last_progress_delay, self.last_message,
+                    "\n\n".join(stacks),
+                    extra={"thread_stacks": stacks},
+                )
+            except:
+                pass
+            # Hopefully give logs some time to flush
+            time.sleep(1)
+            os.kill(0, 9)
+
+    def _run(self):
+        from pynets.cli.pynets_run import main
+        while True:
+            self.last_progress_time = time.time()
+            main()
