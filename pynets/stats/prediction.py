@@ -775,7 +775,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, mega_feat_imp_dict
 
 
-def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types):
+def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
+                      template):
     from joblib import Parallel, delayed
 
     subject_dict = {}
@@ -821,7 +822,8 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types):
 
             outs = Parallel(n_jobs=-1)(
                 delayed(populate_subject_dict)(id, modality, grid,
-                                               subject_dict, alg, mets=mets,
+                                               subject_dict, alg, base_dir,
+                                               template, thr_type, mets=mets,
                                                df_top=df_top) for id in ids)
             for d in outs:
                 subject_dict.update(d)
@@ -830,8 +832,9 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types):
     return subject_dict, modality_grids
 
 
-def populate_subject_dict(id, modality, grid, subject_dict, alg, mets=None,
-                          df_top=None):
+def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
+                          template, thr_type, mets=None, df_top=None):
+
     def filter_cols_from_targets(df_top, targets):
         base = r'^{}'
         expr = '(?=.*{})'
@@ -1292,7 +1295,9 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(base_dir, dict_file_path, modality_grids, drop_cols):
+def create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
+              target_vars, embedding_types):
+
     ml_wf = pe.Workflow(name="ensemble_connectometry")
     ml_wf.base_dir = f"{base_dir}/pynets_ml"
 
@@ -1420,73 +1425,72 @@ def create_wf(base_dir, dict_file_path, modality_grids, drop_cols):
     return ml_wf
 
 
-# if __name__ == "__main__":
-#     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
-#                "frozen_importlib.BuiltinImporter'>)"
-#
-#     base_dir = '/working/tuning_set/outputs_shaeffer'
-#     df = pd.read_csv(
-#         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
-#         index_col=False)
-#
-#     # target_vars = ['rum_persist', 'dep_1', 'age']
-#     target_vars = ['rum_persist']
-#     thr_type = 'MST'
-#     drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
-#     # embedding_types = ['OMNI', 'ASE']
-#     embedding_types = ['OMNI']
-#     modalities = ['func', 'dwi']
-#     template = 'MNI152_T1'
-#     mets = ["global_efficiency", "average_clustering",
-#             "average_shortest_path_length", "average_betweenness_centrality",
-#             "average_eigenvector_centrality", "average_degree_centrality",
-#             "average_diversity_coefficient",
-#             "average_participation_coefficient"]
-#
-#     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
-#     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength']
-#
-#     ses = 1
-#
-#     subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
-#                                                      thr_type)
-#     sub_dict_clean = cleanNullTerms(subject_dict)
-#
-#     subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
-#     with open(subject_dict_file_path, 'wb') as f:
-#         pickle.dump(sub_dict_clean, f, protocol=2)
-#     f.close()
-#
-#     # Subset only those participants which have usable data
-#     df = df[df['participant_id'].isin(list(subject_dict.keys()))]
-#     df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
-#
-#     dict_file_path = make_feature_space_dict(df, modalities, subject_dict,
-#                                              ses, base_dir)
-#
-#     ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols)
-#
-#     execution_dict = {}
-#     execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
-#     execution_dict["poll_sleep_duration"] = 1
-#     execution_dict["crashfile_format"] = 'txt'
-#     execution_dict['local_hash_check'] = False
-#     execution_dict['hash_method'] = 'timestamp'
-#
-#     cfg = dict(execution=execution_dict)
-#
-#     for key in cfg.keys():
-#         for setting, value in cfg[key].items():
-#             ml_wf.config[key][setting] = value
-#
-#     nthreads = psutil.cpu_count()
-#     procmem = [int(nthreads),
-#                int(list(psutil.virtual_memory())[4]/1000000000) - 2]
-#     plugin_args = {
-#         "n_procs": int(procmem[0]),
-#         "memory_gb": int(procmem[1]),
-#         "scheduler": "mem_thread",
-#     }
-#     # out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
-#     out = ml_wf.run(plugin='Linear', plugin_args=plugin_args)
+if __name__ == "__main__":
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
+
+    base_dir = '/working/tuning_set/outputs_shaeffer'
+    df = pd.read_csv(
+        '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
+        index_col=False)
+
+    target_vars = ['rum_persist', 'dep_1', 'age']
+    # target_vars = ['rum_persist']
+    thr_type = 'MST'
+    drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
+    # embedding_types = ['OMNI', 'ASE']
+    embedding_types = ['topology']
+    modalities = ['func', 'dwi']
+    template = 'MNI152_T1'
+    mets = ["global_efficiency", "average_clustering",
+            "average_shortest_path_length", "average_betweenness_centrality",
+            "average_eigenvector_centrality", "average_degree_centrality",
+            "average_diversity_coefficient",
+            "average_participation_coefficient"]
+
+    hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength']
+
+    ses = 1
+
+    subject_dict, modality_grids = make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types, template)
+    sub_dict_clean = cleanNullTerms(subject_dict)
+
+    subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
+    with open(subject_dict_file_path, 'wb') as f:
+        pickle.dump(sub_dict_clean, f, protocol=2)
+    f.close()
+
+    # Subset only those participants which have usable data
+    df = df[df['participant_id'].isin(list(subject_dict.keys()))]
+    df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
+
+    dict_file_path = make_feature_space_dict(df, modalities, subject_dict,
+                                             ses, base_dir)
+
+    ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols)
+
+    execution_dict = {}
+    execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
+    execution_dict["poll_sleep_duration"] = 1
+    execution_dict["crashfile_format"] = 'txt'
+    execution_dict['local_hash_check'] = False
+    execution_dict['hash_method'] = 'timestamp'
+
+    cfg = dict(execution=execution_dict)
+
+    for key in cfg.keys():
+        for setting, value in cfg[key].items():
+            ml_wf.config[key][setting] = value
+
+    nthreads = psutil.cpu_count()
+    procmem = [int(nthreads),
+               int(list(psutil.virtual_memory())[4]/1000000000) - 2]
+    plugin_args = {
+        "n_procs": int(procmem[0]),
+        "memory_gb": int(procmem[1]),
+        "scheduler": "mem_thread",
+    }
+    # out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+    out = ml_wf.run(plugin='Linear', plugin_args=plugin_args)
 
