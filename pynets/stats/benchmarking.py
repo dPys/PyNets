@@ -5,10 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @authors: Derek Pisner
 """
-import pandas as pd
-import numpy as np
-import itertools
-import re
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
@@ -18,9 +14,12 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import re
+import numpy as np
+import itertools
 import warnings
-from scipy import stats
+from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
 
@@ -244,7 +243,6 @@ def CronbachAlpha(itemscores):
               (1 - itemvars.sum() / float(tscores.var(ddof=1))))
 
     return calpha
-
 
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \

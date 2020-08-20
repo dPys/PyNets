@@ -2,7 +2,8 @@
     "dwi": {
             "dg": "['prob']",
             "ml": "['0']",
-            "mod": "['csd']"
+            "mod": "['csd']",
+            "em": 8
         },
     "func": {
             "ct": "None",

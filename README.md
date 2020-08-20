@@ -18,7 +18,7 @@ docker pull dpys/pynets:latest
 ```
 
 ## Manual
-(Requires a local dependency install of FSL version >=5.0.9. See:
+(REQUIRES a local dependency install of FSL version >=5.0.9. See:
 <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>):
 ```
 [sudo] pip install pynets [--user]
@@ -55,45 +55,34 @@ A manuscript is in preparation, but for now, please cite ALL uses with the follo
 }
 ```
 
-The `pynets_bids` CLI
----------------------
+Data already preprocessed with BIDS apps like fmriprep, CPAC, dmriprep? If your BIDS derivatives can be queried with pybids, then you should be able to run them with the user-friendly `pynets_bids` CLI!
 ```
-usage: pynets_bids [-h]
-                   [--participant_label PARTICIPANT_LABEL [PARTICIPANT_LABEL ...]]
-                   [--session_label SESSION_LABEL [SESSION_LABEL ...]]
-                   [--push_location PUSH_LOCATION]
-                   [-ua Path to parcellation file in MNI-space [Path to parcellation file in MNI-space ...]]
-                   [-cm Cluster mask [Cluster mask ...]]
-                   [-roi Path to binarized Region-of-Interest ROI) Nifti1Image [Path to binarized Region-of-Interest (ROI Nifti1Image ...]]
-                   [-ref Atlas reference file path]
-                   [-way Path to binarized Nifti1Image to constrain tractography [Path to binarized Nifti1Image to constrain tractography ...]]
-                   [-config Optional path to a config.json file with runtime settings.]
-                   [-pm Cores,memory] [-plug Scheduler type] [-v]
-                   [-work Working directory]
-                   bids_dir output_dir {participant,group} {dwi,func}
-                   [{dwi,func} ...]
-pynets_bids: the following arguments are required: bids_dir, output_dir, analysis_level, modality
-```
+   pynets_bids '/hnu/fMRIprep/fmriprep' '/Users/dPys/outputs/pynets' participant func --participant_label 0025427 0025428 --session_label 1 2 -config pynets/config/bids_config.json
 
-where the `-config` flag specifies that path to a .json configuration spec that includes at least one of many possible connectome recipes to apply to your data. Pre-built configuration files are included in the pynets/config directory, and an example is shown here (with commented descriptions):
+```
+*Note: If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`. Similarly, if you preprocessed your data using CPAC, then you will want to be sure that an ALFF image exists. PyNets does NOT currently accept template-normalized BOLD or DWI data. See the usage docs for more information on compatible file types.
+
+
+where the `-config` flag specifies that path to a .json configuration spec that includes at least one of many possible connectome recipes to apply to your data. Pre-built configuration files are available (see: <https://github.com/dPys/PyNets/tree/master/pynets/config>), and an example is shown here (with commented descriptions):
 
 ```
 {
-    "dwi": {
-            "dg": "['prob', 'det']",  # Indicates the direction-getting method(s) of tractography.
-            "ml": "['0', '10', '40']",  # Indicates the minimum streamline length(s) for tractographic filtering.
-            "mod": "['csd', 'csa', 'sfm']"  # Indicates the type(s) of diffusion model estimators for fixel reconstruction. At least 1 is required for structural connectometry.
-        },
-    "func": {
-            "ct": "['rena', 'ward', 'kmeans']", # Indicates the type(s) of clustering that will be used to generate a clustering-based parcellation. This should be left as "None" if no clustering will be performed, but can be included simultaneously with the `-a` and `-ua` parcellation options.
-            "k": "['200', '400', '600']", # Indicates the number of clusters to generate in a clustering-based parcellation. This should be left as "None" if no clustering will be performed.
+    "func": { # fMRI options. If you only have functional (i.e. BOLD) data, set each of the `dwi` options to "None"
+            "ct": "None", # Indicates the type(s) of clustering that will be used to generate a clustering-based parcellation. This should be left as "None" if no clustering will be performed, but can be included simultaneously with the `-a` and `-ua` parcellation options.
+            "k": "None", # Indicates the number of clusters to generate in a clustering-based parcellation. This should be left as "None" if no clustering will be performed.
             "hp": "['0', '0.028', '0.080']", # Indicates the high-pass frequenc(ies) to apply to signal extraction from nodes.
-            "mod": "['partcorr', 'sps']", # Indicates the functional connectivity estimator(s) to use. At least 1 is required for functional connectometry.
-            "sm": "['0', '2', '4']", # Indicates the smoothing FWHM value(s) to apply during the nodal time-series signal extraction.
+            "mod": "['partcorr', 'cov']", # Indicates the functional connectivity estimator(s) to use. At least 1 is required for functional connectometry.
+            "sm": "['0', '4']", # Indicates the smoothing FWHM value(s) to apply during the nodal time-series signal extraction.
             "es": "['mean', 'median']" # Indicates the method(s) of nodal time-series signal extraction.
         },
-    "gen": {
-            "a":  "DesikanKlein2012", # Anatomical atlases to define nodes.
+    "dwi": { # dMRI options. If you only have structural (i.e. DWI) data, set each of the `func` options to "None"
+            "dg": "None",
+            "ml": "None",
+            "mod": "None",
+            "em": "None"
+        },
+    "gen": { # These are general options that apply to all modalities
+            "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']", # Anatomical atlases to define nodes.
             "bin":  "False", # Binarize the resulting connectome graph before analyzing it. Note that undirected weighted graphs are analyzed by default.
             "embed":  "False", # Activate omnibus and single-graph adjacency spectral embedding of connectome estimates sampled.
             "mplx":  0, # If both functional and structural data are provided, this parameter [0-3] indicates the type of multiplex connectome modeling to perform. See `pynets -h` for more details on multiplex modes.
@@ -113,6 +102,30 @@ where the `-config` flag specifies that path to a .json configuration spec that 
             "vox":  "'2mm'" # Voxel size (1mm or 2mm). 2mm is the default.
         }
 }
+```
+
+Data not in BIDS format and/or preprocessed using in-house tools?
+No problem-- you can still run pynets manually:
+```
+    pynets -id '002_1' '/Users/dPys/outputs/pynets' \ # where `-id` is an arbitrary subject identifier and the first path is an arbitrary output directory to store derivatives of the workflow.
+    -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image. This is mandatory -- PyNets requires a T1/T2-weighted anatomical image unless you are analyzing raw graphs that ahve already been produced.
+    -a 'BrainnetomeAtlasFan2016' \ # An anatomical atlas name. Note that if were to omit the `-a` flag, a custom parcellation file would need to be specified using the `-ua` flag instead or a valid clustering mask (`-cm`) would be needed to generate an individual parcellation. For a complete catalogue of anatomical atlases available in PyNets, see the `Usage` section of the documentation.
+    -mod 'partcorr' \ # The connectivity model. In the case of structural connectometry, this becomes the diffusion model type.
+    -thr 0.20 \ # Optionally apply a single proportional threshold to the generated graph.
+```
+
+```
+    pynets -id '002_1' '/Users/dPys/outputs/pynets' \ # where `-id` is an arbitrary subject identifier and the first path is an arbitrary output directory to store derivatives of the workflow.
+    -dwi '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/DWI_PREPROCESSED_NATIVE.nii.gz' \ # The dMRI diffusion-weighted image data.
+    -bval '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVAL.bval' \ # The b-values.
+    -bvec '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVEC.bvec' \ # The b-vectors.
+    -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
+    -ua '/Users/dPys/.atlases/MyCustomParcellation-scale1.nii.gz' '/Users/dPys/.atlases/MyCustomParcellation-scale2.nii.gz' \ # The parcellations.
+    -mod 'csd' 'csa' 'sfm' \ # The (diffusion) connectivity model(s).
+    -dg 'prob' 'det'  \ # The tractography direction-getting method.
+    -mst -min_thr 0.20 -max_thr 0.80 -step_thr 0.10 # Multi-thresholding from the Minimum-Spanning Tree, with AUC graph analysis.
+    -n 'Default' # The resting-state network definition to restrict node-making.
 ```
 
 ![Multiplex Layers](docs/_static/structural_functional_multiplex.png)

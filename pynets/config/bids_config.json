@@ -2,7 +2,8 @@
     "dwi": {
             "dg": "['prob', 'det']",
             "ml": "['10', '40']",
-            "mod": "['csd', 'csa']"
+            "mod": "['csd', 'csa']",
+            "em": 8
         },
     "func": {
             "ct": "['rena', 'ward', 'kmeans']",

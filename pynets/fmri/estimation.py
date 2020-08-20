@@ -157,6 +157,10 @@ def get_conn_matrix(
     """
     from nilearn.connectome import ConnectivityMeasure
     from sklearn.covariance import GraphicalLassoCV
+    from sklearn.preprocessing import StandardScaler
+
+    scaler = StandardScaler()
+    time_series = scaler.fit_transform(time_series)
 
     conn_matrix = None
     if conn_model == "corr" or conn_model == "cor" or \
@@ -189,9 +193,6 @@ def get_conn_matrix(
         try:
             estimator.fit(time_series)
         except BaseException:
-            from sklearn.preprocessing import StandardScaler
-            scaler = StandardScaler()
-            time_series = scaler.fit_transform(time_series)
             ix = 0
             print("\nModel did not converge on first attempt. "
                   "Varying tolerance...\n")

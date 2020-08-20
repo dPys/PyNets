@@ -2,7 +2,8 @@
     "dwi": {
             "dg": "None",
             "ml": "None",
-            "mod": "None"
+            "mod": "None",
+            "em": "None"
         },
     "func": {
             "ct": "None",

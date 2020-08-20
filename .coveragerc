@@ -37,7 +37,7 @@ omit =
 	pynets/stats/netmotifs.py
 	pynets/stats/benchmarking.py
 	pynets/stats/embeddings.py
-	pynets/stats/optimeasures.py
+	pynets/stats/prediction.py
 	pynets/registration/register.py
 	pynets/core/interfaces.py
 	pynets/core/cloud_utils.py

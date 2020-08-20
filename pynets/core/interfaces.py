@@ -1106,6 +1106,7 @@ class _RegisterDWIInputSpec(BaseInterfaceInputSpec):
     vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
     mask = traits.Any(mandatory=False)
+    force_create_mask = traits.Bool(True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
     overwrite = traits.Bool(False, usedefault=True)
 
@@ -1198,7 +1199,9 @@ class RegisterDWI(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]):
+                 self.inputs.mask is None and \
+                 op.isfile(anat_mask_existing[0]) and \
+                 self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
@@ -1908,6 +1911,7 @@ class _RegisterFuncInputSpec(BaseInterfaceInputSpec):
     in_dir = traits.Any(mandatory=True)
     vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
+    force_create_mask = traits.Bool(True, usedefault=True)
     simple = traits.Bool(False, usedefault=True)
     overwrite = traits.Bool(False, usedefault=True)
 
@@ -1963,7 +1967,8 @@ class RegisterFunc(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]):
+                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]) \
+                    and self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp",
                     newpath=runtime.cwd
@@ -2650,7 +2655,7 @@ class _TrackingOutputSpec(TraitedSpec):
     curv_thr_list = traits.List(mandatory=True)
     step_list = traits.List(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
-    dm_path = File(exists=True, mandatory=True)
+    dm_path = traits.Any()
     directget = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
     min_length = traits.Any()
@@ -3020,21 +3025,25 @@ class Tracking(SimpleInterface):
         )
 
         # Create streamline density map
-        [dir_path, dm_path] = create_density_map(
-            dwi_img,
-            dir_path,
-            streamlines,
-            self.inputs.conn_model,
-            self.inputs.target_samples,
-            self.inputs.node_size,
-            self.inputs.curv_thr_list,
-            self.inputs.step_list,
-            self.inputs.network,
-            self.inputs.roi,
-            self.inputs.directget,
-            self.inputs.min_length,
-            namer_dir,
-        )
+        try:
+            [dir_path, dm_path] = create_density_map(
+                dwi_img,
+                dir_path,
+                streamlines,
+                self.inputs.conn_model,
+                self.inputs.target_samples,
+                self.inputs.node_size,
+                self.inputs.curv_thr_list,
+                self.inputs.step_list,
+                self.inputs.network,
+                self.inputs.roi,
+                self.inputs.directget,
+                self.inputs.min_length,
+                namer_dir,
+            )
+        except BaseException:
+            print('Density map failed. Check tractography output.')
+            dm_path = None
 
         del streamlines
         dwi_img.uncache()

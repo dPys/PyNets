@@ -3,6 +3,7 @@
             "dg": "['det', 'prob', 'clos']",
             "ml": "['0', '20', '40']",
             "mod": "['csd', 'csa', 'tensor', 'sfm']",
+            "em": 8
         },
     "func": {
             "ct": "None",
