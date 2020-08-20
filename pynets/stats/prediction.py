@@ -82,7 +82,7 @@ def get_ensembles_omni(modality, alg, base_dir):
     return ensembles
 
 
-def get_ensembles_top(modality, thr_type):
+def get_ensembles_top(modality, thr_type, base_dir):
     df_top = pd.read_csv(
         f"{base_dir}/all_subs_neat_{modality}.csv")
     df_top = df_top.dropna(subset=["id"])
@@ -103,7 +103,7 @@ def get_ensembles_top(modality, thr_type):
     return ensembles, df_top
 
 
-def make_feature_space_dict(df, subject_dict, ses, base_dir):
+def make_feature_space_dict(df, modalities, subject_dict, ses, base_dir):
     ml_dfs = {}
     for modality in modalities:
         print(modality)
@@ -465,8 +465,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
     refit_score = 'explained_variance'
 
     # Instantiate grid of model/feature-selection params
-    alphas = [0.000001, 0.00001, 0.0001, 0.001]
-    n_comps = [5, 10, 15]
+    alphas = [0.00000001, 0.0000001, 0.000001, 0.00001]
+    n_comps = [2, 3, 5, 10]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -590,6 +590,7 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, a
                 df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs] + [f"{rsn}_{i}_dim2" for i in ixs] + [f"{rsn}_{i}_dim3" for i in ixs] + [f"{rsn}_{i}_dim4" for i in ixs])
                 print(df_lps)
             else:
+                print(f"Length of indices {len(ixs)} does not equal the number of rows {rsn_dict['data'].shape[0]} in the embedding-space for {ID} {ses} {modality} {((rsn,) + grid_param)}...")
                 df_lps = None
         else:
             df_lps = None
@@ -652,7 +653,7 @@ def graph_theory_prep(df, thr_type):
 
 
 def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
-                           pca_reduce=True, remove_multi=True, std_dev = 3):
+                           pca_reduce=True, remove_multi=True, std_dev=3):
 
     # Remove columns with > 10% missinng values
     X = X.dropna(thresh=len(X) * .80, axis=1)
@@ -732,10 +733,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
 
                 feat_imp_dict = OrderedDict(sorted(dict(zip(best_positions,
                                             feat_imp_dict.values())).items(),
-                                   key=itemgetter(1),
-                                   reverse=True))
-
-
+                                                   key=itemgetter(1),
+                                                   reverse=True))
             else:
                 best_positions = [column[0] for
                                     column in zip(X.columns,
@@ -776,29 +775,40 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, mega_feat_imp_dict
 
 
-def make_subject_dict(modalities, base_dir, thr_type):
+def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types):
+    from joblib import Parallel, delayed
 
     subject_dict = {}
     modality_grids = {}
     for modality in modalities:
         hyperparams = eval(f"hyperparams_{modality}")
-        ids = [os.path.basename(i) + '_ses-1' for i in glob.glob(
-            f"{base_dir}/embeddings_all_{modality}/*") if
-               os.path.basename(i).startswith('sub')]
-
         for alg in embedding_types:
+            if alg == 'ASE' or alg == 'OMNI':
+                ids = [os.path.basename(i) + '_ses-1' for i in glob.glob(
+                    f"{base_dir}/embeddings_all_{modality}/*") if
+                       os.path.basename(i).startswith('sub')]
+            else:
+                ids = [os.path.basename(i) + '_ses-1' for i in glob.glob(
+                    f"{base_dir}/pynets/*") if
+                       os.path.basename(i).startswith('sub')]
+
             if alg == 'ASE':
                 ensembles = get_ensembles_ase(modality, alg, base_dir)
+                df_top = None
             elif alg == 'OMNI':
                 ensembles = get_ensembles_omni(modality, alg, base_dir)
+                df_top=None
             elif alg == 'topology':
-                ensembles, df_top = get_ensembles_top(modality, thr_type)
+                ensembles, df_top = get_ensembles_top(modality, thr_type,
+                                                      f"{base_dir}/pynets")
+            else:
+                ensembles = None
+                raise ValueError('No ensembles specified.')
 
             hyperparam_dict = {}
 
-            [hyperparam_dict, grid] = build_grid(modality, hyperparam_dict,
-                                                 sorted(list(set(hyperparams))),
-                                                 ensembles)
+            grid = build_grid(modality, hyperparam_dict,
+                              sorted(list(set(hyperparams))), ensembles)[1]
 
             # Since we are using all of the 3 RSN connectomes (pDMN, coSN, and fECN) in the feature-space,
             # rather than varying them as hyperparameters (i.e. we assume they each add distinct variance
@@ -809,186 +819,220 @@ def make_subject_dict(modalities, base_dir, thr_type):
             else:
                 modality_grids[modality] = list(set([i[:-1] for i in grid]))
 
-            for id in ids:
-                ID = id.split("_")[0].split("sub-")[1]
-                ses = id.split("_")[1].split("ses-")[1]
+            outs = Parallel(n_jobs=-1)(
+                delayed(populate_subject_dict)(id, modality, grid,
+                                               subject_dict, alg, mets=mets,
+                                               df_top=df_top) for id in ids)
+            for d in outs:
+                subject_dict.update(d)
+            del outs
 
-                if ID not in subject_dict.keys():
-                    subject_dict[ID] = {}
-
-                if ses not in subject_dict[ID].keys():
-                    subject_dict[ID][ses] = {}
-
-                if modality not in subject_dict[ID][ses].keys():
-                    subject_dict[ID][ses][modality] = {}
-
-                subject_dict[ID][ses][modality] = dict.fromkeys(grid, np.nan)
-
-                # Functional case
-                if modality == 'func':
-                    for comb in grid:
-                        extract, hpass, model, res, atlas, smooth = comb
-                        comb_tuple = (atlas, extract, hpass, model, res, smooth)
-                        subject_dict[ID][ses][modality][comb_tuple] = {}
-                        if alg == 'ASE' or alg == 'OMNI':
-                            if smooth == 0:
-                                embeddings = [i for i in glob.glob(f"{base_dir}/embeddings_all_"
-                                          f"{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
-                                          f"gradient*{alg}*{res}*{atlas}*{ID}"
-                                          f"*modality-{modality}*model-{model}*template-{template}*hpass-{hpass}Hz*extract-{extract}.npy") if 'smooth' not in i]
-                            else:
-                                embeddings = [i for i in glob.glob(f"{base_dir}/embeddings_all_"
-                                          f"{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
-                                          f"gradient*{alg}*{res}*{atlas}*{ID}"
-                                          f"*modality-{modality}*model-{model}*template-{template}*hpass-{hpass}Hz*extract-{extract}.npy") if f"smooth-{smooth}fwhm" in i]
-                            if len(embeddings) == 0:
-                                print(
-                                    f"No functional embeddings found for {id} and"
-                                    f" recipe {comb_tuple}...")
-                                continue
-                            elif len(embeddings) == 1:
-                                embedding = embeddings[0]
-                            else:
-                                print(
-                                    f"Too many structural embeddings found for {id} and"
-                                    f" recipe {comb_tuple}:\n{embeddings}")
-                                embedding = \
-                                    sorted(embeddings, key=os.path.getmtime)[0]
-
-                            if os.path.isfile(embedding):
-                                #print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-                                data = np.load(embedding)
-                                coords, labels = get_coords_labels(embedding)
-                                if alg not in subject_dict[ID][ses][modality][comb_tuple].keys():
-                                    subject_dict[ID][ses][modality][comb_tuple][alg] = {}
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['coords'] = coords
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['labels'] = labels
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['data'] = data
-                            else:
-                                print(
-                                    f"Functional embedding not found for {id} and"
-                                    f" recipe {comb_tuple}...")
-                                continue
-                        elif alg == 'topology':
-                            data = np.empty([len(mets), 1], dtype=np.float32)
-                            data[:] = np.nan
-                            i = 0
-                            for met in mets:
-                                col = (
-                                    'rsn-'
-                                    + atlas
-                                    + "_res-"
-                                    + res
-                                    + "_model-"
-                                    + model
-                                    + f"_template-{template}_nodetype-parc_"
-                                    + "smooth-"
-                                    + str(smooth)
-                                    + "fwhm_hpass-"
-                                    + str(hpass)
-                                    + "Hz_extract-"
-                                    + extract
-                                    + "_thrtype-"
-                                    + thr_type
-                                    + "_auc_"
-                                    + met
-                                    + "_auc"
-                                )
-                                if col in df_top.columns:
-                                    try:
-                                        data[i] = df_top[df_top[
-                                                             "participant_id"]
-                                                         == "sub-" + ID + "_ses-"
-                                                         + ses][
-                                            col].values[0]
-                                    except BaseException:
-                                        data[i] = np.nan
-                                else:
-                                    data[i] = np.nan
-                                del col
-                                i += 1
-                            subject_dict[ID][ses][modality][comb_tuple][alg] = data
-
-                # Structural case
-                elif modality == 'dwi':
-                    for comb in grid:
-                        directget, minlength, model, res, atlas = comb
-                        comb_tuple = (atlas, directget, minlength, model, res)
-                        subject_dict[ID][ses][modality][comb_tuple] = {}
-                        if alg == 'ASE' or alg == 'OMNI':
-                            embeddings = glob.glob(f"{base_dir}/embeddings_all"
-                                        f"_{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
-                                        f"gradient*{alg}*{res}*{atlas}*{ID}"
-                                        f"*modality-{modality}*model-{model}*template-{template}*directget-{directget}"
-                                        f"*minlength-{minlength}*.npy")
-                            if len(embeddings) == 0:
-                                print(
-                                    f"No functional embeddings found for {id} and"
-                                    f" recipe {comb_tuple}...")
-                                continue
-                            elif len(embeddings) == 1:
-                                embedding = embeddings[0]
-                            else:
-                                print(
-                                    f"Too many structural embeddings found for {id} and"
-                                    f" recipe {comb_tuple}:\n{embeddings}")
-                                embedding = \
-                                sorted(embeddings, key=os.path.getmtime)[0]
-                            if os.path.isfile(embedding):
-                                #print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-                                data = np.load(embedding)
-                                coords, labels = get_coords_labels(embedding)
-                                if alg not in subject_dict[ID][ses][modality][comb_tuple].keys():
-                                    subject_dict[ID][ses][modality][comb_tuple][alg] = {}
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['coords'] = coords
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['labels'] = labels
-                                subject_dict[ID][ses][modality][comb_tuple][alg]['data'] = data
-                            else:
-                                print(
-                                    f"Structural embedding not found for {id} and"
-                                    f" recipe {comb_tuple}...")
-                                continue
-                        elif alg == 'topology':
-                            data = np.empty([len(mets), 1], dtype=np.float32)
-                            data[:] = np.nan
-                            i = 0
-                            for met in mets:
-                                col = (
-                                    'rsn-'
-                                    + atlas
-                                    + "_res-"
-                                    + res
-                                    + "_model-"
-                                    + model
-                                    + f"_template-{template}_"
-                                    + "_nodetype-parc_samples-20000streams"
-                                      "_tracktype-"
-                                    + "local"
-                                    + "_directget-"
-                                    + directget
-                                    + "_minlength-"
-                                    + minlength
-                                    + "_thrtype-"
-                                    + thr_type
-                                    + "_topology_"
-                                    + met
-                                    + "_auc"
-                                )
-                                if col in df_top.columns:
-                                    try:
-                                        data[i] = df_top[df_top[
-                                                             "participant_id"] ==
-                                                         "sub-" + ID + "_ses-" +
-                                                         ses][
-                                            col].values[0]
-                                    except BaseException:
-                                        data[i] = np.nan
-                                else:
-                                    data[i] = np.nan
-                                del col
-                                i += 1
-                            subject_dict[ID][ses][modality][comb_tuple][alg] = data
     return subject_dict, modality_grids
+
+
+def populate_subject_dict(id, modality, grid, subject_dict, alg, mets=None,
+                          df_top=None):
+    def filter_cols_from_targets(df_top, targets):
+        base = r'^{}'
+        expr = '(?=.*{})'
+        return df_top.columns[
+            df_top.columns.str.contains(
+                base.format(
+                    ''.join(
+                        expr.format(w) for w in
+                        targets)))]
+
+    print(id)
+    ID = id.split("_")[0].split("sub-")[1]
+    ses = id.split("_")[1].split("ses-")[1]
+
+    if ID not in subject_dict.keys():
+        subject_dict[ID] = {}
+
+    if ses not in subject_dict[ID].keys():
+        subject_dict[ID][ses] = {}
+
+    if modality not in subject_dict[ID][ses].keys():
+        subject_dict[ID][ses][modality] = {}
+
+    subject_dict[ID][ses][modality] = dict.fromkeys(grid, np.nan)
+
+    # Functional case
+    if modality == 'func':
+        for comb in grid:
+            extract, hpass, model, res, atlas, smooth = comb
+            comb_tuple = (atlas, extract, hpass, model, res, smooth)
+            subject_dict[ID][ses][modality][comb_tuple] = {}
+            if alg == 'ASE' or alg == 'OMNI':
+                if smooth == 0:
+                    embeddings = [i for i in
+                                  glob.glob(f"{base_dir}/embeddings_all_"
+                                            f"{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
+                                            f"gradient*{alg}*{res}*{atlas}*{ID}"
+                                            f"*modality-{modality}*model-{model}*template-{template}*hpass-{hpass}Hz*extract-{extract}.npy")
+                                  if 'smooth' not in i]
+                else:
+                    embeddings = [i for i in
+                                  glob.glob(f"{base_dir}/embeddings_all_"
+                                            f"{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
+                                            f"gradient*{alg}*{res}*{atlas}*{ID}"
+                                            f"*modality-{modality}*model-{model}*template-{template}*hpass-{hpass}Hz*extract-{extract}.npy")
+                                  if f"smooth-{smooth}fwhm" in i]
+                if len(embeddings) == 0:
+                    print(
+                        f"\nNo functional embeddings found for {id} and"
+                        f" recipe {comb_tuple}...")
+                    continue
+                elif len(embeddings) == 1:
+                    embedding = embeddings[0]
+                else:
+                    print(
+                        f"Multiple structural embeddings found for {id} and"
+                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                        f" recent...")
+                    embedding = sorted(embeddings, key=os.path.getmtime)[0]
+
+                if os.path.isfile(embedding):
+                    # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+                    data = np.load(embedding)
+                    coords, labels = get_coords_labels(embedding)
+                    if alg not in subject_dict[ID][ses][modality][
+                        comb_tuple].keys():
+                        subject_dict[ID][ses][modality][comb_tuple][alg] = {}
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'coords'] = coords
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'labels'] = labels
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'data'] = data
+                else:
+                    print(
+                        f"\nFunctional embedding not found for {id} and"
+                        f" recipe {comb_tuple}...")
+                    continue
+            elif alg == 'topology':
+                data = np.empty([len(mets), 1], dtype=np.float32)
+                data[:] = np.nan
+                i = 0
+                if smooth == 0:
+                    targets = [f"extract-{extract}",
+                               f"hpass-{hpass}Hz",
+                               f"model-{model}", f"res-{res}",
+                               f"rsn-{atlas}", f"thrtype-{thr_type}"]
+                else:
+                    targets = [f"extract-{extract}",
+                               f"hpass-{hpass}Hz",
+                               f"model-{model}", f"res-{res}",
+                               f"rsn-{atlas}",
+                               f"smooth-{smooth}fwhm", f"thrtype-{thr_type}"]
+
+                cols = filter_cols_from_targets(df_top, targets)
+
+                i = 0
+                for met in mets:
+                    col_met = [j for j in cols if met in j]
+                    if len(col_met) == 1:
+                        col = col_met[0]
+                    elif len(col_met) > 1:
+                        print(f"Multiple columns detected: {col_met}")
+                        col = col_met[0]
+                    else:
+                        continue
+                    try:
+                        data[i] = df_top[df_top[
+                                             "participant_id"]
+                                         == "sub-" + ID + "_ses-"
+                                         + ses][
+                            col].values[0]
+                    except BaseException:
+                        print(
+                            f"\nFunctional topology not found for {id} and"
+                            f" recipe {comb_tuple}...")
+                        data[i] = np.nan
+                    del col
+                    i += 1
+                    subject_dict[ID][ses][modality][comb_tuple][alg] = data
+
+    # Structural case
+    elif modality == 'dwi':
+        for comb in grid:
+            directget, minlength, model, res, atlas = comb
+            comb_tuple = (atlas, directget, minlength, model, res)
+            subject_dict[ID][ses][modality][comb_tuple] = {}
+            if alg == 'ASE' or alg == 'OMNI':
+                embeddings = glob.glob(f"{base_dir}/embeddings_all"
+                                       f"_{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
+                                       f"gradient*{alg}*{res}*{atlas}*{ID}"
+                                       f"*modality-{modality}*model-{model}*template-{template}*directget-{directget}"
+                                       f"*minlength-{minlength}*.npy")
+                if len(embeddings) == 0:
+                    print(
+                        f"\nNo functional embeddings found for {id} and"
+                        f" recipe {comb_tuple}...")
+                    continue
+                elif len(embeddings) == 1:
+                    embedding = embeddings[0]
+                else:
+                    print(
+                        f"\nMultiple structural embeddings found for {id} and"
+                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most recent...")
+                    embedding = \
+                        sorted(embeddings, key=os.path.getmtime)[0]
+                if os.path.isfile(embedding):
+                    # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+                    data = np.load(embedding)
+                    coords, labels = get_coords_labels(embedding)
+                    if alg not in subject_dict[ID][ses][modality][
+                        comb_tuple].keys():
+                        subject_dict[ID][ses][modality][comb_tuple][alg] = {}
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'coords'] = coords
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'labels'] = labels
+                    subject_dict[ID][ses][modality][comb_tuple][alg][
+                        'data'] = data
+                else:
+                    print(
+                        f"\nStructural embedding not found for {id} and"
+                        f" recipe {comb_tuple}...")
+                    continue
+            elif alg == 'topology':
+                data = np.empty([len(mets), 1], dtype=np.float32)
+                data[:] = np.nan
+                i = 0
+                targets = [f"minlength-{minlength}",
+                           f"directget-{directget}",
+                           f"model-{model}", f"res-{res}",
+                           f"rsn-{atlas}",
+                           f"thrtype-{thr_type}"]
+
+                cols = filter_cols_from_targets(df_top,
+                                                targets)
+                i = 0
+                for met in mets:
+                    col_met = [j for j in cols if met in j]
+                    if len(col_met) == 1:
+                        col = col_met[0]
+                    elif len(col_met) > 1:
+                        print(f"\nMultiple columns detected: {col_met}")
+                        col = col_met[0]
+                    else:
+                        continue
+                    try:
+                        data[i] = df_top[df_top[
+                                             "participant_id"]
+                                         == "sub-" + ID + "_ses-"
+                                         + ses][
+                            col].values[0]
+                    except BaseException:
+                        print(
+                            f"\nFunctional topology not found for {id} and"
+                            f" recipe {comb_tuple}...")
+                        data[i] = np.nan
+                    del col
+                    i += 1
+                    subject_dict[ID][ses][modality][comb_tuple][alg] = data
+    return subject_dict
 
 
 def cleanNullTerms(d):
@@ -1003,7 +1047,7 @@ def cleanNullTerms(d):
    return clean
 
 
-def make_x_y(input_dict, drop_cols, target_var, alg, grid_param, modality):
+def make_x_y(input_dict, drop_cols,target_var , alg, grid_param, modality):
     import pandas as pd
     import pickle
 
@@ -1248,7 +1292,7 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(base_dir, modality_grids):
+def create_wf(base_dir, dict_file_path, modality_grids, drop_cols):
     ml_wf = pe.Workflow(name="ensemble_connectometry")
     ml_wf.base_dir = f"{base_dir}/pynets_ml"
 
@@ -1262,7 +1306,6 @@ def create_wf(base_dir, modality_grids):
         ),
         name="inputnode",
     )
-
 
     os.makedirs(f"{base_dir}/pynets_ml", exist_ok=True)
     inputnode.inputs.out_dir = f"{base_dir}/pynets_ml"
@@ -1377,64 +1420,73 @@ def create_wf(base_dir, modality_grids):
     return ml_wf
 
 
-if __name__ == "__main__":
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
-               "frozen_importlib.BuiltinImporter'>)"
-
-    base_dir = '/working/tuning_set/outputs_shaeffer'
-    df = pd.read_csv(
-        '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
-        index_col=False)
-
-    # target_vars = ['rum_persist', 'dep_1', 'age']
-    target_vars = ['rum_persist']
-    thr_type = 'MST'
-    drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
-    # embedding_types = ['OMNI', 'ASE']
-    embedding_types = ['OMNI']
-    modalities = ['func', 'dwi']
-    template = 'MNI152_T1'
-    mets = ["global_efficiency", "average_clustering",
-            "average_shortest_path_length", "average_betweenness_centrality",
-            "average_eigenvector_centrality", "average_degree_centrality",
-            "average_diversity_coefficient",
-            "average_participation_coefficient"]
-    hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
-    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength']
-
-    ses = 1
-
-    subject_dict, modality_grids = make_subject_dict(modalities, base_dir, thr_type)
-    sub_dict_clean = cleanNullTerms(subject_dict)
-
-    # Subset only those participants which have usable data
-    df = df[df['participant_id'].isin(list(subject_dict.keys()))]
-    df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
-
-    dict_file_path = make_feature_space_dict(df, sub_dict_clean, ses, base_dir)
-
-    ml_wf = create_wf(base_dir, modality_grids)
-
-    execution_dict = {}
-    execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
-    execution_dict["poll_sleep_duration"] = 0.1
-    execution_dict["crashfile_format"] = 'txt'
-    execution_dict['local_hash_check'] = False
-    execution_dict['hash_method'] = 'timestamp'
-
-    cfg = dict(execution=execution_dict)
-
-    for key in cfg.keys():
-        for setting, value in cfg[key].items():
-            ml_wf.config[key][setting] = value
-
-    nthreads = psutil.cpu_count(logical=False)
-    procmem = [int(nthreads),
-               int(list(psutil.virtual_memory())[4]/1000000000) - 2]
-    plugin_args = {
-        "n_procs": int(procmem[0]),
-        "memory_gb": int(procmem[1]),
-        "scheduler": "mem_thread",
-    }
-    out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+# if __name__ == "__main__":
+#     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+#                "frozen_importlib.BuiltinImporter'>)"
+#
+#     base_dir = '/working/tuning_set/outputs_shaeffer'
+#     df = pd.read_csv(
+#         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
+#         index_col=False)
+#
+#     # target_vars = ['rum_persist', 'dep_1', 'age']
+#     target_vars = ['rum_persist']
+#     thr_type = 'MST'
+#     drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
+#     # embedding_types = ['OMNI', 'ASE']
+#     embedding_types = ['OMNI']
+#     modalities = ['func', 'dwi']
+#     template = 'MNI152_T1'
+#     mets = ["global_efficiency", "average_clustering",
+#             "average_shortest_path_length", "average_betweenness_centrality",
+#             "average_eigenvector_centrality", "average_degree_centrality",
+#             "average_diversity_coefficient",
+#             "average_participation_coefficient"]
+#
+#     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+#     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength']
+#
+#     ses = 1
+#
+#     subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
+#                                                      thr_type)
+#     sub_dict_clean = cleanNullTerms(subject_dict)
+#
+#     subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
+#     with open(subject_dict_file_path, 'wb') as f:
+#         pickle.dump(sub_dict_clean, f, protocol=2)
+#     f.close()
+#
+#     # Subset only those participants which have usable data
+#     df = df[df['participant_id'].isin(list(subject_dict.keys()))]
+#     df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
+#
+#     dict_file_path = make_feature_space_dict(df, modalities, subject_dict,
+#                                              ses, base_dir)
+#
+#     ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols)
+#
+#     execution_dict = {}
+#     execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
+#     execution_dict["poll_sleep_duration"] = 1
+#     execution_dict["crashfile_format"] = 'txt'
+#     execution_dict['local_hash_check'] = False
+#     execution_dict['hash_method'] = 'timestamp'
+#
+#     cfg = dict(execution=execution_dict)
+#
+#     for key in cfg.keys():
+#         for setting, value in cfg[key].items():
+#             ml_wf.config[key][setting] = value
+#
+#     nthreads = psutil.cpu_count()
+#     procmem = [int(nthreads),
+#                int(list(psutil.virtual_memory())[4]/1000000000) - 2]
+#     plugin_args = {
+#         "n_procs": int(procmem[0]),
+#         "memory_gb": int(procmem[1]),
+#         "scheduler": "mem_thread",
+#     }
+#     # out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+#     out = ml_wf.run(plugin='Linear', plugin_args=plugin_args)
 

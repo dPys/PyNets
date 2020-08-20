@@ -2,7 +2,8 @@
     "dwi": {
             "dg": "['clos']",
             "ml": "['0']",
-            "mod": "['csa']"
+            "mod": "['csa']",
+            "em": 8
         },
     "func": {
             "ct": "None",

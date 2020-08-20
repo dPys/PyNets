@@ -55,7 +55,7 @@ A manuscript is in preparation, but for now, please cite ALL uses with the follo
 }
 ```
 
-Data already preprocessed with BIDS apps like fmriprep, CPAC, dmriprep? If your BIDS derivatives can be queried with pybids, then you can easily run them through PyNets!
+Data already preprocessed with BIDS apps like fmriprep, CPAC, dmriprep? If your BIDS derivatives can be queried with pybids, then you should be able to run them with the user-friendly `pynets_bids` CLI!
 ```
    pynets_bids '/hnu/fMRIprep/fmriprep' '/Users/dPys/outputs/pynets' participant func --participant_label 0025427 0025428 --session_label 1 2 -config pynets/config/bids_config.json
 
@@ -78,7 +78,8 @@ where the `-config` flag specifies that path to a .json configuration spec that 
     "dwi": { # dMRI options. If you only have structural (i.e. DWI) data, set each of the `func` options to "None"
             "dg": "None",
             "ml": "None",
-            "mod": "None"
+            "mod": "None",
+            "em": "None"
         },
     "gen": { # These are general options that apply to all modalities
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']", # Anatomical atlases to define nodes.
@@ -109,7 +110,7 @@ No problem-- you can still run pynets manually:
     pynets -id '002_1' '/Users/dPys/outputs/pynets' \ # where `-id` is an arbitrary subject identifier and the first path is an arbitrary output directory to store derivatives of the workflow.
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image. This is mandatory -- PyNets requires a T1/T2-weighted anatomical image unless you are analyzing raw graphs that ahve already been produced.
-    -a 'BrainnetomeAtlasFan2016' \ # An anatomical atlas name. Note that if were to omit the `-a` flag, a custom parcellation file would need to be specified using the `-ua` flag instead or a valid clustering mask (`-cm`) would be needed to generate an individual parcellation.
+    -a 'BrainnetomeAtlasFan2016' \ # An anatomical atlas name. Note that if were to omit the `-a` flag, a custom parcellation file would need to be specified using the `-ua` flag instead or a valid clustering mask (`-cm`) would be needed to generate an individual parcellation. For a complete catalogue of anatomical atlases available in PyNets, see the `Usage` section of the documentation.
     -mod 'partcorr' \ # The connectivity model. In the case of structural connectometry, this becomes the diffusion model type.
     -thr 0.20 \ # Optionally apply a single proportional threshold to the generated graph.
 ```

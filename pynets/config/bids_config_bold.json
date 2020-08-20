@@ -10,7 +10,7 @@
             "k": "None",
             "mod": "['partcorr']",
             "sm": "['0', '4']",
-            "es": "['mean', 'variance']"
+            "es": "['mean', 'median']"
         },
     "gen": {
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']",
