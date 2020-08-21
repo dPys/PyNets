@@ -232,16 +232,6 @@ def get_conn_matrix(
     import sys
     from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
-    # from sklearn.preprocessing import StandardScaler
-    # from sklearn.feature_selection import VarianceThreshold
-
-    # # Remove near-zero variance
-    # sel = VarianceThreshold()
-    # time_series = sel.fit_transform(time_series)
-    #
-    # # Standardize time-series (if it's not already)
-    # scaler = StandardScaler()
-    # time_series = scaler.fit_transform(time_series)
 
     nilearn_kinds = ["cov", "covariance", "covar", "corr", "cor",
                      "correlation", "partcorr", "parcorr",
@@ -275,7 +265,16 @@ def get_conn_matrix(
                                                kind=kind)
             conn_matrix = conn_measure.fit_transform([time_series])[0]
         except BaseException:
+            from scipy.stats import zscore
+
+            # Remove outliers
+            outlier_mask = (np.abs(zscore(time_series)) < float(3)).all(axis=1)
+            time_series = time_series[outlier_mask]
+
             # Fall back to LedoitWolf
+            print('Matrix estimation failed with Lasso and shrinkage due to '
+                  'ill conditions. Removing outliers > 3 SD\'s, '
+                  'and falling back to LedoitWolf...')
             try:
                 conn_measure = ConnectivityMeasure(kind=kind)
                 conn_matrix = conn_measure.fit_transform([time_series])[0]

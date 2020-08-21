@@ -506,6 +506,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                  vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir):
 
     import gc
+    import os
+    import h5py
     from dipy.tracking import utils
     from dipy.tracking.streamline import select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, \
@@ -599,6 +601,19 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         copy=True,
         use_hardlink=False)
 
+    if waymask is not None:
+        waymask_tmp_path = fname_presuffix(
+            waymask, suffix=f"_{step_curv_combinations}",
+            newpath=cache_dir
+        )
+        copyfile(
+            waymask,
+            waymask_tmp_path,
+            copy=True,
+            use_hardlink=False)
+    else:
+        waymask_tmp_path = None
+
     tiss_classifier = prep_tissues(
         t1w2dwi_tmp_path,
         gm_in_dwi_tmp_path,
@@ -609,9 +624,9 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     B0_mask_data = np.asarray(nib.load(B0_mask_tmp_path).dataobj
                               ).astype("bool")
-    mod_fit = np.load(recon_path_tmp_path).astype('float32')
     atlas_img = nib.load(labels_im_file_tmp_path)
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
+    atlas_img.uncache()
     atlas_data_wm_gm_int_data = np.asarray(
         nib.load(atlas_data_wm_gm_int_tmp_path).dataobj
     ).astype("bool").astype("int16")
@@ -626,7 +641,13 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     del atlas_data
 
-    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
+    inclusion_roi = utils.reduce_rois(
+        parcels, list(np.ones(len(parcels)).astype("bool")))[0]
+    del parcels
+
+    with h5py.File(recon_path_tmp_path, 'r+') as hf:
+        mod_fit = hf['reconstruction'][:]
+    hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
@@ -727,10 +748,10 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                 select_by_rois(
                     roi_proximal_streamlines,
                     affine=np.eye(4),
-                    rois=parcels,
-                    include=parcel_vec,
+                    rois=[inclusion_roi],
+                    include=[True],
                     mode="%s" % ("any" if waymask is not None else
-                                 "both_end"),
+                                 "either_end"),
                     tol=roi_neighborhood_tol,
                 )
             )
@@ -755,16 +776,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         print('No streamlines remaining after minimal length criterion.')
         return None
 
-    if waymask is not None:
-        waymask_tmp_path = fname_presuffix(
-            waymask, suffix=f"_{step_curv_combinations}",
-            newpath=cache_dir
-        )
-        copyfile(
-            waymask,
-            waymask_tmp_path,
-            copy=True,
-            use_hardlink=False)
+    if waymask is not None and os.path.isfile(waymask_tmp_path):
         waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj).astype(
             "bool")
         try:
@@ -786,9 +798,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]
 
-    del dg, seeds, roi_proximal_streamlines, streamline_generator, parcel_vec,\
-        parcels, atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
-    atlas_img.uncache()
+    del dg, seeds, roi_proximal_streamlines, streamline_generator, \
+        atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
     gc.collect()
 
     try:

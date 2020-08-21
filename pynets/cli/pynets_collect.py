@@ -488,7 +488,7 @@ def build_collect_workflow(args, retval):
     working_path = args.basedir
     work_dir = args.work
     modality = args.modality
-    drop_cols = args.drop_cols
+    drop_cols = args.dc
     if isinstance(modality, list):
         modality = modality[0]
 
