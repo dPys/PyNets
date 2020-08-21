@@ -609,7 +609,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     B0_mask_data = np.asarray(nib.load(B0_mask_tmp_path).dataobj
                               ).astype("bool")
-    mod_fit = np.load(recon_path_tmp_path).astype('float32')
+    mod_fit = np.load(recon_path_tmp_path, mmap_mode='r+').astype('float32')
     atlas_img = nib.load(labels_im_file_tmp_path)
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
     atlas_data_wm_gm_int_data = np.asarray(

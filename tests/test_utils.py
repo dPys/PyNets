@@ -440,20 +440,19 @@ def test_build_hp_dict(modality):
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")
-    atlas = 'Power'
 
     if modality == 'func':
         file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_modality-func_rsn-Default_model-cov_template-MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
-        hyperparams = ['modality', 'rsn', 'model', 'nodetype', 'smooth', 'hpass', 'extract', 'thrtype', 'thr']
     elif modality == 'dwi':
         file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
-        hyperparams = ['modality', 'model', 'nodetype', 'samples', 'tracktype', 'directget', 'minlength', 'thrtype', 'thr']
+    gen_hyperparams = ['modality', 'model', 'nodetype', 'template']
 
-    hyperparam_dict = dict.fromkeys(hyperparams)
+    hyperparam_dict = {}
     file_renamed = file_renamed.split('graphs/')[1]
-    hyperparam_dict, hyperparams = build_hp_dict(file_renamed, atlas,
-                                                 modality, hyperparam_dict,
-                                                 hyperparams)
+    hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+                                                 modality,
+                                                 hyperparam_dict,
+                                                 gen_hyperparams)
 
     # test_build_sql_db
     if modality == 'func':

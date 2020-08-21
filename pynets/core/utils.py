@@ -1640,60 +1640,6 @@ def timeout(seconds):
     return decorator
 
 
-def build_hp_dict(file_renamed, atlas, modality, hyperparam_dict, hyperparams):
-    """
-    A function to build a hyperparameter dictionary by parsing a given
-    topology metrics .csv file path.
-    """
-    hyperparam_dict["atlas"] = atlas
-
-    for hyperparam in hyperparams:
-        if (
-            (hyperparam != "smooth")
-            and (hyperparam != "hpass")
-            and (hyperparam != "extract")
-            and (hyperparam != "tracktype")
-            and (hyperparam != "directget")
-            and (hyperparam != "minlength")
-        ):
-            try:
-                hyperparam_dict[hyperparam] = file_renamed.split(
-                    hyperparam + "-")[1].split("_")[0]
-            except ValueError:
-                print(f"Hyperparameter: {hyperparam} not found.")
-
-    if modality == "func":
-        if "smooth-" in file_renamed:
-            hyperparam_dict["smooth"] = (
-                file_renamed.split("smooth-")[1].split("_")[0].split("fwhm")[0]
-            )
-            hyperparams.append("smooth")
-        if "hpass-" in file_renamed:
-            hyperparam_dict["hpass"] = (
-                file_renamed.split("hpass-")[1].split("_")[0].split("Hz")[0]
-            )
-            hyperparams.append("hpass")
-        if "extract-" in file_renamed:
-            hyperparam_dict["extract"] = (
-                file_renamed.split("extract-")[1].split("_")[0]
-            )
-            hyperparams.append("extract")
-    elif modality == "dwi":
-        if "tracktype-" in file_renamed:
-            hyperparam_dict["tracktype"] = file_renamed.split(
-                "tracktype-")[1].split("_")[0]
-            hyperparams.append("tracktype")
-        if "directget-" in file_renamed:
-            hyperparam_dict["directget"] = file_renamed.split(
-                "directget-")[1].split("_")[0]
-            hyperparams.append("directget")
-        if "minlength-" in file_renamed:
-            hyperparam_dict["minlength"] = file_renamed.split(
-                "minlength-")[1].split("_")[0]
-            hyperparams.append("minlength")
-    return hyperparam_dict, hyperparams
-
-
 class build_sql_db(object):
     """
     A SQL exporter for AUC metrics.
