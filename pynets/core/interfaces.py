@@ -687,7 +687,7 @@ class IndividualClustering(SimpleInterface):
                 counter = 0
                 boot_parcellations = []
                 while float(counter) < float(c_boot):
-                    with Parallel(n_jobs=nthreads, max_nbytes='1000M',
+                    with Parallel(n_jobs=nthreads, max_nbytes='8000M',
                                   backend='loky', mmap_mode='r+',
                                   temp_folder=cache_dir,
                                   verbose=10) as parallel:

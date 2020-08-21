@@ -26,7 +26,7 @@ def get_optimal_cov_estimator(time_series):
               "Varying tolerance...\n")
         while not hasattr(estimator, 'covariance_') and \
             not hasattr(estimator, 'precision_') and ix < 2:
-            for tol in [0.001, 0.01, 0.1]:
+            for tol in [0.1, 0.01, 0.001]:
                 print(tol)
                 estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol)
                 try:
@@ -229,6 +229,7 @@ def get_conn_matrix(
       for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
 
     """
+    import sys
     from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
     # from sklearn.preprocessing import StandardScaler
@@ -268,12 +269,21 @@ def get_conn_matrix(
                 "\nERROR! No connectivity model specified at runtime. Select a"
                 " valid estimator using the -mod flag.")
 
-        conn_measure = ConnectivityMeasure(cov_estimator=estimator, kind=kind)
-        conn_matrix = conn_measure.fit_transform([time_series])[0]
-
+        try:
+            # Try with the best-fitting Lasso estimator
+            conn_measure = ConnectivityMeasure(cov_estimator=estimator,
+                                               kind=kind)
+            conn_matrix = conn_measure.fit_transform([time_series])[0]
+        except BaseException:
+            # Fall back to LedoitWolf
+            try:
+                conn_measure = ConnectivityMeasure(kind=kind)
+                conn_matrix = conn_measure.fit_transform([time_series])[0]
+            except RuntimeError:
+                print('Matrix estimation failed.')
+                sys.exit(1)
     else:
         if conn_model == "QuicGraphicalLasso":
-
             try:
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError:

@@ -70,13 +70,13 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
             nodif_B0_img.affine),
         fa_path)
 
-    fa_md_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa_md.nii.gz'}"
+    md_path = f"{os.path.dirname(B0_mask)}{'/tensor_md.nii.gz'}"
     nib.save(
         nib.Nifti1Image(
-            FA_MD.astype(
+            MD.astype(
                 np.float32),
             nodif_B0_img.affine),
-        fa_md_path)
+        md_path)
 
     nodif_B0_img.uncache()
     del FA, FA_MD
