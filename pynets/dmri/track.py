@@ -437,7 +437,7 @@ def track_ensemble(
     ix = 0
     while float(stream_counter) < float(target_samples) and float(ix) < \
         len(all_combs):
-        with Parallel(n_jobs=nthreads, backend='loky', max_nbytes='8000M',
+        with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
@@ -641,6 +641,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     del atlas_data
 
+    parcel_vec = list(np.ones(len(parcels)).astype("bool"))
+
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
         mod_fit = hf['reconstruction'][:]
     hf.close()
@@ -745,7 +747,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     roi_proximal_streamlines,
                     affine=np.eye(4),
                     rois=parcels,
-                    include=list(np.ones(len(parcels)).astype("bool")),
+                    include=parcel_vec,
                     mode="%s" % ("any" if waymask is not None else
                                  "either_end"),
                     tol=roi_neighborhood_tol,

@@ -58,7 +58,7 @@ def get_sphere(coords, r, vox_dims, dims):
     return neighbors
 
 
-def create_parcel_atlas(parcel_list):
+def create_parcel_atlas(parcel_list, label_intensities=None):
     """
     Create a 3D Nifti1Image atlas parcellation of consecutive integer
     intensities from an input list of ROI's.
@@ -92,7 +92,11 @@ def create_parcel_atlas(parcel_list):
                 parcel_list[0].shape,
                 dtype=bool))] + parcel_list
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
-    parcel_list_exp = np.array(range(len(parcel_list_exp))).astype("float32")
+    if label_intensities is not None:
+        parcel_list_exp = np.array([0] + label_intensities).astype("float32")
+    else:
+        parcel_list_exp = np.array(range(len(parcel_list_exp))
+                                   ).astype("float32")
     parcel_sum = np.sum(
         parcel_list_exp *
         np.asarray(
@@ -693,11 +697,18 @@ def parcel_masker(
             " brain mask/roi..."
         )
 
+    if any(isinstance(sub, tuple) for sub in labels_adj):
+        label_intensities = [i[1] for i in labels_adj]
+    elif any(isinstance(sub, dict) for sub in labels_adj):
+        label_intensities = None
+    else:
+        label_intensities = labels_adj
+
     # Create a resampled 3D atlas that can be viewed alongside mask img for QA
     resampled_parcels_nii_path = f"{dir_path}/{ID}_parcels_resampled2roimask" \
                                  f"_{op.basename(roi).split('.')[0]}.nii.gz"
     resampled_parcels_map_nifti = resample_img(
-        nodemaker.create_parcel_atlas(parcel_list_adj)[0],
+        nodemaker.create_parcel_atlas(parcel_list_adj, label_intensities)[0],
         target_affine=mask_aff,
         target_shape=mask_data.shape,
         interpolation="nearest",
@@ -1479,8 +1490,16 @@ def node_gen_masking(
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
         roi, coords, parcel_list, labels, dir_path, ID, perc_overlap
     )
+
+    if any(isinstance(sub, tuple) for sub in labels):
+        label_intensities = [i[1] for i in labels]
+    elif any(isinstance(sub, dict) for sub in labels):
+        label_intensities = None
+    else:
+        label_intensities = labels
+
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(
-        parcel_list_masked)
+        parcel_list_masked, label_intensities)
 
     assert (
         len(coords)
@@ -1549,7 +1568,15 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         parcel_list = [index_img(parcel_list_img, i) for i in
                        range(parcel_list_img.shape[-1])]
 
-    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list)
+    if any(isinstance(sub, tuple) for sub in labels):
+        label_intensities = [i[1] for i in labels]
+    elif any(isinstance(sub, dict) for sub in labels):
+        label_intensities = None
+    else:
+        label_intensities = labels
+
+    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list,
+                                                               label_intensities)
 
     coords = list(tuple(x) for x in coords)
 

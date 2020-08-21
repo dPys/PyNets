@@ -16,8 +16,8 @@ def get_optimal_cov_estimator(time_series):
     from sklearn.covariance import GraphicalLassoCV
 
     estimator_shrunk = None
-    estimator = GraphicalLassoCV(cv=5)
-    print("\nFinding best estimator...\n")
+    estimator = GraphicalLassoCV(cv=5, assume_centered=True)
+    print("\nSearching for best Lasso estimator...\n")
     try:
         estimator.fit(time_series)
     except BaseException:
@@ -27,8 +27,9 @@ def get_optimal_cov_estimator(time_series):
         while not hasattr(estimator, 'covariance_') and \
             not hasattr(estimator, 'precision_') and ix < 3:
             for tol in [0.1, 0.01, 0.001, 0.0001]:
-                print(tol)
-                estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol)
+                print(f"Auto-tuning Tolerance={tol}")
+                estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol,
+                                             assume_centered=True)
                 try:
                     estimator.fit(time_series)
                 except BaseException:
@@ -38,49 +39,33 @@ def get_optimal_cov_estimator(time_series):
     if not hasattr(estimator, 'covariance_') and not hasattr(estimator,
                                                              'precision_'):
         print(
-            "Unstable Lasso estimation. Applying shrinkage..."
+            "Unstable Lasso estimation. Applying shrinkage to empirical "
+            "covariance..."
+        )
+        estimator = None
+        from sklearn.covariance import (
+            GraphicalLasso,
+            empirical_covariance,
+            shrunk_covariance,
         )
         try:
-            estimator = None
-            from sklearn.covariance import (
-                GraphicalLasso,
-                empirical_covariance,
-                shrunk_covariance,
-            )
-
-            emp_cov = empirical_covariance(time_series)
-            # Iterate across different levels of alpha
+            emp_cov = empirical_covariance(time_series, assume_centered=True)
             for i in np.arange(0.8, 0.99, 0.01):
+                print(f"Shrinkage={i}:")
                 shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
                 alphaRange = 10.0 ** np.arange(-8, 0)
                 for alpha in alphaRange:
+                    print(f"Auto-tuning alpha={alpha}...")
+                    estimator_shrunk = GraphicalLasso(alpha,
+                                                      assume_centered=True)
                     try:
-                        estimator_shrunk = GraphicalLasso(alpha)
                         estimator_shrunk.fit(shrunk_cov)
-                        print(
-                            f"Retrying covariance matrix estimate with"
-                            f" alpha={alpha}"
-                        )
-                        if estimator_shrunk is None:
-                            pass
-                        else:
-                            break
                     except BaseException:
-                        print(
-                            f"Covariance estimation failed with shrinkage"
-                            f" at alpha={alpha}"
-                        )
                         continue
-        except ValueError:
-            estimator = None
-            print(
-                "Covariance estimation failed. Check time-series data "
-                "for errors."
-            )
-    if estimator is None and estimator_shrunk is None:
-        raise RuntimeError("\nERROR: Covariance estimation failed.")
+        except BaseException:
+            return estimator
 
-    if estimator is None:
+    if estimator is None and estimator_shrunk is not None:
         estimator = estimator_shrunk
 
     return estimator
@@ -229,7 +214,6 @@ def get_conn_matrix(
       for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
 
     """
-    import sys
     from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
 
@@ -240,6 +224,40 @@ def get_conn_matrix(
 
     conn_matrix = None
     estimator = get_optimal_cov_estimator(time_series)
+
+    def fallback_covariance(time_series):
+        from sklearn.ensemble import IsolationForest
+        from sklearn import covariance
+
+        # Remove gross outliers
+        model = IsolationForest(contamination=0.02)
+        model.fit(time_series)
+        outlier_mask = model.predict(time_series)
+        outlier_mask[outlier_mask == -1] = 0
+        time_series = time_series[outlier_mask.astype('bool')]
+
+        # Fall back to LedoitWolf
+        print('Matrix estimation failed with Lasso and shrinkage due to '
+              'ill conditions. Removing potential anomalies from the '
+              'time-series using IsolationForest...')
+        try:
+            print("Trying Ledoit-Wolf Estimator...")
+            conn_measure = ConnectivityMeasure(
+                cov_estimator=covariance.LedoitWolf(store_precision=True,
+                                                    assume_centered=True),
+                kind=kind)
+            conn_matrix = conn_measure.fit_transform([time_series])[0]
+        except (np.linalg.linalg.LinAlgError, FloatingPointError):
+            print("Trying Oracle Approximating Shrinkage Estimator...")
+            conn_measure = ConnectivityMeasure(
+                cov_estimator=covariance.OAS(assume_centered=True),
+                kind=kind)
+            try:
+                conn_matrix = conn_measure.fit_transform([time_series])[0]
+            except (np.linalg.linalg.LinAlgError, FloatingPointError):
+                raise ValueError('All covariance estimators failed to '
+                                 'converge...')
+        return conn_matrix
 
     if conn_model in nilearn_kinds:
         if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
@@ -259,32 +277,16 @@ def get_conn_matrix(
                 "\nERROR! No connectivity model specified at runtime. Select a"
                 " valid estimator using the -mod flag.")
 
-        try:
-            # Try with the best-fitting Lasso estimator
+        # Try with the best-fitting Lasso estimator
+        if estimator is not None:
             conn_measure = ConnectivityMeasure(cov_estimator=estimator,
                                                kind=kind)
-            conn_matrix = conn_measure.fit_transform([time_series])[0]
-        except BaseException:
-            from sklearn.ensemble import IsolationForest
-
-            # Remove gross outliers
-            model = IsolationForest(contamination=0.02)
-            model.fit(time_series)
-            outlier_mask = model.predict(time_series)
-            outlier_mask[outlier_mask == -1] = 0
-            time_series = time_series[outlier_mask.astype('bool')]
-
-            # Fall back to LedoitWolf
-            print('Matrix estimation failed with Lasso and shrinkage due to '
-                  'ill conditions. Removing potential anomalies from the '
-                  'time-series using IsolationForest and falling back to '
-                  'LedoitWolf...')
             try:
-                conn_measure = ConnectivityMeasure(kind=kind)
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
-            except RuntimeError:
-                print('Matrix estimation failed.')
-                sys.exit(1)
+            except (np.linalg.linalg.LinAlgError, FloatingPointError):
+                fallback_covariance(time_series)
+        else:
+            fallback_covariance(time_series)
     else:
         if conn_model == "QuicGraphicalLasso":
             try:

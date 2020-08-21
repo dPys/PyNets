@@ -179,9 +179,10 @@ class FetchNodesLabels(SimpleInterface):
                       "installed?")
             try:
                 if self.inputs.clustering is False:
-                    [uatlas,
-                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                        uatlas)
+                    [uatlas, _] = \
+                        nodemaker.enforce_hem_distinct_consecutive_labels(
+                            uatlas)
+
                 # Fetch user-specified atlas coords
                 [coords, _, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(uatlas)
