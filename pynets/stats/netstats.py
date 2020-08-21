@@ -324,8 +324,8 @@ def smallworldness(
         raise ValueError(f"{approach}' approach not recognized!")
 
     L = nx.average_shortest_path_length(G)
-    Cl = np.nanmean(randMetrics["C"])
-    Lr = np.nanmean(randMetrics["L"])
+    Cl = np.nanmean(randMetrics["C"], dtype=np.float32)
+    Lr = np.nanmean(randMetrics["L"], dtype=np.float32)
 
     return (Lr / L) - (C / Cl)
 
@@ -1329,7 +1329,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     # Add mean
     pc_arr[num_edges, 0] = "average_participation_coefficient"
     nonzero_arr_partic_coef = np.delete(pc_arr[:, 1], [0])
-    pc_arr[num_edges, 1] = np.nanmean(nonzero_arr_partic_coef)
+    pc_arr[num_edges, 1] = np.nanmean(nonzero_arr_partic_coef.astype('float32'), dtype=np.float32)
     print(f"{'Mean Participation Coefficient: '}{str(pc_arr[num_edges, 1])}")
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1357,7 +1357,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     # Add mean
     dc_arr[num_edges, 0] = "average_diversity_coefficient"
     nonzero_arr_diversity_coef = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_edges, 1] = np.nanmean(nonzero_arr_diversity_coef)
+    dc_arr[num_edges, 1] = np.nanmean(nonzero_arr_diversity_coef.astype('float32'), dtype=np.float32)
     print(f"{'Mean Diversity Coefficient: '}{str(dc_arr[num_edges, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1383,7 +1383,7 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     le_arr[num_nodes, 0] = "average_local_efficiency_nodewise"
     nonzero_arr_le = np.delete(le_arr[:, 1], [0])
-    le_arr[num_nodes, 1] = np.nanmean(nonzero_arr_le)
+    le_arr[num_nodes, 1] = np.nanmean(nonzero_arr_le.astype('float32'), dtype=np.float32)
     print(f"{'Mean Local Efficiency: '}{str(le_arr[num_nodes, 1])}")
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
@@ -1411,7 +1411,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     cl_arr[num_nodes, 0] = "average_local_clustering_nodewise"
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
-    cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl)
+    cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Local Clustering across nodes: '}{str(cl_arr[num_nodes, 1])}")
     for i in cl_arr[:, 0]:
@@ -1440,7 +1440,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     dc_arr[num_nodes, 0] = "average_degree_centrality"
     nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc)
+    dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Degree Centrality across nodes: '}{str(dc_arr[num_nodes, 1])}")
     for i in dc_arr[:, 0]:
@@ -1474,7 +1474,7 @@ def get_betweenness_centrality(
         j = j + 1
     bc_arr[num_nodes, 0] = "average_betweenness_centrality"
     nonzero_arr_betw_cent = np.delete(bc_arr[:, 1], [0])
-    bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent)
+    bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Betweenness Centrality across nodes: '}{str(bc_arr[num_nodes, 1])}")
     for i in bc_arr[:, 0]:
@@ -1504,7 +1504,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     ec_arr[num_nodes, 0] = "average_eigenvector_centrality"
     nonzero_arr_eig_cent = np.delete(ec_arr[:, 1], [0])
-    ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent)
+    ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Eigenvector Centrality across nodes: '}{str(ec_arr[num_nodes, 1])}")
     for i in ec_arr[:, 0]:
@@ -1535,7 +1535,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     cc_arr[num_nodes, 0] = "average_communicability_centrality"
     nonzero_arr_comm_cent = np.delete(cc_arr[:, 1], [0])
-    cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent)
+    cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Communicability Centrality across nodes: '}{str(cc_arr[num_nodes, 1])}"
     )
@@ -1568,7 +1568,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     # Add mean
     rc_arr[num_edges, 0] = "average_rich_club_coefficient"
     nonzero_arr_rich_club = np.delete(rc_arr[:, 1], [0])
-    rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club)
+    rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club.astype('float32'), dtype=np.float32)
     print(
         f"{'Mean Rich Club Coefficient across edges: '}{str(rc_arr[num_edges, 1])}")
     for i in rc_arr[:, 0]:
@@ -1932,6 +1932,7 @@ def collect_pandas_df_make(
     import os.path as op
     import pandas as pd
     from pynets.core import utils
+    from pynets.stats.benchmarking import build_hp_dict
     from itertools import groupby
     import re
 
@@ -1987,7 +1988,7 @@ def collect_pandas_df_make(
         hyperparam_dict = {}
         dfs_non_auc = []
         hyperparam_dict["id"] = ID
-        gen_hyperparams = ["nodetype", "model"]
+        gen_hyperparams = ["nodetype", "model", "template"]
         if max([len(i) for i in models_grouped]) > 1:
             print(
                 "Multiple thresholds detected. Computing Area Under the Curve "
@@ -2001,16 +2002,24 @@ def collect_pandas_df_make(
                 for i in models_grouped[thr_set]:
                     thr = non_decimal.sub("", i.split("thr-")[1].split("_")[0])
                     _file = subject_path + "/" + i
-                    df = pd.read_csv(_file)
-                    node_cols = [
-                        s
-                        for s in list(df.columns)
-                        if isinstance(s, int) or any(c.isdigit() for c in s)
-                    ]
-                    if nc_collect is False:
-                        df = df.drop(node_cols, axis=1)
-                    meta[thr_set]["dataframes"][thr] = df
-
+                    if os.path.isfile(_file):
+                        df = pd.read_csv(_file, memory_map=True,
+                                         chunksize=100000, encoding="utf-8",
+                                         skip_blank_lines=False,
+                                         warn_bad_lines=True,
+                                         error_bad_lines=False
+                                         ).read()
+                        node_cols = [
+                            s
+                            for s in list(df.columns)
+                            if isinstance(s, int) or any(c.isdigit() for c in s)
+                        ]
+                        if nc_collect is False:
+                            df = df.drop(node_cols, axis=1)
+                        meta[thr_set]["dataframes"][thr] = df
+                    else:
+                        print(f"File {_file} not found...")
+                        continue
             # For each unique threshold set, for each graph measure, extract
             # AUC
             if sql_out is True:
@@ -2048,9 +2057,10 @@ def collect_pandas_df_make(
                 modality = file_renamed.split("modality-")[1].split("_")[0]
 
                 # Build hyperparameter dictionary
-                hyperparam_dict, hyperparams = utils.build_hp_dict(
-                    file_renamed, atlas, modality, hyperparam_dict,
-                    gen_hyperparams)
+                hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+                                                             modality,
+                                                             hyperparam_dict,
+                                                             gen_hyperparams)
 
                 for measure in df_summary.columns[:-1]:
                     # Get Area Under the Curve
@@ -2091,7 +2101,12 @@ def collect_pandas_df_make(
                 del df_summary_auc
         else:
             for file_ in net_mets_csv_list:
-                dfs_non_auc.append(pd.read_csv(file_))
+                dfs_non_auc.append(pd.read_csv(file_, memory_map=True,
+                                         chunksize=100000, encoding="utf-8",
+                                         skip_blank_lines=False,
+                                         warn_bad_lines=True,
+                                         error_bad_lines=False
+                                         ).read())
 
         if create_summary is True:
             try:

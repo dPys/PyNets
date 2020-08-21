@@ -436,7 +436,7 @@ def test_timeout(s):
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
 def test_build_hp_dict(modality):
     import tempfile
-
+    from pynets.stats.benchmarking import build_hp_dict
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")
@@ -451,10 +451,9 @@ def test_build_hp_dict(modality):
 
     hyperparam_dict = dict.fromkeys(hyperparams)
     file_renamed = file_renamed.split('graphs/')[1]
-    hyperparam_dict, hyperparams = utils.build_hp_dict(file_renamed, atlas,
-                                                       modality,
-                                                       hyperparam_dict,
-                                                       hyperparams)
+    hyperparam_dict, hyperparams = build_hp_dict(file_renamed, atlas,
+                                                 modality, hyperparam_dict,
+                                                 hyperparams)
 
     # test_build_sql_db
     if modality == 'func':
