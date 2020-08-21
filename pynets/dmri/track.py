@@ -641,10 +641,6 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     del atlas_data
 
-    inclusion_roi = utils.reduce_rois(
-        parcels, list(np.ones(len(parcels)).astype("bool")))[0]
-    del parcels
-
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
         mod_fit = hf['reconstruction'][:]
     hf.close()
@@ -748,8 +744,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                 select_by_rois(
                     roi_proximal_streamlines,
                     affine=np.eye(4),
-                    rois=[inclusion_roi],
-                    include=[True],
+                    rois=parcels,
+                    include=list(np.ones(len(parcels)).astype("bool")),
                     mode="%s" % ("any" if waymask is not None else
                                  "either_end"),
                     tol=roi_neighborhood_tol,

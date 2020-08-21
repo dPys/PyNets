@@ -25,8 +25,8 @@ def get_optimal_cov_estimator(time_series):
         print("\nModel did not converge on first attempt. "
               "Varying tolerance...\n")
         while not hasattr(estimator, 'covariance_') and \
-            not hasattr(estimator, 'precision_') and ix < 2:
-            for tol in [0.1, 0.01, 0.001]:
+            not hasattr(estimator, 'precision_') and ix < 3:
+            for tol in [0.1, 0.01, 0.001, 0.0001]:
                 print(tol)
                 estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol)
                 try:
@@ -265,16 +265,20 @@ def get_conn_matrix(
                                                kind=kind)
             conn_matrix = conn_measure.fit_transform([time_series])[0]
         except BaseException:
-            from scipy.stats import zscore
+            from sklearn.ensemble import IsolationForest
 
-            # Remove outliers
-            outlier_mask = (np.abs(zscore(time_series)) < float(3)).all(axis=1)
-            time_series = time_series[outlier_mask]
+            # Remove gross outliers
+            model = IsolationForest(contamination=0.02)
+            model.fit(time_series)
+            outlier_mask = model.predict(time_series)
+            outlier_mask[outlier_mask == -1] = 0
+            time_series = time_series[outlier_mask.astype('bool')]
 
             # Fall back to LedoitWolf
             print('Matrix estimation failed with Lasso and shrinkage due to '
-                  'ill conditions. Removing outliers > 3 SD\'s, '
-                  'and falling back to LedoitWolf...')
+                  'ill conditions. Removing potential anomalies from the '
+                  'time-series using IsolationForest and falling back to '
+                  'LedoitWolf...')
             try:
                 conn_measure = ConnectivityMeasure(kind=kind)
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
