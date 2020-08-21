@@ -324,8 +324,8 @@ def smallworldness(
         raise ValueError(f"{approach}' approach not recognized!")
 
     L = nx.average_shortest_path_length(G)
-    Cl = np.mean(randMetrics["C"])
-    Lr = np.mean(randMetrics["L"])
+    Cl = np.nanmean(randMetrics["C"])
+    Lr = np.nanmean(randMetrics["L"])
 
     return (Lr / L) - (C / Cl)
 
@@ -1329,7 +1329,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     # Add mean
     pc_arr[num_edges, 0] = "average_participation_coefficient"
     nonzero_arr_partic_coef = np.delete(pc_arr[:, 1], [0])
-    pc_arr[num_edges, 1] = np.mean(nonzero_arr_partic_coef)
+    pc_arr[num_edges, 1] = np.nanmean(nonzero_arr_partic_coef)
     print(f"{'Mean Participation Coefficient: '}{str(pc_arr[num_edges, 1])}")
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1357,7 +1357,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     # Add mean
     dc_arr[num_edges, 0] = "average_diversity_coefficient"
     nonzero_arr_diversity_coef = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_edges, 1] = np.mean(nonzero_arr_diversity_coef)
+    dc_arr[num_edges, 1] = np.nanmean(nonzero_arr_diversity_coef)
     print(f"{'Mean Diversity Coefficient: '}{str(dc_arr[num_edges, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1383,7 +1383,7 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     le_arr[num_nodes, 0] = "average_local_efficiency_nodewise"
     nonzero_arr_le = np.delete(le_arr[:, 1], [0])
-    le_arr[num_nodes, 1] = np.mean(nonzero_arr_le)
+    le_arr[num_nodes, 1] = np.nanmean(nonzero_arr_le)
     print(f"{'Mean Local Efficiency: '}{str(le_arr[num_nodes, 1])}")
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
@@ -1411,7 +1411,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     cl_arr[num_nodes, 0] = "average_local_clustering_nodewise"
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
-    cl_arr[num_nodes, 1] = np.mean(nonzero_arr_cl)
+    cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl)
     print(
         f"{'Mean Local Clustering across nodes: '}{str(cl_arr[num_nodes, 1])}")
     for i in cl_arr[:, 0]:
@@ -1440,7 +1440,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     dc_arr[num_nodes, 0] = "average_degree_centrality"
     nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_nodes, 1] = np.mean(nonzero_arr_dc)
+    dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc)
     print(
         f"{'Mean Degree Centrality across nodes: '}{str(dc_arr[num_nodes, 1])}")
     for i in dc_arr[:, 0]:
@@ -1474,7 +1474,7 @@ def get_betweenness_centrality(
         j = j + 1
     bc_arr[num_nodes, 0] = "average_betweenness_centrality"
     nonzero_arr_betw_cent = np.delete(bc_arr[:, 1], [0])
-    bc_arr[num_nodes, 1] = np.mean(nonzero_arr_betw_cent)
+    bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent)
     print(
         f"{'Mean Betweenness Centrality across nodes: '}{str(bc_arr[num_nodes, 1])}")
     for i in bc_arr[:, 0]:
@@ -1504,7 +1504,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     ec_arr[num_nodes, 0] = "average_eigenvector_centrality"
     nonzero_arr_eig_cent = np.delete(ec_arr[:, 1], [0])
-    ec_arr[num_nodes, 1] = np.mean(nonzero_arr_eig_cent)
+    ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent)
     print(
         f"{'Mean Eigenvector Centrality across nodes: '}{str(ec_arr[num_nodes, 1])}")
     for i in ec_arr[:, 0]:
@@ -1535,7 +1535,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
         j = j + 1
     cc_arr[num_nodes, 0] = "average_communicability_centrality"
     nonzero_arr_comm_cent = np.delete(cc_arr[:, 1], [0])
-    cc_arr[num_nodes, 1] = np.mean(nonzero_arr_comm_cent)
+    cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent)
     print(
         f"{'Mean Communicability Centrality across nodes: '}{str(cc_arr[num_nodes, 1])}"
     )
@@ -1568,7 +1568,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     # Add mean
     rc_arr[num_edges, 0] = "average_rich_club_coefficient"
     nonzero_arr_rich_club = np.delete(rc_arr[:, 1], [0])
-    rc_arr[num_edges, 1] = np.mean(nonzero_arr_rich_club)
+    rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club)
     print(
         f"{'Mean Rich Club Coefficient across edges: '}{str(rc_arr[num_edges, 1])}")
     for i in rc_arr[:, 0]:

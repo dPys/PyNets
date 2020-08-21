@@ -10,7 +10,6 @@ from nipype.pipeline import engine as pe
 import os
 import pandas as pd
 import warnings
-
 warnings.filterwarnings("ignore")
 
 
@@ -37,6 +36,13 @@ def get_parser():
         choices=["dwi", "func"],
         help="Specify data modality from which to collect data. Options are"
              " `dwi` and `func`.",
+    )
+    parser.add_argument(
+        "-dc",
+        metavar="Column strings to exclude",
+        default=None,
+        nargs="+",
+        help="Space-delimited list of strings.\n",
     )
     parser.add_argument(
         "-pm",
@@ -86,56 +92,81 @@ def load_pd_dfs(file_):
     import os.path as op
     import pandas as pd
     import numpy as np
+    from colorama import Fore, Style
+    from pynets.cli.pynets_collect import summarize_missingness
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
 
     if file_:
         if op.isfile(file_) and not file_.endswith("_clean.csv"):
-            df = pd.read_csv(file_, chunksize=100000).read()
-            try:
-                df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
-            except BaseException:
-                pass
+            df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+                             nrows=1, skip_blank_lines=False,
+                             warn_bad_lines=True, error_bad_lines=False,
+                             memory_map=True).read()
+            if "Unnamed: 0" in df.columns:
+                df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
             id = op.basename(file_).split("_topology")[0]
-            print(id)
+            if 'sub-sub-' in id:
+                id = id.replace('topology_auc_sub-', '')
+            else:
+                id = id.replace('topology_auc_', '')
+            if 'ses-ses-' in id:
+                id = id.replace('ses-ses-', 'ses-')
+
+            id = ('_').join(id.split('_')[0:2])
+
+            if '.csv' in id:
+                id = id.replace('.csv', '')
+
+            #print(id)
+            ID = id.split("_")[0].split("sub-")[1]
+            ses = id.split("_")[1].split("ses-")[1]
             df["id"] = id
-            try:
-                df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
-            except BaseException:
-                pass
-            try:
-                df.set_index("id", inplace=True)
-            except BaseException:
-                pass
-            bad_cols1 = df.columns[df.columns.str.contains("_x")]
+            df["id"] = df["id"].astype('str')
+            df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
+            bad_cols1 = df.columns[df.columns.str.endswith("_x")]
             if len(bad_cols1) > 0:
-                df.rename(columns=dict(zip(bad_cols1, [bad_col.split(
-                    "_x")[0] for bad_col in bad_cols1])), inplace=True, )
-            bad_cols2 = df.columns[df.columns.str.contains("_y")]
+                for col in bad_cols1:
+                    if np.isnan(df[col][0]) is False:
+                        df.rename(columns=dict(zip(bad_cols1, [bad_col.split(
+                            "_x")[0] for bad_col in bad_cols1])), inplace=True)
+                    else:
+                        df.drop(columns=[col], inplace=True)
+                del col
+            bad_cols2 = df.columns[df.columns.str.endswith("_y")]
             if len(bad_cols2) > 0:
-                df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
-                    "_y")[0] for bad_col in bad_cols2])), inplace=True, )
-            try:
-                df = df.loc[:, ~df.columns.str.contains(
-                    r".?\d{1}$", regex=True)]
-            except BaseException:
-                pass
-            try:
-                df = df.loc[:, ~df.columns.duplicated()]
-            except BaseException:
-                pass
-            try:
-                df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
-            except BaseException:
-                pass
+                for col in bad_cols2:
+                    if np.isnan(df[col][0]) is False:
+                        df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
+                            "_y")[0] for bad_col in bad_cols2])),
+                                  inplace=True)
+                    else:
+                        df.drop(columns=[col], inplace=True)
+                del col
+
+            df = df.loc[:, ~df.columns.str.contains(r".?\d{1}$", regex=True)]
+
+            # Find empty duplicate columns
+            df_dups = df.loc[:, df.columns.duplicated()]
+            if df_dups.empty is False:
+                empty_cols = [col for col in df.columns if
+                              df_dups[col].isnull().all()]
+                # Drop these columns from the dataframe
+                print(f"{Fore.LIGHTYELLOW_EX}Dropping duplicated empty columns: {empty_cols}{Style.RESET_ALL}")
+                df.drop(empty_cols,
+                        axis=1,
+                        inplace=True)
+            if "Unnamed: 0" in df.columns:
+                df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
+            summarize_missingness(df)
             df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=True)
-            del bad_cols2
-            del bad_cols1
-            del id
+            del bad_cols2, bad_cols1, id
 
         else:
+            print(f"{Fore.RED}Cleaned {file_} missing...{Style.RESET_ALL}")
             df = pd.DataFrame()
     else:
+        print(f"{Fore.RED}{file_} missing...{Style.RESET_ALL}")
         df = pd.DataFrame()
     gc.collect()
 
@@ -143,24 +174,21 @@ def load_pd_dfs(file_):
 
 
 def df_concat(dfs, working_path, modality):
-    import re
     import pandas as pd
+    from colorama import Fore, Style
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
 
-    dfs = [df for df in dfs if df is not None]
-    frame = pd.concat(dfs, axis=0, join="outer", sort=True, ignore_index=False)
+    def harmonize_dtypes(df):
+        for i in [j for j in df.columns if j != 'id']:
+            df[i] = df[i].astype("float32")
+        return df
 
-    for i in list(frame.columns)[1:]:
-        try:
-            frame[i] = frame[i].astype("float32")
-        except BaseException:
-            try:
-                frame[i] = pd.to_numeric(
-                    frame[i].apply(lambda x: re.sub("-", "", str(x)))
-                )
-            except BaseException:
-                pass
+    dfs = [harmonize_dtypes(df) for df in dfs if df is not None and
+           df.empty is False]
+
+    frame = pd.concat(dfs, axis=0, join="outer", sort=True,
+                      ignore_index=False)
 
     frame = frame.drop_duplicates(subset="id")
     frame = frame.loc[:, ~frame.columns.str.contains(r"thr_auc$", regex=True)]
@@ -170,31 +198,96 @@ def df_concat(dfs, working_path, modality):
     # Set ID to the first column
     cols = [cols[-1]] + cols[:-1]
     frame = frame[cols]
+    #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
+    missingness_dict = summarize_missingness(frame)[0]
+    bad_cols = []
+    for col in missingness_dict.keys():
+        if missingness_dict[col] > 0.20:
+            bad_cols.append(col)
+
+    if len(bad_cols) > 0:
+        print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
+              f"missingness: {bad_cols}{Style.RESET_ALL}")
+        frame = frame.drop(columns=bad_cols)
+
     frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=False)
+
+    # frame['missing'] = frame.apply(lambda x: x.count(), axis=1)
+    # frame = frame.loc[frame['missing'] > np.mean(frame['missing'])]
+    # frame = frame.sort_values(by=['missing'], ascending=False)
+
     return frame
 
 
-def build_subject_dict(sub, working_path, modality):
+def summarize_missingness(df):
+    import numpy as np
+    from colorama import Fore, Style
+    missingness_dict = dict(df.apply(lambda x: x.isna().sum() /
+                                                  (x.count() + x.isna().sum()),
+                                        axis=0))
+    missingness_mean = np.mean(list(missingness_dict.values()))
+    if missingness_mean > 0.50:
+        print(f"{Fore.RED} {df} missing {100*missingness_mean}% values!{Style.RESET_ALL}")
+
+    return missingness_dict, missingness_mean
+
+
+def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
+    from colorama import Fore, Style
+    import pandas as pd
+    import re
+
+    pd.set_option("display.float_format", lambda x: f"{x:.8f}")
+
+    df = pd.read_csv(
+        auc_file, chunksize=100000, compression="gzip", encoding="utf-8",
+        nrows=1, skip_blank_lines=False,
+        warn_bad_lines=True, error_bad_lines=False,
+        memory_map=True).read()
+    #print(f"{'Atlas: '}{atlas_name}")
+    prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
+    df_pref = df.add_prefix(prefix)
+    if modality == 'dwi':
+        df_pref = df_pref.rename(
+            columns=lambda x: re.sub(
+                "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_", "",
+                x))
+        df_pref = df_pref.rename(
+            columns=lambda x: re.sub(
+                "_tol-\d{1,20}", "",
+                x))
+    bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
+                                                  drop_cols)]
+    print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
+    df_pref.drop(columns=bad_cols, inplace=True)
+
+    print(df_pref)
+    # Find empty duplicate columns
+    df_dups = df_pref.loc[:, df_pref.columns.duplicated()]
+    if df_dups.empty is False:
+        empty_cols = [col for col in df_pref.columns if
+                      df_dups[col].isnull().all()]
+        # Drop these columns from the dataframe
+        df_pref.drop(empty_cols,
+                axis=1,
+                inplace=True)
+    if "Unnamed: 0" in df_pref.columns:
+        df_pref.drop(df_pref.filter(regex="Unnamed: 0"), axis=1, inplace=True)
+
+    if df_pref.empty:
+        print(f"{Fore.RED}Empty raw AUC: {df_pref} from {auc_file}...{Style.RESET_ALL}")
+    return df_pref
+
+
+def build_subject_dict(sub, working_path, modality, drop_cols):
     import shutil
     import os
     import glob
     from pathlib import Path
-
-    def load_pd_dfs_auc(atlas_name, prefix, auc_file):
-        import pandas as pd
-
-        pd.set_option("display.float_format", lambda x: f"{x:.8f}")
-
-        df = pd.read_csv(
-            auc_file, chunksize=100000, compression="gzip", encoding="utf-8"
-        ).read()
-        print(f"{'Atlas: '}{atlas_name}")
-        prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
-        df_pref = df.add_prefix(prefix)
-        return df_pref
-
+    from colorama import Fore, Style
+    from pynets.cli.pynets_collect import load_pd_dfs_auc, summarize_missingness
     subject_dict = {}
-    print(sub)
+    #print(sub)
     subject_dict[sub] = {}
     sessions = sorted(
         [i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith(
@@ -206,15 +299,15 @@ def build_subject_dict(sub, working_path, modality):
             [
                 os.path.basename(str(Path(i).parent.parent))
                 for i in glob.glob(f"{working_path}{'/'}{sub}"
-                                   f"/*/*/*/topology/*")
+                                   f"/*/*/*/topology/*", recursive=True)
             ]
         )
     )
-    print(atlases)
+    #print(atlases)
 
     files_ = []
     for ses in sessions:
-        print(ses)
+        #print(ses)
         subject_dict[sub][ses] = []
         for atlas in atlases:
             #atlas_name = "_".join(atlas.split("_")[1:])
@@ -228,15 +321,16 @@ def build_subject_dict(sub, working_path, modality):
                     .split("model-")[1]
                     .split(modality)[0]
                 )
-                try:
-                    subject_dict[sub][ses].append(
-                        load_pd_dfs_auc(atlas, prefix, auc_file)
-                    )
-                except BaseException:
-                    print("Missing auc file...")
+                if os.path.isfile(auc_file):
+                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file, modality, drop_cols)
+                    if df_sub.empty:
+                        continue
+                    else:
+                        subject_dict[sub][ses].append(df_sub)
+                else:
+                    print(f"{Fore.RED}Missing auc file for {sub} {ses}...{Style.RESET_ALL}")
                     continue
         list_ = subject_dict[sub][ses]
-        print(list_)
         if len(list_) > 0:
             df_base = list_[0][[c for c in list_[
                 0].columns if c.endswith("auc")]]
@@ -248,14 +342,15 @@ def build_subject_dict(sub, working_path, modality):
                     right_index=True,
                     left_index=True,
                 )
-
+            #df_base = pd.concat(list_, axis=1)
+            summarize_missingness(df_base)
             if os.path.isdir(
                     f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
                 out_path = (
                     f"{working_path}/{sub}/{ses}/{modality}/all_combinations"
                     f"_auc.csv"
                 )
-                df_base.to_csv(out_path)
+                df_base.to_csv(out_path, index=False)
                 out_path_new = f"{str(Path(working_path))}/{modality}_" \
                                f"group_topology_auc/topology_auc_sub-{sub}_" \
                                f"ses-{ses}.csv"
@@ -264,13 +359,18 @@ def build_subject_dict(sub, working_path, modality):
 
             del df_base
         else:
+            print(f"{Fore.RED}Missing data for {sub} {ses}...{Style.RESET_ALL}")
             continue
         del list_
 
     return files_
 
 
-def collect_all(working_path, modality):
+def collect_all(working_path, modality, drop_cols):
+    from pathlib import Path
+    import shutil
+    import os
+
     import_list = [
         "import warnings",
         'warnings.filterwarnings("ignore")',
@@ -282,20 +382,27 @@ def collect_all(working_path, modality):
         "import pandas as pd",
         "import shutil",
         "from pathlib import Path",
+        "from colorama import Fore, Style"
     ]
+
+    shutil.rmtree(f"{str(Path(working_path))}/{modality}_group_topology_auc",
+                  ignore_errors=True)
+
+    os.makedirs(f"{str(Path(working_path))}/{modality}_group_topology_auc")
 
     wf = pe.Workflow(name="load_pd_dfs")
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["working_path", "modality"]),
+        niu.IdentityInterface(fields=["working_path", "modality", "drop_cols"]),
         name="inputnode"
     )
     inputnode.inputs.working_path = working_path
     inputnode.inputs.modality = modality
+    inputnode.inputs.drop_cols = drop_cols
 
     build_subject_dict_node = pe.Node(
         niu.Function(
-            input_names=["sub", "working_path", "modality"],
+            input_names=["sub", "working_path", "modality", "drop_cols"],
             output_names=["files_"],
             function=build_subject_dict,
         ),
@@ -334,7 +441,7 @@ def collect_all(working_path, modality):
     wf.connect(
         [
             (inputnode, build_subject_dict_node,
-             [("working_path", "working_path"), ('modality', 'modality')]),
+             [("working_path", "working_path"), ('modality', 'modality'), ('drop_cols', 'drop_cols')]),
             (build_subject_dict_node, df_join_node, [("files_", "files_")]),
             (df_join_node, load_pd_dfs_map, [("files_", "file_")]),
             (load_pd_dfs_map, outputnode, [("df", "dfs")]),
@@ -345,7 +452,6 @@ def collect_all(working_path, modality):
 
 
 def build_collect_workflow(args, retval):
-    import re
     import os
     import glob
     import warnings
@@ -382,6 +488,7 @@ def build_collect_workflow(args, retval):
     working_path = args.basedir
     work_dir = args.work
     modality = args.modality
+    drop_cols = args.drop_cols
     if isinstance(modality, list):
         modality = modality[0]
 
@@ -389,7 +496,7 @@ def build_collect_workflow(args, retval):
         f"{str(Path(working_path))}/{modality}_group_topology_auc",
         exist_ok=True)
 
-    wf = collect_all(working_path, modality)
+    wf = collect_all(working_path, modality, drop_cols)
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -487,17 +594,20 @@ def build_collect_workflow(args, retval):
 
     files_ = [i for i in all_files if '_clean.csv' in i]
 
-    print("Aggregating dataframes...")
     dfs = []
     for file_ in files_:
-        df = pd.read_csv(file_, chunksize=100000).read()
-        try:
-            df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
-        except BaseException:
-            pass
+        df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+            nrows=1, skip_blank_lines=False,
+            warn_bad_lines=True, error_bad_lines=False,
+            memory_map=True).read()
+        if "Unnamed: 0" in df.columns:
+            df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
+        df.dropna(axis='columns', how='all', inplace=True)
         dfs.append(df)
         del df
-    df_concat(dfs, working_path, modality)
+
+    print("Aggregating dataframes...")
+    frame = df_concat(dfs, working_path, modality)
 
     # Cleanup
     for j in all_files:
@@ -530,9 +640,14 @@ def main():
     # args_dict_all = {}
     # args_dict_all['plug'] = 'MultiProc'
     # args_dict_all['v'] = False
-    # args_dict_all['pm'] = '40,40'
-    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs'
-    # args_dict_all['work'] = '/scratch/04171/dpisner/pynets_scratch'
+    # args_dict_all['pm'] = '24,57'
+    # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    # args_dict_all['work'] = '/tmp'
+    # args_dict_all['modality'] = 'func'
+    # args_dict_all['drop_cols'] = [
+    #                  'diversity_coefficient', 'participation_coefficient',
+    #                  "_minlength-20", "_minlength-30", "_minlength-0",
+    #                  "variance", "sum"]
     # from types import SimpleNamespace
     # args = SimpleNamespace(**args_dict_all)
 
