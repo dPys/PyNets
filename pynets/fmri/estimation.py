@@ -229,6 +229,7 @@ def get_conn_matrix(
       for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
 
     """
+    from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
     # from sklearn.preprocessing import StandardScaler
     # from sklearn.feature_selection import VarianceThreshold
