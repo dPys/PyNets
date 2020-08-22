@@ -15,11 +15,11 @@ warnings.filterwarnings("ignore")
 def get_optimal_cov_estimator(time_series):
     from sklearn.covariance import GraphicalLassoCV
 
-    estimator_shrunk = None
     estimator = GraphicalLassoCV(cv=5, assume_centered=True)
     print("\nSearching for best Lasso estimator...\n")
     try:
         estimator.fit(time_series)
+        return estimator
     except BaseException:
         ix = 0
         print("\nModel did not converge on first attempt. "
@@ -32,6 +32,7 @@ def get_optimal_cov_estimator(time_series):
                                              assume_centered=True)
                 try:
                     estimator.fit(time_series)
+                    return estimator
                 except BaseException:
                     ix += 1
                     continue
@@ -42,7 +43,6 @@ def get_optimal_cov_estimator(time_series):
             "Unstable Lasso estimation. Applying shrinkage to empirical "
             "covariance..."
         )
-        estimator = None
         from sklearn.covariance import (
             GraphicalLasso,
             empirical_covariance,
@@ -60,15 +60,13 @@ def get_optimal_cov_estimator(time_series):
                                                       assume_centered=True)
                     try:
                         estimator_shrunk.fit(shrunk_cov)
+                        return estimator_shrunk
                     except BaseException:
                         continue
         except BaseException:
-            return estimator
-
-    if estimator is None and estimator_shrunk is not None:
-        estimator = estimator_shrunk
-
-    return estimator
+            return None
+    else:
+        return estimator
 
 
 def get_conn_matrix(
@@ -278,15 +276,15 @@ def get_conn_matrix(
                 " valid estimator using the -mod flag.")
 
         # Try with the best-fitting Lasso estimator
-        if estimator is not None:
+        if estimator:
             conn_measure = ConnectivityMeasure(cov_estimator=estimator,
                                                kind=kind)
             try:
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
             except (np.linalg.linalg.LinAlgError, FloatingPointError):
-                fallback_covariance(time_series)
+                conn_matrix = fallback_covariance(time_series)
         else:
-            fallback_covariance(time_series)
+            conn_matrix = fallback_covariance(time_series)
     else:
         if conn_model == "QuicGraphicalLasso":
             try:
