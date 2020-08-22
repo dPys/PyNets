@@ -756,7 +756,7 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         import psutil
-        nthreads = psutil.cpu_count(logical=False)
+        nthreads = psutil.cpu_count()
         procmem = [int(nthreads),
                    int(list(psutil.virtual_memory())[4]/1000000000) - 2]
     else:

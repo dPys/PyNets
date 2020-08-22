@@ -36,6 +36,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
             and hyperparam != "hpass"
             and hyperparam != "track_type"
             and hyperparam != "directget"
+            and hyperparam != "tol"
             and hyperparam != "minlength"
             and hyperparam != "samples"
             and hyperparam != "nodetype"
@@ -102,6 +103,16 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                     file_renamed.split("minlength-")[1].split("_")[0]
                 )
             hyperparams.append("minlength")
+        if "tol-" in file_renamed:
+            if "tol" not in hyperparam_dict.keys():
+                hyperparam_dict["tol"] = [
+                    file_renamed.split("tol-")[1].split("_")[0]
+                ]
+            else:
+                hyperparam_dict["tol"].append(
+                    file_renamed.split("tol-")[1].split("_")[0]
+                )
+            hyperparams.append("tol")
 
     for key in hyperparam_dict:
         hyperparam_dict[key] = list(set(hyperparam_dict[key]))

@@ -12,6 +12,63 @@ import indexed_gzip
 warnings.filterwarnings("ignore")
 
 
+def get_optimal_cov_estimator(time_series):
+    from sklearn.covariance import GraphicalLassoCV
+
+    estimator = GraphicalLassoCV(cv=5, assume_centered=True)
+    print("\nSearching for best Lasso estimator...\n")
+    try:
+        estimator.fit(time_series)
+        return estimator
+    except BaseException:
+        ix = 0
+        print("\nModel did not converge on first attempt. "
+              "Varying tolerance...\n")
+        while not hasattr(estimator, 'covariance_') and \
+            not hasattr(estimator, 'precision_') and ix < 3:
+            for tol in [0.1, 0.01, 0.001, 0.0001]:
+                print(f"Auto-tuning Tolerance={tol}")
+                estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol,
+                                             assume_centered=True)
+                try:
+                    estimator.fit(time_series)
+                    return estimator
+                except BaseException:
+                    ix += 1
+                    continue
+
+    if not hasattr(estimator, 'covariance_') and not hasattr(estimator,
+                                                             'precision_'):
+        print(
+            "Unstable Lasso estimation. Applying shrinkage to empirical "
+            "covariance..."
+        )
+        from sklearn.covariance import (
+            GraphicalLasso,
+            empirical_covariance,
+            shrunk_covariance,
+        )
+        try:
+            emp_cov = empirical_covariance(time_series, assume_centered=True)
+            for i in np.arange(0.8, 0.99, 0.01):
+                print(f"Shrinkage={i}:")
+                shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
+                alphaRange = 10.0 ** np.arange(-8, 0)
+                for alpha in alphaRange:
+                    print(f"Auto-tuning alpha={alpha}...")
+                    estimator_shrunk = GraphicalLasso(alpha,
+                                                      assume_centered=True)
+                    try:
+                        estimator_shrunk.fit(shrunk_cov)
+                        return estimator_shrunk
+                    except BaseException:
+                        continue
+        except BaseException:
+            return None
+    else:
+        return estimator
+
+
 def get_conn_matrix(
     time_series,
     conn_model,
@@ -155,187 +212,143 @@ def get_conn_matrix(
       for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
 
     """
+    from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
-    from sklearn.covariance import GraphicalLassoCV
-    from sklearn.preprocessing import StandardScaler
 
-    scaler = StandardScaler()
-    time_series = scaler.fit_transform(time_series)
+    nilearn_kinds = ["cov", "covariance", "covar", "corr", "cor",
+                     "correlation", "partcorr", "parcorr",
+                     "partialcorrelation", "cov", "covariance", "covar",
+                     "sps", "sparse", "precision"]
 
     conn_matrix = None
-    if conn_model == "corr" or conn_model == "cor" or \
-        conn_model == "correlation":
-        # credit: nilearn
-        print("\nComputing correlation matrix...\n")
-        conn_measure = ConnectivityMeasure(kind="correlation")
-        conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif (
-        conn_model == "partcorr"
-        or conn_model == "parcorr"
-        or conn_model == "partialcorrelation"
-    ):
-        # credit: nilearn
-        print("\nComputing partial correlation matrix...\n")
-        conn_measure = ConnectivityMeasure(kind="partial correlation")
-        conn_matrix = conn_measure.fit_transform([time_series])[0]
-    elif (
-        conn_model == "cov"
-        or conn_model == "covariance"
-        or conn_model == "covar"
-        or conn_model == "sps"
-        or conn_model == "sparse"
-        or conn_model == "precision"
-    ):
-        # Fit estimator to matrix to get sparse matrix
-        estimator_shrunk = None
-        estimator = GraphicalLassoCV(cv=5)
-        print("\nComputing covariance...\n")
-        try:
-            estimator.fit(time_series)
-        except BaseException:
-            ix = 0
-            print("\nModel did not converge on first attempt. "
-                  "Varying tolerance...\n")
-            while not hasattr(estimator, 'covariance_') and \
-                not hasattr(estimator, 'precision_') and ix < 2:
-                for tol in [0.001, 0.01, 0.1]:
-                    print(tol)
-                    estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol)
-                    try:
-                        estimator.fit(time_series)
-                    except BaseException:
-                        ix += 1
-                        continue
+    estimator = get_optimal_cov_estimator(time_series)
 
-        if not hasattr(estimator, 'covariance_') and not hasattr(estimator,
-                                                                 'precision_'):
-            print(
-                "Unstable Lasso estimation. Applying shrinkage..."
-            )
+    def fallback_covariance(time_series):
+        from sklearn.ensemble import IsolationForest
+        from sklearn import covariance
+
+        # Remove gross outliers
+        model = IsolationForest(contamination=0.02)
+        model.fit(time_series)
+        outlier_mask = model.predict(time_series)
+        outlier_mask[outlier_mask == -1] = 0
+        time_series = time_series[outlier_mask.astype('bool')]
+
+        # Fall back to LedoitWolf
+        print('Matrix estimation failed with Lasso and shrinkage due to '
+              'ill conditions. Removing potential anomalies from the '
+              'time-series using IsolationForest...')
+        try:
+            print("Trying Ledoit-Wolf Estimator...")
+            conn_measure = ConnectivityMeasure(
+                cov_estimator=covariance.LedoitWolf(store_precision=True,
+                                                    assume_centered=True),
+                kind=kind)
+            conn_matrix = conn_measure.fit_transform([time_series])[0]
+        except (np.linalg.linalg.LinAlgError, FloatingPointError):
+            print("Trying Oracle Approximating Shrinkage Estimator...")
+            conn_measure = ConnectivityMeasure(
+                cov_estimator=covariance.OAS(assume_centered=True),
+                kind=kind)
             try:
-                estimator = None
-                from sklearn.covariance import (
-                    GraphicalLasso,
-                    empirical_covariance,
-                    shrunk_covariance,
-                )
+                conn_matrix = conn_measure.fit_transform([time_series])[0]
+            except (np.linalg.linalg.LinAlgError, FloatingPointError):
+                raise ValueError('All covariance estimators failed to '
+                                 'converge...')
+        return conn_matrix
 
-                emp_cov = empirical_covariance(time_series)
-                # Iterate across different levels of alpha
-                for i in np.arange(0.8, 0.99, 0.01):
-                    shrunk_cov = shrunk_covariance(emp_cov, shrinkage=i)
-                    alphaRange = 10.0 ** np.arange(-8, 0)
-                    for alpha in alphaRange:
-                        try:
-                            estimator_shrunk = GraphicalLasso(alpha)
-                            estimator_shrunk.fit(shrunk_cov)
-                            print(
-                                f"Retrying covariance matrix estimate with"
-                                f" alpha={alpha}"
-                            )
-                            if estimator_shrunk is None:
-                                pass
-                            else:
-                                break
-                        except BaseException:
-                            print(
-                                f"Covariance estimation failed with shrinkage"
-                                f" at alpha={alpha}"
-                            )
-                            continue
-            except ValueError:
-                estimator = None
-                print(
-                    "Covariance estimation failed. Check time-series data "
-                    "for errors."
-                )
+    if conn_model in nilearn_kinds:
+        if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
+            print("\nComputing correlation matrix...\n")
+            kind="correlation"
+        elif conn_model == "partcorr" or conn_model == "parcorr" or conn_model == "partialcorrelation":
+            print("\nComputing partial correlation matrix...\n")
+            kind="partial correlation"
+        elif conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
+            print("\nComputing precision matrix...\n")
+            kind="precision"
+        elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
+            print("\nComputing covariance matrix...\n")
+            kind = "covariance"
+        else:
+            raise ValueError(
+                "\nERROR! No connectivity model specified at runtime. Select a"
+                " valid estimator using the -mod flag.")
 
-        if estimator is None and estimator_shrunk is None:
-            raise RuntimeError("\nERROR: Covariance estimation failed.")
-        if conn_model == "sps" or conn_model == "sparse" or \
-            conn_model == "precision":
-            if estimator_shrunk is None:
-                print("\nFetching precision matrix from covariance "
-                      "estimator...\n")
-                conn_matrix = estimator.precision_
-            else:
-                print(
-                    "\nFetching shrunk precision matrix from covariance "
-                    "estimator...\n"
-                )
-                conn_matrix = estimator_shrunk.precision_
-        elif conn_model == "cov" or conn_model == "covariance" or \
-            conn_model == "covar":
-            if estimator_shrunk is None:
-                print("\nFetching covariance matrix from covariance"
-                      " estimator...\n")
-                conn_matrix = estimator.covariance_
-            else:
-                conn_matrix = estimator_shrunk.covariance_
-    elif conn_model == "QuicGraphicalLasso":
-
-        try:
-            from inverse_covariance import QuicGraphicalLasso
-        except ImportError:
-            print("Cannot run QuicGraphLasso. Skggm not installed!")
-
-        # Compute the sparse inverse covariance via QuicGraphLasso
-        # credit: skggm
-        model = QuicGraphicalLasso(
-            init_method="cov", lam=0.5, mode="default", verbose=1
-        )
-        print("\nCalculating QuicGraphLasso precision matrix using skggm...\n")
-        model.fit(time_series)
-        conn_matrix = model.precision_
-    elif conn_model == "QuicGraphicalLassoCV":
-        try:
-            from inverse_covariance import QuicGraphicalLassoCV
-        except ImportError:
-            print("Cannot run QuicGraphLassoCV. Skggm not installed!")
-
-        # Compute the sparse inverse covariance via QuicGraphLassoCV
-        # credit: skggm
-        model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
-        print("\nCalculating QuicGraphLassoCV precision matrix using"
-              " skggm...\n")
-        model.fit(time_series)
-        conn_matrix = model.precision_
-    elif conn_model == "QuicGraphicalLassoEBIC":
-        try:
-            from inverse_covariance import QuicGraphicalLassoEBIC
-        except ImportError:
-            print("Cannot run QuicGraphLassoEBIC. Skggm not installed!")
-
-        # Compute the sparse inverse covariance via QuicGraphLassoEBIC
-        # credit: skggm
-        model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
-        print("\nCalculating QuicGraphLassoEBIC precision matrix using"
-              " skggm...\n")
-        model.fit(time_series)
-        conn_matrix = model.precision_
-    elif conn_model == "AdaptiveQuicGraphicalLasso":
-        try:
-            from inverse_covariance import (
-                AdaptiveQuicGraphicalLasso,
-                QuicGraphicalLassoEBIC,
-            )
-        except ImportError:
-            print("Cannot run AdaptiveGraphLasso. Skggm not installed!")
-
-        # Compute the sparse inverse covariance via
-        # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
-        # credit: skggm
-        model = AdaptiveQuicGraphicalLasso(
-            estimator=QuicGraphicalLassoEBIC(
-                init_method="cov",), method="binary", )
-        print("\nCalculating AdaptiveQuicGraphLasso precision matrix using"
-              " skggm...\n")
-        model.fit(time_series)
-        conn_matrix = model.estimator_.precision_
+        # Try with the best-fitting Lasso estimator
+        if estimator:
+            conn_measure = ConnectivityMeasure(cov_estimator=estimator,
+                                               kind=kind)
+            try:
+                conn_matrix = conn_measure.fit_transform([time_series])[0]
+            except (np.linalg.linalg.LinAlgError, FloatingPointError):
+                conn_matrix = fallback_covariance(time_series)
+        else:
+            conn_matrix = fallback_covariance(time_series)
     else:
-        raise ValueError(
-            "\nERROR! No connectivity model specified at runtime. Select a"
-            " valid estimator using the -mod flag.")
+        if conn_model == "QuicGraphicalLasso":
+            try:
+                from inverse_covariance import QuicGraphicalLasso
+            except ImportError:
+                print("Cannot run QuicGraphLasso. Skggm not installed!")
+
+            # Compute the sparse inverse covariance via QuicGraphLasso
+            # credit: skggm
+            model = QuicGraphicalLasso(
+                init_method="cov", lam=0.5, mode="default", verbose=1
+            )
+            print("\nCalculating QuicGraphLasso precision matrix using skggm...\n")
+            model.fit(time_series)
+            conn_matrix = model.precision_
+        elif conn_model == "QuicGraphicalLassoCV":
+            try:
+                from inverse_covariance import QuicGraphicalLassoCV
+            except ImportError:
+                print("Cannot run QuicGraphLassoCV. Skggm not installed!")
+
+            # Compute the sparse inverse covariance via QuicGraphLassoCV
+            # credit: skggm
+            model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
+            print("\nCalculating QuicGraphLassoCV precision matrix using"
+                  " skggm...\n")
+            model.fit(time_series)
+            conn_matrix = model.precision_
+        elif conn_model == "QuicGraphicalLassoEBIC":
+            try:
+                from inverse_covariance import QuicGraphicalLassoEBIC
+            except ImportError:
+                print("Cannot run QuicGraphLassoEBIC. Skggm not installed!")
+
+            # Compute the sparse inverse covariance via QuicGraphLassoEBIC
+            # credit: skggm
+            model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
+            print("\nCalculating QuicGraphLassoEBIC precision matrix using"
+                  " skggm...\n")
+            model.fit(time_series)
+            conn_matrix = model.precision_
+        elif conn_model == "AdaptiveQuicGraphicalLasso":
+            try:
+                from inverse_covariance import (
+                    AdaptiveQuicGraphicalLasso,
+                    QuicGraphicalLassoEBIC,
+                )
+            except ImportError:
+                print("Cannot run AdaptiveGraphLasso. Skggm not installed!")
+
+            # Compute the sparse inverse covariance via
+            # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
+            # credit: skggm
+            model = AdaptiveQuicGraphicalLasso(
+                estimator=QuicGraphicalLassoEBIC(
+                    init_method="cov",), method="binary", )
+            print("\nCalculating AdaptiveQuicGraphLasso precision matrix using"
+                  " skggm...\n")
+            model.fit(time_series)
+            conn_matrix = model.estimator_.precision_
+        else:
+            raise ValueError(
+                "\nERROR! No connectivity model specified at runtime. Select a"
+                " valid estimator using the -mod flag.")
 
     # Enforce symmetry
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))

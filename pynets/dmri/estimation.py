@@ -46,40 +46,38 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    data = nib.load(dwi_file).get_fdata()
+    data = nib.load(dwi_file, mmap=False).get_fdata()
 
     print("Generating tensor FA image to use for registrations...")
-    nodif_B0_img = nib.load(B0_mask)
-    nodif_B0_mask_data = np.nan_to_num(np.asarray(
-        nodif_B0_img.dataobj)).astype("bool")
+    nodif_B0_img = nib.load(B0_mask, mmap=False)
+    nodif_B0_mask_data = nodif_B0_img.get_fdata().astype("bool")
     model = TensorModel(gtab)
     mod = model.fit(data, nodif_B0_mask_data)
     FA = fractional_anisotropy(mod.evals)
-    MD = mean_diffusivity(mod.evals)
-    FA_MD = np.logical_or(
-        FA >= 0.2, (np.logical_and(
-            FA >= 0.08, MD >= 0.0011)))
-    FA[np.isnan(FA)] = 0
-    FA_MD[np.isnan(FA_MD)] = 0
+    # MD = mean_diffusivity(mod.evals)
+    # FA_MD = np.logical_or(
+    #     FA >= 0.2, (np.logical_and(
+    #         FA >= 0.08, MD >= 0.0011)))
+    # FA_MD[np.isnan(FA_MD)] = 0
+    FA = np.nan_to_num(np.asarray(FA.astype('float32')))
 
     fa_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa.nii.gz'}"
     nib.save(
         nib.Nifti1Image(
-            FA.astype(
-                np.float32),
+            FA,
             nodif_B0_img.affine),
         fa_path)
 
-    fa_md_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa_md.nii.gz'}"
-    nib.save(
-        nib.Nifti1Image(
-            FA_MD.astype(
-                np.float32),
-            nodif_B0_img.affine),
-        fa_md_path)
+    # md_path = f"{os.path.dirname(B0_mask)}{'/tensor_md.nii.gz'}"
+    # nib.save(
+    #     nib.Nifti1Image(
+    #         MD.astype(
+    #             np.float32),
+    #         nodif_B0_img.affine),
+    #     md_path)
 
     nodif_B0_img.uncache()
-    del FA, FA_MD
+    del FA
 
     return fa_path, B0_mask, gtab_file, dwi_file
 

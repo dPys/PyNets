@@ -179,9 +179,10 @@ class FetchNodesLabels(SimpleInterface):
                       "installed?")
             try:
                 if self.inputs.clustering is False:
-                    [uatlas,
-                     _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                        uatlas)
+                    [uatlas, _] = \
+                        nodemaker.enforce_hem_distinct_consecutive_labels(
+                            uatlas)
+
                 # Fetch user-specified atlas coords
                 [coords, _, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(uatlas)
@@ -687,7 +688,7 @@ class IndividualClustering(SimpleInterface):
                 counter = 0
                 boot_parcellations = []
                 while float(counter) < float(c_boot):
-                    with Parallel(n_jobs=nthreads, max_nbytes='1000M',
+                    with Parallel(n_jobs=nthreads, max_nbytes='8000M',
                                   backend='loky', mmap_mode='r+',
                                   temp_folder=cache_dir,
                                   verbose=10) as parallel:
@@ -2765,7 +2766,7 @@ class Tracking(SimpleInterface):
                 )
                 else "parc"
             ),
-            ".npy",
+            ".hdf5",
         )
 
         gtab_file_tmp_path = fname_presuffix(
@@ -2781,13 +2782,18 @@ class Tracking(SimpleInterface):
 
         # Only re-run the reconstruction if we have to
         if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
+            import h5py
             model, _ = reconstruction(
                 self.inputs.conn_model,
                 gtab,
                 dwi_data,
                 B0_mask_tmp_path,
             )
-            np.save(recon_path, model)
+            with h5py.File(recon_path, 'w') as hf:
+                hf.create_dataset("reconstruction",
+                                  data=model.astype('float32'))
+            hf.close()
+
             copyfile(
                 recon_path,
                 f"{namer_dir}/{op.basename(recon_path)}",

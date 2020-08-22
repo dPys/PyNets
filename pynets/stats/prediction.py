@@ -28,6 +28,7 @@ from collections import OrderedDict
 from operator import itemgetter
 from pynets.core.utils import flatten
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import KNNImputer
 
 warnings.simplefilter("ignore")
 
@@ -82,28 +83,42 @@ def get_ensembles_omni(modality, alg, base_dir):
     return ensembles
 
 
-def get_ensembles_top(modality, thr_type, base_dir):
-    df_top = pd.read_csv(
-        f"{base_dir}/all_subs_neat_{modality}.csv")
-    df_top = df_top.dropna(subset=["id"])
-    df_top['id'] = df_top['id'].str.replace('topology_auc_sub-', '')
-    df_top = df_top.rename(
-        columns=lambda x: re.sub("partcorr", "model-partcorr", x))
-    df_top = df_top.rename(
-        columns=lambda x: re.sub("_corr", "_model-corr", x))
-    df_top = df_top.rename(
-        columns=lambda x: re.sub("_cov", "_model-cov", x))
-    df_top['participant_id'] = df_top['id'].str.replace("_ses-ses-",
-                                                        "_ses-")
-    df_top['participant_id'] = df_top['participant_id'].str.replace(
-        ".csv", "")
-    [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
-    ensembles = [i for i in ensembles if
-                 i != 'id' and i != 'participant_id']
+def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
+    topology_file = f"{base_dir}/all_subs_neat_{modality}.csv"
+    if os.path.isfile(topology_file):
+        df_top = pd.read_csv(topology_file)
+        df_top = df_top.dropna(subset=["id"])
+        df_top['id'] = df_top['id'].str.replace('topology_auc_sub-', '')
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("partcorr", "model-partcorr", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_corr", "_model-corr", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_cov", "_model-cov", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_sfm", "_model-sfm", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_csa", "_model-csa", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_tensor", "_model-tensor", x))
+        df_top = df_top.rename(
+            columns=lambda x: re.sub("_csd", "_model-csd", x))
+        df_top['participant_id'] = df_top['id'].str.replace("_ses-ses-",
+                                                            "_ses-")
+        df_top['participant_id'] = df_top['participant_id'].str.replace(
+            ".csv", "")
+        df_top = df_top.dropna(axis='columns',
+                               thresh=drop_thr * len(df_top)
+                               ).drop(columns=['id'])
+        [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
+        ensembles = [i for i in ensembles if i != 'participant_id']
+    else:
+        ensembles = None
+        df_top = None
     return ensembles, df_top
 
 
-def make_feature_space_dict(df, modalities, subject_dict, ses, base_dir):
+def make_feature_space_dict(df, modalities, subject_dict, ses, base_dir, mets=None):
     ml_dfs = {}
     for modality in modalities:
         print(modality)
@@ -120,7 +135,7 @@ def make_feature_space_dict(df, modalities, subject_dict, ses, base_dir):
                     continue
 
                 # save feature space to dict
-                ml_dfs[modality][alg][grid_param] = create_feature_space(df, grid_param, subject_dict, ses, modality, alg)
+                ml_dfs[modality][alg][grid_param] = create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets)
 
     dict_file_path = f"{base_dir}/pynets_ml_dict.pkl"
     with open(dict_file_path, 'wb') as f:
@@ -466,7 +481,7 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
 
     # Instantiate grid of model/feature-selection params
     alphas = [0.00000001, 0.0000001, 0.000001, 0.00001]
-    n_comps = [2, 3, 5, 10]
+    n_comps = [3, 4, 5, 6, 7, 8, 9]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -499,8 +514,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
             pipe,
             param_grid=param_grid,
             scoring=scoring,
-            refit=RazorCV.standard_error(param, True, refit_score),
-            #refit=refit_score,
+            # refit=RazorCV.standard_error(param, True, refit_score),
+            refit=refit_score,
             n_jobs=1,
             cv=inner_cv,
             iid=False
@@ -600,30 +615,46 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, a
     return df_lps
 
 
-def create_feature_space(df, grid_param, subject_dict, ses, modality, alg):
+def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=None):
     df_tmps = []
     rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
 
+    grid_param = tuple(x for x in grid_param if x not in rsns)
+
     for ID in df['participant_id']:
         if ID not in subject_dict.keys():
+            print(f"ID: {ID} not found...")
             continue
 
-        if ses not in subject_dict[ID].keys():
+        if str(ses) not in subject_dict[ID].keys():
+            print(f"Session: {ses} not found for ID {ID}...")
             continue
 
-        if modality not in subject_dict[ID][ses].keys():
+        if modality not in subject_dict[ID][str(ses)].keys():
+            print(f"Modality: {modality} not found for ID {ID}, ses-{ses}...")
             continue
 
         rsn_frames = []
         for rsn in rsns:
-            df_lps = flatten_latent_positions(rsn, subject_dict, ID, ses,
-                                              modality, grid_param, alg)
+            if alg == 'OMNI' or alg == 'ASE':
+                df_lps = flatten_latent_positions(rsn, subject_dict, ID, ses,
+                                                  modality, grid_param, alg)
+            else:
+                if ((rsn,) + grid_param) in subject_dict[ID][str(ses)][modality].keys():
+                    if alg in subject_dict[ID][str(ses)][modality][((rsn,) + grid_param)].keys():
+                        df_lps = pd.DataFrame(subject_dict[ID][str(ses)][modality][((rsn,) + grid_param)][alg].T, columns=mets)
+                    else:
+                        df_lps = None
+                else:
+                    df_lps = None
             rsn_frames.append(df_lps)
 
         rsn_frames = [i for i in rsn_frames if i is not None]
         if len(rsn_frames) == 3:
             rsn_big_df = pd.concat(rsn_frames, axis=1)
-            df_tmp = df[df["participant_id"] == ID].reset_index().drop(columns='index').join(rsn_big_df, how='right')
+            df_tmp = df[df["participant_id"] ==
+                        ID].reset_index().drop(columns='index').join(
+                rsn_big_df, how='right')
             df_tmps.append(df_tmp)
             del df_tmp
 
@@ -643,20 +674,38 @@ def graph_theory_prep(df, thr_type):
             [i.split("_thrtype-" + thr_type + "_")[0] for i in
              list(set(df.columns))]
         )
-        if j != "id"
+        if j != "participant_id"
     ]
-    for col in [i for i in df.columns if i != "id" and i != "participant_id"]:
-        df[col] = (df[col] - df[col].min()) / (df[col].max() - df[col].min())
-        df[col] = df[col][df[col] > 0]
-        df[col] = df[col][df[col] < 1]
+
+    id_col = df['participant_id']
+    scaler = StandardScaler()
+    df = pd.DataFrame(scaler.fit_transform(df[[i for
+                                               i in df.columns if
+                                               i != "participant_id"]]),
+                      columns=[i for i in df.columns if i != "participant_id"])
+
+    imp = KNNImputer(n_neighbors=3)
+    df = pd.DataFrame(imp.fit_transform(
+        df[[i for i in df.columns if i != "participant_id"]]),
+                      columns=[i for i in df.columns if i != "participant_id"])
+
+    df = pd.concat([id_col, df], axis=1)
+
     return df, cols
 
 
 def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
                            pca_reduce=True, remove_multi=True, std_dev=3):
 
+    # Instantiate a working dictionary of performance across bootstraps
+    grand_mean_best_estimator = {}
+    grand_mean_best_Rsquared = {}
+    grand_mean_best_MSE = {}
+
     # Remove columns with > 10% missinng values
     X = X.dropna(thresh=len(X) * .80, axis=1)
+    if X.empty:
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
 
     # Apply a simple imputer (note that this assumes extreme cases of
     # missingness have already been addressed)
@@ -667,16 +716,22 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     sel = VarianceThreshold(threshold=(var_thr * (1 - var_thr)))
     sel.fit(X)
     X = X[X.columns[sel.get_support(indices=True)]]
+    if X.empty:
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
 
     # Remove multicollinear columns
     if remove_multi is True:
         transformer = ReduceVIF()
         X = transformer.fit_transform(X, y)
+        if X.empty:
+            return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
 
     # Remove outliers
     outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
     X = X[outlier_mask]
     y = y[outlier_mask]
+    if X.empty:
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
 
     # Standardize X
     scaler = StandardScaler()
@@ -686,11 +741,6 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     # scaler = StandardScaler()
     # y = pd.DataFrame(scaler.fit_transform(y.reshape(-1,1)))
 
-    # Instantiate a working dictionary of performance across bootstraps
-    grand_mean_best_estimator = {}
-    grand_mean_best_Rsquared = {}
-    grand_mean_best_MSE = {}
-
     # Bootstrap train-test split
     # Repeated test-train splits "simulates" the variability of incoming data,
     # particularly when training on smaller datasets
@@ -698,8 +748,11 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     best_positions_list = []
     for boot in range(0, n_boots):
         # Instantiate a dictionary of regressors
-        regressors = {'l1': linear_model.Lasso(random_state=boot, fit_intercept=True, warm_start=True),
-                      'l2': linear_model.Ridge(random_state=boot, fit_intercept=True)}
+        regressors = {'l1': linear_model.Lasso(random_state=boot,
+                                               fit_intercept=True,
+                                               warm_start=True),
+                      'l2': linear_model.Ridge(random_state=boot,
+                                               fit_intercept=True)}
 
         # Instantiate an outer-fold
         outer_cv = KFold(n_splits=k_folds, shuffle=True, random_state=boot + 1)
@@ -772,12 +825,14 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
 
     del X, y, scaler
 
-    return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, mega_feat_imp_dict
+    return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+           grand_mean_best_MSE, mega_feat_imp_dict
 
 
 def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                       template):
     from joblib import Parallel, delayed
+    rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
 
     subject_dict = {}
     modality_grids = {}
@@ -798,10 +853,12 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                 df_top = None
             elif alg == 'OMNI':
                 ensembles = get_ensembles_omni(modality, alg, base_dir)
-                df_top=None
+                df_top = None
             elif alg == 'topology':
                 ensembles, df_top = get_ensembles_top(modality, thr_type,
                                                       f"{base_dir}/pynets")
+                if ensembles is None or df_top is None:
+                    raise ValueError('Missing topology outputs.')
             else:
                 ensembles = None
                 raise ValueError('No ensembles specified.')
@@ -811,16 +868,20 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
             grid = build_grid(modality, hyperparam_dict,
                               sorted(list(set(hyperparams))), ensembles)[1]
 
-            # Since we are using all of the 3 RSN connectomes (pDMN, coSN, and fECN) in the feature-space,
-            # rather than varying them as hyperparameters (i.e. we assume they each add distinct variance
+            grid_mod = list(set([tuple(x for x in i if x not in rsns) for i in
+                             grid]))
+
+            # Since we are using all of the 3 RSN connectomes (pDMN, coSN, and
+            # fECN) in the feature-space,
+            # rather than varying them as hyperparameters (i.e. we assume they
+            # each add distinct variance
             # from one another) Create an abridged grid, where
             if modality == 'func':
-                modality_grids[modality] = list(
-                    set([i[:-2] + tuple(i[-1]) for i in grid]))
+                modality_grids[modality] = grid_mod
             else:
-                modality_grids[modality] = list(set([i[:-1] for i in grid]))
+                modality_grids[modality] = grid_mod
 
-            outs = Parallel(n_jobs=-1)(
+            outs = Parallel(n_jobs=-1, backend='loky', verbose=10)(
                 delayed(populate_subject_dict)(id, modality, grid,
                                                subject_dict, alg, base_dir,
                                                template, thr_type, mets=mets,
@@ -834,6 +895,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
 
 def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                           template, thr_type, mets=None, df_top=None):
+
 
     def filter_cols_from_targets(df_top, targets):
         base = r'^{}'
@@ -867,7 +929,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
             comb_tuple = (atlas, extract, hpass, model, res, smooth)
             subject_dict[ID][ses][modality][comb_tuple] = {}
             if alg == 'ASE' or alg == 'OMNI':
-                if smooth == 0:
+                if smooth == 0 or smooth is None:
                     embeddings = [i for i in
                                   glob.glob(f"{base_dir}/embeddings_all_"
                                             f"{modality}/sub-{ID}/rsn-{atlas}_res-{res}/"
@@ -916,7 +978,6 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
             elif alg == 'topology':
                 data = np.empty([len(mets), 1], dtype=np.float32)
                 data[:] = np.nan
-                i = 0
                 if smooth == 0:
                     targets = [f"extract-{extract}",
                                f"hpass-{hpass}Hz",
@@ -940,26 +1001,30 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                         print(f"Multiple columns detected: {col_met}")
                         col = col_met[0]
                     else:
-                        continue
-                    try:
-                        data[i] = df_top[df_top[
-                                             "participant_id"]
-                                         == "sub-" + ID + "_ses-"
-                                         + ses][
-                            col].values[0]
-                    except BaseException:
-                        print(
-                            f"\nFunctional topology not found for {id} and"
-                            f" recipe {comb_tuple}...")
                         data[i] = np.nan
-                    del col
+                        continue
+
+                    out = df_top[df_top[
+                                         "participant_id"]
+                                     == "sub-" + ID + "_ses-"
+                                     + ses][
+                        col].values
+                    if len(out) == 0:
+                        print(
+                            f"\nFunctional topology not found for {id}, {met}, "
+                            f"and recipe {comb_tuple}...")
+                        data[i] = np.nan
+                    else:
+                        data[i] = out
+
+                    del col, out
                     i += 1
                     subject_dict[ID][ses][modality][comb_tuple][alg] = data
 
     # Structural case
     elif modality == 'dwi':
         for comb in grid:
-            directget, minlength, model, res, atlas = comb
+            directget, minlength, model, res, atlas, tol = comb
             comb_tuple = (atlas, directget, minlength, model, res)
             subject_dict[ID][ses][modality][comb_tuple] = {}
             if alg == 'ASE' or alg == 'OMNI':
@@ -970,7 +1035,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                                        f"*minlength-{minlength}*.npy")
                 if len(embeddings) == 0:
                     print(
-                        f"\nNo functional embeddings found for {id} and"
+                        f"\nNo structural embeddings found for {id} and"
                         f" recipe {comb_tuple}...")
                     continue
                 elif len(embeddings) == 1:
@@ -1020,19 +1085,26 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                         print(f"\nMultiple columns detected: {col_met}")
                         col = col_met[0]
                     else:
-                        continue
-                    try:
-                        data[i] = df_top[df_top[
-                                             "participant_id"]
-                                         == "sub-" + ID + "_ses-"
-                                         + ses][
-                            col].values[0]
-                    except BaseException:
                         print(
-                            f"\nFunctional topology not found for {id} and"
-                            f" recipe {comb_tuple}...")
+                            f"\nStructural topology not found for {id}, {met}, "
+                            f"and recipe {comb_tuple}...")
                         data[i] = np.nan
-                    del col
+                        continue
+
+                    out = df_top[df_top[
+                                         "participant_id"]
+                                     == "sub-" + ID + "_ses-"
+                                     + ses][
+                        col].values
+                    if len(out) == 0:
+                        print(
+                            f"\nStructural topology not found for {id}, {met}, "
+                            f"and recipe {comb_tuple}...")
+                        data[i] = np.nan
+                    else:
+                        data[i] = out
+
+                    del col, out
                     i += 1
                     subject_dict[ID][ses][modality][comb_tuple][alg] = data
     return subject_dict
@@ -1063,6 +1135,7 @@ def make_x_y(input_dict, drop_cols,target_var , alg, grid_param, modality):
 
     if grid_param in ml_dfs[modality][alg].keys():
         df_all = ml_dfs[modality][alg][grid_param]
+        df_all = df_all.loc[:, ~df_all.columns.duplicated()]
         if df_all is None:
             df_all = pd.Series()
     else:
@@ -1199,16 +1272,20 @@ class BSNestedCV(SimpleInterface):
             [grand_mean_best_estimator, grand_mean_best_Rsquared,
              grand_mean_best_MSE, mega_feat_imp_dict] = bootstrapped_nested_cv(
                 X, self.inputs.y)
-            print(f"Target Outcome: {self.inputs.target_var}")
-            print(f"Modality: {self.inputs.modality}")
-            print(f"Embedding type: {self.inputs.alg}")
-            print(f"Grid Params: {self.inputs.grid_param}")
-            print(f"Best Estimator: {grand_mean_best_estimator}")
-            print(f"R2: {grand_mean_best_Rsquared}")
-            print(f"MSE: {grand_mean_best_MSE}")
-            print(
-                f"Most important latent positions: "
-                f"{list(mega_feat_imp_dict.keys())}")
+            if len(mega_feat_imp_dict) > 1:
+                print(f"Target Outcome: {self.inputs.target_var}")
+                print(f"Modality: {self.inputs.modality}")
+                print(f"Embedding type: {self.inputs.alg}")
+                print(f"Grid Params: {self.inputs.grid_param}")
+                print(f"Best Estimator: {grand_mean_best_estimator}")
+                print(f"R2: {grand_mean_best_Rsquared}")
+                print(f"MSE: {grand_mean_best_MSE}")
+                print(
+                    f"Most important latent positions: "
+                    f"{list(mega_feat_imp_dict.keys())}")
+            else:
+                print('Empty feature-space!')
+                mega_feat_imp_dict = OrderedDict()
         else:
             print('Empty feature-space!')
             grand_mean_best_estimator = dict()
@@ -1437,23 +1514,24 @@ if __name__ == "__main__":
     target_vars = ['rum_persist', 'dep_1', 'age']
     # target_vars = ['rum_persist']
     thr_type = 'MST'
-    drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
+    # drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
+    drop_cols = ['rum_persist']
     # embedding_types = ['OMNI', 'ASE']
     embedding_types = ['topology']
     modalities = ['func', 'dwi']
     template = 'MNI152_T1'
     mets = ["global_efficiency", "average_clustering",
             "average_shortest_path_length", "average_betweenness_centrality",
-            "average_eigenvector_centrality", "average_degree_centrality",
-            "average_diversity_coefficient",
-            "average_participation_coefficient"]
+            "average_eigenvector_centrality", "average_degree_centrality"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
-    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength']
+    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
     ses = 1
 
-    subject_dict, modality_grids = make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types, template)
+    subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
+                                                     thr_type, mets,
+                                                     embedding_types, template)
     sub_dict_clean = cleanNullTerms(subject_dict)
 
     subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
@@ -1461,14 +1539,19 @@ if __name__ == "__main__":
         pickle.dump(sub_dict_clean, f, protocol=2)
     f.close()
 
+    # with open(subject_dict_file_path, 'rb') as f:
+    #     sub_dict_clean = pickle.load(f)
+    # f.close()
+
     # Subset only those participants which have usable data
-    df = df[df['participant_id'].isin(list(subject_dict.keys()))]
+    df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
     df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
 
-    dict_file_path = make_feature_space_dict(df, modalities, subject_dict,
-                                             ses, base_dir)
+    dict_file_path = make_feature_space_dict(df, modalities, sub_dict_clean,
+                                             ses, base_dir, mets)
 
-    ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols)
+    ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
+              target_vars, embedding_types)
 
     execution_dict = {}
     execution_dict["crashdump_dir"] = str(ml_wf.base_dir)

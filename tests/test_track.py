@@ -15,6 +15,7 @@ import nibabel as nib
 import indexed_gzip
 import numpy as np
 import logging
+import h5py
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -148,9 +149,13 @@ def test_track_ensemble(directget, target_samples):
     dwi_data = dwi_img.get_fdata()
 
     temp_dir = tempfile.TemporaryDirectory()
-    recon_path = temp_dir.name + '/model_file.npy'
+    recon_path = temp_dir.name + '/model_file.hdf5'
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
-    np.save(recon_path, model)
+
+    with h5py.File(recon_path, 'w') as hf:
+        hf.create_dataset("reconstruction",
+                          data=model.astype('float32'))
+    hf.close()
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
                                        labels_im_file,
@@ -203,8 +208,12 @@ def test_track_ensemble_particle():
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
     temp_dir = tempfile.TemporaryDirectory()
-    recon_path = temp_dir.name + '/model_file.npy'
-    np.save(recon_path, model)
+    recon_path = temp_dir.name + '/model_file.hdf5'
+
+    with h5py.File(recon_path, 'w') as hf:
+        hf.create_dataset("reconstruction",
+                          data=model.astype('float32'))
+    hf.close()
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
                                        labels_im_file, recon_path, sphere,
