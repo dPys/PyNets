@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import dill
 import re
 import glob
 import numpy as np
@@ -56,7 +57,8 @@ import_list = ["import pandas as pd",
                "from pathlib import Path",
                "from collections import OrderedDict",
                "from operator import itemgetter",
-               "from statsmodels.stats.outliers_influence import variance_inflation_factor"]
+               "from statsmodels.stats.outliers_influence import variance_inflation_factor",
+               "from sklearn.impute import KNNImputer", "from pynets.core.utils import flatten", "import pickle", "import dill"]
 
 
 def get_ensembles_ase(modality, alg, base_dir):
@@ -88,7 +90,6 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
     if os.path.isfile(topology_file):
         df_top = pd.read_csv(topology_file)
         df_top = df_top.dropna(subset=["id"])
-        df_top['id'] = df_top['id'].str.replace('topology_auc_sub-', '')
         df_top = df_top.rename(
             columns=lambda x: re.sub("partcorr", "model-partcorr", x))
         df_top = df_top.rename(
@@ -103,15 +104,11 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
             columns=lambda x: re.sub("_tensor", "_model-tensor", x))
         df_top = df_top.rename(
             columns=lambda x: re.sub("_csd", "_model-csd", x))
-        df_top['participant_id'] = df_top['id'].str.replace("_ses-ses-",
-                                                            "_ses-")
-        df_top['participant_id'] = df_top['participant_id'].str.replace(
-            ".csv", "")
         df_top = df_top.dropna(axis='columns',
                                thresh=drop_thr * len(df_top)
-                               ).drop(columns=['id'])
+                               )
         [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
-        ensembles = [i for i in ensembles if i != 'participant_id']
+        ensembles = [i for i in ensembles if i != 'id']
     else:
         ensembles = None
         df_top = None
@@ -139,7 +136,7 @@ def make_feature_space_dict(df, modalities, subject_dict, ses, base_dir, mets=No
 
     dict_file_path = f"{base_dir}/pynets_ml_dict.pkl"
     with open(dict_file_path, 'wb') as f:
-        pickle.dump(ml_dfs, f, protocol=2)
+        dill.dump(ml_dfs, f)
     f.close()
 
     return dict_file_path
@@ -481,7 +478,7 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
 
     # Instantiate grid of model/feature-selection params
     alphas = [0.00000001, 0.0000001, 0.000001, 0.00001]
-    n_comps = [3, 4, 5, 6, 7, 8, 9]
+    n_comps = [5, 10, 15, 20, 25]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -674,20 +671,21 @@ def graph_theory_prep(df, thr_type):
             [i.split("_thrtype-" + thr_type + "_")[0] for i in
              list(set(df.columns))]
         )
-        if j != "participant_id"
+        if j != "id"
     ]
 
-    id_col = df['participant_id']
+    id_col = df['id']
     scaler = StandardScaler()
-    df = pd.DataFrame(scaler.fit_transform(df[[i for
+    df = pd.DataFrame(scaler.fit_transform(np.nan_to_num(df[[i for
                                                i in df.columns if
-                                               i != "participant_id"]]),
-                      columns=[i for i in df.columns if i != "participant_id"])
+                                               i != "id"]])),
+                      columns=[i for i in df.columns if i != "id"])
 
-    imp = KNNImputer(n_neighbors=3)
+    #imp = KNNImputer(n_neighbors=3)
+    imp = SimpleImputer()
     df = pd.DataFrame(imp.fit_transform(
-        df[[i for i in df.columns if i != "participant_id"]]),
-                      columns=[i for i in df.columns if i != "participant_id"])
+        df[[i for i in df.columns if i != "id"]]),
+                      columns=[i for i in df.columns if i != "id"])
 
     df = pd.concat([id_col, df], axis=1)
 
@@ -702,7 +700,7 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     grand_mean_best_Rsquared = {}
     grand_mean_best_MSE = {}
 
-    # Remove columns with > 10% missinng values
+    # Remove columns with > 20% missing values
     X = X.dropna(thresh=len(X) * .80, axis=1)
     if X.empty:
         return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
@@ -1005,7 +1003,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                         continue
 
                     out = df_top[df_top[
-                                         "participant_id"]
+                                         "id"]
                                      == "sub-" + ID + "_ses-"
                                      + ses][
                         col].values
@@ -1092,7 +1090,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                         continue
 
                     out = df_top[df_top[
-                                         "participant_id"]
+                                         "id"]
                                      == "sub-" + ID + "_ses-"
                                      + ses][
                         col].values
@@ -1122,7 +1120,7 @@ def cleanNullTerms(d):
    return clean
 
 
-def make_x_y(input_dict, drop_cols,target_var , alg, grid_param, modality):
+def make_x_y(input_dict, drop_cols, target_var, alg, grid_param, modality):
     import pandas as pd
     import pickle
 
@@ -1130,14 +1128,20 @@ def make_x_y(input_dict, drop_cols,target_var , alg, grid_param, modality):
     print(alg)
     print(grid_param)
     with open(input_dict, 'rb') as f:
-        ml_dfs = pickle.load(f)
+        ml_dfs = dill.load(f)
     f.close()
 
     if grid_param in ml_dfs[modality][alg].keys():
         df_all = ml_dfs[modality][alg][grid_param]
-        df_all = df_all.loc[:, ~df_all.columns.duplicated()]
         if df_all is None:
             df_all = pd.Series()
+        else:
+            try:
+                df_all = df_all.loc[:, ~df_all.columns.duplicated()]
+                if df_all.empty:
+                    df_all = pd.Series()
+            except:
+                df_all = pd.Series()
     else:
         df_all = pd.Series()
 
@@ -1198,30 +1202,39 @@ class MakeXY(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import pandas as pd
+        import os
+        from time import sleep
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
-        input_dict_tmp = fname_presuffix(
-            self.inputs.input_dict, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.input_dict,
-            input_dict_tmp,
-            copy=True,
-            use_hardlink=False)
+        if os.path.isfile(self.inputs.input_dict):
+            input_dict_tmp = fname_presuffix(
+                self.inputs.input_dict, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.input_dict,
+                input_dict_tmp,
+                copy=True,
+                use_hardlink=False)
 
-        [X, Y] = \
-            make_x_y(input_dict_tmp, self.inputs.drop_cols,
-                     self.inputs.target_var, self.inputs.alg,
-                     tuple(self.inputs.grid_param), self.inputs.modality)
+            while not os.path.isfile(input_dict_tmp):
+                sleep(5)
 
-        if isinstance(X, pd.DataFrame):
-            out_X = f"{runtime.cwd}/X_{self.inputs.target_var}_" \
-                    f"{self.inputs.modality}_{self.inputs.alg}_" \
-                    f"{'_'.join(self.inputs.grid_param)}.csv"
+            [X, Y] = \
+                make_x_y(input_dict_tmp, self.inputs.drop_cols,
+                         self.inputs.target_var, self.inputs.alg,
+                         tuple(self.inputs.grid_param), self.inputs.modality)
 
-            X.to_csv(out_X, index=False)
+            if isinstance(X, pd.DataFrame):
+                out_X = f"{runtime.cwd}/X_{self.inputs.target_var}_" \
+                        f"{self.inputs.modality}_{self.inputs.alg}_" \
+                        f"{'_'.join(self.inputs.grid_param)}.csv"
+
+                X.to_csv(out_X, index=False)
+            else:
+                out_X = None
         else:
             out_X = None
+            Y = None
 
         self._results["X"] = out_X
         self._results["Y"] = Y
@@ -1266,25 +1279,34 @@ class BSNestedCV(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
+        import os
 
         if self.inputs.X:
-            X = pd.read_csv(self.inputs.X, index_col=False)
-            [grand_mean_best_estimator, grand_mean_best_Rsquared,
-             grand_mean_best_MSE, mega_feat_imp_dict] = bootstrapped_nested_cv(
-                X, self.inputs.y)
-            if len(mega_feat_imp_dict) > 1:
-                print(f"Target Outcome: {self.inputs.target_var}")
-                print(f"Modality: {self.inputs.modality}")
-                print(f"Embedding type: {self.inputs.alg}")
-                print(f"Grid Params: {self.inputs.grid_param}")
-                print(f"Best Estimator: {grand_mean_best_estimator}")
-                print(f"R2: {grand_mean_best_Rsquared}")
-                print(f"MSE: {grand_mean_best_MSE}")
-                print(
-                    f"Most important latent positions: "
-                    f"{list(mega_feat_imp_dict.keys())}")
+            if os.path.isfile(self.inputs.X):
+                X = pd.read_csv(
+                    self.inputs.X, chunksize=100000).read()
+                [grand_mean_best_estimator, grand_mean_best_Rsquared,
+                 grand_mean_best_MSE, mega_feat_imp_dict] = bootstrapped_nested_cv(
+                    X, self.inputs.y)
+                if len(mega_feat_imp_dict) > 1:
+                    print(f"Target Outcome: {self.inputs.target_var}")
+                    print(f"Modality: {self.inputs.modality}")
+                    print(f"Embedding type: {self.inputs.alg}")
+                    print(f"Grid Params: {self.inputs.grid_param}")
+                    print(f"Best Estimator: {grand_mean_best_estimator}")
+                    print(f"R2: {grand_mean_best_Rsquared}")
+                    print(f"MSE: {grand_mean_best_MSE}")
+                    print(
+                        f"Most important latent positions: "
+                        f"{list(mega_feat_imp_dict.keys())}")
+                else:
+                    print('Empty feature-space!')
+                    mega_feat_imp_dict = OrderedDict()
             else:
-                print('Empty feature-space!')
+                print('Feature-space .csv file not found!')
+                grand_mean_best_estimator = dict()
+                grand_mean_best_Rsquared = dict()
+                grand_mean_best_MSE = dict()
                 mega_feat_imp_dict = OrderedDict()
         else:
             print('Empty feature-space!')
@@ -1414,8 +1436,8 @@ def create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
     x_y_iters.append(("grid_param", grid_param_list[1:]))
 
     make_x_y_func_node.iterables = x_y_iters
-    make_x_y_func_node.interface.n_procs = 1
-    make_x_y_func_node._mem_gb = 4
+    make_x_y_func_node.interface.n_procs = 2
+    make_x_y_func_node._mem_gb = 8
     make_x_y_func_node.inputs.modality = 'func'
     make_x_y_func_node.inputs.target_var = target_vars_list[0]
     make_x_y_func_node.inputs.alg = embedding_types_list[0]
@@ -1428,7 +1450,7 @@ def create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
     )
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
-    bootstrapped_nested_cv_node.interface._mem_gb = 1
+    bootstrapped_nested_cv_node.interface._mem_gb = 2
 
 
     make_df_node = pe.Node(
@@ -1502,63 +1524,18 @@ def create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
     return ml_wf
 
 
-if __name__ == "__main__":
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
-               "frozen_importlib.BuiltinImporter'>)"
-
-    base_dir = '/working/tuning_set/outputs_shaeffer'
-    df = pd.read_csv(
-        '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
-        index_col=False)
-
-    target_vars = ['rum_persist', 'dep_1', 'age']
-    # target_vars = ['rum_persist']
-    thr_type = 'MST'
-    # drop_cols = ['rum_persist', 'dep_1', 'age', 'sex']
-    drop_cols = ['rum_persist']
-    # embedding_types = ['OMNI', 'ASE']
-    embedding_types = ['topology']
-    modalities = ['func', 'dwi']
-    template = 'MNI152_T1'
-    mets = ["global_efficiency", "average_clustering",
-            "average_shortest_path_length", "average_betweenness_centrality",
-            "average_eigenvector_centrality", "average_degree_centrality"]
-
-    hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
-    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
-
-    ses = 1
-
-    subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
-                                                     thr_type, mets,
-                                                     embedding_types, template)
-    sub_dict_clean = cleanNullTerms(subject_dict)
-
-    subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
-    with open(subject_dict_file_path, 'wb') as f:
-        pickle.dump(sub_dict_clean, f, protocol=2)
-    f.close()
-
-    # with open(subject_dict_file_path, 'rb') as f:
-    #     sub_dict_clean = pickle.load(f)
-    # f.close()
-
-    # Subset only those participants which have usable data
-    df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
-    df = df[['participant_id', 'rum_persist', 'dep_1', 'age', 'sex']]
-
-    dict_file_path = make_feature_space_dict(df, modalities, sub_dict_clean,
-                                             ses, base_dir, mets)
+def build_predict_workflow(base_dir, dict_file_path, modality_grids, drop_cols,
+              target_vars, embedding_types):
 
     ml_wf = create_wf(base_dir, dict_file_path, modality_grids, drop_cols,
               target_vars, embedding_types)
 
     execution_dict = {}
     execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
-    execution_dict["poll_sleep_duration"] = 1
+    execution_dict["poll_sleep_duration"] = 2
     execution_dict["crashfile_format"] = 'txt'
     execution_dict['local_hash_check'] = False
-    execution_dict['hash_method'] = 'timestamp'
+    execution_dict['hash_method'] = 'content'
 
     cfg = dict(execution=execution_dict)
 
@@ -1572,8 +1549,81 @@ if __name__ == "__main__":
     plugin_args = {
         "n_procs": int(procmem[0]),
         "memory_gb": int(procmem[1]),
-        "scheduler": "mem_thread",
+        "scheduler": "topological_sort",
     }
-    # out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
-    out = ml_wf.run(plugin='Linear', plugin_args=plugin_args)
+    out = ml_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+    #out = ml_wf.run(plugin='Linear', plugin_args=plugin_args)
+    return out
 
+
+if __name__ == "__main__":
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
+    import sys
+    import gc
+    from multiprocessing import set_start_method, Process, Manager
+
+    base_dir = '/working/tuning_set/outputs_shaeffer'
+    df = pd.read_csv(
+        '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
+        index_col=False)
+
+    # target_vars = ['rum_persist', 'dep_1', 'age']
+    target_vars = ['rum_persist']
+    thr_type = 'MST'
+    # drop_cols = ['rum_persist', 'dep_1', 'age']
+    drop_cols = ['rum_persist']
+    # drop_cols = ['rum_persist']
+    embedding_types = ['OMNI', 'ASE']
+    # embedding_types = ['topology']
+    modalities = ['func']
+    template = 'MNI152_T1'
+    mets = ["global_efficiency", "average_clustering",
+            "average_shortest_path_length", "average_local_efficiency_nodewise",
+            "average_betweenness_centrality",
+            "average_eigenvector_centrality", "average_degree_centrality"]
+
+    hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
+
+    ses = 1
+
+    subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
+                                                     thr_type, mets,
+                                                     embedding_types, template)
+    sub_dict_clean = cleanNullTerms(subject_dict)
+
+    subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
+
+    with open(subject_dict_file_path, 'wb') as f:
+        dill.dump(sub_dict_clean, f)
+    f.close()
+
+    # with open(subject_dict_file_path, 'rb') as f:
+    #     sub_dict_clean = pickle.load(f)
+    # f.close()
+
+    # Subset only those participants which have usable data
+    df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
+    df = df[['participant_id', 'rum_persist', 'rum_1', 'dep_1', 'age']]
+    # Remove 4 outliers in the behavioral data
+    df = df[(df['participant_id'] != '33' and df['participant_id'] != '21' and
+             df['participant_id'] != '54' and df['participant_id'] != '14')]
+    dict_file_path = make_feature_space_dict(df, modalities, sub_dict_clean,
+                                             ses, base_dir, mets)
+
+    set_start_method("forkserver")
+    with Manager() as mgr:
+        retval = mgr.dict()
+        p = Process(target=build_predict_workflow, args=(base_dir, dict_file_path, modality_grids, drop_cols,
+              target_vars, embedding_types))
+        p.start()
+        p.join()
+
+        if p.exitcode != 0:
+            sys.exit(p.exitcode)
+
+        # Clean up master process before running workflow, which may create
+        # forks
+        gc.collect()
+    mgr.shutdown()
