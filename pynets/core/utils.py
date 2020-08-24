@@ -1121,6 +1121,7 @@ def decompress_nifti(infile):
     import gzip
     import os
     import shutil
+    from time import sleep
 
     _, base, ext = split_filename(infile)
 
@@ -1130,9 +1131,10 @@ def decompress_nifti(infile):
     with gzip.open(infile, "rb") as in_file:
         with open(os.path.abspath(base + ext), "wb") as out_file:
             shutil.copyfileobj(in_file, out_file, 128*1024)
-        out_file.close()
-    in_file.close()
 
+    sleep(5)
+    # in_file.close()
+    # out_file.close()
     os.remove(infile)
     return out_file.name
 

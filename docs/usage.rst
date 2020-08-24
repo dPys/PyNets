@@ -342,7 +342,7 @@ runs, you can use the `pynets_collect` CLI: ::
 
     pynets_collect -basedir '/Users/dPys/outputs/pynets' -modality 'func'
 
-which will generate a new dataframe, all_subs_neat.csv, where each row is a
+which will generate a group summary dataframe in `basedir`, all_subs_neat.csv, where each row is a
 given subject session and/or run, and each column is a graph topological
 metric the was calculated, with the prefix indicating correspondence to a
-given connectome sample of interest.
+given connectome ensemble of interest.

@@ -143,7 +143,6 @@ def sweep_directory(
                     **merge_dicts(
                         mod_query,
                         {"extension": [".nii", ".nii.gz"],
-                         "suffix": ["dwi"]
                          },
                     )
                 )
@@ -179,7 +178,6 @@ def sweep_directory(
                         mod_query,
                         {
                             "extension": [".nii", ".nii.gz"],
-                            "suffix": ["bold"],
                         },
                     )
                 )

@@ -40,7 +40,7 @@ def get_parser():
     parser.add_argument(
         "-dc",
         metavar="Column strings to exclude",
-        default=None,
+        default="None",
         nargs="+",
         help="Space-delimited list of strings.\n",
     )
@@ -199,16 +199,16 @@ def df_concat(dfs, working_path, modality):
     cols = [cols[-1]] + cols[:-1]
     frame = frame[cols]
     #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
-    missingness_dict = summarize_missingness(frame)[0]
-    bad_cols = []
-    for col in missingness_dict.keys():
-        if missingness_dict[col] > 0.20:
-            bad_cols.append(col)
+    # missingness_dict = summarize_missingness(frame)[0]
+    # bad_cols = []
+    # for col in missingness_dict.keys():
+    #     if missingness_dict[col] > 0.20:
+    #         bad_cols.append(col)
 
-    if len(bad_cols) > 0:
-        print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
-              f"missingness: {bad_cols}{Style.RESET_ALL}")
-        frame = frame.drop(columns=bad_cols)
+    # if len(bad_cols) > 0:
+        # print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
+        #       f"missingness: {bad_cols}{Style.RESET_ALL}")
+        # frame = frame.drop(columns=bad_cols)
 
     frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=False)
 
@@ -258,7 +258,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 x))
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
-    print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
+    #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
     df_pref.drop(columns=bad_cols, inplace=True)
 
     print(df_pref)
