@@ -23,17 +23,16 @@ easily on a supercomputer, even if optimization reveals a clear connectome
 recipe that ultimately only requires samples in practice (e.g. a few select
 combinations for purposes of predictive algorithm deployment).
 
-With that in mind, the minimal hardware specs required to run PyNets,
-regardless of Linear vs. parallel execution, is 2 vCPUs and at least 6 GB of
-RAM. The recommended hardware, however, for single-subject ensemble sampling
-is at least 4-8 vCPU's and 16-24 GB of RAM (e.g. newer desktops and high-end
-laptops). On AWS and supercomputer clusters, however, PyNets is almost
-infinitely scalable-- because it relies on a forkserver for multiprocessing,
+With that in mind, the minimal hardware specs required to run PyNets is 4 vCPUs, at least 8 GB of
+free RAM, and at least 15-20 GB of free disk space. The recommended hardware for single-subject ensemble sampling
+is 8+ vCPU's, 16+ GB of RAM, and 20+ GB of disk space (e.g. high-end
+desktops and laptops). On AWS and supercomputer clusters, however, PyNets hypothetically has infinite scalability--
+because it relies on a forkserver for multiprocessing,
 it will auto-optimize its concurrency based on however many cores and memory
 are made available to it in an embaressingly parallelizable manner.
 
     .. note::
-        Another important ceiling to consider is I/O. Be sure that whe you
+        Another important ceiling to consider is I/O. Be sure that when you
         specify the working directory for a PyNets run using the `-work` flag,
         that it be to a location on disk that allows for more intensive I/O
         operations. Locally, this would likely be a directory like '/tmp/work'

@@ -35,11 +35,14 @@ cd PyNets
 [sudo] python setup.py install [--user]
 ```
 
+Hardware Requirements
+---------------------
+4 vCPUs, 8+ GB free RAM, and at least 15-20 GB of free disk space.
+UNIX/MacOS 64-bit platforms (guaranteed) and Windows PC platforms (experimental)
+
 Documentation
 -------------
 Explore official installation instructions, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
-
-*NEW July 2020: Try out the first official PyNets tutorial introducing connectome ensemble sampling: <https://nbviewer.jupyter.org/github/dPys/PyNets/blob/master/tutorial/QuickStartTutorial.ipynb>
 
 Citing
 ------

@@ -40,7 +40,7 @@ def get_parser():
     parser.add_argument(
         "-dc",
         metavar="Column strings to exclude",
-        default=None,
+        default="None",
         nargs="+",
         help="Space-delimited list of strings.\n",
     )
@@ -258,7 +258,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 x))
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
-    print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
+    #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
     df_pref.drop(columns=bad_cols, inplace=True)
 
     print(df_pref)
