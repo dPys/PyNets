@@ -962,12 +962,11 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
         for comb in grid:
             try:
                 extract, hpass, model, res, atlas, smooth = comb
-                comb_tuple = (atlas, extract, hpass, model, res, smooth)
             except:
                 print(comb)
                 extract, hpass, model, res, atlas = comb
                 smooth = None
-                comb_tuple = (atlas, extract, hpass, model, res, smooth)
+            comb_tuple = (atlas, extract, hpass, model, res, smooth)
             subject_dict[ID][ses][modality][comb_tuple] = {}
             if alg == 'ASE' or alg == 'OMNI':
                 if smooth == 0 or smooth is None:
@@ -993,7 +992,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                     embedding = embeddings[0]
                 else:
                     print(
-                        f"Multiple structural embeddings found for {id} and"
+                        f"Multiple functional embeddings found for {id} and"
                         f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
                         f" recent...")
                     embedding = sorted(embeddings, key=os.path.getmtime)[0]

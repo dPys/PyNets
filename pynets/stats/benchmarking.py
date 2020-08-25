@@ -22,7 +22,8 @@ import numpy as np
 import itertools
 import warnings
 from sklearn.preprocessing import StandardScaler
-from pynets.stats.prediction import make_subject_dict, cleanNullTerms, get_ensembles_top, get_ensembles_embedding
+from pynets.stats.prediction import make_subject_dict, cleanNullTerms, \
+    get_ensembles_top, get_ensembles_embedding, build_grid
 
 warnings.filterwarnings("ignore")
 
@@ -158,10 +159,6 @@ def discr_stat(
     check_X_y(X, Y, accept_sparse=True)
 
     uniques, counts = np.unique(Y, return_counts=True)
-    if (counts != 1).sum() <= 1:
-        msg = "You have passed a vector containing only a single unique" \
-              " sample id."
-        raise ValueError(msg)
     if remove_isolates:
         idx = np.isin(Y, uniques[counts != 1])
         labels = Y[idx]
@@ -253,8 +250,11 @@ def CronbachAlpha(itemscores):
     itemvars = itemscores.var(axis=0, ddof=1)
     tscores = itemscores.sum(axis=1)
     nitems = itemscores.shape[1]
-    calpha = (nitems / float(nitems - 1) *
-              (1 - itemvars.sum() / float(tscores.var(ddof=1))))
+    try:
+        calpha = (nitems / float(nitems - 1) *
+                  (float(1 - itemvars.sum()) / float(tscores.var(ddof=1))))
+    except:
+        calpha = 0
 
     return calpha
 
@@ -294,275 +294,121 @@ if __name__ == "__main__":
         dill.dump(sub_dict_clean, f)
     f.close()
 
-#     if icc is True:
-#         i = 0
-#         for atlas, res, model, extract, hpass, smooth in grid:
-#             df_summary.at[i, "grid"] = (
-#                 atlas, res, model, extract, hpass, smooth)
-#             print(atlas, res, model, extract, hpass, smooth)
-#             id_list = []
-#             icc_list = []
-#             for ID in subject_dict.keys():
-#                 ses_list = []
-#                 for ses in subject_dict[ID].keys():
-#                     id_list.append(ID)
-#                     ses_list.append(
-#                         subject_dict[ID][ses][
-#                             (atlas, res, model, extract, hpass, smooth)
-#                         ]["topology"]
-#                     )
-#                 meas = np.hstack(ses_list)
-#                 try:
-#                     icc_out = CronbachAlpha(meas)
-#                     icc_list.append(icc_out)
-#                     df_summary.at[i, "icc"] = np.nanmean(icc_list)
-#                     del icc_out, ses_list
-#                 except BaseException:
-#                     continue
-#             del icc_list
-#             i += 1
-#
-#     if disc is True:
-#         i = 0
-#         for atlas, res, model, extract, hpass, smooth in grid:
-#             print(atlas, res, model, extract, hpass, smooth)
-#             id_list = []
-#             vect_all = []
-#             for ID in subject_dict.keys():
-#                 vects = []
-#                 for ses in subject_dict[ID].keys():
-#                     id_list.append(ID)
-#                     vects.append(
-#                         subject_dict[ID][ses][
-#                             (atlas, res, model, extract, hpass, smooth)
-#                         ]["topology"]
-#                     )
-#                 vect_all.append(np.concatenate(vects, axis=1))
-#                 del vects
-#             X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
-#
-#             Y = np.array(id_list)
-#             try:
-#                 df_summary.at[i, "grid"] = (
-#                     atlas, res, model, extract, hpass, smooth)
-#                 bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
-#                 for m in set(bad_ixs):
-#                     if (X_top.shape[0] - bad_ixs.count(m)
-#                             ) / X_top.shape[0] < 0.50:
-#                         X_top = np.delete(X_top, m, axis=1)
-#                 imp = IterativeImputer(max_iter=50, random_state=42)
-#                 X_top = imp.fit_transform(X_top)
-#                 scaler = StandardScaler()
-#                 X_top = scaler.fit_transform(X_top)
-#                 discr_stat_val, rdf = discr_stat(X_top, Y)
-#                 df_summary.at[i, "discriminability"] = discr_stat_val
-#                 print(discr_stat_val)
-#                 # print(rdf)
-#                 del discr_stat_val
-#                 i += 1
-#             except BaseException:
-#                 i += 1
-#                 continue
-# elif modality == "dwi":
-#     gen_hyperparams = ["model", "clust", "_k"]
-#     for col in cols:
-#         build_hp_dict(
-#             col,
-#             col.split("_clust")[0],
-#             "dwi",
-#             hyperparam_dict,
-#             gen_hyperparams)
-#
-#     for key in hyperparam_dict:
-#         hyperparam_dict[key] = list(set(hyperparam_dict[key]))
-#
-#     grid = list(
-#         itertools.product(
-#             *(hyperparam_dict[param] for param in hyperparam_dict.keys())
-#         )
-#     )
-#
-#     subject_dict = {}
-#     for id in df["id"]:
-#         print(id)
-#         ID = id.split("_")[0].split("sub-")[1]
-#         ses = id.split("_")[1].split("ses-")[1]
-#         if ID not in subject_dict.keys():
-#             subject_dict[ID] = {}
-#         subject_dict[ID][ses] = dict.fromkeys(grid, np.nan)
-#         for (
-#             atlas,
-#             model,
-#             clust,
-#             _k,
-#             track_type,
-#             directget,
-#             min_length,
-#         ) in subject_dict[ID][ses]:
-#             subject_dict[ID][ses][
-#                 (atlas, model, clust, _k, track_type, directget,
-#                  min_length)
-#             ] = {}
-#             met_vals = np.empty([len(mets), 1], dtype=np.float32)
-#             met_vals[:] = np.nan
-#             i = 0
-#             for met in mets:
-#                 col = (
-#                     atlas
-#                     + "_clust-"
-#                     + clust
-#                     + "_k-"
-#                     + str(_k)
-#                     + "_model-"
-#                     + model
-#                     + "_nodetype-parc_samples-20000streams_tracktype-"
-#                     + track_type
-#                     + "_directget-"
-#                     + directget
-#                     + "_minlength-"
-#                     + min_length
-#                     + "_thrtype-"
-#                     + thr_type
-#                     + "_topology_"
-#                     + met
-#                     + "_auc"
-#                 )
-#                 try:
-#                     met_vals[i] = df[df["id"] == "sub-" +
-#                                      ID + "_ses-" + ses][col].values[0]
-#                 except BaseException:
-#                     print(
-#                         "No values found for: " +
-#                         met +
-#                         " in column: " +
-#                         col +
-#                         "\n")
-#                     met_vals[i] = np.nan
-#                 del col
-#                 i += 1
-#             subject_dict[ID][ses][
-#                 (atlas, model, clust, _k, track_type, directget,
-#                  min_length)]["topology"] = met_vals
-#             del i, atlas, model, clust, _k, track_type, directget, \
-#                 min_length
-#         del ID, ses
-#
-#     if icc is True:
-#         i = 0
-#         for atlas, model, clust, _k, track_type, directget, min_length in \
-#             grid:
-#             df_summary.at[i, "grid"] = (
-#                 atlas,
-#                 model,
-#                 clust,
-#                 _k,
-#                 track_type,
-#                 directget,
-#                 min_length,
-#             )
-#             print(atlas, model, clust, _k, track_type, directget,
-#                   min_length)
-#             id_list = []
-#             icc_list = []
-#             for ID in subject_dict.keys():
-#                 ses_list = []
-#                 for ses in subject_dict[ID].keys():
-#                     id_list.append(ID)
-#                     ses_list.append(
-#                         subject_dict[ID][ses][
-#                             (
-#                                 atlas,
-#                                 model,
-#                                 clust,
-#                                 _k,
-#                                 track_type,
-#                                 directget,
-#                                 min_length,
-#                             )
-#                         ]["topology"]
-#                     )
-#                 meas = np.hstack(ses_list)
-#                 try:
-#                     icc_out = CronbachAlpha(meas)
-#                     icc_list.append(icc_out)
-#                     df_summary.at[i, "icc"] = np.nanmean(icc_list)
-#                     del icc_out, ses_list
-#                 except BaseException:
-#                     continue
-#             del icc_list
-#             i += 1
-#
-#     if disc is True:
-#         i = 0
-#         for atlas, model, clust, _k, track_type, directget, min_length in\
-#             grid:
-#             print(atlas, model, clust, _k, track_type, directget,
-#                   min_length)
-#             id_list = []
-#             vect_all = []
-#             for ID in subject_dict.keys():
-#                 vects = []
-#                 for ses in subject_dict[ID].keys():
-#                     id_list.append(ID)
-#                     vects.append(
-#                         subject_dict[ID][ses][
-#                             (
-#                                 atlas,
-#                                 model,
-#                                 clust,
-#                                 _k,
-#                                 track_type,
-#                                 directget,
-#                                 min_length,
-#                             )
-#                         ]["topology"]
-#                     )
-#                 vect_all.append(np.concatenate(vects, axis=1))
-#                 del vects
-#             X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
-#
-#             Y = np.array(id_list)
-#             try:
-#                 df_summary.at[i, "grid"] = (
-#                     atlas,
-#                     model,
-#                     clust,
-#                     _k,
-#                     track_type,
-#                     directget,
-#                     min_length,
-#                 )
-#                 bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
-#                 for m in set(bad_ixs):
-#                     if (X_top.shape[0] - bad_ixs.count(m)
-#                             ) / X_top.shape[0] < 0.50:
-#                         X_top = np.delete(X_top, m, axis=1)
-#                 imp = IterativeImputer(max_iter=50, random_state=42)
-#                 X_top = imp.fit_transform(X_top)
-#                 scaler = StandardScaler()
-#                 X_top = scaler.fit_transform(X_top)
-#                 discr_stat_val, rdf = discr_stat(X_top, Y)
-#                 df_summary.at[i, "discriminability"] = discr_stat_val
-#                 print(discr_stat_val)
-#                 # print(rdf)
-#                 del discr_stat_val
-#                 i += 1
-#             except BaseException:
-#                 i += 1
-#                 continue
+    # with open(subject_dict_file_path, 'rb') as f:
+    #     sub_dict_clean = dill.load(f)
+    # f.close()
 
-    # if icc is True and disc is False:
-    #     df_summary = df_summary.sort_values("icc", ascending=False)
-    #     # df_summary = df_summary[df_summary.topological_icc >
-    #     #                         df_summary.icc.quantile(.50)]
-    # elif icc is False and disc is True:
-    #     df_summary = df_summary.sort_values(
-    #         "discriminability", ascending=False)
-    #     # df_summary = df_summary[df_summary.discriminability >
-    #     #                         df_summary.discriminability.quantile(.50)]
-    # elif icc is True and disc is True:
-    #     df_summary = df_summary.sort_values(
-    #         by=["discriminability", "icc"], ascending=False
-    #     )
-    #
-    # df_summary.to_csv(working_dir + "/grid_clean_" + modality + ".csv")
+    rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+
+    if icc is True and disc is False:
+        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'icc'])
+    elif icc is False and disc is True:
+        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'discriminability'])
+    elif icc is True and disc is True:
+        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'discriminability', 'icc'])
+
+    embedding_types = ['topology']
+    modalities = ['dwi']
+    for modality in modalities:
+        hyperparams = eval(f"hyperparams_{modality}")
+        hyperparam_dict = {}
+
+        ensembles, df_top = get_ensembles_top(modality, thr_type,
+                                              f"{base_dir}/pynets")
+
+        grid = build_grid(modality, hyperparam_dict,
+                          sorted(list(set(hyperparams))), ensembles)[1]
+
+        for alg in embedding_types:
+            ix = 0
+            for comb in grid:
+                if modality == 'func':
+                    try:
+                        extract, hpass, model, res, atlas, smooth = comb
+                    except:
+                        print(comb)
+                        extract, hpass, model, res, atlas = comb
+                        smooth = 0
+                    comb_tuple = (atlas, extract, hpass, model, res, smooth)
+                else:
+                    try:
+                        directget, minlength, model, res, atlas, tol = comb
+                    except:
+                        print(comb)
+                        directget, minlength, model, res, atlas = comb
+                    comb_tuple = (atlas, directget, minlength, model, res)
+
+                df_summary.at[ix, "grid"] = comb_tuple
+                df_summary.at[ix, "modality"] = modality
+                df_summary.at[ix, "embedding"] = alg
+
+                # icc
+                if icc is True:
+                    id_list = []
+                    icc_list = []
+                    for ID in sub_dict_clean.keys():
+                        ses_list = []
+                        for ses in sub_dict_clean[ID].keys():
+                            id_list.append(ID)
+                            ses_list.append(
+                                sub_dict_clean[ID][ses][modality][comb_tuple][alg]
+                            )
+                        meas = np.hstack(ses_list)
+                        if np.isnan(meas).all():
+                            continue
+                        else:
+                            icc_out = CronbachAlpha(meas)
+                            icc_list.append(icc_out)
+                            df_summary.at[ix, "icc"] = np.nanmean(icc_list)
+                            del icc_out, ses_list
+                    del icc_list
+
+                if disc is True:
+                    id_list = []
+                    vect_all = []
+                    for ID in sub_dict_clean.keys():
+                        vects = []
+                        for ses in sub_dict_clean[ID].keys():
+                            id_list.append(ID)
+                            vects.append(
+                                sub_dict_clean[ID][ses][modality][comb_tuple][alg]
+                            )
+                        vect_all.append(np.concatenate(vects, axis=1))
+                        del vects
+                    X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
+                    Y = np.array(id_list)
+                    if np.isnan(X_top).all() or len(Y) < 3 or \
+                        (np.unique(Y, return_counts=True)[1] != 1).all() == 1:
+                        continue
+                    else:
+                        bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
+                        for m in set(bad_ixs):
+                            if (X_top.shape[0] - bad_ixs.count(m)
+                            ) / X_top.shape[0] < 0.50:
+                                X_top = np.delete(X_top, m, axis=1)
+                        imp = IterativeImputer(max_iter=50, random_state=42)
+                        X_top = imp.fit_transform(X_top)
+                        scaler = StandardScaler()
+                        X_top = scaler.fit_transform(X_top)
+                        discr_stat_val, rdf = discr_stat(X_top, Y)
+                        df_summary.at[ix, "discriminability"] = discr_stat_val
+                        print(discr_stat_val)
+                        # print(rdf)
+                        del discr_stat_val
+                ix += 1
+
+    if icc is True and disc is False:
+        df_summary = df_summary.sort_values("icc", ascending=False)
+        # df_summary = df_summary[df_summary.topological_icc >
+        #                         df_summary.icc.quantile(.50)]
+    elif icc is False and disc is True:
+        df_summary = df_summary.sort_values(
+            "discriminability", ascending=False)
+        # df_summary = df_summary[df_summary.discriminability >
+        #                         df_summary.discriminability.quantile(.50)]
+    elif icc is True and disc is True:
+        df_summary = df_summary.sort_values(
+            by=["discriminability", "icc"], ascending=False
+        )
+
+    df_summary.to_csv(f"{base_dir}/{base_dir}/grid_clean.csv")
