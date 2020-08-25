@@ -1649,6 +1649,7 @@ def dmri_connectometry(
                     "parc",
                     "atlas",
                     "uatlas",
+                    "vox_size"
                 ],
                 output_names=[
                     "net_parcels_map_nifti",
@@ -1662,6 +1663,11 @@ def dmri_connectometry(
                 imports=import_list,
             ),
             name="node_gen_node",
+        )
+        dmri_connectometry_wf.connect(
+            [
+                (inputnode, node_gen_node, [("vox_size", "vox_size")]),
+            ]
         )
     else:
         # Non-masking case
@@ -4238,6 +4244,7 @@ def fmri_connectometry(
                     "parc",
                     "atlas",
                     "uatlas",
+                    "vox_size"
                 ],
                 output_names=[
                     "net_parcels_map_nifti",
@@ -4252,7 +4259,11 @@ def fmri_connectometry(
             ),
             name="node_gen_node",
         )
-
+        fmri_connectometry_wf.connect(
+            [
+                (inputnode, node_gen_node, [("vox_size", "vox_size")]),
+            ]
+        )
     else:
         # Non-masking case
         node_gen_node = pe.Node(

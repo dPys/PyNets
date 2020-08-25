@@ -728,7 +728,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     # Remove columns with > 20% missing values
     X = X.dropna(thresh=len(X) * .80, axis=1)
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Apply a simple imputer (note that this assumes extreme cases of
     # missingness have already been addressed)
@@ -740,21 +741,24 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     sel.fit(X)
     X = X[X.columns[sel.get_support(indices=True)]]
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Remove multicollinear columns
     if remove_multi is True:
         transformer = ReduceVIF()
         X = transformer.fit_transform(X, y)
         if X.empty:
-            return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+            return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+                   grand_mean_best_MSE, {}
 
     # Remove outliers
     outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
     X = X[outlier_mask]
     y = y[outlier_mask]
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Standardize X
     scaler = StandardScaler()
@@ -764,8 +768,7 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     # scaler = StandardScaler()
     # y = pd.DataFrame(scaler.fit_transform(y.reshape(-1,1)))
 
-    # Bootstrap train-test split
-    # Repeated test-train splits "simulates" the variability of incoming data,
+    # Bootstrap nested CV's "simulates" the variability of incoming data,
     # particularly when training on smaller datasets
     feature_imp_dicts = []
     best_positions_list = []
@@ -816,10 +819,13 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
                     best_positions = list(X.columns)
                 else:
                     best_positions = [column[0] for
-                                        column in zip(X.columns,
-                                                      fitted.named_steps['feature_select'].get_support(indices=True)) if column[1]]
+                                        column in
+                                      zip(X.columns, fitted.named_steps[
+                                          'feature_select'].get_support(
+                                          indices=True)) if column[1]]
 
-                coefs = np.abs(fitted.named_steps[best_regressor.split('_')[0]].coef_)
+                coefs = np.abs(fitted.named_steps[
+                                   best_regressor.split('_')[0]].coef_)
 
                 feat_imp_dict = OrderedDict(sorted(dict(zip(best_positions,
                                                             coefs)).items(),
@@ -858,7 +864,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
 def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                       template, sessions):
     from joblib import Parallel, delayed
-    rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+    #rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+    rsns = ['triple']
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
@@ -869,16 +876,19 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
         for alg in embedding_types:
             for ses_name in sessions:
                 if alg == 'ASE' or alg == 'OMNI':
-                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in glob.glob(
+                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in
+                           glob.glob(
                         f"{base_dir}/embeddings_all_{modality}/*") if
                            os.path.basename(i).startswith('sub')]
                 else:
-                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in glob.glob(
+                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in
+                           glob.glob(
                         f"{base_dir}/pynets/*") if
                            os.path.basename(i).startswith('sub')]
 
                 if alg == 'ASE' or alg == 'OMNI':
-                    ensembles = get_ensembles_embedding(modality, alg, base_dir)
+                    ensembles = get_ensembles_embedding(modality, alg,
+                                                        base_dir)
                     df_top = None
                     if ensembles is None:
                         continue
@@ -896,10 +906,11 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                 hyperparam_dict = {}
 
                 grid = build_grid(modality, hyperparam_dict,
-                                  sorted(list(set(hyperparams))), ensembles)[1]
+                                  sorted(list(set(hyperparams))),
+                                  ensembles)[1]
 
-                grid_mod = list(set([tuple(x for x in i if x not in rsns) for i in
-                                 grid]))
+                grid_mod = list(set([tuple(x for x in i if x not in rsns)
+                                     for i in grid]))
 
                 # Since we are using all of the 3 RSN connectomes (pDMN, coSN, and
                 # fECN) in the feature-space,
@@ -1088,7 +1099,8 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                 else:
                     print(
                         f"\nMultiple structural embeddings found for {id} and"
-                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most recent...")
+                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                        f" recent...")
                     embedding = \
                         sorted(embeddings, key=os.path.getmtime)[0]
                 if os.path.isfile(embedding):
@@ -1343,7 +1355,8 @@ class BSNestedCV(SimpleInterface):
                 X = pd.read_csv(
                     self.inputs.X, chunksize=100000).read()
                 [grand_mean_best_estimator, grand_mean_best_Rsquared,
-                 grand_mean_best_MSE, mega_feat_imp_dict] = bootstrapped_nested_cv(
+                 grand_mean_best_MSE, mega_feat_imp_dict] = \
+                    bootstrapped_nested_cv(
                     X, self.inputs.y)
                 if len(mega_feat_imp_dict) > 1:
                     print(f"Target Outcome: {self.inputs.target_var}")

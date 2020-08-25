@@ -589,7 +589,7 @@ def parcel_masker(
         dir_path,
         ID,
         perc_overlap,
-        vox_size='2mm'):
+        vox_size):
     """
     Evaluate the affinity of any arbitrary list of parcel nodes for a
     user-specified ROI mask.
@@ -667,7 +667,7 @@ def parcel_masker(
         mask_img, template_img,
     )
 
-    mask_data = mask_img_res.get_fdata()
+    mask_data = mask_img_res.get_fdata().astype('bool')
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
@@ -745,7 +745,7 @@ def parcel_masker(
     return coords_adj, labels_adj, parcel_list_adj
 
 
-def coords_masker(roi, coords, labels, error):
+def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     """
     Evaluate the affinity of any arbitrary list of coordinate nodes for a
     user-specified ROI mask.
@@ -777,10 +777,45 @@ def coords_masker(roi, coords, labels, error):
     import nibabel as nib
     from nilearn.image import math_img
     from pynets.core.nodemaker import mmToVox
+    import yaml
+    import pkg_resources
+    import sys
+    from nilearn.image import resample_to_img
 
     mask_img = math_img("img > 0", img=nib.load(roi))
-    mask_aff = mask_img.affine
-    mask_data = mask_img.get_fdata()
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
+
+    template_brain = pkg_resources.resource_filename(
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+    )
+    try:
+        template_img = nib.load(template_brain)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI template. Do you have git-lfs "
+              f"installed?")
+        sys.exit(1)
+
+    mask_img_res = resample_to_img(
+        mask_img, template_img,
+    )
+
+    mask_data = mask_img_res.get_fdata().astype('bool')
+
+    mask_aff = mask_img_res.affine
+
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
     y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
     z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
@@ -1439,8 +1474,9 @@ def node_gen_masking(
     parc,
     atlas,
     uatlas,
+    vox_size,
     perc_overlap=0.10,
-    error=2,
+    error=2
 ):
     """
     In the case that masking was applied, this function generate nodes based
@@ -1510,7 +1546,7 @@ def node_gen_masking(
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
-        roi, coords, parcel_list, labels, dir_path, ID, perc_overlap
+        roi, coords, parcel_list, labels, dir_path, ID, perc_overlap, vox_size,
     )
 
     if any(isinstance(sub, tuple) for sub in labels):
