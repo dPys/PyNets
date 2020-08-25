@@ -142,7 +142,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
                                                                                                   net_parcel_list,
                                                                                                   net_labels,
                                                                                                   dir_path, ID,
-                                                                                                  perc_overlap)
+                                                                                                  perc_overlap, vox_size='2mm')
     print("%s%s%s" % ('parcel_masker --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
@@ -294,7 +294,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
     [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_labels,
-                                                            dir_path, ID, perc_overlap)
+                                                            dir_path, ID, perc_overlap, vox_size='2mm')
     print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
