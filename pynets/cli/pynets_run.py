@@ -761,7 +761,7 @@ def build_workflow(args, retval):
                    int(list(psutil.virtual_memory())[4]/1000000000) - 2]
     else:
         procmem = list(eval(str(resources)))
-        procmem[1] = procmem[1] - 2
+        procmem[1] = procmem[1] - 1
     if args.thr is None:
         thr = float(1.0)
     else:
@@ -832,6 +832,8 @@ def build_workflow(args, retval):
     else:
         extract_strategy_list = None
     roi = args.roi
+    if isinstance(roi, list):
+        roi = roi[0]
     conn_model = args.mod
     if conn_model:
         if (isinstance(conn_model, list)) and (len(conn_model) > 1):

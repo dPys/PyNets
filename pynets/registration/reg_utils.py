@@ -297,7 +297,7 @@ def waymask2dwi_align(
     template_img = nib.load(template)
 
     waymask_img_res = resample_to_img(
-        waymask_img, template_img, interpolation="nearest"
+        waymask_img, template_img,
     )
     waymask_res = f"{waymask.split('.nii')[0]}_res.nii.gz"
     nib.save(waymask_img_res, waymask_res)
