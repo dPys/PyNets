@@ -184,7 +184,7 @@ class ReduceVIF(BaseEstimator, TransformerMixin):
         return X
 
 
-# We create a callable class, called `RazorCV`,
+# We create a callable class, called `RazorCV`
 class RazorCV(object):
     '''
     PR to SKlearn by dPys 2019
@@ -197,8 +197,7 @@ class RazorCV(object):
     within one standard error (or some percentile/alpha-level tolerance) of
     the empirically optimal model. This assumes that the models can be easily
     ordered from simplest to most complex based on some user-defined target
-    parameter. By enabling the user to specify this parameter of interest,
-    whether greater values of this parameter are to be defined as
+    parameter. Greater values of this parameter are to be defined as
     'more complex', and a target scoring metric (i.e. in the case of
     multi-metric scoring), the `RazorCV` function can be called directly by
     `refit` (e.g. in GridSearchCV).
@@ -230,7 +229,7 @@ class RazorCV(object):
 
     Notes
     -----
-    Here, simplest is defined by the complexity of the model as influenced by
+    Here, 'simplest' is defined by the complexity of the model as influenced by
     some user-defined target parameter (e.g. number of components, number of
     estimators, polynomial degree, cost, scale, number hidden units, weight
     decay, number of nearest neighbors, L1/L2 penalty, etc.).
@@ -262,7 +261,8 @@ class RazorCV(object):
         Check whether the target refit scorer is negated. If so, adjusted
         greater_is_better accordingly.
         """
-        if self.scoring not in self.scoring_dict.keys() and f"{self.scoring}_score" not in self.scoring_dict.keys():
+        if self.scoring not in self.scoring_dict.keys() and \
+            f"{self.scoring}_score" not in self.scoring_dict.keys():
             if self.scoring.startswith('neg_'):
                 self.greater_is_better = True
             else:
@@ -489,7 +489,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
     means_all_exp_var = {}
     means_all_MSE = {}
 
-    # Model + feature selection by iterating grid-search across linear regressors
+    # Model + feature selection by iterating grid-search across linear
+    # regressors
     for regressor_name, regressor in sorted(regressors.items()):
         if pca_reduce is True and X.shape[0] < X.shape[1]:
             # Pipeline feature selection (PCA) with model fitting
@@ -502,7 +503,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
                           'feature_select__n_components': n_comps}
             refit = RazorCV.standard_error('n_components', True, refit_score)
         else:
-            # <25 Features, don't perform feature selection.
+            # <25 Features, don't perform feature selection, but produce a
+            # userwarning
             if X.shape[1] < 25:
                 pipe = Pipeline([
                     (regressor_name, regressor),
@@ -539,7 +541,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
         means_MSE = pipe_grid_cv.cv_results_[
             f"mean_test_neg_root_mean_squared_error"]
 
-        # Apply PCA in the case that the # of features exceeds the number of observations
+        # Apply PCA in the case that the # of features exceeds the number of
+        # observations
         if pca_reduce is True and X.shape[0] < X.shape[1]:
             best_estimator_name = f"{regressor_name}_{pipe_grid_cv.best_estimator_.get_params()[regressor_name + '__alpha']}_{pipe_grid_cv.best_estimator_.named_steps['feature_select'].n_components}"
         else:
@@ -569,9 +572,11 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds):
                 [(best_regressor.split('_')[0], est)])
         else:
             est.alpha = float(best_regressor.split('_')[-2])
-            kbest = SelectKBest(f_regression, k=int(best_regressor.split('_')[-1]))
+            kbest = SelectKBest(f_regression,
+                                k=int(best_regressor.split('_')[-1]))
             reg = Pipeline(
-                [('feature_select', kbest), (best_regressor.split('_')[0], est)])
+                [('feature_select', kbest),
+                 (best_regressor.split('_')[0], est)])
 
     return reg, best_regressor
 
@@ -633,7 +638,8 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, a
     return df_lps
 
 
-def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=None):
+def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
+                         mets=None):
     df_tmps = []
     rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
 
@@ -728,7 +734,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     # Remove columns with > 20% missing values
     X = X.dropna(thresh=len(X) * .80, axis=1)
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Apply a simple imputer (note that this assumes extreme cases of
     # missingness have already been addressed)
@@ -740,21 +747,24 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     sel.fit(X)
     X = X[X.columns[sel.get_support(indices=True)]]
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Remove multicollinear columns
     if remove_multi is True:
         transformer = ReduceVIF()
         X = transformer.fit_transform(X, y)
         if X.empty:
-            return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+            return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+                   grand_mean_best_MSE, {}
 
     # Remove outliers
     outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
     X = X[outlier_mask]
     y = y[outlier_mask]
     if X.empty:
-        return grand_mean_best_estimator, grand_mean_best_Rsquared, grand_mean_best_MSE, {}
+        return grand_mean_best_estimator, grand_mean_best_Rsquared, \
+               grand_mean_best_MSE, {}
 
     # Standardize X
     scaler = StandardScaler()
@@ -764,8 +774,7 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
     # scaler = StandardScaler()
     # y = pd.DataFrame(scaler.fit_transform(y.reshape(-1,1)))
 
-    # Bootstrap train-test split
-    # Repeated test-train splits "simulates" the variability of incoming data,
+    # Bootstrap nested CV's "simulates" the variability of incoming data,
     # particularly when training on smaller datasets
     feature_imp_dicts = []
     best_positions_list = []
@@ -813,13 +822,17 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
                                                    reverse=True))
             else:
                 if X.shape[1] < 25:
+                    print(UserWarning('Total number of features is <25!'))
                     best_positions = list(X.columns)
                 else:
                     best_positions = [column[0] for
-                                        column in zip(X.columns,
-                                                      fitted.named_steps['feature_select'].get_support(indices=True)) if column[1]]
+                                        column in
+                                      zip(X.columns, fitted.named_steps[
+                                          'feature_select'].get_support(
+                                          indices=True)) if column[1]]
 
-                coefs = np.abs(fitted.named_steps[best_regressor.split('_')[0]].coef_)
+                coefs = np.abs(fitted.named_steps[
+                                   best_regressor.split('_')[0]].coef_)
 
                 feat_imp_dict = OrderedDict(sorted(dict(zip(best_positions,
                                                             coefs)).items(),
@@ -858,7 +871,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
 def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                       template, sessions):
     from joblib import Parallel, delayed
-    rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+    #rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+    rsns = ['triple']
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
@@ -869,16 +883,19 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
         for alg in embedding_types:
             for ses_name in sessions:
                 if alg == 'ASE' or alg == 'OMNI':
-                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in glob.glob(
+                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in
+                           glob.glob(
                         f"{base_dir}/embeddings_all_{modality}/*") if
                            os.path.basename(i).startswith('sub')]
                 else:
-                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in glob.glob(
+                    ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in
+                           glob.glob(
                         f"{base_dir}/pynets/*") if
                            os.path.basename(i).startswith('sub')]
 
                 if alg == 'ASE' or alg == 'OMNI':
-                    ensembles = get_ensembles_embedding(modality, alg, base_dir)
+                    ensembles = get_ensembles_embedding(modality, alg,
+                                                        base_dir)
                     df_top = None
                     if ensembles is None:
                         continue
@@ -896,10 +913,11 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                 hyperparam_dict = {}
 
                 grid = build_grid(modality, hyperparam_dict,
-                                  sorted(list(set(hyperparams))), ensembles)[1]
+                                  sorted(list(set(hyperparams))),
+                                  ensembles)[1]
 
-                grid_mod = list(set([tuple(x for x in i if x not in rsns) for i in
-                                 grid]))
+                grid_mod = list(set([tuple(x for x in i if x not in rsns)
+                                     for i in grid]))
 
                 # Since we are using all of the 3 RSN connectomes (pDMN, coSN, and
                 # fECN) in the feature-space,
@@ -1088,7 +1106,8 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                 else:
                     print(
                         f"\nMultiple structural embeddings found for {id} and"
-                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most recent...")
+                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                        f" recent...")
                     embedding = \
                         sorted(embeddings, key=os.path.getmtime)[0]
                 if os.path.isfile(embedding):
@@ -1343,7 +1362,8 @@ class BSNestedCV(SimpleInterface):
                 X = pd.read_csv(
                     self.inputs.X, chunksize=100000).read()
                 [grand_mean_best_estimator, grand_mean_best_Rsquared,
-                 grand_mean_best_MSE, mega_feat_imp_dict] = bootstrapped_nested_cv(
+                 grand_mean_best_MSE, mega_feat_imp_dict] = \
+                    bootstrapped_nested_cv(
                     X, self.inputs.y)
                 if len(mega_feat_imp_dict) > 1:
                     print(f"Target Outcome: {self.inputs.target_var}")
@@ -1652,7 +1672,8 @@ if __name__ == "__main__":
     target_modality = 'dwi'
     template = 'MNI152_T1'
     mets = ["global_efficiency", "average_clustering",
-            "average_shortest_path_length", "average_local_efficiency_nodewise",
+            "average_shortest_path_length",
+            "average_local_efficiency_nodewise",
             "average_betweenness_centrality",
             "average_eigenvector_centrality"]
 
@@ -1683,15 +1704,18 @@ if __name__ == "__main__":
     df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
     df = df[['participant_id', 'rum_persist', 'rum_1', 'dep_1', 'age']]
     # Remove 4 outliers in the behavioral data
-    df = df.loc[(df['participant_id'] != '33') & (df['participant_id'] != '21') &
-                (df['participant_id'] != '54') & (df['participant_id'] != '14')]
+    df = df.loc[(df['participant_id'] != '33') &
+                (df['participant_id'] != '21') &
+                (df['participant_id'] != '54') &
+                (df['participant_id'] != '14')]
     dict_file_path = make_feature_space_dict(df, modalities, sub_dict_clean,
                                              sessions[0], base_dir, mets)
 
     with Manager() as mgr:
         retval = mgr.dict()
-        p = Process(target=build_predict_workflow, args=(base_dir, dict_file_path, modality_grids, drop_cols,
-              target_vars, embedding_types, target_modality))
+        p = Process(target=build_predict_workflow,
+                    args=(base_dir, dict_file_path, modality_grids, drop_cols,
+                          target_vars, embedding_types, target_modality))
         p.start()
         p.join()
 

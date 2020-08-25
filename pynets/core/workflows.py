@@ -1649,6 +1649,7 @@ def dmri_connectometry(
                     "parc",
                     "atlas",
                     "uatlas",
+                    "vox_size"
                 ],
                 output_names=[
                     "net_parcels_map_nifti",
@@ -1662,6 +1663,11 @@ def dmri_connectometry(
                 imports=import_list,
             ),
             name="node_gen_node",
+        )
+        dmri_connectometry_wf.connect(
+            [
+                (inputnode, node_gen_node, [("vox_size", "vox_size")]),
+            ]
         )
     else:
         # Non-masking case
@@ -1973,7 +1979,18 @@ def dmri_connectometry(
     streams2graph_node._mem_gb = runtime_dict["streams2graph_node"][1]
 
     if error_margin_list:
-        streams2graph_node.iterables = [("error_margin", error_margin_list)]
+        streams2graph_node.inputs.error_margin = error_margin_list[0]
+        streams2graph_node.iterables = [("error_margin",
+                                         error_margin_list[1:])]
+    else:
+        dmri_connectometry_wf.connect(
+            [
+                (
+                    dsn_node, streams2graph_node,
+                    [("error_margin", "error_margin")],
+                )
+            ]
+        )
 
     # Create outputnode to capture results of nested workflow
     outputnode = pe.Node(
@@ -2490,10 +2507,29 @@ def dmri_connectometry(
                 joinsource=prep_spherical_nodes_node,
                 joinfield=map_fields,
             )
+            if error_margin_list is not None:
+                join_iters_node_em = pe.JoinNode(
+                    niu.IdentityInterface(fields=map_fields),
+                    name="join_iters_node_em",
+                    joinsource=streams2graph_node,
+                    joinfield=map_fields,
+                )
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_em, map_connects),
+                        (join_iters_node_em, join_iters_node_prep_spheres,
+                         map_connects)
+                    ]
+                )
+            else:
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_prep_spheres,
+                         map_connects),
+                    ]
+                )
             dmri_connectometry_wf.connect(
                 [
-                    (thr_info_node, join_iters_node_prep_spheres,
-                     map_connects),
                     (join_iters_node_prep_spheres, join_iters_node,
                      map_connects),
                 ]
@@ -2508,9 +2544,29 @@ def dmri_connectometry(
                 joinsource=run_tracking_node,
                 joinfield=map_fields,
             )
+            if error_margin_list is not None:
+                join_iters_node_em = pe.JoinNode(
+                    niu.IdentityInterface(fields=map_fields),
+                    name="join_iters_node_em",
+                    joinsource=streams2graph_node,
+                    joinfield=map_fields,
+                )
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_em, map_connects),
+                        (join_iters_node_em, join_iters_node_run_track,
+                         map_connects)
+                    ]
+                )
+            else:
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_run_track,
+                         map_connects),
+                    ]
+                )
             dmri_connectometry_wf.connect(
                 [
-                    (thr_info_node, join_iters_node_run_track, map_connects),
                     (join_iters_node_run_track, join_iters_node, map_connects),
                 ]
             )
@@ -2521,9 +2577,26 @@ def dmri_connectometry(
             and not node_size_list
         ):
             # print('No connectivity model or node extraction iterables...')
-            dmri_connectometry_wf.connect(
-                [(thr_info_node, join_iters_node, map_connects)]
-            )
+            if error_margin_list is not None:
+                join_iters_node_em = pe.JoinNode(
+                    niu.IdentityInterface(fields=map_fields),
+                    name="join_iters_node_em",
+                    joinsource=streams2graph_node,
+                    joinfield=map_fields,
+                )
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_em, map_connects),
+                        (join_iters_node_em, join_iters_node,
+                         map_connects)
+                    ]
+                )
+            else:
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node, map_connects),
+                    ]
+                )
         elif (conn_model_list or multi_directget or min_length_list) or (
             node_size_list and parc is False
         ):
@@ -2540,10 +2613,29 @@ def dmri_connectometry(
                 joinsource=run_tracking_node,
                 joinfield=map_fields,
             )
-            dmri_connectometry_wf.connect([(thr_info_node,
-                                            join_iters_node_run_track,
-                                            map_connects),
-                                           (join_iters_node_run_track,
+            if error_margin_list is not None:
+                join_iters_node_em = pe.JoinNode(
+                    niu.IdentityInterface(fields=map_fields),
+                    name="join_iters_node_em",
+                    joinsource=streams2graph_node,
+                    joinfield=map_fields,
+                )
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_em, map_connects),
+                        (join_iters_node_em, join_iters_node_run_track,
+                         map_connects)
+                    ]
+                )
+            else:
+                dmri_connectometry_wf.connect(
+                    [
+                        (thr_info_node, join_iters_node_run_track,
+                         map_connects),
+                    ]
+                )
+
+            dmri_connectometry_wf.connect([(join_iters_node_run_track,
                                             join_iters_node_prep_spheres,
                                             map_connects,
                                             ),
@@ -3138,7 +3230,6 @@ def dmri_connectometry(
                     ("directget", "directget"),
                     ("warped_fa", "warped_fa"),
                     ("min_length", "min_length"),
-                    ("error_margin", "error_margin"),
                     ("network", "network"),
                 ],
             ),
@@ -4238,6 +4329,7 @@ def fmri_connectometry(
                     "parc",
                     "atlas",
                     "uatlas",
+                    "vox_size"
                 ],
                 output_names=[
                     "net_parcels_map_nifti",
@@ -4252,7 +4344,11 @@ def fmri_connectometry(
             ),
             name="node_gen_node",
         )
-
+        fmri_connectometry_wf.connect(
+            [
+                (inputnode, node_gen_node, [("vox_size", "vox_size")]),
+            ]
+        )
     else:
         # Non-masking case
         node_gen_node = pe.Node(

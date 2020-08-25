@@ -3,7 +3,7 @@
             "dg": "['det', 'prob']",
             "ml": "['0', '20']",
             "mod": "['csa']",
-            "em": 8
+            "tol": 8
         },
     "func": {
             "ct": "None",

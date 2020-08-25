@@ -96,8 +96,8 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     print("%s%s%s" % ('fetch_nilearn_atlas_coords --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
-    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(network, template, coords, labels, parc,
-                                                                         parcel_list)
+    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(
+        network, template, coords, labels, parc, parcel_list)
     print("%s%s%s" % ('get_node_membership --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     assert coords is not None
@@ -114,7 +114,8 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     # Set example inputs
     import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
-    template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    template = pkg_resources.resource_filename("pynets",
+                                               f"templates/MNI152_T1_brain_2mm.nii.gz")
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
@@ -141,7 +142,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
                                                                                                   net_parcel_list,
                                                                                                   net_labels,
                                                                                                   dir_path, ID,
-                                                                                                  perc_overlap)
+                                                                                                  perc_overlap, vox_size='2mm')
     print("%s%s%s" % ('parcel_masker --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
@@ -289,11 +290,11 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
     [WB_net_parcels_map_nifti_masked, WB_coords_masked, WB_labels_masked,
      _, _, _] = nodemaker.node_gen_masking(roi, WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
-                                           parlistfile)
+                                           parlistfile, vox_size='2mm')
 
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
     [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(roi, WB_coords, WB_parcel_list, WB_labels,
-                                                            dir_path, ID, perc_overlap)
+                                                            dir_path, ID, perc_overlap, vox_size='2mm')
     print("%s%s%s" % ('parcel_masker (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 

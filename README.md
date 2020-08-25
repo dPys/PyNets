@@ -79,10 +79,10 @@ where the `-config` flag specifies that path to a .json configuration spec that 
             "es": "['mean', 'median']" # Indicates the method(s) of nodal time-series signal extraction.
         },
     "dwi": { # dMRI options. If you only have structural (i.e. DWI) data, set each of the `func` options to "None"
-            "dg": "None",
-            "ml": "None",
-            "mod": "None",
-            "em": "None"
+            "dg": "det", # The directional assumptions of tractography (e.g. deterministic, probabilistic)
+            "ml": "40", # The minimum length criterion for streamlines in tractography
+            "mod": "csd", # The diffusion model type
+            "tol": "8" # The tolerance distance (in the units of the streamlines, usually mm). If any node in the streamline is within this distance from the center of any voxel in the ROI, then the connection is counted as an edge"
         },
     "gen": { # These are general options that apply to all modalities
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']", # Anatomical atlases to define nodes.

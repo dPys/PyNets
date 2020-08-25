@@ -544,11 +544,14 @@ def get_node_membership(
                         (parcel_vol.astype("uint16") == 1))))
 
             # Calculate % overlap
-            try:
+            if overlap_count > 0:
                 overlap = float(overlap_count / total_count)
-            except BaseException:
-                print(f"No overlap with roi mask. Dropping parcel {i}...")
+            else:
+                print(
+                    f"No overlap of parcel {i} with rsn mask...")
                 overlap = float(0)
+                i += 1
+                continue
 
             if overlap >= perc_overlap:
                 print(
@@ -558,7 +561,7 @@ def get_node_membership(
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
                 net_labels.append(labels[i])
-            i = i + 1
+            i += 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
 
     rsn_img.uncache()
@@ -585,7 +588,8 @@ def parcel_masker(
         labels,
         dir_path,
         ID,
-        perc_overlap):
+        perc_overlap,
+        vox_size):
     """
     Evaluate the affinity of any arbitrary list of parcel nodes for a
     user-specified ROI mask.
@@ -625,37 +629,64 @@ def parcel_masker(
         corresponding to ROI masks with a spatial affinity to the specified
         ROI mask.
     """
-    from pynets.core import nodemaker
-    from nilearn.image import resample_img
-    from nilearn import masking
-    import os.path as op
+    from nilearn.image import resample_to_img
+    from nilearn.image import math_img
+    from nilearn.image import index_img
     import types
+    import yaml
+    import pkg_resources
+    import sys
 
-    mask_img = nib.load(roi)
-    mask_aff = mask_img.affine
-    mask_data, _ = masking._load_mask_img(roi)
-    mask_img.uncache()
+    mask_img = math_img("img > 0", img=nib.load(roi))
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
+
+    template_brain = pkg_resources.resource_filename(
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+    )
+    try:
+        template_img = nib.load(template_brain)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI template. Do you have git-lfs "
+              f"installed?")
+        sys.exit(1)
+
+    mask_img_res = resample_to_img(
+        mask_img, template_img,
+    )
+
+    mask_data = mask_img_res.get_fdata().astype('bool')
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
+    elif isinstance(parcel_list, str):
+        parcel_list_img = nib.load(parcel_list)
+        parcel_list = [index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])]
 
     i = 0
     indices = []
     for parcel in parcel_list:
-        parcel_vol = np.zeros(mask_data.shape, dtype=bool)
-        parcel_data_reshaped = np.asarray(
-            resample_img(
-                parcel, target_affine=mask_aff, target_shape=mask_data.shape
-            ).dataobj
-        )
-        parcel_vol[parcel_data_reshaped == 1] = 1
-
+        parcel = resample_to_img(parcel, template_img, interpolation='nearest')
         # Count number of unique voxels where overlap of parcel and mask occurs
         overlap_count = len(
             np.unique(
                 np.where(
                     (mask_data.astype("uint16") == 1)
-                    & (parcel_vol.astype("uint16") == 1)
+                    & (np.asarray(parcel.dataobj
+                                  ).astype('bool').astype("uint16") == 1)
                 )
             )
         )
@@ -664,16 +695,22 @@ def parcel_masker(
         total_count = len(
             np.unique(
                 np.where(
-                    (parcel_vol.astype("uint16") == 1))))
+                    (np.asarray(parcel.dataobj
+                                ).astype('bool').astype("uint16") == 1)
+                )
+            )
+        )
 
         # Calculate % overlap
-        try:
+        if overlap_count > 0:
             overlap = float(overlap_count / total_count)
-        except BaseException:
+        else:
             print(
-                f"\nWarning: No overlap of parcel {labels[i]} with roi"
-                f" mask!\n")
-            overlap = float(0)
+                f"No overlap of parcel {labels[i]} with roi"
+                f" mask...")
+            indices.append(i)
+            i += 1
+            continue
 
         if overlap >= perc_overlap:
             print(
@@ -682,7 +719,7 @@ def parcel_masker(
             )
         else:
             indices.append(i)
-        i = i + 1
+        i += 1
 
     labels_adj = list(labels)
     coords_adj = list(tuple(x) for x in coords)
@@ -697,24 +734,6 @@ def parcel_masker(
             " brain mask/roi..."
         )
 
-    if any(isinstance(sub, tuple) for sub in labels_adj):
-        label_intensities = [i[1] for i in labels_adj]
-    elif any(isinstance(sub, dict) for sub in labels_adj):
-        label_intensities = None
-    else:
-        label_intensities = labels_adj
-
-    # Create a resampled 3D atlas that can be viewed alongside mask img for QA
-    resampled_parcels_nii_path = f"{dir_path}/{ID}_parcels_resampled2roimask" \
-                                 f"_{op.basename(roi).split('.')[0]}.nii.gz"
-    resampled_parcels_map_nifti = resample_img(
-        nodemaker.create_parcel_atlas(parcel_list_adj, label_intensities)[0],
-        target_affine=mask_aff,
-        target_shape=mask_data.shape,
-        interpolation="nearest",
-    )
-    nib.save(resampled_parcels_map_nifti, resampled_parcels_nii_path)
-    resampled_parcels_map_nifti.uncache()
     if not coords_adj:
         raise ValueError(
             "\nERROR: ROI mask was likely too restrictive and yielded < 2"
@@ -726,7 +745,7 @@ def parcel_masker(
     return coords_adj, labels_adj, parcel_list_adj
 
 
-def coords_masker(roi, coords, labels, error):
+def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     """
     Evaluate the affinity of any arbitrary list of coordinate nodes for a
     user-specified ROI mask.
@@ -755,10 +774,48 @@ def coords_masker(roi, coords, labels, error):
         Filtered list of string labels corresponding to ROI nodes with a
         spatial affinity for the specified ROI mask.
     """
-    from nilearn import masking
+    import nibabel as nib
+    from nilearn.image import math_img
     from pynets.core.nodemaker import mmToVox
+    import yaml
+    import pkg_resources
+    import sys
+    from nilearn.image import resample_to_img
 
-    mask_data, mask_aff = masking._load_mask_img(roi)
+    mask_img = math_img("img > 0", img=nib.load(roi))
+
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            template_name = hardcoded_params["template"][0]
+        except KeyError:
+            print(
+                "No template specified in runconfig.yaml"
+            )
+            sys.exit(0)
+    stream.close()
+
+    template_brain = pkg_resources.resource_filename(
+        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+    )
+    try:
+        template_img = nib.load(template_brain)
+    except indexed_gzip.ZranError as e:
+        print(e,
+              f"\nCannot load MNI template. Do you have git-lfs "
+              f"installed?")
+        sys.exit(1)
+
+    mask_img_res = resample_to_img(
+        mask_img, template_img,
+    )
+
+    mask_data = mask_img_res.get_fdata().astype('bool')
+
+    mask_aff = mask_img_res.affine
+
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
     y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
     z_vox = np.diagonal(mask_aff[:3, 0:3])[2]
@@ -1417,8 +1474,9 @@ def node_gen_masking(
     parc,
     atlas,
     uatlas,
-    perc_overlap=0.75,
-    error=2,
+    vox_size,
+    perc_overlap=0.10,
+    error=2
 ):
     """
     In the case that masking was applied, this function generate nodes based
@@ -1488,7 +1546,7 @@ def node_gen_masking(
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
-        roi, coords, parcel_list, labels, dir_path, ID, perc_overlap
+        roi, coords, parcel_list, labels, dir_path, ID, perc_overlap, vox_size,
     )
 
     if any(isinstance(sub, tuple) for sub in labels):
