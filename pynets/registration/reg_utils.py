@@ -1268,7 +1268,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     if normalized is not input_img:
         out_fname = (
             f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_"
-            f"reor-RAS.nii{dwi_prep.split('/')[-1].split('.nii')[1]}"
+            f"reor-RAS.nii.gz"
         )
         if (
             overwrite is False
@@ -1296,7 +1296,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     else:
         out_fname = (
             f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_"
-            f"noreor-RAS.nii{dwi_prep.split('/')[-1].split('.nii')[1]}"
+            f"noreor-RAS.nii.gz"
         )
         out_bvec_fname = bvec_fname
 
@@ -1342,12 +1342,12 @@ def reorient_img(img, out_dir, overwrite=True):
         print(f"{'Reorienting '}{img}{' to RAS+...'}")
         out_name = (
             f"{out_dir}/{img.split('/')[-1].split('.nii')[0]}_"
-            f"reor-RAS.nii{img.split('/')[-1].split('.nii')[1]}"
+            f"reor-RAS.nii.gz"
         )
     else:
         out_name = (
             f"{out_dir}/{img.split('/')[-1].split('.nii')[0]}_"
-            f"noreor-RAS.nii{img.split('/')[-1].split('.nii')[1]}"
+            f"noreor-RAS.nii.gz"
         )
 
     if overwrite is False and os.path.isfile(out_name):
@@ -1397,7 +1397,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
         img_file_res = (
             f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
-            f"res-{vox_size}.nii{os.path.basename(img_file).split('.nii')[1]}"
+            f"res-{vox_size}.nii.gz"
         )
         if overwrite is False and os.path.isfile(img_file_res):
             img_file = img_file_res
@@ -1421,7 +1421,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
         img_file_nores = (
             f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
             f"nores-{vox_size}"
-            f".nii{os.path.basename(img_file).split('.nii')[1]}")
+            f".nii.gz")
         if overwrite is False and os.path.isfile(img_file_nores):
             img_file = img_file_nores
             pass

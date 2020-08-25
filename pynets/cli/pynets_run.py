@@ -1845,7 +1845,8 @@ def build_workflow(args, retval):
                         'roi_neighborhood_tol preset cannot be less than '
                         'the value of the structural connectome error_margin'
                         ' parameter.')
-            print(f"{Fore.GREEN}Iterating minimum streamline lengths:")
+            print(f"{Fore.GREEN}Iterating ROI-streamline intersection "
+                  f"tolerance:")
             print(f"{Fore.BLUE}{', '.join(error_margin_list)}")
 
         if target_samples:
