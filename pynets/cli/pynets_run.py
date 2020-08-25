@@ -401,7 +401,7 @@ def get_parser():
              "minimums, separate the list by space (e.g. 10 30 50).\n",
     )
     parser.add_argument(
-        "-em",
+        "-tol",
         metavar="Error margin",
         default=8,
         nargs="+",
@@ -987,7 +987,7 @@ def build_workflow(args, retval):
             min_length_list = None
     else:
         min_length_list = None
-    error_margin = args.em
+    error_margin = args.tol
     if error_margin:
         if (isinstance(error_margin, list)) and (len(error_margin) > 1):
             error_margin_list = error_margin
