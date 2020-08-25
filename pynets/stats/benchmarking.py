@@ -23,7 +23,7 @@ import itertools
 import warnings
 from sklearn.preprocessing import StandardScaler
 from pynets.stats.prediction import make_subject_dict, cleanNullTerms, \
-    get_ensembles_top, get_ensembles_embedding, build_grid
+    get_ensembles_top, build_grid
 
 warnings.filterwarnings("ignore")
 
