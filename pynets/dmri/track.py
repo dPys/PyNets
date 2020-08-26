@@ -208,6 +208,7 @@ def create_density_map(
     roi,
     directget,
     min_length,
+    error_margin,
     namer_dir,
 ):
     """
@@ -267,7 +268,7 @@ def create_density_map(
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype("float32"), dwi_img.affine)
 
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
         "/density_map_",
         "%s" % (network + "_" if network is not None else ""),
@@ -291,6 +292,8 @@ def create_density_map(
         directget,
         "_minlength-",
         min_length,
+        "_tol-",
+        error_margin,
         ".nii.gz",
     )
     dm_img.to_filename(dm_path)

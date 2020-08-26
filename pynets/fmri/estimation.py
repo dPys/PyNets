@@ -27,7 +27,7 @@ def get_optimal_cov_estimator(time_series):
         while not hasattr(estimator, 'covariance_') and \
             not hasattr(estimator, 'precision_') and ix < 3:
             for tol in [0.1, 0.01, 0.001, 0.0001]:
-                print(f"Auto-tuning Tolerance={tol}")
+                print(f"Tolerance={tol}")
                 estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol,
                                              assume_centered=True)
                 try:

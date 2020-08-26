@@ -435,8 +435,7 @@ def main():
     import gc
     import sys
     import json
-    import ast
-    import yaml
+    from pynets.core.utils import build_args_from_config
     import itertools
     from types import SimpleNamespace
     import pkg_resources
@@ -504,34 +503,8 @@ def main():
             arg_dict = json.load(stream)
         stream.close()
 
-    # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit()
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit()
-
-    stream.close()
-
     # S3
     # Primary inputs
-
     s3 = bids_args.bids_dir.startswith("s3://")
 
     if not s3:
@@ -781,43 +754,7 @@ def main():
             list(set(list(flatten(i)))) for i in intermodal_dict.values()
         ]
 
-    arg_list = []
-    for mod_ in modalities:
-        arg_list.append(arg_dict[mod_])
-
-    arg_list.append(arg_dict["gen"])
-
-    args_dict_all = {}
-    models = []
-    for d in arg_list:
-        if "mod" in d.keys():
-            if d["mod"] == "None":
-                del d["mod"]
-                args_dict_all.update(d)
-                continue
-            if len(modality) == 1:
-                if any(x in d["mod"] for x in
-                       func_models) and ("dwi" in modality):
-                    del d["mod"]
-                elif any(x in d["mod"] for x in
-                         struct_models) and ("func" in modality):
-                    del d["mod"]
-            else:
-                if any(x in d["mod"] for x in func_models) or any(
-                    x in d["mod"] for x in struct_models
-                ):
-                    models.append(ast.literal_eval(d["mod"]))
-        args_dict_all.update(d)
-
-    if len(modality) > 1:
-        args_dict_all["mod"] = str(list(set(flatten(models))))
-
-    print("Arguments parsed from bids_config.json:\n")
-    print(args_dict_all)
-
-    for key, val in args_dict_all.items():
-        if isinstance(val, str):
-            args_dict_all[key] = ast.literal_eval(val)
+    args_dict_all = build_args_from_config(modality, arg_dict)
 
     id_list = []
     for i in sorted(list(set(subjs))):

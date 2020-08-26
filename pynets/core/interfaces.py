@@ -61,6 +61,7 @@ class FetchNodesLabels(SimpleInterface):
         from nilearn.image import concat_imgs
         import pandas as pd
         import time
+        import textwrap
         from pathlib import Path
         import os.path as op
         import glob
@@ -334,8 +335,9 @@ class FetchNodesLabels(SimpleInterface):
                         np.arange(len(coords) + 1) != 0
                     ].tolist()
 
+
         print(f"Coordinates:\n{coords}")
-        print(f"Labels:\n{labels}")
+        print(f"Labels:\n{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
 
         assert len(coords) == len(labels)
 
@@ -3045,6 +3047,7 @@ class Tracking(SimpleInterface):
                 self.inputs.roi,
                 self.inputs.directget,
                 self.inputs.min_length,
+                self.inputs.error_margin,
                 namer_dir,
             )
         except BaseException:

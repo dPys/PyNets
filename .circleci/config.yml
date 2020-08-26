@@ -58,7 +58,7 @@ jobs:
               docker build \
                 --cache-from=pynets \
                 --rm=false \
-                -t dpys/pynets:latest \
+                -t dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
@@ -80,7 +80,7 @@ jobs:
             THISVERSION=$( python3 get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            DOCKERVERSION=$(docker run --rm -it dpys/pynets:latest pynets --version)
+            DOCKERVERSION=$(docker run --rm -it dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` pynets --version)
             DOCKERVERSION=${DOCKERVERSION%$'\r'}
             DOCKERVERSION=${DOCKERVERSION#*"PyNets v"}
             echo "VERSION: \"$THISVERSION\""
@@ -91,7 +91,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             mkdir -p /tmp/cache
-            docker save debian:stretch-slim dpys/pynets:latest \
+            docker save debian:stretch-slim dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
             | pigz -3 > /tmp/cache/docker.tar.gz
 
       - persist_to_workspace:
@@ -381,7 +381,7 @@ jobs:
               docker tag dpys/pynets dpys/pynets:unstable
               docker push dpys/pynets:unstable
               if [[ -n "$CIRCLE_TAG" ]]; then
-                docker push dpys/pynets:latest
+                docker push dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
                 docker tag dpys/pynets dpys/pynets:$CIRCLE_TAG
                 docker push dpys/pynets:$CIRCLE_TAG
               fi
