@@ -647,7 +647,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     parcel_vec = list(np.ones(len(parcels)).astype("bool"))
 
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
-        mod_fit = hf['reconstruction'][:]
+        mod_fit = hf['reconstruction'][:].astype('float32')
     hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))

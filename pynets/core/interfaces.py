@@ -2793,7 +2793,7 @@ class Tracking(SimpleInterface):
             )
             with h5py.File(recon_path, 'w') as hf:
                 hf.create_dataset("reconstruction",
-                                  data=model.astype('float32'))
+                                  data=model.astype('float32'), dtype='f4')
             hf.close()
 
             copyfile(
