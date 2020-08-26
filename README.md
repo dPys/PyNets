@@ -14,7 +14,7 @@ Install
 -------
 ## Dockerhub (preferred):
 ```
-docker pull dpys/pynets:latest
+docker pull dpys/pynets
 ```
 
 ## Manual

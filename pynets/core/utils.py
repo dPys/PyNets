@@ -1706,6 +1706,78 @@ class build_sql_db(object):
         return
 
 
+def build_args_from_config(modality, arg_dict):
+    import ast
+    import pkg_resources
+    import yaml
+
+    modalities = ["func", "dwi"]
+
+    # Available functional and structural connectivity models
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params["available_models"]["func_models"]
+        except KeyError:
+            print(
+                "ERROR: available functional models not successfully extracted"
+                " from runconfig.yaml"
+            )
+            sys.exit()
+        try:
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
+        except KeyError:
+            print(
+                "ERROR: available structural models not successfully extracted"
+                " from runconfig.yaml"
+            )
+            sys.exit()
+
+    stream.close()
+
+    arg_list = []
+    for mod_ in modalities:
+        arg_list.append(arg_dict[mod_])
+
+    arg_list.append(arg_dict["gen"])
+
+    args_dict_all = {}
+    models = []
+    for d in arg_list:
+        if "mod" in d.keys():
+            if d["mod"] == "None":
+                del d["mod"]
+                args_dict_all.update(d)
+                continue
+            if len(modality) == 1:
+                if any(x in d["mod"] for x in
+                       func_models) and ("dwi" in modality):
+                    del d["mod"]
+                elif any(x in d["mod"] for x in
+                         struct_models) and ("func" in modality):
+                    del d["mod"]
+            else:
+                if any(x in d["mod"] for x in func_models) or any(
+                    x in d["mod"] for x in struct_models
+                ):
+                    models.append(ast.literal_eval(d["mod"]))
+        args_dict_all.update(d)
+
+    if len(modality) > 1:
+        args_dict_all["mod"] = str(list(set(flatten(models))))
+
+    print("Arguments parsed from config .json:\n")
+    print(args_dict_all)
+
+    for key, val in args_dict_all.items():
+        if isinstance(val, str):
+            args_dict_all[key] = ast.literal_eval(val)
+    return args_dict_all
+
+
 class watchdog(object):
     def run(self):
         self.shutdown = threading.Event()
