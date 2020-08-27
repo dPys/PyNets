@@ -152,7 +152,9 @@ def load_pd_dfs(file_):
                 empty_cols = [col for col in df.columns if
                               df_dups[col].isnull().all()]
                 # Drop these columns from the dataframe
-                print(f"{Fore.LIGHTYELLOW_EX}Dropping duplicated empty columns: {empty_cols}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}"
+                      f"ropping duplicated empty columns: "
+                      f"{empty_cols}{Style.RESET_ALL}")
                 df.drop(empty_cols,
                         axis=1,
                         inplace=True)
@@ -252,10 +254,6 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             columns=lambda x: re.sub(
                 "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_", "",
                 x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "_tol-\d{1,20}", "",
-                x))
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
     #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
@@ -322,13 +320,15 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
                     .split(modality)[0]
                 )
                 if os.path.isfile(auc_file):
-                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file, modality, drop_cols)
+                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file,
+                                             modality, drop_cols)
                     if df_sub.empty:
                         continue
                     else:
                         subject_dict[sub][ses].append(df_sub)
                 else:
-                    print(f"{Fore.RED}Missing auc file for {sub} {ses}...{Style.RESET_ALL}")
+                    print(f"{Fore.RED}Missing auc file for {sub} {ses}..."
+                          f"{Style.RESET_ALL}")
                     continue
         list_ = subject_dict[sub][ses]
         if len(list_) > 0:
@@ -359,7 +359,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
 
             del df_base
         else:
-            print(f"{Fore.RED}Missing data for {sub} {ses}...{Style.RESET_ALL}")
+            print(f"{Fore.RED}Missing data for {sub} {ses}..."
+                  f"{Style.RESET_ALL}")
             continue
         del list_
 
@@ -393,7 +394,8 @@ def collect_all(working_path, modality, drop_cols):
     wf = pe.Workflow(name="load_pd_dfs")
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["working_path", "modality", "drop_cols"]),
+        niu.IdentityInterface(fields=["working_path", "modality",
+                                      "drop_cols"]),
         name="inputnode"
     )
     inputnode.inputs.working_path = working_path
@@ -441,7 +443,8 @@ def collect_all(working_path, modality, drop_cols):
     wf.connect(
         [
             (inputnode, build_subject_dict_node,
-             [("working_path", "working_path"), ('modality', 'modality'), ('drop_cols', 'drop_cols')]),
+             [("working_path", "working_path"), ('modality', 'modality'),
+              ('drop_cols', 'drop_cols')]),
             (build_subject_dict_node, df_join_node, [("files_", "files_")]),
             (df_join_node, load_pd_dfs_map, [("files_", "file_")]),
             (load_pd_dfs_map, outputnode, [("df", "dfs")]),

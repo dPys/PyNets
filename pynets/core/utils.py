@@ -8,6 +8,7 @@ Copyright (C) 2017
 import warnings
 import os
 import re
+import sys
 import os.path as op
 import indexed_gzip
 import nibabel as nib
@@ -1813,6 +1814,7 @@ class watchdog(object):
             # Hopefully give logs some time to flush
             time.sleep(1)
             os.kill(0, 9)
+            sys.exit(1)
 
     def _run(self):
         from pynets.cli.pynets_run import main

@@ -2949,7 +2949,7 @@ class Tracking(SimpleInterface):
         gc.collect()
 
         # Save streamlines to trk
-        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             runtime.cwd,
             "/streamlines_",
             "%s"
@@ -2982,6 +2982,8 @@ class Tracking(SimpleInterface):
             self.inputs.directget,
             "_minlength-",
             self.inputs.min_length,
+            "_tol-",
+            self.inputs.error_margin,
             ".trk",
         )
 

@@ -116,12 +116,21 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     import os
     from dipy.io import load_pickle
     from dipy.reconst.shm import anisotropic_power
-    from dipy.core.sphere import HemiSphere
+    from dipy.core.sphere import HemiSphere, Sphere
     from dipy.reconst.shm import sf_to_sh
 
     gtab = load_pickle(gtab_file)
+
+    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
+
     gtab_hemisphere = HemiSphere(
         xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
+
+    try:
+        assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
+    except BaseException:
+        gtab_hemisphere = Sphere(
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
 
     img = nib.load(dwi_file)
     aff = img.affine
@@ -553,6 +562,8 @@ def streams2graph(
         raise ValueError('roi_neighborhood_tol preset cannot be less than '
                          'the value of the structural connectome error_margin'
                          ' parameter.')
+    else:
+        print(f"Using fiber-roi intersection tolerance: {error_margin}...")
 
     # Load FA
     fa_img = nib.load(warped_fa)
