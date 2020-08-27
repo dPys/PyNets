@@ -40,7 +40,7 @@ def get_parser():
     parser.add_argument(
         "-dc",
         metavar="Column strings to exclude",
-        default="None",
+        default=None,
         nargs="+",
         help="Space-delimited list of strings.\n",
     )
@@ -119,8 +119,6 @@ def load_pd_dfs(file_):
                 id = id.replace('.csv', '')
 
             #print(id)
-            ID = id.split("_")[0].split("sub-")[1]
-            ses = id.split("_")[1].split("ses-")[1]
             df["id"] = id
             df["id"] = df["id"].astype('str')
             df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
@@ -200,7 +198,7 @@ def df_concat(dfs, working_path, modality):
     # Set ID to the first column
     cols = [cols[-1]] + cols[:-1]
     frame = frame[cols]
-    #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
+    # frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
     # missingness_dict = summarize_missingness(frame)[0]
     # bad_cols = []
     # for col in missingness_dict.keys():
@@ -229,7 +227,8 @@ def summarize_missingness(df):
                                         axis=0))
     missingness_mean = np.mean(list(missingness_dict.values()))
     if missingness_mean > 0.50:
-        print(f"{Fore.RED} {df} missing {100*missingness_mean}% values!{Style.RESET_ALL}")
+        print(f"{Fore.RED} {df} missing {100*missingness_mean}% "
+              f"values!{Style.RESET_ALL}")
 
     return missingness_dict, missingness_mean
 
@@ -625,6 +624,7 @@ def main():
     """Initializes collection of pynets outputs."""
     import gc
     import sys
+    from pynets.cli.pynets_collect import build_collect_workflow
 
     try:
         from pynets.core.utils import do_dir_path
@@ -647,6 +647,7 @@ def main():
     # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     # args_dict_all['work'] = '/tmp'
     # args_dict_all['modality'] = 'func'
+    # args_dict_all['dc'] = ''
     # args_dict_all['drop_cols'] = [
     #                  'diversity_coefficient', 'participation_coefficient',
     #                  "_minlength-20", "_minlength-30", "_minlength-0",
@@ -656,7 +657,11 @@ def main():
 
     from multiprocessing import set_start_method, Process, Manager
 
-    set_start_method("forkserver")
+    try:
+        set_start_method("forkserver")
+    except:
+        pass
+
     with Manager() as mgr:
         retval = mgr.dict()
         p = Process(target=build_collect_workflow, args=(args, retval))
