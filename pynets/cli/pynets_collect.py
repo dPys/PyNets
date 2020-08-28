@@ -40,7 +40,7 @@ def get_parser():
     parser.add_argument(
         "-dc",
         metavar="Column strings to exclude",
-        default="None",
+        default=None,
         nargs="+",
         help="Space-delimited list of strings.\n",
     )
@@ -119,8 +119,6 @@ def load_pd_dfs(file_):
                 id = id.replace('.csv', '')
 
             #print(id)
-            ID = id.split("_")[0].split("sub-")[1]
-            ses = id.split("_")[1].split("ses-")[1]
             df["id"] = id
             df["id"] = df["id"].astype('str')
             df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
@@ -152,7 +150,9 @@ def load_pd_dfs(file_):
                 empty_cols = [col for col in df.columns if
                               df_dups[col].isnull().all()]
                 # Drop these columns from the dataframe
-                print(f"{Fore.LIGHTYELLOW_EX}Dropping duplicated empty columns: {empty_cols}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}"
+                      f"ropping duplicated empty columns: "
+                      f"{empty_cols}{Style.RESET_ALL}")
                 df.drop(empty_cols,
                         axis=1,
                         inplace=True)
@@ -198,7 +198,7 @@ def df_concat(dfs, working_path, modality):
     # Set ID to the first column
     cols = [cols[-1]] + cols[:-1]
     frame = frame[cols]
-    #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
+    # frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
     # missingness_dict = summarize_missingness(frame)[0]
     # bad_cols = []
     # for col in missingness_dict.keys():
@@ -227,7 +227,8 @@ def summarize_missingness(df):
                                         axis=0))
     missingness_mean = np.mean(list(missingness_dict.values()))
     if missingness_mean > 0.50:
-        print(f"{Fore.RED} {df} missing {100*missingness_mean}% values!{Style.RESET_ALL}")
+        print(f"{Fore.RED} {df} missing {100*missingness_mean}% "
+              f"values!{Style.RESET_ALL}")
 
     return missingness_dict, missingness_mean
 
@@ -251,10 +252,6 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         df_pref = df_pref.rename(
             columns=lambda x: re.sub(
                 "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_", "",
-                x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "_tol-\d{1,20}", "",
                 x))
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
@@ -322,13 +319,15 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
                     .split(modality)[0]
                 )
                 if os.path.isfile(auc_file):
-                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file, modality, drop_cols)
+                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file,
+                                             modality, drop_cols)
                     if df_sub.empty:
                         continue
                     else:
                         subject_dict[sub][ses].append(df_sub)
                 else:
-                    print(f"{Fore.RED}Missing auc file for {sub} {ses}...{Style.RESET_ALL}")
+                    print(f"{Fore.RED}Missing auc file for {sub} {ses}..."
+                          f"{Style.RESET_ALL}")
                     continue
         list_ = subject_dict[sub][ses]
         if len(list_) > 0:
@@ -359,7 +358,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
 
             del df_base
         else:
-            print(f"{Fore.RED}Missing data for {sub} {ses}...{Style.RESET_ALL}")
+            print(f"{Fore.RED}Missing data for {sub} {ses}..."
+                  f"{Style.RESET_ALL}")
             continue
         del list_
 
@@ -393,7 +393,8 @@ def collect_all(working_path, modality, drop_cols):
     wf = pe.Workflow(name="load_pd_dfs")
 
     inputnode = pe.Node(
-        niu.IdentityInterface(fields=["working_path", "modality", "drop_cols"]),
+        niu.IdentityInterface(fields=["working_path", "modality",
+                                      "drop_cols"]),
         name="inputnode"
     )
     inputnode.inputs.working_path = working_path
@@ -441,7 +442,8 @@ def collect_all(working_path, modality, drop_cols):
     wf.connect(
         [
             (inputnode, build_subject_dict_node,
-             [("working_path", "working_path"), ('modality', 'modality'), ('drop_cols', 'drop_cols')]),
+             [("working_path", "working_path"), ('modality', 'modality'),
+              ('drop_cols', 'drop_cols')]),
             (build_subject_dict_node, df_join_node, [("files_", "files_")]),
             (df_join_node, load_pd_dfs_map, [("files_", "file_")]),
             (load_pd_dfs_map, outputnode, [("df", "dfs")]),
@@ -622,6 +624,7 @@ def main():
     """Initializes collection of pynets outputs."""
     import gc
     import sys
+    from pynets.cli.pynets_collect import build_collect_workflow
 
     try:
         from pynets.core.utils import do_dir_path
@@ -644,6 +647,7 @@ def main():
     # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     # args_dict_all['work'] = '/tmp'
     # args_dict_all['modality'] = 'func'
+    # args_dict_all['dc'] = ''
     # args_dict_all['drop_cols'] = [
     #                  'diversity_coefficient', 'participation_coefficient',
     #                  "_minlength-20", "_minlength-30", "_minlength-0",
@@ -653,7 +657,11 @@ def main():
 
     from multiprocessing import set_start_method, Process, Manager
 
-    set_start_method("forkserver")
+    try:
+        set_start_method("forkserver")
+    except:
+        pass
+
     with Manager() as mgr:
         retval = mgr.dict()
         p = Process(target=build_collect_workflow, args=(args, retval))

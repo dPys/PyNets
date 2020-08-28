@@ -1979,9 +1979,11 @@ def dmri_connectometry(
     streams2graph_node._mem_gb = runtime_dict["streams2graph_node"][1]
 
     if error_margin_list:
-        streams2graph_node.inputs.error_margin = error_margin_list[0]
-        streams2graph_node.iterables = [("error_margin",
-                                         error_margin_list[1:])]
+        streams2graph_node.iterables = [("error_margin", error_margin_list)]
+        dmri_connectometry_wf.connect(
+            [(inputnode, streams2graph_node,
+              [("error_margin", "error_margin")])]
+        )
     else:
         dmri_connectometry_wf.connect(
             [
