@@ -1,0 +1,4 @@
+pybind11>=2.5.0
+cpalgorithm>=0.0.14
+pingouin>=0.3.7
+#skggm>=0.2.8

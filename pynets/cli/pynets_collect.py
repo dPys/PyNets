@@ -639,21 +639,22 @@ def main():
               " flag.\n")
         sys.exit()
 
-    args = get_parser().parse_args()
-    # args_dict_all = {}
-    # args_dict_all['plug'] = 'MultiProc'
-    # args_dict_all['v'] = False
-    # args_dict_all['pm'] = '24,57'
-    # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    # args_dict_all['work'] = '/tmp'
-    # args_dict_all['modality'] = 'func'
-    # args_dict_all['dc'] = ''
-    # args_dict_all['drop_cols'] = [
-    #                  'diversity_coefficient', 'participation_coefficient',
-    #                  "_minlength-20", "_minlength-30", "_minlength-0",
-    #                  "variance", "sum"]
-    # from types import SimpleNamespace
-    # args = SimpleNamespace(**args_dict_all)
+    # args = get_parser().parse_args()
+    args_dict_all = {}
+    args_dict_all['plug'] = 'MultiProc'
+    args_dict_all['v'] = False
+    args_dict_all['pm'] = '24,57'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    args_dict_all['work'] = '/tmp/work'
+    args_dict_all['modality'] = 'func'
+    args_dict_all['dc'] = ''
+    args_dict_all['drop_cols'] = [
+                     'diversity_coefficient', 'participation_coefficient',
+                     "_minlength-20", "_minlength-30", "_minlength-0",
+                     "variance", "sum"]
+    from types import SimpleNamespace
+    args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
 
