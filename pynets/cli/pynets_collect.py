@@ -93,7 +93,6 @@ def load_pd_dfs(file_):
     import pandas as pd
     import numpy as np
     from colorama import Fore, Style
-    from pynets.cli.pynets_collect import summarize_missingness
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
 
@@ -119,30 +118,30 @@ def load_pd_dfs(file_):
                 id = id.replace('.csv', '')
 
             #print(id)
+
             df["id"] = id
             df["id"] = df["id"].astype('str')
             df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
-            bad_cols1 = df.columns[df.columns.str.endswith("_x")]
-            if len(bad_cols1) > 0:
-                for col in bad_cols1:
-                    if np.isnan(df[col][0]) is False:
-                        df.rename(columns=dict(zip(bad_cols1, [bad_col.split(
-                            "_x")[0] for bad_col in bad_cols1])), inplace=True)
-                    else:
-                        df.drop(columns=[col], inplace=True)
-                del col
-            bad_cols2 = df.columns[df.columns.str.endswith("_y")]
-            if len(bad_cols2) > 0:
-                for col in bad_cols2:
-                    if np.isnan(df[col][0]) is False:
-                        df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
-                            "_y")[0] for bad_col in bad_cols2])),
-                                  inplace=True)
-                    else:
-                        df.drop(columns=[col], inplace=True)
-                del col
-
-            df = df.loc[:, ~df.columns.str.contains(r".?\d{1}$", regex=True)]
+            # bad_cols1 = df.columns[df.columns.str.endswith("_x")]
+            # if len(bad_cols1) > 0:
+            #     for col in bad_cols1:
+            #         if np.isnan(df[col][0]) is False:
+            #             df.rename(columns=dict(zip(bad_cols1, [bad_col.split(
+            #                 "_x")[0] for bad_col in bad_cols1])), inplace=True)
+            #         else:
+            #             df.drop(columns=[col], inplace=True)
+            #     del col
+            # bad_cols2 = df.columns[df.columns.str.endswith("_y")]
+            # if len(bad_cols2) > 0:
+            #     for col in bad_cols2:
+            #         if np.isnan(df[col][0]) is False:
+            #             df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
+            #                 "_y")[0] for bad_col in bad_cols2])),
+            #                       inplace=True)
+            #         else:
+            #             df.drop(columns=[col], inplace=True)
+            #     del col
+            #df = df.loc[:, ~df.columns.str.contains(r".?\d{1}$", regex=True)]
 
             # Find empty duplicate columns
             df_dups = df.loc[:, df.columns.duplicated()]
@@ -158,9 +157,9 @@ def load_pd_dfs(file_):
                         inplace=True)
             if "Unnamed: 0" in df.columns:
                 df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
-            summarize_missingness(df)
-            df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=True)
-            del bad_cols2, bad_cols1, id
+            # summarize_missingness(df)
+            df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=False)
+            del id
 
         else:
             print(f"{Fore.RED}Cleaned {file_} missing...{Style.RESET_ALL}")
@@ -173,9 +172,11 @@ def load_pd_dfs(file_):
     return df
 
 
-def df_concat(dfs, working_path, modality):
+def df_concat(dfs, working_path, modality, drop_cols):
     import pandas as pd
-    from colorama import Fore, Style
+    import numpy as np
+    import glob
+    # from colorama import Fore, Style
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
 
@@ -184,47 +185,125 @@ def df_concat(dfs, working_path, modality):
             df[i] = df[i].astype("float32")
         return df
 
-    dfs = [harmonize_dtypes(df) for df in dfs if df is not None and
-           df.empty is False]
+    def fill_columns(df, all_cols):
+        import numpy as np
+        diverging_cols = list(np.setdiff1d(all_cols, df.columns.tolist()))
+        if len(diverging_cols) > 0:
+            df = df.reindex(
+                columns=[*df.columns.tolist(), *diverging_cols],
+                fill_value=np.nan)
+        df = df.reindex(sorted(df.columns), axis=1)
+        return df
 
-    frame = pd.concat(dfs, axis=0, join="outer", sort=True,
+    print('Harmonizing columnn types across dataframes...')
+    dfs = [harmonize_dtypes(df) for df in dfs if df is not None and df.empty
+           is False]
+
+    all_cols = []
+    for df in dfs:
+        all_cols.extend(df.columns.tolist())
+    all_cols = list(set(all_cols))
+
+    print('Harmonizing columnn names across dataframes...')
+    out_dfs = [fill_columns(df, all_cols) for df in dfs]
+
+    # for df in out_dfs:
+    #     print(len(df.columns))
+
+    print('Joining...')
+    frame = pd.concat(out_dfs, axis=0, join="inner", sort=False,
                       ignore_index=False)
-
-    frame = frame.drop_duplicates(subset="id")
     frame = frame.loc[:, ~frame.columns.str.contains(r"thr_auc$", regex=True)]
+    frame.dropna(axis='columns', how='all', inplace=True)
+    for drop_col in drop_cols:
+        frame = frame.loc[:, ~frame.columns.str.contains(f"{drop_col}",
+                                                         regex=True)]
+
     # frame = frame.loc[:, (frame == 0).mean() < .5]
     # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
-    cols = list(frame.columns)
-    # Set ID to the first column
-    cols = [cols[-1]] + cols[:-1]
-    frame = frame[cols]
     # frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
-    # missingness_dict = summarize_missingness(frame)[0]
-    # bad_cols = []
-    # for col in missingness_dict.keys():
-    #     if missingness_dict[col] > 0.20:
-    #         bad_cols.append(col)
+    missingness_dict = summarize_missingness(frame)[0]
+    bad_cols = []
+    for col in missingness_dict.keys():
+        if missingness_dict[col] > 0.20:
+            bad_cols.append(col)
+    del col
+
+    bad_cols_dict = {}
+    for col in bad_cols:
+        bad_cols_dict[col] = frame[col].index[frame[col].apply(np.isnan)]
+
+    rerun_dict = {}
+    print('Fill in any missing cells if auc files are detected, '
+          'otherwise creating an inventory of missingness...')
+    for bad_col in bad_cols_dict.keys():
+        atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
+        for lab in bad_cols_dict[bad_col]:
+            sub = lab.split('_')[0]
+            ses = lab.split('_')[1]
+            if sub not in rerun_dict.keys():
+                rerun_dict[sub] = {}
+            if ses not in rerun_dict[sub].keys():
+                rerun_dict[sub][ses] = {}
+            if modality not in rerun_dict[sub][ses].keys():
+                rerun_dict[sub][ses][modality] = {}
+            if atlas not in rerun_dict[sub][ses][modality].keys():
+                rerun_dict[sub][ses][modality][atlas] = []
+            search_str = bad_col.replace(f"{atlas}_", '').split('_thrtype')[0]
+            outs = [i for i in glob.glob(f"{working_path}/{sub}/{ses}/"
+                                         f"{modality}/{atlas}/topology/auc/*")
+                    if search_str in i]
+
+            if len(outs) == 1:
+                # Fill in gaps (for things that get dropped during earlier
+                # stages)
+                df_tmp = pd.read_csv(
+                    outs[0], chunksize=100000, compression="gzip",
+                    encoding="utf-8",
+                    nrows=1, skip_blank_lines=False,
+                    warn_bad_lines=True, error_bad_lines=False,
+                    memory_map=True).read()
+                if not df_tmp.empty:
+                    print(f"Recovered missing data from {sub}, {ses} for "
+                          f"{bad_col}...")
+                    try:
+                        frame.loc[lab, bad_col] = df_tmp.filter(
+                            regex=bad_col.split('auc_')[1:][0]
+                        ).values.tolist()[0][0]
+                    except:
+                        print(f"{bad_col} invalid...")
+                        continue
+                    del df_tmp
+                else:
+                    rerun_dict[sub][ses][modality][atlas].append(bad_col)
+            elif len(outs) > 1:
+                print(f"Warning! Multiple similarly auc files detected for "
+                      f"{sub}, {ses}, {bad_col}")
+                rerun_dict[sub][ses][modality][atlas].append(bad_col)
+            else:
+                # Add to missingness inventory if not found
+                rerun_dict[sub][ses][modality][atlas].append(bad_col)
 
     # if len(bad_cols) > 0:
         # print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
         #       f"missingness: {bad_cols}{Style.RESET_ALL}")
         # frame = frame.drop(columns=bad_cols)
 
-    frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=False)
+    frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=True)
 
     # frame['missing'] = frame.apply(lambda x: x.count(), axis=1)
     # frame = frame.loc[frame['missing'] > np.mean(frame['missing'])]
     # frame = frame.sort_values(by=['missing'], ascending=False)
 
-    return frame
+    return frame, rerun_dict
 
 
 def summarize_missingness(df):
     import numpy as np
     from colorama import Fore, Style
     missingness_dict = dict(df.apply(lambda x: x.isna().sum() /
-                                                  (x.count() + x.isna().sum()),
-                                        axis=0))
+                                               (x.count() + x.isna().sum()),
+                                     axis=0))
     missingness_mean = np.mean(list(missingness_dict.values()))
     if missingness_mean > 0.50:
         print(f"{Fore.RED} {df} missing {100*missingness_mean}% "
@@ -251,11 +330,12 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
     if modality == 'dwi':
         df_pref = df_pref.rename(
             columns=lambda x: re.sub(
-                "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_", "",
-                x))
+                "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_",
+                "", x))
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
-    #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
+    #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing
+    # exclusionary strings...{Style.RESET_ALL}")
     df_pref.drop(columns=bad_cols, inplace=True)
 
     print(df_pref)
@@ -265,26 +345,28 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         empty_cols = [col for col in df_pref.columns if
                       df_dups[col].isnull().all()]
         # Drop these columns from the dataframe
-        df_pref.drop(empty_cols,
-                axis=1,
-                inplace=True)
+        df_pref.drop(empty_cols, axis=1, inplace=True)
     if "Unnamed: 0" in df_pref.columns:
         df_pref.drop(df_pref.filter(regex="Unnamed: 0"), axis=1, inplace=True)
 
     if df_pref.empty:
-        print(f"{Fore.RED}Empty raw AUC: {df_pref} from {auc_file}...{Style.RESET_ALL}")
+        print(f"{Fore.RED}Empty raw AUC: {df_pref} from {auc_file}..."
+              f"{Style.RESET_ALL}")
+
     return df_pref
 
 
 def build_subject_dict(sub, working_path, modality, drop_cols):
     import shutil
     import os
+    import pandas as pd
     import glob
     from pathlib import Path
     from colorama import Fore, Style
-    from pynets.cli.pynets_collect import load_pd_dfs_auc, summarize_missingness
+    from pynets.cli.pynets_collect import load_pd_dfs_auc
+
     subject_dict = {}
-    #print(sub)
+    print(sub)
     subject_dict[sub] = {}
     sessions = sorted(
         [i for i in os.listdir(f"{working_path}{'/'}{sub}") if i.startswith(
@@ -300,13 +382,14 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
             ]
         )
     )
-    #print(atlases)
+    print(atlases)
 
     files_ = []
     for ses in sessions:
-        #print(ses)
-        subject_dict[sub][ses] = []
+        print(ses)
+        subject_dict[sub][ses] = {}
         for atlas in atlases:
+            subject_dict[sub][ses][atlas] = []
             #atlas_name = "_".join(atlas.split("_")[1:])
             auc_csvs = glob.glob(
                 f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology/auc/*"
@@ -321,38 +404,43 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
                 if os.path.isfile(auc_file):
                     df_sub = load_pd_dfs_auc(atlas, prefix, auc_file,
                                              modality, drop_cols)
+                    df_sub['id'] = f"{sub}_{ses}"
                     if df_sub.empty:
+                        print(f"{Fore.RED}Empty auc file for {sub} {ses}..."
+                              f"{Style.RESET_ALL}")
                         continue
                     else:
-                        subject_dict[sub][ses].append(df_sub)
+                        subject_dict[sub][ses][atlas].append(df_sub)
                 else:
                     print(f"{Fore.RED}Missing auc file for {sub} {ses}..."
                           f"{Style.RESET_ALL}")
                     continue
-        list_ = subject_dict[sub][ses]
+        list_ = [subject_dict[sub][ses][i] for i in
+                 subject_dict[sub][ses].keys()]
+        list_ = [item for sublist in list_ for item in sublist]
         if len(list_) > 0:
             df_base = list_[0][[c for c in list_[
-                0].columns if c.endswith("auc")]]
+                0].columns if c.endswith("auc") or c == 'id']]
+            df_base.set_index('id', inplace=True)
             for m in range(len(list_))[1:]:
+                df_to_be_merged = list_[m][[c for c in list_[m].columns if
+                                            c.endswith("auc") or c == 'id']]
+                df_to_be_merged.set_index('id', inplace=True)
                 df_base = df_base.merge(
-                    list_[m][[c for c in list_[m].columns if c.endswith(
-                        "auc")]],
-                    how="right",
-                    right_index=True,
+                    df_to_be_merged,
                     left_index=True,
+                    right_index=True,
                 )
-            #df_base = pd.concat(list_, axis=1)
-            summarize_missingness(df_base)
             if os.path.isdir(
                     f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
                 out_path = (
                     f"{working_path}/{sub}/{ses}/{modality}/all_combinations"
                     f"_auc.csv"
                 )
-                df_base.to_csv(out_path, index=False)
+                df_base.to_csv(out_path, index=True)
                 out_path_new = f"{str(Path(working_path))}/{modality}_" \
-                               f"group_topology_auc/topology_auc_sub-{sub}_" \
-                               f"ses-{ses}.csv"
+                               f"group_topology_auc/topology_auc_{sub}_" \
+                               f"{ses}.csv"
                 files_.append(out_path_new)
                 shutil.copyfile(out_path, out_path_new)
 
@@ -462,6 +550,9 @@ def build_collect_workflow(args, retval):
     import pkg_resources
     from pathlib import Path
     import yaml
+    import uuid
+    from time import strftime
+    import shutil
 
     try:
         import pynets
@@ -494,6 +585,9 @@ def build_collect_workflow(args, retval):
     if isinstance(modality, list):
         modality = modality[0]
 
+    if os.path.isdir(work_dir):
+        shutil.rmtree(work_dir)
+
     os.makedirs(
         f"{str(Path(working_path))}/{modality}_group_topology_auc",
         exist_ok=True)
@@ -520,8 +614,9 @@ def build_collect_workflow(args, retval):
         except FileNotFoundError:
             print("Failed to parse runconfig.yaml")
 
-    os.makedirs(f"{work_dir}{'/pynets_out_collection'}", exist_ok=True)
-    wf.base_dir = f"{work_dir}{'/pynets_out_collection'}"
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    os.makedirs(f"{work_dir}/pynets_out_collection{run_uuid}", exist_ok=True)
+    wf.base_dir = f"{work_dir}/pynets_out_collection{run_uuid}"
 
     if verbose is True:
         from nipype import config, logging
@@ -597,19 +692,26 @@ def build_collect_workflow(args, retval):
     files_ = [i for i in all_files if '_clean.csv' in i]
 
     dfs = []
+    #missingness_dict = {}
     for file_ in files_:
-        df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-            nrows=1, skip_blank_lines=False,
-            warn_bad_lines=True, error_bad_lines=False,
-            memory_map=True).read()
+        df = pd.read_csv(file_, chunksize=100000, encoding="utf-8", nrows=1,
+                         skip_blank_lines=False, warn_bad_lines=True,
+                         error_bad_lines=False, memory_map=True).read()
         if "Unnamed: 0" in df.columns:
             df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
-        df.dropna(axis='columns', how='all', inplace=True)
+        #missingness_dict[file_] = summarize_missingness(df)[1]
+        df.set_index('id', inplace=True)
+        df.index = df.index.map(str)
         dfs.append(df)
         del df
 
     print("Aggregating dataframes...")
-    frame = df_concat(dfs, working_path, modality)
+    frame, rerun_dict = df_concat(dfs, working_path, modality, drop_cols)
+
+    print("Missingness Summary:")
+    summarize_missingness(frame)
+
+    print(f"Rerun:\n{rerun_dict}")
 
     # Cleanup
     for j in all_files:
@@ -625,6 +727,7 @@ def main():
     import gc
     import sys
     from pynets.cli.pynets_collect import build_collect_workflow
+    from types import SimpleNamespace
 
     try:
         from pynets.core.utils import do_dir_path
@@ -652,8 +755,7 @@ def main():
     args_dict_all['drop_cols'] = [
                      'diversity_coefficient', 'participation_coefficient',
                      "_minlength-20", "_minlength-30", "_minlength-0",
-                     "variance", "sum"]
-    from types import SimpleNamespace
+                     "variance"]
     args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
