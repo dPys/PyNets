@@ -1049,17 +1049,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
 
 def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                           template, thr_type, mets=None, df_top=None):
-
-
-    def filter_cols_from_targets(df_top, targets):
-        base = r'^{}'
-        expr = '(?=.*{})'
-        return df_top.columns[
-            df_top.columns.str.contains(
-                base.format(
-                    ''.join(
-                        expr.format(w) for w in
-                        targets)))]
+    from pynets.core.utils import filter_cols_from_targets
 
     # print(id)
     ID = id.split("_")[0].split("sub-")[1]

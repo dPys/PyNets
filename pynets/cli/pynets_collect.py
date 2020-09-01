@@ -172,10 +172,13 @@ def load_pd_dfs(file_):
     return df
 
 
-def df_concat(dfs, working_path, modality, drop_cols):
+def df_concat(dfs, working_path, modality, drop_cols, args):
     import pandas as pd
     import numpy as np
-    import glob
+    from joblib import Parallel, delayed
+    import tempfile
+    from pynets.cli.pynets_collect import build_collect_workflow
+
     # from colorama import Fore, Style
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
@@ -195,10 +198,23 @@ def df_concat(dfs, working_path, modality, drop_cols):
         df = df.reindex(sorted(df.columns), axis=1)
         return df
 
+    def mergedicts(dict1, dict2):
+        for k in set(dict1.keys()).union(dict2.keys()):
+            if k in dict1 and k in dict2:
+                if isinstance(dict1[k], dict) and \
+                    isinstance(dict2[k], dict):
+                    yield (k, dict(mergedicts(dict1[k],
+                                              dict2[k])))
+                else:
+                    yield (k, dict2[k])
+            elif k in dict1:
+                yield (k, dict1[k])
+            else:
+                yield (k, dict2[k])
+
     print('Harmonizing columnn types across dataframes...')
     dfs = [harmonize_dtypes(df) for df in dfs if df is not None and df.empty
            is False]
-
     all_cols = []
     for df in dfs:
         all_cols.extend(df.columns.tolist())
@@ -219,6 +235,18 @@ def df_concat(dfs, working_path, modality, drop_cols):
         frame = frame.loc[:, ~frame.columns.str.contains(f"{drop_col}",
                                                          regex=True)]
 
+    try:
+        frame = frame.set_index('id')
+    except:
+        pass
+
+    drop = [i for i in frame.columns if 'participation' in i]
+    frame = frame.drop(columns=drop)
+    drop = [i for i in frame.columns if 'degree_centrality' in i]
+    frame = frame.drop(columns=drop)
+    drop = [i for i in frame.columns if 'betweenness_centrality' in i]
+    frame = frame.drop(columns=drop)
+
     # frame = frame.loc[:, (frame == 0).mean() < .5]
     # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
     # frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
@@ -235,54 +263,29 @@ def df_concat(dfs, working_path, modality, drop_cols):
 
     rerun_dict = {}
     print('Fill in any missing cells if auc files are detected, '
-          'otherwise creating an inventory of missingness...')
-    for bad_col in bad_cols_dict.keys():
-        atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
-        for lab in bad_cols_dict[bad_col]:
-            sub = lab.split('_')[0]
-            ses = lab.split('_')[1]
-            if sub not in rerun_dict.keys():
-                rerun_dict[sub] = {}
-            if ses not in rerun_dict[sub].keys():
-                rerun_dict[sub][ses] = {}
-            if modality not in rerun_dict[sub][ses].keys():
-                rerun_dict[sub][ses][modality] = {}
-            if atlas not in rerun_dict[sub][ses][modality].keys():
-                rerun_dict[sub][ses][modality][atlas] = []
-            search_str = bad_col.replace(f"{atlas}_", '').split('_thrtype')[0]
-            outs = [i for i in glob.glob(f"{working_path}/{sub}/{ses}/"
-                                         f"{modality}/{atlas}/topology/auc/*")
-                    if search_str in i]
+          'otherwise create an inventory of missingness...')
+    par_dict = rerun_dict.copy()
+    cache_dir = tempfile.mkdtemp()
+    with Parallel(n_jobs=-1, backend='multiprocessing',
+                  verbose=10, max_nbytes=None,
+                  temp_folder=cache_dir) as parallel:
+        outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
+                                                 par_dict, modality,
+                        working_path, drop_cols, frame) for
+                        bad_col in bad_cols_dict.keys())
 
-            if len(outs) == 1:
-                # Fill in gaps (for things that get dropped during earlier
-                # stages)
-                df_tmp = pd.read_csv(
-                    outs[0], chunksize=100000, compression="gzip",
-                    encoding="utf-8",
-                    nrows=1, skip_blank_lines=False,
-                    warn_bad_lines=True, error_bad_lines=False,
-                    memory_map=True).read()
-                if not df_tmp.empty:
-                    print(f"Recovered missing data from {sub}, {ses} for "
-                          f"{bad_col}...")
-                    try:
-                        frame.loc[lab, bad_col] = df_tmp.filter(
-                            regex=bad_col.split('auc_')[1:][0]
-                        ).values.tolist()[0][0]
-                    except:
-                        print(f"{bad_col} invalid...")
-                        continue
-                    del df_tmp
-                else:
-                    rerun_dict[sub][ses][modality][atlas].append(bad_col)
-            elif len(outs) > 1:
-                print(f"Warning! Multiple similarly auc files detected for "
-                      f"{sub}, {ses}, {bad_col}")
-                rerun_dict[sub][ses][modality][atlas].append(bad_col)
-            else:
-                # Add to missingness inventory if not found
-                rerun_dict[sub][ses][modality][atlas].append(bad_col)
+    rerun_dicts = []
+    reruns = []
+    for rd, rerun in outs:
+        rerun_dicts.append(rd)
+        reruns.append(rerun)
+
+    for rd in rerun_dicts:
+        rerun_dict = dict(mergedicts(rerun_dict, rd))
+
+    # Re-run collection...
+    if sum(reruns) > 1:
+        frame = build_collect_workflow(args, outs)
 
     # if len(bad_cols) > 0:
         # print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
@@ -296,6 +299,112 @@ def df_concat(dfs, working_path, modality, drop_cols):
     # frame = frame.sort_values(by=['missing'], ascending=False)
 
     return frame, rerun_dict
+
+
+def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
+                    working_path, drop_cols, frame):
+    import glob
+
+    atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
+    rerun = False
+
+    for lab in bad_cols_dict[bad_col]:
+        sub = lab.split('_')[0]
+        ses = lab.split('_')[1]
+        if sub not in rerun_dict.keys():
+            rerun_dict[sub] = {}
+        if ses not in rerun_dict[sub].keys():
+            rerun_dict[sub][ses] = {}
+        if modality not in rerun_dict[sub][ses].keys():
+            rerun_dict[sub][ses][modality] = {}
+        if atlas not in rerun_dict[sub][ses][modality].keys():
+            rerun_dict[sub][ses][modality][atlas] = []
+        search_str = bad_col.replace(f"{atlas}_", '').split('_thrtype')[0]
+        if not os.path.isdir(f"{working_path}/{sub}/{ses}/"
+                             f"{modality}/{atlas}/topology/auc"):
+            if not os.path.isdir(
+                f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology"):
+                print(f"Missing graph analysis for {sub}, {ses} for "
+                      f"{atlas}...")
+        else:
+            from pynets.stats.netstats import collect_pandas_df_make
+            collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
+                                             f"{modality}/{atlas}/topology/*_neat.csv"),
+                                   f"{sub}_{ses}", None, False)
+            rerun = True
+        outs = [i for i in glob.glob(f"{working_path}/{sub}/{ses}/"
+                                     f"{modality}/{atlas}/topology/auc/*")
+                if search_str in i]
+
+        if len(outs) == 1:
+            # Fill in gaps (for things that get dropped during earlier
+            # stages)
+            df_tmp = pd.read_csv(
+                outs[0], chunksize=100000, compression="gzip",
+                encoding="utf-8",
+                nrows=1, skip_blank_lines=False,
+                warn_bad_lines=True, error_bad_lines=False,
+                memory_map=True).read()
+            if not df_tmp.empty:
+                for drop in drop_cols:
+                    if drop in bad_col:
+                        print(f"Removing column: {drop}")
+                        frame = frame.drop(columns=bad_col)
+
+                if bad_col not in frame.columns:
+                    continue
+                try:
+                    frame.loc[lab, bad_col] = df_tmp.filter(
+                        regex=bad_col.split('auc_')[1:][0]
+                    ).values.tolist()[0][0]
+                    print(f"Recovered missing data from {sub}, {ses} for "
+                          f"{bad_col}...")
+                except:
+                    # frame.loc[lab, bad_col] = df_tmp.filter(
+                    #     regex=bad_col.split('auc')[1:][0]
+                    # ).values.tolist()[0][0]
+                    if bad_col not in frame.columns:
+                        continue
+                    else:
+                        print(f"{bad_col} invalid...")
+                    continue
+                del df_tmp
+            else:
+                rerun_dict[sub][ses][modality][atlas].append(bad_col)
+        elif len(outs) > 1:
+            for out in outs:
+                df_tmp = pd.read_csv(
+                    out, chunksize=100000, compression="gzip",
+                    encoding="utf-8",
+                    nrows=1, skip_blank_lines=False,
+                    warn_bad_lines=True, error_bad_lines=False,
+                    memory_map=True).read()
+                if not df_tmp.empty:
+                    print(f"Recovered missing data from {sub}, {ses} for "
+                          f"{bad_col}...")
+
+                    for drop in drop_cols:
+                        if drop in bad_col:
+                            print(f"Removing column: {drop}")
+                            frame = frame.drop(columns=bad_col)
+                    try:
+                        frame.loc[lab, bad_col] = df_tmp.filter(
+                            regex=bad_col.split('auc_')[1:][0]
+                        ).values.tolist()[0][0]
+                    except:
+                        # frame.loc[lab, bad_col] = df_tmp.filter(
+                        #     regex=bad_col.split('auc')[1:][0]
+                        # ).values.tolist()[0][0]
+                        if bad_col not in frame.columns:
+                            continue
+                        else:
+                            print(f"{bad_col} invalid...")
+                        continue
+                    del df_tmp
+        else:
+            # Add to missingness inventory if not found
+            rerun_dict[sub][ses][modality][atlas].append(bad_col)
+    return rerun_dict, rerun
 
 
 def summarize_missingness(df):
@@ -706,7 +815,7 @@ def build_collect_workflow(args, retval):
         del df
 
     print("Aggregating dataframes...")
-    frame, rerun_dict = df_concat(dfs, working_path, modality, drop_cols)
+    frame, rerun_dict = df_concat(dfs, working_path, modality, drop_cols, args)
 
     print("Missingness Summary:")
     summarize_missingness(frame)
@@ -719,7 +828,7 @@ def build_collect_workflow(args, retval):
             os.remove(j)
 
     print('\nDone!')
-    return
+    return frame
 
 
 def main():
@@ -742,21 +851,21 @@ def main():
               " flag.\n")
         sys.exit()
 
-    # args = get_parser().parse_args()
-    args_dict_all = {}
-    args_dict_all['plug'] = 'MultiProc'
-    args_dict_all['v'] = False
-    args_dict_all['pm'] = '24,57'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['work'] = '/tmp/work'
-    args_dict_all['modality'] = 'func'
-    args_dict_all['dc'] = ''
-    args_dict_all['drop_cols'] = [
-                     'diversity_coefficient', 'participation_coefficient',
-                     "_minlength-20", "_minlength-30", "_minlength-0",
-                     "variance"]
-    args = SimpleNamespace(**args_dict_all)
+    args = get_parser().parse_args()
+    # args_dict_all = {}
+    # args_dict_all['plug'] = 'MultiProc'
+    # args_dict_all['v'] = False
+    # args_dict_all['pm'] = '24,57'
+    # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    # #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    # args_dict_all['work'] = '/tmp/work'
+    # args_dict_all['modality'] = 'func'
+    # args_dict_all['dc'] = ''
+    # args_dict_all['drop_cols'] = [
+    #                  'diversity_coefficient', 'participation_coefficient',
+    #                  "_minlength-20", "_minlength-30", "_minlength-0",
+    #                  "variance"]
+    # args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
 

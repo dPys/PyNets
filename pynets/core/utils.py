@@ -1707,6 +1707,18 @@ class build_sql_db(object):
         return
 
 
+def filter_cols_from_targets(df, targets):
+    base = r'^{}'
+    expr = '(?=.*{})'
+    out = df.columns[
+        df.columns.str.contains(
+            base.format(
+                ''.join(
+                    expr.format(w) for w in
+                    targets)))]
+    return out
+
+
 def build_args_from_config(modality, arg_dict):
     import ast
     import pkg_resources
