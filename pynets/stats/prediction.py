@@ -109,7 +109,7 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
         df_top = pd.read_csv(topology_file)
         df_top = df_top.dropna(subset=["id"])
         df_top = df_top.rename(
-            columns=lambda x: re.sub("partcorr", "model-partcorr", x))
+            columns=lambda x: re.sub("_partcorr", "_model-partcorr", x))
         df_top = df_top.rename(
             columns=lambda x: re.sub("_corr", "_model-corr", x))
         df_top = df_top.rename(
@@ -122,10 +122,10 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
             columns=lambda x: re.sub("_tensor", "_model-tensor", x))
         df_top = df_top.rename(
             columns=lambda x: re.sub("_csd", "_model-csd", x))
-        df_top = df_top.dropna(how='all')
-        df_top = df_top.dropna(axis='columns',
-                               thresh=drop_thr * len(df_top)
-                               )
+        # df_top = df_top.dropna(how='all')
+        # df_top = df_top.dropna(axis='columns',
+        #                        thresh=drop_thr * len(df_top)
+        #                        )
         if not df_top.empty and len(df_top.columns) > 1:
             [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
             print(df_top)
@@ -742,12 +742,13 @@ def graph_theory_prep(df, thr_type):
     ]
 
     id_col = df['id']
+
     scaler = StandardScaler()
     #imp = KNNImputer(n_neighbors=5)
-    # imp = SimpleImputer()
-    # df = pd.DataFrame(imp.fit_transform(
-    #     df[[i for i in df.columns if i != "id"]]),
-    #                   columns=[i for i in df.columns if i != "id"])
+    imp = SimpleImputer()
+    df = pd.DataFrame(imp.fit_transform(
+        df[[i for i in df.columns if i != "id"]]),
+                      columns=[i for i in df.columns if i != "id"])
 
     df = pd.DataFrame(scaler.fit_transform(df[[i for
                                                i in df.columns if
@@ -897,7 +898,8 @@ def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=5,
             feature_imp_dicts.append(feat_imp_dict)
             best_positions_list.append(best_positions)
 
-        drop_cols = [i for i in X.columns if i=='rum_1' or i=='dep_1' or i=='age' or i=='sex']
+        drop_cols = [i for i in X.columns if i=='rum_1' or i=='dep_1' or
+                     i=='age' or i=='sex']
         final_est.fit(X.drop(columns=drop_cols), y)
         # Save the mean CV scores for this bootstrapped iteration
         grand_mean_best_estimator[boot] = best_regressor
@@ -1839,8 +1841,8 @@ def main():
         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
         index_col=False)
 
-    embedding_types = ['topology', 'OMNI', 'ASE']
-    #embedding_types = ['topology']
+    #embedding_types = ['topology', 'OMNI', 'ASE']
+    embedding_types = ['topology']
     #embedding_types = ['OMNI']
     modalities = ['func', 'dwi']
     thr_type = 'MST'

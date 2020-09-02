@@ -305,7 +305,7 @@ if __name__ == "__main__":
 
     embedding_types = ['topology']
     #embedding_types = ['topology', 'OMNI', 'ASE']
-    modalities = ['dwi', 'func']
+    modalities = ['func', 'dwi']
     template = 'MNI152_T1'
     mets = ["global_efficiency", "average_clustering",
             "average_shortest_path_length",
@@ -336,7 +336,6 @@ if __name__ == "__main__":
             sub_dict_clean = dill.load(f)
         f.close()
 
-    ix = 0
     for modality in modalities:
         hyperparams = eval(f"hyperparams_{modality}")
         hyperparam_dict = {}
@@ -367,7 +366,10 @@ if __name__ == "__main__":
                 if 'topology' in embedding_types:
                     for met in mets:
                         df_summary[f"icc_{met}"] = pd.Series(np.nan)
+            else:
+                raise ValueError('Must specify either icc or disc as True.')
 
+            ix = 0
             for comb in grid:
                 if modality == 'func':
                     try:
@@ -383,8 +385,6 @@ if __name__ == "__main__":
 
                 df_summary = df_summary.append(pd.Series(), ignore_index=True)
                 df_summary.at[ix, "grid"] = comb_tuple
-                df_summary.at[ix, "modality"] = modality
-                df_summary.at[ix, "embedding"] = alg
 
                 # icc
                 if icc is True:
@@ -405,6 +405,14 @@ if __name__ == "__main__":
                                 id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][comb_tuple][alg][mets.index(met)][0]
                             df_wide = pd.DataFrame(id_dict).T
                             df_wide = df_wide.add_prefix(f"{met}_visit_")
+                            df_wide.replace(0, np.nan, inplace=True)
+                            scaler = StandardScaler()
+                            df_wide = pd.DataFrame(scaler.fit_transform(df_wide[[i for
+                                                                  i in
+                                                                  df_wide.columns if
+                                                                  i != "id"]]),
+                                         columns=[i for i in df_wide.columns if
+                                                  i != "id"])
                             try:
                                 c_alpha = pg.cronbach_alpha(data=df_wide)
                                 print('Cronbach Alpha...')
@@ -451,11 +459,11 @@ if __name__ == "__main__":
                     del discr_stat_val, kx
                 ix += 1
 
-            df_summary = df_summary.dropna()
-
             if disc is True:
                 df_summary = df_summary.sort_values(
                     by=["discriminability"], ascending=False
                 )
+
+            df_summary = df_summary.dropna(axis=0, how='all')
 
             df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv")
