@@ -1181,7 +1181,7 @@ def save_netmets(
         metric_list_names,
         net_met_val_list_final):
     from pynets.core import utils
-
+    import os
     # And save results to csv
     out_path_neat = (
         f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}{'_neat.csv'}"
@@ -1190,6 +1190,8 @@ def save_netmets(
     df = pd.DataFrame.from_dict(
         zipped_dict, orient="index", dtype="float32"
     ).transpose()
+    if os.path.isfile(out_path_neat):
+        os.remove(out_path_neat)
     df.to_csv(out_path_neat, index=False)
     del df, zipped_dict, net_met_val_list_final, metric_list_names
 
@@ -2082,6 +2084,8 @@ def collect_pandas_df_make(
                     :, df_summary_auc.columns.str.endswith("auc")
                 ]
                 auc_outfile = auc_dir + file_renamed
+                if os.path.isfile(auc_outfile):
+                    os.remove(auc_outfile)
                 df_summary_auc.to_csv(
                     auc_outfile,
                     header=True,
@@ -2166,6 +2170,8 @@ def collect_pandas_df_make(
                 net_csv_summary_out_path = (
                     f"{summary_dir}/topology_sub-{str(ID)}_"
                     f"{'%s' % ('_' + network if network is not None else '')}.csv")
+                if os.path.isfile(net_csv_summary_out_path):
+                    os.remove(net_csv_summary_out_path)
                 df_concatted_final.to_csv(
                     net_csv_summary_out_path, index=False)
                 del (

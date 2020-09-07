@@ -89,6 +89,7 @@ def get_parser():
 
 def load_pd_dfs(file_):
     import gc
+    import os
     import os.path as op
     import pandas as pd
     import numpy as np
@@ -98,10 +99,22 @@ def load_pd_dfs(file_):
 
     if file_:
         if op.isfile(file_) and not file_.endswith("_clean.csv"):
-            df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                nrows=1, skip_blank_lines=False,
-                warn_bad_lines=True, error_bad_lines=False,
-                memory_map=True, engine='python').read()
+            try:
+                df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+                                 nrows=1, skip_blank_lines=False,
+                                 warn_bad_lines=True, error_bad_lines=False,
+                                 memory_map=True, engine='python').read()
+            except:
+                print(f"Load failed for {file_}. Trying again with c engine.")
+                try:
+                    df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+                                     nrows=1, skip_blank_lines=False,
+                                     warn_bad_lines=True,
+                                     error_bad_lines=False,
+                                     memory_map=True, engine='c').read()
+                except:
+                    print(f"Cannot load {file_}")
+                    return pd.DataFrame()
             if "Unnamed: 0" in df.columns:
                 df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
             id = op.basename(file_).split("_topology")[0]
@@ -159,6 +172,8 @@ def load_pd_dfs(file_):
             if "Unnamed: 0" in df.columns:
                 df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
             # summarize_missingness(df)
+            if os.path.isfile(f"{file_.split('.csv')[0]}{'_clean.csv'}"):
+                os.remove(f"{file_.split('.csv')[0]}{'_clean.csv'}")
             df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=False)
             del id
 
@@ -174,6 +189,7 @@ def load_pd_dfs(file_):
 
 
 def df_concat(dfs, working_path, modality, drop_cols, args):
+    import os
     import pandas as pd
     import numpy as np
     from joblib import Parallel, delayed
@@ -250,8 +266,14 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
         frame_fill = pd.read_csv(f"{working_path}/"
                                  f"all_subs_neat_{modality}.csv")
-        frame_fill = frame_fill.set_index('id')
-        frame[frame.isnull()] = frame_fill
+        if len(frame_fill.columns) == len(frame.columns):
+            print("Found existing dataframe. Using this to fill in "
+                  "missing values...")
+            try:
+                frame_fill = frame_fill.set_index('id')
+                frame[frame.isnull()] = frame_fill
+            except:
+                pass
 
     # frame = frame.loc[:, (frame == 0).mean() < .5]
     # frame = frame.loc[:, frame.isnull().mean() <= 0.1]
@@ -279,7 +301,9 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
                         working_path, drop_cols, frame) for
                         bad_col in bad_cols_dict.keys())
 
-    frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=False)
+    if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
+        os.remove(f"{working_path}/all_subs_neat_{modality}.csv")
+    frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=True)
 
     rerun_dicts = []
     reruns = []
@@ -309,7 +333,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
 def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     working_path, drop_cols, frame):
     import glob
-
+    import os
     atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
     rerun = False
 
@@ -345,12 +369,24 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
         if len(outs) == 1:
             # Fill in gaps (for things that get dropped during earlier
             # stages)
-            df_tmp = pd.read_csv(
-                outs[0], chunksize=100000, compression="gzip",
-                encoding="utf-8",
-                nrows=1, skip_blank_lines=False,
-                warn_bad_lines=True, error_bad_lines=False,
-                memory_map=True, engine='python').read()
+            try:
+                df_tmp = pd.read_csv(
+                    outs[0], chunksize=100000, compression="gzip",
+                    encoding="utf-8",
+                    nrows=1, skip_blank_lines=False,
+                    warn_bad_lines=True, error_bad_lines=False,
+                    memory_map=True, engine='python').read()
+            except:
+                try:
+                    df_tmp = pd.read_csv(
+                        outs[0], chunksize=100000, compression="gzip",
+                        encoding="utf-8",
+                        nrows=1, skip_blank_lines=False,
+                        warn_bad_lines=True, error_bad_lines=False,
+                        memory_map=True, engine='c').read()
+                except:
+                    print(f"Cannot load {outs[0]}")
+                    continue
             if not df_tmp.empty:
                 for drop in drop_cols:
                     if drop in bad_col:
@@ -372,16 +408,13 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     print(f"Recovered missing data from {sub}, {ses} for "
                           f"{bad_col}...")
                 except:
-                    frame.loc[lab, bad_col] = df_tmp.filter(
-                        regex=bad_col.split('auc')[1:][0]
-                    ).values.tolist()[0][0]
-                    from pynets.stats.netstats import \
-                        collect_pandas_df_make
-                    collect_pandas_df_make(
-                        glob.glob(f"{working_path}/{sub}/{ses}/"
-                                  f"{modality}/{atlas}/topology/*_neat.csv"),
-                        f"{sub}_{ses}", None, False)
-                    # continue
+                    # from pynets.stats.netstats import \
+                    #     collect_pandas_df_make
+                    # collect_pandas_df_make(
+                    #     glob.glob(f"{working_path}/{sub}/{ses}/"
+                    #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                    #     f"{sub}_{ses}", None, False)
+                    continue
                 del df_tmp
             else:
                 # from pynets.stats.netstats import collect_pandas_df_make
@@ -392,12 +425,24 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                 continue
         elif len(outs) > 1:
             for out in outs:
-                df_tmp = pd.read_csv(
-                    out, chunksize=100000, compression="gzip",
-                    encoding="utf-8",
-                    nrows=1, skip_blank_lines=False,
-                    warn_bad_lines=True, error_bad_lines=False,
-                    memory_map=True, engine='python').read()
+                try:
+                    df_tmp = pd.read_csv(
+                        out, chunksize=100000, compression="gzip",
+                        encoding="utf-8",
+                        nrows=1, skip_blank_lines=False,
+                        warn_bad_lines=True, error_bad_lines=False,
+                        memory_map=True, engine='python').read()
+                except:
+                    try:
+                        df_tmp = pd.read_csv(
+                            out, chunksize=100000, compression="gzip",
+                            encoding="utf-8",
+                            nrows=1, skip_blank_lines=False,
+                            warn_bad_lines=True, error_bad_lines=False,
+                            memory_map=True, engine='c').read()
+                    except:
+                        print(f"Cannot load {out}")
+                        continue
                 if not df_tmp.empty:
                     print(f"Recovered missing data from {sub}, {ses} for "
                           f"{bad_col}...")
@@ -411,23 +456,23 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                             regex=bad_col.split('auc_')[1:][0]
                         ).values.tolist()[0][0]
                     except:
-                        from pynets.stats.netstats import \
-                            collect_pandas_df_make
-                        collect_pandas_df_make(
-                            glob.glob(f"{working_path}/{sub}/{ses}/"
-                                      f"{modality}/{atlas}/topology/*_neat.csv"),
-                            f"{sub}_{ses}", None, False)
-                        # continue
+                        # from pynets.stats.netstats import \
+                        #     collect_pandas_df_make
+                        # collect_pandas_df_make(
+                        #     glob.glob(f"{working_path}/{sub}/{ses}/"
+                        #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #     f"{sub}_{ses}", None, False)
+                        continue
                     del df_tmp
         else:
             # Add to missingness inventory if not found
             rerun_dict[sub][ses][modality][atlas].append(bad_col)
-            from pynets.stats.netstats import \
-                collect_pandas_df_make
-            collect_pandas_df_make(
-                glob.glob(f"{working_path}/{sub}/{ses}/"
-                          f"{modality}/{atlas}/topology/*_neat.csv"),
-                f"{sub}_{ses}", None, False)
+            # from pynets.stats.netstats import \
+            #     collect_pandas_df_make
+            # collect_pandas_df_make(
+            #     glob.glob(f"{working_path}/{sub}/{ses}/"
+            #               f"{modality}/{atlas}/topology/*_neat.csv"),
+            #     f"{sub}_{ses}", None, False)
     return rerun_dict, rerun
 
 
@@ -449,6 +494,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
     from colorama import Fore, Style
     import pandas as pd
     import re
+    import os
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
 
@@ -458,9 +504,17 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             encoding="utf-8",
             nrows=1, skip_blank_lines=False,
             warn_bad_lines=True, error_bad_lines=False,
-            memory_map=True, engine='python').read()
+            memory_map=True, engine='c').read()
     except:
-        return pd.DataFrame()
+        try:
+            df = pd.read_csv(
+                auc_file, chunksize=100000, compression="gzip",
+                encoding="utf-8",
+                nrows=1, skip_blank_lines=False,
+                warn_bad_lines=True, error_bad_lines=False,
+                memory_map=True, engine='python').read()
+        except:
+            return pd.DataFrame()
 
     #print(f"{'Atlas: '}{atlas_name}")
     prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
@@ -517,8 +571,7 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}{'/'}{sub}"
-                                   f"/{sub}/*/{modality}/*/topology/*",
+                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/topology/*",
                                    recursive=True)
             ]
         )
@@ -582,6 +635,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
                     f"{working_path}/{sub}/{ses}/{modality}/all_combinations"
                     f"_auc.csv"
                 )
+                if os.path.isfile(out_path):
+                    os.remove(out_path)
                 df_base.to_csv(out_path, index=False)
                 out_path_new = f"{str(Path(working_path))}/{modality}_" \
                                f"group_topology_auc/topology_auc_{sub}_" \
@@ -858,18 +913,15 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     args_dict_all['pm'] = '24,57'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
-    args_dict_all['drop_cols'] = [
-                     'diversity_coefficient', 'participation_coefficient',
-                     "_minlength-20", "_minlength-30", "_minlength-0",
-                     "variance"]
-    args_dict_all['dc'] = [
-                     'diversity_coefficient', 'participation_coefficient',
-                     "_minlength-20", "_minlength-30", "_minlength-0",
-                     "variance"]
+    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    args_dict_all['work'] = '/tmp/work/func'
+    args_dict_all['modality'] = 'func'
+    args_dict_all['dc'] = ['diversity_coefficient',
+                           'participation_coefficient',
+                           "_minlength-0",
+                           "_minlength-20", "_minlength-30", "variance",
+                           "_betweenness_centrality", "res-1000"]
     args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
@@ -905,10 +957,21 @@ def main():
     dfs = []
     #missingness_dict = {}
     for file_ in files_:
-        df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                nrows=1, skip_blank_lines=False,
-                warn_bad_lines=True, error_bad_lines=False,
-                memory_map=True, engine='python').read()
+        try:
+            df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+                             nrows=1, skip_blank_lines=False,
+                             warn_bad_lines=True, error_bad_lines=False,
+                             memory_map=True, engine='python').read()
+        except:
+            try:
+                df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
+                                 nrows=1, skip_blank_lines=False,
+                                 warn_bad_lines=True, error_bad_lines=False,
+                                 memory_map=True, engine='c').read()
+            except:
+                print(f"Cannot load {file_}...")
+                continue
+
         if "Unnamed: 0" in df.columns:
             df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
         #missingness_dict[file_] = summarize_missingness(df)[1]

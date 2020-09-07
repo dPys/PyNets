@@ -6,10 +6,10 @@ StructuralNetworkWeighting:
     overlap_thr: # ROI-streamline overlap in units of voxels.
         - 1
 tracking:
-    step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.2-0.8 which encompasses the typical range of values used in human tractography.
+    step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.8 which encompasses the typical range of values used in human tractography.
+        - 0.1
         - 0.2
         - 0.4
-        - 0.6
         - 0.8
     curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
         - 60
@@ -237,7 +237,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -245,7 +245,7 @@ execution_dict: # Nipype workflow global settings
     - 'display_variable':
         - ':0'
     - 'job_finished_timeout':
-        - 120
+        - 60
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':
