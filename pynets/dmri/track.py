@@ -752,11 +752,11 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     rois=parcels,
                     include=parcel_vec,
                     mode="%s" % ("any" if waymask is not None else
-                                 "either_end"),
+                                 "both_end"),
                     tol=roi_neighborhood_tol,
                 )
             )
-        print("%s%s" % ("Filtering by: \nnode intersection: ",
+        print("%s%s" % ("Filtering by: \nNode intersection: ",
                         len(roi_proximal_streamlines)))
     except BaseException:
         print('No streamlines found to connect any parcels! '

@@ -681,7 +681,7 @@ def build_workflow(args, retval):
     fbvec = args.bvec
     graph = args.g
 
-    if graph:
+    if graph is not None:
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []
@@ -704,12 +704,35 @@ def build_workflow(args, retval):
             multi_subject_multigraph = None
         else:
             graph = graph[0]
-            if "," in graph:
-                multi_graph = graph.split(",")
+            if os.path.isdir(graph):
+                graph_iter = Path(graph).rglob('rawgraph*.npy')
+                if isinstance(ID, list):
+                    if len(ID) > 1:
+                        multi_graph = None
+                        multi_subject_multigraph = []
+                        for id in ID:
+                            multi_subject_multigraph.append(
+                                [str(g) for g in graph_iter if id in str(g)])
+                    else:
+                        multi_subject_multigraph = None
+                        ID = ID[0]
+                        multi_graph = [str(g) for g in
+                                       graph_iter if
+                                       ID in str(g)]
+                else:
+                    multi_subject_multigraph = None
+                    multi_graph = [str(g) for g in
+                                   graph_iter if
+                                   ID in str(g)]
+                graph = None
+                multi_subject_graph = None
             else:
-                multi_graph = None
-            multi_subject_graph = None
-            multi_subject_multigraph = None
+                if "," in graph:
+                    multi_graph = graph.split(",")
+                else:
+                    multi_graph = None
+                multi_subject_graph = None
+                multi_subject_multigraph = None
     else:
         multi_graph = None
         multi_subject_graph = None
@@ -2032,7 +2055,7 @@ def build_workflow(args, retval):
     else:
         multimodal = False
 
-    if roi is not None:
+    if roi is not None and roi is not 'None':
         print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
         if not os.path.isfile(roi):
             raise FileNotFoundError(f"{roi} does not exist. Ensure "

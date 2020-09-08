@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2017
 @authors: Derek Pisner
 """
+import os
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
@@ -45,6 +46,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
             and hyperparam != "samples"
             and hyperparam != "nodetype"
             and hyperparam != "template"
+            and hyperparam != "extract"
 
         ):
             if hyperparam not in hyperparam_dict.keys():
@@ -62,10 +64,9 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["smooth"] = [file_renamed.split(
                     "smooth-")[1].split("_")[0].split("fwhm")[0]]
             else:
-                hyperparam_dict["smooth"].append(
-                    file_renamed.split("smooth-"
-                                       )[1].split("_")[0].split("fwhm")[0])
+                hyperparam_dict["smooth"].append(0)
             hyperparams.append("smooth")
+
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
                 hyperparam_dict["hpass"] = [file_renamed.split(
@@ -240,75 +241,101 @@ def _discr_rdf(dissimilarities, labels):
     return out
 
 
-def reshape_graphs(graphs):
-    n, v1, v2 = np.shape(graphs)
-    return np.reshape(graphs, (n, v1 * v2))
+def beta_lin_comb(beta, GVDAT, meta):
+    """
+    This function calculates linear combinations of graph vectors stored in
+    GVDAT for all subjects and all sessions given the weights vector beta.
+    This was adapted from a function of the same name, written by Kamil Bonna,
+    10.09.2018.
 
+    Parameters
+    ----------
+    beta : list
+        List of metaparameter weights.
+    GVDAT : ndarray
+        5d data structure storing graph vectors.
 
-def CronbachAlpha(itemscores):
-    itemscores = np.asarray([i for i in itemscores if np.nan not in i])
-    itemvars = itemscores.var(axis=0, ddof=1)
-    tscores = itemscores.sum(axis=1)
-    nitems = itemscores.shape[1]
-    try:
-        calpha = (nitems / float(nitems - 1) *
-                  (float(1 - itemvars.sum()) / float(tscores.var(ddof=1))))
-    except:
-        calpha = 0
+    Returns
+    -------
+    gv_array : ndarray
+        2d array of aggregated graph vectors for all sessions, all subjects.
+    """
+    import numpy as np
+    import math
 
-    return calpha
+    def normalize_beta(beta):
+        sum_weight = sum([b1 * b2 * b3 for b1 in beta[:N_atl] for b2 in
+                          beta[N_atl:N_atl + N_mod] for b3 in beta[-N_thr:]])
+        return [b / math.pow(sum_weight, 1 / 3) for b in beta]
+
+    # Dataset dimensionality
+    N_sub = meta['N_sub']
+    N_ses = meta['N_ses']
+    N_gvm = meta['N_gvm']
+    N_thr = len(meta['thr'])
+    N_atl = len(meta['atl'])
+    N_mod = len(meta['mod'])
+
+    # Normalize and split full beta vector
+    beta = normalize_beta(beta)
+    beta_atl = beta[:N_atl]
+    beta_mod = beta[N_atl:N_atl + N_mod]
+    beta_thr = beta[-N_thr:]
+
+    # Calculate linear combinations
+    gv_array = np.zeros((N_sub * N_ses, N_gvm), dtype='float')
+    for sesh in range(N_sub * N_ses):
+        gvlc = 0  # Graph-Vector Linear Combination (GVLC)
+        for atl in range(N_atl):
+            for mod in range(N_mod):
+                for thr in range(N_thr):
+                    gvlc += GVDAT[sesh][atl][mod][thr] * beta_atl[atl] * \
+                            beta_mod[mod] * beta_thr[thr]
+        gv_array[sesh] = gvlc
+    return gv_array
 
 
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     thr_type = "MST"
     icc = True
     disc = True
 
-    #embedding_types = ['topology']
-    embedding_types = ['topology', 'OMNI', 'ASE']
-    modalities = ['dwi', 'func']
+    embedding_types = ['topology']
+    #embedding_types = ['topology', 'OMNI', 'ASE']
+    modalities = ['func', 'dwi']
     template = 'MNI152_T1'
     mets = ["global_efficiency", "average_clustering",
-            "average_shortest_path_length", "average_local_efficiency_nodewise",
+            "average_shortest_path_length",
+            "average_local_efficiency_nodewise",
             "average_betweenness_centrality",
-            "average_eigenvector_centrality"]
+            "average_eigenvector_centrality", "modularity"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
     sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
 
-    subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
-                                                     thr_type, mets,
-                                                     embedding_types,
-                                                     template,
-                                                     sessions)
-    sub_dict_clean = cleanNullTerms(subject_dict)
+    subject_dict_file_path = f"{base_dir}/pynets_subject_dict_topology.pkl"
 
-    subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
+    if not os.path.isfile(subject_dict_file_path):
+        subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
+                                                         thr_type, mets,
+                                                         embedding_types,
+                                                         template,
+                                                         sessions)
+        sub_dict_clean = cleanNullTerms(subject_dict)
 
-    with open(subject_dict_file_path, 'wb') as f:
-        dill.dump(sub_dict_clean, f)
-    f.close()
+        with open(subject_dict_file_path, 'wb') as f:
+            dill.dump(sub_dict_clean, f)
+        f.close()
+    else:
+        with open(subject_dict_file_path, 'rb') as f:
+            sub_dict_clean = dill.load(f)
+        f.close()
 
-    # with open(subject_dict_file_path, 'rb') as f:
-    #     sub_dict_clean = dill.load(f)
-    # f.close()
-
-    rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-
-    if icc is True and disc is False:
-        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'icc'])
-    elif icc is False and disc is True:
-        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'discriminability'])
-    elif icc is True and disc is True:
-        df_summary = pd.DataFrame(columns=['grid', 'modality', 'embedding', 'discriminability', 'icc'])
-
-    embedding_types = ['topology']
-    modalities = ['dwi']
     for modality in modalities:
         hyperparams = eval(f"hyperparams_{modality}")
         hyperparam_dict = {}
@@ -320,52 +347,92 @@ if __name__ == "__main__":
                           sorted(list(set(hyperparams))), ensembles)[1]
 
         for alg in embedding_types:
+            # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
+            rsns = ['triple']
+            if icc is True and disc is False:
+                df_summary = pd.DataFrame(
+                    columns=['grid', 'modality', 'embedding'])
+                if 'topology' in embedding_types:
+                    for met in mets:
+                        df_summary[f"icc_{met}"] = pd.Series(np.nan)
+            elif icc is False and disc is True:
+                df_summary = pd.DataFrame(
+                    columns=['grid', 'modality', 'embedding',
+                             'discriminability'])
+            elif icc is True and disc is True:
+                df_summary = pd.DataFrame(
+                    columns=['grid', 'modality', 'embedding',
+                             'discriminability'])
+                if 'topology' in embedding_types:
+                    for met in mets:
+                        df_summary[f"icc_{met}"] = pd.Series(np.nan)
+            else:
+                raise ValueError('Must specify either icc or disc as True.')
+
             ix = 0
             for comb in grid:
                 if modality == 'func':
                     try:
                         extract, hpass, model, res, atlas, smooth = comb
                     except:
-                        print(comb)
+                        print(f"Missing {comb}...")
                         extract, hpass, model, res, atlas = comb
                         smooth = 0
                     comb_tuple = (atlas, extract, hpass, model, res, smooth)
                 else:
-                    try:
-                        directget, minlength, model, res, atlas, tol = comb
-                    except:
-                        print(comb)
-                        directget, minlength, model, res, atlas = comb
-                    comb_tuple = (atlas, directget, minlength, model, res)
+                    directget, minlength, model, res, atlas, tol = comb
+                    comb_tuple = (atlas, directget, minlength, model, res, tol)
 
+                df_summary = df_summary.append(pd.Series(), ignore_index=True)
                 df_summary.at[ix, "grid"] = comb_tuple
-                df_summary.at[ix, "modality"] = modality
-                df_summary.at[ix, "embedding"] = alg
 
                 # icc
                 if icc is True:
+                    try:
+                        import pingouin as pg
+                    except ImportError:
+                        print(
+                            "Cannot evaluate test-retest reliability. pingouin"
+                            " must be installed!")
                     id_list = []
-                    icc_list = []
-                    for ID in sub_dict_clean.keys():
-                        ses_list = []
-                        for ses in sub_dict_clean[ID].keys():
-                            id_list.append(ID)
-                            ses_list.append(
-                                sub_dict_clean[ID][ses][modality][comb_tuple][alg]
-                            )
-                        meas = np.hstack(ses_list)
-                        if np.isnan(meas).all():
-                            continue
-                        else:
-                            icc_out = CronbachAlpha(meas)
-                            icc_list.append(icc_out)
-                            df_summary.at[ix, "icc"] = np.nanmean(icc_list)
-                            del icc_out, ses_list
-                    del icc_list
+                    jx = ix
+                    for met in mets:
+                        id_dict = {}
+                        for ID in sub_dict_clean.keys():
+                            id_dict[ID] = {}
+                            ses_list = []
+                            for ses in sub_dict_clean[ID].keys():
+                                id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][comb_tuple][alg][mets.index(met)][0]
+                            df_wide = pd.DataFrame(id_dict).T
+                            df_wide = df_wide.add_prefix(f"{met}_visit_")
+                            df_wide.replace(0, np.nan, inplace=True)
+                            scaler = StandardScaler()
+                            df_wide = pd.DataFrame(scaler.fit_transform(df_wide[[i for
+                                                                  i in
+                                                                  df_wide.columns if
+                                                                  i != "id"]]),
+                                         columns=[i for i in df_wide.columns if
+                                                  i != "id"])
+                            try:
+                                c_alpha = pg.cronbach_alpha(data=df_wide)
+                                print('Cronbach Alpha...')
+                            except:
+                                print('FAILED...')
+                                print(df_wide)
+                                continue
+                            df_summary.at[jx, f"cronbach_alpha_{met}"] = \
+                            c_alpha[0]
+                            df_summary.at[jx, f"cronbach_alpha_{met}_cl"] = \
+                                c_alpha[1][0]
+                            df_summary.at[jx, f"cronbach_alpha_{met}_cu"] = \
+                                c_alpha[1][1]
+                            del df_wide
+                    del jx
 
                 if disc is True:
                     id_list = []
                     vect_all = []
+                    kx = ix
                     for ID in sub_dict_clean.keys():
                         vects = []
                         for ses in sub_dict_clean[ID].keys():
@@ -377,38 +444,26 @@ if __name__ == "__main__":
                         del vects
                     X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
                     Y = np.array(id_list)
-                    if np.isnan(X_top).all() or len(Y) < 3 or \
-                        (np.unique(Y, return_counts=True)[1] != 1).all() == 1:
-                        continue
-                    else:
-                        bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
-                        for m in set(bad_ixs):
-                            if (X_top.shape[0] - bad_ixs.count(m)
-                            ) / X_top.shape[0] < 0.50:
-                                X_top = np.delete(X_top, m, axis=1)
-                        imp = IterativeImputer(max_iter=50, random_state=42)
-                        X_top = imp.fit_transform(X_top)
-                        scaler = StandardScaler()
-                        X_top = scaler.fit_transform(X_top)
-                        discr_stat_val, rdf = discr_stat(X_top, Y)
-                        df_summary.at[ix, "discriminability"] = discr_stat_val
-                        print(discr_stat_val)
-                        # print(rdf)
-                        del discr_stat_val
+                    bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
+                    for m in set(bad_ixs):
+                        if (X_top.shape[0] - bad_ixs.count(m)) / X_top.shape[0] < 0.50:
+                            X_top = np.delete(X_top, m, axis=1)
+                    imp = IterativeImputer(max_iter=50, random_state=42)
+                    X_top = imp.fit_transform(X_top)
+                    scaler = StandardScaler()
+                    X_top = scaler.fit_transform(X_top)
+                    discr_stat_val, rdf = discr_stat(X_top, Y)
+                    df_summary.at[kx, "discriminability"] = discr_stat_val
+                    print(discr_stat_val)
+                    # print(rdf)
+                    del discr_stat_val, kx
                 ix += 1
 
-    if icc is True and disc is False:
-        df_summary = df_summary.sort_values("icc", ascending=False)
-        # df_summary = df_summary[df_summary.topological_icc >
-        #                         df_summary.icc.quantile(.50)]
-    elif icc is False and disc is True:
-        df_summary = df_summary.sort_values(
-            "discriminability", ascending=False)
-        # df_summary = df_summary[df_summary.discriminability >
-        #                         df_summary.discriminability.quantile(.50)]
-    elif icc is True and disc is True:
-        df_summary = df_summary.sort_values(
-            by=["discriminability", "icc"], ascending=False
-        )
+            if disc is True:
+                df_summary = df_summary.sort_values(
+                    by=["discriminability"], ascending=False
+                )
 
-    df_summary.to_csv(f"{base_dir}/{base_dir}/grid_clean.csv")
+            df_summary = df_summary.dropna(axis=0, how='all')
+
+            df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv")

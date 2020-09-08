@@ -1325,6 +1325,9 @@ def thresh_raw_graph(
         est_path):
     from pynets.core import thresholding
 
+    if 'rawgraph' in est_path:
+        est_path = est_path.replace('rawgraph', 'graph')
+
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
         conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)

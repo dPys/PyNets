@@ -6,10 +6,10 @@ StructuralNetworkWeighting:
     overlap_thr: # ROI-streamline overlap in units of voxels.
         - 1
 tracking:
-    step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.2-0.8 which encompasses the typical range of values used in human tractography.
+    step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.8 which encompasses the typical range of values used in human tractography.
+        - 0.1
         - 0.2
         - 0.4
-        - 0.6
         - 0.8
     curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
         - 60
@@ -19,8 +19,8 @@ tracking:
         - False
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'local'
-    tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 50,000 = 5 million streamlines!)
-        - 50000
+    tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 30,000 = 3 million streamlines!)
+        - 30000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
@@ -30,11 +30,11 @@ tracking:
     sphere:
         - 'repulsion724'
     n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
-        - 1000
+        - 1500
     max_length:
         - 500
     tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
-        - 'wb'
+        - 'wm'
     pft_back_tracking_dist: # For particle tracking
         - 2
     pft_front_tracking_dist: # For particle tracking
@@ -237,7 +237,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -245,7 +245,7 @@ execution_dict: # Nipype workflow global settings
     - 'display_variable':
         - ':0'
     - 'job_finished_timeout':
-        - 120
+        - 60
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':

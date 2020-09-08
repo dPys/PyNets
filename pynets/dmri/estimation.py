@@ -642,7 +642,7 @@ def streams2graph(
     bad_idxs = []
     fiberlengths = {}
     fa_weights_dict = {}
-    print(f"Quantifying fiber-ROI intsersection for {atlas}:")
+    print(f"Quantifying fiber-ROI intersection for {atlas}:")
     for ix, s in enumerate(sl):
         # Percent counter
         pcN = int(round(100*float(ix / total_streamlines)))

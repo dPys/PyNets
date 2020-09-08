@@ -198,7 +198,7 @@ def local_efficiency(G, weight="weight"):
 
         if weight is not None:
             for (n1, n2) in temp_G.edges():
-                temp_G[n1][n2][weight] = G[n1][n2][weight]
+                temp_G[n1][n2][weight] = np.abs(G[n1][n2][weight])
 
         efficiencies[node] = global_efficiency(temp_G, weight)
 
@@ -233,16 +233,19 @@ def average_local_efficiency(G, weight="weight"):
 
     """
     eff = local_efficiency(G, weight)
-    total = sum(eff.values())
-    N = len(eff)
-    return total / N
+    e_loc_vec = np.array(list(eff.values()))
+    e_loc_vec = np.array([e_loc_vec[e_loc_vec != 0.].min(axis=0)])
+    total = np.sum(e_loc_vec)
+    N = e_loc_vec.shape
+    avg_e_loc = total / N
+    return avg_e_loc[0]
 
 
 @timeout(DEFAULT_TIMEOUT)
 def smallworldness(
         G,
-        niter=10,
-        nrand=100,
+        niter=5,
+        nrand=10,
         approach="clustering",
         reference="random"):
     """
@@ -253,8 +256,8 @@ def smallworldness(
     omega = Lr/L - C/Cl
 
     where C and L are respectively the average clustering coefficient/transitivity
-    and average shortest path length of G. Lr is the average shortest path length
-    of an equivalent random graph and Cl is the average clustering
+    and average shortest path length of G. Lr is the average shortest path
+    length of an equivalent random graph and Cl is the average clustering
     coefficient/transitivity of an equivalent lattice/random graph.
 
     Parameters
@@ -262,11 +265,11 @@ def smallworldness(
     G : NetworkX graph
         An undirected graph.
 
-    niter: integer (optional, default=10)
+    niter: integer (optional, default=5)
         Approximate number of rewiring per edge to compute the equivalent
         random graph.
 
-    nrand: integer (optional, default=100)
+    nrand: integer (optional, default=10)
         Number of random graphs generated to compute the average clustering
         coefficient (Cr) and average shortest path length (Lr).
     approach : str
@@ -290,12 +293,14 @@ def smallworldness(
 
     """
 
-    from networkx.algorithms.smallworld import random_reference, lattice_reference
+    from networkx.algorithms.smallworld import random_reference, \
+        lattice_reference
 
     # Compute the mean clustering coefficient and average shortest path length
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
+        #print(i)
         Gr = random_reference(G, niter=niter, seed=i)
         if reference == "random":
             Gl = random_reference(G, niter=niter, seed=i)
@@ -317,9 +322,9 @@ def smallworldness(
         del Gr, Gl
 
     if approach == "clustering":
-        C = weighted_transitivity(G)
-    elif approach == "transitivity":
         C = nx.average_clustering(G, weight="weight")
+    elif approach == "transitivity":
+        C = weighted_transitivity(G)
     else:
         raise ValueError(f"{approach}' approach not recognized!")
 
@@ -327,12 +332,13 @@ def smallworldness(
     Cl = np.nanmean(randMetrics["C"], dtype=np.float32)
     Lr = np.nanmean(randMetrics["L"], dtype=np.float32)
 
-    return (Lr / L) - (C / Cl)
+    return np.nan_to_num(Lr / L) - np.nan_to_num(C / Cl)
 
 
 def create_communities(node_comm_aff_mat, node_num):
     """
-    Create a 1D vector of community assignments from a community affiliation matrix.
+    Create a 1D vector of community assignments from a community affiliation
+    matrix.
 
     Parameters
     ----------
@@ -1181,7 +1187,7 @@ def save_netmets(
         metric_list_names,
         net_met_val_list_final):
     from pynets.core import utils
-
+    import os
     # And save results to csv
     out_path_neat = (
         f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}{'_neat.csv'}"
@@ -1190,6 +1196,8 @@ def save_netmets(
     df = pd.DataFrame.from_dict(
         zipped_dict, orient="index", dtype="float32"
     ).transpose()
+    if os.path.isfile(out_path_neat):
+        os.remove(out_path_neat)
     df.to_csv(out_path_neat, index=False)
     del df, zipped_dict, net_met_val_list_final, metric_list_names
 
@@ -2034,7 +2042,12 @@ def collect_pandas_df_make(
             else:
                 sql_db = None
             for thr_set in meta.keys():
-                df_summary = pd.concat(meta[thr_set]["dataframes"].values())
+                if len(meta[thr_set]["dataframes"].values()) > 1:
+                    df_summary = pd.concat(
+                        meta[thr_set]["dataframes"].values())
+                else:
+                    print(f"No values to concatenate at {thr_set}...")
+                    continue
                 df_summary["thr"] = meta[thr_set]["dataframes"].keys()
                 meta[thr_set]["summary_dataframe"] = df_summary
                 df_summary_auc = df_summary.iloc[[0]]
@@ -2082,6 +2095,8 @@ def collect_pandas_df_make(
                     :, df_summary_auc.columns.str.endswith("auc")
                 ]
                 auc_outfile = auc_dir + file_renamed
+                if os.path.isfile(auc_outfile):
+                    os.remove(auc_outfile)
                 df_summary_auc.to_csv(
                     auc_outfile,
                     header=True,
@@ -2166,6 +2181,8 @@ def collect_pandas_df_make(
                 net_csv_summary_out_path = (
                     f"{summary_dir}/topology_sub-{str(ID)}_"
                     f"{'%s' % ('_' + network if network is not None else '')}.csv")
+                if os.path.isfile(net_csv_summary_out_path):
+                    os.remove(net_csv_summary_out_path)
                 df_concatted_final.to_csv(
                     net_csv_summary_out_path, index=False)
                 del (

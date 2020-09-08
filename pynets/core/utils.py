@@ -725,20 +725,32 @@ def save_mat(conn_matrix, est_path, fmt=None):
     G.graph["ecount"] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
     if fmt == "edgelist_csv":
+        if os.path.isfile(f"{est_path.split('.npy')[0]}.csv"):
+            os.remove(f"{est_path.split('.npy')[0]}.csv")
         nx.write_weighted_edgelist(
             G, f"{est_path.split('.npy')[0]}.csv", encoding="utf-8"
         )
     elif fmt == "gpickle":
+        if os.path.isfile(f"{est_path.split('.npy')[0]}.pkl"):
+            os.remove(f"{est_path.split('.npy')[0]}.pkl")
         nx.write_gpickle(G, f"{est_path.split('.npy')[0]}.pkl")
     elif fmt == "graphml":
+        if os.path.isfile(f"{est_path.split('.npy')[0]}.graphml"):
+            os.remove(f"{est_path.split('.npy')[0]}.graphml")
         nx.write_graphml(G, f"{est_path.split('.npy')[0]}.graphml")
     elif fmt == "txt":
+        if os.path.isfile(f"{est_path.split('.npy')[0]}{'.txt'}"):
+            os.remove(f"{est_path.split('.npy')[0]}{'.txt'}")
         np.savetxt(
             f"{est_path.split('.npy')[0]}{'.txt'}",
             nx.to_numpy_matrix(G))
     elif fmt == "npy":
+        if os.path.isfile(est_path):
+            os.remove(est_path)
         np.save(est_path, nx.to_numpy_matrix(G))
     elif fmt == "edgelist_ssv":
+        if os.path.isfile(f"{est_path.split('.npy')[0]}.ssv"):
+            os.remove(f"{est_path.split('.npy')[0]}.ssv")
         nx.write_weighted_edgelist(
             G,
             f"{est_path.split('.npy')[0]}.ssv",
@@ -1707,6 +1719,18 @@ class build_sql_db(object):
         return
 
 
+def filter_cols_from_targets(df, targets):
+    base = r'^{}'
+    expr = '(?=.*{})'
+    out = df.columns[
+        df.columns.str.contains(
+            base.format(
+                ''.join(
+                    expr.format(w) for w in
+                    targets)))]
+    return out
+
+
 def build_args_from_config(modality, arg_dict):
     import ast
     import pkg_resources
@@ -1812,7 +1836,7 @@ class watchdog(object):
             except:
                 pass
             # Hopefully give logs some time to flush
-            time.sleep(1)
+            time.sleep(2)
             os.kill(0, 9)
             sys.exit(1)
 
