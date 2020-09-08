@@ -234,11 +234,8 @@ def average_local_efficiency(G, weight="weight"):
     """
     eff = local_efficiency(G, weight)
     e_loc_vec = np.array(list(eff.values()))
-    e_loc_vec = np.array([e_loc_vec[e_loc_vec != 0.].min(axis=0)])
-    total = np.sum(e_loc_vec)
-    N = e_loc_vec.shape
-    avg_e_loc = total / N
-    return avg_e_loc[0]
+    e_loc_vec = np.array(e_loc_vec[e_loc_vec != 0.])
+    return np.nanmean(e_loc_vec)
 
 
 @timeout(DEFAULT_TIMEOUT)

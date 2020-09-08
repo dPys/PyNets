@@ -6,7 +6,7 @@ Base module variables
 # from ._version import get_versions
 # __version__ = get_versions()['version']
 # del get_versions
-__version__ = "1.0.12"
+__version__ = "1.0.13"
 
 __packagename__ = "pynets"
 __copyright__ = "Copyright 2017, Derek Pisner"

@@ -429,7 +429,7 @@ def get_parser():
     parser.add_argument(
         "-norm",
         metavar="Normalization strategy for resulting graph(s)",
-        default=0,
+        default=1,
         nargs=1,
         choices=["0", "1", "2", "3", "4", "5", "6"],
         help="Include this flag to normalize the resulting graph by (1) "
@@ -437,7 +437,7 @@ def get_parser():
              "for all non-zero edges; (4) using pass-to-ranks for all non-zero"
              " edges relative to the number of nodes; (5) using pass-to-ranks"
              " with zero-edge boost; and (6) which standardizes the matrix to "
-             "values [0, 1]. Default is (0) which is no normalization.\n",
+             "values [0, 1]. Default is (1) which is maximum edge weight.\n",
     )
     parser.add_argument(
         "-bin",
