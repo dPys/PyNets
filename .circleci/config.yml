@@ -127,6 +127,9 @@ jobs:
       - run:
           name: Install Requirements (may contain pinned versions)
           command: python -m pip install -r requirements.txt
+#      - run:
+#          name: Install Optional Requirements (may contain pinned versions)
+#          command: python -m pip install -r optional-requirements.txt
       - run:
           name: Install pynets
           command: python setup.py install

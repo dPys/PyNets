@@ -337,39 +337,39 @@ def test_plot_all_struct(plotting_data, roi):
     temp_dir.cleanup()
 
 
-def test_plot_all_struct_func(plotting_data):
-    """Test structural and functional plotting."""
-    import multinetx as mx
-    base_dir = str(Path(__file__).parent/"examples")
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
-
-    labels = plotting_data['labels'][:10]
-    coords = plotting_data['coords'][:10]
-    metadata = {'coords': coords, 'labels': labels}
-
-    name = 'output_fname'
-
-    func_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-func_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_smooth-2fwhm_hpass-FalseHz_extract-mean.npy")
-    dwi_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-dwi_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_samples-2streams_tracktype-local_directget-prob_minlength-200.npy")
-    modality_paths = (func_file, dwi_file)
-
-    G_func = nx.from_numpy_matrix(np.load(func_file))
-    G_dwi = nx.from_numpy_matrix(np.load(dwi_file))
-
-    mG_path = tempfile.NamedTemporaryFile(mode='w+', suffix='.gpickle')
-    mG = mx.MultilayerGraph(list_of_layers=[G_func, G_dwi])
-
-    # This is a hack to get i/o working. There is an nx inhertiance issue that prevents reading.
-    intra_layer_edges = mG.intra_layer_edges
-    del mG.intra_layer_edges
-
-    nx.write_gpickle(mG, mG_path.name)
-
-    plot_gen.plot_all_struct_func(mG_path.name, dir_path, name, modality_paths, metadata)
-
-    temp_dir.cleanup()
-    mG_path.close()
+# def test_plot_all_struct_func(plotting_data):
+#     """Test structural and functional plotting."""
+#     import multinetx as mx
+#     base_dir = str(Path(__file__).parent/"examples")
+#     temp_dir = tempfile.TemporaryDirectory()
+#     dir_path = str(temp_dir.name)
+#
+#     labels = plotting_data['labels'][:10]
+#     coords = plotting_data['coords'][:10]
+#     metadata = {'coords': coords, 'labels': labels}
+#
+#     name = 'output_fname'
+#
+#     func_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-func_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_smooth-2fwhm_hpass-FalseHz_extract-mean.npy")
+#     dwi_file = (f"{base_dir}/miscellaneous/graphs/rawgraph_sub-002_modality-dwi_rsn-Default_roi-002_parcels_resampled2roimask_pDMN_3_bin_model-sps_template-MNI152_T1_nodetype-spheres-6mm_samples-2streams_tracktype-local_directget-prob_minlength-200.npy")
+#     modality_paths = (func_file, dwi_file)
+#
+#     G_func = nx.from_numpy_matrix(np.load(func_file))
+#     G_dwi = nx.from_numpy_matrix(np.load(dwi_file))
+#
+#     mG_path = tempfile.NamedTemporaryFile(mode='w+', suffix='.gpickle')
+#     mG = mx.MultilayerGraph(list_of_layers=[G_func, G_dwi])
+#
+#     # This is a hack to get i/o working. There is an nx inhertiance issue that prevents reading.
+#     intra_layer_edges = mG.intra_layer_edges
+#     del mG.intra_layer_edges
+#
+#     nx.write_gpickle(mG, mG_path.name)
+#
+#     plot_gen.plot_all_struct_func(mG_path.name, dir_path, name, modality_paths, metadata)
+#
+#     temp_dir.cleanup()
+#     mG_path.close()
 
 
 @pytest.mark.parametrize("nan", [True, False])
