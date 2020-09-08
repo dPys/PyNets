@@ -96,7 +96,7 @@ singularity run -e docker://dpys/pynets:latest pynets \
     -step_thr $(jq -r .step_thr config.json) \
     -mod partcorr csd \
     -plt \
-    -n Vis \
+    -n Default \
     -mplx 2 \
     -pm 6,20
 
