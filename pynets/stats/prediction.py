@@ -1873,14 +1873,15 @@ def main():
         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
         index_col=False)
 
+    embedding_types = ['OMNI', 'ASE']
     #embedding_types = ['topology', 'OMNI', 'ASE']
-    embedding_types = ['topology']
+    #embedding_types = ['topology']
     #embedding_types = ['OMNI']
     modalities = ['func', 'dwi']
     thr_type = 'MST'
 
     ###
-    target_embedding_type = 'topology'
+    target_embedding_type = 'OMNI'
     target_modality = 'func'
     target_var = 'rum_persist'
     ###
