@@ -152,7 +152,7 @@ def make_feature_space_dict(ml_dfs, df, target_modality, subject_dict, ses,
         ml_dfs[target_modality][target_embedding_type] = {}
     grid_params = modality_grids[target_modality]
     par_dict = subject_dict.copy()
-    with Parallel(n_jobs=112, backend='loky',
+    with Parallel(n_jobs=-1, backend='loky',
                   verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(create_feature_space)(df, grid_param, par_dict,
@@ -766,7 +766,7 @@ def graph_theory_prep(df, thr_type):
     return df, cols
 
 
-def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=5,
+def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
                            pca_reduce=True, remove_multi=False, std_dev=3):
 
     # Instantiate a working dictionary of performance across bootstraps
@@ -1027,7 +1027,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                 par_dict = subject_dict_all.copy()
                 cache_dir = tempfile.mkdtemp()
 
-                with Parallel(n_jobs=112, backend='multiprocessing',
+                with Parallel(n_jobs=-1, backend='loky',
                               verbose=10, max_nbytes=None,
                               temp_folder=cache_dir) as parallel:
                     outs = parallel(delayed(populate_subject_dict)(id, modality, grid,
@@ -1384,7 +1384,15 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
                 df_all = df_all.loc[:, ~df_all.columns.duplicated()]
                 df_all.reset_index(level=0, inplace=True)
                 df_all.rename(columns={'index': 'id'}, inplace=True)
-                if all(df_all.drop(columns=['id', 'age', 'rum_1', 'dep_1', 'rum_persist']).isnull().all()) or len(df_all.columns) == 1 or (np.abs(np.array(df_all.drop(columns=['id', 'age', 'rum_1', 'dep_1', 'rum_persist']))) < 0.0001).all():
+                if all(df_all.drop(columns=['id', 'age', 'sex', 'rum_1',
+                                            'dep_1', 'rum_persist',
+                                            'dep_persist']).isnull().all()) \
+                    or len(df_all.columns) == 1 or \
+                    (np.abs(np.array(df_all.drop(columns=['id', 'age', 'sex',
+                                                          'rum_1', 'dep_1',
+                                                          'rum_persist',
+                                                          'dep_persist']))) <
+                     0.0001).all():
                     df_all = pd.Series()
                 else:
                     df_all.drop(columns=['id'], inplace=True)
@@ -1873,21 +1881,26 @@ def main():
 
     ###
     target_embedding_type = 'topology'
-    target_modality = 'dwi'
-    target_var = 'dep_1'
+    target_modality = 'func'
+    target_var = 'rum_persist'
     ###
 
-    if target_var == 'rum_persist' or target_var == 'dep_1':
-        drop_cols = [target_var]
+    if target_var == 'rum_persist':
+        drop_cols = [target_var, 'dep_persist']
+    elif target_var == 'dep_persist':
+        drop_cols = [target_var, 'rum_persist']
+    elif target_var == 'dep_1' or target_var == 'rum_1':
+        drop_cols = [target_var, 'dep_persist', 'rum_persist']
     else:
-        drop_cols = [target_var, 'rum_persist', 'dep_1', 'rum_1']
+        drop_cols = [target_var, 'rum_persist', 'dep_persist', 'dep_1',
+                     'rum_1']
 
     template = 'MNI152_T1'
     mets = ["global_efficiency",
-            "average_clustering",
             "average_shortest_path_length",
-            "average_local_efficiency_nodewise",
+            "degree_assortativity_coefficient",
             "average_eigenvector_centrality",
+            "average_betweenness_centrality",
             "modularity"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
@@ -1922,7 +1935,8 @@ def main():
 
     # Subset only those participants which have usable data
     df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
-    df = df[['participant_id', 'rum_persist', 'rum_1', 'dep_1', 'age']]
+    df = df[['participant_id', 'rum_persist', 'dep_persist', 'rum_1',
+             'dep_1', 'age', 'sex']]
 
     # Remove 4 outliers subjects with excessive missing behavioral data
     df = df.loc[(df['participant_id'] != '33') &
@@ -1931,7 +1945,7 @@ def main():
                 (df['participant_id'] != '14')]
 
     dict_file_path = f"{base_dir}/pynets_ml_dict_{target_modality}_" \
-                     f"{target_var}_{target_embedding_type}.pkl"
+                     f"{target_embedding_type}.pkl"
 
     if not os.path.isfile(dict_file_path) or not os.path.isfile(
         dict_file_path):

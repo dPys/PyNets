@@ -132,15 +132,10 @@ def global_efficiency(G, weight="weight"):
     if N < 2:
         return 0
 
+    lengths = list(nx.all_pairs_dijkstra_path_length(G, weight=weight))
     inv_lengths = []
-    for node in G:
-        if weight is None:
-            lengths = nx.single_source_shortest_path_length(G, node)
-        else:
-            lengths = nx.single_source_dijkstra_path_length(
-                G, node, weight=weight)
-
-        inv = [1 / x for x in lengths.values() if x is not 0]
+    for length in lengths:
+        inv = [1 / x for x in length[1].values() if x is not 0]
         inv_lengths.extend(inv)
 
     return sum(inv_lengths) / (N * (N - 1))
@@ -182,10 +177,7 @@ def local_efficiency(G, weight="weight"):
       in weighted networks. Eur Phys J B 32, 249-263.
 
     """
-    if G.is_directed():
-        new_graph = nx.DiGraph
-    else:
-        new_graph = nx.Graph
+    new_graph = nx.Graph
 
     efficiencies = dict()
     for node in G:
@@ -241,10 +233,10 @@ def average_local_efficiency(G, weight="weight"):
 @timeout(DEFAULT_TIMEOUT)
 def smallworldness(
         G,
-        niter=5,
+        niter=1,
         nrand=10,
         approach="clustering",
-        reference="random"):
+        reference="fast"):
     """
     Returns the small-world coefficient of a graph
 
@@ -273,8 +265,9 @@ def smallworldness(
         Specifies whether to use clustering coefficient `clustering` or
         `transitivity` method of counting triangles. Default is `clustering`.
     reference : str
-        Specifies whether to use a random `random` or lattice
-        `lattice` reference for clustering/transitivity. Default is `random`.
+        Specifies whether to use a random `random`, lattice
+        `lattice` reference, or fast `fast` erdos-renyi sample for
+        clustering/transitivity. Default is `fast`.
 
     Returns
     -------
@@ -292,30 +285,35 @@ def smallworldness(
 
     from networkx.algorithms.smallworld import random_reference, \
         lattice_reference
+    from graspy.models import DCSBMEstimator
+
+    dcer = DCSBMEstimator(directed=False, loops=False)
+    dcer.fit(nx.to_numpy_array(prune_disconnected(G)[0]))
 
     # Compute the mean clustering coefficient and average shortest path length
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
-        #print(i)
-        Gr = random_reference(G, niter=niter, seed=i)
-        if reference == "random":
-            Gl = random_reference(G, niter=niter, seed=i)
-        elif reference == "lattice":
-            Gl = lattice_reference(G, niter=niter, seed=i)
+        if reference != "fast":
+            Gr = random_reference(G, niter=niter, seed=i)
+            if reference == "random":
+                Gl = random_reference(G, niter=niter, seed=i)
+            elif reference == "lattice":
+                Gl = lattice_reference(G, niter=niter, seed=i)
+            else:
+                raise ValueError(f"{reference}' graph type not recognized!")
         else:
-            raise ValueError(f"{reference}' graph type not recognized!")
-
+            Gr = prune_disconnected(nx.from_numpy_array(dcer.sample()[0]))[0]
+            Gl = Gr.copy()
         if approach == "clustering":
-            randMetrics["C"].append(nx.average_clustering(Gl, weight="weight"))
+            randMetrics["C"].append(nx.average_clustering(Gl, weight='weight'))
         elif approach == "transitivity":
             randMetrics["C"].append(weighted_transitivity(Gl))
         else:
             raise ValueError(f"{approach}' approach not recognized!")
 
         randMetrics["L"].append(
-            nx.average_shortest_path_length(
-                Gr, weight="weight"))
+            nx.average_shortest_path_length(Gr, weight="weight"))
         del Gr, Gl
 
     if approach == "clustering":
@@ -325,7 +323,7 @@ def smallworldness(
     else:
         raise ValueError(f"{approach}' approach not recognized!")
 
-    L = nx.average_shortest_path_length(G)
+    L = nx.average_shortest_path_length(G, weight="weight")
     Cl = np.nanmean(randMetrics["C"], dtype=np.float32)
     Lr = np.nanmean(randMetrics["L"], dtype=np.float32)
 
@@ -731,8 +729,8 @@ def link_communities(W, type_clustering="single"):
 @timeout(DEFAULT_TIMEOUT)
 def weighted_transitivity(G):
     r"""
-    Compute weighted graph transitivity, the fraction of all possible weighted triangles
-    present in G.
+    Compute weighted graph transitivity, the fraction of all possible
+    weighted triangles present in G.
 
     Possible triangles are identified by the number of "triads"
     (two edges with a shared vertex).
@@ -795,11 +793,11 @@ def prune_disconnected(G):
       with Node-Wise Thresholding. Brain Connectivity.
       https://doi.org/10.1089/brain.2017.0523
     .. [2] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-      https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain
+      Network Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
-    print("Pruning disconnected...")
+    #print("Pruning disconnected...")
 
     # List because it returns a generator
     components = list(nx.connected_components(G))
@@ -1397,9 +1395,8 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
 
 
 def get_clustering(G, metric_list_names, net_met_val_list_final):
-    from networkx.algorithms import clustering
 
-    cl_vector = clustering(G)
+    cl_vector = nx.clustering(G, weight="weight")
     print("\nCalculating Local Clusterings...")
     cl_vals = list(cl_vector.values())
     cl_nodes = list(cl_vector.keys())
@@ -2132,7 +2129,8 @@ def collect_pandas_df_make(
                     if max([len(i) for i in models_grouped]) > 1:
                         df_concat = pd.concat(
                             [meta[thr_set]["auc_dataframe"] for
-                             thr_set in meta.keys()]
+                             thr_set in meta.keys() if "auc_dataframe" in
+                             meta[thr_set].keys()]
                         )
                         del meta
                     else:

@@ -307,11 +307,12 @@ if __name__ == "__main__":
     #embedding_types = ['topology', 'OMNI', 'ASE']
     modalities = ['func', 'dwi']
     template = 'MNI152_T1'
-    mets = ["global_efficiency", "average_clustering",
+    mets = ["global_efficiency",
             "average_shortest_path_length",
-            "average_local_efficiency_nodewise",
+            "degree_assortativity_coefficient",
             "average_betweenness_centrality",
-            "average_eigenvector_centrality", "modularity"]
+            "average_eigenvector_centrality",
+            "modularity"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
@@ -388,6 +389,7 @@ if __name__ == "__main__":
 
                 # icc
                 if icc is True:
+                    print('Cronbach Alpha...')
                     try:
                         import pingouin as pg
                     except ImportError:
@@ -402,8 +404,12 @@ if __name__ == "__main__":
                             id_dict[ID] = {}
                             ses_list = []
                             for ses in sub_dict_clean[ID].keys():
-                                id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][comb_tuple][alg][mets.index(met)][0]
+                                if comb_tuple in sub_dict_clean[ID][ses][
+                                    modality][alg].keys():
+                                    id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
                             df_wide = pd.DataFrame(id_dict).T
+                            if df_wide.empty:
+                                continue
                             df_wide = df_wide.add_prefix(f"{met}_visit_")
                             df_wide.replace(0, np.nan, inplace=True)
                             scaler = StandardScaler()
@@ -415,7 +421,6 @@ if __name__ == "__main__":
                                                   i != "id"])
                             try:
                                 c_alpha = pg.cronbach_alpha(data=df_wide)
-                                print('Cronbach Alpha...')
                             except:
                                 print('FAILED...')
                                 print(df_wide)
@@ -436,27 +441,31 @@ if __name__ == "__main__":
                     for ID in sub_dict_clean.keys():
                         vects = []
                         for ses in sub_dict_clean[ID].keys():
-                            id_list.append(ID)
-                            vects.append(
-                                sub_dict_clean[ID][ses][modality][comb_tuple][alg]
-                            )
-                        vect_all.append(np.concatenate(vects, axis=1))
-                        del vects
-                    X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
-                    Y = np.array(id_list)
-                    bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
-                    for m in set(bad_ixs):
-                        if (X_top.shape[0] - bad_ixs.count(m)) / X_top.shape[0] < 0.50:
-                            X_top = np.delete(X_top, m, axis=1)
-                    imp = IterativeImputer(max_iter=50, random_state=42)
-                    X_top = imp.fit_transform(X_top)
-                    scaler = StandardScaler()
-                    X_top = scaler.fit_transform(X_top)
-                    discr_stat_val, rdf = discr_stat(X_top, Y)
-                    df_summary.at[kx, "discriminability"] = discr_stat_val
-                    print(discr_stat_val)
-                    # print(rdf)
-                    del discr_stat_val, kx
+                            if comb_tuple in sub_dict_clean[ID][ses][
+                                modality][alg].keys():
+                                id_list.append(ID)
+                                vects.append(
+                                    sub_dict_clean[ID][ses][modality][alg][comb_tuple]
+                                )
+                        if len(vects) > 0:
+                            vect_all.append(np.concatenate(vects, axis=1))
+                            del vects
+                    if len(vect_all) > 0:
+                        X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
+                        Y = np.array(id_list)
+                        bad_ixs = [i[1] for i in np.argwhere(np.isnan(X_top))]
+                        for m in set(bad_ixs):
+                            if (X_top.shape[0] - bad_ixs.count(m)) / X_top.shape[0] < 0.50:
+                                X_top = np.delete(X_top, m, axis=1)
+                        imp = IterativeImputer(max_iter=50, random_state=42)
+                        X_top = imp.fit_transform(X_top)
+                        scaler = StandardScaler()
+                        X_top = scaler.fit_transform(X_top)
+                        discr_stat_val, rdf = discr_stat(X_top, Y)
+                        df_summary.at[kx, "discriminability"] = discr_stat_val
+                        print(discr_stat_val)
+                        # print(rdf)
+                        del discr_stat_val, kx
                 ix += 1
 
             if disc is True:
