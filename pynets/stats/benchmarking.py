@@ -470,6 +470,7 @@ if __name__ == "__main__":
                                 else:
                                     vect = flatten_latent_positions('triple', sub_dict_clean, ID, ses, modality, comb_tuple[1:], alg)
                                 vects.append(vect)
+                        vects = [i for i in vects if i is not None]
                         if len(vects) > 0 and alg == 'topology':
                             vect_all.append(np.concatenate(vects, axis=1))
                         elif len(vects) > 0:
@@ -507,5 +508,3 @@ if __name__ == "__main__":
             df_summary = df_summary.dropna(axis=0, how='all')
 
             df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv")
-
-    df_summary.to_csv(f"{base_dir}/grid_clean_master.csv")

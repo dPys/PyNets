@@ -764,7 +764,7 @@ def graph_theory_prep(df, thr_type):
     return df, cols
 
 
-def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
+def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=5,
                            pca_reduce=True, remove_multi=False, std_dev=3):
 
     # Instantiate a working dictionary of performance across bootstraps
@@ -1240,6 +1240,8 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                     i += 1
                 if (np.abs(data) < 0.0001).all():
                     data[:] = np.nan
+                elif (np.abs(data) < 0.0001).any():
+                    data[data < 0.0001] = np.nan
                 subject_dict[ID][ses][modality][alg][comb_tuple] = data
                 print(data)
             del comb, comb_tuple
@@ -1364,6 +1366,8 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                     i += 1
                 if (np.abs(data) < 0.0001).all():
                     data[:] = np.nan
+                elif (np.abs(data) < 0.0001).any():
+                    data[data < 0.0001] = np.nan
                 subject_dict[ID][ses][modality][alg][comb_tuple] = data
                 print(data)
             del comb, comb_tuple
@@ -1898,15 +1902,15 @@ def main():
         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
         index_col=False)
 
-    embedding_types = ['OMNI', 'ASE']
-    #embedding_types = ['topology', 'OMNI', 'ASE']
+    embedding_types = ['OMNI', 'ASE', 'vectorize']
+    #embedding_types = ['topology', 'OMNI', 'ASE', 'vectorize']
     #embedding_types = ['topology']
     #embedding_types = ['OMNI']
     modalities = ['func', 'dwi']
     thr_type = 'MST'
 
     ###
-    target_embedding_type = 'OMNI'
+    target_embedding_type = 'topology'
     target_modality = 'func'
     target_var = 'rum_persist'
     ###
@@ -1926,15 +1930,17 @@ def main():
             "average_shortest_path_length",
             "degree_assortativity_coefficient",
             "average_eigenvector_centrality",
-            "average_betweenness_centrality"]
+            "average_betweenness_centrality",
+            "modularity",
+            "smallworldness"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
     sessions = ['1']
 
-    subject_dict_file_path = f"{base_dir}/pynets_subject_dict.pkl"
-    subject_mod_grids_file_path = f"{base_dir}/pynets_modality_grids.pkl"
+    subject_dict_file_path = f"{base_dir}/pynets_subject_dict{'_'.join(embedding_types)}.pkl"
+    subject_mod_grids_file_path = f"{base_dir}/pynets_modality_grids{'_'.join(embedding_types)}.pkl"
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path):
