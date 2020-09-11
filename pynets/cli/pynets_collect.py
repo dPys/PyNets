@@ -114,7 +114,8 @@ def load_pd_dfs(file_):
                                      memory_map=True, engine='c').read()
                 except:
                     print(f"Cannot load {file_}")
-                    return pd.DataFrame()
+                    df = pd.DataFrame()
+                    return df
             if "Unnamed: 0" in df.columns:
                 df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
             id = op.basename(file_).split("_topology")[0]
@@ -514,7 +515,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 warn_bad_lines=True, error_bad_lines=False,
                 memory_map=True, engine='python').read()
         except:
-            return pd.DataFrame()
+            df_pref = pd.DataFrame()
+            return df_pref
 
     #print(f"{'Atlas: '}{atlas_name}")
     prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
@@ -913,15 +915,20 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     args_dict_all['pm'] = '24,57'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
     args_dict_all['work'] = '/tmp/work/func'
     args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
+                           'average_local_efficiency',
+                           'average_clustering',
+                           'average_local_clustering_nodewise',
+                           'average_local_efficiency_nodewise',
+                           'degree_centrality',
                            "_minlength-0",
                            "_minlength-20", "_minlength-30", "variance",
-                           "_betweenness_centrality", "res-1000"]
+                           "res-1000"]
     args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager

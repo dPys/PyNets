@@ -241,6 +241,8 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     B0_mask_data = np.nan_to_num(np.asarray(
         nib.load(B0_mask).dataobj)).astype("bool")
     csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    # Clip any negative values
+    csa_mod = np.clip(csa_mod, 0, np.max(csa_mod, -1)[..., None])
     del B0_mask_data
     return csa_mod, model
 

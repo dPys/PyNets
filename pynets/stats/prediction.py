@@ -81,7 +81,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                                       1].replace('.npy', '') for i in
                                   glob.glob(
                                       f"{base_dir}/embeddings_all_{modality}/*/*/*/*{alg}*.npy")]))
-    elif alg == 'ASE':
+    elif alg == 'ASE' or alg == 'vectorize':
         ensembles = list(set([os.path.basename(i).split(alg + '_')[
                                   1].split('_rawgraph')[
                                   0] + '_' +
@@ -152,7 +152,7 @@ def make_feature_space_dict(ml_dfs, df, target_modality, subject_dict, ses,
         ml_dfs[target_modality][target_embedding_type] = {}
     grid_params = modality_grids[target_modality]
     par_dict = subject_dict.copy()
-    with Parallel(n_jobs=112, backend='loky',
+    with Parallel(n_jobs=-1, backend='loky',
                   verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(create_feature_space)(df, grid_param, par_dict,
@@ -614,40 +614,37 @@ def get_coords_labels(embedding):
 
 def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, alg):
     import pickle
-    if ((rsn,) + grid_param) in subject_dict[ID][str(ses)][modality]:
-        if alg in subject_dict[ID][str(ses)][modality][((rsn,) + grid_param)].keys():
-            rsn_dict = subject_dict[ID][str(ses)][modality][((rsn,) + grid_param)][alg]
-            if not isinstance(rsn_dict['coords'], list):
-                if os.path.isfile(rsn_dict['coords']):
-                    with open(rsn_dict['coords'], "rb") as file_:
-                        rsn_dict['coords'] = pickle.load(file_)
-                    file_.close()
-            if not isinstance(rsn_dict['labels'], list):
-                if os.path.isfile(rsn_dict['labels']):
-                    with open(rsn_dict['labels'], "rb") as file_:
-                        rsn_dict['labels'] = pickle.load(file_)
-                    file_.close()
-            if not isinstance(rsn_dict['data'], np.ndarray):
-                rsn_dict['data'] = np.load(rsn_dict['data'])
-            ixs = [i[1] for i in rsn_dict['labels']]
-            if len(ixs) == rsn_dict['data'].shape[0]:
-                rsn_arr = rsn_dict['data'].T.reshape(1, rsn_dict['data'].T.shape[0] * rsn_dict['data'].T.shape[1])
-                if rsn_dict['data'].shape[1] == 1:
-                    df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs])
-                elif rsn_dict['data'].shape[1] == 3:
-                    df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs] + [f"{rsn}_{i}_dim2" for i in ixs] + [f"{rsn}_{i}_dim3" for i in ixs])
-                else:
-                    raise ValueError(f"Number of dimensions {rsn_dict['data'].shape[1]} not supported. See flatten_latent_positions function...")
-                print(df_lps)
+    if ((rsn,) + grid_param) in subject_dict[ID][str(ses)][modality][alg]:
+        rsn_dict = subject_dict[ID][str(ses)][modality][alg][((rsn,) + grid_param)]
+        if not isinstance(rsn_dict['coords'], list):
+            if os.path.isfile(rsn_dict['coords']):
+                with open(rsn_dict['coords'], "rb") as file_:
+                    rsn_dict['coords'] = pickle.load(file_)
+                file_.close()
+        if not isinstance(rsn_dict['labels'], list):
+            if os.path.isfile(rsn_dict['labels']):
+                with open(rsn_dict['labels'], "rb") as file_:
+                    rsn_dict['labels'] = pickle.load(file_)
+                file_.close()
+        if not isinstance(rsn_dict['data'], np.ndarray):
+            rsn_dict['data'] = np.load(rsn_dict['data'])
+        ixs = [i[1] for i in rsn_dict['labels']]
+        if len(ixs) == rsn_dict['data'].shape[0]:
+            rsn_arr = rsn_dict['data'].T.reshape(1, rsn_dict['data'].T.shape[0] * rsn_dict['data'].T.shape[1])
+            if rsn_dict['data'].shape[1] == 1:
+                df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs])
+            elif rsn_dict['data'].shape[1] == 3:
+                df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs] + [f"{rsn}_{i}_dim2" for i in ixs] + [f"{rsn}_{i}_dim3" for i in ixs])
             else:
-                print(f"Length of indices {len(ixs)} does not equal the "
-                      f"number of rows {rsn_dict['data'].shape[0]} in the "
-                      f"embedding-space for {ID} {ses} {modality} "
-                      f"{((rsn,) + grid_param)}. This means that at point a"
-                      f" node index was dropped from the parcellation, but "
-                      f"not from the final graph...")
-                df_lps = None
+                raise ValueError(f"Number of dimensions {rsn_dict['data'].shape[1]} not supported. See flatten_latent_positions function...")
+            print(df_lps)
         else:
+            print(f"Length of indices {len(ixs)} does not equal the "
+                  f"number of rows {rsn_dict['data'].shape[0]} in the "
+                  f"embedding-space for {ID} {ses} {modality} "
+                  f"{((rsn,) + grid_param)}. This means that at point a"
+                  f" node index was dropped from the parcellation, but "
+                  f"not from the final graph...")
             df_lps = None
     else:
         df_lps = None
@@ -707,7 +704,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
         # df_tmps.append(df_tmp)
         # del df_tmp, rsn_big_df
 
-        if alg == 'OMNI' or alg == 'ASE':
+        if alg == 'OMNI' or alg == 'ASE' or alg == 'vectorize':
             df_lps = flatten_latent_positions('triple', subject_dict, ID,
                                               ses, modality, grid_param, alg)
         else:
@@ -736,7 +733,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
 
 
 def graph_theory_prep(df, thr_type):
-    #from sklearn.impute import KNNImputer
+    from sklearn.impute import KNNImputer
 
     cols = [
         j
@@ -749,24 +746,25 @@ def graph_theory_prep(df, thr_type):
 
     id_col = df['id']
 
-    #scaler = StandardScaler()
-    #imp = KNNImputer(n_neighbors=5)
-    imp = SimpleImputer()
+    scaler = StandardScaler()
+    imp = KNNImputer(n_neighbors=5)
+    #df = df.dropna(thresh=len(df) * .80, axis=1)
+    #imp = SimpleImputer()
     df = pd.DataFrame(imp.fit_transform(
-        df[[i for i in df.columns if i != "id"]]),
-                      columns=[i for i in df.columns if i != "id"])
+         df[[i for i in df.columns if i != "id"]]),
+                       columns=[i for i in df.columns if i != "id"])
 
-    # df = pd.DataFrame(scaler.fit_transform(df[[i for
-    #                                            i in df.columns if
-    #                                            i != "id"]]),
-    #                   columns=[i for i in df.columns if i != "id"])
+    df = pd.DataFrame(scaler.fit_transform(df[[i for
+                                               i in df.columns if
+                                               i != "id"]]),
+                      columns=[i for i in df.columns if i != "id"])
 
     df = pd.concat([id_col, df], axis=1)
 
     return df, cols
 
 
-def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=5,
+def bootstrapped_nested_cv(X, y, n_boots=10, var_thr=.8, k_folds=10,
                            pca_reduce=True, remove_multi=False, std_dev=3):
 
     # Instantiate a working dictionary of performance across bootstraps
@@ -970,7 +968,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
         for alg in embedding_types:
             print(f"EMBEDDING TYPE: {alg}")
             for ses_name in sessions:
-                if alg == 'ASE' or alg == 'OMNI':
+                if alg == 'ASE' or alg == 'OMNI' or alg == 'vectorize':
                     ids = [f"{os.path.basename(i)}_ses-{ses_name}" for i in
                            glob.glob(
                         f"{base_dir}/embeddings_all_{modality}/*") if
@@ -981,7 +979,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                         f"{base_dir}/pynets/*") if
                            os.path.basename(i).startswith('sub')]
 
-                if alg == 'ASE' or alg == 'OMNI':
+                if alg == 'ASE' or alg == 'OMNI' or alg == 'vectorize':
                     ensembles = get_ensembles_embedding(modality, alg,
                                                         base_dir)
                     df_top = None
@@ -1027,7 +1025,7 @@ def make_subject_dict(modalities, base_dir, thr_type, mets, embedding_types,
                 par_dict = subject_dict_all.copy()
                 cache_dir = tempfile.mkdtemp()
 
-                with Parallel(n_jobs=112, backend='multiprocessing',
+                with Parallel(n_jobs=-1, backend='loky',
                               verbose=10, max_nbytes=None,
                               temp_folder=cache_dir) as parallel:
                     outs = parallel(delayed(populate_subject_dict)(id, modality, grid,
@@ -1087,74 +1085,86 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
             except:
                 try:
                     extract, hpass, model, res, atlas = comb
-                    smooth = 0
+                    smooth = '0'
                 except:
                     raise ValueError(f"Failed to parse recipe: {comb}")
-            comb_tuple = (atlas, extract, hpass, model, res, smooth)
+            comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
             print(comb_tuple)
             subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            if alg == 'ASE' or alg == 'OMNI':
+            if alg == 'ASE' or alg == 'OMNI' or alg == 'vectorize':
                 if smooth == 0 or smooth is None:
                     embeddings = [i for i in
                                   glob.glob(f"{base_dir}/embeddings_all_"
-                                            f"{modality}/sub-{ID}/rsn-"
+                                            f"{modality}/sub-{ID}/ses-{ses}/rsn-"
                                             f"{atlas}_res-{res}/"
-                                            f"gradient*{alg}*{res}*"
-                                            f"{atlas}*{ID}"
+                                            f"gradient-{alg}_{res}_*{ID}"
                                             f"*modality-{modality}*model-"
                                             f"{model}*template-{template}*"
                                             f"hpass-{hpass}Hz*extract-"
-                                            f"{extract}.npy")
+                                            f"{extract}*")
                                   if 'smooth' not in i]
                 else:
                     embeddings = [i for i in
                                   glob.glob(f"{base_dir}/embeddings_all_"
-                                            f"{modality}/sub-{ID}/rsn-{atlas}"
+                                            f"{modality}/sub-{ID}/ses-{ses}/"
+                                            f"rsn-{atlas}"
                                             f"_res-{res}/"
-                                            f"gradient*{alg}*{res}*{atlas}"
+                                            f"gradient*{alg}*{res}*"
                                             f"*{ID}*modality-{modality}*model-"
                                             f"{model}*template-{template}*"
                                             f"hpass-{hpass}Hz*extract-"
-                                            f"{extract}.npy")
+                                            f"{extract}*")
                                   if f"smooth-{smooth}fwhm" in i]
                 if len(embeddings) == 0:
                     if smooth == 0 or smooth is None:
                         embeddings = [i for i in
                                       glob.glob(f"{base_dir}/embeddings_all_"
-                                                f"{modality}/sub-{ID}/rsn-"
+                                                f"{modality}/sub-{ID}/ses-{ses}"
+                                                f"/rsn-"
                                                 f"{atlas}_res-{res}/"
                                                 f"gradient*{alg}*{res}*"
                                                 f"{atlas}*{ID}"
                                                 f"*modality-{modality}*model-"
                                                 f"{model}*template-{template}*"
                                                 f"hpass-{hpass}Hz*extract-"
-                                                f"{extract}.npy")
+                                                f"{extract}*")
                                       if 'smooth' not in i]
                     else:
                         embeddings = [i for i in
                                       glob.glob(f"{base_dir}/embeddings_all_"
-                                                f"{modality}/sub-{ID}/rsn-{atlas}"
+                                                f"{modality}/sub-{ID}/ses-{ses}"
+                                                f"/rsn-{atlas}"
                                                 f"_res-{res}/"
                                                 f"gradient*{alg}*{res}*{atlas}"
                                                 f"*{ID}*modality-{modality}*model-"
                                                 f"{model}*template-{template}*"
                                                 f"hpass-{hpass}Hz*extract-"
-                                                f"{extract}.npy")
+                                                f"{extract}*")
                                       if f"smooth-{smooth}fwhm" in i]
                 if len(embeddings) == 0:
                     print(
                         f"\nNo functional embeddings found for {id} and"
-                        f" recipe {comb_tuple}...")
+                        f" recipe {comb_tuple} & {alg}...")
                     continue
                 elif len(embeddings) == 1:
                     embedding = embeddings[0]
                 else:
-                    sorted_embeddings = sorted(embeddings,
-                                               key=os.path.getmtime)
-                    if comb_tuple[-1] == 0:
-                        col = [i for i in sorted_embeddings if 'fwhm' not
-                               in i][0]
+                    embeddings_raw = [i for i in embeddings if
+                                      'thrtype' not in i]
+                    if len(embeddings_raw) == 1:
+                        embedding = embeddings[0]
+
+                    elif len(embeddings_raw) > 1:
+                        sorted_embeddings = sorted(embeddings_raw,
+                                                   key=os.path.getmtime)
+                        print(
+                            f"Multiple functional embeddings found for {id} and"
+                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                            f" recent...")
+                        embedding = sorted_embeddings[0]
                     else:
+                        sorted_embeddings = sorted(embeddings,
+                                                   key=os.path.getmtime)
                         print(
                             f"Multiple functional embeddings found for {id} and"
                             f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
@@ -1178,7 +1188,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                 else:
                     print(
                         f"\nFunctional embedding not found for {id} and"
-                        f" recipe {comb_tuple}...")
+                        f" recipe {comb_tuple} & {alg}...")
                     continue
             elif alg == 'topology':
                 data = np.empty([len(mets), 1], dtype=np.float32)
@@ -1244,15 +1254,15 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
             comb_tuple = (atlas, directget, minlength, model, res, tol)
             print(comb_tuple)
             subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            if alg == 'ASE' or alg == 'OMNI':
+            if alg == 'ASE' or alg == 'OMNI' or alg == 'vectorize':
                 embeddings = glob.glob(f"{base_dir}/embeddings_all"
-                                       f"_{modality}/sub-{ID}/rsn-{atlas}_"
+                                       f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
                                        f"res-{res}/"
                                        f"gradient*{alg}*{res}*{atlas}*{ID}"
                                        f"*modality-{modality}*model-{model}"
                                        f"*template-{template}*directget-"
                                        f"{directget}"
-                                       f"*minlength-{minlength}*tol-{tol}.npy")
+                                       f"*minlength-{minlength}*tol-{tol}*")
                 if len(embeddings) == 0:
                     embeddings = glob.glob(f"{base_dir}/embeddings_all"
                                            f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
@@ -1261,21 +1271,36 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                                            f"*modality-{modality}*model-{model}"
                                            f"*template-{template}*directget-"
                                            f"{directget}"
-                                           f"*minlength-{minlength}*tol-{tol}.npy")
+                                           f"*minlength-{minlength}*tol-{tol}*")
                 if len(embeddings) == 0:
-                    print(
-                        f"\nNo structural embeddings found for {id} and"
-                        f" recipe {comb_tuple}...")
+                    print(f"\nNo structural embeddings found for {id} and"
+                          f" recipe {comb_tuple} & {alg}...")
                     continue
                 elif len(embeddings) == 1:
                     embedding = embeddings[0]
                 else:
-                    print(
-                        f"\nMultiple structural embeddings found for {id} and"
-                        f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                        f" recent...")
-                    embedding = \
-                        sorted(embeddings, key=os.path.getmtime)[0]
+                    embeddings_raw = [i for i in embeddings if
+                                      'thrtype' not in i]
+                    if len(embeddings_raw) == 1:
+                        embedding = embeddings[0]
+
+                    elif len(embeddings_raw) > 1:
+                        sorted_embeddings = sorted(embeddings_raw,
+                                                   key=os.path.getmtime)
+                        print(
+                            f"Multiple functional embeddings found for {id} and"
+                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                            f" recent...")
+                        embedding = sorted_embeddings[0]
+                    else:
+                        sorted_embeddings = sorted(embeddings,
+                                                   key=os.path.getmtime)
+                        print(
+                            f"Multiple functional embeddings found for {id} and"
+                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                            f" recent...")
+                        embedding = sorted_embeddings[0]
+
                 if os.path.isfile(embedding):
                     # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
                     #data = np.load(embedding)
@@ -1293,7 +1318,7 @@ def populate_subject_dict(id, modality, grid, subject_dict, alg, base_dir,
                 else:
                     print(
                         f"\nStructural embedding not found for {id} and"
-                        f" recipe {comb_tuple}...")
+                        f" recipe {comb_tuple} & {alg}...")
                     continue
             elif alg == 'topology':
                 data = np.empty([len(mets), 1], dtype=np.float32)
@@ -1384,7 +1409,15 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
                 df_all = df_all.loc[:, ~df_all.columns.duplicated()]
                 df_all.reset_index(level=0, inplace=True)
                 df_all.rename(columns={'index': 'id'}, inplace=True)
-                if all(df_all.drop(columns=['id', 'age', 'rum_1', 'dep_1', 'rum_persist']).isnull().all()) or len(df_all.columns) == 1 or (np.abs(np.array(df_all.drop(columns=['id', 'age', 'rum_1', 'dep_1', 'rum_persist']))) < 0.0001).all():
+                if all(df_all.drop(columns=['id', 'age', 'sex', 'rum_1',
+                                            'dep_1', 'rum_persist',
+                                            'dep_persist']).isnull().all()) \
+                    or len(df_all.columns) == 1 or \
+                    (np.abs(np.array(df_all.drop(columns=['id', 'age', 'sex',
+                                                          'rum_1', 'dep_1',
+                                                          'rum_persist',
+                                                          'dep_persist']))) <
+                     0.0001).all():
                     df_all = pd.Series()
                 else:
                     df_all.drop(columns=['id'], inplace=True)
@@ -1865,30 +1898,35 @@ def main():
         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
         index_col=False)
 
+    embedding_types = ['OMNI', 'ASE']
     #embedding_types = ['topology', 'OMNI', 'ASE']
-    embedding_types = ['topology']
+    #embedding_types = ['topology']
     #embedding_types = ['OMNI']
     modalities = ['func', 'dwi']
     thr_type = 'MST'
 
     ###
-    target_embedding_type = 'topology'
-    target_modality = 'dwi'
-    target_var = 'dep_1'
+    target_embedding_type = 'OMNI'
+    target_modality = 'func'
+    target_var = 'rum_persist'
     ###
 
-    if target_var == 'rum_persist' or target_var == 'dep_1':
-        drop_cols = [target_var]
+    if target_var == 'rum_persist':
+        drop_cols = [target_var, 'dep_persist']
+    elif target_var == 'dep_persist':
+        drop_cols = [target_var, 'rum_persist']
+    elif target_var == 'dep_1' or target_var == 'rum_1':
+        drop_cols = [target_var, 'dep_persist', 'rum_persist']
     else:
-        drop_cols = [target_var, 'rum_persist', 'dep_1', 'rum_1']
+        drop_cols = [target_var, 'rum_persist', 'dep_persist', 'dep_1',
+                     'rum_1']
 
     template = 'MNI152_T1'
     mets = ["global_efficiency",
-            "average_clustering",
             "average_shortest_path_length",
-            "average_local_efficiency_nodewise",
+            "degree_assortativity_coefficient",
             "average_eigenvector_centrality",
-            "modularity"]
+            "average_betweenness_centrality"]
 
     hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
@@ -1922,7 +1960,8 @@ def main():
 
     # Subset only those participants which have usable data
     df = df[df['participant_id'].isin(list(sub_dict_clean.keys()))]
-    df = df[['participant_id', 'rum_persist', 'rum_1', 'dep_1', 'age']]
+    df = df[['participant_id', 'rum_persist', 'dep_persist', 'rum_1',
+             'dep_1', 'age', 'sex']]
 
     # Remove 4 outliers subjects with excessive missing behavioral data
     df = df.loc[(df['participant_id'] != '33') &
@@ -1930,26 +1969,28 @@ def main():
                 (df['participant_id'] != '54') &
                 (df['participant_id'] != '14')]
 
-    dict_file_path = f"{base_dir}/pynets_ml_dict_{target_modality}_" \
-                     f"{target_var}_{target_embedding_type}.pkl"
-
-    if not os.path.isfile(dict_file_path) or not os.path.isfile(
-        dict_file_path):
-        ml_dfs = {}
-        for modality in modalities:
-            for alg in embedding_types:
+    ml_dfs_list = []
+    for modality in modalities:
+        for alg in embedding_types:
+            dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
+                             f"{alg}.pkl"
+            if not os.path.isfile(dict_file_path) or not os.path.isfile(
+                dict_file_path):
+                ml_dfs = {}
                 ml_dfs = make_feature_space_dict(ml_dfs, df, modality,
                                                  sub_dict_clean,
                                                  sessions[0], modality_grids,
                                                  alg, mets)
 
-        with open(dict_file_path, 'wb') as f:
-            dill.dump(ml_dfs, f)
-        f.close()
-    else:
-        with open(dict_file_path, 'rb') as f:
-            ml_dfs = dill.load(f)
-        f.close()
+                with open(dict_file_path, 'wb') as f:
+                    dill.dump(ml_dfs, f)
+                f.close()
+                del ml_dfs
+            else:
+                with open(dict_file_path, 'rb') as f:
+                    ml_dfs = dill.load(f)
+                f.close()
+                ml_dfs_list.append(ml_dfs)
 
     tables = list(itertools.product(modalities, embedding_types))
 

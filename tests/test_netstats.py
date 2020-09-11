@@ -260,11 +260,10 @@ def test_smallworldness():
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
 
-    omega = netstats.smallworldness(G, niter=5, nrand=5, approach='clustering', reference='random')
+    sigma = netstats.smallworldness(G, niter=5, nrand=5, approach='clustering', reference='random')
 
-    # A network is smallworld if omega < 1
-    assert omega > 0
-    assert omega < 1
+    # A network is smallworld if sigma > 1
+    assert sigma > 1
 
 
 def test_participation_coef_sign():
