@@ -118,6 +118,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python --version
+            python --version
             python -m pip install -U pip
       - run:
           name: Install graphviz
