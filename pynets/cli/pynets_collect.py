@@ -915,10 +915,10 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     args_dict_all['pm'] = '24,57'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['work'] = '/tmp/work/func'
-    args_dict_all['modality'] = 'func'
+    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    args_dict_all['work'] = '/tmp/work/dwi'
+    args_dict_all['modality'] = 'dwi'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',

@@ -307,7 +307,7 @@ if __name__ == "__main__":
     #embedding_types = ['topology']
     #embedding_types = ['topology', 'OMNI', 'ASE']
     #embedding_types = ['ASE']
-    embedding_types = ['OMNI', 'ASE', 'vectorize']
+    embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
     template = 'MNI152_T1'
     mets = ["global_efficiency",
@@ -344,12 +344,7 @@ if __name__ == "__main__":
     rsns = ['triple']
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
 
-    df_summary = pd.DataFrame(
-        columns=['grid', 'modality', 'embedding',
-                 'discriminability'])
-    ix = 0
     for modality in modalities:
-        df_summary.at[ix, "modality"] = modality
         hyperparams = eval(f"hyperparams_{modality}")
         hyperparam_dict = {}
 
@@ -360,9 +355,13 @@ if __name__ == "__main__":
                           sorted(list(set(hyperparams))), ensembles)[1]
 
         for alg in embedding_types:
-            df_summary.at[ix, "embedding"] = alg
-
+            df_summary = pd.DataFrame(
+                columns=['grid', 'modality', 'embedding',
+                         'discriminability'])
+            ix = 0
             for comb in grid:
+                df_summary.at[ix, "modality"] = modality
+                df_summary.at[ix, "embedding"] = alg
                 if modality == 'func':
                     try:
                         extract, hpass, model, res, atlas, smooth = comb
@@ -400,6 +399,7 @@ if __name__ == "__main__":
                         df_wide = pd.DataFrame(id_dict).T
                         if df_wide.empty:
                             del df_wide
+                            ix += 1
                             continue
                         df_wide = df_wide.add_prefix(f"{met}_visit_")
                         df_wide.replace(0, np.nan, inplace=True)
@@ -409,6 +409,7 @@ if __name__ == "__main__":
                             print('FAILED...')
                             print(df_wide)
                             del df_wide
+                            ix += 1
                             continue
                         df_summary.at[jx, f"cronbach_alpha_{met}"] = c_alpha[0]
                         del df_wide
@@ -436,6 +437,7 @@ if __name__ == "__main__":
                                 df = pd.DataFrame(id_dict).T
                                 if df.empty:
                                     del df_long
+                                    ix += 1
                                     continue
                                 df.columns.values[0] = f"{met}"
                                 df.replace(0, np.nan, inplace=True)
@@ -452,6 +454,7 @@ if __name__ == "__main__":
                             print('FAILED...')
                             print(df_long)
                             del df_long
+                            ix += 1
                             continue
                         del df_long
                     del mx
@@ -470,6 +473,7 @@ if __name__ == "__main__":
                                 else:
                                     vect = flatten_latent_positions('triple', sub_dict_clean, ID, ses, modality, comb_tuple[1:], alg)
                                 vects.append(vect)
+                        vects = [i for i in vects if i is not None]
                         if len(vects) > 0 and alg == 'topology':
                             vect_all.append(np.concatenate(vects, axis=1))
                         elif len(vects) > 0:
@@ -491,7 +495,11 @@ if __name__ == "__main__":
                         X_top = imp.fit_transform(X_top)
                         scaler = StandardScaler()
                         X_top = scaler.fit_transform(X_top)
-                        discr_stat_val, rdf = discr_stat(X_top, Y)
+                        try:
+                            discr_stat_val, rdf = discr_stat(X_top, Y)
+                        except:
+                            ix += 1
+                            continue
                         df_summary.at[kx, "discriminability"] = discr_stat_val
                         print(discr_stat_val)
                         # print(rdf)
@@ -499,13 +507,6 @@ if __name__ == "__main__":
                     del kx
                 ix += 1
 
-            if disc is True:
-                df_summary = df_summary.sort_values(
-                    by=["discriminability"], ascending=False
-                )
-
             df_summary = df_summary.dropna(axis=0, how='all')
 
             df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv")
-
-    df_summary.to_csv(f"{base_dir}/grid_clean_master.csv")
