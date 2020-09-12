@@ -1902,7 +1902,7 @@ def main():
         '/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv',
         index_col=False)
 
-    embedding_types = ['OMNI', 'ASE', 'vectorize']
+    embedding_types = ['OMNI', 'ASE']
     #embedding_types = ['topology', 'OMNI', 'ASE', 'vectorize']
     #embedding_types = ['topology']
     #embedding_types = ['OMNI']
@@ -1910,7 +1910,7 @@ def main():
     thr_type = 'MST'
 
     ###
-    target_embedding_type = 'topology'
+    target_embedding_type = 'OMNI'
     target_modality = 'func'
     target_var = 'rum_persist'
     ###
@@ -1975,8 +1975,9 @@ def main():
                 (df['participant_id'] != '54') &
                 (df['participant_id'] != '14')]
 
-    ml_dfs_list = []
+    ml_dfs_dict = {}
     for modality in modalities:
+        ml_dfs_dict[modality] = {}
         for alg in embedding_types:
             dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
                              f"{alg}.pkl"
@@ -1991,12 +1992,14 @@ def main():
                 with open(dict_file_path, 'wb') as f:
                     dill.dump(ml_dfs, f)
                 f.close()
+                ml_dfs_dict[modality][alg] = dict_file_path
                 del ml_dfs
             else:
-                with open(dict_file_path, 'rb') as f:
-                    ml_dfs = dill.load(f)
-                f.close()
-                ml_dfs_list.append(ml_dfs)
+                ml_dfs_dict[modality][alg] = dict_file_path
+
+    with open(ml_dfs_dict[target_modality][target_embedding_type], 'rb') as f:
+        ml_dfs = dill.load(f)
+    f.close()
 
     tables = list(itertools.product(modalities, embedding_types))
 
