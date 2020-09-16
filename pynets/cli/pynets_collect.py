@@ -915,10 +915,11 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     args_dict_all['pm'] = '24,57'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
+    args_dict_all['work'] = '/tmp/work/func'
+    args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',
@@ -926,7 +927,8 @@ def main():
                            'average_local_clustering_nodewise',
                            'average_local_efficiency_nodewise',
                            'degree_centrality',
-                           "_minlength-0",
+                           'weighted_transitivity',
+                        #   "_minlength-0",
                            "_minlength-20", "_minlength-30", "variance",
                            "res-1000"]
     args = SimpleNamespace(**args_dict_all)

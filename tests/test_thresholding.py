@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import os
 import numpy as np
 try:
     import cPickle as pickle
@@ -268,9 +269,12 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
         assert edge_threshold is None # edge_threshold will be none in one case
     else:
         assert edge_threshold is not None
-    assert est_path is not None
+    assert os.path.isfile(est_path) is True
     assert thr is not None
-    assert node_size is not None
+    if node_size != 'parc':
+        assert isinstance(node_size, int)
+    else:
+        assert isinstance(node_size, str)
     assert network is not None
     assert conn_model is not None
     assert roi is not None

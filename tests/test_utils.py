@@ -107,7 +107,8 @@ def test_collect_pandas_df():
     Test collect_pandas_df_make functionality
     """
     import glob
-    base_dir = str(Path(__file__).parent/"examples")
+    #base_dir = str(Path(__file__).parent/"examples")
+    base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
     multi_nets = None
     multimodal = False
     network = None
@@ -116,6 +117,8 @@ def test_collect_pandas_df():
     net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv") if '_neat.csv' not in i]
     out = utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
     assert out is True
+    assert isinstance(net_mets_csv_list, list)
+    assert len(net_mets_csv_list) == 9
 
 
 @pytest.mark.parametrize("node_size", [6, None])
@@ -140,8 +143,10 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
-                                          thr_type, hpass, parc, extract_strategy)
+                                          thr_type, hpass, parc,
+                                          extract_strategy)
     assert est_path is not None
+    #assert 'smooth-6' in est_path
 
 
 @pytest.mark.parametrize("node_size", [6, None])

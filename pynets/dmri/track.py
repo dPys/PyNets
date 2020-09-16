@@ -403,6 +403,7 @@ def track_ensemble(
     """
     import os
     import gc
+    import sys
     import time
     import pkg_resources
     import yaml
@@ -457,8 +458,13 @@ def track_ensemble(
             out_streams = [i for i in out_streams if i is not None and
                            len(i) > 0]
 
-            if len(out_streams) < 10:
+            if len(out_streams) < 100:
                 ix += 1
+                print("Fewer than 100 streamlines tracked on last iteration."
+                      " loosening tolerance and anatomical constraints...")
+                tiss_class = 'wb'
+                roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
+                min_length = float(min_length) * 0.95
                 continue
             else:
                 ix = 0
@@ -482,11 +488,11 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-    if ix >= len(all_combs):
-        raise ValueError(f"Tractography failed. "
-                         f">{len(all_combs)} consecutive sampling iterations "
-                         f"with <10 streamlines. Are you using a waymask? "
-                         f"If so, it may be too restrictive.")
+    if ix >= len(all_combs) and float(stream_counter) < float(target_samples):
+        print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
+              f"iterations with <100 streamlines. Are you using a waymask? "
+              f"If so, it may be too restrictive.")
+        return ArraySequence()
     else:
         print("Tracking Complete: ", str(time.time() - start))
 
@@ -497,7 +503,8 @@ def track_ensemble(
         print('Generating final ArraySequence...')
         return ArraySequence([ArraySequence(i) for i in all_streams])
     else:
-        raise ValueError('No streamlines generated!')
+        print('No streamlines generated!')
+        return ArraySequence()
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,

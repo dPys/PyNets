@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
+from sklearn.impute import IterativeImputer, SimpleImputer
 import pandas as pd
 import re
 import glob
@@ -25,7 +25,9 @@ import warnings
 from sklearn.preprocessing import StandardScaler
 from pynets.stats.prediction import make_subject_dict, cleanNullTerms, \
     get_ensembles_top, build_grid, flatten_latent_positions
-
+from joblib import Parallel, delayed
+import tempfile
+from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
 
 
@@ -51,39 +53,39 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
         ):
             if hyperparam not in hyperparam_dict.keys():
                 hyperparam_dict[hyperparam] = [
-                    file_renamed.split(hyperparam + "-")[1].split("_")[0]
+                    str(file_renamed.split(hyperparam + "-")[1].split("_")[0])
                 ]
             else:
                 hyperparam_dict[hyperparam].append(
-                    file_renamed.split(hyperparam + "-")[1].split("_")[0]
+                    str(file_renamed.split(hyperparam + "-")[1].split("_")[0])
                 )
 
     if modality == "func":
         if "smooth-" in file_renamed:
             if "smooth" not in hyperparam_dict.keys():
-                hyperparam_dict["smooth"] = [file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0]]
+                hyperparam_dict["smooth"] = [str(file_renamed.split(
+                    "smooth-")[1].split("_")[0].split("fwhm")[0])]
             else:
-                hyperparam_dict["smooth"].append(0)
+                hyperparam_dict["smooth"].append(str(0))
             hyperparams.append("smooth")
 
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
-                hyperparam_dict["hpass"] = [file_renamed.split(
-                    "hpass-")[1].split("_")[0].split("Hz")[0]]
+                hyperparam_dict["hpass"] = [str(file_renamed.split(
+                    "hpass-")[1].split("_")[0].split("Hz")[0])]
             else:
                 hyperparam_dict["hpass"].append(
-                    file_renamed.split("hpass-"
-                                       )[1].split("_")[0].split("Hz")[0])
+                    str(file_renamed.split("hpass-"
+                                       )[1].split("_")[0].split("Hz")[0]))
             hyperparams.append("hpass")
         if "extract-" in file_renamed:
             if "extract" not in hyperparam_dict.keys():
                 hyperparam_dict["extract"] = [
-                    file_renamed.split("extract-")[1].split("_")[0]
+                    str(file_renamed.split("extract-")[1].split("_")[0])
                 ]
             else:
                 hyperparam_dict["extract"].append(
-                    file_renamed.split("extract-")[1].split("_")[0]
+                    str(file_renamed.split("extract-")[1].split("_")[0])
                 )
             hyperparams.append("extract")
 
@@ -91,31 +93,31 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
         if "directget-" in file_renamed:
             if "directget" not in hyperparam_dict.keys():
                 hyperparam_dict["directget"] = [
-                    file_renamed.split("directget-")[1].split("_")[0]
+                    str(file_renamed.split("directget-")[1].split("_")[0])
                 ]
             else:
                 hyperparam_dict["directget"].append(
-                    file_renamed.split("directget-")[1].split("_")[0]
+                    str(file_renamed.split("directget-")[1].split("_")[0])
                 )
             hyperparams.append("directget")
         if "minlength-" in file_renamed:
             if "minlength" not in hyperparam_dict.keys():
                 hyperparam_dict["minlength"] = [
-                    file_renamed.split("minlength-")[1].split("_")[0]
+                    str(file_renamed.split("minlength-")[1].split("_")[0])
                 ]
             else:
                 hyperparam_dict["minlength"].append(
-                    file_renamed.split("minlength-")[1].split("_")[0]
+                    str(file_renamed.split("minlength-")[1].split("_")[0])
                 )
             hyperparams.append("minlength")
         if "tol-" in file_renamed:
             if "tol" not in hyperparam_dict.keys():
                 hyperparam_dict["tol"] = [
-                    file_renamed.split("tol-")[1].split("_")[0]
+                    str(file_renamed.split("tol-")[1].split("_")[0])
                 ]
             else:
                 hyperparam_dict["tol"].append(
-                    file_renamed.split("tol-")[1].split("_")[0]
+                    str(file_renamed.split("tol-")[1].split("_")[0])
                 )
             hyperparams.append("tol")
 
@@ -200,7 +202,7 @@ def discr_stat(
 
 def _discr_rdf(dissimilarities, labels):
     """
-    A function for computing the reliability density function of a dataset.
+    A function for computing the int_consist density function of a dataset.
 
     Parameters
     ----------
@@ -295,20 +297,197 @@ def beta_lin_comb(beta, GVDAT, meta):
     return gv_array
 
 
+def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
+    vects = []
+    for ses in sub_dict_clean[ID].keys():
+        #print(ses)
+        if comb_tuple in sub_dict_clean[ID][ses][modality][alg].keys():
+            if alg == 'topology':
+                vect = sub_dict_clean[ID][ses][modality][alg][comb_tuple]
+            else:
+                vect = flatten_latent_positions('triple', sub_dict_clean, ID,
+                                                ses,
+                                                modality, comb_tuple[1:], alg)
+            vects.append(vect)
+    vects = [i for i in vects if i is not None]
+    if len(vects) > 0 and alg == 'topology':
+        out = np.concatenate(vects, axis=1)
+    elif len(vects) > 0:
+        out = pd.concat(vects, axis=0)
+        del vects
+    else:
+        out = None
+    #print(out)
+    return out
+
+
+def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
+                              int_consist):
+    df_summary = pd.DataFrame(
+        columns=['grid', 'modality', 'embedding',
+                 'discriminability'])
+    print(comb)
+    df_summary.at[0, "modality"] = modality
+    df_summary.at[0, "embedding"] = alg
+
+    if modality == 'func':
+        try:
+            extract, hpass, model, res, atlas, smooth = comb
+        except:
+            print(f"Missing {comb}...")
+            extract, hpass, model, res, atlas = comb
+            smooth = '0'
+        comb_tuple = (atlas, extract, hpass, model, res, smooth)
+    else:
+        directget, minlength, model, res, atlas, tol = comb
+        comb_tuple = (atlas, directget, minlength, model, res, tol)
+
+    df_summary.at[0, "grid"] = comb_tuple
+
+    # int_consist
+    if int_consist is True:
+        try:
+            import pingouin as pg
+        except ImportError:
+            print(
+                "Cannot evaluate test-retest int_consist. pingouin"
+                " must be installed!")
+        for met in mets:
+            id_dict = {}
+            for ID in ids:
+                id_dict[ID] = {}
+                for ses in sub_dict_clean[ID].keys():
+                    if comb_tuple in sub_dict_clean[ID][ses][
+                        modality][alg].keys():
+                        id_dict[ID][ses] = \
+                        sub_dict_clean[ID][ses][modality][alg][comb_tuple][
+                            mets.index(met)][0]
+            df_wide = pd.DataFrame(id_dict).T
+            if df_wide.empty:
+                del df_wide
+                return pd.Series()
+            df_wide = df_wide.add_prefix(f"{met}_visit_")
+            df_wide.replace(0, np.nan, inplace=True)
+            try:
+                c_alpha = pg.cronbach_alpha(data=df_wide)
+            except:
+                print('FAILED...')
+                print(df_wide)
+                del df_wide
+                return pd.Series()
+            df_summary.at[0, f"cronbach_alpha_{met}"] = c_alpha[0]
+            del df_wide
+
+    # icc
+    if icc is True:
+        try:
+            import pingouin as pg
+        except ImportError:
+            print(
+                "Cannot evaluate ICC. pingouin"
+                " must be installed!")
+        for met in mets:
+            id_dict = {}
+            dfs = []
+            for ses in [str(i) for i in range(1, 11)]:
+                for ID in ids:
+                    id_dict[ID] = {}
+                    if comb_tuple in sub_dict_clean[ID][ses][
+                        modality][alg].keys():
+                        id_dict[ID][ses] = \
+                        sub_dict_clean[ID][ses][modality][alg][comb_tuple][
+                            mets.index(met)][0]
+                    df = pd.DataFrame(id_dict).T
+                    if df.empty:
+                        del df_long
+                        return pd.Series()
+                    df.columns.values[0] = f"{met}"
+                    df.replace(0, np.nan, inplace=True)
+                    df['id'] = df.index
+                    df['ses'] = ses
+                    df.reset_index(drop=True, inplace=True)
+                    dfs.append(df)
+            df_long = pd.concat(dfs, names=['id', 'ses', f"{met}"]).drop(
+                columns=[str(i) for i in range(1, 10)])
+            try:
+                c_icc = pg.intraclass_corr(data=df_long, targets='id',
+                                           raters='ses', ratings=f"{met}",
+                                           nan_policy='omit').round(3)
+                c_icc = c_icc.set_index("Type")
+                df_summary.at[0, f"icc_{met}"] = pd.DataFrame(
+                    c_icc.drop(index=['ICC1', 'ICC2', 'ICC3'])['ICC']).mean()[
+                    0]
+            except:
+                print('FAILED...')
+                print(df_long)
+                del df_long
+                return pd.Series()
+            del df_long
+
+    if disc is True:
+        vect_all = []
+        for ID in ids:
+            out = gen_sub_vec(sub_dict_clean, ID, modality, alg,
+                              comb_tuple)
+            # print(out)
+            vect_all.append(out)
+        vect_all = [i for i in vect_all if i is not None]
+        if len(vect_all) > 0:
+            if alg == 'topology':
+                X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
+                bad_ixs = [i[1] for i in
+                           np.argwhere(np.isnan(X_top))]
+                for m in set(bad_ixs):
+                    if (X_top.shape[0] - bad_ixs.count(m)) / \
+                        X_top.shape[0] < 0.50:
+                        X_top = np.delete(X_top, m, axis=1)
+            else:
+                if len(vect_all) > 0:
+                    X_top = np.array(pd.concat(vect_all, axis=0))
+                else:
+                    return pd.Series()
+
+            shapes = []
+            for ix, i in enumerate(vect_all):
+                shapes.append(i.shape[0] * [list(ids)[ix]])
+            Y = np.array(list(flatten(shapes)))
+            if alg == 'topology':
+                imp = IterativeImputer(max_iter=50,
+                                       random_state=42)
+            else:
+                imp = SimpleImputer()
+            X_top = imp.fit_transform(X_top)
+            scaler = StandardScaler()
+            X_top = scaler.fit_transform(X_top)
+            try:
+                discr_stat_val, rdf = discr_stat(X_top, Y)
+            except:
+                return pd.Series()
+            df_summary.at[0, "discriminability"] = discr_stat_val
+            print(discr_stat_val)
+            print("\n")
+            # print(rdf)
+            del discr_stat_val
+        del vect_all
+    return df_summary
+
+
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
     base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/visual'
     thr_type = "MST"
     icc = False
     disc = True
-    reliability = False
+    int_consist = False
 
     #embedding_types = ['topology']
     #embedding_types = ['topology', 'OMNI', 'ASE']
     #embedding_types = ['ASE']
     embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
+    #modalities = ['dwi']
     template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
@@ -324,15 +503,14 @@ if __name__ == "__main__":
     sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
 
     subject_dict_file_path = f"{base_dir}/pynets_subject_dict_{'_'.join(embedding_types)}.pkl"
-
+    missingness_summary = f"{base_dir}/benchmarking_missingness_summary_{'_'.join(embedding_types)}.csv"
     if not os.path.isfile(subject_dict_file_path):
-        subject_dict, modality_grids = make_subject_dict(modalities, base_dir,
-                                                         thr_type, mets,
-                                                         embedding_types,
-                                                         template,
-                                                         sessions)
+        subject_dict, modality_grids, missingness_frames = make_subject_dict(
+            modalities, base_dir, thr_type, mets, embedding_types, template,
+            sessions)
         sub_dict_clean = cleanNullTerms(subject_dict)
-
+        final_missingness_summary = pd.concat([i for i in missingness_frames if isinstance(i, pd.DataFrame)])
+        final_missingness_summary.to_csv(missingness_summary, index=False)
         with open(subject_dict_file_path, 'wb') as f:
             dill.dump(sub_dict_clean, f)
         f.close()
@@ -344,7 +522,10 @@ if __name__ == "__main__":
     rsns = ['triple']
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
 
+    ids = sub_dict_clean.keys()
+
     for modality in modalities:
+        print(f"MODALITY: {modality}")
         hyperparams = eval(f"hyperparams_{modality}")
         hyperparam_dict = {}
 
@@ -355,158 +536,37 @@ if __name__ == "__main__":
                           sorted(list(set(hyperparams))), ensembles)[1]
 
         for alg in embedding_types:
-            df_summary = pd.DataFrame(
-                columns=['grid', 'modality', 'embedding',
-                         'discriminability'])
-            ix = 0
+            print(f"EMBEDDING TYPE: {alg}")
+            # if os.path.isfile(f"{base_dir}/grid_clean_{modality}_{alg}.csv"):
+            #     continue
+
+            par_dict = sub_dict_clean.copy()
+            cache_dir = tempfile.mkdtemp()
+
+            # with Parallel(
+            #     n_jobs=-1,
+            #     require='sharedmem',
+            #     verbose=10,
+            #     max_nbytes=None,
+            #     temp_folder=cache_dir,
+            # ) as parallel:
+            #     outs_tup = parallel(
+            #         delayed(benchmark_reproducibility)(
+            #             comb, modality, alg, par_dict,
+            #             disc, int_consist,
+            #         )
+            #         for comb in grid
+            #     )
+
+            outs = []
             for comb in grid:
-                df_summary.at[ix, "modality"] = modality
-                df_summary.at[ix, "embedding"] = alg
-                if modality == 'func':
-                    try:
-                        extract, hpass, model, res, atlas, smooth = comb
-                    except:
-                        print(f"Missing {comb}...")
-                        extract, hpass, model, res, atlas = comb
-                        smooth = 0
-                    comb_tuple = (atlas, extract, hpass, model, res, smooth)
-                else:
-                    directget, minlength, model, res, atlas, tol = comb
-                    comb_tuple = (atlas, directget, minlength, model, res, tol)
+                outs.append(benchmark_reproducibility(
+                    comb, modality, alg, par_dict,
+                    disc, int_consist,
+                ))
 
-                df_summary = df_summary.append(pd.Series(), ignore_index=True)
-                df_summary.at[ix, "grid"] = comb_tuple
-
-                # reliability
-                if reliability is True:
-                    try:
-                        import pingouin as pg
-                    except ImportError:
-                        print(
-                            "Cannot evaluate test-retest reliability. pingouin"
-                            " must be installed!")
-                    id_list = []
-                    jx = ix
-                    for met in mets:
-                        id_dict = {}
-                        for ID in sub_dict_clean.keys():
-                            id_dict[ID] = {}
-                            ses_list = []
-                            for ses in sub_dict_clean[ID].keys():
-                                if comb_tuple in sub_dict_clean[ID][ses][
-                                    modality][alg].keys():
-                                    id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
-                        df_wide = pd.DataFrame(id_dict).T
-                        if df_wide.empty:
-                            del df_wide
-                            ix += 1
-                            continue
-                        df_wide = df_wide.add_prefix(f"{met}_visit_")
-                        df_wide.replace(0, np.nan, inplace=True)
-                        try:
-                            c_alpha = pg.cronbach_alpha(data=df_wide)
-                        except:
-                            print('FAILED...')
-                            print(df_wide)
-                            del df_wide
-                            ix += 1
-                            continue
-                        df_summary.at[jx, f"cronbach_alpha_{met}"] = c_alpha[0]
-                        del df_wide
-                    del jx
-
-                # icc
-                if icc is True:
-                    try:
-                        import pingouin as pg
-                    except ImportError:
-                        print(
-                            "Cannot evaluate ICC. pingouin"
-                            " must be installed!")
-                    id_list = []
-                    mx = ix
-                    for met in mets:
-                        id_dict = {}
-                        dfs = []
-                        for ses in [str(i) for i in range(1, 11)]:
-                            for ID in sub_dict_clean.keys():
-                                id_dict[ID] = {}
-                                if comb_tuple in sub_dict_clean[ID][ses][
-                                    modality][alg].keys():
-                                    id_dict[ID][ses] = sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
-                                df = pd.DataFrame(id_dict).T
-                                if df.empty:
-                                    del df_long
-                                    ix += 1
-                                    continue
-                                df.columns.values[0] = f"{met}"
-                                df.replace(0, np.nan, inplace=True)
-                                df['id'] = df.index
-                                df['ses'] = ses
-                                df.reset_index(drop=True, inplace=True)
-                                dfs.append(df)
-                        df_long = pd.concat(dfs, names=['id', 'ses', f"{met}"]).drop(columns=[str(i) for i in range(1, 10)])
-                        try:
-                            c_icc = pg.intraclass_corr(data=df_long, targets='id', raters='ses', ratings=f"{met}", nan_policy='omit').round(3)
-                            c_icc = c_icc.set_index("Type")
-                            df_summary.at[mx, f"icc_{met}"] = pd.DataFrame(c_icc.drop(index=['ICC1', 'ICC2', 'ICC3'])['ICC']).mean()[0]
-                        except:
-                            print('FAILED...')
-                            print(df_long)
-                            del df_long
-                            ix += 1
-                            continue
-                        del df_long
-                    del mx
-
-                if disc is True:
-                    id_list = []
-                    vect_all = []
-                    kx = ix
-                    for ID in sub_dict_clean.keys():
-                        vects = []
-                        for ses in sub_dict_clean[ID].keys():
-                            if comb_tuple in sub_dict_clean[ID][ses][modality][alg].keys():
-                                id_list.append(ID)
-                                if alg == 'topology':
-                                    vect = sub_dict_clean[ID][ses][modality][alg][comb_tuple]
-                                else:
-                                    vect = flatten_latent_positions('triple', sub_dict_clean, ID, ses, modality, comb_tuple[1:], alg)
-                                vects.append(vect)
-                        vects = [i for i in vects if i is not None]
-                        if len(vects) > 0 and alg == 'topology':
-                            vect_all.append(np.concatenate(vects, axis=1))
-                        elif len(vects) > 0:
-                            vect_all.append(pd.concat(vects, axis=0))
-                            del vects
-                    if len(vect_all) > 0:
-                        if alg == 'topology':
-                            X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
-                            bad_ixs = [i[1] for i in
-                                       np.argwhere(np.isnan(X_top))]
-                            for m in set(bad_ixs):
-                                if (X_top.shape[0] - bad_ixs.count(m)) / \
-                                    X_top.shape[0] < 0.50:
-                                    X_top = np.delete(X_top, m, axis=1)
-                        else:
-                            X_top = np.array(pd.concat(vect_all, axis=0))
-                        Y = np.array(id_list)
-                        imp = IterativeImputer(max_iter=50, random_state=42)
-                        X_top = imp.fit_transform(X_top)
-                        scaler = StandardScaler()
-                        X_top = scaler.fit_transform(X_top)
-                        try:
-                            discr_stat_val, rdf = discr_stat(X_top, Y)
-                        except:
-                            ix += 1
-                            continue
-                        df_summary.at[kx, "discriminability"] = discr_stat_val
-                        print(discr_stat_val)
-                        # print(rdf)
-                        del discr_stat_val
-                    del kx
-                ix += 1
-
+            df_summary = pd.concat(outs, axis=0)
             df_summary = df_summary.dropna(axis=0, how='all')
-
-            df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv")
+            print(f"Saving to {base_dir}/grid_clean_{modality}_{alg}.csv...")
+            df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv",
+                              index=False)
