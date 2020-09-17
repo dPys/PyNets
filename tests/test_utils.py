@@ -107,8 +107,7 @@ def test_collect_pandas_df():
     Test collect_pandas_df_make functionality
     """
     import glob
-    #base_dir = str(Path(__file__).parent/"examples")
-    base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
+    base_dir = str(Path(__file__).parent/"examples")
     multi_nets = None
     multimodal = False
     network = None
