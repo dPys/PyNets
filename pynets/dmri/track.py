@@ -447,8 +447,7 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < \
-        len(all_combs):
+    while float(stream_counter) < float(target_samples):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
@@ -474,10 +473,11 @@ def track_ensemble(
                     tiss_class = 'wb'
                 roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                 min_length = float(min_length) * 0.95
-                continue
             else:
-                ix = 0
                 out_streams = concatenate(out_streams, axis=0)
+
+            if float(ix) > len(all_combs):
+                break
 
             # Append streamline generators to prevent exponential growth
             # in memory consumption
@@ -811,7 +811,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=roi_neighborhood_tol,
+                    tol=0,
                     mode="any",
                 )
             ]
