@@ -310,7 +310,7 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
                                                 ses,
                                                 modality, comb_tuple[1:], alg)
             vects.append(vect)
-    vects = [i for i in vects if i is not None]
+    vects = [i for i in vects if i is not None and not np.isnan(i).all()]
     if len(vects) > 0 and alg == 'topology':
         out = np.concatenate(vects, axis=1)
     elif len(vects) > 0:
@@ -323,7 +323,7 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
 
 
 def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
-                              int_consist):
+                              int_consist, final_missingness_summary):
     df_summary = pd.DataFrame(
         columns=['grid', 'modality', 'embedding',
                  'discriminability'])
@@ -344,6 +344,14 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
         comb_tuple = (atlas, directget, minlength, model, res, tol)
 
     df_summary.at[0, "grid"] = comb_tuple
+
+    missing_sub_seshes = \
+        final_missingness_summary.loc[(final_missingness_summary['alg']==alg)
+                                      & (final_missingness_summary[
+                                             'modality']==modality) &
+                                      (final_missingness_summary[
+                                           'grid']==comb_tuple)
+                                      ].drop_duplicates(subset='id')
 
     # int_consist
     if int_consist is True and alg == 'topology':
@@ -436,7 +444,7 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                 continue
             # print(out)
             vect_all.append(out)
-        vect_all = [i for i in vect_all if i is not None]
+        vect_all = [i for i in vect_all if i is not None and not np.isnan(i).all()]
         if len(vect_all) > 0:
             if alg == 'topology':
                 X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
@@ -451,7 +459,6 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                     X_top = np.array(pd.concat(vect_all, axis=0))
                 else:
                     return pd.Series()
-
             shapes = []
             for ix, i in enumerate(vect_all):
                 shapes.append(i.shape[0] * [list(ids)[ix]])
@@ -567,7 +574,7 @@ if __name__ == "__main__":
             for comb in grid:
                 outs.append(benchmark_reproducibility(
                     comb, modality, alg, par_dict,
-                    disc, int_consist,
+                    disc, int_consist, final_missingness_summary,
                 ))
 
             df_summary = pd.concat(outs, axis=0)
