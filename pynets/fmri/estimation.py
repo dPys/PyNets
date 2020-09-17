@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -212,6 +212,7 @@ def get_conn_matrix(
       for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
 
     """
+    import sys
     from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
 
@@ -253,8 +254,11 @@ def get_conn_matrix(
             try:
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
             except (np.linalg.linalg.LinAlgError, FloatingPointError):
-                raise ValueError('All covariance estimators failed to '
-                                 'converge...')
+                try:
+                    raise ValueError('All covariance estimators failed to '
+                                     'converge...')
+                except ValueError:
+                    sys.exit(1)
         return conn_matrix
 
     if conn_model in nilearn_kinds:
@@ -271,9 +275,12 @@ def get_conn_matrix(
             print("\nComputing covariance matrix...\n")
             kind = "covariance"
         else:
-            raise ValueError(
-                "\nERROR! No connectivity model specified at runtime. Select a"
-                " valid estimator using the -mod flag.")
+            try:
+                raise ValueError(
+                    "\nERROR! No connectivity model specified at runtime. Select a"
+                    " valid estimator using the -mod flag.")
+            except ValueError:
+                sys.exit(0)
 
         # Try with the best-fitting Lasso estimator
         if estimator:
@@ -291,6 +298,7 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError:
                 print("Cannot run QuicGraphLasso. Skggm not installed!")
+                sys.exit(0)
 
             # Compute the sparse inverse covariance via QuicGraphLasso
             # credit: skggm
@@ -305,6 +313,7 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLassoCV
             except ImportError:
                 print("Cannot run QuicGraphLassoCV. Skggm not installed!")
+                sys.exit(0)
 
             # Compute the sparse inverse covariance via QuicGraphLassoCV
             # credit: skggm
@@ -318,6 +327,7 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLassoEBIC
             except ImportError:
                 print("Cannot run QuicGraphLassoEBIC. Skggm not installed!")
+                sys.exit(0)
 
             # Compute the sparse inverse covariance via QuicGraphLassoEBIC
             # credit: skggm
@@ -334,6 +344,7 @@ def get_conn_matrix(
                 )
             except ImportError:
                 print("Cannot run AdaptiveGraphLasso. Skggm not installed!")
+                sys.exit(0)
 
             # Compute the sparse inverse covariance via
             # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
@@ -346,18 +357,27 @@ def get_conn_matrix(
             model.fit(time_series)
             conn_matrix = model.estimator_.precision_
         else:
-            raise ValueError(
-                "\nERROR! No connectivity model specified at runtime. Select a"
-                " valid estimator using the -mod flag.")
+            try:
+                raise ValueError(
+                    "\nERROR! No connectivity model specified at runtime. "
+                    "Select a valid estimator using the -mod flag.")
+            except ValueError:
+                import sys
+                sys.exit(0)
 
     # Enforce symmetry
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
 
     if conn_matrix.shape < (2, 2):
-        raise RuntimeError(
-            "\nERROR! Matrix estimation selection yielded an empty or"
-            " 1-dimensional graph. "
-            "Check time-series for errors or try using a different atlas")
+        try:
+            raise RuntimeError(
+                "\nERROR! Matrix estimation selection yielded an empty or"
+                " 1-dimensional graph. "
+                "Check time-series for errors or try using a different atlas")
+        except RuntimeError:
+            import sys
+            sys.exit(0)
+
     coords = np.array(coords)
     labels = np.array(labels)
 
@@ -500,7 +520,7 @@ class TimeseriesExtraction(object):
                     "ERROR: Plotting configuration not successfully extracted "
                     "from runconfig.yaml"
                 )
-                sys.exit(0)
+                sys.exit(1)
         stream.close()
 
     def prepare_inputs(self):
@@ -511,16 +531,25 @@ class TimeseriesExtraction(object):
         from nilearn.image import math_img
 
         if not op.isfile(self.func_file):
-            raise ValueError(
-                "\nERROR: Functional data input not found! Check that the"
-                " file(s) specified with the -i "
-                "flag exist(s)")
+            try:
+                raise FileNotFoundError(
+                    "\nERROR: Functional data input not found! Check that the"
+                    " file(s) specified with the -i "
+                    "flag exist(s)")
+            except FileNotFoundError:
+                import sys
+                sys.exit(0)
 
         if self.conf:
             if not op.isfile(self.conf):
-                raise ValueError(
-                    "\nERROR: Confound regressor file not found! Check that"
-                    " the file(s) specified with the -conf flag exist(s)")
+                try:
+                    raise FileNotFoundError(
+                        "\nERROR: Confound regressor file not found! Check "
+                        "that the file(s) specified with the -conf flag "
+                        "exist(s)")
+                except FileNotFoundError:
+                    import sys
+                    sys.exit(0)
 
         self._func_img = nib.load(self.func_file)
         self._func_img.set_data_dtype(np.float32)
@@ -614,7 +643,11 @@ class TimeseriesExtraction(object):
         self._func_img.uncache()
 
         if self.ts_within_nodes is None:
-            raise RuntimeError("\nERROR: Time-series extraction failed!")
+            try:
+                raise RuntimeError("\nTime-series extraction failed!")
+            except RuntimeError:
+                import sys
+                sys.exit(1)
         else:
             self.node_size = "parc"
 

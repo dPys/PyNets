@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -77,7 +77,11 @@ def do_dir_path(atlas, outdir):
     if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path, exist_ok=True)
     elif atlas is None:
-        raise ValueError("Error: cannot create directory for a null atlas!")
+        try:
+            raise ValueError("Error: cannot create directory for a null atlas!")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     return dir_path
 
@@ -184,7 +188,7 @@ def create_est_path_func(
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     if (node_size is None) and (parc is True):
@@ -313,7 +317,7 @@ def create_est_path_diff(
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     if (node_size is None) and (parc is True):
@@ -425,7 +429,7 @@ def create_raw_path_func(
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     if (node_size is None) and (parc is True):
@@ -542,7 +546,7 @@ def create_raw_path_diff(
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     if (node_size is None) and (parc is True):
@@ -653,7 +657,11 @@ def load_mat(est_path):
     elif fmt == ".npy":
         G = nx.from_numpy_array(np.load(est_path))
     else:
-        raise ValueError("\nERROR: File format not supported!")
+        try:
+            raise ValueError("\nFile format not supported!")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     G.graph["ecount"] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
@@ -757,9 +765,27 @@ def save_mat(conn_matrix, est_path, fmt=None):
             delimiter=" ",
             encoding="utf-8")
     else:
-        raise ValueError("\nERROR: File format not supported!")
-
+        try:
+            raise ValueError("\nFile format not supported!")
+        except ValueError:
+            import sys
+            sys.exit(1)
     return
+
+
+def mergedicts(dict1, dict2):
+    for k in set(dict1.keys()).union(dict2.keys()):
+        if k in dict1 and k in dict2:
+            if isinstance(dict1[k], dict) and \
+                isinstance(dict2[k], dict):
+                yield (k, dict(mergedicts(dict1[k],
+                                          dict2[k])))
+            else:
+                yield (k, dict2[k])
+        elif k in dict1:
+            yield (k, dict1[k])
+        else:
+            yield (k, dict2[k])
 
 
 def save_mat_thresholded(
@@ -1202,6 +1228,7 @@ def collect_pandas_df(
         If True, then collect_pandas_df completed successfully.
 
     """
+    import sys
     import yaml
     import pkg_resources
     from pathlib import Path
@@ -1220,6 +1247,7 @@ def collect_pandas_df(
                 "ERROR: available functional models not sucessfully extracted"
                 " from runconfig.yaml"
             )
+            sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
@@ -1228,6 +1256,7 @@ def collect_pandas_df(
                 "ERROR: available structural models not sucessfully extracted"
                 " from runconfig.yaml"
             )
+            sys.exit(1)
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1482,7 +1511,7 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_siz
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     namer_dir = f"{dir_path}/parcellations"
@@ -1503,9 +1532,11 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_siz
     try:
         template_img = nib.load(template_brain)
     except indexed_gzip.ZranError as e:
+        import sys
         print(e,
               f"\nCannot load MNI template. Do you have git-lfs "
               f"installed?")
+        sys.exit(1)
 
     net_parcels_map_nifti = resample_to_img(
         net_parcels_map_nifti, template_img, interpolation="nearest"
@@ -1750,7 +1781,7 @@ def build_args_from_config(modality, arg_dict):
                 "ERROR: available functional models not successfully extracted"
                 " from runconfig.yaml"
             )
-            sys.exit()
+            sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
@@ -1759,7 +1790,7 @@ def build_args_from_config(modality, arg_dict):
                 "ERROR: available structural models not successfully extracted"
                 " from runconfig.yaml"
             )
-            sys.exit()
+            sys.exit(1)
 
     stream.close()
 

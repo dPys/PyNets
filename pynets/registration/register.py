@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner
 """
 import os
@@ -219,7 +219,10 @@ def direct_streamline_norm(
             hardcoded_params = yaml.load(stream)
             run_dsn = hardcoded_params['tracking']["DSN"][0]
         except FileNotFoundError:
+            import sys
             print("Failed to parse runconfig.yaml")
+            exit(1)
+
     stream.close()
 
     if run_dsn is True:
@@ -242,9 +245,11 @@ def direct_streamline_norm(
         try:
             template_img = nib.load(template_path)
         except indexed_gzip.ZranError as e:
+            import sys
             print(e,
                   f"\nCannot load FA template. Do you have git-lfs "
                   f"installed?")
+            sys.exit(1)
         uatlas_mni_img = nib.load(atlas_mni)
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
@@ -367,8 +372,13 @@ def direct_streamline_norm(
             print(len(streams_final_filt)/len(streams_in_curr_grid))
             adjusted_affine = affine_map.affine.copy()
             if i > len(combs) - 1:
-                raise ValueError('DSN failed. Header orientation information '
-                                 'may be corrupted. Is your dataset oblique?')
+                try:
+                    raise ValueError('DSN failed. Header orientation '
+                                     'information may be corrupted. '
+                                     'Is your dataset oblique?')
+                except ValueError:
+                    import sys
+                    sys.exit(1)
             adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
             adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
             adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
@@ -699,10 +709,12 @@ class DmriReg(object):
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
             except RuntimeError:
+                import sys
                 print(
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
+                sys.exit(1)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -910,12 +922,17 @@ class DmriReg(object):
         First creates ventricle ROI. Then creates transforms from stock MNI template to dwi space.
         For this to succeed, must first have called both t1w2dwi_align.
         """
+        import sys
         import time
         import os.path as op
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
-            raise ValueError("FSL atlas for ventricle reference not found!")
+            try:
+                raise FileNotFoundError("FSL atlas for ventricle reference not"
+                                        " found!")
+            except FileNotFoundError:
+                sys.exit(1)
 
         # Create transform to MNI atlas to T1w using flirt. This will be use to
         # transform the ventricles to dwi space.
@@ -938,6 +955,7 @@ class DmriReg(object):
             print(e,
                   f"\nCannot load ventricle ROI. Do you have git-lfs "
                   f"installed?")
+            sys.exit(1)
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(
@@ -964,6 +982,7 @@ class DmriReg(object):
                 print(e,
                       f"\nCannot load Corpus Callosum ROI. Do you have "
                       f"git-lfs installed?")
+                sys.exit(1)
 
             regutils.apply_warp(
                 self.t1w_brain,
@@ -1190,10 +1209,12 @@ class FmriReg(object):
                 gm_mask = maps["gm_prob"]
                 wm_mask = maps["wm_prob"]
             except RuntimeError:
+                import sys
                 print(
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
+                sys.exit(1)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)

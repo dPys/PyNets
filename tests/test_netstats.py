@@ -434,7 +434,7 @@ def test_get_metrics(metric):
 @pytest.mark.parametrize("sql_out", [True, False])
 @pytest.mark.parametrize("nc_collect", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
-@pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=ValueError)),
+@pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=SystemExit)),
                                        pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
                                        1,
                                        2])

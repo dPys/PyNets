@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2018
+Copyright (C) 2016
 @author: Derek Pisner
 """
 from pathlib import Path
@@ -286,10 +286,13 @@ def build_asetomes(est_path_iterlist, ID):
             n_components = hardcoded_params["gradients"][
                 "n_components"][0]
         except KeyError:
+            import sys
             print(
                 "ERROR: available gradient dimensionality presets not "
                 "sucessfully extracted from runconfig.yaml"
             )
+            sys.exit(1)
+
     stream.close()
 
     if isinstance(est_path_iterlist, list):
@@ -350,10 +353,12 @@ def build_masetome(est_path_iterlist, ID):
             n_components = hardcoded_params["gradients"][
                 "n_components"][0]
         except KeyError:
+            import sys
             print(
                 "ERROR: available gradient dimensionality presets not "
                 "sucessfully extracted from runconfig.yaml"
             )
+            sys.exit(1)
     stream.close()
 
     out_paths = []
@@ -402,6 +407,7 @@ def build_omnetome(est_path_iterlist, ID):
       Conference on (pp. 964-967). IEEE.
 
     """
+    import sys
     import numpy as np
     import yaml
     from pynets.core.utils import flatten
@@ -420,6 +426,7 @@ def build_omnetome(est_path_iterlist, ID):
                 "ERROR: available functional models not sucessfully extracted"
                 " from runconfig.yaml"
             )
+            sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
@@ -428,6 +435,7 @@ def build_omnetome(est_path_iterlist, ID):
                 "ERROR: available structural models not sucessfully extracted"
                 " from runconfig.yaml"
             )
+            sys.exit(1)
         try:
             n_components = hardcoded_params["gradients"][
                 "n_components"][0]
@@ -436,6 +444,8 @@ def build_omnetome(est_path_iterlist, ID):
                 "ERROR: available gradient dimensionality presets not "
                 "sucessfully extracted from runconfig.yaml"
             )
+            sys.exit(1)
+
     stream.close()
 
     if isinstance(est_path_iterlist, list):
@@ -531,9 +541,9 @@ def build_omnetome(est_path_iterlist, ID):
                                     list(set([i.shape for i in
                                               pop_rsn_list]))) > 1:
                                 raise RuntimeWarning(
-                                    "ERROR: Inconsistent number of"
+                                    "Inconsistent number of"
                                     " vertices in graph population "
-                                    "that precludes embedding")
+                                    "that precludes embedding...")
                             out_path = _omni_embed(
                                 pop_rsn_list, atlas, graph_path, ID, rsn,
                                 n_components
@@ -552,8 +562,8 @@ def build_omnetome(est_path_iterlist, ID):
                     if len(pop_list) > 1:
                         if len(list(set([i.shape for i in pop_list]))) > 1:
                             raise RuntimeWarning(
-                                "ERROR: Inconsistent number of vertices in graph"
-                                " population that precludes embedding")
+                                "Inconsistent number of vertices in "
+                                "graph population that precludes embedding")
                         out_path = _omni_embed(pop_list, atlas,
                                                graph_path, ID,
                                                n_components=n_components)
@@ -577,7 +587,7 @@ def build_omnetome(est_path_iterlist, ID):
                                     list(set([i.shape for i in
                                               pop_rsn_list]))) > 1:
                                 raise RuntimeWarning(
-                                    "ERROR: Inconsistent number of"
+                                    "Inconsistent number of"
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
@@ -598,7 +608,7 @@ def build_omnetome(est_path_iterlist, ID):
                     if len(pop_list) > 1:
                         if len(list(set([i.shape for i in pop_list]))) > 1:
                             raise RuntimeWarning(
-                                "ERROR: Inconsistent number of vertices in graph"
+                                "Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
                         out_path = _omni_embed(pop_list, atlas, graph_path,
                                                ID, n_components=n_components)

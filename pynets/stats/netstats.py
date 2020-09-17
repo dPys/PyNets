@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner
 """
 import pandas as pd
@@ -857,7 +857,9 @@ def most_important(G, method="betweenness", sd=1):
             algorithm.detect(G)
             ranking = algorithm.get_coreness().items()
         except ImportError:
+            import sys
             print("Cannot run coreness detection. cpalgorithm not installed!")
+            sys.exit(1)
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
@@ -1126,7 +1128,9 @@ class CleanGraphs(object):
                     hub_detection_method = hardcoded_params[
                         "hub_detection_method"][0]
                 except FileNotFoundError:
+                    import sys
                     print("Failed to parse runconfig.yaml")
+                    sys.exit(1)
             stream.close()
             [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
@@ -1148,7 +1152,12 @@ class CleanGraphs(object):
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
         else:
-            raise ValueError(f"Pruning option {self.prune} invalid!")
+            try:
+                raise ValueError(f"Pruning option {self.prune} invalid!")
+            except ValueError:
+                import sys
+                sys.exit(0)
+
         return self.in_mat, final_mat_path
 
     def print_summary(self):
@@ -1709,7 +1718,9 @@ def extractnetstats(
                 f"\n\nGlobal Topographic Metrics:"
                 f"\n{metric_list_global_names}\n")
         except FileNotFoundError:
+            import sys
             print("Failed to parse global_graph_measures.yaml")
+            sys.exit(1)
 
     with open(
         pkg_resources.resource_filename("pynets",
@@ -1721,7 +1732,9 @@ def extractnetstats(
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
             print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
         except FileNotFoundError:
+            import sys
             print("Failed to parse local_graph_measures.yaml")
+            sys.exit(1)
 
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
     # we are exploiting it intentionally to facilitate uninterrupted, automated graph analysis even when algorithms are
@@ -1929,6 +1942,7 @@ def collect_pandas_df_make(
       https://doi.org/10.1016/j.neuroimage.2015.05.011
 
     """
+    import sys
     import gc
     import os
     import os.path as op
@@ -1948,7 +1962,10 @@ def collect_pandas_df_make(
             if net_mets_csv.endswith('.csv'):
                 net_mets_csv_list_exist.append(net_mets_csv)
             else:
-                raise ValueError('File not .csv format')
+                try:
+                    raise ValueError('File not .csv format')
+                except ValueError:
+                    sys.exit(1)
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(
