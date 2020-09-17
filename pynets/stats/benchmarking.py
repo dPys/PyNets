@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @authors: Derek Pisner
 """
 import os
@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import (
     manhattan_distances,
     euclidean_distances,
 )
+from datetime import datetime
 from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, SimpleImputer
@@ -345,7 +346,7 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
     df_summary.at[0, "grid"] = comb_tuple
 
     # int_consist
-    if int_consist is True:
+    if int_consist is True and alg == 'topology':
         try:
             import pingouin as pg
         except ImportError:
@@ -379,7 +380,7 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
             del df_wide
 
     # icc
-    if icc is True:
+    if icc is True and alg == 'topology':
         try:
             import pingouin as pg
         except ImportError:
@@ -427,8 +428,12 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
     if disc is True:
         vect_all = []
         for ID in ids:
-            out = gen_sub_vec(sub_dict_clean, ID, modality, alg,
-                              comb_tuple)
+            try:
+                out = gen_sub_vec(sub_dict_clean, ID, modality, alg,
+                                  comb_tuple)
+            except:
+                print(f"{ID} {modality} {alg} {comb_tuple} failed...")
+                continue
             # print(out)
             vect_all.append(out)
         vect_all = [i for i in vect_all if i is not None]
@@ -475,17 +480,17 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/visual'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/visual'
     thr_type = "MST"
-    icc = False
+    icc = True
     disc = True
-    int_consist = False
+    int_consist = True
 
     #embedding_types = ['topology']
-    #embedding_types = ['topology', 'OMNI', 'ASE']
+    embedding_types = ['topology', 'OMNI', 'ASE']
     #embedding_types = ['ASE']
-    embedding_types = ['OMNI', 'ASE']
+    #embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
     #modalities = ['dwi']
     template = 'MNI152_T1'
@@ -545,12 +550,12 @@ if __name__ == "__main__":
 
             # with Parallel(
             #     n_jobs=-1,
-            #     require='sharedmem',
+            #     backend='loky',
             #     verbose=10,
             #     max_nbytes=None,
             #     temp_folder=cache_dir,
             # ) as parallel:
-            #     outs_tup = parallel(
+            #     outs = parallel(
             #         delayed(benchmark_reproducibility)(
             #             comb, modality, alg, par_dict,
             #             disc, int_consist,
@@ -567,6 +572,8 @@ if __name__ == "__main__":
 
             df_summary = pd.concat(outs, axis=0)
             df_summary = df_summary.dropna(axis=0, how='all')
-            print(f"Saving to {base_dir}/grid_clean_{modality}_{alg}.csv...")
-            df_summary.to_csv(f"{base_dir}/grid_clean_{modality}_{alg}.csv",
-                              index=False)
+            print(f"Saving to {base_dir}/grid_clean_{modality}_{alg}_"
+                  f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
+            df_summary.to_csv(f"{base_dir}/grid_clean"
+                              f"_{modality}_{alg}_"
+                              f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv", index=False)

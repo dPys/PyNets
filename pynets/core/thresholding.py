@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -95,7 +95,11 @@ def threshold_proportional(W, p, copy=True):
 
     """
     if p > 1 or p < 0:
-        raise ValueError("Threshold must be in range [0,1]")
+        try:
+            raise ValueError("Threshold must be in range [0,1]")
+        except ValueError:
+            import sys
+            sys.exit(0)
     if copy:
         W = W.copy()
     n = len(W)
@@ -767,7 +771,9 @@ def local_thresholding_prop(conn_matrix, thr):
         return conn_matrix_thr
 
     except ValueError:
+        import sys
         print("MST thresholding failed. Check raw graph output manually for debugging.")
+        sys.exit(1)
 
 
 def perform_thresholding(
@@ -999,7 +1005,12 @@ def thresh_func(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        try:
+            raise ValueError("ERROR: Raw connectivity matrix contains only"
+                             " zeros.")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     # Save unthresholded
     utils.save_mat(
@@ -1236,7 +1247,12 @@ def thresh_struct(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        try:
+            raise ValueError("ERROR: Raw connectivity matrix contains only"
+                             " zeros.")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     # Save unthresholded
     utils.save_mat(

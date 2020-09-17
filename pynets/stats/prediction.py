@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2017
+Copyright (C) 2016
 @authors: Derek Pisner
 """
 import pandas as pd
@@ -20,7 +20,8 @@ from nipype.interfaces.base import (
 )
 from scipy import stats
 from sklearn.model_selection import KFold, GridSearchCV, cross_validate
-from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_regression
+from sklearn.feature_selection import VarianceThreshold, SelectKBest, \
+    f_regression
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn import linear_model, decomposition

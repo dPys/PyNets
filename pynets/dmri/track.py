@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -60,10 +60,14 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
-        raise ValueError(
-            "Error: No valid reconstruction model specified. See the `-mod` "
-            "flag."
-        )
+        try:
+            raise ValueError(
+                "Error: No valid reconstruction model specified. See the "
+                "`-mod` flag."
+            )
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del dwi_data
 
@@ -184,7 +188,11 @@ def prep_tissues(
             )
         )
     else:
-        raise ValueError("Tissue classifier cannot be none.")
+        try:
+            raise ValueError("Tissue classifier cannot be none.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del gm_data, wm_data, vent_csf_in_dwi_data
     mask_img.uncache()
@@ -462,7 +470,8 @@ def track_ensemble(
                 ix += 1
                 print("Fewer than 100 streamlines tracked on last iteration."
                       " loosening tolerance and anatomical constraints...")
-                tiss_class = 'wb'
+                if track_type != 'particle':
+                    tiss_class = 'wb'
                 roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                 min_length = float(min_length) * 0.95
                 continue
@@ -683,9 +692,14 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             min_separation_angle=min_separation_angle,
         )
     else:
-        raise ValueError(
-            "ERROR: No valid direction getter(s) specified."
-        )
+        try:
+            raise ValueError(
+                "ERROR: No valid direction getter(s) specified."
+            )
+        except ValueError:
+            import sys
+            sys.exit(0)
+
     print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
     # Perform wm-gm interface seeding, using n_seeds at a time
@@ -732,8 +746,12 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             return_all=True,
         )
     else:
-        raise ValueError(
-            "ERROR: No valid tracking method(s) specified.")
+        try:
+            raise ValueError(
+                "ERROR: No valid tracking method(s) specified.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain

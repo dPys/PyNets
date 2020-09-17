@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import indexed_gzip
@@ -275,7 +275,11 @@ def discretisation(eigen_vec):
                 R = np.matrix(Vh).transpose() * np.matrix(U).transpose()
 
     if exitLoop == 0:
-        raise ValueError("SVD did not converge after 30 retries")
+        try:
+            raise ValueError("SVD did not converge after 30 retries")
+        except ValueError:
+            import sys
+            sys.exit(1)
     else:
         return eigenvec_discrete
 
@@ -885,11 +889,19 @@ class NiParcellate(object):
             self._conn_comps = conn_comps[0]
             self.num_conn_comps = len(conn_comps[1])
         except BaseException:
-            raise ValueError("Clustering mask is empty!")
+            try:
+                raise ValueError("Clustering mask is empty!")
+            except ValueError:
+                import sys
+                sys.exit(1)
 
         if not self._conn_comps:
             if np.sum(np.asarray(self._clust_mask_corr_img.dataobj)) == 0:
-                raise ValueError("Clustering mask is empty!")
+                try:
+                    raise ValueError("Clustering mask is empty!")
+                except ValueError:
+                    import sys
+                    sys.exit(1)
             else:
                 self._conn_comps = self._clust_mask_corr_img
                 self.num_conn_comps = 1
@@ -903,18 +915,27 @@ class NiParcellate(object):
             or self.clust_type == "single"
         ):
             if self.num_conn_comps > 1:
-                raise ValueError(
-                    "Clustering method unstable with spatial constrainsts "
-                    "applied to multiple connected components.")
+                try:
+                    raise ValueError(
+                        "Clustering method unstable with spatial constrainsts "
+                        "applied to multiple connected components.")
+                except ValueError:
+                    import sys
+                    sys.exit(0)
 
         if (
             self.clust_type == "ward" and self.num_conn_comps > 1
         ) or self.clust_type == "ncut":
             if self.k < self.num_conn_comps:
-                raise ValueError(
-                    "k must minimally be greater than the total number of "
-                    "connected components in "
-                    "the mask in the case of agglomerative clustering.")
+                try:
+                    raise ValueError(
+                        "k must minimally be greater than the total number of "
+                        "connected components in "
+                        "the mask in the case of agglomerative clustering.")
+                except ValueError:
+                    import sys
+                    sys.exit(0)
+
             if self.local_corr == "tcorr" or self.local_corr == "scorr":
                 self._local_conn_mat_path = (
                     f"{self.uatlas.split('.nii')[0]}_"
@@ -937,9 +958,12 @@ class NiParcellate(object):
                             self._func_img, self._clust_mask_corr_img,
                             thresh=r_thresh)
                     else:
-                        raise ValueError(
-                            "Local connectivity type not available")
-
+                        try:
+                            raise ValueError(
+                                "Local connectivity type not available")
+                        except ValueError:
+                            import sys
+                            sys.exit(0)
                     print(
                         f"Saving spatially constrained connectivity structure"
                         f" to: {self._local_conn_mat_path}"
@@ -949,16 +973,25 @@ class NiParcellate(object):
                     self._local_conn = load_npz(self._local_conn_mat_path)
             elif self.local_corr == "allcorr":
                 if self.clust_type == "ncut":
-                    raise ValueError(
-                        "Must select either `tcorr` or `scorr` local "
-                        "connectivity option if you are using "
-                        "`ncut` clustering method")
+                    try:
+                        raise ValueError(
+                            "Must select either `tcorr` or `scorr` local "
+                            "connectivity option if you are using "
+                            "`ncut` clustering method")
+                    except ValueError:
+                        import sys
+                        sys.exit(0)
+
                 self._local_conn = "auto"
             else:
-                raise ValueError(
-                    "Local connectivity method not recognized. Only tcorr,"
-                    " scorr, and auto are currently "
-                    "supported")
+                try:
+                    raise ValueError(
+                        "Local connectivity method not recognized. Only tcorr,"
+                        " scorr, and auto are currently "
+                        "supported")
+                except ValueError:
+                    import sys
+                    sys.exit(0)
         else:
             self._local_conn = "auto"
         return
@@ -993,15 +1026,23 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     if (clust_type == "ward") and (local_corr != "allcorr"):
         if _local_conn_mat_path is not None:
             if not os.path.isfile(_local_conn_mat_path):
+                try:
+                    raise FileNotFoundError(
+                        "File containing sparse matrix of local connectivity"
+                        " structure not found."
+                    )
+                except FileNotFoundError:
+                    import sys
+                    sys.exit(0)
+        else:
+            try:
                 raise FileNotFoundError(
                     "File containing sparse matrix of local connectivity"
                     " structure not found."
                 )
-        else:
-            raise FileNotFoundError(
-                "File containing sparse matrix of local connectivity"
-                " structure not found."
-            )
+            except FileNotFoundError:
+                import sys
+                sys.exit(0)
 
     if (
         clust_type == "complete"

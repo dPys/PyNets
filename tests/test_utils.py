@@ -146,7 +146,6 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
                                           thr_type, hpass, parc,
                                           extract_strategy)
     assert est_path is not None
-    #assert 'smooth-6' in est_path
 
 
 @pytest.mark.parametrize("node_size", [6, None])
@@ -210,7 +209,7 @@ def test_create_csv_path():
 @pytest.mark.parametrize("fmt", ['edgelist_csv', 'gpickle', 'graphml', 'txt',
                                  'npy', 'edgelist_ssv',
                                  pytest.param(None, marks=pytest.mark.xfail(
-                                     raises=ValueError))])
+                                     raises=SystemExit))])
 def test_save_mat(fmt):
     import glob as glob
     import tempfile
@@ -269,7 +268,7 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
 
 @pytest.mark.parametrize("atlas", ['Power', 'Shirer', 'Shen', 'Smith',
-                                    pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))])
+                                    pytest.param(None, marks=pytest.mark.xfail(raises=SystemExit))])
 @pytest.mark.parametrize("input", ['fmri', 'dmri'])
 def test_do_dir_path(atlas, input):
     """
