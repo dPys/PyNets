@@ -100,24 +100,26 @@ def get_conn_matrix(
     Parameters
     ----------
     time_series : array
-        2D m x n array consisting of the time-series signal for each ROI node where m = number of scans and
-        n = number of ROI's.
+        2D m x n array consisting of the time-series signal for each ROI node
+        where m = number of scans and n = number of ROI's.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     roi : str
@@ -149,28 +151,31 @@ def get_conn_matrix(
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     Returns
     -------
     conn_matrix : array
         Adjacency matrix stored as an m x n array of nodes and edges.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     roi : str
@@ -202,14 +207,17 @@ def get_conn_matrix(
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     References
     ----------
-    .. [1] Varoquaux, G., & Craddock, R. C. (2013). Learning and comparing functional connectomes
-      across subjects. NeuroImage. https://doi.org/10.1016/j.neuroimage.2013.04.007
-    .. [2] Jason Laska, Manjari Narayan, 2017. skggm 0.2.7: A scikit-learn compatible package
-      for Gaussian and related Graphical Models. doi:10.5281/zenodo.830033
+    .. [1] Varoquaux, G., & Craddock, R. C. (2013). Learning and comparing
+      functional connectomes across subjects. NeuroImage.
+      https://doi.org/10.1016/j.neuroimage.2013.04.007
+    .. [2] Jason Laska, Manjari Narayan, 2017. skggm 0.2.7:
+      A scikit-learn compatible package for Gaussian and related Graphical
+      Models. doi:10.5281/zenodo.830033
 
     """
     import sys

@@ -420,7 +420,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
             else:
                 # from pynets.stats.netstats import collect_pandas_df_make
                 # collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
-                #                                  f"{modality}/{atlas}/topology/*_neat.csv"),
+                #                                  f"{modality}/{atlas}/
+                #                                  topology/*_neat.csv"),
                 #                        f"{sub}_{ses}", None, False)
                 rerun_dict[sub][ses][modality][atlas].append(bad_col)
                 continue
@@ -461,7 +462,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                         #     collect_pandas_df_make
                         # collect_pandas_df_make(
                         #     glob.glob(f"{working_path}/{sub}/{ses}/"
-                        #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #               f"{modality}/{atlas}/topology/
+                        #               *_neat.csv"),
                         #     f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
@@ -573,8 +575,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/topology/*",
-                                   recursive=True)
+                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/"
+                                   f"topology/*", recursive=True)
             ]
         )
     )
@@ -954,9 +956,13 @@ def main():
         gc.collect()
     mgr.shutdown()
 
-    working_path = args_dict_all['basedir']
-    modality = args_dict_all['modality']
-    drop_cols = args_dict_all['dc']
+    # working_path = args_dict_all['basedir']
+    # modality = args_dict_all['modality']
+    # drop_cols = args_dict_all['dc']
+    working_path = args.basedir
+    modality = args.modality
+    drop_cols = args.dc
+
     all_files = glob.glob(
         f"{str(Path(working_path))}/{modality}_group_topology_auc/*.csv"
     )

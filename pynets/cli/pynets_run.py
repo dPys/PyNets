@@ -655,7 +655,8 @@ def build_workflow(args, retval):
                                    'FSL has been properly installed before '
                                    'proceeding.')
         except EnvironmentError:
-            sys.exit(1)
+            retval["return_code"] = 1
+            return retval
     else:
         fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
@@ -667,7 +668,8 @@ def build_workflow(args, retval):
                 raise EnvironmentError('Is your FSL installation corrupted? '
                                        'Check permissions.')
             except EnvironmentError:
-                sys.exit(1)
+                retval["return_code"] = 1
+                return retval
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -751,7 +753,7 @@ def build_workflow(args, retval):
     ):
         try:
             raise ValueError(
-                "\nError: You must include a subject ID in your command line "
+                "\nYou must include a subject ID in your command line "
                 "call."
             )
         except ValueError:
@@ -763,7 +765,7 @@ def build_workflow(args, retval):
         if multi_subject_graph:
             if len(ID) != len(multi_subject_graph):
                 print(
-                    "Error: Length of ID list does not correspond to length of"
+                    "\nLength of ID list does not correspond to length of"
                     " input graph file list."
                 )
                 retval["return_code"] = 1
@@ -771,7 +773,7 @@ def build_workflow(args, retval):
         if multi_subject_multigraph:
             if len(ID) != len(multi_subject_multigraph):
                 print(
-                    "Error: Length of ID list does not correspond to length of"
+                    "\nLength of ID list does not correspond to length of"
                     " input graph file list."
                 )
                 retval["return_code"] = 1
@@ -779,7 +781,7 @@ def build_workflow(args, retval):
         if len(ID) > 1 and not multi_subject_graph and not \
             multi_subject_multigraph:
             print(
-                "Error: Length of ID list does not correspond to length of"
+                "\nLength of ID list does not correspond to length of"
                 " input graph file list."
             )
             retval["return_code"] = 1

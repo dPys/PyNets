@@ -157,7 +157,8 @@ class FetchNodesLabels(SimpleInterface):
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
                 if self.inputs.clustering is False:
                     [uatlas,
-                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                     labels] = \
+                        nodemaker.enforce_hem_distinct_consecutive_labels(
                         uatlas, label_names=labels)
                 if self.inputs.parc is True:
                     parcel_list = nodemaker.gen_img_list(uatlas)
@@ -343,7 +344,8 @@ class FetchNodesLabels(SimpleInterface):
 
 
         print(f"Coordinates:\n{coords}")
-        print(f"Labels:\n{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
+        print(f"Labels:\n"
+        f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
 
         assert len(coords) == len(labels)
 
@@ -652,8 +654,8 @@ class IndividualClustering(SimpleInterface):
                     import nibabel as nib
                     from nilearn.masking import unmask
                     from pynets.fmri.estimation import timeseries_bootstrap
-                    boot_series = timeseries_bootstrap(ts_data.func,
-                                                       block_size)[0].astype('float32')
+                    boot_series = timeseries_bootstrap(
+                        ts_data.func, block_size)[0].astype('float32')
                     return unmask(boot_series, clust_mask_corr_img)
 
                 def run_bs_iteration(i, ts_data, work_dir, local_corr,

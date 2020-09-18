@@ -431,12 +431,18 @@ def track_ensemble(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         nthreads = hardcoded_params["nthreads"][0]
-        n_seeds_per_iter = hardcoded_params['tracking']["n_seeds_per_iter"][0]
-        max_length = hardcoded_params['tracking']["max_length"][0]
-        pft_back_tracking_dist = hardcoded_params['tracking']["pft_back_tracking_dist"][0]
-        pft_front_tracking_dist = hardcoded_params['tracking']["pft_front_tracking_dist"][0]
-        particle_count = hardcoded_params['tracking']["particle_count"][0]
-        min_separation_angle = hardcoded_params['tracking']["min_separation_angle"][0]
+        n_seeds_per_iter = \
+            hardcoded_params['tracking']["n_seeds_per_iter"][0]
+        max_length = \
+            hardcoded_params['tracking']["max_length"][0]
+        pft_back_tracking_dist = \
+            hardcoded_params['tracking']["pft_back_tracking_dist"][0]
+        pft_front_tracking_dist = \
+            hardcoded_params['tracking']["pft_front_tracking_dist"][0]
+        particle_count = \
+            hardcoded_params['tracking']["particle_count"][0]
+        min_separation_angle = \
+            hardcoded_params['tracking']["min_separation_angle"][0]
     stream.close()
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
@@ -813,7 +819,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=roi_neighborhood_tol,
+                    tol=0,
                     mode="all",
                 )
             ]
