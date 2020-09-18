@@ -393,7 +393,7 @@ def get_node_membership(
         parcel_list_res = gen_img_list(par_tmp)
     else:
         parcel_list_res = None
-        
+
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = [
         "Vis",
@@ -973,7 +973,8 @@ def gen_img_list(uatlas):
     par_max = len(bna_data_for_coords_uniq) - 1
     img_stack = []
     for idx in range(1, par_max + 1):
-        roi_img = bna_data.astype("uint16") == bna_data_for_coords_uniq[idx].astype("uint16")
+        roi_img = bna_data.astype("uint16") == \
+                  bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
     img_stack = np.array(img_stack)
 
@@ -1658,8 +1659,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list,
-                                                               label_intensities)
+    [net_parcels_map_nifti, _] = \
+        nodemaker.create_parcel_atlas(parcel_list, label_intensities)
 
     coords = list(tuple(x) for x in coords)
 

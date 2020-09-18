@@ -431,12 +431,18 @@ def track_ensemble(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         nthreads = hardcoded_params["nthreads"][0]
-        n_seeds_per_iter = hardcoded_params['tracking']["n_seeds_per_iter"][0]
-        max_length = hardcoded_params['tracking']["max_length"][0]
-        pft_back_tracking_dist = hardcoded_params['tracking']["pft_back_tracking_dist"][0]
-        pft_front_tracking_dist = hardcoded_params['tracking']["pft_front_tracking_dist"][0]
-        particle_count = hardcoded_params['tracking']["particle_count"][0]
-        min_separation_angle = hardcoded_params['tracking']["min_separation_angle"][0]
+        n_seeds_per_iter = \
+            hardcoded_params['tracking']["n_seeds_per_iter"][0]
+        max_length = \
+            hardcoded_params['tracking']["max_length"][0]
+        pft_back_tracking_dist = \
+            hardcoded_params['tracking']["pft_back_tracking_dist"][0]
+        pft_front_tracking_dist = \
+            hardcoded_params['tracking']["pft_front_tracking_dist"][0]
+        particle_count = \
+            hardcoded_params['tracking']["particle_count"][0]
+        min_separation_angle = \
+            hardcoded_params['tracking']["min_separation_angle"][0]
     stream.close()
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
@@ -465,6 +471,8 @@ def track_ensemble(
             out_streams = [i for i in out_streams if i is not None and
                            len(i) > 0]
 
+            out_streams = concatenate(out_streams, axis=0)
+
             if len(out_streams) < 100:
                 ix += 1
                 print("Fewer than 100 streamlines tracked on last iteration."
@@ -474,10 +482,7 @@ def track_ensemble(
                 roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                 min_length = float(min_length) * 0.95
             else:
-                out_streams = concatenate(out_streams, axis=0)
-
-            if float(ix) > len(all_combs):
-                break
+                ix -= 1
 
             # Append streamline generators to prevent exponential growth
             # in memory consumption
@@ -496,6 +501,9 @@ def track_ensemble(
             )
             gc.collect()
             print(Style.RESET_ALL)
+
+        if float(ix) > len(all_combs):
+            break
 
     if ix >= len(all_combs) and float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
@@ -803,8 +811,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         return None
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
-        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj).astype(
-            "bool")
+        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj
+                                  ).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(
@@ -812,7 +820,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     np.eye(4),
                     waymask_data,
                     tol=0,
-                    mode="any",
+                    mode="all",
                 )
             ]
             print("%s%s" % ("Waymask proximity: ",

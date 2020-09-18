@@ -420,7 +420,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
             else:
                 # from pynets.stats.netstats import collect_pandas_df_make
                 # collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
-                #                                  f"{modality}/{atlas}/topology/*_neat.csv"),
+                #                                  f"{modality}/{atlas}/
+                #                                  topology/*_neat.csv"),
                 #                        f"{sub}_{ses}", None, False)
                 rerun_dict[sub][ses][modality][atlas].append(bad_col)
                 continue
@@ -461,7 +462,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                         #     collect_pandas_df_make
                         # collect_pandas_df_make(
                         #     glob.glob(f"{working_path}/{sub}/{ses}/"
-                        #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #               f"{modality}/{atlas}/topology/
+                        #               *_neat.csv"),
                         #     f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
@@ -573,8 +575,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/topology/*",
-                                   recursive=True)
+                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/"
+                                   f"topology/*", recursive=True)
             ]
         )
     )
@@ -894,7 +896,7 @@ def main():
     import sys
     import glob
     from pynets.cli.pynets_collect import build_collect_workflow
-    from types import SimpleNamespace
+    # from types import SimpleNamespace
     from pathlib import Path
 
     try:
@@ -910,28 +912,28 @@ def main():
               " flag.\n")
         sys.exit()
 
-    # args = get_parser().parse_args()
-    args_dict_all = {}
-    args_dict_all['plug'] = 'MultiProc'
-    args_dict_all['v'] = False
-    args_dict_all['pm'] = '24,57'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
-    args_dict_all['dc'] = ['diversity_coefficient',
-                           'participation_coefficient',
-                           'average_local_efficiency',
-                           'average_clustering',
-                           'average_local_clustering_nodewise',
-                           'average_local_efficiency_nodewise',
-                           'degree_centrality',
-                           'weighted_transitivity',
-                        #   "_minlength-0",
-                           "_minlength-20", "_minlength-30", "variance",
-                           "res-1000"]
-    args = SimpleNamespace(**args_dict_all)
+    args = get_parser().parse_args()
+    # args_dict_all = {}
+    # args_dict_all['plug'] = 'MultiProc'
+    # args_dict_all['v'] = False
+    # args_dict_all['pm'] = '24,57'
+    # #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    # #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
+    # args_dict_all['work'] = '/tmp/work/dwi'
+    # args_dict_all['modality'] = 'dwi'
+    # args_dict_all['dc'] = ['diversity_coefficient',
+    #                        'participation_coefficient',
+    #                        'average_local_efficiency',
+    #                        'average_clustering',
+    #                        'average_local_clustering_nodewise',
+    #                        'average_local_efficiency_nodewise',
+    #                        'degree_centrality',
+    #                        'weighted_transitivity',
+    #                     #   "_minlength-0",
+    #                        "_minlength-20", "_minlength-30", "variance",
+    #                        "res-1000"]
+    # args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
 
@@ -954,9 +956,13 @@ def main():
         gc.collect()
     mgr.shutdown()
 
-    working_path = args_dict_all['basedir']
-    modality = args_dict_all['modality']
-    drop_cols = args_dict_all['dc']
+    # working_path = args_dict_all['basedir']
+    # modality = args_dict_all['modality']
+    # drop_cols = args_dict_all['dc']
+    working_path = args.basedir
+    modality = args.modality
+    drop_cols = args.dc
+
     all_files = glob.glob(
         f"{str(Path(working_path))}/{modality}_group_topology_auc/*.csv"
     )

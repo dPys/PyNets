@@ -113,11 +113,12 @@ def global_efficiency(G, weight="weight"):
     to make a completely connected graph. Since that knowlege may not exist,
     the scaling factor is not included. If that knowlege exists, construct the
     corresponding weighted graph and calculate its global_efficiency to scale
-    the weighted graph. Distance between nodes is calculated as the sum of weights.
-    If the graph is defined such that a higher weight represents a stronger connection,
-    distance should be represented by 1/weight. In this case, use the invert
-    weights function to generate a graph where the weights are set to 1/weight
-    and then calculate efficiency
+    the weighted graph. Distance between nodes is calculated as the sum of
+    weights.
+    If the graph is defined such that a higher weight represents a stronger
+    connection, distance should be represented by 1/weight. In this case, use
+    the invert weights function to generate a graph where the weights are set
+    to 1/weight and then calculate efficiency
 
     References
     ----------
@@ -244,10 +245,11 @@ def smallworldness(
 
     omega = Lr/L - C/Cl
 
-    where C and L are respectively the average clustering coefficient/transitivity
-    and average shortest path length of G. Lr is the average shortest path
-    length of an equivalent random graph and Cl is the average clustering
-    coefficient/transitivity of an equivalent lattice/random graph.
+    where C and L are respectively the average clustering
+    coefficient/ transitivity and average shortest path length of G. Lr is
+    the average shortest path length of an equivalent random graph and Cl is
+    the average clustering coefficient/transitivity of an equivalent
+    lattice/random graph.
 
     Parameters
     ----------
@@ -338,9 +340,11 @@ def create_communities(node_comm_aff_mat, node_num):
     Parameters
     ----------
     node_comm_aff_mat : array
-        Community affiliation matrix produced from modularity estimation (e.g. Louvain).
+        Community affiliation matrix produced from modularity estimation
+        (e.g. Louvain).
     node_num : int
-        Number of total connected nodes in the graph used to estimate node_comm_aff_mat.
+        Number of total connected nodes in the graph used to estimate
+        node_comm_aff_mat.
 
     Returns
     -------
@@ -545,10 +549,10 @@ def link_communities(W, type_clustering="single"):
 
     References
     ----------
-    .. [1] de Reus, M. A., Saenger, V. M., Kahn, R. S., & van den Heuvel, M. P. (2014).
-      An edge-centric perspective on the human connectome: Link communities in the
-      brain. Philosophical Transactions of the Royal Society B: Biological Sciences.
-      https://doi.org/10.1098/rstb.2013.0527
+    .. [1] de Reus, M. A., Saenger, V. M., Kahn, R. S., & van den Heuvel,
+      M. P. (2014). An edge-centric perspective on the human connectome:
+      Link communities in the brain. Philosophical Transactions of the Royal
+      Society B: Biological Sciences. https://doi.org/10.1098/rstb.2013.0527
 
     """
 
@@ -753,11 +757,11 @@ def weighted_transitivity(G):
 
     References
     ----------
-    .. [1] Wasserman, S., and Faust, K. (1994). Social Network Analysis: Methods and
-      Applications. Cambridge: Cambridge University Press.
-    .. [2] Alain Barrat, Marc Barthelemy, Romualdo Pastor-Satorras, Alessandro Vespignani:
-      The architecture of complex weighted networks, Proc. Natl. Acad. Sci.
-      USA 101, 3747 (2004)
+    .. [1] Wasserman, S., and Faust, K. (1994). Social Network Analysis:
+      Methods and Applications. Cambridge: Cambridge University Press.
+    .. [2] Alain Barrat, Marc Barthelemy, Romualdo Pastor-Satorras, Alessandro
+      Vespignani: The architecture of complex weighted networks, Proc. Natl.
+      Acad. Sci. USA 101, 3747 (2004)
 
     """
 
@@ -828,8 +832,8 @@ def most_important(G, method="betweenness", sd=1):
     G : Obj
         NetworkX graph.
     method : str
-        Determines method for defining hubs. Valid inputs are coreness, richclub, and
-        eigenvector centrality. Default is coreness.
+        Determines method for defining hubs. Valid inputs are coreness,
+        richclub, and eigenvector centrality. Default is coreness.
     sd : int
         Number of standard errors as cutoff for low-importance pruning.
 
@@ -998,13 +1002,15 @@ class CleanGraphs(object):
     Parameters
     ----------
     thr : float
-        The value, between 0 and 1, used to threshold the graph using any variety of methods
-        triggered through other options.
+        The value, between 0 and 1, used to threshold the graph using any
+        variety of methods triggered through other options.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance,
        partcorr for partial correlation). sps type is used by default.
     est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
+        array in .npy format.
     prune : int
         Indicates whether to prune final graph of disconnected nodes/isolates.
     norm : int
@@ -1020,9 +1026,9 @@ class CleanGraphs(object):
     .. [1] Qin, Tai, and Karl Rohe. "Regularized spectral clustering
       under the degree-corrected stochastic blockmodel." In Advances
       in Neural Information Processing Systems, pp. 3120-3128. 2013
-    .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to discover
-      asymmetries and directional communities." Proceedings of the National Academy
-      of Sciences 113.45 (2016): 12679-12684.
+    .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to
+      discover asymmetries and directional communities." Proceedings of the
+      National Academy of Sciences 113.45 (2016): 12679-12684.
 
     """
 
@@ -1194,7 +1200,8 @@ def save_netmets(
     import os
     # And save results to csv
     out_path_neat = (
-        f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}{'_neat.csv'}"
+        f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}"
+        f"{'_neat.csv'}"
     )
     zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
     df = pd.DataFrame.from_dict(
@@ -1268,14 +1275,15 @@ def community_resolution_selection(G):
                         resolution=resolution).values()))
             num_comms = len(np.unique(ci))
             print(
-                f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}"
+                f"{'Found '}{num_comms}{' communities at resolution: '}"
+                f"{resolution}{'...'}"
             )
             resolution = resolution + 10
             tries = tries + 1
             if tries > 100:
                 print(
-                    "\nWARNING: Louvain community detection failed. Proceeding with single community affiliation "
-                    "vector...")
+                    "\nWARNING: Louvain community detection failed. "
+                    "Proceeding with single community affiliation vector...")
                 break
     elif num_comms > len(G.edges()) / 10:
         resolution = 0.1
@@ -1288,18 +1296,20 @@ def community_resolution_selection(G):
                         resolution=resolution).values()))
             num_comms = len(np.unique(ci))
             print(
-                f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}"
+                f"{'Found '}{num_comms}{' communities at resolution: '}"
+                f"{resolution}{'...'}"
             )
             resolution = resolution / 10
             tries = tries + 1
             if tries > 100:
                 print(
-                    "\nWARNING: Louvain community detection failed. Proceeding with single community affiliation "
-                    "vector...")
+                    "\nWARNING: Louvain community detection failed. "
+                    "Proceeding with single community affiliation vector...")
                 break
     else:
         print(
-            f"{'Found '}{num_comms}{' communities at resolution: '}{resolution}{'...'}"
+            f"{'Found '}{num_comms}{' communities at resolution: '}"
+            f"{resolution}{'...'}"
         )
     return dict(zip(G.nodes(), ci)), ci, resolution, num_comms
 
@@ -1334,14 +1344,16 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
             pc_arr[j, 1] = pc_vals[j]
         except BaseException:
             print(
-                f"{'Participation coefficient is undefined for node '}{str(j)}{' of G'}"
+                f"{'Participation coefficient is undefined for node '}"
+                f"{str(j)}{' of G'}"
             )
             pc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     pc_arr[num_edges, 0] = "average_participation_coefficient"
     nonzero_arr_partic_coef = np.delete(pc_arr[:, 1], [0])
-    pc_arr[num_edges, 1] = np.nanmean(nonzero_arr_partic_coef.astype('float32'), dtype=np.float32)
+    pc_arr[num_edges, 1] = np.nanmean(
+        nonzero_arr_partic_coef.astype('float32'), dtype=np.float32)
     print(f"{'Mean Participation Coefficient: '}{str(pc_arr[num_edges, 1])}")
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1363,13 +1375,15 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
             dc_arr[j, 1] = dc_vals[j]
         except BaseException:
             print(
-                f"{'Diversity coefficient is undefined for node '}{str(j)}{' of G'}")
+                f"{'Diversity coefficient is undefined for node '}{str(j)}"
+                f"{' of G'}")
             dc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     dc_arr[num_edges, 0] = "average_diversity_coefficient"
     nonzero_arr_diversity_coef = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_edges, 1] = np.nanmean(nonzero_arr_diversity_coef.astype('float32'), dtype=np.float32)
+    dc_arr[num_edges, 1] = np.nanmean(
+        nonzero_arr_diversity_coef.astype('float32'), dtype=np.float32)
     print(f"{'Mean Diversity Coefficient: '}{str(dc_arr[num_edges, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1390,12 +1404,14 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
         try:
             le_arr[j, 1] = le_vals[j]
         except BaseException:
-            print(f"{'Local efficiency is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'Local efficiency is undefined for node '}{str(j)}"
+                  f"{' of G'}")
             le_arr[j, 1] = np.nan
         j = j + 1
     le_arr[num_nodes, 0] = "average_local_efficiency_nodewise"
     nonzero_arr_le = np.delete(le_arr[:, 1], [0])
-    le_arr[num_nodes, 1] = np.nanmean(nonzero_arr_le.astype('float32'), dtype=np.float32)
+    le_arr[num_nodes, 1] = np.nanmean(nonzero_arr_le.astype('float32'),
+                                      dtype=np.float32)
     print(f"{'Mean Local Efficiency: '}{str(le_arr[num_nodes, 1])}")
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
@@ -1417,12 +1433,14 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
         try:
             cl_arr[j, 1] = cl_vals[j]
         except BaseException:
-            print(f"{'Local clustering is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'Local clustering is undefined for node '}{str(j)}"
+                  f"{' of G'}")
             cl_arr[j, 1] = np.nan
         j = j + 1
     cl_arr[num_nodes, 0] = "average_local_clustering_nodewise"
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
-    cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl.astype('float32'), dtype=np.float32)
+    cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl.astype('float32'),
+                                      dtype=np.float32)
     print(
         f"{'Mean Local Clustering across nodes: '}{str(cl_arr[num_nodes, 1])}")
     for i in cl_arr[:, 0]:
@@ -1446,14 +1464,17 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
         try:
             dc_arr[j, 1] = dc_vals[j]
         except BaseException:
-            print(f"{'Degree centrality is undefined for node '}{str(j)}{' of G'}")
+            print(f"{'Degree centrality is undefined for node '}{str(j)}"
+                  f"{' of G'}")
             dc_arr[j, 1] = np.nan
         j = j + 1
     dc_arr[num_nodes, 0] = "average_degree_centrality"
     nonzero_arr_dc = np.delete(dc_arr[:, 1], [0])
-    dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc.astype('float32'), dtype=np.float32)
+    dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc.astype('float32'),
+                                      dtype=np.float32)
     print(
-        f"{'Mean Degree Centrality across nodes: '}{str(dc_arr[num_nodes, 1])}")
+        f"{'Mean Degree Centrality across nodes: '}"
+        f"{str(dc_arr[num_nodes, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
@@ -1479,15 +1500,18 @@ def get_betweenness_centrality(
             bc_arr[j, 1] = bc_vals[j]
         except BaseException:
             print(
-                f"{'betweennesss centrality is undefined for node '}{str(j)}{' of G'}"
+                f"{'betweennesss centrality is undefined for node '}"
+                f"{str(j)}{' of G'}"
             )
             bc_arr[j, 1] = np.nan
         j = j + 1
     bc_arr[num_nodes, 0] = "average_betweenness_centrality"
     nonzero_arr_betw_cent = np.delete(bc_arr[:, 1], [0])
-    bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent.astype('float32'), dtype=np.float32)
+    bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent.astype('float32'),
+                                      dtype=np.float32)
     print(
-        f"{'Mean Betweenness Centrality across nodes: '}{str(bc_arr[num_nodes, 1])}")
+        f"{'Mean Betweenness Centrality across nodes: '}"
+        f"{str(bc_arr[num_nodes, 1])}")
     for i in bc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(bc_arr[:, 1])
@@ -1510,14 +1534,17 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
             ec_arr[j, 1] = ec_vals[j]
         except BaseException:
             print(
-                f"{'Eigenvector centrality is undefined for node '}{str(j)}{' of G'}")
+                f"{'Eigenvector centrality is undefined for node '}"
+                f"{str(j)}{' of G'}")
             ec_arr[j, 1] = np.nan
         j = j + 1
     ec_arr[num_nodes, 0] = "average_eigenvector_centrality"
     nonzero_arr_eig_cent = np.delete(ec_arr[:, 1], [0])
-    ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent.astype('float32'), dtype=np.float32)
+    ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent.astype('float32'),
+                                      dtype=np.float32)
     print(
-        f"{'Mean Eigenvector Centrality across nodes: '}{str(ec_arr[num_nodes, 1])}")
+        f"{'Mean Eigenvector Centrality across nodes: '}"
+        f"{str(ec_arr[num_nodes, 1])}")
     for i in ec_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(ec_arr[:, 1])
@@ -1540,15 +1567,18 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
             cc_arr[j, 1] = cc_vals[j]
         except BaseException:
             print(
-                f"{'Communicability centrality is undefined for node '}{str(j)}{' of G'}"
+                f"{'Communicability centrality is undefined for node '}"
+                f"{str(j)}{' of G'}"
             )
             cc_arr[j, 1] = np.nan
         j = j + 1
     cc_arr[num_nodes, 0] = "average_communicability_centrality"
     nonzero_arr_comm_cent = np.delete(cc_arr[:, 1], [0])
-    cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent.astype('float32'), dtype=np.float32)
+    cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent.astype('float32'),
+                                      dtype=np.float32)
     print(
-        f"{'Mean Communicability Centrality across nodes: '}{str(cc_arr[num_nodes, 1])}"
+        f"{'Mean Communicability Centrality across nodes: '}"
+        f"{str(cc_arr[num_nodes, 1])}"
     )
     for i in cc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1573,15 +1603,18 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
             rc_arr[j, 1] = rc_vals[j]
         except BaseException:
             print(
-                f"{'Rich club coefficient is undefined for node '}{str(j)}{' of G'}")
+                f"{'Rich club coefficient is undefined for node '}"
+                f"{str(j)}{' of G'}")
             rc_arr[j, 1] = np.nan
         j = j + 1
     # Add mean
     rc_arr[num_edges, 0] = "average_rich_club_coefficient"
     nonzero_arr_rich_club = np.delete(rc_arr[:, 1], [0])
-    rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club.astype('float32'), dtype=np.float32)
+    rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club.astype('float32'),
+                                      dtype=np.float32)
     print(
-        f"{'Mean Rich Club Coefficient across edges: '}{str(rc_arr[num_edges, 1])}")
+        f"{'Mean Rich Club Coefficient across edges: '}"
+        f"{str(rc_arr[num_edges, 1])}")
     for i in rc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(rc_arr[:, 1])
@@ -1606,16 +1639,18 @@ def extractnetstats(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr : float
-        The value, between 0 and 1, used to threshold the graph using any variety of methods
-        triggered through other options.
+        The value, between 0 and 1, used to threshold the graph using any
+        variety of methods triggered through other options.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance,
        partcorr for partial correlation). sps type is used by default.
     est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
+        array in .npy format.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     prune : int
@@ -1634,12 +1669,13 @@ def extractnetstats(
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network Analysis.
-      https://doi.org/10.1016/C2012-0-06036-X
-    .. [2] Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart, “Exploring network structure,
-      dynamics, and function using NetworkX”, in Proceedings of the 7th Python in Science Conference
-      (SciPy2008), Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds), (Pasadena, CA USA),
-      pp. 11–15, Aug 2008
+      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network
+      Analysis. https://doi.org/10.1016/C2012-0-06036-X
+    .. [2] Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart,
+      “Exploring network structure, dynamics, and function using NetworkX”,
+      in Proceedings of the 7th Python in Science Conference (SciPy2008),
+      Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds),
+      (Pasadena, CA USA), pp. 11–15, Aug 2008
 
     """
     import time
@@ -1766,8 +1802,8 @@ def extractnetstats(
         try:
             if ci is None:
                 raise KeyError(
-                    "Participation coefficient cannot be calculated for G in the absence of a "
-                    "community affiliation vector")
+                    "Participation coefficient cannot be calculated for G in"
+                    " the absence of a community affiliation vector")
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_participation(
                 in_mat, ci, metric_list_names, net_met_val_list_final
@@ -1783,8 +1819,8 @@ def extractnetstats(
         try:
             if ci is None:
                 raise KeyError(
-                    "Diversity coefficient cannot be calculated for G in the absence of a community "
-                    "affiliation vector")
+                    "Diversity coefficient cannot be calculated for G in the"
+                    " absence of a community affiliation vector")
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_diversity(
                 in_mat, ci, metric_list_names, net_met_val_list_final
@@ -1913,7 +1949,8 @@ def collect_pandas_df_make(
     sql_out=False,
 ):
     """
-    Summarize list of pickled pandas dataframes of graph metrics unique to eacho unique combination of hyperparameters.
+    Summarize list of pickled pandas dataframes of graph metrics unique to
+    each unique combination of hyperparameters.
 
     Parameters
     ----------
@@ -1922,8 +1959,8 @@ def collect_pandas_df_make(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the
-        study of brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
     sql_out : bool
@@ -1936,10 +1973,10 @@ def collect_pandas_df_make(
 
     References
     ----------
-    .. [1] Drakesmith, M., Caeyenberghs, K., Dutt, A., Lewis, G., David, A. S., &
-      Jones, D. K. (2015). Overcoming the effects of false positives and threshold
-      bias in graph theoretical analyses of neuroimaging data. NeuroImage.
-      https://doi.org/10.1016/j.neuroimage.2015.05.011
+    .. [1] Drakesmith, M., Caeyenberghs, K., Dutt, A., Lewis, G., David,
+      A. S., & Jones, D. K. (2015). Overcoming the effects of false positives
+      and threshold bias in graph theoretical analyses of neuroimaging data.
+      NeuroImage. https://doi.org/10.1016/j.neuroimage.2015.05.011
 
     """
     import sys
@@ -2031,7 +2068,8 @@ def collect_pandas_df_make(
                         node_cols = [
                             s
                             for s in list(df.columns)
-                            if isinstance(s, int) or any(c.isdigit() for c in s)
+                            if isinstance(s, int) or any(c.isdigit() for c in
+                                                         s)
                         ]
                         if nc_collect is False:
                             df = df.drop(node_cols, axis=1)
