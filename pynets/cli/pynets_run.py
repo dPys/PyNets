@@ -174,7 +174,7 @@ def get_parser():
         metavar="Path to custom parcellation file",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Optionally specify a path to a "
+        help="(metaparameter): Optionally specify a path to a "
              "parcellation/atlas Nifti1Image file in MNI space. Labels should"
              "be spatially distinct across hemispheres and ordered with "
              "consecutive integers with a value of 0 as the background label."
@@ -182,7 +182,7 @@ def get_parser():
              "separate them by space.\n",
     )
 
-    # Modality-pervasive hyperparameters
+    # Modality-pervasive metaparameters
     parser.add_argument(
         "-mod",
         metavar="Connectivity estimation/reconstruction method",
@@ -201,15 +201,14 @@ def get_parser():
             "csd",
             "sfm",
         ],
-        help="(Hyperparameter): Specify connectivity estimation model. "
+        help="(metaparameter): Specify connectivity estimation model. "
              "For fMRI, possible models include: corr for correlation, "
              "cov for covariance, sps for precision covariance, partcorr for "
-             "partial correlation. sps type is used by default. If skgmm is "
+             "partial correlation. If skgmm is "
              "installed (https://github.com/skggm/skggm), then "
              "QuicGraphicalLasso, QuicGraphicalLassoCV, "
-             "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. Default "
-             "is partcorr for fMRI. For dMRI, current models include csa, "
-             "csd, and sfm.\n",
+             "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For "
+             "dMRI, current models include csa, csd, and sfm.\n",
     )
     parser.add_argument(
         "-a",
@@ -251,7 +250,7 @@ def get_parser():
             'sub-colin27_label-L2018_desc-scale4_atlas',
             'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
-        help="(Hyperparameter): Specify an atlas parcellation from nilearn or "
+        help="(metaparameter): Specify an atlas parcellation from nilearn or "
              "local libraries. If you wish to iterate your pynets run over "
              "multiple atlases, separate them by space. Available nilearn "
              "atlases are:"
@@ -280,7 +279,7 @@ def get_parser():
         metavar="Spherical centroid node size",
         default=4,
         nargs="+",
-        help="(Hyperparameter): Optionally specify coordinate-based node "
+        help="(metaparameter): Optionally specify coordinate-based node "
              "radius size(s). Default is 4 "
         "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline "
              "across multiple node sizes, separate the list "
@@ -298,29 +297,29 @@ def get_parser():
         "-min_thr",
         metavar="Multi-thresholding minimum threshold",
         default=None,
-        help="(Hyperparameter): Minimum threshold for multi-thresholding.\n",
+        help="(metaparameter): Minimum threshold for multi-thresholding.\n",
     )
     parser.add_argument(
         "-max_thr",
         metavar="Multi-thresholding maximum threshold",
         default=None,
-        help="(Hyperparameter): Maximum threshold for multi-thresholding.",
+        help="(metaparameter): Maximum threshold for multi-thresholding.",
     )
     parser.add_argument(
         "-step_thr",
         metavar="Multi-thresholding step size",
         default=None,
-        help="(Hyperparameter): Threshold step value for multi-thresholding. "
+        help="(metaparameter): Threshold step value for multi-thresholding. "
              "Default is 0.01.\n",
     )
 
-    # fMRI hyperparameters
+    # fMRI metaparameters
     parser.add_argument(
         "-sm",
         metavar="Smoothing value (mm fwhm)",
         default=0,
         nargs="+",
-        help="(Hyperparameter): Optionally specify smoothing width(s). "
+        help="(metaparameter): Optionally specify smoothing width(s). "
              "Default is 0 / no smoothing. If you wish to iterate the pipeline"
              " across multiple smoothing separate the list "
              "by space (e.g. 2 4 6).\n",
@@ -330,7 +329,7 @@ def get_parser():
         metavar="High-pass filter (Hz)",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Optionally specify high-pass filter values "
+        help="(metaparameter): Optionally specify high-pass filter values "
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
              "multiple high-pass filter thresholds, values, "
@@ -361,7 +360,7 @@ def get_parser():
         metavar="Number of k clusters",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Specify a number of clusters to produce. "
+        help="(metaparameter): Specify a number of clusters to produce. "
              "If you wish to iterate the pipeline across multiple values of k,"
              " separate the list by space (e.g. 100 150 200).\n",
     )
@@ -372,7 +371,7 @@ def get_parser():
         nargs="+",
         choices=["ward", "rena", "kmeans", "complete", "average", "single",
                  "ncut"],
-        help="(Hyperparameter): Specify the types of clustering to use. "
+        help="(metaparameter): Specify the types of clustering to use. "
              "Recommended options are: ward, rena, kmeans, or ncut. Note that "
              "imposing spatial constraints with a mask consisting of "
              "disconnected components will leading to clustering instability "
@@ -384,18 +383,18 @@ def get_parser():
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="(Hyperparameter): Specify the path to a Nifti1Image mask file"
+        help="(metaparameter): Specify the path to a Nifti1Image mask file"
              " to constrained functional clustering. If specifying a list of "
              "paths to multiple cluster masks, separate them by space.\n",
     )
 
-    # dMRI hyperparameters
+    # dMRI metaparameters
     parser.add_argument(
         "-ml",
         metavar="Minimum fiber length for tracking",
         default=20,
         nargs="+",
-        help="(Hyperparameter): Include this flag to manually specify a "
+        help="(metaparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
              "is 20. If you wish to iterate the pipeline across multiple "
              "minimums, separate the list by space (e.g. 10 30 50).\n",
@@ -405,7 +404,7 @@ def get_parser():
         metavar="Error margin",
         default=8,
         nargs="+",
-        help="(Hyperparameter): Distance (in the units of the streamlines, "
+        help="(metaparameter): Distance (in the units of the streamlines, "
              "usually mm). If any coordinate in the streamline is within this "
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
@@ -418,7 +417,7 @@ def get_parser():
         default="det",
         nargs="+",
         choices=["det", "prob", "clos"],
-        help="(Hyperparameter): Include this flag to manually specify the "
+        help="(metaparameter): Include this flag to manually specify the "
              "statistical approach to tracking for dmri connectome estimation."
              " Options are: det (deterministic), closest (clos), and "
              "prob (probabilistic). Default is det. If you wish to iterate the"
@@ -650,10 +649,13 @@ def build_workflow(args, retval):
         )
 
     if environ.get('FSLDIR') is None:
-        raise EnvironmentError('FSLDIR not found! Be sure that this '
-                               'environment variable is set and/or that FSL '
-                               'has been properly installed before '
-                               'proceeding.')
+        try:
+            raise EnvironmentError('FSLDIR not found! Be sure that this '
+                                   'environment variable is set and/or that '
+                                   'FSL has been properly installed before '
+                                   'proceeding.')
+        except EnvironmentError:
+            sys.exit(1)
     else:
         fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
@@ -661,8 +663,11 @@ def build_workflow(args, retval):
             print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
                   f"FSLDIR={os.environ['FSLDIR']}")
         else:
-            raise EnvironmentError('Is your FSL installation corrupted? '
-                                   'Check permissions.')
+            try:
+                raise EnvironmentError('Is your FSL installation corrupted? '
+                                       'Check permissions.')
+            except EnvironmentError:
+                sys.exit(1)
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -744,9 +749,13 @@ def build_workflow(args, retval):
         and multi_subject_graph is None
         and multi_subject_multigraph is None
     ):
-        raise ValueError(
-            "\nError: You must include a subject ID in your command line call."
-        )
+        try:
+            raise ValueError(
+                "\nError: You must include a subject ID in your command line "
+                "call."
+            )
+        except ValueError:
+            sys.exit(1)
 
     if (
         multi_subject_graph or multi_subject_multigraph or graph or multi_graph
@@ -1168,9 +1177,13 @@ def build_workflow(args, retval):
         directget = None
 
     if (ID is None) and (func_file_list is None):
-        raise ValueError(
-            "\nError: You must include a subject ID in your command line call."
-        )
+        try:
+            raise ValueError(
+                "\nYou must include a subject ID in your command line "
+                "call."
+            )
+        except ValueError:
+            sys.exit(1)
 
     if func_file_list and isinstance(ID, list):
         if len(ID) != len(func_file_list):
@@ -1855,19 +1868,26 @@ def build_workflow(args, retval):
             print(f"{Fore.BLUE}{', '.join(min_length_list)}")
         if error_margin:
             if float(roi_neighborhood_tol) <= float(error_margin):
-                raise ValueError(
-                    'roi_neighborhood_tol preset cannot be less than '
-                    'the value of the structural connectome error_margin'
-                    ' parameter.')
+                try:
+                    raise ValueError(
+                        'roi_neighborhood_tol preset cannot be less than '
+                        'the value of the structural connectome error_margin'
+                        ' parameter.')
+                except ValueError:
+                    sys.exit(1)
+
             print(f"{Fore.GREEN}Using {Fore.BLUE}{error_margin}"
                   f"mm{Fore.GREEN} error margin...")
         else:
             for em in error_margin_list:
                 if float(roi_neighborhood_tol) <= float(em):
-                    raise ValueError(
-                        'roi_neighborhood_tol preset cannot be less than '
-                        'the value of the structural connectome error_margin'
-                        ' parameter.')
+                    try:
+                        raise ValueError(
+                            'roi_neighborhood_tol preset cannot be less than '
+                            'the value of the structural connectome '
+                            'error_margin parameter.')
+                    except ValueError:
+                        sys.exit(1)
             print(f"{Fore.GREEN}Iterating ROI-streamline intersection "
                   f"tolerance:")
             print(f"{Fore.BLUE}{', '.join(error_margin_list)}")
@@ -1891,44 +1911,67 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:{Fore.BLUE}\n "
                       f"{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
-                    raise FileNotFoundError(f"{_dwi_file} does not exist. "
-                                            f"Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_dwi_file} does not exist. "
+                                                f"Ensure "
+                                                f"that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
+
                 print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
                 if not os.path.isfile(fbvec):
-                    raise FileNotFoundError(f"{_fbvec} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_fbvec} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
+
                 if not os.path.isfile(fbval):
-                    raise FileNotFoundError(f"{_fbval} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_fbval} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                raise FileNotFoundError(f"{dwi_file} does not exist. "
-                                        f"Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{dwi_file} does not exist. "
+                                            f"Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
-                raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
             if not os.path.isfile(fbval):
-                raise FileNotFoundError(f"{fbval} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{fbval} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                raise FileNotFoundError(f"{waymask} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{waymask} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         conf = None
         k = None
         clust_mask = None
@@ -1949,31 +1992,42 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    raise FileNotFoundError(
-                        f"{_func_file} does not exist. Ensure "
-                        f"that you are only specifying "
-                        f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(
+                            f"{_func_file} does not exist. Ensure "
+                            f"that you are only specifying "
+                            f"absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
-                raise FileNotFoundError(f"{func_file} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
-
+                try:
+                    raise FileNotFoundError(f"{func_file} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
-                    raise FileNotFoundError(f"{_conf} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_conf} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
-                raise FileNotFoundError(f"{conf} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{conf} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
@@ -1983,30 +2037,42 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    raise FileNotFoundError(
-                        f"{_func_file} does not exist. Ensure "
-                        f"that you are only specifying "
-                        f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(
+                            f"{_func_file} does not exist. Ensure "
+                            f"that you are only specifying "
+                            f"absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
-                raise FileNotFoundError(f"{func_file} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{func_file} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
-                    raise FileNotFoundError(f"{_conf} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_conf} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
-                raise FileNotFoundError(f"{conf} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{conf} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
@@ -2014,85 +2080,120 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                       f"{Fore.BLUE}{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
-                    raise FileNotFoundError(f"{_dwi_file} does not exist. "
-                                            f"Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_dwi_file} does not exist."
+                                                f" Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if not os.path.isfile(_fbvec):
-                    raise FileNotFoundError(f"{_fbvec} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_fbvec} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
                 if not os.path.isfile(_fbval):
-                    raise FileNotFoundError(f"{_fbval} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(f"{_fbval} does not exist. "
+                                                f"Ensure that you are only "
+                                                f"specifying absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                raise FileNotFoundError(f"{dwi_file} does not exist. "
-                                        f"Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{dwi_file} does not exist. "
+                                            f"Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
-                raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
             if not os.path.isfile(fbval):
-                raise FileNotFoundError(f"{fbval} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{fbval} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                raise FileNotFoundError(f"{waymask} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{waymask} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
     else:
         multimodal = False
 
     if roi is not None and roi is not 'None':
         print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
         if not os.path.isfile(roi):
-            raise FileNotFoundError(f"{roi} does not exist. Ensure "
-                                    f"that you are only specifying "
-                                    f"absolute paths.")
+            try:
+                raise FileNotFoundError(f"{roi} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+            except FileNotFoundError:
+                sys.exit(1)
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
                 print(f"{Fore.GREEN}T1-Weighted Image:\n "
                       f"{Fore.BLUE}{anat_file}")
                 if not os.path.isfile(anat_file):
-                    raise FileNotFoundError(
-                        f"{anat_file} does not exist. Ensure "
-                        f"that you are only specifying "
-                        f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(
+                            f"{anat_file} does not exist. Ensure "
+                            f"that you are only specifying "
+                            f"absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
             if not os.path.isfile(anat_file):
-                raise FileNotFoundError(f"{anat_file} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{anat_file} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
 
     if mask or mask_list:
         if mask_list and len(mask_list) > 1:
             for mask in mask_list:
                 print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
                 if not os.path.isfile(mask):
-                    raise FileNotFoundError(
-                        f"{mask} does not exist. Ensure "
-                        f"that you are only specifying "
-                        f"absolute paths.")
+                    try:
+                        raise FileNotFoundError(
+                            f"{mask} does not exist. Ensure "
+                            f"that you are only specifying "
+                            f"absolute paths.")
+                    except FileNotFoundError:
+                        sys.exit(1)
         else:
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
             if not os.path.isfile(mask):
-                raise FileNotFoundError(f"{mask} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                try:
+                    raise FileNotFoundError(f"{mask} does not exist. Ensure "
+                                            f"that you are only specifying "
+                                            f"absolute paths.")
+                except FileNotFoundError:
+                    sys.exit(1)
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"

@@ -294,6 +294,7 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
+    from nilearn.image import math_img
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -326,6 +327,10 @@ def waymask2dwi_align(
         waymask_in_dwi)
 
     time.sleep(0.5)
+
+    t_img = nib.load(waymask_in_dwi)
+    mask = math_img("img > 0.01", img=t_img)
+    mask.to_filename(waymask_in_dwi)
 
     return waymask_in_dwi
 

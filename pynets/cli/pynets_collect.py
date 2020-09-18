@@ -894,7 +894,7 @@ def main():
     import sys
     import glob
     from pynets.cli.pynets_collect import build_collect_workflow
-    from types import SimpleNamespace
+    # from types import SimpleNamespace
     from pathlib import Path
 
     try:
@@ -910,28 +910,28 @@ def main():
               " flag.\n")
         sys.exit()
 
-    # args = get_parser().parse_args()
-    args_dict_all = {}
-    args_dict_all['plug'] = 'MultiProc'
-    args_dict_all['v'] = False
-    args_dict_all['pm'] = '24,57'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
-    args_dict_all['dc'] = ['diversity_coefficient',
-                           'participation_coefficient',
-                           'average_local_efficiency',
-                           'average_clustering',
-                           'average_local_clustering_nodewise',
-                           'average_local_efficiency_nodewise',
-                           'degree_centrality',
-                           'weighted_transitivity',
-                        #   "_minlength-0",
-                           "_minlength-20", "_minlength-30", "variance",
-                           "res-1000"]
-    args = SimpleNamespace(**args_dict_all)
+    args = get_parser().parse_args()
+    # args_dict_all = {}
+    # args_dict_all['plug'] = 'MultiProc'
+    # args_dict_all['v'] = False
+    # args_dict_all['pm'] = '24,57'
+    # #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    # #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
+    # args_dict_all['work'] = '/tmp/work/dwi'
+    # args_dict_all['modality'] = 'dwi'
+    # args_dict_all['dc'] = ['diversity_coefficient',
+    #                        'participation_coefficient',
+    #                        'average_local_efficiency',
+    #                        'average_clustering',
+    #                        'average_local_clustering_nodewise',
+    #                        'average_local_efficiency_nodewise',
+    #                        'degree_centrality',
+    #                        'weighted_transitivity',
+    #                     #   "_minlength-0",
+    #                        "_minlength-20", "_minlength-30", "variance",
+    #                        "res-1000"]
+    # args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager
 
