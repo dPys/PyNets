@@ -6,7 +6,6 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
-import os
 import numpy as np
 try:
     import cPickle as pickle
@@ -269,26 +268,23 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
         assert edge_threshold is None # edge_threshold will be none in one case
     else:
         assert edge_threshold is not None
-    assert os.path.isfile(est_path) is True
-    assert thr is not None
-    if node_size != 'parc':
-        assert isinstance(node_size, int)
-    else:
-        assert isinstance(node_size, str)
-    assert network is not None
-    assert conn_model is not None
-    assert roi is not None
-    assert smooth is not None
-    assert prune is not None
-    assert ID is not None
-    assert dir_path is not None
-    assert atlas is not None
+    assert est_path is str
+    assert thr is float
+    assert node_size is int
+    assert network is str
+    assert conn_model is str
+    assert roi is str
+    assert smooth is int
+    assert prune is bool
+    assert ID is str
+    assert dir_path is str
+    assert atlas is str
     assert uatlas is None # Set to none above
-    assert labels is not None
-    assert coords is not None
-    assert norm is not None
-    assert binary is not None
-    assert hpass is not None
+    assert labels is list
+    assert coords is list
+    assert norm is int
+    assert binary is bool
+    assert hpass is bool
 
     # Additional arguments for thresh_struc
     if all_zero == True and type == 'struct':
@@ -314,25 +310,25 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
                                                                                atlas_mni, streams, directget,
                                                                                min_length, error_margin, check_consistency=False)
 
-    assert dens_thresh is not None
-    assert thr is not None
+    assert dens_thresh is bool
+    assert thr is float
     assert conn_matrix is not None
-    assert conn_model is not None
-    assert network is not None
-    assert ID is not None
-    assert dir_path is not None
-    assert roi is not None
-    assert node_size is not None
-    assert min_span_tree is not None
-    assert disp_filt is not None
-    assert parc is not None
-    assert prune is not None
-    assert atlas is not None
-    assert uatlas is None
-    assert labels is not None
-    assert coords is not None
-    assert norm is not None
-    assert binary is not None
+    assert conn_model is str
+    assert network is str
+    assert ID is str
+    assert dir_path is str
+    assert roi is str
+    assert node_size is int
+    assert min_span_tree is bool
+    assert disp_filt is bool
+    assert parc is bool
+    assert prune is bool
+    assert atlas is str
+    assert uatlas is str
+    assert labels is list
+    assert coords is list
+    assert norm is int
+    assert binary is bool
     assert target_samples is not None
     assert track_type is not None
     assert atlas_mni is not None
