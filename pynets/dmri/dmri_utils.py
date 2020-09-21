@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import os
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix

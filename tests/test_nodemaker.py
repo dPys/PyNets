@@ -10,7 +10,9 @@ import pytest
 import numpy as np
 import time
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 from pathlib import Path
 from pynets.core import nodemaker
 try:

@@ -228,7 +228,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
     from pynets.core.utils import flatten
     from graspy.embed import AdjacencySpectralEmbed
     from joblib import dump
-    from graspy.utils import get_lcc
+    #from graspy.utils import get_lcc
 
     # Adjacency Spectral embedding
     print(
@@ -236,7 +236,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
         f"{subgraph_name}{'...'}"
     )
     ase = AdjacencySpectralEmbed(n_components=n_components)
-    ase_fit = ase.fit_transform(get_lcc(mat))
+    # ase_fit = ase.fit_transform(get_lcc(mat))
+    ase_fit = ase.fit_transform(mat)
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 

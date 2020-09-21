@@ -8,7 +8,9 @@ Copyright (C) 2016
 import warnings
 import numpy as np
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import networkx as nx
 import os.path as op
 import tkinter
@@ -693,12 +695,19 @@ def plot_all_func(
         "pynets", "templates/ch2better.nii.gz"
     )
 
-    try:
-        nib.load(ch2better_loc)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load plotting template. Do you have git-lfs "
-              f"installed?")
+    if sys.platform.startswith('win') is False:
+        try:
+            nib.load(ch2better_loc)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
+    else:
+        try:
+            nib.load(ch2better_loc)
+        except ImportError:
+            print(f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -996,12 +1005,19 @@ def plot_all_struct(
         "pynets", "templates/ch2better.nii.gz"
     )
 
-    try:
-        nib.load(ch2better_loc)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load plotting template. Do you have git-lfs "
-              f"installed?")
+    if sys.platform.startswith('win') is False:
+        try:
+            nib.load(ch2better_loc)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
+    else:
+        try:
+            nib.load(ch2better_loc)
+        except ImportError:
+            print(f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
@@ -1203,7 +1219,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     import warnings
     warnings.filterwarnings("ignore")
     import numpy as np
-    import indexed_gzip
+    import sys
+    if sys.platform.startswith('win') is False:
+        import indexed_gzip
     import nibabel as nib
     import multinetx as mx
     import matplotlib
@@ -1224,12 +1242,19 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         "pynets", "templates/ch2better.nii.gz"
     )
 
-    try:
-        nib.load(ch2better_loc)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load plotting template. Do you have git-lfs "
-              f"installed?")
+    if sys.platform.startswith('win') is False:
+        try:
+            nib.load(ch2better_loc)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
+    else:
+        try:
+            nib.load(ch2better_loc)
+        except ImportError:
+            print(f"\nCannot load plotting template. Do you have git-lfs "
+                  f"installed?")
 
     with open(
         pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"

@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 # from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
@@ -108,7 +110,6 @@ def workflow_selector(
         "import os",
         "import numpy as np",
         "import networkx as nx",
-        "import indexed_gzip",
         "import nibabel as nib",
         "import warnings",
         'warnings.filterwarnings("ignore")',
@@ -1363,6 +1364,7 @@ def dmri_connectometry(
     """
     A function interface for generating a dMRI connectometry nested workflow
     """
+    import sys
     import itertools
     import pkg_resources
     import nibabel as nib
@@ -1403,15 +1405,7 @@ def dmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            import sys
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
@@ -3594,15 +3588,7 @@ def fmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            import sys
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
