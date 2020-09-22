@@ -5,7 +5,9 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import numpy as np
 import warnings
@@ -334,7 +336,7 @@ def parcellate_ncut(W, k, mask_img):
 
     unique_a = sorted(set(np.array(a.flatten().tolist()[0])))
 
-    # Renumber clusters to make them contiguous
+    # Renumber clusters to make them non-contiguous
     b = np.zeros((len(a), 1))
     for i in range(0, len(unique_a)):
         b[a == unique_a[i]] = i + 1

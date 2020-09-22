@@ -843,20 +843,7 @@ def perform_thresholding(
         conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(
             G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
         # Enforce original dimensionality by padding with zeros.
-        if conn_matrix_bin.shape != conn_matrix.shape:
-            if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
-                result = np.zeros(conn_matrix.shape)
-                result[
-                    : conn_matrix_bin.shape[0], : conn_matrix_bin.shape[1]
-                ] = conn_matrix_bin
-                conn_matrix_thr = np.multiply(conn_matrix, result)
-            else:
-                result = np.zeros(conn_matrix_bin.shape)
-                result[: conn_matrix.shape[0],
-                       : conn_matrix.shape[1]] = conn_matrix
-                conn_matrix_thr = np.multiply(conn_matrix_bin, result)
-        else:
-            conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+        conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
         if dens_thresh is False:
             thr_type = "PROP"

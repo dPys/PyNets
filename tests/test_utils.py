@@ -14,7 +14,9 @@ except ImportError:
 from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import pytest
 import logging
 

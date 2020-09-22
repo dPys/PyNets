@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 from nipype.interfaces.base import (
     BaseInterface,

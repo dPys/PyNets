@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import yaml
 from pathlib import Path
@@ -364,13 +366,22 @@ def get_node_membership(
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm, \
         create_parcel_atlas, gen_img_list
 
-    try:
-        template_img = nib.load(infile)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI reference. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(infile)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI reference. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(infile)
+        except ImportError:
+            print(f"\nCannot load MNI reference. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+
     bna_aff = template_img.affine
 
     x_vox = np.diagonal(bna_aff[:3, 0:3])[0]
@@ -475,12 +486,22 @@ def get_node_membership(
             "Z"])
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
-    try:
-        rsn_img = nib.load(par_file)
-    except indexed_gzip.ZranError as e:
-        print(e, "\nCannot load RSN reference image. Do you have git-lfs "
-                 "installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            rsn_img = nib.load(par_file)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load RSN reference image. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            rsn_img = nib.load(par_file)
+        except ImportError:
+            print(f"\nCannot load RSN reference image. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
@@ -664,13 +685,22 @@ def parcel_masker(
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -810,13 +840,22 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -1255,13 +1294,22 @@ def parcel_naming(coords, vox_size):
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     coords_vox = []
     for i in coords:

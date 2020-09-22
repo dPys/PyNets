@@ -8,7 +8,9 @@ Copyright (C) 2016
 import warnings
 import numpy as np
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 
 warnings.filterwarnings("ignore")
 
@@ -468,10 +470,11 @@ def track_ensemble(
                     vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir) for i in
                 all_combs)
 
-            out_streams = [i for i in out_streams if i is not None and
-                           len(i) > 0]
+            out_streams = [i for i in out_streams if i is not None and i is
+                           not ArraySequence() and len(i) > 0]
 
-            out_streams = concatenate(out_streams, axis=0)
+            if len(out_streams) > 1:
+                out_streams = concatenate(out_streams, axis=0)
 
             if len(out_streams) < 100:
                 ix += 1
@@ -481,6 +484,7 @@ def track_ensemble(
                     tiss_class = 'wb'
                 roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                 min_length = float(min_length) * 0.95
+                continue
             else:
                 ix -= 1
 
@@ -811,8 +815,9 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         return None
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
-        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj
-                                  ).astype("bool")
+        from nilearn.image import math_img
+        mask = math_img("img > 0.01", img=nib.load(waymask_tmp_path))
+        waymask_data = np.asarray(mask.dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(

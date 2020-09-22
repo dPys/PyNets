@@ -290,8 +290,9 @@ def get_parser():
         metavar="Graph threshold",
         default=1.00,
         help="Optionally specify a threshold indicating a proportion of "
-             "weights to preserve in the graph. Default is proportional "
-             "thresholding. If omitted, no thresholding will be applied. \n",
+             "weights to preserve in the graph. Default is no thresholding. "
+             "If `-mst`, `-dt`, or `-df` flags are not included, than "
+             "proportional thresholding will be performed\n",
     )
     parser.add_argument(
         "-min_thr",
@@ -2434,7 +2435,6 @@ def build_workflow(args, retval):
             "import os",
             "import numpy as np",
             "import networkx as nx",
-            "import indexed_gzip",
             "import nibabel as nib",
             "import warnings",
             'warnings.filterwarnings("ignore")',
@@ -3541,7 +3541,7 @@ def main():
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
               " flag.\n")
-        sys.exit(0)
+        sys.exit(1)
 
     args = get_parser().parse_args()
 

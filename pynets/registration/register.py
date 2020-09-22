@@ -8,7 +8,9 @@ Copyright (C) 2016
 import os
 import nibabel as nib
 import warnings
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import math_img
@@ -197,6 +199,7 @@ def direct_streamline_norm(
       different spatial normalization approaches on tractography and structural
       brain networks. Network Neuroscience, 1-19.
     """
+    import sys
     import gc
     from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import reg_utils as regutils
@@ -244,14 +247,23 @@ def direct_streamline_norm(
         template_path = pkg_resources.resource_filename(
             "pynets", f"templates/FA_{int(vox_size)}mm.nii.gz"
         )
-        try:
-            template_img = nib.load(template_path)
-        except indexed_gzip.ZranError as e:
-            import sys
-            print(e,
-                  f"\nCannot load FA template. Do you have git-lfs "
-                  f"installed?")
-            sys.exit(1)
+
+        if sys.platform.startswith('win') is False:
+            try:
+                template_img = nib.load(template_path)
+            except indexed_gzip.ZranError as e:
+                print(e,
+                      f"\nCannot load FA template. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+        else:
+            try:
+                template_img = nib.load(template_path)
+            except ImportError:
+                print(f"\nCannot load FA template. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+
         uatlas_mni_img = nib.load(atlas_mni)
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
@@ -959,13 +971,22 @@ class DmriReg(object):
             out=None,
         )
         time.sleep(0.5)
-        try:
-            nib.load(self.mni_vent_loc)
-        except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load ventricle ROI. Do you have git-lfs "
-                  f"installed?")
-            sys.exit(1)
+
+        if sys.platform.startswith('win') is False:
+            try:
+                nib.load(self.mni_vent_loc)
+            except indexed_gzip.ZranError as e:
+                print(e,
+                      f"\nCannot load ventricle ROI. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+        else:
+            try:
+                nib.load(self.mni_vent_loc)
+            except ImportError:
+                print(f"\nCannot load ventricle ROI. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(
@@ -986,13 +1007,22 @@ class DmriReg(object):
                 sup=True,
             )
             time.sleep(0.5)
-            try:
-                nib.load(self.corpuscallosum)
-            except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load Corpus Callosum ROI. Do you have "
-                      f"git-lfs installed?")
-                sys.exit(1)
+
+            if sys.platform.startswith('win') is False:
+                try:
+                    nib.load(self.corpuscallosum)
+                except indexed_gzip.ZranError as e:
+                    print(e,
+                          f"\nCannot load Corpus Callosum ROI. "
+                          f"Do you have git-lfs installed?")
+                    sys.exit(1)
+            else:
+                try:
+                    nib.load(self.corpuscallosum)
+                except ImportError:
+                    print(f"\nCannot load Corpus Callosum ROI. "
+                          f"Do you have git-lfs installed?")
+                    sys.exit(1)
 
             regutils.apply_warp(
                 self.t1w_brain,

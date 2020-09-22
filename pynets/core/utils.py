@@ -10,10 +10,10 @@ import os
 import re
 import sys
 import os.path as op
-import indexed_gzip
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import numpy as np
-import sys
 import time
 import logging
 import threading
@@ -1580,14 +1580,22 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        import sys
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     net_parcels_map_nifti = resample_to_img(
         net_parcels_map_nifti, template_img, interpolation="nearest"
@@ -1887,6 +1895,29 @@ def build_args_from_config(modality, arg_dict):
         if isinstance(val, str):
             args_dict_all[key] = ast.literal_eval(val)
     return args_dict_all
+
+
+def check_template_loads(template, template_mask, template_name):
+    import sys
+    if sys.platform.startswith('win') is False:
+        try:
+            nib.load(template)
+            nib.load(template_mask)
+            return print('Local template detected...')
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load template {template_name} image or template "
+                  f"mask. Do you have git-lfs installed?")
+            sys.exit(1)
+    else:
+        try:
+            nib.load(template)
+            nib.load(template_mask)
+            return print('Local template detected...')
+        except ImportError:
+            print(f"\nCannot load template {template_name} image or template "
+                  f"mask. Do you have git-lfs installed?")
+            sys.exit(1)
 
 
 class watchdog(object):
