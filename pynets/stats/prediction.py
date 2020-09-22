@@ -684,7 +684,8 @@ def nested_fit(X, y, regressors, boot, pca_reduce, k_folds,
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         est.alpha = float(best_regressor.split("alpha-")[1].split('_')[0])
         pca = decomposition.PCA(
-            n_components=int(best_regressor.split("nfeatures-")[1].split('_')[0]), whiten=True
+            n_components=int(best_regressor.split("nfeatures-")[1].split('_')[0]),
+            whiten=True
         )
         reg = Pipeline([("feature_select", pca),
                         (best_regressor.split("regressor-")[1].split('_')[0], est)])
@@ -714,11 +715,14 @@ def build_grid(modality, hyperparam_dict, hyperparams, ensembles):
             print(f"Failed to parse ensemble {ensemble}...")
 
     if "rsn" in hyperparam_dict.keys():
-        hyperparam_dict["rsn"] = [i for i in hyperparam_dict["rsn"] if "res" not in i]
+        hyperparam_dict["rsn"] = [i for i in hyperparam_dict["rsn"] if "res"
+                                  not in i]
 
-    hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(), key=lambda x: x[0]))
+    hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(),
+                                         key=lambda x: x[0]))
     grid = list(
-        itertools.product(*(hyperparam_dict[param] for param in hyperparam_dict.keys()))
+        itertools.product(*(hyperparam_dict[param] for param in
+                            hyperparam_dict.keys()))
     )
 
     return hyperparam_dict, grid
@@ -732,11 +736,14 @@ def get_coords_labels(embedding):
     return coords_file, labels_file
 
 
-def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, alg):
+def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param,
+                             alg):
     import pickle
 
-    if ((rsn,) + grid_param) in subject_dict[ID][str(ses)][modality][alg].keys():
-        rsn_dict = subject_dict[ID][str(ses)][modality][alg][((rsn,) + grid_param)]
+    if ((rsn,) + grid_param) in \
+        subject_dict[ID][str(ses)][modality][alg].keys():
+        rsn_dict = subject_dict[ID][str(ses)][modality][alg][((rsn,) +
+                                                              grid_param)]
         if not isinstance(rsn_dict["coords"], list):
             if os.path.isfile(rsn_dict["coords"]):
                 with open(rsn_dict["coords"], "rb") as file_:
@@ -755,7 +762,8 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, a
                 1, rsn_dict["data"].T.shape[0] * rsn_dict["data"].T.shape[1]
             )
             if rsn_dict["data"].shape[1] == 1:
-                df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1" for i in ixs])
+                df_lps = pd.DataFrame(rsn_arr, columns=[f"{rsn}_{i}_dim1"
+                                                        for i in ixs])
             elif rsn_dict["data"].shape[1] == 3:
                 df_lps = pd.DataFrame(
                     rsn_arr,
@@ -765,7 +773,8 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param, a
                 )
             else:
                 raise ValueError(
-                    f"Number of dimensions {rsn_dict['data'].shape[1]} not supported. See flatten_latent_positions function..."
+                    f"Number of dimensions {rsn_dict['data'].shape[1]} "
+                    f"not supported. See flatten_latent_positions function..."
                 )
             # print(df_lps)
         else:
@@ -1033,7 +1042,9 @@ def bootstrapped_nested_cv(
         except:
             pass
 
-    if X.empty:
+    if X.empty or len(X.columns) < 5:
+        print("Low feature count. Setting performance on this feature-space "
+              "to NA...")
         return (
             grand_mean_best_estimator,
             grand_mean_best_Rsquared,
@@ -1046,9 +1057,6 @@ def bootstrapped_nested_cv(
     # scaler = StandardScaler()
     # y = pd.DataFrame(scaler.fit_transform(np.array(y).reshape(-1, 1)))
     y = pd.DataFrame(np.array(y).reshape(-1, 1))
-
-    if X.shape[1] < 5:
-        print(f"Low feature count: {X.shape[1]}")
 
     print(f"\nX: {X}\ny: {y}\n")
 
@@ -1218,6 +1226,8 @@ def make_subject_dict(
                         for i in glob.glob(f"{base_dir}/pynets/*")
                         if os.path.basename(i).startswith("sub")
                     ]
+
+                ids = [i for i in ids if 's030' not in i]
 
                 if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
                     ensembles = get_ensembles_embedding(modality, alg,
@@ -1446,12 +1456,14 @@ def populate_subject_dict(
                 elif len(embeddings) == 1:
                     embedding = embeddings[0]
                 else:
-                    embeddings_raw = [i for i in embeddings if "thrtype" not in i]
+                    embeddings_raw = [i for i in embeddings if "thrtype"
+                                      not in i]
                     if len(embeddings_raw) == 1:
                         embedding = embeddings[0]
 
                     elif len(embeddings_raw) > 1:
-                        sorted_embeddings = sorted(embeddings_raw, key=os.path.getmtime)
+                        sorted_embeddings = sorted(embeddings_raw,
+                                                   key=os.path.getmtime)
                         print(
                             f"Multiple functional embeddings found for {id} and"
                             f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
@@ -1500,7 +1512,7 @@ def populate_subject_dict(
             elif alg == "topology":
                 data = np.empty([len(mets), 1], dtype=np.float32)
                 data[:] = np.nan
-                if smooth == 0:
+                if smooth == '0':
                     targets = [
                         f"extract-{extract}",
                         f"hpass-{hpass}Hz",
@@ -1528,7 +1540,7 @@ def populate_subject_dict(
                     if len(col_met) == 1:
                         col = col_met[0]
                     elif len(col_met) > 1:
-                        if comb_tuple[-1] == 0:
+                        if comb_tuple[-1] == '0':
                             col = [i for i in col_met if "fwhm" not in i][0]
                         else:
                             print(f"Multiple columns detected: {col_met}")
@@ -1620,12 +1632,14 @@ def populate_subject_dict(
                 elif len(embeddings) == 1:
                     embedding = embeddings[0]
                 else:
-                    embeddings_raw = [i for i in embeddings if "thrtype" not in i]
+                    embeddings_raw = [i for i in embeddings if "thrtype" not
+                                      in i]
                     if len(embeddings_raw) == 1:
                         embedding = embeddings[0]
 
                     elif len(embeddings_raw) > 1:
-                        sorted_embeddings = sorted(embeddings_raw, key=os.path.getmtime)
+                        sorted_embeddings = sorted(embeddings_raw,
+                                                   key=os.path.getmtime)
                         print(
                             f"Multiple functional embeddings found for {id} and"
                             f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
@@ -1633,7 +1647,8 @@ def populate_subject_dict(
                         )
                         embedding = sorted_embeddings[0]
                     else:
-                        sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
+                        sorted_embeddings = sorted(embeddings,
+                                                   key=os.path.getmtime)
                         print(
                             f"Multiple functional embeddings found for {id} and"
                             f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
@@ -1831,7 +1846,8 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
                     df_all = pd.Series()
                 else:
                     df_all.drop(columns=["id"], inplace=True)
-                    if len(df_all.columns) < 10:
+                    if len(df_all.columns) < 5:
+                        print(f"Too few columns detected for {grid_param}...")
                         df_all = pd.Series()
             except:
                 df_all = pd.Series()
@@ -1861,7 +1877,8 @@ def concatenate_frames(out_dir, modality, alg, target_var, files_):
             except BaseException:
                 pass
             dfs.append(df)
-        frame = pd.concat(dfs, axis=0, join="outer", sort=True, ignore_index=False)
+        frame = pd.concat(dfs, axis=0, join="outer", sort=True,
+                          ignore_index=False)
         out_path = f"{out_dir}/final_df_{modality}_{alg}_{target_var}.csv"
         print(f"Saving to {out_path}...")
         if os.path.isfile(out_path):
@@ -1925,9 +1942,11 @@ class MakeXY(SimpleInterface):
             self.inputs.target_var == "rum_1":
             drop_cols = [self.inputs.target_var, "dep_persist", "rum_persist"]
         elif self.inputs.target_var == "dep_2":
-            drop_cols = [self.inputs.target_var, "dep_persist", "rum_persist", "rum_2"]
+            drop_cols = [self.inputs.target_var, "dep_persist", "rum_persist",
+                         "rum_2"]
         elif self.inputs.target_var == "rum_2":
-            drop_cols = [self.inputs.target_var, "dep_persist", "rum_persist", "dep_2"]
+            drop_cols = [self.inputs.target_var, "dep_persist", "rum_persist",
+                         "dep_2"]
         else:
             drop_cols = [self.inputs.target_var, "rum_persist", "dep_persist",
                          "dep_1", "rum_1"]
@@ -1941,7 +1960,11 @@ class MakeXY(SimpleInterface):
         )
 
         if isinstance(X, pd.DataFrame):
-            out_X = f"{runtime.cwd}/X_{self.inputs.target_var}_{self.inputs.modality}_{self.inputs.alg}_" f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
+            out_X = f"{runtime.cwd}/X_" \
+                    f"{self.inputs.target_var}_" \
+                    f"{self.inputs.modality}_" \
+                    f"{self.inputs.alg}_" \
+                    f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
 
             if os.path.isfile(out_X):
                 os.remove(out_X)
@@ -2156,7 +2179,11 @@ class MakeDF(SimpleInterface):
             df_summary.at[0, "MSE"] = np.nan
             df_summary.at[0, "lp_importance"] = np.nan
 
-        out_df_summary = f"{runtime.cwd}/df_summary_{self.inputs.target_var}_{self.inputs.modality}_{self.inputs.alg}_{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
+        out_df_summary = f"{runtime.cwd}/df_summary_" \
+                         f"{self.inputs.target_var}_" \
+                         f"{self.inputs.modality}_" \
+                         f"{self.inputs.alg}_" \
+                         f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
         if os.path.isfile(out_df_summary):
             os.remove(out_df_summary)
         df_summary.to_csv(out_df_summary, index=False)
@@ -2331,7 +2358,7 @@ def build_predict_workflow(args, retval):
     modality = args["modality"]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    ml_meta_wf = pe.Workflow(name="pynets_multiperform")
+    ml_meta_wf = pe.Workflow(name="pynets_multipredict")
     ml_meta_wf.base_dir = f"{base_dir}/pynets_multiperform_{run_uuid}"
 
     os.makedirs(ml_meta_wf.base_dir, exist_ok=True)
@@ -2424,7 +2451,7 @@ def build_predict_workflow(args, retval):
     )
     execution_dict = {}
     execution_dict["crashdump_dir"] = str(ml_meta_wf.base_dir)
-    execution_dict["poll_sleep_duration"] = 1
+    execution_dict["poll_sleep_duration"] = 0.5
     execution_dict["crashfile_format"] = "txt"
     execution_dict["local_hash_check"] = False
     execution_dict["stop_on_first_crash"] = False
@@ -2463,7 +2490,8 @@ def main():
     )
 
     # Hard-Coded #
-    embedding_types = ['OMNI', 'ASE', 'topology']
+    #embedding_types = ['OMNI', 'ASE', 'topology']
+    embedding_types = ['topology']
     #modalities = ["func", "dwi"]
     modalities = ["func"]
     thr_type = "MST"
@@ -2482,7 +2510,9 @@ def main():
 
     # User-Specified #
     target_modality = 'func'
-    target_vars = ["rum_2", "dep_2"]
+    #target_vars = ["rum_2", "dep_2"]
+    target_vars = ["rum_persist", "dep_persist", "rum_2", "dep_2", "dep_1",
+                   "rum_1"]
     sessions = ["1"]
 
     subject_dict_file_path = (
@@ -2503,10 +2533,13 @@ def main():
             sessions
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
-        final_missingness_summary = pd.concat(
-            [i for i in missingness_frames if isinstance(i, pd.DataFrame)]
-        )
-        final_missingness_summary.to_csv(missingness_summary, index=False)
+        missingness_frames = [i for i in missingness_frames if isinstance(i, pd.DataFrame)]
+        if len(missingness_frames) != 0:
+            if len(missingness_frames) > 1:
+                final_missingness_summary = pd.concat(missingness_frames)
+            elif len(missingness_frames) == 1:
+                final_missingness_summary = missingness_frames[0]
+            final_missingness_summary.to_csv(missingness_summary, index=False)
         with open(subject_dict_file_path, "wb") as f:
             dill.dump(sub_dict_clean, f)
         f.close()
@@ -2574,9 +2607,6 @@ def main():
         ml_dfs = dict(mergedicts(ml_dfs, d))
 
     # with open('pynets_ml_dict_func_topology.pkl', "rb") as f:
-    #     ml_dfs = dill.load(f)
-    # f.close()
-    # with open('pynets_ml_dict_dwi_topology_bak.pkl', "rb") as f:
     #     ml_dfs = dill.load(f)
     # f.close()
 
