@@ -4646,8 +4646,7 @@ def fmri_connectometry(
                                         ),
                                        (check_orient_and_dims_roi_node,
                                         register_roi_node,
-                                        [("outfile",
-                                          "roi")],
+                                        [("outfile", "roi")],
                                         ),
                                        ])
 

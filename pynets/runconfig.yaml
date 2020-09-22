@@ -253,7 +253,7 @@ execution_dict: # Nipype workflow global settings
     - 'keep_inputs':
         - False
     - 'remove_unnecessary_outputs':
-        - True
+        - False
     - 'remove_node_directories':
         - False
     - 'raise_insufficient':

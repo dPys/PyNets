@@ -1822,6 +1822,7 @@ def filter_cols_from_targets(df, targets):
                 ''.join(
                     expr.format(w) for w in
                     targets)))]
+
     return out
 
 
