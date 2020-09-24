@@ -703,13 +703,9 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             min_separation_angle=min_separation_angle,
         )
     else:
-        try:
-            raise ValueError(
-                "ERROR: No valid direction getter(s) specified."
-            )
-        except ValueError:
-            import sys
-            sys.exit(0)
+        raise ValueError(
+            "ERROR: No valid direction getter(s) specified."
+        )
 
     print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
@@ -851,7 +847,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     ]
     for j in tmp_files_:
         if j is not None:
-            os.remove(j)
+            if os.path.isfile(j):
+                os.remove(j)
     gc.collect()
 
     try:

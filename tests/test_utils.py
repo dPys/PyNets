@@ -210,7 +210,7 @@ def test_create_csv_path():
 @pytest.mark.parametrize("fmt", ['edgelist_csv', 'gpickle', 'graphml', 'txt',
                                  'npy', 'edgelist_ssv',
                                  pytest.param(None, marks=pytest.mark.xfail(
-                                     raises=SystemExit))])
+                                     raises=ValueError))])
 def test_save_mat(fmt):
     import glob as glob
     import tempfile
