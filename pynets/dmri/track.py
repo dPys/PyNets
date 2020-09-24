@@ -455,7 +455,8 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples):
+    while float(stream_counter) < float(target_samples) and \
+        float(ix) < 0.75*float(len(all_combs)):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
@@ -476,7 +477,7 @@ def track_ensemble(
             if len(out_streams) > 1:
                 out_streams = concatenate(out_streams, axis=0)
 
-            if len(out_streams) < 100:
+            if len(out_streams) < 50:
                 ix += 1
                 print("Fewer than 100 streamlines tracked on last iteration."
                       " loosening tolerance and anatomical constraints...")
@@ -506,12 +507,10 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-        if float(ix) > len(all_combs):
-            break
-
-    if ix >= len(all_combs) and float(stream_counter) < float(target_samples):
+    if ix >= 0.75*len(all_combs) and \
+        float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
-              f"iterations with <100 streamlines. Are you using a waymask? "
+              f"iterations with <50 streamlines. Are you using a waymask? "
               f"If so, it may be too restrictive.")
         return ArraySequence()
     else:
@@ -816,7 +815,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
         from nilearn.image import math_img
-        mask = math_img("img > 0.001", img=nib.load(waymask_tmp_path))
+        mask = math_img("img > 0.0075", img=nib.load(waymask_tmp_path))
         waymask_data = np.asarray(mask.dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
@@ -839,6 +838,20 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     del dg, seeds, roi_proximal_streamlines, streamline_generator, \
         atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
+
+    tmp_files_ = [
+        t1w2dwi_tmp_path,
+        vent_csf_in_dwi_tmp_path,
+        recon_path_tmp_path,
+        gm_in_dwi_tmp_path,
+        wm_in_dwi_tmp_path,
+        B0_mask_tmp_path,
+        labels_im_file_tmp_path,
+        atlas_data_wm_gm_int_tmp_path
+    ]
+    for j in tmp_files_:
+        if j is not None:
+            os.remove(j)
     gc.collect()
 
     try:
