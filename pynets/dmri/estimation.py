@@ -563,13 +563,9 @@ def streams2graph(
     start = time.time()
 
     if float(roi_neighborhood_tol) <= float(error_margin):
-        try:
-            raise ValueError('roi_neighborhood_tol preset cannot be less than '
-                             'the value of the structural connectome error'
-                             '_margin parameter.')
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError('roi_neighborhood_tol preset cannot be less than '
+                         'the value of the structural connectome error'
+                         '_margin parameter.')
     else:
         print(f"Using fiber-roi intersection tolerance: {error_margin}...")
 

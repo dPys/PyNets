@@ -816,7 +816,7 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
         from nilearn.image import math_img
-        mask = math_img("img > 0.01", img=nib.load(waymask_tmp_path))
+        mask = math_img("img > 0.001", img=nib.load(waymask_tmp_path))
         waymask_data = np.asarray(mask.dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
@@ -824,8 +824,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=0,
-                    mode="all",
+                    tol=roi_neighborhood_tol,
+                    mode="all"
                 )
             ]
             print("%s%s" % ("Waymask proximity: ",

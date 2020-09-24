@@ -562,7 +562,7 @@ def link_communities(W, type_clustering="single"):
     W = normalize(W)
 
     if type_clustering not in ("single", "complete"):
-        print("Error: Unrecognized clustering type")
+        raise ValueError("Unrecognized clustering type")
 
     # Set diagonal to mean weights
     np.fill_diagonal(W, 0)
@@ -860,10 +860,10 @@ def most_important(G, method="betweenness", sd=1):
             algorithm = cp.KM_config()
             algorithm.detect(G)
             ranking = algorithm.get_coreness().items()
-        except ImportError:
-            import sys
-            print("Cannot run coreness detection. cpalgorithm not installed!")
-            sys.exit(1)
+        except ImportError as e:
+            print(e, "Cannot run coreness detection. "
+                     "cpalgorithm not installed!")
+
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
@@ -1133,9 +1133,9 @@ class CleanGraphs(object):
                     hardcoded_params = yaml.load(stream)
                     hub_detection_method = hardcoded_params[
                         "hub_detection_method"][0]
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     import sys
-                    print("Failed to parse runconfig.yaml")
+                    print(e, "Failed to parse runconfig.yaml")
                     sys.exit(1)
             stream.close()
             [self.G, _] = most_important(self.G, method=hub_detection_method)
@@ -1158,11 +1158,7 @@ class CleanGraphs(object):
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
         else:
-            try:
-                raise ValueError(f"Pruning option {self.prune} invalid!")
-            except ValueError:
-                import sys
-                sys.exit(0)
+            raise ValueError(f"Pruning option {self.prune} invalid!")
 
         return self.in_mat, final_mat_path
 
@@ -1753,9 +1749,9 @@ def extractnetstats(
             print(
                 f"\n\nGlobal Topographic Metrics:"
                 f"\n{metric_list_global_names}\n")
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             import sys
-            print("Failed to parse global_graph_measures.yaml")
+            print(e, "Failed to parse global_graph_measures.yaml")
             sys.exit(1)
 
     with open(
@@ -1767,9 +1763,9 @@ def extractnetstats(
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
             print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             import sys
-            print("Failed to parse local_graph_measures.yaml")
+            print(e, "Failed to parse local_graph_measures.yaml")
             sys.exit(1)
 
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
@@ -1999,10 +1995,7 @@ def collect_pandas_df_make(
             if net_mets_csv.endswith('.csv'):
                 net_mets_csv_list_exist.append(net_mets_csv)
             else:
-                try:
-                    raise ValueError('File not .csv format')
-                except ValueError:
-                    sys.exit(1)
+                raise ValueError('File not .csv format')
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(

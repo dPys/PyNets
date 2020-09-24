@@ -23,7 +23,7 @@ Required
 
 :(B): A supported connectivity model specified with the `-mod` flag. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
 
-:(C): If an atlas is not specified with the `-a` flag must be included, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
+:(C): If an atlas is not specified with the `-a` flag, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
 
 :Atlas Library:
     - 'atlas_harvard_oxford'

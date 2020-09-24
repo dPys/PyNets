@@ -18,9 +18,9 @@ from nilearn.image import math_img
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
-except KeyError:
-    print("FSLDIR environment variable not set!")
-
+except KeyError as e:
+    print(e, "FSLDIR environment variable not set!")
+    sys.exit(1)
 
 def direct_streamline_norm(
     streams,
@@ -223,9 +223,9 @@ def direct_streamline_norm(
         try:
             hardcoded_params = yaml.load(stream)
             run_dsn = hardcoded_params['tracking']["DSN"][0]
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             import sys
-            print("Failed to parse runconfig.yaml")
+            print(e, "Failed to parse runconfig.yaml")
             exit(1)
 
     stream.close()
@@ -259,8 +259,8 @@ def direct_streamline_norm(
         else:
             try:
                 template_img = nib.load(template_path)
-            except ImportError:
-                print(f"\nCannot load FA template. Do you have git-lfs "
+            except ImportError as e:
+                print(e, f"\nCannot load FA template. Do you have git-lfs "
                       f"installed?")
                 sys.exit(1)
 
@@ -372,13 +372,10 @@ def direct_streamline_norm(
             print(len(streams_final_filt)/len(streams_in_curr_grid))
             adjusted_affine = affine_map.affine.copy()
             if i > len(combs) - 1:
-                try:
-                    raise ValueError('DSN failed. Header orientation '
-                                     'information may be corrupted. '
-                                     'Is your dataset oblique?')
-                except ValueError:
-                    import sys
-                    sys.exit(1)
+                raise ValueError('DSN failed. Header orientation '
+                                 'information may be corrupted. '
+                                 'Is your dataset oblique?')
+
             adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
             adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
             adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
@@ -728,9 +725,9 @@ class DmriReg(object):
                 wm_mask = maps["wm_prob"]
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
-            except RuntimeError:
+            except RuntimeError as e:
                 import sys
-                print(
+                print(e,
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
@@ -950,11 +947,8 @@ class DmriReg(object):
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
-            try:
-                raise FileNotFoundError("FSL atlas for ventricle reference not"
-                                        " found!")
-            except FileNotFoundError:
-                sys.exit(1)
+            raise FileNotFoundError("FSL atlas for ventricle reference not"
+                                    " found!")
 
         # Create transform to MNI atlas to T1w using flirt. This will be use to
         # transform the ventricles to dwi space.
@@ -983,8 +977,8 @@ class DmriReg(object):
         else:
             try:
                 nib.load(self.mni_vent_loc)
-            except ImportError:
-                print(f"\nCannot load ventricle ROI. Do you have git-lfs "
+            except ImportError as e:
+                print(e, f"\nCannot load ventricle ROI. Do you have git-lfs "
                       f"installed?")
                 sys.exit(1)
 
@@ -1019,8 +1013,8 @@ class DmriReg(object):
             else:
                 try:
                     nib.load(self.corpuscallosum)
-                except ImportError:
-                    print(f"\nCannot load Corpus Callosum ROI. "
+                except ImportError as e:
+                    print(e, f"\nCannot load Corpus Callosum ROI. "
                           f"Do you have git-lfs installed?")
                     sys.exit(1)
 
@@ -1265,9 +1259,9 @@ class FmriReg(object):
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                 gm_mask = maps["gm_prob"]
                 wm_mask = maps["wm_prob"]
-            except RuntimeError:
+            except RuntimeError as e:
                 import sys
-                print(
+                print(e,
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )

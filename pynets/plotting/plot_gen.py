@@ -705,8 +705,8 @@ def plot_all_func(
     else:
         try:
             nib.load(ch2better_loc)
-        except ImportError:
-            print(f"\nCannot load plotting template. Do you have git-lfs "
+        except ImportError as e:
+            print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
     with open(
@@ -745,9 +745,9 @@ def plot_all_func(
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
             labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted "
+        except KeyError as e:
+            print(e,
+                "Plotting configuration not successfully extracted "
                 "from runconfig.yaml"
             )
             sys.exit(0)
@@ -902,7 +902,7 @@ def plot_all_func(
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
             raise RuntimeError(
-                "\nERROR: no coordinates to plot! Are you running plotting "
+                "\nno coordinates to plot! Are you running plotting "
                 "outside of pynets's internal estimation schemes?")
 
         plt.close("all")
@@ -1015,8 +1015,8 @@ def plot_all_struct(
     else:
         try:
             nib.load(ch2better_loc)
-        except ImportError:
-            print(f"\nCannot load plotting template. Do you have git-lfs "
+        except ImportError as e:
+            print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
     with open(
@@ -1031,9 +1031,9 @@ def plot_all_struct(
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
             labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError:
+        except KeyError as e:
             print(
-                "ERROR: Plotting configuration not successfully extracted from"
+                e, "Plotting configuration not successfully extracted from"
                 " runconfig.yaml"
             )
             sys.exit(0)
@@ -1190,8 +1190,8 @@ def plot_all_struct(
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
             raise RuntimeError(
-                "\nERROR: no coordinates to plot! Are you running plotting outside of pynets's "
-                "internal estimation schemes?")
+                "\nNo coordinates to plot! Are you running plotting "
+                "outside of pynets's internal estimation schemes?")
 
         plt.close("all")
 
@@ -1252,8 +1252,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     else:
         try:
             nib.load(ch2better_loc)
-        except ImportError:
-            print(f"\nCannot load plotting template. Do you have git-lfs "
+        except ImportError as e:
+            print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
     with open(
@@ -1270,9 +1270,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             adjacency = hardcoded_params["plotting"]["adjacency"][0]
             dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
             labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted from"
+        except KeyError as e:
+            print(e,
+                "Plotting configuration not successfully extracted from"
                 " runconfig.yaml"
             )
             sys.exit(0)
@@ -1582,8 +1582,8 @@ def plot_graph_measure_hists(csv_all_metrics):
         global_measures = list(set([
             meas.split('auc_')[1] for meas in measures
         ]))
-    except ValueError:
-        print(measures)
+    except ValueError as e:
+        print(e, measures)
 
     fig, axes = plt.subplots(
         ncols=nearest_square_root(len(global_measures)),
