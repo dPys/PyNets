@@ -62,7 +62,10 @@ def test_save_nifti_parcels_map():
     affine = np.diag([1, 2, 3, 1])
     net_parcels_map_nifti = nib.Nifti1Image(array_data, affine)
 
-    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti, vox_size)
+    net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path,
+                                                        network,
+                                                        net_parcels_map_nifti,
+                                                        vox_size)
     assert os.path.isfile(net_parcels_nii_path) is True
 
 
@@ -84,8 +87,9 @@ def test_save_ts_to_file():
     ID = '002'
     ts_within_nodes = f"{base_dir}/miscellaneous/002_Default_rsn_net_ts.npy"
 
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path, ts_within_nodes, smooth, hpass, node_size,
-                                        extract_strategy)
+    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path,
+                                        ts_within_nodes, smooth, hpass,
+                                        node_size, extract_strategy)
     assert os.path.isfile(out_path_ts) is True
 
 
@@ -115,8 +119,10 @@ def test_collect_pandas_df():
     network = None
     ID = '002'
     plot_switch = False
-    net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv") if '_neat.csv' not in i]
-    out = utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
+    net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv")
+                         if '_neat.csv' not in i]
+    out = utils.collect_pandas_df(network, ID, net_mets_csv_list,
+                                  plot_switch, multi_nets, multimodal)
     assert out is True
     assert isinstance(net_mets_csv_list, list)
     assert len(net_mets_csv_list) == 9
@@ -202,7 +208,8 @@ def test_create_csv_path():
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
-                                          thr_type, hpass, parc, extract_strategy)
+                                          thr_type, hpass, parc,
+                                          extract_strategy)
     out_path = utils.create_csv_path(dir_path, est_path)
     assert out_path is not None
 
@@ -269,7 +276,8 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
 
 @pytest.mark.parametrize("atlas", ['Power', 'Shirer', 'Shen', 'Smith',
-                                    pytest.param(None, marks=pytest.mark.xfail(raises=SystemExit))])
+                                    pytest.param(None,
+                                                 marks=pytest.mark.xfail(raises=ValueError))])
 @pytest.mark.parametrize("input", ['fmri', 'dmri'])
 def test_do_dir_path(atlas, input):
     """

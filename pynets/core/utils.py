@@ -1910,6 +1910,29 @@ def check_template_loads(template, template_mask, template_name):
             sys.exit(1)
 
 
+def save_4d_to_3d(in_file):
+    from nipype.utils.filemanip import fname_presuffix
+
+    files_3d = nib.four_to_three(nib.load(in_file))
+    out_files = []
+    for i, file_3d in enumerate(files_3d):
+        out_file = fname_presuffix(in_file, suffix="_tmp_{}".format(i))
+        file_3d.to_filename(out_file)
+        out_files.append(out_file)
+    del files_3d
+    return out_files
+
+
+def save_3d_to_4d(in_files):
+    from nipype.utils.filemanip import fname_presuffix
+
+    img_4d = nib.funcs.concat_images([nib.load(img_3d) for img_3d in in_files])
+    out_file = fname_presuffix(in_files[0], suffix="_merged")
+    img_4d.to_filename(out_file)
+    del img_4d
+    return out_file
+
+
 class watchdog(object):
     def run(self):
         self.shutdown = threading.Event()
