@@ -78,12 +78,8 @@ def do_dir_path(atlas, outdir):
     if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path, exist_ok=True)
     elif atlas is None:
-        try:
-            raise ValueError("Error: cannot create directory for a null "
-                             "atlas!")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError("cannot create directory for a null "
+                         "atlas!")
 
     return dir_path
 
@@ -191,8 +187,8 @@ def create_est_path_func(
         hardcoded_params = yaml.load(stream)
         try:
             template_name = hardcoded_params["template"][0]
-        except KeyError:
-            print(
+        except KeyError as e:
+            print(e,
                 "No template specified in runconfig.yaml"
             )
             sys.exit(1)
@@ -323,8 +319,8 @@ def create_est_path_diff(
         hardcoded_params = yaml.load(stream)
         try:
             template_name = hardcoded_params["template"][0]
-        except KeyError:
-            print(
+        except KeyError as e:
+            print(e,
                 "No template specified in runconfig.yaml"
             )
             sys.exit(1)
@@ -440,8 +436,8 @@ def create_raw_path_func(
         hardcoded_params = yaml.load(stream)
         try:
             template_name = hardcoded_params["template"][0]
-        except KeyError:
-            print(
+        except KeyError as e:
+            print(e,
                 "No template specified in runconfig.yaml"
             )
             sys.exit(1)
@@ -557,8 +553,8 @@ def create_raw_path_diff(
         hardcoded_params = yaml.load(stream)
         try:
             template_name = hardcoded_params["template"][0]
-        except KeyError:
-            print(
+        except KeyError as e:
+            print(e,
                 "No template specified in runconfig.yaml"
             )
             sys.exit(1)
@@ -673,11 +669,7 @@ def load_mat(est_path):
     elif fmt == ".npy":
         G = nx.from_numpy_array(np.load(est_path))
     else:
-        try:
-            raise ValueError("\nFile format not supported!")
-        except ValueError:
-            import sys
-            sys.exit(0)
+        raise ValueError("\nFile format not supported!")
 
     G.graph["ecount"] = nx.number_of_edges(G)
     G = nx.convert_node_labels_to_integers(G, first_label=1)
@@ -781,11 +773,8 @@ def save_mat(conn_matrix, est_path, fmt=None):
             delimiter=" ",
             encoding="utf-8")
     else:
-        try:
-            raise ValueError("\nFile format not supported!")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError("\nFile format not supported!")
+
     return
 
 
@@ -1287,18 +1276,18 @@ def collect_pandas_df(
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not sucessfully extracted"
+        except KeyError as e:
+            print(e,
+                "available functional models not sucessfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not sucessfully extracted"
+        except KeyError as e:
+            print(e,
+                "available structural models not sucessfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
@@ -1558,8 +1547,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         hardcoded_params = yaml.load(stream)
         try:
             template_name = hardcoded_params["template"][0]
-        except KeyError:
-            print(
+        except KeyError as e:
+            print(e,
                 "No template specified in runconfig.yaml"
             )
             sys.exit(1)
@@ -1592,8 +1581,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
     else:
         try:
             template_img = nib.load(template_brain)
-        except ImportError:
-            print(f"\nCannot load MNI template. Do you have git-lfs "
+        except ImportError as e:
+            print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
             sys.exit(1)
 
@@ -1840,18 +1829,18 @@ def build_args_from_config(modality, arg_dict):
         hardcoded_params = yaml.load(stream)
         try:
             func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available functional models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available structural models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
@@ -1915,10 +1904,33 @@ def check_template_loads(template, template_mask, template_name):
             nib.load(template)
             nib.load(template_mask)
             return print('Local template detected...')
-        except ImportError:
-            print(f"\nCannot load template {template_name} image or template "
+        except ImportError as e:
+            print(e, f"\nCannot load template {template_name} image or template "
                   f"mask. Do you have git-lfs installed?")
             sys.exit(1)
+
+
+def save_4d_to_3d(in_file):
+    from nipype.utils.filemanip import fname_presuffix
+
+    files_3d = nib.four_to_three(nib.load(in_file))
+    out_files = []
+    for i, file_3d in enumerate(files_3d):
+        out_file = fname_presuffix(in_file, suffix="_tmp_{}".format(i))
+        file_3d.to_filename(out_file)
+        out_files.append(out_file)
+    del files_3d
+    return out_files
+
+
+def save_3d_to_4d(in_files):
+    from nipype.utils.filemanip import fname_presuffix
+
+    img_4d = nib.funcs.concat_images([nib.load(img_3d) for img_3d in in_files])
+    out_file = fname_presuffix(in_files[0], suffix="_merged")
+    img_4d.to_filename(out_file)
+    del img_4d
+    return out_file
 
 
 class watchdog(object):

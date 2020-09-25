@@ -130,18 +130,18 @@ def workflow_selector(
         try:
             func_models = hardcoded_params["available_models"][
                 "func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available functional models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available structural models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
@@ -167,13 +167,9 @@ def workflow_selector(
                 conn_model_dwi = dwi_model_list[0]
                 dwi_model_list = None
         else:
-            try:
-                raise RuntimeError(
-                    "Multimodal fMRI-dMRI pipeline specified, but "
-                    "only one connectivity model specified.")
-            except RuntimeError:
-                import sys
-                sys.exit(0)
+            raise RuntimeError(
+                "Multimodal fMRI-dMRI pipeline specified, but "
+                "only one connectivity model specified.")
 
     elif (dwi_file is not None) and (func_file is None):
         print("Parsing diffusion models...")
@@ -1411,11 +1407,7 @@ def dmri_connectometry(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -2649,11 +2641,7 @@ def dmri_connectometry(
                                             map_connects),
                                            ])
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
@@ -3594,11 +3582,7 @@ def fmri_connectometry(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -5036,11 +5020,7 @@ def fmri_connectometry(
                 ]
             )
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
