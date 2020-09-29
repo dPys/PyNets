@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -36,8 +36,8 @@ def threshold_absolute(W, thr, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if copy:
@@ -95,7 +95,11 @@ def threshold_proportional(W, p, copy=True):
 
     """
     if p > 1 or p < 0:
-        raise ValueError("Threshold must be in range [0,1]")
+        try:
+            raise ValueError("Threshold must be in range [0,1]")
+        except ValueError:
+            import sys
+            sys.exit(0)
     if copy:
         W = W.copy()
     n = len(W)
@@ -130,8 +134,8 @@ def normalize(W):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     W /= np.max(np.abs(W))
@@ -154,8 +158,8 @@ def standardize(W):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     W = (W - np.min(W)) / np.ptp(W)
@@ -173,9 +177,11 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
     thr : float
         Density value between 0-1.
     max_iters : int
-        Maximum number of iterations for performing absolute thresholding. Default is 1000.
+        Maximum number of iterations for performing absolute thresholding.
+        Default is 1000.
     interval : float
-        Interval for increasing the absolute threshold for each iteration. Default is 0.01.
+        Interval for increasing the absolute threshold for each iteration.
+        Default is 0.01.
 
     Returns
     -------
@@ -188,8 +194,8 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
       Comparing brain networks of different size and connectivity
       density using graph theory. PLoS ONE.
       https://doi.org/10.1371/journal.pone.0013701
-    .. [2] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [2] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     from pynets.core import thresholding
@@ -226,7 +232,8 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
             i = i + 1
     else:
         print(
-            "Density of raw matrix is already greater than or equal to the target density requested"
+            "Density of raw matrix is already greater than or equal to the "
+            "target density requested"
         )
 
     return conn_matrix
@@ -267,8 +274,8 @@ def thr2prob(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if copy:
@@ -297,8 +304,8 @@ def binarize(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if copy:
@@ -329,8 +336,8 @@ def invert(W, copy=False):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if copy:
@@ -387,8 +394,8 @@ def weight_conversion(W, wcm, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if wcm == "binarize":
@@ -417,8 +424,8 @@ def autofix(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and interpretations.
-      Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
+    .. [1] Complex network measures of brain connectivity: Uses and
+      interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
     if copy:
@@ -442,7 +449,8 @@ def autofix(W, copy=True):
 
 def disparity_filter(G, weight="weight"):
     """
-    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
+    Compute significance scores (alpha) for weighted edges in G as defined in
+    Serrano et al. 2009.
 
     Parameters
     ----------
@@ -455,12 +463,13 @@ def disparity_filter(G, weight="weight"):
     Returns
     -------
     B : Object
-        Weighted NetworkX graph with a significance score (alpha) assigned to each edge.
+        Weighted NetworkX graph with a significance score (alpha) assigned to
+        each edge.
 
     References
     ----------
-    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-      PNAS, 106:16, pp. 6483-6488.
+    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of
+      complex weighted networks. PNAS, 106:16, pp. 6483-6488.
 
     """
     from scipy import integrate
@@ -481,9 +490,8 @@ def disparity_filter(G, weight="weight"):
                     alpha_ij_out = (
                         1
                         - (k_out - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out)[
-                            0
-                        ]
+                        * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0,
+                                         p_ij_out)[0]
                     )
                     N.add_edge(
                         u, v, weight=w, alpha_out=float(f"{alpha_ij_out:.4f}"))
@@ -506,7 +514,8 @@ def disparity_filter(G, weight="weight"):
                     alpha_ij_in = (
                         1
                         - (k_in - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in)[0]
+                        * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0,
+                                         p_ij_in)[0]
                     )
                     N.add_edge(
                         v, u, weight=w, alpha_in=float(f"{alpha_ij_in:.4f}"))
@@ -524,7 +533,8 @@ def disparity_filter(G, weight="weight"):
                     alpha_ij = (
                         1
                         - (k - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[0]
+                        * integrate.quad(lambda x: (1 - x) ** (k - 2), 0,
+                                         p_ij)[0]
                     )
                     B.add_edge(u, v, weight=w, alpha=float(f"{alpha_ij:.4f}"))
             else:
@@ -534,7 +544,8 @@ def disparity_filter(G, weight="weight"):
 
 def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
     """
-    Compute significance scores (alpha) for weighted edges in G as defined in Serrano et al. 2009.
+    Compute significance scores (alpha) for weighted edges in G as defined in
+    Serrano et al. 2009.
 
     Parameters
     ----------
@@ -549,32 +560,36 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
             used to select the surviving edges. Default is 0.4.
 
     cut_mode : str
-            In the case of directed graphs. It represents the logic operation to filter out edges
-            that do not pass the threshold value, combining the alpha_in and alpha_out attributes
-            resulting from the disparity_filter function. Default is 'or'. Possible strings: 'or', 'and'.
+            In the case of directed graphs. It represents the logic operation
+            to filter out edges that do not pass the threshold value,
+            combining the alpha_in and alpha_out attributes resulting from
+            the disparity_filter function. Default is 'or'.
+            Possible strings: 'or', 'and'.
+
     Returns
     -------
     B : Object
-        Weighted NetworkX graph with a significance score (alpha) assigned to each edge. The resulting
-        graph contains only edges that survived from the filtering with the alpha_t threshold.
+        Weighted NetworkX graph with a significance score (alpha) assigned to
+        each edge. The resulting graph contains only edges that survived from
+        the filtering with the alpha_t threshold.
 
     References
     ----------
-    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of complex weighted networks.
-      PNAS, 106:16, pp. 6483-6488.
+    .. [1] M. A. Serrano et al. (2009) Extracting the Multiscale backbone of
+      complex weighted networks. PNAS, 106:16, pp. 6483-6488.
 
     """
 
-    if nx.is_directed(G):  # Directed case:
+    if nx.is_directed(G):
         B = nx.DiGraph()
         for u, v, w in G.edges(data=True):
             try:
                 alpha_in = w["alpha_in"]
-            except KeyError:  # there is no alpha_in, so we assign 1. It will never pass the cut
+            except KeyError:
                 alpha_in = 1
             try:
                 alpha_out = w["alpha_out"]
-            except KeyError:  # there is no alpha_out, so we assign 1. It will never pass the cut
+            except KeyError:
                 alpha_out = 1
 
             if cut_mode == "or":
@@ -590,7 +605,7 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
         for u, v, w in G.edges(data=True):
             try:
                 alpha = w["alpha"]
-            except KeyError:  # there is no alpha, so we assign 1. It will never pass the cut
+            except KeyError:
                 alpha = 1
 
             if alpha < alpha_t:
@@ -602,10 +617,11 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
 def weight_to_distance(G):
     """
     Inverts all the edge weights so they become equivalent to distance measure.
-    With a weight, the higher the value the stronger the connection. With a distance,
-    the higher the value the "weaker" the connection. In this case there is no
-    measurement unit for the distance, as it is just a conversion from the weights.
-    The distances can be accessed in each node's property with constants.
+    With a weight, the higher the value the stronger the connection. With a
+    distance, the higher the value the "weaker" the connection. In this case
+    there is no measurement unit for the distance, as it is just a conversion
+    from the weights. The distances can be accessed in each node's property
+    with constants.
 
     Parameters
     ----------
@@ -665,15 +681,17 @@ def knn(conn_matrix, k):
 
 def local_thresholding_prop(conn_matrix, thr):
     """
-    Threshold the adjacency matrix by building from the minimum spanning tree (MST) and adding
-    successive N-nearest neighbour degree graphs to achieve target proportional threshold.
+    Threshold the adjacency matrix by building from the minimum spanning tree
+    (MST) and adding successive N-nearest neighbour degree graphs to achieve
+    target proportional threshold.
 
     Parameters
     ----------
     conn_matrix : array
         Weighted NxN matrix.
     thr : float
-        A proportional threshold, between 0 and 1, to achieve through local thresholding.
+        A proportional threshold, between 0 and 1, to achieve through local
+        thresholding.
 
     Returns
     -------
@@ -682,10 +700,11 @@ def local_thresholding_prop(conn_matrix, thr):
 
     References
     ----------
-    .. [1] Alexander-Bloch, A. F., Gogtay, N., Meunier, D., Birn, R., Clasen, L.,
-      Lalonde, F., … Bullmore, E. T. (2010). Disrupted modularity and local
-      connectivity of brain functional networks in childhood-onset schizophrenia.
-      Frontiers in Systems Neuroscience. https://doi.org/10.3389/fnsys.2010.00147
+    .. [1] Alexander-Bloch, A. F., Gogtay, N., Meunier, D., Birn, R., Clasen,
+      L., Lalonde, F., … Bullmore, E. T. (2010). Disrupted modularity and local
+      connectivity of brain functional networks in childhood-onset
+      schizophrenia. Frontiers in Systems Neuroscience.
+      https://doi.org/10.3389/fnsys.2010.00147
     .. [2] Tewarie, P., van Dellen, E., Hillebrand, A., & Stam, C. J. (2015).
       The minimum spanning tree: An unbiased method for brain network analysis.
       NeuroImage. https://doi.org/10.1016/j.neuroimage.2014.10.015
@@ -713,7 +732,8 @@ def local_thresholding_prop(conn_matrix, thr):
 
     if len_edges > edgenum:
         print(
-            f"Warning: The minimum spanning tree already has: {len_edges} edges, select more edges. Local Threshold "
+            f"Warning: The minimum spanning tree already has: {len_edges} "
+            f"edges, select more edges. Local Threshold "
             f"will be applied by just retaining the Minimum Spanning Tree")
         conn_matrix_thr = nx.to_numpy_array(G)
         return conn_matrix_thr
@@ -723,7 +743,8 @@ def local_thresholding_prop(conn_matrix, thr):
     while (
         len_edges < edgenum
         and k <= np.shape(conn_matrix)[0]
-        and (len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:])))
+        and (len(len_edge_list[-fail_tol:]) -
+             len(set(len_edge_list[-fail_tol:])))
         < (fail_tol - 1)
     ):
         # print(k)
@@ -767,7 +788,10 @@ def local_thresholding_prop(conn_matrix, thr):
         return conn_matrix_thr
 
     except ValueError:
-        print("MST thresholding failed. Check raw graph output manually for debugging.")
+        import sys
+        print("MST thresholding failed. Check raw graph output manually for"
+              " debugging.")
+        sys.exit(1)
 
 
 def perform_thresholding(
@@ -811,30 +835,15 @@ def perform_thresholding(
         edge_threshold = f"{str(thr_perc)}%"
         G1 = thresholding.disparity_filter(
             nx.from_numpy_array(np.abs(conn_matrix)))
-        # G2 = nx.Graph([(u, v, d) for u, v, d in G1.edges(data=True) if d['alpha'] < thr])
         print(f"Computing edge disparity significance with alpha = {thr}")
         print(
-            f"Filtered graph: nodes = {G1.number_of_nodes()}, edges = {G1.number_of_edges()}"
+            f"Filtered graph: nodes = {G1.number_of_nodes()}, "
+            f"edges = {G1.number_of_edges()}"
         )
-        # print(f'Backbone graph: nodes = {G2.number_of_nodes()}, edges = {G2.number_of_edges()}")
-        # print(G2.edges(data=True))
         conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(
             G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
         # Enforce original dimensionality by padding with zeros.
-        if conn_matrix_bin.shape != conn_matrix.shape:
-            if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
-                result = np.zeros(conn_matrix.shape)
-                result[
-                    : conn_matrix_bin.shape[0], : conn_matrix_bin.shape[1]
-                ] = conn_matrix_bin
-                conn_matrix_thr = np.multiply(conn_matrix, result)
-            else:
-                result = np.zeros(conn_matrix_bin.shape)
-                result[: conn_matrix.shape[0],
-                       : conn_matrix.shape[1]] = conn_matrix
-                conn_matrix_thr = np.multiply(conn_matrix_bin, result)
-        else:
-            conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+        conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
         if dens_thresh is False:
             thr_type = "PROP"
@@ -878,23 +887,26 @@ def thresh_func(
     check_consistency=True,
 ):
     """
-    Threshold a functional connectivity matrix using any of a variety of methods.
+    Threshold a functional connectivity matrix using any of a variety of
+    methods.
 
     Parameters
     ----------
     dens_thresh : bool
-        Indicates whether a target graph density is to be used as the basis for thresholding.
+        Indicates whether a target graph density is to be used as the basis
+        for thresholding.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     conn_matrix : array
         Adjacency matrix stored as an m x n array of nodes and edges.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     dir_path : str
@@ -902,13 +914,14 @@ def thresh_func(
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     min_span_tree : bool
         Indicates whether local thresholding from the Minimum Spanning Tree
         should be used.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
         'backbone network' should be used.
@@ -933,7 +946,8 @@ def thresh_func(
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     Returns
     -------
@@ -942,23 +956,26 @@ def thresh_func(
     edge_threshold : str
         The string percentage representation of thr.
     est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
+        array in .npy format.
     thr : float
-        The value, between 0 and 1, used to threshold the graph using any variety of methods
-        triggered through other options.
+        The value, between 0 and 1, used to threshold the graph using any
+        variety of methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     ID : str
@@ -982,7 +999,8 @@ def thresh_func(
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
 
     References
     ----------
@@ -999,7 +1017,12 @@ def thresh_func(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        try:
+            raise ValueError("ERROR: Raw connectivity matrix contains only"
+                             " zeros.")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     # Save unthresholded
     utils.save_mat(
@@ -1018,7 +1041,8 @@ def thresh_func(
         ),
     )
 
-    [thr_type, edge_threshold, conn_matrix_thr] = thresholding.perform_thresholding(
+    [thr_type, edge_threshold, conn_matrix_thr] = \
+        thresholding.perform_thresholding(
         conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
@@ -1100,7 +1124,8 @@ def thresh_struct(
     check_consistency=True,
 ):
     """
-    Threshold a structural connectivity matrix using any of a variety of methods.
+    Threshold a structural connectivity matrix using any of a variety of
+    methods.
 
     Parameters
     ----------
@@ -1108,16 +1133,17 @@ def thresh_struct(
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     conn_matrix : array
         Adjacency matrix stored as an m x n array of nodes and edges.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
     dir_path : str
@@ -1125,8 +1151,8 @@ def thresh_struct(
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     min_span_tree : bool
         Indicates whether local thresholding from the Minimum Spanning Tree
         should be used.
@@ -1160,7 +1186,8 @@ def thresh_struct(
     streams : str
         File path to save streamline array sequence in .trk format.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are:
+        det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
@@ -1172,19 +1199,21 @@ def thresh_struct(
     edge_threshold : str
         The string percentage representation of thr.
     est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array in .npy format.
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
+        array in .npy format.
     thr : float
-        The value, between 0 and 1, used to threshold the graph using any variety of methods
-        triggered through other options.
+        The value, between 0 and 1, used to threshold the graph using any
+        variety of methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     prune : bool
@@ -1216,7 +1245,8 @@ def thresh_struct(
     streams : str
         File path to save streamline array sequence in .trk format.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are:
+        det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
@@ -1236,7 +1266,12 @@ def thresh_struct(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("ERROR: Raw connectivity matrix contains only zeros.")
+        try:
+            raise ValueError("ERROR: Raw connectivity matrix contains only"
+                             " zeros.")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     # Save unthresholded
     utils.save_mat(

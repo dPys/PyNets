@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 from nipype.interfaces import utility as niu
@@ -11,6 +11,9 @@ import os
 import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 
 
 def get_parser():
@@ -101,17 +104,12 @@ def load_pd_dfs(file_):
         if op.isfile(file_) and not file_.endswith("_clean.csv"):
             try:
                 df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                                 nrows=1, skip_blank_lines=False,
-                                 warn_bad_lines=True, error_bad_lines=False,
-                                 memory_map=True, engine='python').read()
+                                 engine='python').read()
             except:
                 print(f"Load failed for {file_}. Trying again with c engine.")
                 try:
                     df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                                     nrows=1, skip_blank_lines=False,
-                                     warn_bad_lines=True,
-                                     error_bad_lines=False,
-                                     memory_map=True, engine='c').read()
+                                     engine='c').read()
                 except:
                     print(f"Cannot load {file_}")
                     df = pd.DataFrame()
@@ -295,7 +293,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
           'otherwise create an inventory of missingness...')
     par_dict = rerun_dict.copy()
     cache_dir = tempfile.mkdtemp()
-    with Parallel(n_jobs=-1, require='sharedmem', verbose=10,
+    with Parallel(n_jobs=-1, backend='loky', verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                  par_dict, modality,
@@ -373,18 +371,12 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
             try:
                 df_tmp = pd.read_csv(
                     outs[0], chunksize=100000, compression="gzip",
-                    encoding="utf-8",
-                    nrows=1, skip_blank_lines=False,
-                    warn_bad_lines=True, error_bad_lines=False,
-                    memory_map=True, engine='python').read()
+                    encoding="utf-8", engine='python').read()
             except:
                 try:
                     df_tmp = pd.read_csv(
                         outs[0], chunksize=100000, compression="gzip",
-                        encoding="utf-8",
-                        nrows=1, skip_blank_lines=False,
-                        warn_bad_lines=True, error_bad_lines=False,
-                        memory_map=True, engine='c').read()
+                        encoding="utf-8", engine='c').read()
                 except:
                     print(f"Cannot load {outs[0]}")
                     continue
@@ -396,12 +388,12 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
 
                 if bad_col not in frame.columns:
                     continue
-                    # from pynets.stats.netstats import \
-                    #     collect_pandas_df_make
-                    # collect_pandas_df_make(
-                    #     glob.glob(f"{working_path}/{sub}/{ses}/"
-                    #               f"{modality}/{atlas}/topology/*_neat.csv"),
-                    #     f"{sub}_{ses}", None, False)
+                    from pynets.stats.netstats import \
+                        collect_pandas_df_make
+                    collect_pandas_df_make(
+                        glob.glob(f"{working_path}/{sub}/{ses}/"
+                                  f"{modality}/{atlas}/topology/*_neat.csv"),
+                        f"{sub}_{ses}", None, False)
                 try:
                     frame.loc[lab, bad_col] = df_tmp.filter(
                         regex=bad_col.split('auc_')[1:][0]
@@ -409,19 +401,19 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     print(f"Recovered missing data from {sub}, {ses} for "
                           f"{bad_col}...")
                 except:
-                    # from pynets.stats.netstats import \
-                    #     collect_pandas_df_make
-                    # collect_pandas_df_make(
-                    #     glob.glob(f"{working_path}/{sub}/{ses}/"
-                    #               f"{modality}/{atlas}/topology/*_neat.csv"),
-                    #     f"{sub}_{ses}", None, False)
+                    from pynets.stats.netstats import \
+                        collect_pandas_df_make
+                    collect_pandas_df_make(
+                        glob.glob(f"{working_path}/{sub}/{ses}/"
+                                  f"{modality}/{atlas}/topology/*_neat.csv"),
+                        f"{sub}_{ses}", None, False)
                     continue
                 del df_tmp
             else:
-                # from pynets.stats.netstats import collect_pandas_df_make
-                # collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
-                #                                  f"{modality}/{atlas}/topology/*_neat.csv"),
-                #                        f"{sub}_{ses}", None, False)
+                from pynets.stats.netstats import collect_pandas_df_make
+                collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
+                                                 f"{modality}/{atlas}/topology/*_neat.csv"),
+                                       f"{sub}_{ses}", None, False)
                 rerun_dict[sub][ses][modality][atlas].append(bad_col)
                 continue
         elif len(outs) > 1:
@@ -429,18 +421,12 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                 try:
                     df_tmp = pd.read_csv(
                         out, chunksize=100000, compression="gzip",
-                        encoding="utf-8",
-                        nrows=1, skip_blank_lines=False,
-                        warn_bad_lines=True, error_bad_lines=False,
-                        memory_map=True, engine='python').read()
+                        encoding="utf-8", engine='python').read()
                 except:
                     try:
                         df_tmp = pd.read_csv(
                             out, chunksize=100000, compression="gzip",
-                            encoding="utf-8",
-                            nrows=1, skip_blank_lines=False,
-                            warn_bad_lines=True, error_bad_lines=False,
-                            memory_map=True, engine='c').read()
+                            encoding="utf-8", engine='c').read()
                     except:
                         print(f"Cannot load {out}")
                         continue
@@ -457,23 +443,23 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                             regex=bad_col.split('auc_')[1:][0]
                         ).values.tolist()[0][0]
                     except:
-                        # from pynets.stats.netstats import \
-                        #     collect_pandas_df_make
-                        # collect_pandas_df_make(
-                        #     glob.glob(f"{working_path}/{sub}/{ses}/"
-                        #               f"{modality}/{atlas}/topology/*_neat.csv"),
-                        #     f"{sub}_{ses}", None, False)
+                        from pynets.stats.netstats import \
+                            collect_pandas_df_make
+                        collect_pandas_df_make(
+                            glob.glob(f"{working_path}/{sub}/{ses}/"
+                                      f"{modality}/{atlas}/topology/*_neat.csv"),
+                            f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
         else:
             # Add to missingness inventory if not found
             rerun_dict[sub][ses][modality][atlas].append(bad_col)
-            # from pynets.stats.netstats import \
-            #     collect_pandas_df_make
-            # collect_pandas_df_make(
-            #     glob.glob(f"{working_path}/{sub}/{ses}/"
-            #               f"{modality}/{atlas}/topology/*_neat.csv"),
-            #     f"{sub}_{ses}", None, False)
+            from pynets.stats.netstats import \
+                collect_pandas_df_make
+            collect_pandas_df_make(
+                glob.glob(f"{working_path}/{sub}/{ses}/"
+                          f"{modality}/{atlas}/topology/*_neat.csv"),
+                f"{sub}_{ses}", None, False)
     return rerun_dict, rerun
 
 
@@ -502,18 +488,12 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
     try:
         df = pd.read_csv(
             auc_file, chunksize=100000, compression="gzip",
-            encoding="utf-8",
-            nrows=1, skip_blank_lines=False,
-            warn_bad_lines=True, error_bad_lines=False,
-            memory_map=True, engine='c').read()
+            encoding="utf-8", engine='c').read()
     except:
         try:
             df = pd.read_csv(
                 auc_file, chunksize=100000, compression="gzip",
-                encoding="utf-8",
-                nrows=1, skip_blank_lines=False,
-                warn_bad_lines=True, error_bad_lines=False,
-                memory_map=True, engine='python').read()
+                encoding="utf-8", engine='python').read()
         except:
             df_pref = pd.DataFrame()
             return df_pref
@@ -573,8 +553,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
         set(
             [
                 os.path.basename(str(Path(i).parent.parent))
-                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/topology/*",
-                                   recursive=True)
+                for i in glob.glob(f"{working_path}/{sub}/*/{modality}/*/"
+                                   f"topology/*", recursive=True)
             ]
         )
     )
@@ -665,7 +645,6 @@ def collect_all(working_path, modality, drop_cols):
         'warnings.filterwarnings("ignore")',
         "import os",
         "import numpy as np",
-        "import indexed_gzip",
         "import nibabel as nib",
         "import glob",
         "import pandas as pd",
@@ -914,11 +893,13 @@ def main():
     args_dict_all = {}
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
-    args_dict_all['pm'] = '24,57'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['pm'] = '48,57'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
+    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['work'] = '/tmp/work/func'
+    args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',
@@ -926,7 +907,7 @@ def main():
                            'average_local_clustering_nodewise',
                            'average_local_efficiency_nodewise',
                            'degree_centrality',
-                           "_minlength-0",
+                        #   "_minlength-0",
                            "_minlength-20", "_minlength-30", "variance",
                            "res-1000"]
     args = SimpleNamespace(**args_dict_all)
@@ -955,6 +936,10 @@ def main():
     working_path = args_dict_all['basedir']
     modality = args_dict_all['modality']
     drop_cols = args_dict_all['dc']
+    # working_path = args.basedir
+    # modality = args.modality
+    # drop_cols = args.dc
+
     all_files = glob.glob(
         f"{str(Path(working_path))}/{modality}_group_topology_auc/*.csv"
     )
@@ -966,15 +951,11 @@ def main():
     for file_ in files_:
         try:
             df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                             nrows=1, skip_blank_lines=False,
-                             warn_bad_lines=True, error_bad_lines=False,
-                             memory_map=True, engine='python').read()
+                             engine='python').read()
         except:
             try:
                 df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
-                                 nrows=1, skip_blank_lines=False,
-                                 warn_bad_lines=True, error_bad_lines=False,
-                                 memory_map=True, engine='c').read()
+                                 engine='c').read()
             except:
                 print(f"Cannot load {file_}...")
                 continue

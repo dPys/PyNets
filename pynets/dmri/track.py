@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 
 warnings.filterwarnings("ignore")
 
@@ -60,10 +62,14 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
-        raise ValueError(
-            "Error: No valid reconstruction model specified. See the `-mod` "
-            "flag."
-        )
+        try:
+            raise ValueError(
+                "Error: No valid reconstruction model specified. See the "
+                "`-mod` flag."
+            )
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del dwi_data
 
@@ -184,7 +190,11 @@ def prep_tissues(
             )
         )
     else:
-        raise ValueError("Tissue classifier cannot be none.")
+        try:
+            raise ValueError("Tissue classifier cannot be none.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del gm_data, wm_data, vent_csf_in_dwi_data
     mask_img.uncache()
@@ -403,6 +413,7 @@ def track_ensemble(
     """
     import os
     import gc
+    import sys
     import time
     import pkg_resources
     import yaml
@@ -422,12 +433,18 @@ def track_ensemble(
     ) as stream:
         hardcoded_params = yaml.load(stream)
         nthreads = hardcoded_params["nthreads"][0]
-        n_seeds_per_iter = hardcoded_params['tracking']["n_seeds_per_iter"][0]
-        max_length = hardcoded_params['tracking']["max_length"][0]
-        pft_back_tracking_dist = hardcoded_params['tracking']["pft_back_tracking_dist"][0]
-        pft_front_tracking_dist = hardcoded_params['tracking']["pft_front_tracking_dist"][0]
-        particle_count = hardcoded_params['tracking']["particle_count"][0]
-        min_separation_angle = hardcoded_params['tracking']["min_separation_angle"][0]
+        n_seeds_per_iter = \
+            hardcoded_params['tracking']["n_seeds_per_iter"][0]
+        max_length = \
+            hardcoded_params['tracking']["max_length"][0]
+        pft_back_tracking_dist = \
+            hardcoded_params['tracking']["pft_back_tracking_dist"][0]
+        pft_front_tracking_dist = \
+            hardcoded_params['tracking']["pft_front_tracking_dist"][0]
+        particle_count = \
+            hardcoded_params['tracking']["particle_count"][0]
+        min_separation_angle = \
+            hardcoded_params['tracking']["min_separation_angle"][0]
     stream.close()
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
@@ -438,8 +455,7 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and float(ix) < \
-        len(all_combs):
+    while float(stream_counter) < float(target_samples):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
@@ -454,15 +470,23 @@ def track_ensemble(
                     vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir) for i in
                 all_combs)
 
-            out_streams = [i for i in out_streams if i is not None and
-                           len(i) > 0]
+            out_streams = [i for i in out_streams if i is not None and i is
+                           not ArraySequence() and len(i) > 0]
 
-            if len(out_streams) < 10:
+            if len(out_streams) > 1:
+                out_streams = concatenate(out_streams, axis=0)
+
+            if len(out_streams) < 100:
                 ix += 1
+                print("Fewer than 100 streamlines tracked on last iteration."
+                      " loosening tolerance and anatomical constraints...")
+                if track_type != 'particle':
+                    tiss_class = 'wb'
+                roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
+                min_length = float(min_length) * 0.95
                 continue
             else:
-                ix = 0
-                out_streams = concatenate(out_streams, axis=0)
+                ix -= 1
 
             # Append streamline generators to prevent exponential growth
             # in memory consumption
@@ -482,11 +506,14 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-    if ix >= len(all_combs):
-        raise ValueError(f"Tractography failed. "
-                         f">{len(all_combs)} consecutive sampling iterations "
-                         f"with <10 streamlines. Are you using a waymask? "
-                         f"If so, it may be too restrictive.")
+        if float(ix) > len(all_combs):
+            break
+
+    if ix >= len(all_combs) and float(stream_counter) < float(target_samples):
+        print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
+              f"iterations with <100 streamlines. Are you using a waymask? "
+              f"If so, it may be too restrictive.")
+        return ArraySequence()
     else:
         print("Tracking Complete: ", str(time.time() - start))
 
@@ -497,7 +524,8 @@ def track_ensemble(
         print('Generating final ArraySequence...')
         return ArraySequence([ArraySequence(i) for i in all_streams])
     else:
-        raise ValueError('No streamlines generated!')
+        print('No streamlines generated!')
+        return ArraySequence()
 
 
 def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
@@ -676,9 +704,14 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             min_separation_angle=min_separation_angle,
         )
     else:
-        raise ValueError(
-            "ERROR: No valid direction getter(s) specified."
-        )
+        try:
+            raise ValueError(
+                "ERROR: No valid direction getter(s) specified."
+            )
+        except ValueError:
+            import sys
+            sys.exit(0)
+
     print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
     # Perform wm-gm interface seeding, using n_seeds at a time
@@ -725,8 +758,12 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             return_all=True,
         )
     else:
-        raise ValueError(
-            "ERROR: No valid tracking method(s) specified.")
+        try:
+            raise ValueError(
+                "ERROR: No valid tracking method(s) specified.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain
@@ -778,16 +815,17 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         return None
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
-        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj).astype(
-            "bool")
+        from nilearn.image import math_img
+        mask = math_img("img > 0.01", img=nib.load(waymask_tmp_path))
+        waymask_data = np.asarray(mask.dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=roi_neighborhood_tol,
-                    mode="any",
+                    tol=0,
+                    mode="all",
                 )
             ]
             print("%s%s" % ("Waymask proximity: ",

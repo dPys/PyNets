@@ -17,7 +17,7 @@ indexed_gzip==1.2.0
 seaborn>=0.10.0
 matplotlib>=3.2.2
 networkx==2.4
-nipype==1.5.0
+nipype==1.5.1
 scikit_learn>=0.23.0
 dipy==1.1.0
 boto3>=1.9.111

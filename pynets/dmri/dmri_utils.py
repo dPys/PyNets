@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
 import os
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix
@@ -52,10 +54,14 @@ def normalize_gradients(
 
     # Check for bval-bvec discrepancy.
     if not np.all(b0s == b0_vecs):
-        raise ValueError(
-            "Inconsistent bvals and bvecs (%d, %d low-b, respectively)."
-            % (b0s.sum(), b0_vecs.sum())
-        )
+        try:
+            raise ValueError(
+                "Inconsistent bvals and bvecs (%d, %d low-b, respectively)."
+                % (b0s.sum(), b0_vecs.sum())
+            )
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     # Rescale b-vals if requested
     if b_scale:

@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 import yaml
 from pathlib import Path
@@ -359,26 +361,49 @@ def get_node_membership(
     import pkg_resources
     import pandas as pd
     import sys
-    from nilearn.image import resample_to_img, resample_img, index_img
-    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm
+    import tempfile
+    from nilearn.image import resample_to_img, index_img
+    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm, \
+        create_parcel_atlas, gen_img_list
 
-    try:
-        template_img = nib.load(infile)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI reference. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(infile)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI reference. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(infile)
+        except ImportError:
+            print(f"\nCannot load MNI reference. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+
     bna_aff = template_img.affine
 
     x_vox = np.diagonal(bna_aff[:3, 0:3])[0]
     y_vox = np.diagonal(bna_aff[:3, 0:3])[1]
     z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
-    if isinstance(parcel_list, str):
-        parcel_list_img = nib.load(parcel_list)
-        parcel_list = [index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])]
+    if parc is True:
+        if isinstance(parcel_list, str):
+            parcel_list_img = nib.load(parcel_list)
+            parcel_list = list([index_img(parcel_list_img, i) for i in
+                                range(parcel_list_img.shape[-1])])
+            parcel_atlas = create_parcel_atlas(parcel_list)[0]
+        else:
+            parcel_atlas = create_parcel_atlas(parcel_list)[0]
+        parcel_atlas_img_res = resample_to_img(
+            parcel_atlas, template_img, interpolation="nearest"
+        )
+        par_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz').name
+        nib.save(parcel_atlas_img_res, par_tmp)
+        parcel_list_res = gen_img_list(par_tmp)
+    else:
+        parcel_list_res = None
 
     # Determine whether input is from 17-networks or 7-networks
     seven_nets = [
@@ -461,12 +486,22 @@ def get_node_membership(
             "Z"])
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
-    try:
-        rsn_img = nib.load(par_file)
-    except indexed_gzip.ZranError as e:
-        print(e, "\nCannot load RSN reference image. Do you have git-lfs "
-                 "installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            rsn_img = nib.load(par_file)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load RSN reference image. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            rsn_img = nib.load(par_file)
+        except ImportError:
+            print(f"\nCannot load RSN reference image. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
@@ -520,11 +555,8 @@ def get_node_membership(
         RSN_parcels = []
         coords_with_parc = []
         net_labels = []
-        for parcel in parcel_list:
-            parcel_vol = np.zeros(RSNmask.shape, dtype=bool)
-            parcel_vol[np.asarray(
-                resample_img(parcel, target_affine=rsn_img.affine,
-                             target_shape=RSNmask.shape).dataobj) == 1] = 1
+        for parcel in parcel_list_res:
+            parcel_vol = np.asarray(parcel.dataobj).astype('bool')
 
             # Count number of unique voxels where overlap of parcel and mask
             # occurs
@@ -547,9 +579,7 @@ def get_node_membership(
             if overlap_count > 0:
                 overlap = float(overlap_count / total_count)
             else:
-                print(
-                    f"No overlap of parcel {i} with rsn mask...")
-                overlap = float(0)
+                print(f"No overlap of parcel {i} with rsn mask...")
                 i += 1
                 continue
 
@@ -649,19 +679,28 @@ def parcel_masker(
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -733,13 +772,14 @@ def parcel_masker(
             "ERROR: Restrictive masking. No parcels remain after masking with"
             " brain mask/roi..."
         )
+        sys.exit(1)
 
     if not coords_adj:
         raise ValueError(
             "\nERROR: ROI mask was likely too restrictive and yielded < 2"
             " remaining parcels"
         )
-
+        sys.exit(1)
     assert len(coords_adj) == len(labels_adj) == len(parcel_list_adj)
 
     return coords_adj, labels_adj, parcel_list_adj
@@ -794,19 +834,28 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -864,6 +913,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             "ERROR: Restrictive masking. No coords remain after masking with"
             " brain mask/roi..."
         )
+        sys.exit(1)
 
     if len(coords) <= 1:
         raise ValueError(
@@ -898,12 +948,16 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     label_intensities : list
         A list of integer label intensity values from the parcellation.
     """
+    import sys
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas):
-        raise ValueError(
-            "\nERROR: User-specified atlas input not found! Check that the "
-            "file(s) specified with the -ua flag exist(s)")
+        try:
+            raise ValueError(
+                "\nERROR: User-specified atlas input not found! Check that "
+                "the file(s) specified with the -ua flag exist(s)")
+        except ValueError:
+            sys.exit(1)
 
     atlas = uatlas.split("/")[-1].split(".")[0]
 
@@ -934,15 +988,19 @@ def gen_img_list(uatlas):
         List of binarized Nifti1Images corresponding to ROI masks for each
         unique atlas label.
     """
+    import sys
     import gc
     from nilearn.image import iter_img
     import os.path as op
     from nilearn.image import new_img_like
 
     if not op.isfile(uatlas):
-        raise ValueError(
-            "\nERROR: User-specified atlas input not found! Check that the"
-            " file(s) specified with the -ua flag exist(s)")
+        try:
+            raise ValueError(
+                "\nERROR: User-specified atlas input not found! Check that the"
+                " file(s) specified with the -ua flag exist(s)")
+        except ValueError:
+            sys.exit(1)
 
     bna_img = nib.load(uatlas)
     bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
@@ -954,7 +1012,8 @@ def gen_img_list(uatlas):
     par_max = len(bna_data_for_coords_uniq) - 1
     img_stack = []
     for idx in range(1, par_max + 1):
-        roi_img = bna_data == bna_data_for_coords_uniq[idx].astype("uint16")
+        roi_img = bna_data.astype("uint16") == \
+                  bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
     img_stack = np.array(img_stack)
 
@@ -1101,10 +1160,12 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     try:
         assert len(coords) == len(labels) == intensity_count
     except ValueError as err:
+        import sys
         print('Failed!')
         print(f"# Coords: {len(coords)}")
         print(f"# Labels: {len(labels)}")
         print(f"# Intensities: {intensity_count}")
+        sys.exit(1)
 
     return parcellation, coords, labels
 
@@ -1133,14 +1194,18 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
         File path to a new, RSN-filtered atlas parcellation Nifti1Image.
     """
     import gc
+    import sys
     from nilearn.image import concat_imgs
     from pynets.core import nodemaker
     import os.path as op
 
     if not op.isfile(uatlas):
-        raise ValueError(
-            "\nERROR: User-specified atlas input not found! Check that the "
-            "file(s) specified with the -ua flag exist(s)")
+        try:
+            raise ValueError(
+                "\nERROR: User-specified atlas input not found! Check that "
+                "the file(s) specified with the -ua flag exist(s)")
+        except ValueError:
+            sys.exit(1)
 
     img_list = nodemaker.gen_img_list(uatlas)
     print(
@@ -1216,26 +1281,35 @@ def parcel_naming(coords, vox_size):
             print(
                 "No labeling atlases listed in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
         try:
             template_name = hardcoded_params["template"][0]
         except KeyError:
             print(
                 "No template specified in runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
     )
-    try:
-        template_img = nib.load(template_brain)
-    except indexed_gzip.ZranError as e:
-        print(e,
-              f"\nCannot load MNI template. Do you have git-lfs "
-              f"installed?")
-        sys.exit(1)
+
+    if sys.platform.startswith('win') is False:
+        try:
+            template_img = nib.load(template_brain)
+        except indexed_gzip.ZranError as e:
+            print(e,
+                  f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
+    else:
+        try:
+            template_img = nib.load(template_brain)
+        except ImportError:
+            print(f"\nCannot load MNI template. Do you have git-lfs "
+                  f"installed?")
+            sys.exit(1)
 
     coords_vox = []
     for i in coords:
@@ -1633,8 +1707,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(parcel_list,
-                                                               label_intensities)
+    [net_parcels_map_nifti, _] = \
+        nodemaker.create_parcel_atlas(parcel_list, label_intensities)
 
     coords = list(tuple(x) for x in coords)
 
@@ -1793,6 +1867,10 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     if par_max > 0:
         parc = True
     else:
-        raise ValueError("Number of nodes is zero.")
+        try:
+            raise ValueError("Number of nodes is zero.")
+        except ValueError:
+            import sys
+            sys.exit(1)
 
     return iter_img(parcel_list), par_max, node_size, parc

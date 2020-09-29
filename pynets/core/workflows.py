@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 # from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
@@ -108,7 +110,6 @@ def workflow_selector(
         "import os",
         "import numpy as np",
         "import networkx as nx",
-        "import indexed_gzip",
         "import nibabel as nib",
         "import warnings",
         'warnings.filterwarnings("ignore")',
@@ -134,7 +135,7 @@ def workflow_selector(
                 "ERROR: available functional models not successfully extracted"
                 " from runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
@@ -143,7 +144,7 @@ def workflow_selector(
                 "ERROR: available structural models not successfully extracted"
                 " from runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     # Handle modality logic
@@ -166,11 +167,14 @@ def workflow_selector(
                 conn_model_dwi = dwi_model_list[0]
                 dwi_model_list = None
         else:
-            raise RuntimeError(
-                "ERROR: Multimodal fMRI-dMRI pipeline specified, but only one"
-                " connectivity model "
-                "specified.")
-            sys.exit(0)
+            try:
+                raise RuntimeError(
+                    "Multimodal fMRI-dMRI pipeline specified, but "
+                    "only one connectivity model specified.")
+            except RuntimeError:
+                import sys
+                sys.exit(0)
+
     elif (dwi_file is not None) and (func_file is None):
         print("Parsing diffusion models...")
         conn_model_dwi = conn_model
@@ -1360,6 +1364,7 @@ def dmri_connectometry(
     """
     A function interface for generating a dMRI connectometry nested workflow
     """
+    import sys
     import itertools
     import pkg_resources
     import nibabel as nib
@@ -1400,19 +1405,17 @@ def dmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        raise FileNotFoundError("Template or mask not found!")
+        try:
+            raise FileNotFoundError("Template or mask not found!")
+        except FileNotFoundError:
+            import sys
+            sys.exit(1)
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -2646,7 +2649,11 @@ def dmri_connectometry(
                                             map_connects),
                                            ])
         else:
-            raise RuntimeError("\nERROR: Unknown join context.")
+            try:
+                raise RuntimeError("\nERROR: Unknown join context.")
+            except RuntimeError:
+                import sys
+                sys.exit(1)
 
         no_iters = False
     else:
@@ -3581,19 +3588,17 @@ def fmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        raise FileNotFoundError("Template or mask not found!")
+        try:
+            raise FileNotFoundError("Template or mask not found!")
+        except FileNotFoundError:
+            import sys
+            sys.exit(1)
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -5032,7 +5037,11 @@ def fmri_connectometry(
                 ]
             )
         else:
-            raise RuntimeError("\nERROR: Unknown join context.")
+            try:
+                raise RuntimeError("\nERROR: Unknown join context.")
+            except RuntimeError:
+                import sys
+                sys.exit(1)
 
         no_iters = False
     else:

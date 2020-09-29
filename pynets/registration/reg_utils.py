@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner
 """
 import os
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
@@ -16,7 +18,9 @@ warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
 except KeyError:
+    import sys
     print("FSLDIR environment variable not set!")
+    sys.exit(0)
 
 
 def gen_mask(t1w_head, t1w_brain, mask):
@@ -46,7 +50,11 @@ def gen_mask(t1w_head, t1w_brain, mask):
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
         except RuntimeError:
-            print('Deepbrain extraction failed...')
+            try:
+                print('Deepbrain extraction failed...')
+            except ValueError:
+                import sys
+                sys.exit(1)
         del t1w_data
 
     # Threshold T1w brain to binary in anat space
@@ -288,6 +296,7 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
+    from nilearn.image import math_img
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -320,6 +329,10 @@ def waymask2dwi_align(
         waymask_in_dwi)
 
     time.sleep(0.5)
+
+    t_img = nib.load(waymask_in_dwi)
+    mask = math_img("img > 0.01", img=t_img)
+    mask.to_filename(waymask_in_dwi)
 
     return waymask_in_dwi
 
@@ -1288,7 +1301,12 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
             if bvec_array.shape[0] != 3:
                 bvec_array = bvec_array.T
             if not bvec_array.shape[0] == transform_orientation.shape[0]:
-                raise ValueError("Unrecognized bvec format")
+                try:
+                    raise ValueError("Unrecognized bvec format")
+                except ValueError:
+                    import sys
+                    sys.exit(1)
+
             output_array = np.zeros_like(bvec_array)
             for this_axnum, (axnum, flip) in enumerate(transform_orientation):
                 output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)

@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
+Copyright (C) 2016
 @author: Derek Pisner
 """
 import os
 import nibabel as nib
 import warnings
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import numpy as np
 from pynets.registration import reg_utils as regutils
 from nilearn.image import math_img
@@ -54,8 +56,8 @@ def direct_streamline_norm(
     t1_aligned_mni
 ):
     """
-    A Function to perform normalization of streamlines tracked in native diffusion space
-    to an MNI-space template.
+    A Function to perform normalization of streamlines tracked in native
+    diffusion space to an MNI-space template.
 
     Parameters
     ----------
@@ -66,7 +68,8 @@ def direct_streamline_norm(
     ap_path : str
         File path to the anisotropic power Nifti1Image.
     dir_path : str
-        Path to directory containing subject derivative data for a given pynets run.
+        Path to directory containing subject derivative data for a given
+        pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     target_samples : int
@@ -77,8 +80,8 @@ def direct_streamline_norm(
         Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's for tracking.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's for tracking.
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
@@ -115,7 +118,8 @@ def direct_streamline_norm(
     atlas_mni : str
         File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
     basedir_path : str
-        Path to directory to output direct-streamline normalized temp files and outputs.
+        Path to directory to output direct-streamline normalized temp files
+        and outputs.
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
@@ -191,10 +195,11 @@ def direct_streamline_norm(
 
     References
     ----------
-    .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of different
-      spatial normalization approaches on tractography and structural
+    .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of
+      different spatial normalization approaches on tractography and structural
       brain networks. Network Neuroscience, 1-19.
     """
+    import sys
     import gc
     from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import reg_utils as regutils
@@ -219,7 +224,10 @@ def direct_streamline_norm(
             hardcoded_params = yaml.load(stream)
             run_dsn = hardcoded_params['tracking']["DSN"][0]
         except FileNotFoundError:
+            import sys
             print("Failed to parse runconfig.yaml")
+            exit(1)
+
     stream.close()
 
     if run_dsn is True:
@@ -239,12 +247,23 @@ def direct_streamline_norm(
         template_path = pkg_resources.resource_filename(
             "pynets", f"templates/FA_{int(vox_size)}mm.nii.gz"
         )
-        try:
-            template_img = nib.load(template_path)
-        except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load FA template. Do you have git-lfs "
-                  f"installed?")
+
+        if sys.platform.startswith('win') is False:
+            try:
+                template_img = nib.load(template_path)
+            except indexed_gzip.ZranError as e:
+                print(e,
+                      f"\nCannot load FA template. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+        else:
+            try:
+                template_img = nib.load(template_path)
+            except ImportError:
+                print(f"\nCannot load FA template. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+
         uatlas_mni_img = nib.load(atlas_mni)
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
@@ -309,21 +328,7 @@ def direct_streamline_norm(
             ".nii.gz",
         )
 
-        # streams_warp_png = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (dsn_dir, '/streamlines_mni_warp_',
-        #                                                                '%s' % (network + '_' if network is not
-        #                                                                                         None else ''),
-        #                                                                '%s' % (op.basename(roi).split('.')[0] + '_' if
-        #                                                                        roi is not None else ''),
-        #                                                                conn_model, '_', target_samples,
-        #                                                                '%s' % ("%s%s" %
-        #                                                                        ('_' + str(node_size),
-        #                                                                         'mm_') if ((node_size != 'parc') and
-        #                                                                                    (node_size is not None)) else
-        #                                                                        '_'),
-        #                                                                'curv', str(curv_thr_list).replace(', ', '_'),
-        #                                                                'step', str(step_list).replace(', ', '_'), 'tracktype-',
-        #                                                                track_type,  '_directget-', directget, '_minlength-', min_length,
-        #                                                                '.png')
+        # streams_warp_png = '/tmp/dsn.png'
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
@@ -347,10 +352,10 @@ def direct_streamline_norm(
         streams_in_curr_grid = transform_streamlines(
             streamlines, warped_fa_affine)
 
-        # Create isocenter mapping where we anchor the origin transformation affine
-        # to the corner of the FOV by scaling x, y, z offsets according to a multiplicative
-        # van der Corput sequence with a base value equal to the voxel
-        # resolution
+        # Create isocenter mapping where we anchor the origin transformation
+        # affine to the corner of the FOV by scaling x, y, z offsets according
+        # to a multiplicative van der Corput sequence with a base value equal
+        # to the voxel resolution
         [x_mul, y_mul, z_mul] = [vdc(i, vox_size) for i in range(1, 4)]
 
         ref_grid_aff = vox_size * np.eye(4)
@@ -367,8 +372,13 @@ def direct_streamline_norm(
             print(len(streams_final_filt)/len(streams_in_curr_grid))
             adjusted_affine = affine_map.affine.copy()
             if i > len(combs) - 1:
-                raise ValueError('DSN failed. Header orientation information '
-                                 'may be corrupted. Is your dataset oblique?')
+                try:
+                    raise ValueError('DSN failed. Header orientation '
+                                     'information may be corrupted. '
+                                     'Is your dataset oblique?')
+                except ValueError:
+                    import sys
+                    sys.exit(1)
             adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
             adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
             adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
@@ -404,8 +414,9 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni, streams_warp_png)
-        # plot_gen.show_template_bundles(streamlines, fa_path, streams_warp_png)
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni,
+        # streams_warp_png) plot_gen.show_template_bundles(streamlines,
+        # fa_path, streams_warp_png)
 
         # Create and save MNI density map
         nib.save(
@@ -419,8 +430,8 @@ def direct_streamline_norm(
             density_mni,
         )
 
-        # Map parcellation from native space back to MNI-space and create an 'uncertainty-union' parcellation
-        # with original mni-space uatlas
+        # Map parcellation from native space back to MNI-space and create an
+        # 'uncertainty-union' parcellation with original mni-space uatlas
         warped_uatlas = affine_map.transform_inverse(
             mapping.transform(
                 np.asarray(atlas_img.dataobj).astype("int"),
@@ -443,7 +454,8 @@ def direct_streamline_norm(
             warped_uatlas_img_res_data.astype("bool") *
             uatlas_mni_data.astype("bool"))
         os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
-        atlas_mni = f"{dir_path}/parcellations/{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
+        atlas_mni = f"{dir_path}/parcellations/" \
+                    f"{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
 
         nib.save(
             nib.Nifti1Image(
@@ -518,14 +530,16 @@ class DmriReg(object):
     References
     ----------
     .. [1] Adluru, N., Zhang, H., Tromp, D. P. M., & Alexander, A. L. (2013).
-      Effects of DTI spatial normalization on white matter tract reconstructions.
-      Medical Imaging 2013: Image Processing. https://doi.org/10.1117/12.2007130
+      Effects of DTI spatial normalization on white matter tract
+      reconstructions. Medical Imaging 2013: Image Processing.
+      https://doi.org/10.1117/12.2007130
     .. [2] Greve DN, Fischl B. Accurate and robust brain image alignment using
       boundary-based registration. Neuroimage. 2009 Oct;48(1):63–72.
       doi:10.1016/j.neuroimage.2009.06.060.
     .. [3] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
-      hidden Markov random field model and the expectation-maximization algorithm.
-      IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
+      hidden Markov random field model and the expectation-maximization
+      algorithm. IEEE Trans Med Imaging. 2001 Jan;20(1):45–57.
+      doi:10.1109/42.906424.
     """
 
     def __init__(
@@ -562,32 +576,42 @@ class DmriReg(object):
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
         self.warp_t1w2mni = f"{self.reg_path_warp}{'/t1w2mni_warp.nii.gz'}"
-        self.t1w2dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_in_dwi.nii.gz'}"
+        self.t1w2dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                       f"{'_in_dwi.nii.gz'}"
         self.t1_aligned_mni = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
         )
-        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
-        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_head.nii.gz'}"
+        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                         f"{'_brain.nii.gz'}"
+        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                        f"{'_head.nii.gz'}"
         self.t1w_brain_mask = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
         )
         self.t1w_brain_mask_in_dwi = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask_in_dwi.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}"
+            f"{'_brain_mask_in_dwi.nii.gz'}"
         )
         self.dwi2t1w_xfm = f"{self.reg_path_mat}{'/dwi2t1w_xfm.mat'}"
         self.t1w2dwi_xfm = f"{self.reg_path_mat}{'/t1w2dwi_xfm.mat'}"
         self.t1w2dwi_bbr_xfm = f"{self.reg_path_mat}{'/t1w2dwi_bbr_xfm.mat'}"
         self.dwi2t1w_bbr_xfm = f"{self.reg_path_mat}{'/dwi2t1w_bbr_xfm.mat'}"
-        self.t1wtissue2dwi_xfm = f"{self.reg_path_mat}{'/t1wtissue2dwi_xfm.mat'}"
+        self.t1wtissue2dwi_xfm = f"{self.reg_path_mat}" \
+                                 f"{'/t1wtissue2dwi_xfm.mat'}"
         self.temp2dwi_xfm = (
             f"{self.reg_path_mat}{'/'}{self.dwi_name}{'_xfm_temp2dwi.mat'}"
         )
         self.map_name = f"{self.t1w_name}{'_seg'}"
-        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm.nii.gz'}"
-        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_thr.nii.gz'}"
-        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_edge.nii.gz'}"
-        self.csf_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf.nii.gz'}"
-        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
+        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                       f"{'_wm.nii.gz'}"
+        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                           f"{'_wm_thr.nii.gz'}"
+        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                       f"{'_wm_edge.nii.gz'}"
+        self.csf_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                        f"{'_csf.nii.gz'}"
+        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                       f"{'_gm.nii.gz'}"
         self.xfm_roi2mni_init = f"{self.reg_path_mat}{'/roi_2_mni.mat'}"
         self.mni_vent_loc = pkg_resources.resource_filename(
             "pynets", f"templates/LateralVentricles_{vox_size}.nii.gz"
@@ -595,10 +619,13 @@ class DmriReg(object):
         self.csf_mask_dwi = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf_mask_dwi.nii.gz'}"
         )
-        self.gm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm_in_dwi.nii.gz'}"
-        self.wm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_in_dwi.nii.gz'}"
+        self.gm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                         f"{'_gm_in_dwi.nii.gz'}"
+        self.wm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                         f"{'_wm_in_dwi.nii.gz'}"
         self.csf_mask_dwi_bin = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf_mask_dwi_bin.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}"
+            f"{'_csf_mask_dwi_bin.nii.gz'}"
         )
         self.gm_in_dwi_bin = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm_in_dwi_bin.nii.gz'}"
@@ -610,7 +637,8 @@ class DmriReg(object):
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_vent_mask_dwi.nii.gz'}"
         )
         self.vent_csf_in_dwi = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}{'_vent_csf_in_dwi.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}"
+            f"{'_vent_csf_in_dwi.nii.gz'}"
         )
         self.vent_mask_mni = f"{self.reg_path_img}{'/vent_mask_mni.nii.gz'}"
         self.vent_mask_t1w = f"{self.reg_path_img}{'/vent_mask_t1w.nii.gz'}"
@@ -618,7 +646,7 @@ class DmriReg(object):
             "pynets", f"templates/{self.template_name}_{vox_size}.nii.gz"
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_" f"brain_{vox_size}.nii.gz"
+            "pynets", f"templates/{self.template_name}_brain_{vox_size}.nii.gz"
         )
         self.input_mni_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{self.template_name}_"
@@ -627,7 +655,8 @@ class DmriReg(object):
             "pynets", f"core/atlases/HarvardOxford-sub-prob-{vox_size}.nii.gz"
         )
         self.wm_gm_int_in_dwi = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_gm_int_in_dwi.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}"
+            f"{'_wm_gm_int_in_dwi.nii.gz'}"
         )
         self.wm_gm_int_in_dwi_bin = (
             f"{self.reg_path_img}/{self.t1w_name}_wm_gm_int_in_dwi_bin.nii.gz"
@@ -638,7 +667,8 @@ class DmriReg(object):
         self.corpuscallosum_mask_t1w = (
             f"{self.reg_path_img}{'/CorpusCallosum_t1wmask.nii.gz'}"
         )
-        self.corpuscallosum_dwi = f"{self.reg_path_img}{'/CorpusCallosum_dwi.nii.gz'}"
+        self.corpuscallosum_dwi = f"{self.reg_path_img}" \
+                                  f"{'/CorpusCallosum_dwi.nii.gz'}"
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [
@@ -699,10 +729,12 @@ class DmriReg(object):
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
             except RuntimeError:
+                import sys
                 print(
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
+                sys.exit(1)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -905,17 +937,24 @@ class DmriReg(object):
 
     def tissue2dwi_align(self):
         """
-        A function to perform alignment of ventricle ROI's from MNI space --> dwi and CSF from T1w space --> dwi.
-        First generates and performs dwi space alignment of avoidance/waypoint masks for tractography.
-        First creates ventricle ROI. Then creates transforms from stock MNI template to dwi space.
-        For this to succeed, must first have called both t1w2dwi_align.
+        A function to perform alignment of ventricle ROI's from MNI
+        space --> dwi and CSF from T1w space --> dwi. First generates and
+        performs dwi space alignment of avoidance/waypoint masks for
+        tractography. First creates ventricle ROI. Then creates transforms
+        from stock MNI template to dwi space. For this to succeed, must first
+        have called both t1w2dwi_align.
         """
+        import sys
         import time
         import os.path as op
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
-            raise ValueError("FSL atlas for ventricle reference not found!")
+            try:
+                raise FileNotFoundError("FSL atlas for ventricle reference not"
+                                        " found!")
+            except FileNotFoundError:
+                sys.exit(1)
 
         # Create transform to MNI atlas to T1w using flirt. This will be use to
         # transform the ventricles to dwi space.
@@ -932,12 +971,22 @@ class DmriReg(object):
             out=None,
         )
         time.sleep(0.5)
-        try:
-            nib.load(self.mni_vent_loc)
-        except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load ventricle ROI. Do you have git-lfs "
-                  f"installed?")
+
+        if sys.platform.startswith('win') is False:
+            try:
+                nib.load(self.mni_vent_loc)
+            except indexed_gzip.ZranError as e:
+                print(e,
+                      f"\nCannot load ventricle ROI. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
+        else:
+            try:
+                nib.load(self.mni_vent_loc)
+            except ImportError:
+                print(f"\nCannot load ventricle ROI. Do you have git-lfs "
+                      f"installed?")
+                sys.exit(1)
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(
@@ -958,12 +1007,22 @@ class DmriReg(object):
                 sup=True,
             )
             time.sleep(0.5)
-            try:
-                nib.load(self.corpuscallosum)
-            except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load Corpus Callosum ROI. Do you have "
-                      f"git-lfs installed?")
+
+            if sys.platform.startswith('win') is False:
+                try:
+                    nib.load(self.corpuscallosum)
+                except indexed_gzip.ZranError as e:
+                    print(e,
+                          f"\nCannot load Corpus Callosum ROI. "
+                          f"Do you have git-lfs installed?")
+                    sys.exit(1)
+            else:
+                try:
+                    nib.load(self.corpuscallosum)
+                except ImportError:
+                    print(f"\nCannot load Corpus Callosum ROI. "
+                          f"Do you have git-lfs installed?")
+                    sys.exit(1)
 
             regutils.apply_warp(
                 self.t1w_brain,
@@ -1060,21 +1119,25 @@ class DmriReg(object):
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
         os.system(
-            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero -bin {self.vent_mask_dwi}"
+            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero "
+            f"-bin {self.vent_mask_dwi}"
         )
         time.sleep(1)
         os.system(
-            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} -bin {self.vent_csf_in_dwi}"
+            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} "
+            f"-bin {self.vent_csf_in_dwi}"
         )
         time.sleep(1)
         print("Creating Corpus Callosum mask...")
         os.system(
-            f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} -sub {self.vent_csf_in_dwi} "
+            f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} "
+            f"-sub {self.vent_csf_in_dwi} "
             f"-bin {self.corpuscallosum_dwi}")
         time.sleep(1)
         # Create gm-wm interface image
         os.system(
-            f"fslmaths {self.gm_in_dwi_bin} -mul {self.wm_in_dwi_bin} -add {self.corpuscallosum_dwi} "
+            f"fslmaths {self.gm_in_dwi_bin} -mul {self.wm_in_dwi_bin} "
+            f"-add {self.corpuscallosum_dwi} "
             f"-mas {self.B0_mask} -bin {self.wm_gm_int_in_dwi}")
         time.sleep(1)
         return
@@ -1082,15 +1145,18 @@ class DmriReg(object):
 
 class FmriReg(object):
     """
-    A Class for Registering an atlas to a subject's MNI-aligned T1w image in native epi space.
+    A Class for Registering an atlas to a subject's MNI-aligned T1w image in
+    native epi space.
+
     References
     ----------
     .. [1] Brett M, Leff AP, Rorden C, Ashburner J (2001) Spatial Normalization
       of Brain Images with Focal Lesions Using Cost Function Masking.
       NeuroImage 14(2) doi:10.006/nimg.2001.0845.
     .. [2] Zhang Y, Brady M, Smith S. Segmentation of brain MR images through a
-      hidden Markov random field model and the expectation-maximization algorithm.
-      IEEE Trans Med Imaging. 2001 Jan;20(1):45–57. doi:10.1109/42.906424.
+      hidden Markov random field model and the expectation-maximization
+      algorithm. IEEE Trans Med Imaging. 2001 Jan;20(1):45–57.
+      doi:10.1109/42.906424.
     """
 
     def __init__(
@@ -1122,22 +1188,32 @@ class FmriReg(object):
         self.t1_aligned_mni = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
         )
-        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain.nii.gz'}"
-        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_head.nii.gz'}"
+        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                         f"{'_brain.nii.gz'}"
+        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
+                        f"{'_head.nii.gz'}"
         self.t1w_brain_mask = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}"
+            f"{'_brain_mask.nii.gz'}"
         )
-        self.map_name = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_seg'}"
-        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm.nii.gz'}"
-        self.gm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_gm_thr.nii.gz'}"
-        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm.nii.gz'}"
-        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_thr.nii.gz'}"
-        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}{'_wm_edge.nii.gz'}"
+        self.map_name = f"{self.reg_path_img}{'/'}" \
+                        f"{self.t1w_name}{'_seg'}"
+        self.gm_mask = f"{self.reg_path_img}{'/'}" \
+                       f"{self.t1w_name}{'_gm.nii.gz'}"
+        self.gm_mask_thr = f"{self.reg_path_img}{'/'}" \
+                           f"{self.t1w_name}{'_gm_thr.nii.gz'}"
+        self.wm_mask = f"{self.reg_path_img}{'/'}" \
+                       f"{self.t1w_name}{'_wm.nii.gz'}"
+        self.wm_mask_thr = f"{self.reg_path_img}{'/'}" \
+                           f"{self.t1w_name}{'_wm_thr.nii.gz'}"
+        self.wm_edge = f"{self.reg_path_img}{'/'}" \
+                       f"{self.t1w_name}{'_wm_edge.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename(
             "pynets", f"templates/{self.template_name}_{vox_size}.nii.gz"
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_" f"brain_{vox_size}.nii.gz"
+            "pynets", f"templates/{self.template_name}_"
+                      f"brain_{vox_size}.nii.gz"
         )
         self.input_mni_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{self.template_name}_"
@@ -1190,10 +1266,12 @@ class FmriReg(object):
                 gm_mask = maps["gm_prob"]
                 wm_mask = maps["wm_prob"]
             except RuntimeError:
+                import sys
                 print(
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
+                sys.exit(1)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
@@ -1302,4 +1380,3 @@ class FmriReg(object):
             self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
                                                   self.t12mni_xfm)
         return
-

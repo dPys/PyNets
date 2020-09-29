@@ -8,7 +8,9 @@ Created on Wed Dec 27 16:19:14 2017
 import pytest
 import numpy as np
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 from pathlib import Path
 try:
     import cPickle as pickle

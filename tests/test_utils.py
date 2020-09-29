@@ -14,7 +14,9 @@ except ImportError:
 from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import pytest
 import logging
 
@@ -116,6 +118,8 @@ def test_collect_pandas_df():
     net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv") if '_neat.csv' not in i]
     out = utils.collect_pandas_df(network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal)
     assert out is True
+    assert isinstance(net_mets_csv_list, list)
+    assert len(net_mets_csv_list) == 9
 
 
 @pytest.mark.parametrize("node_size", [6, None])
@@ -140,7 +144,8 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
 
     est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
-                                          thr_type, hpass, parc, extract_strategy)
+                                          thr_type, hpass, parc,
+                                          extract_strategy)
     assert est_path is not None
 
 
@@ -205,7 +210,7 @@ def test_create_csv_path():
 @pytest.mark.parametrize("fmt", ['edgelist_csv', 'gpickle', 'graphml', 'txt',
                                  'npy', 'edgelist_ssv',
                                  pytest.param(None, marks=pytest.mark.xfail(
-                                     raises=ValueError))])
+                                     raises=SystemExit))])
 def test_save_mat(fmt):
     import glob as glob
     import tempfile
@@ -264,7 +269,7 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
 
 @pytest.mark.parametrize("atlas", ['Power', 'Shirer', 'Shen', 'Smith',
-                                    pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))])
+                                    pytest.param(None, marks=pytest.mark.xfail(raises=SystemExit))])
 @pytest.mark.parametrize("input", ['fmri', 'dmri'])
 def test_do_dir_path(atlas, input):
     """
