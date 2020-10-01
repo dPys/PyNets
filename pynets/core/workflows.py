@@ -2843,7 +2843,6 @@ def dmri_connectometry(
                     thresh_diff_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),
@@ -5068,7 +5067,6 @@ def fmri_connectometry(
         "extract_strategy",
     ]
     thr_func_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -5202,7 +5200,6 @@ def fmri_connectometry(
                     thresh_func_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),

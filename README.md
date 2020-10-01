@@ -18,8 +18,8 @@ docker pull dpys/pynets
 ```
 
 ## Manual
-(REQUIRES a local dependency install of FSL version >=5.0.9. See:
-<https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>):
+(REQUIRES a local dependency install of [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9, as well as an
+installation of [Python3.6+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
 ```
 [sudo] pip install pynets [--user]
 ```
@@ -38,7 +38,11 @@ cd PyNets
 Hardware Requirements
 ---------------------
 4 vCPUs, 8+ GB free RAM, and at least 15-20 GB of free disk space.
-UNIX/MacOS 64-bit platforms (guaranteed) and Windows PC platforms (experimental)
+
+Operating Systems
+-----------------
+UNIX/MacOS 64-bit platforms
+Windows 10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
 
 Documentation
 -------------

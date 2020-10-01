@@ -803,23 +803,26 @@ def prune_disconnected(G):
     """
     #print("Pruning disconnected...")
 
+    G_tmp = G.copy()
+
     # List because it returns a generator
-    components = list(nx.connected_components(G))
+    components = list(nx.connected_components(G_tmp))
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
 
-    isolates = [n for (n, d) in G.degree() if d == 0]
+    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
 
     # Remove disconnected nodes
     pruned_nodes = []
     s = 0
-    for node in list(G.nodes()):
+    for node in list(G_tmp.nodes()):
         if node not in components_connected or node in isolates:
-            G.remove_node(node)
+            print(f"Removing {node}")
+            G_tmp.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
 
-    return G, pruned_nodes
+    return G_tmp, pruned_nodes
 
 
 def most_important(G, method="betweenness", sd=1):
@@ -2155,7 +2158,10 @@ def collect_pandas_df_make(
                 ]
                 auc_outfile = auc_dir + file_renamed
                 if os.path.isfile(auc_outfile):
-                    os.remove(auc_outfile)
+                    try:
+                        os.remove(auc_outfile)
+                    except BaseException:
+                        continue
                 df_summary_auc.to_csv(
                     auc_outfile,
                     header=True,
@@ -2242,7 +2248,10 @@ def collect_pandas_df_make(
                     f"{summary_dir}/topology_sub-{str(ID)}_"
                     f"{'%s' % ('_' + network if network is not None else '')}.csv")
                 if os.path.isfile(net_csv_summary_out_path):
-                    os.remove(net_csv_summary_out_path)
+                    try:
+                        os.remove(net_csv_summary_out_path)
+                    except BaseException:
+                        pass
                 df_concatted_final.to_csv(
                     net_csv_summary_out_path, index=False)
                 del (
