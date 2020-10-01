@@ -365,8 +365,8 @@ def test_thresh_raw_graph():
         disp_filt,
         est_path)
 
-    assert thr_type is None
-    assert edge_threshold is None
-    assert conn_matrix_thr is None
-    assert thr is None
+    assert thr_type is not None
+    assert edge_threshold is not None
+    assert conn_matrix_thr is not None
+    assert thr is not None
     assert est_path is None
