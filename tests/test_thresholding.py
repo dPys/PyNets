@@ -369,4 +369,4 @@ def test_thresh_raw_graph():
     assert edge_threshold is not None
     assert conn_matrix_thr is not None
     assert thr is not None
-    assert est_path is None
+    assert est_path is not None
