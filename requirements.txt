@@ -28,7 +28,7 @@ graspy>=0.0.2
 sqlalchemy>=1.3.1
 duecredit>=0.8.0
 templateflow>=0.6.2
-scikit-image==0.14.2
+scikit-image>=0.14.2
 six>=1.12.0
 git+https://github.com/dPys/nilearn.git@enh/parc_conn
 git+https://github.com/dPys/deepbrain.git@master
