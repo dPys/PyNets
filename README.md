@@ -98,7 +98,7 @@ where the `-config` flag specifies that path to a .json configuration spec that 
             "spheres":  "False", # Use spheres as nodes (vs. parcel labels, the default).
             "ns":  "None", # If `spheres` is True, this indicates integer radius size(s) of spherical centroid nodes.
             "p":  "['1']", # Apply anti-fragmentation, largest connected-component subgraph selection, or any of a variety of hub-detection methods to graph(s).
-            "plt":  "False", # Activate plotting (adjancency matrix and glass-brain included by default).
+            "plt":  "False", # Activate plotting (adjacency matrix and glass-brain included by default).
             "thr":  1.0, # A threshold (0.0-1.0). This can be left as "None" if multi-thresholding is used.
             "max_thr":  0.80, # If performing multi-thresholding, a minimum threshold.
             "min_thr":  0.20, # If performing multi-thresholding, a maximum threshold.
