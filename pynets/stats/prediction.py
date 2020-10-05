@@ -818,8 +818,9 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param,
 def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=None):
     df_tmps = []
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    rsns = ["triple"]
-    #rsns = ["ward", "kmeans"]
+    #rsns = ["triple"]
+    # rsns = ["ward", "kmeans"]
+    rsns = ["kmeans"]
     grid_param = tuple(x for x in grid_param if x not in rsns)
 
     for rsn in rsns:
@@ -1257,9 +1258,14 @@ def make_subject_dict(
     import tempfile
     import gc
 
+    def tuple_insert(tup, pos, ele):
+        tup = tup[:pos] + (ele,) + tup[pos:]
+        return tup
+
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    rsns = ["triple"]
+    #rsns = ["triple"]
     #rsns = ["ward", "kmeans"]
+    rsns = ["kmeans"]
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
@@ -1321,9 +1327,10 @@ def make_subject_dict(
                                      len(list(i)) > 0]))
 
                     grid_mod = list(
-                        set([tuple(x for x in i if x not in rsns) for i in grid])
+                        set([tuple(x for x in i if x != rsn) for i in grid if rsn in i])
                     )
 
+                    grid = list(set([tuple_insert(i, 4, rsn) for i in grid_mod]))
                     # In the case that we are using all of the 3 RSN connectomes
                     # (pDMN, coSN, and fECN) in the feature-space,
                     # rather than varying them as hyperparameters (i.e. we assume
@@ -1594,7 +1601,6 @@ def populate_subject_dict(
                     ]
 
                 cols = filter_cols_from_targets(df_top, targets)
-
                 i = 0
                 for met in mets:
                     col_met = [j for j in cols if met in j]
@@ -2564,7 +2570,7 @@ def build_predict_workflow(args, retval):
 def main():
     import json
 
-    base_dir = "/working/tuning_set/outputs_shaeffer"
+    base_dir = "/working/tuning_set/outputs_clustering_group"
     #base_dir = "/working/tuning_set/outputs_clustering_group"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
@@ -2572,13 +2578,14 @@ def main():
     )
 
     # Hard-Coded #
-    #embedding_types = ['OMNI', 'ASE', 'topology']
+    embedding_types = ['OMNI', 'ASE', 'topology']
     #embedding_types = ['OMNI', 'topology']
-    embedding_types = ['topology']
+    #embedding_types = ['topology']
+    #embedding_types = ['OMNI', 'ASE']
     #embedding_types = ['OMNI', 'ASE']
     #modalities = ["func", "dwi"]
-    #modalities = ["func"]
-    modalities = ["dwi"]
+    modalities = ["func"]
+    #modalities = ["dwi"]
     thr_type = "MST"
     #thr_type = "PROP"
     template = "MNI152_T1"
@@ -2595,16 +2602,16 @@ def main():
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     # User-Specified #
-    target_modality = 'dwi'
-    #target_modality = 'func'
+    #target_modality = 'dwi'
+    target_modality = 'func'
     #target_vars = ["rum_2", "dep_2"]
     #target_vars = ["rumination_persist_phenotype",
     # "depression_persist_phenotype", "rum_2", "dep_2", "dep_1", "rum_1"]
     #target_vars = ["depression_persist_phenotype"]
-    # target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2', 'dep_1',
-    #               'dep_2']
+    target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2', 'dep_1',
+                   'dep_2']
     #target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2']
-    target_vars = ['dep_2']
+    #target_vars = ['dep_2']
 
     sessions = ["1"]
 
