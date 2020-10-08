@@ -30,7 +30,8 @@ def test_average_shortest_path_length_for_all():
     avgest_path_len = netstats.average_shortest_path_length_for_all(G)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert avgest_path_len is not None
+    assert avgest_path_len > 0
+    assert type(avgest_path_len) == float
 
 
 def test_average_local_efficiency():
@@ -45,7 +46,8 @@ def test_average_local_efficiency():
     average_local_efficiency = netstats.average_local_efficiency(G)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert average_local_efficiency is not None
+    assert average_local_efficiency > 0
+    assert average_local_efficiency.dtype == float
 
 
 # used random node_comm_aff_mat
@@ -61,7 +63,7 @@ def test_create_communities():
     com_assign = netstats.create_communities(node_comm_aff_mat, node_num)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert com_assign is not None
+    assert len(com_assign) > 0
 
 
 def test_participation_coef():
@@ -78,7 +80,7 @@ def test_participation_coef():
     P = netstats.participation_coef(W, ci, degree='undirected')
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-    assert P is not None
+    assert P.size > 0
 
 
 def test_modularity():
@@ -90,12 +92,12 @@ def test_modularity():
     in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_matrix(in_mat)
     start_time = time.time()
-    ci = community.best_partition(G)
-    mod = community.community_louvain.modularity(ci, G)
+    ci_dict = community.best_partition(G)
+    mod = community.community_louvain.modularity(ci_dict, G)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-    assert ci is not None
-    assert mod is not None
+    assert type(ci_dict) == dict
+    assert type(mod) == float
 
 
 def test_diversity_coef_sign():
@@ -112,8 +114,8 @@ def test_diversity_coef_sign():
     [Hpos, Hneg] = netstats.diversity_coef_sign(W, ci)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-    assert Hpos is not None
-    assert Hneg is not None
+    assert Hpos.size > 0
+    assert Hneg.size > 0
 
 
 @pytest.mark.parametrize("clustering",
@@ -136,7 +138,6 @@ def test_link_communities(clustering):
     assert type(M) is np.ndarray
     assert np.sum(M) == 24
 
-
 @pytest.mark.parametrize("connected_case", [True, False])
 def test_prune_disconnected(connected_case):
     """
@@ -150,15 +151,12 @@ def test_prune_disconnected(connected_case):
         G = nx.Graph()
         G.add_edge(1, 2)
         G.add_node(3)
-
     start_time = time.time()
     [G_out, pruned_nodes] = netstats.prune_disconnected(G)
     print("%s%s%s" % ('Pruning disconnected test --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-
     assert type(G_out) is nx.Graph
     assert type(pruned_nodes) is list
-
     if connected_case is True:
         assert len(pruned_nodes) == 0
     elif connected_case is False:
@@ -210,7 +208,7 @@ def test_extractnetstats(binary, prune, norm):
     # Cover exceptions. This can definiely be improved. It increases coverage, but not as throughly
     # as I hoped.
     from tempfile import NamedTemporaryFile
-    f_temp =NamedTemporaryFile(mode='w+', suffix='.npy')
+    f_temp = NamedTemporaryFile(mode='w+', suffix='.npy')
 
     nan_array = np.empty((5, 5))
     nan_array[:] = np.nan
@@ -246,6 +244,7 @@ def test_raw_mets():
         print(i)
         print(net_met_val)
         assert net_met_val is not np.nan
+        assert type(net_met_val) == float
 
 
 def test_subgraph_number_of_cliques_for_all():
@@ -322,6 +321,7 @@ def test_weighted_transitivity(binarize):
 @pytest.mark.parametrize("prune", [pytest.param(0, marks=pytest.mark.xfail(raises=UnboundLocalError)), 1, 2, 3])
 @pytest.mark.parametrize("norm", [i for i in range(1, 7)])
 def test_clean_graphs(fmt, conn_model, prune, norm):
+    #test_CleanGraphs
     """
     Test all combination of parameters for the CleanGraphs class
     """
