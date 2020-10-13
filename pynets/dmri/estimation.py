@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 
 warnings.filterwarnings("ignore")
@@ -561,13 +563,9 @@ def streams2graph(
     start = time.time()
 
     if float(roi_neighborhood_tol) <= float(error_margin):
-        try:
-            raise ValueError('roi_neighborhood_tol preset cannot be less than '
-                             'the value of the structural connectome error'
-                             '_margin parameter.')
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError('roi_neighborhood_tol preset cannot be less than '
+                         'the value of the structural connectome error'
+                         '_margin parameter.')
     else:
         print(f"Using fiber-roi intersection tolerance: {error_margin}...")
 

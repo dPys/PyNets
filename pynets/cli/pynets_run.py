@@ -290,8 +290,9 @@ def get_parser():
         metavar="Graph threshold",
         default=1.00,
         help="Optionally specify a threshold indicating a proportion of "
-             "weights to preserve in the graph. Default is proportional "
-             "thresholding. If omitted, no thresholding will be applied. \n",
+             "weights to preserve in the graph. Default is no thresholding. "
+             "If `-mst`, `-dt`, or `-df` flags are not included, than "
+             "proportional thresholding will be performed\n",
     )
     parser.add_argument(
         "-min_thr",
@@ -649,14 +650,13 @@ def build_workflow(args, retval):
         )
 
     if environ.get('FSLDIR') is None:
-        try:
-            raise EnvironmentError('FSLDIR not found! Be sure that this '
-                                   'environment variable is set and/or that '
-                                   'FSL has been properly installed before '
-                                   'proceeding.')
-        except EnvironmentError:
-            retval["return_code"] = 1
-            return retval
+        print('EnvironmentError: FSLDIR not found! '
+                               'Be sure that this '
+                               'environment variable is set and/or that '
+                               'FSL has been properly installed before '
+                               'proceeding.')
+        retval["return_code"] = 1
+        return retval
     else:
         fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
@@ -664,12 +664,10 @@ def build_workflow(args, retval):
             print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
                   f"FSLDIR={os.environ['FSLDIR']}")
         else:
-            try:
-                raise EnvironmentError('Is your FSL installation corrupted? '
-                                       'Check permissions.')
-            except EnvironmentError:
-                retval["return_code"] = 1
-                return retval
+            print('Is your FSL installation corrupted? Check permissions.')
+            retval["return_code"] = 1
+            return retval
+
     # Start timer
     now = datetime.datetime.now()
     timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -751,13 +749,10 @@ def build_workflow(args, retval):
         and multi_subject_graph is None
         and multi_subject_multigraph is None
     ):
-        try:
-            raise ValueError(
-                "\nYou must include a subject ID in your command line "
-                "call."
-            )
-        except ValueError:
-            sys.exit(1)
+        print("\nERROR: You must include a subject ID in your command "
+              "line call.")
+        retval["return_code"] = 1
+        return retval
 
     if (
         multi_subject_graph or multi_subject_multigraph or graph or multi_graph
@@ -765,16 +760,16 @@ def build_workflow(args, retval):
         if multi_subject_graph:
             if len(ID) != len(multi_subject_graph):
                 print(
-                    "\nLength of ID list does not correspond to length of"
-                    " input graph file list."
+                    "\nERROR: Length of ID list does not correspond to length"
+                    " of input graph file list."
                 )
                 retval["return_code"] = 1
                 return retval
         if multi_subject_multigraph:
             if len(ID) != len(multi_subject_multigraph):
                 print(
-                    "\nLength of ID list does not correspond to length of"
-                    " input graph file list."
+                    "\nERROR: Length of ID list does not correspond to length"
+                    " of input graph file list."
                 )
                 retval["return_code"] = 1
                 return retval
@@ -1103,7 +1098,9 @@ def build_workflow(args, retval):
                     list(hardcoded_params["execution_dict"][i].keys())[0]
                 ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
         except FileNotFoundError:
-            print("Failed to parse runconfig.yaml")
+            print("ERROR: Failed to parse runconfig.yaml")
+            retval["return_code"] = 1
+            return retval
     stream.close()
 
     if (min_thr is not None) and (
@@ -1111,7 +1108,7 @@ def build_workflow(args, retval):
         multi_thr = True
     elif (min_thr is not None) or (max_thr is not None) or \
         (step_thr is not None):
-        print("Error: Missing either min_thr, max_thr, or step_thr flags!")
+        print("ERROR: Missing either min_thr, max_thr, or step_thr flags!")
         retval["return_code"] = 1
         return retval
     else:
@@ -1127,7 +1124,7 @@ def build_workflow(args, retval):
         and (multi_subject_multigraph is None)
     ):
         print(
-            "\nError: You must include a file path to either a 4d BOLD EPI"
+            "\nERROR: You must include a file path to either a 4d BOLD EPI"
             " image in T1w space"
             "in .nii/.nii.gz format using the `-func` flag, or a 4d DWI image"
             " series in native diffusion"
@@ -1179,18 +1176,15 @@ def build_workflow(args, retval):
         directget = None
 
     if (ID is None) and (func_file_list is None):
-        try:
-            raise ValueError(
-                "\nYou must include a subject ID in your command line "
-                "call."
-            )
-        except ValueError:
-            sys.exit(1)
+        print("\nERROR: You must include a subject ID in your command line "
+                "call.")
+        retval["return_code"] = 1
+        return retval
 
     if func_file_list and isinstance(ID, list):
         if len(ID) != len(func_file_list):
             print(
-                "Error: Length of ID list does not correspond to length of"
+                "ERROR: Length of ID list does not correspond to length of"
                 " input func file list."
             )
             retval["return_code"] = 1
@@ -1203,7 +1197,7 @@ def build_workflow(args, retval):
         if isinstance(conf, list) and func_file_list:
             if len(conf) != len(func_file_list):
                 print(
-                    "Error: Length of confound regressor list does not"
+                    "ERROR: Length of confound regressor list does not"
                     " correspond to length of input file list."
                 )
                 retval["return_code"] = 1
@@ -1227,7 +1221,7 @@ def build_workflow(args, retval):
     if dwi_file_list and isinstance(ID, list):
         if len(ID) != len(dwi_file_list):
             print(
-                "Error: Length of ID list does not correspond to length of"
+                "ERROR: Length of ID list does not correspond to length of"
                 " input dwi file list."
             )
             retval["return_code"] = 1
@@ -1236,7 +1230,7 @@ def build_workflow(args, retval):
         if isinstance(fbval, list) and dwi_file_list:
             if len(fbval) != len(dwi_file_list):
                 print(
-                    "Error: Length of fbval list does not correspond to"
+                    "ERROR: Length of fbval list does not correspond to"
                     " length of input dwi file list."
                 )
                 retval["return_code"] = 1
@@ -1261,7 +1255,7 @@ def build_workflow(args, retval):
         if isinstance(fbvec, list) and dwi_file_list:
             if len(fbvec) != len(dwi_file_list):
                 print(
-                    "Error: Length of fbvec list does not correspond to length"
+                    "ERROR: Length of fbvec list does not correspond to length"
                     " of input dwi file list."
                 )
                 retval["return_code"] = 1
@@ -1288,7 +1282,7 @@ def build_workflow(args, retval):
                 dwi_file_list
             ):
                 print(
-                    "Error: Length of anat list does not correspond to length"
+                    "ERROR: Length of anat list does not correspond to length"
                     " of input dwi and func file lists."
                 )
                 retval["return_code"] = 1
@@ -1299,7 +1293,7 @@ def build_workflow(args, retval):
         elif isinstance(anat_file, list) and dwi_file_list:
             if len(anat_file) != len(dwi_file_list):
                 print(
-                    "Error: Length of anat list does not correspond to length"
+                    "ERROR: Length of anat list does not correspond to length"
                     " of input dwi file list."
                 )
                 retval["return_code"] = 1
@@ -1310,7 +1304,7 @@ def build_workflow(args, retval):
         elif isinstance(anat_file, list) and func_file_list:
             if len(anat_file) != len(func_file_list):
                 print(
-                    "Error: Length of anat list does not correspond to length"
+                    "ERROR: Length of anat list does not correspond to length"
                     " of input func file list."
                 )
                 retval["return_code"] = 1
@@ -1332,7 +1326,7 @@ def build_workflow(args, retval):
             if len(mask) != len(func_file_list) and len(
                     mask) != len(dwi_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to"
+                    "ERROR: Length of brain mask list does not correspond to"
                     " length of input func "
                     "and dwi file lists.")
                 retval["return_code"] = 1
@@ -1343,7 +1337,7 @@ def build_workflow(args, retval):
         elif isinstance(mask, list) and func_file_list:
             if len(mask) != len(func_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to"
+                    "ERROR: Length of brain mask list does not correspond to"
                     " length of input func file list."
                 )
                 retval["return_code"] = 1
@@ -1354,7 +1348,7 @@ def build_workflow(args, retval):
         elif isinstance(mask, list) and dwi_file_list:
             if len(mask) != len(dwi_file_list):
                 print(
-                    "Error: Length of brain mask list does not correspond to"
+                    "ERROR: Length of brain mask list does not correspond to"
                     " length of input dwi file list."
                 )
                 retval["return_code"] = 1
@@ -1720,7 +1714,7 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "Error: the -ua flag cannot be used alone with the clustering"
+                "ERROR: the -ua flag cannot be used alone with the clustering"
                 " option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
@@ -1788,8 +1782,8 @@ def build_workflow(args, retval):
     if dwi_file or dwi_file_list:
         if (conn_model == "ten") and (directget == "prob"):
             print(
-                "Cannot perform probabilistic tracking with tensor model"
-                " estimation..."
+                "\nERROR: Cannot perform probabilistic tracking with tensor "
+                "model estimation..."
             )
             retval["return_code"] = 1
             return retval
@@ -1870,26 +1864,22 @@ def build_workflow(args, retval):
             print(f"{Fore.BLUE}{', '.join(min_length_list)}")
         if error_margin:
             if float(roi_neighborhood_tol) <= float(error_margin):
-                try:
-                    raise ValueError(
-                        'roi_neighborhood_tol preset cannot be less than '
-                        'the value of the structural connectome error_margin'
-                        ' parameter.')
-                except ValueError:
-                    sys.exit(1)
+                print('\nERROR: roi_neighborhood_tol preset cannot be less '
+                      'than the value of the structural connectome '
+                      'error_margin parameter.')
+                retval["return_code"] = 1
+                return retval
 
             print(f"{Fore.GREEN}Using {Fore.BLUE}{error_margin}"
                   f"mm{Fore.GREEN} error margin...")
         else:
             for em in error_margin_list:
                 if float(roi_neighborhood_tol) <= float(em):
-                    try:
-                        raise ValueError(
-                            'roi_neighborhood_tol preset cannot be less than '
-                            'the value of the structural connectome '
-                            'error_margin parameter.')
-                    except ValueError:
-                        sys.exit(1)
+                    print('\nERROR: roi_neighborhood_tol preset cannot be less '
+                          'than the value of the structural connectome '
+                          'error_margin parameter.')
+                    retval["return_code"] = 1
+                    return retval
             print(f"{Fore.GREEN}Iterating ROI-streamline intersection "
                   f"tolerance:")
             print(f"{Fore.BLUE}{', '.join(error_margin_list)}")
@@ -1913,67 +1903,54 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:{Fore.BLUE}\n "
                       f"{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
-                    try:
-                        raise FileNotFoundError(f"{_dwi_file} does not exist. "
-                                                f"Ensure "
-                                                f"that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_dwi_file} does not exist. "
+                          f"Ensure that you are only specifying absolute "
+                          f"paths.")
+                    retval["return_code"] = 1
+                    return retval
 
                 print(f"{Fore.GREEN}B-Values:\n{Fore.BLUE} {_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n{Fore.BLUE} {_fbvec}")
                 if not os.path.isfile(fbvec):
-                    try:
-                        raise FileNotFoundError(f"{_fbvec} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_fbvec} does not exist. "
+                          f"Ensure that you are only specifying absolute "
+                          f"paths.")
+                    retval["return_code"] = 1
+                    return retval
 
                 if not os.path.isfile(fbval):
-                    try:
-                        raise FileNotFoundError(f"{_fbval} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_fbval} does not exist. "
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                try:
-                    raise FileNotFoundError(f"{dwi_file} does not exist. "
-                                            f"Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {dwi_file} does not exist. Ensure that you are"
+                      f" only specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
-                try:
-                    raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {fbvec} does not exist. Ensure that you are "
+                      f"only specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
             if not os.path.isfile(fbval):
-                try:
-                    raise FileNotFoundError(f"{fbval} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {fbval} does not exist. Ensure that you are "
+                      f"only specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                try:
-                    raise FileNotFoundError(f"{waymask} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {waymask} does not exist. Ensure that you are "
+                      f"only specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
         conf = None
         k = None
         clust_mask = None
@@ -1994,42 +1971,36 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    try:
-                        raise FileNotFoundError(
-                            f"{_func_file} does not exist. Ensure "
+                    print(f"\nERROR: {_func_file} does not exist. Ensure "
                             f"that you are only specifying "
                             f"absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
-                try:
-                    raise FileNotFoundError(f"{func_file} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {func_file} does not exist. "
+                      f"Ensure that you are only specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
-                    try:
-                        raise FileNotFoundError(f"{_conf} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_conf} does not exist. "
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
-                try:
-                    raise FileNotFoundError(f"{conf} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {conf} does not exist. Ensure "
+                 f"that you are only specifying "
+                 f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
         multimodal = False
     elif (func_file or func_file_list) and (dwi_file or dwi_file_list):
         multimodal = True
@@ -2039,42 +2010,37 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    try:
-                        raise FileNotFoundError(
-                            f"{_func_file} does not exist. Ensure "
+                    print(f"\nERROR: ERROR: {_func_file} does not exist. Ensure "
                             f"that you are only specifying "
                             f"absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
-                try:
-                    raise FileNotFoundError(f"{func_file} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {func_file} does not exist. "
+                                        f"Ensure that you are only "
+                                        f"specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
         if conf_list:
             for _conf in conf_list:
                 print(f"{Fore.GREEN}BOLD Confound Regressors:\n "
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
-                    try:
-                        raise FileNotFoundError(f"{_conf} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_conf} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
-                try:
-                    raise FileNotFoundError(f"{conf} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {conf} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
         if dwi_file_list:
             for (_dwi_file, _fbval, _fbvec, _anat_file) in list(
                 zip(dwi_file_list, fbval_list, fbvec_list, anat_file_list)
@@ -2082,120 +2048,108 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                       f"{Fore.BLUE}{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
-                    try:
-                        raise FileNotFoundError(f"{_dwi_file} does not exist."
-                                                f" Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_dwi_file} does not exist."
+                                            f" Ensure that you are only "
+                                            f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if not os.path.isfile(_fbvec):
-                    try:
-                        raise FileNotFoundError(f"{_fbvec} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_fbvec} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
                 if not os.path.isfile(_fbval):
-                    try:
-                        raise FileNotFoundError(f"{_fbval} does not exist. "
-                                                f"Ensure that you are only "
-                                                f"specifying absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(f"\nERROR: {_fbval} does not exist. "
+                                            f"Ensure that you are only "
+                                            f"specifying absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                try:
-                    raise FileNotFoundError(f"{dwi_file} does not exist. "
-                                            f"Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {dwi_file} does not exist. "
+                                        f"Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
-                try:
-                    raise FileNotFoundError(f"{fbvec} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {fbvec} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
             if not os.path.isfile(fbval):
-                try:
-                    raise FileNotFoundError(f"{fbval} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {fbval} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                try:
-                    raise FileNotFoundError(f"{waymask} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {waymask} does not exist. "
+                                        f"Ensure that you are only "
+                                        f"specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
     else:
         multimodal = False
 
     if roi is not None and roi is not 'None':
         print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
         if not os.path.isfile(roi):
-            try:
-                raise FileNotFoundError(f"{roi} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
-            except FileNotFoundError:
-                sys.exit(1)
+            print(f"\nERROR: {roi} does not exist. Ensure "
+                                    f"that you are only specifying "
+                                    f"absolute paths.")
+            retval["return_code"] = 1
+            return retval
     if anat_file or anat_file_list:
         if anat_file_list and len(anat_file_list) > 1:
             for anat_file in anat_file_list:
                 print(f"{Fore.GREEN}T1-Weighted Image:\n "
                       f"{Fore.BLUE}{anat_file}")
                 if not os.path.isfile(anat_file):
-                    try:
-                        raise FileNotFoundError(
-                            f"{anat_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(
+                        f"\nERROR: {anat_file} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
             if not os.path.isfile(anat_file):
-                try:
-                    raise FileNotFoundError(f"{anat_file} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {anat_file} does not exist. "
+                                        f"Ensure that you are only "
+                                        f"specifying absolute paths.")
+                retval["return_code"] = 1
+                return retval
 
     if mask or mask_list:
         if mask_list and len(mask_list) > 1:
             for mask in mask_list:
                 print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
                 if not os.path.isfile(mask):
-                    try:
-                        raise FileNotFoundError(
-                            f"{mask} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
-                    except FileNotFoundError:
-                        sys.exit(1)
+                    print(
+                        f"\nERROR: {mask} does not exist. Ensure "
+                        f"that you are only specifying "
+                        f"absolute paths.")
+                    retval["return_code"] = 1
+                    return retval
         else:
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
             if not os.path.isfile(mask):
-                try:
-                    raise FileNotFoundError(f"{mask} does not exist. Ensure "
-                                            f"that you are only specifying "
-                                            f"absolute paths.")
-                except FileNotFoundError:
-                    sys.exit(1)
+                print(f"\nERROR: {mask} does not exist. Ensure "
+                                        f"that you are only specifying "
+                                        f"absolute paths.")
+                retval["return_code"] = 1
+                return retval
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"
@@ -2434,7 +2388,6 @@ def build_workflow(args, retval):
             "import os",
             "import numpy as np",
             "import networkx as nx",
-            "import indexed_gzip",
             "import nibabel as nib",
             "import warnings",
             'warnings.filterwarnings("ignore")',
@@ -2677,21 +2630,38 @@ def build_workflow(args, retval):
 
             if multi_graph:
                 print("Using multiple custom input graphs...")
+                if op.basename(op.dirname(multi_graph[0])) == 'graphs':
+                    if 'func' in op.dirname(multi_graph[0]):
+                        outdir = f"{outdir}/func"
+                    elif 'dwi' in op.dirname(multi_graph[0]):
+                        outdir = f"{outdir}/dwi"
                 conn_model_list = []
                 i = 1
                 for graph in multi_graph:
                     conn_model_list.append(str(i))
-                    graph_name = op.basename(graph).split(
-                        op.splitext(graph)[1])[0]
-                    print(graph_name)
-                    atlas = f"{graph_name}_{ID}"
+                    if op.basename(op.dirname(graph)) == 'graphs':
+                        atlas = op.basename(op.dirname(op.dirname(graph)))
+                        print(f"Parcellation Resolution detected: {atlas}")
+                    else:
+                        graph_name = op.basename(graph).split(
+                            op.splitext(graph)[1])[0]
+                        print(graph_name)
+                        atlas = f"{graph_name}_{ID}"
                     do_dir_path(atlas, outdir)
                     i = i + 1
             else:
-                graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
-                print("Using single custom graph input...")
-                print(graph_name)
-                atlas = f"{graph_name}_{ID}"
+                if op.basename(op.dirname(graph)) == 'graphs':
+                    atlas = op.basename(op.dirname(op.dirname(graph)))
+                    print(f"Parcellation Resolution detected: {atlas}")
+                    if 'func' in op.dirname(graph):
+                        outdir = f"{outdir}/func"
+                    elif 'dwi' in op.dirname(graph):
+                        outdir = f"{outdir}/dwi"
+                else:
+                    graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
+                    print("Using single custom graph input...")
+                    print(graph_name)
+                    atlas = f"{graph_name}_{ID}"
                 do_dir_path(atlas, outdir)
             wf = raw_graph_workflow(
                 multi_thr,
@@ -3541,7 +3511,7 @@ def main():
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
               " flag.\n")
-        sys.exit(0)
+        sys.exit(1)
 
     args = get_parser().parse_args()
 

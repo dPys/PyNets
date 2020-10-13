@@ -562,7 +562,7 @@ def link_communities(W, type_clustering="single"):
     W = normalize(W)
 
     if type_clustering not in ("single", "complete"):
-        print("Error: Unrecognized clustering type")
+        raise ValueError("Unrecognized clustering type")
 
     # Set diagonal to mean weights
     np.fill_diagonal(W, 0)
@@ -803,23 +803,26 @@ def prune_disconnected(G):
     """
     #print("Pruning disconnected...")
 
+    G_tmp = G.copy()
+
     # List because it returns a generator
-    components = list(nx.connected_components(G))
+    components = list(nx.connected_components(G_tmp))
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
 
-    isolates = [n for (n, d) in G.degree() if d == 0]
+    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
 
     # Remove disconnected nodes
     pruned_nodes = []
     s = 0
-    for node in list(G.nodes()):
+    for node in list(G_tmp.nodes()):
         if node not in components_connected or node in isolates:
-            G.remove_node(node)
+            print(f"Removing {node}")
+            G_tmp.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
 
-    return G, pruned_nodes
+    return G_tmp, pruned_nodes
 
 
 def most_important(G, method="betweenness", sd=1):
@@ -860,10 +863,10 @@ def most_important(G, method="betweenness", sd=1):
             algorithm = cp.KM_config()
             algorithm.detect(G)
             ranking = algorithm.get_coreness().items()
-        except ImportError:
-            import sys
-            print("Cannot run coreness detection. cpalgorithm not installed!")
-            sys.exit(1)
+        except ImportError as e:
+            print(e, "Cannot run coreness detection. "
+                     "cpalgorithm not installed!")
+
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
@@ -1133,9 +1136,9 @@ class CleanGraphs(object):
                     hardcoded_params = yaml.load(stream)
                     hub_detection_method = hardcoded_params[
                         "hub_detection_method"][0]
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     import sys
-                    print("Failed to parse runconfig.yaml")
+                    print(e, "Failed to parse runconfig.yaml")
                     sys.exit(1)
             stream.close()
             [self.G, _] = most_important(self.G, method=hub_detection_method)
@@ -1158,11 +1161,7 @@ class CleanGraphs(object):
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
         else:
-            try:
-                raise ValueError(f"Pruning option {self.prune} invalid!")
-            except ValueError:
-                import sys
-                sys.exit(0)
+            raise ValueError(f"Pruning option {self.prune} invalid!")
 
         return self.in_mat, final_mat_path
 
@@ -1242,7 +1241,7 @@ def iterate_nx_global_measures(G, metric_list_glob):
         net_met_arr[j, 1] = net_met_val
         print(net_met.replace("_", " ").title())
         print(str(net_met_val))
-        print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         print("\n")
         j = j + 1
     net_met_val_list = list(net_met_arr[:, 1])
@@ -1753,9 +1752,9 @@ def extractnetstats(
             print(
                 f"\n\nGlobal Topographic Metrics:"
                 f"\n{metric_list_global_names}\n")
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             import sys
-            print("Failed to parse global_graph_measures.yaml")
+            print(e, "Failed to parse global_graph_measures.yaml")
             sys.exit(1)
 
     with open(
@@ -1767,9 +1766,9 @@ def extractnetstats(
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
             print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             import sys
-            print("Failed to parse local_graph_measures.yaml")
+            print(e, "Failed to parse local_graph_measures.yaml")
             sys.exit(1)
 
     # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
@@ -1790,7 +1789,7 @@ def extractnetstats(
             net_met_val_list_final, metric_list_names, ci = get_community(
                 G, net_met_val_list_final, metric_list_names
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Louvain modularity calculation is undefined for G")
             # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
@@ -1808,7 +1807,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_participation(
                 in_mat, ci, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Participation coefficient cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
@@ -1825,11 +1824,28 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_diversity(
                 in_mat, ci, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Diversity coefficient cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
             pass
+
+    # # Link communities
+    # if "link_communities" in metric_list_nodal:
+    #     try:
+    #         if ci is None:
+    #             raise KeyError(
+    #                 "Link communities cannot be calculated for G in the"
+    #                 " absence of a community affiliation vector")
+    #         start_time = time.time()
+    #         metric_list_names, net_met_val_list_final = get_link_communities(
+    #             in_mat, ci, metric_list_names, net_met_val_list_final
+    #         )
+    #         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+    #     except BaseException:
+    #         print("Link communities cannot be calculated for G")
+    #         # np.save("%s%s%s" % ('/tmp/link_comms_failure', random.randint(1, 400), '.npy'), in_mat)
+    #         pass
 
     # Local Efficiency
     if "local_efficiency" in metric_list_nodal:
@@ -1838,7 +1854,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_local_efficiency(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Local efficiency cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
@@ -1852,7 +1868,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_clustering(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Local clustering cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
@@ -1866,7 +1882,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_degree_centrality(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Degree centrality cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
@@ -1879,7 +1895,7 @@ def extractnetstats(
             start_time = time.time()
             metric_list_names, net_met_val_list_final = get_betweenness_centrality(
                 G_len, metric_list_names, net_met_val_list_final)
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Betweenness centrality cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
@@ -1893,7 +1909,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_eigen_centrality(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Eigenvector centrality cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
@@ -1907,7 +1923,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_comm_centrality(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Communicability centrality cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
@@ -1921,7 +1937,7 @@ def extractnetstats(
             metric_list_names, net_met_val_list_final = get_rich_club_coeff(
                 G, metric_list_names, net_met_val_list_final
             )
-            print(f"{np.round(time.time() - start_time, 1)}{'s'}")
+            print(f"{np.round(time.time() - start_time, 3)}{'s'}")
         except BaseException:
             print("Rich club coefficient cannot be calculated for G")
             # np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
@@ -1999,10 +2015,7 @@ def collect_pandas_df_make(
             if net_mets_csv.endswith('.csv'):
                 net_mets_csv_list_exist.append(net_mets_csv)
             else:
-                try:
-                    raise ValueError('File not .csv format')
-                except ValueError:
-                    sys.exit(1)
+                raise ValueError('File not .csv format')
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(
@@ -2145,7 +2158,10 @@ def collect_pandas_df_make(
                 ]
                 auc_outfile = auc_dir + file_renamed
                 if os.path.isfile(auc_outfile):
-                    os.remove(auc_outfile)
+                    try:
+                        os.remove(auc_outfile)
+                    except BaseException:
+                        continue
                 df_summary_auc.to_csv(
                     auc_outfile,
                     header=True,
@@ -2232,7 +2248,10 @@ def collect_pandas_df_make(
                     f"{summary_dir}/topology_sub-{str(ID)}_"
                     f"{'%s' % ('_' + network if network is not None else '')}.csv")
                 if os.path.isfile(net_csv_summary_out_path):
-                    os.remove(net_csv_summary_out_path)
+                    try:
+                        os.remove(net_csv_summary_out_path)
+                    except BaseException:
+                        pass
                 df_concatted_final.to_csv(
                     net_csv_summary_out_path, index=False)
                 del (

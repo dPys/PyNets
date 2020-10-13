@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 # from ..due import due, BibTeX
 
 warnings.filterwarnings("ignore")
@@ -108,7 +110,6 @@ def workflow_selector(
         "import os",
         "import numpy as np",
         "import networkx as nx",
-        "import indexed_gzip",
         "import nibabel as nib",
         "import warnings",
         'warnings.filterwarnings("ignore")',
@@ -129,18 +130,18 @@ def workflow_selector(
         try:
             func_models = hardcoded_params["available_models"][
                 "func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available functional models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
         try:
             struct_models = hardcoded_params["available_models"][
                 "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not successfully extracted"
+        except KeyError as e:
+            print(e,
+                "available structural models not successfully extracted"
                 " from runconfig.yaml"
             )
             sys.exit(1)
@@ -166,13 +167,9 @@ def workflow_selector(
                 conn_model_dwi = dwi_model_list[0]
                 dwi_model_list = None
         else:
-            try:
-                raise RuntimeError(
-                    "Multimodal fMRI-dMRI pipeline specified, but "
-                    "only one connectivity model specified.")
-            except RuntimeError:
-                import sys
-                sys.exit(0)
+            raise RuntimeError(
+                "Multimodal fMRI-dMRI pipeline specified, but "
+                "only one connectivity model specified.")
 
     elif (dwi_file is not None) and (func_file is None):
         print("Parsing diffusion models...")
@@ -1363,6 +1360,7 @@ def dmri_connectometry(
     """
     A function interface for generating a dMRI connectometry nested workflow
     """
+    import sys
     import itertools
     import pkg_resources
     import nibabel as nib
@@ -1403,25 +1401,13 @@ def dmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            import sys
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -2655,11 +2641,7 @@ def dmri_connectometry(
                                             map_connects),
                                            ])
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
@@ -2861,7 +2843,6 @@ def dmri_connectometry(
                     thresh_diff_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),
@@ -3594,25 +3575,13 @@ def fmri_connectometry(
         template_mask = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
-        try:
-            nib.load(template)
-            nib.load(template_mask)
-        except indexed_gzip.ZranError as e:
-            import sys
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
+        utils.check_template_loads(template, template_mask, template_name)
     else:
         [template, template_mask, _] = utils.get_template_tf(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -4660,8 +4629,7 @@ def fmri_connectometry(
                                         ),
                                        (check_orient_and_dims_roi_node,
                                         register_roi_node,
-                                        [("outfile",
-                                          "roi")],
+                                        [("outfile", "roi")],
                                         ),
                                        ])
 
@@ -5051,11 +5019,7 @@ def fmri_connectometry(
                 ]
             )
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
@@ -5103,7 +5067,6 @@ def fmri_connectometry(
         "extract_strategy",
     ]
     thr_func_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -5237,7 +5200,6 @@ def fmri_connectometry(
                     thresh_func_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),

@@ -119,8 +119,8 @@ def test_diversity_coef_sign():
 @pytest.mark.parametrize("clustering",
     [
         'single',
-        'complete',
-        pytest.param(None, marks=pytest.mark.xfail(raises=UnboundLocalError))
+        pytest.param('complete', marks=pytest.mark.xfail(raises=ValueError)),
+        pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))
     ]
 )
 def test_link_communities(clustering):
@@ -128,30 +128,42 @@ def test_link_communities(clustering):
     Test for link_communities functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
-
+    in_mat = np.load(f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy")
     start_time = time.time()
     M = netstats.link_communities(in_mat, type_clustering=clustering)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+    print("%s%s%s" % ('Link Communities --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-    assert M is not None
+    assert type(M) is np.ndarray
+    assert np.sum(M) == 24
 
 
-def test_prune_disconnected():
+@pytest.mark.parametrize("connected_case", [True, False])
+def test_prune_disconnected(connected_case):
     """
     Test pruning functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
-    G = nx.from_numpy_array(in_mat)
+    if connected_case is True:
+        in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+        G = nx.from_numpy_array(in_mat)
+    elif connected_case is False:
+        G = nx.Graph()
+        G.add_edge(1, 2)
+        G.add_node(3)
 
     start_time = time.time()
-    [G, pruned_nodes] = netstats.prune_disconnected(G)
-    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+    [G_out, pruned_nodes] = netstats.prune_disconnected(G)
+    print("%s%s%s" % ('Pruning disconnected test --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
-    assert G is not None
-    assert pruned_nodes is not None
+    assert type(G_out) is nx.Graph
+    assert type(pruned_nodes) is list
+
+    if connected_case is True:
+        assert len(pruned_nodes) == 0
+    elif connected_case is False:
+        assert len(pruned_nodes) > 0
+        assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
 
 def test_most_important():
@@ -434,7 +446,7 @@ def test_get_metrics(metric):
 @pytest.mark.parametrize("sql_out", [True, False])
 @pytest.mark.parametrize("nc_collect", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
-@pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=SystemExit)),
+@pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=ValueError)),
                                        pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
                                        1,
                                        2])

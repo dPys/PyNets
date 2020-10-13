@@ -24,7 +24,8 @@ logger.setLevel(50)
 
 @pytest.mark.parametrize("cp", [True, False])
 @pytest.mark.parametrize("thr", [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
-def test_conn_mat_operations(cp, thr):
+@pytest.mark.parametrize("mat_size", [(10, 10), (100, 100)])
+def test_conn_mat_operations(cp, thr, mat_size):
     """ Includes original tests using .npy and new tests from randomly generate arrays, as
         well as additional assert statements.
     """
@@ -138,47 +139,48 @@ def test_conn_mat_operations(cp, thr):
         assert isinstance(w, np.ndarray)
 
     base_dir = str(Path(__file__).parent/"examples")
+    # base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
     W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_model-cov_raw_mat.npy")
 
     x_orig = W.copy()
-    x_rand = x = np.random.rand(10, 10)
+    x_rand = x = np.random.rand(mat_size[0], mat_size[1])
     test_binarize(x_orig, thr, cp)
     test_binarize(x_rand, thr, cp)
 
     x_orig = W.copy()
-    x_rand = np.random.rand(10, 10)
+    x_rand = np.random.rand(mat_size[0], mat_size[1])
     test_normalize(x_orig, thr, cp)
     test_normalize(x_rand, thr, cp)
 
     x_orig = W.copy()
-    x_rand = np.random.rand(10, 10)
+    x_rand = np.random.rand(mat_size[0], mat_size[1])
     test_threshold_absolute(x_orig, thr, cp)
     test_threshold_absolute(x_rand, thr, cp)
 
     x_orig = W.copy()
-    x_rand = np.random.rand(10, 10)
+    x_rand = np.random.rand(mat_size[0], mat_size[1])
     test_invert(x_orig, thr, cp)
     test_invert(x, thr, cp)
 
     x_orig = W.copy()
-    x_rand = np.random.rand(10, 10)
+    x_rand = np.random.rand(mat_size[0], mat_size[1])
     test_autofix(x_orig, thr, cp)
     test_autofix(x, thr, cp)
 
     # Prevent redundant testing.
     if cp == True:
         x_orig = W.copy()
-        x_rand = np.random.rand(10, 10)
+        x_rand = np.random.rand(mat_size[0], mat_size[1])
         test_density(x_orig, thr)
         test_density(x_orig, thr)
 
         x_orig = W.copy()
-        x_rand = np.random.rand(10, 10)
+        x_rand = np.random.rand(mat_size[0], mat_size[1])
         test_thr2prob(x_orig, thr)
         test_thr2prob(x_rand, thr)
 
         x_orig = W.copy()
-        x_rand = np.random.rand(10,10)
+        x_rand = np.random.rand(mat_size[0], mat_size[1])
         test_local_thresholding_prop(x_rand, thr)
         test_knn(x_rand, thr)
         test_disparity_filter(x_rand, thr)
@@ -226,9 +228,9 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     dir_path = f"{base_dir}/miscellaneous"
 
     if all_zero == True and type == 'func':
-        conn_matrix = np.zeros((10,10))
+        conn_matrix = np.zeros((10, 10))
     elif frag_g == True:
-        conn_matrix = np.random.rand(10,10)
+        conn_matrix = np.random.rand(10, 10)
         for i in range(1, 10):
             conn_matrix[0][i] = 0
             conn_matrix[i][0] = 0
@@ -349,14 +351,19 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     
 def test_thresh_raw_graph():
     from pynets.core import thresholding
+
     thr = 0.5
     conn_matrix = np.random.rand(10, 10)
     min_span_tree = True
     dens_thresh = True
     disp_filt = True
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
-    [thr_type, edge_threshold, conn_matrix_thr, thr, est_path] = thresholding.thresh_raw_graph(
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
+               f"nodetype-parc_model-sps_template-MNI152_T1_thrtype-" \
+               f"DENS_thr-0.19.npy"
+
+    [thr_type, edge_threshold, conn_matrix_thr, thr, est_path] = \
+        thresholding.thresh_raw_graph(
         conn_matrix,
         thr,
         min_span_tree,
@@ -368,4 +375,3 @@ def test_thresh_raw_graph():
     assert conn_matrix_thr.size is 100
     assert (0 <= thr <= 1)
     assert os.path.isfile(est_path) is True
-    

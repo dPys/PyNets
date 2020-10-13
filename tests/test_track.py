@@ -12,7 +12,9 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import numpy as np
 import logging
 import h5py
@@ -77,8 +79,8 @@ def test_prep_tissues(tiss_class):
     vent_csf_in_dwi = f"{base_dir}/003/dmri/csf_mask_dmri.nii.gz"
     wm_in_dwi = f"{base_dir}/003/dmri/wm_mask_dmri.nii.gz"
 
-    tiss_classifier = track.prep_tissues(t1w_mask, gm_in_dwi, vent_csf_in_dwi,
-                                         wm_in_dwi, tiss_class, B0_mask,
+    tiss_classifier = track.prep_tissues(nib.load(t1w_mask), nib.load(gm_in_dwi), nib.load(vent_csf_in_dwi),
+                                         nib.load(wm_in_dwi), tiss_class, nib.load(B0_mask),
                                          cmc_step_size=0.2)
     assert tiss_classifier is not None
 

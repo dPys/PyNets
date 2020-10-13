@@ -24,7 +24,7 @@ tracking:
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
-        - 2
+        - 3
     roi_neighborhood_tol:
         - 16
     sphere:
@@ -48,7 +48,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 2
+    - 1
 graph_file_format:
     - 'npy'
 low_pass:
@@ -216,7 +216,7 @@ resource_dict: # Nipype workflow resource settings
       - 'omni_embedding_node':
         - (1, 2)
       - 'join_iters_node_thr':
-        - (1, 1)
+        - (1, 2)
       - 'join_iters_node_nets':
         - (1, 1)
       - 'join_iters_node_atlas':
@@ -237,7 +237,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -251,7 +251,7 @@ execution_dict: # Nipype workflow global settings
     - 'use_relative_paths':
         - True
     - 'keep_inputs':
-        - True
+        - False
     - 'remove_unnecessary_outputs':
         - False
     - 'remove_node_directories':

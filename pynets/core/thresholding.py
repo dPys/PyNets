@@ -95,11 +95,8 @@ def threshold_proportional(W, p, copy=True):
 
     """
     if p > 1 or p < 0:
-        try:
-            raise ValueError("Threshold must be in range [0,1]")
-        except ValueError:
-            import sys
-            sys.exit(0)
+        raise ValueError("Threshold must be in range [0,1]")
+
     if copy:
         W = W.copy()
     n = len(W)
@@ -787,11 +784,9 @@ def local_thresholding_prop(conn_matrix, thr):
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
         return conn_matrix_thr
 
-    except ValueError:
-        import sys
-        print("MST thresholding failed. Check raw graph output manually for"
+    except ValueError as e:
+        print(e, f"MST thresholding failed. Check raw graph output manually for"
               " debugging.")
-        sys.exit(1)
 
 
 def perform_thresholding(
@@ -843,20 +838,7 @@ def perform_thresholding(
         conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(
             G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
         # Enforce original dimensionality by padding with zeros.
-        if conn_matrix_bin.shape != conn_matrix.shape:
-            if conn_matrix.shape[0] > conn_matrix_bin.shape[0]:
-                result = np.zeros(conn_matrix.shape)
-                result[
-                    : conn_matrix_bin.shape[0], : conn_matrix_bin.shape[1]
-                ] = conn_matrix_bin
-                conn_matrix_thr = np.multiply(conn_matrix, result)
-            else:
-                result = np.zeros(conn_matrix_bin.shape)
-                result[: conn_matrix.shape[0],
-                       : conn_matrix.shape[1]] = conn_matrix
-                conn_matrix_thr = np.multiply(conn_matrix_bin, result)
-        else:
-            conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
+        conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
         if dens_thresh is False:
             thr_type = "PROP"
@@ -1030,12 +1012,8 @@ def thresh_func(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        try:
-            raise ValueError("ERROR: Raw connectivity matrix contains only"
-                             " zeros.")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError("Raw connectivity matrix contains only"
+                         " zeros.")
 
     # Save unthresholded
     utils.save_mat(
@@ -1279,12 +1257,8 @@ def thresh_struct(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        try:
-            raise ValueError("ERROR: Raw connectivity matrix contains only"
-                             " zeros.")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError("Raw connectivity matrix contains only"
+                         " zeros.")
 
     # Save unthresholded
     utils.save_mat(

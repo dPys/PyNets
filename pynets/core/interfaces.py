@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import warnings
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 from nipype.interfaces.base import (
     BaseInterface,
@@ -56,6 +58,7 @@ class FetchNodesLabels(SimpleInterface):
     output_spec = _FetchNodesLabelsOutputSpec
 
     def _run_interface(self, runtime):
+        import sys
         from pynets.core import utils, nodemaker
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from nilearn.image import concat_imgs
@@ -107,13 +110,9 @@ class FetchNodesLabels(SimpleInterface):
                 else:
                     parcel_list = None
             else:
-                try:
-                    raise FileNotFoundError(
-                        f"\nAtlas file for {self.inputs.atlas} not found!"
-                    )
-                except FileNotFoundError:
-                    import sys
-                    sys.exit(0)
+                raise FileNotFoundError(
+                    f"\nAtlas file for {self.inputs.atlas} not found!"
+                )
 
             atlas = self.inputs.atlas
         elif (
@@ -165,12 +164,9 @@ class FetchNodesLabels(SimpleInterface):
                 else:
                     parcel_list = None
             else:
-                try:
-                    raise FileNotFoundError(
-                        f"\nAtlas file for {self.inputs.atlas} not found!")
-                except FileNotFoundError:
-                    import sys
-                    sys.exit(0)
+                raise FileNotFoundError(
+                    f"\nAtlas file for {self.inputs.atlas} not found!")
+
             par_max = None
             atlas = self.inputs.atlas
             label_intensities = None
@@ -203,13 +199,13 @@ class FetchNodesLabels(SimpleInterface):
                     parcel_list = None
                 # Describe user atlas coords
                 print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
-            except ValueError:
-                import sys
-                print(
+            except ValueError as e:
+                print(e,
                     "Either you have specified the name of an atlas that does"
                     " not exist in the nilearn or local repository or you have"
                     " not supplied a 3d atlas parcellation image!")
-                sys.exit(0)
+                import sys
+                sys.exit(1)
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -249,24 +245,21 @@ class FetchNodesLabels(SimpleInterface):
 
                 # Describe user atlas coords
                 print(f"\n{atlas} comes with {par_max} parcels\n")
-            except ValueError:
-                import sys
-                print(
+            except ValueError as e:
+                print(e,
                     "Either you have specified the name of an atlas that does"
                     " not exist in the nilearn or local repository or you have"
                     " not supplied a 3d atlas parcellation image!")
-                sys.exit(0)
+                import sys
+                sys.exit(1)
             labels = None
             networks_list = None
         else:
-            try:
-                raise ValueError(
-                    "Either you have specified the name of an atlas that does"
-                    " not exist in the nilearn or local repository or you have"
-                    " not supplied a 3d atlas parcellation image!")
-            except ValueError:
-                import sys
-                sys.exit(0)
+            raise ValueError(
+                "Either you have specified the name of an atlas that does"
+                " not exist in the nilearn or local repository or you have"
+                " not supplied a 3d atlas parcellation image!")
+
         # Labels prep
         if atlas and not labels:
             if (self.inputs.ref_txt is not None) and (
@@ -756,15 +749,11 @@ class IndividualClustering(SimpleInterface):
                 parcellation.to_filename(out_path)
 
         else:
-            try:
-                raise ValueError(
-                    "Clustering method not recognized. See: "
-                    "https://nilearn.github.io/modules/generated/"
-                    "nilearn.regions.Parcellations."
-                    "html#nilearn.regions.Parcellations")
-            except ValueError:
-                import sys
-                sys.exit(0)
+            raise ValueError(
+                "Clustering method not recognized. See: "
+                "https://nilearn.github.io/modules/generated/"
+                "nilearn.regions.Parcellations."
+                "html#nilearn.regions.Parcellations")
 
         # Give it a minute
         ix = 0
@@ -774,12 +763,8 @@ class IndividualClustering(SimpleInterface):
             ix += 1
 
         if not os.path.isfile(nip.uatlas):
-            try:
-                raise FileNotFoundError(f"Parcellation clustering failed for"
-                                        f" {nip.uatlas}")
-            except FileNotFoundError:
-                import sys
-                sys.exit(0)
+            raise FileNotFoundError(f"Parcellation clustering failed for"
+                                    f" {nip.uatlas}")
 
         self._results["atlas"] = atlas
         self._results["uatlas"] = nip.uatlas
@@ -934,12 +919,10 @@ class ExtractTimeseries(SimpleInterface):
                 == te.ts_within_nodes.shape[1]
             )
         except AssertionError as e:
-            import sys
             e.args += ('Coords: ', len(self.inputs.coords),
                        self.inputs.coords, 'Labels:',
                        len(self.inputs.labels),
                        self.inputs.labels, te.ts_within_nodes.shape)
-            raise
 
         self._results["ts_within_nodes"] = te.ts_within_nodes
         self._results["node_size"] = te.node_size
@@ -2309,11 +2292,11 @@ class RegisterAtlasFunc(SimpleInterface):
                         aligned_atlas_gm, self.inputs.coords,
                         self.inputs.labels)
 
-            except FileNotFoundError:
+            except FileNotFoundError as e:
                 import sys
-                print('T1w-space parcellation not found. Did you delete '
+                print(e, 'T1w-space parcellation not found. Did you delete '
                       'outputs?')
-                sys.exit(0)
+                sys.exit(1)
         else:
             if self.inputs.uatlas is None:
                 uatlas_tmp_path = None
@@ -2473,13 +2456,11 @@ class RegisterAtlasFunc(SimpleInterface):
                            ) if i != 0]
         try:
             assert len(coords) == len(labels) == len(intensities)
-        except ValueError as err:
-            import sys
-            print('Failed!')
+        except ValueError as e:
+            print(e, 'Failed!')
             print(f"# Coords: {len(coords)}")
             print(f"# Labels: {len(labels)}")
             print(f"# Intensities: {len(intensities)}")
-            sys.exit(1)
 
         self._results["aligned_atlas_gm"] = aligned_atlas_gm
         self._results["coords"] = coords
@@ -2695,6 +2676,7 @@ class Tracking(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import sys
         import os.path as op
         from dipy.io import load_pickle
         from colorama import Fore, Style
@@ -2943,11 +2925,7 @@ class Tracking(SimpleInterface):
                 f" Maximum"
             )
         else:
-            try:
-                raise ValueError("Direction-getting type not recognized!")
-            except ValueError:
-                import sys
-                sys.exit(0)
+            raise ValueError("Direction-getting type not recognized!")
 
         print(Style.RESET_ALL)
 
@@ -3037,12 +3015,8 @@ class Tracking(SimpleInterface):
                       f"streamlines output {namer_dir}/{op.basename(streams)}"
                       f" is recommended.")
             if len(streamlines) < 0.5*orig_count:
-                try:
-                    raise ValueError('LiFE revealed no plausible streamlines '
-                                     'in the tractogram!')
-                except ValueError:
-                    import sys
-                    sys.exit(0)
+                raise ValueError('LiFE revealed no plausible streamlines '
+                                 'in the tractogram!')
             del dwi_data, mask_data
 
         stf = StatefulTractogram(

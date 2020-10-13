@@ -8,7 +8,9 @@ Copyright (C) 2016
 import warnings
 import numpy as np
 import nibabel as nib
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 
 warnings.filterwarnings("ignore")
 
@@ -87,14 +89,14 @@ def prep_tissues(
 
     Parameters
     ----------
-    t1_mask : str
-        File path to a T1w mask.
-    gm_in_dwi : str
-        File path to grey-matter tissue segmentation Nifti1Image.
-    vent_csf_in_dwi : str
-        File path to ventricular CSF tissue segmentation Nifti1Image.
-    wm_in_dwi : str
-        File path to white-matter tissue segmentation Nifti1Image.
+    t1_mask : Nifti1Image
+        T1w mask img.
+    gm_in_dwi : Nifti1Image
+        Grey-matter tissue segmentation Nifti1Image.
+    vent_csf_in_dwi : Nifti1Image
+        Ventricular CSF tissue segmentation Nifti1Image.
+    wm_in_dwi : Nifti1Image
+        White-matter tissue segmentation Nifti1Image.
     tiss_class : str
         Tissue classification method.
     cmc_step_size : float
@@ -125,19 +127,17 @@ def prep_tissues(
     from nilearn.image import math_img
 
     # Load B0 mask
-    B0_mask_img = math_img("img > 0.0", img=nib.load(B0_mask, mmap=True))
+    B0_mask_img = math_img("img > 0.0", img=B0_mask)
 
     # Load t1 mask
-    mask_img = math_img("img > 0.0", img=nib.load(t1_mask, mmap=True))
+    mask_img = math_img("img > 0.0", img=t1_mask)
 
     # Load tissue maps and prepare tissue classifier
-    wm_img = nib.load(wm_in_dwi, mmap=True)
-    wm_mask_img = math_img("img > 0.0", img=wm_img)
-    gm_img = nib.load(gm_in_dwi, mmap=True)
-    gm_data = np.asarray(gm_img.dataobj, dtype=np.float32)
-    wm_data = np.asarray(wm_img.dataobj, dtype=np.float32)
-    vent_csf_in_dwi_data = np.asarray(nib.load(vent_csf_in_dwi,
-                                               mmap=True).dataobj,
+    wm_mask_img = math_img("img > 0.0", img=wm_in_dwi)
+    gm_mask_img = math_img("img > 0.0", img=gm_in_dwi)
+    gm_data = np.asarray(gm_mask_img.dataobj, dtype=np.float32)
+    wm_data = np.asarray(wm_mask_img.dataobj, dtype=np.float32)
+    vent_csf_in_dwi_data = np.asarray(vent_csf_in_dwi.dataobj,
                                       dtype=np.float32)
     if tiss_class == "act":
         background = np.ones(mask_img.shape)
@@ -179,8 +179,7 @@ def prep_tissues(
                         B0_mask_img,
                         nib.Nifti1Image(np.invert(
                             vent_csf_in_dwi_data.astype('bool')).astype(
-                            'int'),
-                                        affine=mask_img.affine),
+                            'int'), affine=mask_img.affine),
                     ],
                     threshold=1,
                     connected=False,
@@ -195,10 +194,6 @@ def prep_tissues(
             sys.exit(0)
 
     del gm_data, wm_data, vent_csf_in_dwi_data
-    mask_img.uncache()
-    gm_img.uncache()
-    wm_img.uncache()
-    B0_mask_img.uncache()
 
     return tiss_classifier
 
@@ -411,7 +406,6 @@ def track_ensemble(
     """
     import os
     import gc
-    import sys
     import time
     import pkg_resources
     import yaml
@@ -422,6 +416,7 @@ def track_ensemble(
     from colorama import Fore, Style
     from pynets.dmri.dmri_utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
+    from pynets.core.utils import save_3d_to_4d
 
     cache_dir = f"{cache_dir}/joblib_tracking"
     os.makedirs(cache_dir, exist_ok=True)
@@ -447,33 +442,38 @@ def track_ensemble(
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
+    tissues4d = save_3d_to_4d([B0_mask, labels_im_file, atlas_data_wm_gm_int,
+                               t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi])
+
     # Commence Ensemble Tractography
     start = time.time()
     stream_counter = 0
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples):
+    while float(stream_counter) < float(target_samples) and \
+        float(ix) < 0.75*float(len(all_combs)):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
-                    i, atlas_data_wm_gm_int, recon_path,
+                    i, recon_path,
                     n_seeds_per_iter, directget, maxcrossing, max_length,
                     pft_back_tracking_dist, pft_front_tracking_dist,
-                    particle_count, B0_mask, roi_neighborhood_tol,
-                    labels_im_file, waymask, min_length, track_type,
-                    min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
-                    vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir) for i in
+                    particle_count, roi_neighborhood_tol,
+                    waymask, min_length, track_type,
+                    min_separation_angle, sphere, tiss_class, tissues4d,
+                    cache_dir) for i in
                 all_combs)
 
-            out_streams = [i for i in out_streams if i is not None and
-                           len(i) > 0]
+            out_streams = [i for i in out_streams if i is not None and i is
+                           not ArraySequence() and len(i) > 0]
 
-            out_streams = concatenate(out_streams, axis=0)
+            if len(out_streams) > 1:
+                out_streams = concatenate(out_streams, axis=0)
 
-            if len(out_streams) < 100:
+            if len(out_streams) < 50:
                 ix += 1
                 print("Fewer than 100 streamlines tracked on last iteration."
                       " loosening tolerance and anatomical constraints...")
@@ -481,6 +481,7 @@ def track_ensemble(
                     tiss_class = 'wb'
                 roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                 min_length = float(min_length) * 0.95
+                continue
             else:
                 ix -= 1
 
@@ -502,12 +503,10 @@ def track_ensemble(
             gc.collect()
             print(Style.RESET_ALL)
 
-        if float(ix) > len(all_combs):
-            break
-
-    if ix >= len(all_combs) and float(stream_counter) < float(target_samples):
+    if ix >= 0.75*len(all_combs) and \
+        float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
-              f"iterations with <100 streamlines. Are you using a waymask? "
+              f"iterations with <50 streamlines. Are you using a waymask? "
               f"If so, it may be too restrictive.")
         return ArraySequence()
     else:
@@ -524,13 +523,12 @@ def track_ensemble(
         return ArraySequence()
 
 
-def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
+def run_tracking(step_curv_combinations, recon_path,
                  n_seeds_per_iter, directget, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
-                 particle_count, B0_mask, roi_neighborhood_tol,
-                 labels_im_file, waymask, min_length, track_type,
-                 min_separation_angle, sphere, t1w2dwi, gm_in_dwi,
-                 vent_csf_in_dwi, wm_in_dwi, tiss_class, cache_dir):
+                 particle_count, roi_neighborhood_tol, waymask, min_length,
+                 track_type, min_separation_angle, sphere, tiss_class,
+                 tissues4d, cache_dir):
 
     import gc
     import os
@@ -544,79 +542,10 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         ClosestPeakDirectionGetter,
         DeterministicMaximumDirectionGetter
     )
+    from nilearn.image import index_img
     from pynets.dmri.track import prep_tissues
     from nibabel.streamlines.array_sequence import ArraySequence
     from nipype.utils.filemanip import copyfile, fname_presuffix
-
-    B0_mask_tmp_path = fname_presuffix(
-        B0_mask, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        B0_mask,
-        B0_mask_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    labels_im_file_tmp_path = fname_presuffix(
-        labels_im_file, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        labels_im_file,
-        labels_im_file_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    atlas_data_wm_gm_int_tmp_path = fname_presuffix(
-        atlas_data_wm_gm_int, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        atlas_data_wm_gm_int,
-        atlas_data_wm_gm_int_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    t1w2dwi_tmp_path = fname_presuffix(
-        t1w2dwi, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        t1w2dwi,
-        t1w2dwi_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    gm_in_dwi_tmp_path = fname_presuffix(
-        gm_in_dwi, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        gm_in_dwi,
-        gm_in_dwi_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    vent_csf_in_dwi_tmp_path = fname_presuffix(
-        vent_csf_in_dwi, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        vent_csf_in_dwi,
-        vent_csf_in_dwi_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    wm_in_dwi_tmp_path = fname_presuffix(
-        wm_in_dwi, suffix=f"_{step_curv_combinations}",
-        newpath=cache_dir
-    )
-    copyfile(
-        wm_in_dwi,
-        wm_in_dwi_tmp_path,
-        copy=True,
-        use_hardlink=False)
 
     recon_path_tmp_path = fname_presuffix(
         recon_path, suffix=f"_{step_curv_combinations}",
@@ -641,21 +570,30 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
     else:
         waymask_tmp_path = None
 
-    tiss_classifier = prep_tissues(
-        t1w2dwi_tmp_path,
-        gm_in_dwi_tmp_path,
-        vent_csf_in_dwi_tmp_path,
-        wm_in_dwi_tmp_path,
-        tiss_class,
-        B0_mask_tmp_path)
+    tissue_img = nib.load(tissues4d)
 
-    B0_mask_data = np.asarray(nib.load(B0_mask_tmp_path).dataobj
-                              ).astype("bool")
-    atlas_img = nib.load(labels_im_file_tmp_path)
+    # Order:
+    B0_mask = index_img(tissue_img, 0)
+    atlas_img = index_img(tissue_img, 1)
+    atlas_data_wm_gm_int = index_img(tissue_img, 2)
+    t1w2dwi = index_img(tissue_img, 3)
+    gm_in_dwi = index_img(tissue_img, 4)
+    vent_csf_in_dwi = index_img(tissue_img, 5)
+    wm_in_dwi = index_img(tissue_img, 6)
+
+    tiss_classifier = prep_tissues(
+        t1w2dwi,
+        gm_in_dwi,
+        vent_csf_in_dwi,
+        wm_in_dwi,
+        tiss_class,
+        B0_mask
+    )
+
+    B0_mask_data = np.asarray(B0_mask.dataobj).astype("bool")
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
-    atlas_img.uncache()
     atlas_data_wm_gm_int_data = np.asarray(
-        nib.load(atlas_data_wm_gm_int_tmp_path).dataobj
+        atlas_data_wm_gm_int.dataobj
     ).astype("bool").astype("int16")
 
     # Build mask vector from atlas for later roi filtering
@@ -700,13 +638,9 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
             min_separation_angle=min_separation_angle,
         )
     else:
-        try:
-            raise ValueError(
-                "ERROR: No valid direction getter(s) specified."
-            )
-        except ValueError:
-            import sys
-            sys.exit(0)
+        raise ValueError(
+            "ERROR: No valid direction getter(s) specified."
+        )
 
     print("%s%s" % ("Step: ", step_curv_combinations[0]))
 
@@ -811,16 +745,17 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
         return None
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
-        waymask_data = np.asarray(nib.load(waymask_tmp_path).dataobj
-                                  ).astype("bool")
+        from nilearn.image import math_img
+        mask = math_img("img > 0.0075", img=nib.load(waymask_tmp_path))
+        waymask_data = np.asarray(mask.dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=0,
-                    mode="all",
+                    tol=roi_neighborhood_tol,
+                    mode="all"
                 )
             ]
             print("%s%s" % ("Waymask proximity: ",
@@ -834,6 +769,8 @@ def run_tracking(step_curv_combinations, atlas_data_wm_gm_int, recon_path,
 
     del dg, seeds, roi_proximal_streamlines, streamline_generator, \
         atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
+
+    os.remove(recon_path_tmp_path)
     gc.collect()
 
     try:

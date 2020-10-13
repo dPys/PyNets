@@ -7,7 +7,9 @@ Copyright (C) 2016
 """
 import os
 import numpy as np
-import indexed_gzip
+import sys
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
 import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
@@ -18,7 +20,7 @@ try:
 except KeyError:
     import sys
     print("FSLDIR environment variable not set!")
-    sys.exit(0)
+    sys.exit(1)
 
 
 def gen_mask(t1w_head, t1w_brain, mask):
@@ -47,12 +49,9 @@ def gen_mask(t1w_head, t1w_brain, mask):
         t1w_data = img.get_fdata().astype('float32')
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
-        except RuntimeError:
-            try:
-                print('Deepbrain extraction failed...')
-            except ValueError:
-                import sys
-                sys.exit(1)
+        except RuntimeError as e:
+            print(e, 'Deepbrain extraction failed...')
+
         del t1w_data
 
     # Threshold T1w brain to binary in anat space

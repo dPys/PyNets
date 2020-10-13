@@ -52,12 +52,12 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
             try:
                 labeling_atlas = \
                 hardcoded_params["plotting"]["labeling_atlas"][0]
-            except KeyError:
-                print(
-                    "ERROR: Plotting configuration not successfully extracted"
+            except KeyError as e:
+                print(e,
+                    "Plotting configuration not successfully extracted"
                     " from runconfig.yaml"
                 )
-                sys.exit(0)
+                sys.exit(1)
         stream.close()
         labels = [i[0][labeling_atlas] for i in labels]
     except BaseException:
@@ -134,12 +134,12 @@ def plot_community_conn_mat(
             try:
                 labeling_atlas = \
                 hardcoded_params["plotting"]["labeling_atlas"][0]
-            except KeyError:
-                print(
-                    "ERROR: Plotting configuration not successfully extracted"
+            except KeyError as e:
+                print(e,
+                    "Plotting configuration not successfully extracted"
                     " from runconfig.yaml"
                 )
-                sys.exit(0)
+                sys.exit(1)
         stream.close()
         labels = [i[0][labeling_atlas] for i in labels]
     except BaseException:
@@ -309,12 +309,12 @@ def plot_conn_mat_func(
         try:
             cmap_name = hardcoded_params["plotting"]["functional"][
                 "adjacency"]["color_theme"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted from"
+        except KeyError as e:
+            print(e,
+                "Plotting configuration not successfully extracted from"
                 " runconfig.yaml"
             )
-            sys.exit(0)
+            sys.exit(1)
     stream.close()
 
     plot_graphs.plot_conn_mat(
@@ -483,9 +483,9 @@ def plot_conn_mat_struct(
         try:
             cmap_name = hardcoded_params["plotting"]["structural"][
                 "adjacency"]["color_theme"][0]
-        except KeyError:
-            print(
-                "ERROR: Plotting configuration not successfully extracted from"
+        except KeyError as e:
+            print(e,
+                "Plotting configuration not successfully extracted from"
                 " runconfig.yaml"
             )
             sys.exit(0)
