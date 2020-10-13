@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import os
 import numpy as np
 try:
     import cPickle as pickle
@@ -16,7 +17,6 @@ from pynets.core import thresholding
 import networkx as nx
 import pytest
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
