@@ -561,12 +561,12 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if predict_type == 'regressor':
         feature_selector = f_regression
-        alphas = [0.00000001, 0.0000001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 5, 10]
+        alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5, 0.75, 1, 5]
     elif predict_type == 'classifier':
         feature_selector = f_classif
-        Cs = [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]
+        Cs = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
     # Instantiate grid of model/feature-selection params
-    n_comps = [5, 10, 15]
+    n_comps = [10]
     l1_ratios = [0, 0.25, 0.5, 0.75, 1]
 
     # Instantiate a working dictionary of performance within a bootstrap
@@ -818,9 +818,9 @@ def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param,
 def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=None):
     df_tmps = []
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    #rsns = ["triple"]
+    rsns = ["triple", "kmeans"]
     # rsns = ["ward", "kmeans"]
-    rsns = ["kmeans"]
+    # rsns = ["kmeans"]
     grid_param = tuple(x for x in grid_param if x not in rsns)
 
     for rsn in rsns:
@@ -1263,9 +1263,10 @@ def make_subject_dict(
         return tup
 
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    #rsns = ["triple"]
+    rsns = ["triple", "kmeans"]
     #rsns = ["ward", "kmeans"]
-    rsns = ["kmeans"]
+    #rsns = ["ward"]
+    #rsns = ["kmeans"]
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
@@ -1905,7 +1906,7 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
                     if len(df_all.columns) < 5:
                         print(f"Too few columns detected for {grid_param}...")
                         df_all = pd.Series()
-            except:
+            except BaseException:
                 df_all = pd.Series()
     else:
         df_all = pd.Series()
@@ -1913,10 +1914,15 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
     if len(df_all) < 50:
         X = None
         Y = None
-        print("\nFeature-space NA\n")
-    else:
+        print("\nToo few cases in feature-space after preprocessing, "
+              "skipping...\n")
+    elif len(df_all) > 50:
         Y = df_all[target_var].values
         X = df_all.drop(columns=drop_cols)
+    else:
+        X = None
+        Y = None
+        print("\nEmpty/Missing Feature-space...\n")
     return X, Y
 
 
@@ -1933,13 +1939,18 @@ def concatenate_frames(out_dir, modality, alg, target_var, files_):
             except BaseException:
                 pass
             dfs.append(df)
-        frame = pd.concat(dfs, axis=0, join="outer", sort=True,
-                          ignore_index=False)
-        out_path = f"{out_dir}/final_df_{modality}_{alg}_{target_var}.csv"
-        print(f"Saving to {out_path}...")
-        if os.path.isfile(out_path):
-            os.remove(out_path)
-        frame.to_csv(out_path, index=False)
+        try:
+            frame = pd.concat(dfs, axis=0, join="outer", sort=True,
+                              ignore_index=False)
+            out_path = f"{out_dir}/final_df_{modality}_{alg}_{target_var}.csv"
+            print(f"Saving to {out_path}...")
+            if os.path.isfile(out_path):
+                os.remove(out_path)
+            frame.to_csv(out_path, index=False)
+        except BaseException:
+            print(f"Dataframe concatenation failed for {modality}, {alg}, "
+                  f"{target_var}...")
+            return None, alg, target_var
 
         return out_path, alg, target_var
     else:
@@ -1972,6 +1983,7 @@ class MakeXY(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        import numpy as np
         import pandas as pd
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import uuid
@@ -2010,13 +2022,20 @@ class MakeXY(SimpleInterface):
             drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "depression_persist_phenotype",
                          "dep_1", "rum_1"]
 
-        [X, Y] = make_x_y(
-            input_dict_tmp,
-            drop_cols,
-            self.inputs.target_var,
-            self.inputs.alg,
-            tuple(self.inputs.grid_param),
-        )
+        try:
+            [X, Y] = make_x_y(
+                input_dict_tmp,
+                drop_cols,
+                self.inputs.target_var,
+                self.inputs.alg,
+                tuple(self.inputs.grid_param),
+            )
+        except BaseException:
+            print(f"Failed to make X or Y with {input_dict_tmp}, "
+                  f"{self.inputs.target_var}, {self.inputs.alg}, "
+                  f"{self.inputs.grid_param}...")
+            X = None
+            Y = None
 
         if isinstance(X, pd.DataFrame):
             out_X = f"{runtime.cwd}/X_" \
@@ -2025,12 +2044,15 @@ class MakeXY(SimpleInterface):
                     f"{self.inputs.alg}_" \
                     f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
 
-            if os.path.isfile(out_X):
-                os.remove(out_X)
+            # if os.path.isfile(out_X):
+            #     os.remove(out_X)
             X.to_csv(out_X, index=False)
         else:
             out_X = None
-            Y = None
+
+        if Y is not None:
+            if np.isnan(Y).all():
+                Y = None
 
         self._results["X"] = out_X
         self._results["Y"] = Y
@@ -2058,10 +2080,10 @@ class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
 class _BSNestedCVOutputSpec(TraitedSpec):
     """Output interface wrapper for BSNestedCV"""
 
-    grand_mean_best_estimator = traits.Dict()
-    grand_mean_best_score = traits.Dict()
-    grand_mean_y_predicted = traits.Dict()
-    grand_mean_best_error = traits.Dict()
+    grand_mean_best_estimator = traits.Any()
+    grand_mean_best_score = traits.Any()
+    grand_mean_y_predicted = traits.Any()
+    grand_mean_best_error = traits.Any()
     mega_feat_imp_dict = traits.Any()
     target_var = traits.Str()
     modality = traits.Str()
@@ -2085,7 +2107,7 @@ class BSNestedCV(SimpleInterface):
         else:
             predict_type = 'regressor'
 
-        if self.inputs.X is not None:
+        if self.inputs.X is not None and self.inputs.y is not None:
             if os.path.isfile(self.inputs.X):
                 X = pd.read_csv(self.inputs.X, chunksize=100000).read()
                 # if self.inputs.modality == 'func':
@@ -2109,43 +2131,56 @@ class BSNestedCV(SimpleInterface):
                 #                                var_thr=.80,
                 #                                remove_multi=False,
                 #                                missingness_thr=0.50)
-                [
-                    grand_mean_best_estimator,
-                    grand_mean_best_score,
-                    grand_mean_best_error,
-                    mega_feat_imp_dict,
-                    grand_mean_y_predicted,
-                ] = bootstrapped_nested_cv(X, self.inputs.y,
-                                           predict_type=predict_type)
-                if len(mega_feat_imp_dict) > 1:
-                    print(
-                        f"\n\n{Fore.BLUE}Target Outcome: {Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"{Fore.BLUE}Modality: {Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"{Fore.BLUE}Embedding type: {Fore.RED}{self.inputs.alg}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"{Fore.BLUE}Grid Params: {Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"{Fore.BLUE}Best Estimator: {Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"\n{Fore.BLUE}Variance: {Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"{Fore.BLUE}Error: {Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
-                    )
-                    #print(f"y_actual: {self.inputs.y}")
-                    #print(f"y_predicted: {grand_mean_y_predicted}")
-                    print(
-                        f"{Fore.BLUE}Feature Importance: {Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} with {Fore.RED}{len(mega_feat_imp_dict.keys())} features...{Style.RESET_ALL}\n\n"
-                    )
-                else:
-                    print("Empty feature-space!")
+                try:
+                    [
+                        grand_mean_best_estimator,
+                        grand_mean_best_score,
+                        grand_mean_best_error,
+                        mega_feat_imp_dict,
+                        grand_mean_y_predicted,
+                    ] = bootstrapped_nested_cv(X, self.inputs.y,
+                                               predict_type=predict_type)
+                    if len(mega_feat_imp_dict) > 1:
+                        print(
+                            f"\n\n{Fore.BLUE}Target Outcome: {Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"{Fore.BLUE}Modality: {Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"{Fore.BLUE}Embedding type: {Fore.RED}{self.inputs.alg}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"{Fore.BLUE}Grid Params: {Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"{Fore.BLUE}Best Estimator: {Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"\n{Fore.BLUE}Variance: {Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
+                        )
+                        print(
+                            f"{Fore.BLUE}Error: {Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
+                        )
+                        #print(f"y_actual: {self.inputs.y}")
+                        #print(f"y_predicted: {grand_mean_y_predicted}")
+                        print(
+                            f"{Fore.BLUE}Feature Importance: {Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} with {Fore.RED}{len(mega_feat_imp_dict.keys())} features...{Style.RESET_ALL}\n\n"
+                        )
+                    else:
+                        print(f"{Fore.RED}Empty feature-space!{Style.RESET_ALL}")
+                        grand_mean_best_estimator = dict()
+                        grand_mean_best_score = dict()
+                        grand_mean_y_predicted = dict()
+                        grand_mean_best_error = dict()
+                        mega_feat_imp_dict = OrderedDict()
+                except BaseException:
+                    print(f"{Fore.RED}Empty feature-space!{Style.RESET_ALL}")
+                    grand_mean_best_estimator = dict()
+                    grand_mean_best_score = dict()
+                    grand_mean_y_predicted = dict()
+                    grand_mean_best_error = dict()
+                    mega_feat_imp_dict = OrderedDict()
             else:
                 print("Feature-space .csv file not found!")
                 grand_mean_best_estimator = dict()
@@ -2177,10 +2212,10 @@ class BSNestedCV(SimpleInterface):
 
 
 class _MakeDFInputSpec(BaseInterfaceInputSpec):
-    grand_mean_best_estimator = traits.Dict()
-    grand_mean_best_score = traits.Dict()
-    grand_mean_y_predicted = traits.Dict()
-    grand_mean_best_error = traits.Dict()
+    grand_mean_best_estimator = traits.Any()
+    grand_mean_best_score = traits.Any()
+    grand_mean_y_predicted = traits.Any()
+    grand_mean_best_error = traits.Any()
     mega_feat_imp_dict = traits.Any()
     target_var = traits.Str()
     modality = traits.Str()
@@ -2207,6 +2242,15 @@ class MakeDF(SimpleInterface):
         import pandas as pd
         import numpy as np
 
+        def get_CI(stats, alpha=0.95):
+            p = ((1.0 - alpha) / 2.0) * 100
+            lower = max(0.0, np.nanpercentile(stats, p))
+            p = (alpha + ((1.0 - alpha) / 2.0)) * 100
+            upper = min(1.0, np.nanpercentile(stats, p))
+            print('%.1f confidence interval %.1f%% and %.1f%%' % (
+                alpha * 100, lower * 100, upper * 100))
+            return lower, upper
+
         df_summary = pd.DataFrame(
             columns=[
                 "modality",
@@ -2215,6 +2259,14 @@ class MakeDF(SimpleInterface):
                 "best_estimator",
                 "Score",
                 "Error",
+                "Score_95CI_upper",
+                "Score_95CI_lower",
+                "Error_95CI_upper",
+                "Error_95CI_lower",
+                "Score_90CI_upper",
+                "Score_90CI_lower",
+                "Error_90CI_upper",
+                "Error_90CI_lower",
                 "target_variable",
                 "lp_importance",
                 "Predicted_y",
@@ -2246,22 +2298,37 @@ class MakeDF(SimpleInterface):
                 set(list(self.inputs.grand_mean_best_estimator.values())),
                 key=list(self.inputs.grand_mean_best_estimator.values()).count,
             )
-            df_summary.at[0, "Score"] = np.mean(
+            df_summary.at[0, "Score"] = np.nanmean(
                 list(self.inputs.grand_mean_best_score.values())
             )
             df_summary.at[0, "Predicted_y"] = y_pred_vals
             df_summary.at[0, "Error"] = np.mean(
                 list(self.inputs.grand_mean_best_error.values())
             )
+            df_summary.at[0, "Score_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[1]
+            df_summary.at[0, "Score_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[0]
+            df_summary.at[0, "Score_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[1]
+            df_summary.at[0, "Score_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[0]
+            df_summary.at[0, "Error_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[1]
+            df_summary.at[0, "Error_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[0]
+            df_summary.at[0, "Error_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[1]
+            df_summary.at[0, "Error_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[0]
             df_summary.at[0, "lp_importance"] = np.array(
                 list(self.inputs.mega_feat_imp_dict.keys())
             )
-
         else:
             df_summary.at[0, "best_estimator"] = np.nan
             df_summary.at[0, "Score"] = np.nan
             df_summary.at[0, "Predicted_y"] = np.nan
             df_summary.at[0, "Error"] = np.nan
+            df_summary.at[0, "Score_95CI_upper"] = np.nan
+            df_summary.at[0, "Score_95CI_lower"] = np.nan
+            df_summary.at[0, "Score_90CI_upper"] = np.nan
+            df_summary.at[0, "Score_90CI_lower"] = np.nan
+            df_summary.at[0, "Error_95CI_upper"] = np.nan
+            df_summary.at[0, "Error_95CI_lower"] = np.nan
+            df_summary.at[0, "Error_90CI_upper"] = np.nan
+            df_summary.at[0, "Error_90CI_lower"] = np.nan
             df_summary.at[0, "lp_importance"] = np.nan
 
         out_df_summary = f"{runtime.cwd}/df_summary_" \
@@ -2312,7 +2379,7 @@ def create_wf(modality_grids, modality):
                                  nested=True)
 
     make_x_y_func_node.interface.n_procs = 1
-    make_x_y_func_node._mem_gb = 2
+    make_x_y_func_node._mem_gb = 1
 
     x_y_iters = []
     x_y_iters.append(("grid_param", grid_param_combos))
@@ -2322,7 +2389,7 @@ def create_wf(modality_grids, modality):
         BSNestedCV(), name="bootstrapped_nested_cv_node", nested=True)
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
-    bootstrapped_nested_cv_node.interface._mem_gb = 3
+    bootstrapped_nested_cv_node.interface._mem_gb = 4
 
     make_df_node = pe.Node(MakeDF(), name="make_df_node")
 
@@ -2446,6 +2513,7 @@ def build_predict_workflow(args, retval):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_meta_wf = pe.Workflow(name="pynets_multipredict")
+    #ml_meta_wf.base_dir = f"/tmp/pynets_multiperform_{run_uuid}"
     ml_meta_wf.base_dir = f"{base_dir}/pynets_multiperform_{run_uuid}"
 
     os.makedirs(ml_meta_wf.base_dir, exist_ok=True)
@@ -2475,9 +2543,6 @@ def build_predict_workflow(args, retval):
         ),
         name="meta_iter_info_node", nested=True
     )
-
-    # meta_iter_info_node.inputs.target_var = target_vars[0]
-    # meta_iter_info_node.inputs.embedding_type = embedding_types[0]
 
     # Set up as iterables
     vars_embeddings_iters = list(
@@ -2538,16 +2603,16 @@ def build_predict_workflow(args, retval):
     )
     execution_dict = {}
     execution_dict["crashdump_dir"] = str(ml_meta_wf.base_dir)
-    execution_dict["poll_sleep_duration"] = 0.5
+    execution_dict["poll_sleep_duration"] = 0.01
     execution_dict["crashfile_format"] = "txt"
     execution_dict["local_hash_check"] = False
     execution_dict["stop_on_first_crash"] = False
-    execution_dict["keep_inputs"] = False
+    execution_dict["keep_inputs"] = True
     execution_dict["remove_unnecessary_outputs"] = False
     execution_dict["remove_node_directories"] = False
     execution_dict["raise_insufficient"] = False
     execution_dict["plugin"] = "MultiProc"
-    nthreads = psutil.cpu_count()
+    nthreads = psutil.cpu_count() * 4
     procmem = [int(nthreads),
                int(list(psutil.virtual_memory())[4] / 1000000000) - 2]
     plugin_args = {
@@ -2562,7 +2627,7 @@ def build_predict_workflow(args, retval):
         for setting, value in cfg[key].items():
             ml_meta_wf.config[key][setting] = value
 
-    out = ml_meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
+    out = ml_meta_wf.run(plugin='LegacyMultiProc', plugin_args=plugin_args)
     #out = ml_meta_wf.run(plugin='Linear')
     return out
 
@@ -2570,8 +2635,9 @@ def build_predict_workflow(args, retval):
 def main():
     import json
 
-    base_dir = "/working/tuning_set/outputs_clustering_group"
-    #base_dir = "/working/tuning_set/outputs_clustering_group"
+    base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
+    #base_dir = "/working/tuning_set/outputs_clustering"
+    #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
         index_col=False
@@ -2586,6 +2652,7 @@ def main():
     #modalities = ["func", "dwi"]
     modalities = ["func"]
     #modalities = ["dwi"]
+    #modalities = ["dwi", "func"]
     thr_type = "MST"
     #thr_type = "PROP"
     template = "MNI152_T1"
@@ -2606,23 +2673,28 @@ def main():
     target_modality = 'func'
     #target_vars = ["rum_2", "dep_2"]
     #target_vars = ["rumination_persist_phenotype",
-    # "depression_persist_phenotype", "rum_2", "dep_2", "dep_1", "rum_1"]
+    #"depression_persist_phenotype", "rum_2", "dep_2", "dep_1", "rum_1"]
     #target_vars = ["depression_persist_phenotype"]
-    target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2', 'dep_1',
-                   'dep_2']
+    # target_vars = ['rumination_persist_phenotype',
+    #                'depression_persist_phenotype', 'rum_2', 'dep_2']
+    #target_vars = ["rum_1", "dep_1"]
     #target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2']
-    #target_vars = ['dep_2']
+    # target_vars = ["rumination_persist_phenotype",
+    #                "depression_persist_phenotype",
+    #                "dep_2", "dep_1"]
+    target_vars = ["rumination_persist_phenotype",
+                   "depression_persist_phenotype"]
 
     sessions = ["1"]
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{'_'.join(embedding_types)}.pkl"
+        f"{base_dir}/pynets_subject_dict_{target_modality}_{'_'.join(embedding_types)}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{'_'.join(embedding_types)}.pkl"
+        f"{base_dir}/pynets_modality_grids_{target_modality}_{'_'.join(embedding_types)}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{'_'.join(embedding_types)}.csv"
+        f"{base_dir}/pynets_missingness_summary_{target_modality}_{'_'.join(embedding_types)}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(

@@ -1047,7 +1047,7 @@ class CleanGraphs(object):
 
         self.thr = thr
         self.conn_model = conn_model
-        self.est_path = est_path
+        self.est_pathself.est_path = est_path
         self.prune = prune
         self.norm = norm
         self.out_fmt = out_fmt
@@ -1679,6 +1679,7 @@ def extractnetstats(
     """
     import time
     import gc
+    import os
     import os.path as op
     import yaml
 
@@ -1689,11 +1690,12 @@ def extractnetstats(
     from pathlib import Path
 
     cg = CleanGraphs(thr, conn_model, est_path, prune, norm)
+
     if float(norm) >= 1:
         cg.normalize_graph()
 
     if float(prune) >= 1:
-        cg.prune_graph()
+        [_, tmp_graph_path] = cg.prune_graph()
 
     if binary is True:
         in_mat, G = cg.binarize_graph()
@@ -1949,6 +1951,9 @@ def extractnetstats(
     )
 
     # Cleanup
+    if tmp_graph_path:
+        os.remove(tmp_graph_path)
+
     del net_met_val_list_final, metric_list_names, metric_list_global
     gc.collect()
 
@@ -2024,7 +2029,11 @@ def collect_pandas_df_make(
         )
 
     net_mets_csv_list = net_mets_csv_list_exist
-    subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
+    if len(net_mets_csv_list) >= 1:
+        subject_path = op.dirname(op.dirname(op.dirname(net_mets_csv_list[0])))
+    else:
+        print("No topology files found!")
+        combination_complete = True
 
     if len(net_mets_csv_list) > 1:
         print(f"\n\nAll graph analysis results:\n{str(net_mets_csv_list)}\n\n")

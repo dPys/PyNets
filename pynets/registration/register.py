@@ -735,7 +735,7 @@ class DmriReg(object):
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
-        mask = math_img("img > 0.20", img=t_img)
+        mask = math_img("img > 0.10", img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
         # Extract wm edge
@@ -1275,6 +1275,7 @@ class FmriReg(object):
                                                     self.gm_mask_thr,
                                                     self.gm_mask)
         time.sleep(0.5)
+
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
         mask = math_img("img > 0.50", img=t_img)

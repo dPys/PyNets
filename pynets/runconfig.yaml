@@ -9,6 +9,7 @@ tracking:
     step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.8 which encompasses the typical range of values used in human tractography.
         - 0.1
         - 0.2
+        - 0.2
         - 0.4
         - 0.8
     curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
@@ -50,7 +51,7 @@ c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
 nthreads:
     - 1
 graph_file_format:
-    - 'npy'
+    - 'json'
 low_pass:
     - null # See Yuen et al. 2019, which applies 0.25 low_pass. NOTE: *If you are working with task data, this setting should almost always be `null`.
 parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is True.
