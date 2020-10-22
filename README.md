@@ -42,7 +42,9 @@ Hardware Requirements
 Operating Systems
 -----------------
 UNIX/MacOS 64-bit platforms
+
 Windows 10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
+
 
 Documentation
 -------------

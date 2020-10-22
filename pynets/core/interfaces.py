@@ -1421,6 +1421,7 @@ class RegisterAtlasDWI(SimpleInterface):
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
+        from scipy.ndimage import binary_opening
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -1691,6 +1692,27 @@ class RegisterAtlasDWI(SimpleInterface):
                 use_hardlink=False,
             )
 
+        # wm_img = nib.load(self.inputs.wm_in_dwi)
+        # wm_data = wm_img.get_fdata().astype('bool')
+        # atlas_img = nib.load(dwi_aligned_atlas)
+        # atlas_data = atlas_img.get_fdata().astype('bool')
+        # B0_mask_img = nib.load(B0_mask_tmp_path)
+        # B0_mask_data = B0_mask_img.get_fdata().astype('bool')
+        # wm_data_dil = binary_opening(wm_data, structure=atlas_data,
+        #                              mask=B0_mask_data)
+        # wm_in_dwi_tmp_path = fname_presuffix(
+        #     self.inputs.wm_in_dwi, suffix="_tmp", newpath=runtime.cwd
+        # )
+        # nib.save(nib.Nifti1Image(wm_data_dil, affine=wm_img.affine,
+        #                          header=wm_img.header), wm_in_dwi_tmp_path)
+        #
+        # wm_img.uncache()
+        # atlas_img.uncache()
+        # B0_mask_img.uncache()
+        # del atlas_data, wm_data, B0_mask_data, wm_data_dil
+        # self._results["wm_in_dwi"] = wm_in_dwi_tmp_path
+
+        self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
         self._results["dwi_aligned_atlas_wmgm_int"] = \
             dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
@@ -1701,7 +1723,6 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["uatlas"] = uatlas_out
         self._results["coords"] = coords
         self._results["labels"] = labels
-        self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
         self._results["gm_in_dwi"] = self.inputs.gm_in_dwi
         self._results["vent_csf_in_dwi"] = self.inputs.vent_csf_in_dwi
         self._results["B0_mask"] = B0_mask_tmp_path

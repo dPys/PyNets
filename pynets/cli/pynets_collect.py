@@ -236,14 +236,14 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
         all_cols.extend(df.columns.tolist())
     all_cols = list(set(all_cols))
 
-    print('Harmonizing columnn names across dataframes...')
-    out_dfs = [fill_columns(df, all_cols) for df in dfs]
+    print('Filling divergent columns across dataframes...')
+    #out_dfs = [fill_columns(df, all_cols) for df in dfs]
 
     # for df in out_dfs:
     #     print(len(df.columns))
 
     print('Joining...')
-    frame = pd.concat(out_dfs, axis=0, join="outer", sort=False,
+    frame = pd.concat(dfs, axis=0, join="outer", sort=False,
                       ignore_index=False)
     frame = frame.loc[:, ~frame.columns.str.contains(r"thr_auc$", regex=True)]
     frame.dropna(axis='columns', how='all', inplace=True)
@@ -262,17 +262,17 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     # drop = [i for i in frame.columns if 'betweenness_centrality' in i]
     # frame = frame.drop(columns=drop)
 
-    if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
-        frame_fill = pd.read_csv(f"{working_path}/"
-                                 f"all_subs_neat_{modality}.csv")
-        if len(frame_fill.columns) == len(frame.columns):
-            print("Found existing dataframe. Using this to fill in "
-                  "missing values...")
-            try:
-                frame_fill = frame_fill.set_index('id')
-                frame[frame.isnull()] = frame_fill
-            except:
-                pass
+    # if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
+    #     frame_fill = pd.read_csv(f"{working_path}/"
+    #                              f"all_subs_neat_{modality}.csv")
+    #     if len(frame_fill.columns) == len(frame.columns):
+    #         print("Found existing dataframe. Using this to fill in "
+    #               "missing values...")
+    #         try:
+    #             frame_fill = frame_fill.set_index('id')
+    #             frame[frame.isnull()] = frame_fill
+    #         except:
+    #             pass
 
     bad_cols1 = frame.columns[frame.columns.str.endswith("_x")]
     if len(bad_cols1) > 0:
@@ -313,7 +313,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
           'otherwise create an inventory of missingness...')
     par_dict = rerun_dict.copy()
     cache_dir = tempfile.mkdtemp()
-    with Parallel(n_jobs=-1, require='sharedmem', verbose=10,
+    with Parallel(n_jobs=-1, backend='loky', verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                  par_dict, modality,
@@ -426,21 +426,21 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     ).values.tolist()[0][0]
                 except:
                     print(f"Failed to recover missing data from {bad_col}...")
-                    from pynets.stats.netstats import \
-                        collect_pandas_df_make
-                    collect_pandas_df_make(
-                        glob.glob(f"{working_path}/{sub}/{ses}/"
-                                  f"{modality}/{atlas}/topology/*_neat.csv"),
-                        f"{sub}_{ses}", None, False)
+                    # from pynets.stats.netstats import \
+                    #     collect_pandas_df_make
+                    # collect_pandas_df_make(
+                    #     glob.glob(f"{working_path}/{sub}/{ses}/"
+                    #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                    #     f"{sub}_{ses}", None, False)
                     continue
                 del df_tmp
             else:
                 print(f"{df_tmp} is empty...")
-                from pynets.stats.netstats import collect_pandas_df_make
-                collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
-                                                 f"{modality}/{atlas}/topology/*_neat.csv"),
-                                       f"{sub}_{ses}", None, False)
-                rerun_dict[sub][ses][modality][atlas].append(bad_col)
+                # from pynets.stats.netstats import collect_pandas_df_make
+                # collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
+                #                                  f"{modality}/{atlas}/topology/*_neat.csv"),
+                #                        f"{sub}_{ses}", None, False)
+                # rerun_dict[sub][ses][modality][atlas].append(bad_col)
                 continue
         elif len(outs) > 1:
             for out in outs:
@@ -471,23 +471,23 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     except:
                         print(
                             f"Failed to recover missing data from {bad_col}...")
-                        from pynets.stats.netstats import \
-                            collect_pandas_df_make
-                        collect_pandas_df_make(
-                            glob.glob(f"{working_path}/{sub}/{ses}/"
-                                      f"{modality}/{atlas}/topology/*_neat.csv"),
-                            f"{sub}_{ses}", None, False)
+                        # from pynets.stats.netstats import \
+                        #     collect_pandas_df_make
+                        # collect_pandas_df_make(
+                        #     glob.glob(f"{working_path}/{sub}/{ses}/"
+                        #               f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #     f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
         else:
             # Add to missingness inventory if not found
             rerun_dict[sub][ses][modality][atlas].append(bad_col)
-            from pynets.stats.netstats import \
-                collect_pandas_df_make
-            collect_pandas_df_make(
-                glob.glob(f"{working_path}/{sub}/{ses}/"
-                          f"{modality}/{atlas}/topology/*_neat.csv"),
-                f"{sub}_{ses}", None, False)
+            # from pynets.stats.netstats import \
+            #     collect_pandas_df_make
+            # collect_pandas_df_make(
+            #     glob.glob(f"{working_path}/{sub}/{ses}/"
+            #               f"{modality}/{atlas}/topology/*_neat.csv"),
+            #     f"{sub}_{ses}", None, False)
             print(f"No outputs!")
 
     return rerun_dict, rerun
@@ -536,6 +536,24 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             columns=lambda x: re.sub(
                 "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_",
                 "", x))
+
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "res-200",
+            "res-77", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "res-400",
+            "res-135", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "res-600",
+            "res-180", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "res-800",
+            "res-228", x))
+
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
     #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing
@@ -610,8 +628,8 @@ def build_subject_dict(sub, working_path, modality, drop_cols):
                     .split(modality)[0]
                 )
                 if os.path.isfile(auc_file) and is_non_zero_file(auc_file):
-                    df_sub = load_pd_dfs_auc(atlas, prefix, auc_file,
-                                             modality, drop_cols)
+                    df_sub = load_pd_dfs_auc(atlas, f"model-{prefix}",
+                                             auc_file, modality, drop_cols)
                     df_sub['id'] = f"{sub}_{ses}"
                     if df_sub.empty:
                         print(f"{Fore.RED}Empty auc file for {sub} {ses}..."
@@ -925,14 +943,15 @@ def main():
     args_dict_all = {}
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
-    args_dict_all['pm'] = '64,126'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering_group/pynets'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['pm'] = '128,500'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
+    args_dict_all['work'] = '/tmp/work/func'
+    args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',
@@ -945,8 +964,10 @@ def main():
                            'degree_centrality',
                         #   "_minlength-0",
                         #   "_minlength-20",
+                        #   'rsn-triple',
+                           'ward', 'tol-None',
                            "_minlength-30", "variance",
-                           "res-1000"]
+                           "res-1000", "smooth-2fwhm"]
     args = SimpleNamespace(**args_dict_all)
 
     from multiprocessing import set_start_method, Process, Manager

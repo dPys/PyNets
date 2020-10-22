@@ -710,22 +710,31 @@ def build_workflow(args, retval):
         else:
             graph = graph[0]
             if os.path.isdir(graph):
+                # modality = 'func'
                 graph_iter = Path(graph).rglob('rawgraph*.npy')
                 if isinstance(ID, list):
                     if len(ID) > 1:
                         multi_graph = None
                         multi_subject_multigraph = []
                         for id in ID:
+                            # multi_subject_multigraph.append(
+                            #     [str(g) for g in graph_iter if id in str(g) and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
                         multi_subject_multigraph = None
                         ID = ID[0]
+                        # multi_graph = [str(g) for g in
+                        #                graph_iter if
+                        #                ID in str(g) and modality in str(g)]
                         multi_graph = [str(g) for g in
                                        graph_iter if
                                        ID in str(g)]
                 else:
                     multi_subject_multigraph = None
+                    # multi_graph = [str(g) for g in
+                    #                graph_iter if
+                    #                ID in str(g) and modality in str(g)]
                     multi_graph = [str(g) for g in
                                    graph_iter if
                                    ID in str(g)]

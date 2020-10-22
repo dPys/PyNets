@@ -13,7 +13,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
+def _omni_embed(pop_array, atlas, graph_path_list, ID,
+                subgraph_name="all_nodes", n_components=None, norm=1):
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
     sets.
@@ -32,7 +33,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
         If list of ndarray, each array must have shape (n_vertices, n_vertices).
         If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
     atlas : str
-    graph_path : str
+    graph_pathlist : list
     ID : str
     subgraph_name : str
 
@@ -52,10 +53,26 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
       Journal of Machine Learning Research.
 
     """
+    import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
+    from pynets.stats.netstats import CleanGraphs
+
+    clean_mats = []
+    i = 0
+    for graph_path in graph_path_list:
+        cg = CleanGraphs(None, None, graph_path, 0, norm)
+
+        if float(norm) >= 1:
+            G = cg.normalize_graph()
+            mat_clean = nx.to_numpy_array(G)
+        else:
+            mat_clean = pop_array[i]
+
+        clean_mats.append(mat_clean)
+        i += 1
 
     # Omnibus embedding
     print(
@@ -71,7 +88,7 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
                                                  omni_fit.shape[2],
                                                  omni_fit.shape[0]))
 
-    dir_path = str(Path(os.path.dirname(graph_path)).parent)
+    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
 
     namer_dir = f"{dir_path}/embeddings"
     if not os.path.isdir(namer_dir):
@@ -79,20 +96,20 @@ def _omni_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
 
     out_path = (
         f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
-        f"{os.path.basename(graph_path).split('_thrtype')[0]}.npy"
+        f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
     )
 
-    out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-                        f"{subgraph_name}_" \
-                        f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-                        f"_MDS.joblib"
-    out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-                       f"{subgraph_name}_" \
-                       f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-                       f"_MDS.joblib"
+    # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+    #                     f"{subgraph_name}_" \
+    #                     f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+    #                     f"_MDS.joblib"
+    # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+    #                    f"{subgraph_name}_" \
+    #                    f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+    #                    f"_MDS.joblib"
 
-    dump(omni, out_path_est_omni)
-    dump(omni, out_path_est_mds)
+    # dump(omni, out_path_est_omni)
+    # dump(omni, out_path_est_mds)
 
     print("Saving...")
     np.save(out_path, mds_fit)
@@ -179,7 +196,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     return out_path
 
 
-def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
+def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None, prune=0, norm=1):
     """
 
     Class for computing the adjacency spectral embedding of a graph.
@@ -224,10 +241,13 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
       Journal of the American Statistical Association, Vol. 107(499), 2012
 
     """
+    import os
+    import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
     from graspy.embed import AdjacencySpectralEmbed
     from joblib import dump
+    from pynets.stats.netstats import CleanGraphs
     #from graspy.utils import get_lcc
 
     # Adjacency Spectral embedding
@@ -236,8 +256,21 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
         f"{subgraph_name}{'...'}"
     )
     ase = AdjacencySpectralEmbed(n_components=n_components)
-    # ase_fit = ase.fit_transform(get_lcc(mat))
-    ase_fit = ase.fit_transform(mat)
+    cg = CleanGraphs(None, None, graph_path, prune, norm)
+
+    if float(norm) >= 1:
+        G = cg.normalize_graph()
+        mat_clean = nx.to_numpy_array(G)
+    else:
+        mat_clean = mat
+
+    if float(prune) >= 1:
+        graph_path_tmp = cg.prune_graph()[1]
+        mat_clean = np.load(graph_path_tmp)
+    else:
+        mat_clean = mat
+
+    ase_fit = ase.fit_transform(mat_clean)
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 
@@ -247,11 +280,11 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
 
     out_path = f"{namer_dir}/gradient-ASE" \
                f"_{atlas}_{subgraph_name}_{os.path.basename(graph_path)}"
-    out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
-                   f"_{subgraph_name}" \
-                   f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
+    # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
+    #                f"_{subgraph_name}" \
+    #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
-    dump(ase, out_path_est)
+    #dump(ase, out_path_est)
 
     print("Saving...")
     np.save(out_path, ase_fit)
@@ -535,8 +568,10 @@ def build_omnetome(est_path_iterlist, ID):
                     # RSN case
                     for rsn in parcel_dict_func[atlas]:
                         pop_rsn_list = []
+                        graph_path_list = []
                         for graph in parcel_dict_func[atlas][rsn]:
                             pop_rsn_list.append(np.load(graph))
+                            graph_path_list.append(graph)
                         if len(pop_rsn_list) > 1:
                             if len(
                                     list(set([i.shape for i in
@@ -546,7 +581,7 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding...")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path, ID, rsn,
+                                pop_rsn_list, atlas, graph_path_list, ID, rsn,
                                 n_components
                             )
                             out_paths_func.append(out_path)
@@ -558,15 +593,17 @@ def build_omnetome(est_path_iterlist, ID):
                             pass
                 else:
                     pop_list = []
+                    graph_path_list = []
                     for pop_ref in parcel_dict_func[atlas]:
                         pop_list.append(np.load(pop_ref))
+                        graph_path_list.append(pop_ref)
                     if len(pop_list) > 1:
                         if len(list(set([i.shape for i in pop_list]))) > 1:
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in "
                                 "graph population that precludes embedding")
                         out_path = _omni_embed(pop_list, atlas,
-                                               graph_path, ID,
+                                               graph_path_list, ID,
                                                n_components=n_components)
                         out_paths_func.append(out_path)
                     else:
@@ -579,10 +616,12 @@ def build_omnetome(est_path_iterlist, ID):
             if len(parcel_dict_dwi[atlas]) > 0:
                 if isinstance(parcel_dict_dwi[atlas], dict):
                     # RSN case
+                    graph_path_list = []
                     for rsn in parcel_dict_dwi[atlas]:
                         pop_rsn_list = []
                         for graph in parcel_dict_dwi[atlas][rsn]:
                             pop_rsn_list.append(np.load(graph))
+                            graph_path_list.append(graph)
                         if len(pop_rsn_list) > 1:
                             if len(
                                     list(set([i.shape for i in
@@ -592,7 +631,7 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path, ID,
+                                pop_rsn_list, atlas, graph_path_list, ID,
                                 rsn, n_components
                             )
                             out_paths_dwi.append(out_path)
@@ -604,14 +643,16 @@ def build_omnetome(est_path_iterlist, ID):
                             pass
                 else:
                     pop_list = []
+                    graph_path_list = []
                     for pop_ref in parcel_dict_dwi[atlas]:
                         pop_list.append(np.load(pop_ref))
+                        graph_path_list.append(pop_ref)
                     if len(pop_list) > 1:
                         if len(list(set([i.shape for i in pop_list]))) > 1:
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas, graph_path,
+                        out_path = _omni_embed(pop_list, atlas, graph_path_list,
                                                ID, n_components=n_components)
                         out_paths_dwi.append(out_path)
                     else:
