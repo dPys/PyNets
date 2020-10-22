@@ -86,9 +86,9 @@ def test_conn_mat_operations(cp, thr, mat_size):
         x_undir = nx.to_numpy_matrix(x_undir)
 
         conn_matrix_thr = thresholding.local_thresholding_prop(x, thr)
-        assert conn_matrix_thr is not None
+        assert isinstance(conn_matrix_thr, np.ndarray)
         conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, thr)
-        assert conn_matrix_thr_undir is not None
+        assert isinstance(conn_matrix_thr_undir, np.ndarray)
 
     def test_knn(x, thr):
         k = int(thr * 10)
@@ -106,10 +106,10 @@ def test_conn_mat_operations(cp, thr, mat_size):
         for e in range(1, 10):
             G_undir.remove_edge(0, e)
 
-        N = thresholding.disparity_filter(G_dir, weight='weight')
-        assert N is not None
-        N = thresholding.disparity_filter(G_undir, weight='weight')
-        assert N is not None
+        B = thresholding.disparity_filter(G_dir, weight='weight')
+        assert isinstance(B, nx.Graph)
+        B = thresholding.disparity_filter(G_undir, weight='weight')
+        assert isinstance(B, nx.Graph)
 
     def test_disparity_filter_alpha_cut(x):
         G_undir = nx.from_numpy_matrix(x)
@@ -118,25 +118,25 @@ def test_conn_mat_operations(cp, thr, mat_size):
         G_undir.add_edge(0, 1, alpha=0.1, weight=0.5)
 
         for mode in ['or', 'and']:
-            N = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight', cut_mode = mode)
-            assert N is not None
-            N = thresholding.disparity_filter_alpha_cut(G_undir, weight='weight', cut_mode = mode)
-            assert N is not None
+            B = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight', cut_mode = mode)
+            assert isinstance(B, nx.Graph)
+            B = thresholding.disparity_filter_alpha_cut(G_undir, weight='weight', cut_mode = mode)
+            assert isinstance(B, nx.Graph)
 
     def test_weight_conversion(x, cp):
         # Cross test all wcm and copy combinations
         for wcm in ['binarize', 'lengths']:
             w = thresholding.weight_conversion(x, wcm, cp)
-            assert w is not None
+            assert isinstance(w, np.ndarray)
 
     def test_weight_to_distance(x):
         G = nx.from_numpy_matrix(x)
         w = thresholding.weight_to_distance(G)
-        assert w is not None
+        assert isinstance(w, nx.Graph)
 
     def test_standardize(x):
         w = thresholding.standardize(x)
-        assert w is not None
+        assert isinstance(w, np.ndarray)
 
     base_dir = str(Path(__file__).parent/"examples")
     # base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
@@ -209,7 +209,7 @@ def test_edge_cases(thr):
             x[i][idx-1] = 1
 
     conn_mat_edge_one = thresholding.local_thresholding_prop(x, thr)
-    assert conn_mat_edge_one is not None
+    assert isinstance(conn_mat_edge_one, np.ndarray)
 
 
 @pytest.mark.parametrize("type,parc,all_zero,frag_g",
@@ -266,31 +266,35 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
                                  atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy,
                                  check_consistency=False)
 
-    assert conn_matrix_thr is not None
+    assert conn_matrix_thr.size is 100
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
         assert edge_threshold is None # edge_threshold will be none in one case
     else:
-        assert edge_threshold is not None
+        assert isinstance(edge_threshold, str)
     assert os.path.isfile(est_path) is True
-    assert thr is not None
-    if node_size != 'parc':
-        assert isinstance(node_size, int)
+    assert (0 <= thr <= 1)
+    if isinstance(node_size, str):
+        assert node_size is 'parc'
     else:
-        assert isinstance(node_size, str)
-    assert network is not None
-    assert conn_model is not None
-    assert roi is not None
-    assert smooth is not None
-    assert prune is not None
-    assert ID is not None
-    assert dir_path is not None
-    assert atlas is not None
-    assert uatlas is None # Set to none above
-    assert labels is not None
-    assert coords is not None
-    assert norm is not None
-    assert binary is not None
-    assert hpass is not None
+        assert isinstance(node_size, int)
+    assert isinstance(network, str)
+    assert isinstance(conn_model, str)
+    if roi is not None:
+        assert isinstance(roi, str)
+        assert os.path.isfile(roi) is True
+    assert isinstance(smooth, int)
+    assert isinstance(prune, bool)
+    assert isinstance(ID, str)
+    assert isinstance(dir_path, str)
+    assert isinstance(atlas, str)
+    if uatlas is not None:
+        assert isinstance(uatlas, str)
+        assert os.path.isfile(uatlas) is True
+    assert isinstance(labels, list)
+    assert isinstance(coords, list)
+    assert isinstance(norm, int)
+    assert isinstance(binary, bool)
+    assert isinstance(hpass, bool)
 
     # Additional arguments for thresh_struc
     if all_zero == True and type == 'struct':
@@ -316,32 +320,35 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
                                                                                atlas_mni, streams, directget,
                                                                                min_length, error_margin, check_consistency=False)
 
-    assert dens_thresh is not None
-    assert thr is not None
-    assert conn_matrix is not None
-    assert conn_model is not None
-    assert network is not None
-    assert ID is not None
-    assert dir_path is not None
-    assert roi is not None
-    assert node_size is not None
-    assert min_span_tree is not None
-    assert disp_filt is not None
-    assert parc is not None
-    assert prune is not None
-    assert atlas is not None
+    assert isinstance(dens_thresh, bool)
+    assert (0 <= thr <= 1)
+    assert conn_matrix.size is 100
+    assert isinstance(conn_model, str)
+    assert isinstance(network, str)
+    assert isinstance(ID, str)
+    assert isinstance(dir_path, str)
+    assert isinstance(roi, str)
+    if isinstance(node_size, str):
+        assert node_size is 'parc'
+    else:
+        assert isinstance(node_size, int)
+    assert isinstance(min_span_tree, bool)
+    assert isinstance(disp_filt, bool)
+    assert isinstance(parc, bool)
+    assert isinstance(prune, bool)
+    assert isinstance(atlas, str)
     assert uatlas is None
-    assert labels is not None
-    assert coords is not None
-    assert norm is not None
-    assert binary is not None
-    assert target_samples is not None
-    assert track_type is not None
-    assert atlas_mni is not None
-    assert streams is not None
-    assert directget is not None
-
-
+    assert isinstance(labels, list)
+    assert len(coords) is len(labels) 
+    assert isinstance(coords, list)
+    assert isinstance(norm, int)
+    assert isinstance(binary, bool)
+    assert isinstance(target_samples, int)
+    assert isinstance(track_type, str)
+    assert isinstance(atlas_mni, str)
+    assert isinstance(streams, str)
+    assert isinstance(directget, str)
+    
 def test_thresh_raw_graph():
     from pynets.core import thresholding
 
@@ -350,8 +357,7 @@ def test_thresh_raw_graph():
     min_span_tree = True
     dens_thresh = True
     disp_filt = True
-    # base_dir = str(Path(__file__).parent/"examples")
-    base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
+    base_dir = str(Path(__file__).parent/"examples")
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
                f"nodetype-parc_model-sps_template-MNI152_T1_thrtype-" \
                f"DENS_thr-0.19.npy"
@@ -364,9 +370,8 @@ def test_thresh_raw_graph():
         dens_thresh,
         disp_filt,
         est_path)
-
-    assert thr_type is not None
-    assert edge_threshold is not None
-    assert conn_matrix_thr is not None
-    assert thr is not None
-    assert est_path is not None
+    assert isinstance(thr_type, str)
+    assert isinstance(edge_threshold, str)
+    assert conn_matrix_thr.size is 100
+    assert (0 <= thr <= 1)
+    assert os.path.isfile(est_path) is True
