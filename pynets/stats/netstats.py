@@ -1696,6 +1696,8 @@ def extractnetstats(
 
     if float(prune) >= 1:
         [_, tmp_graph_path] = cg.prune_graph()
+    else:
+        tmp_graph_path = None
 
     if binary is True:
         in_mat, G = cg.binarize_graph()
@@ -1951,8 +1953,9 @@ def extractnetstats(
     )
 
     # Cleanup
-    if tmp_graph_path:
-        os.remove(tmp_graph_path)
+    if tmp_graph_path is not None:
+        if os.path.isfile(tmp_graph_path):
+            os.remove(tmp_graph_path)
 
     del net_met_val_list_final, metric_list_names, metric_list_global
     gc.collect()
