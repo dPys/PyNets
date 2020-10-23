@@ -335,9 +335,9 @@ def track_ensemble(
 
     target_samples : int
         Total number of streamline samples specified to generate streams.
-    atlas_data_wm_gm_int : array
-        3D int32 numpy array of atlas parcellation intensities from Nifti1Image
-        in T1w-warped native diffusion space, restricted to wm-gm interface.
+    atlas_data_wm_gm_int : str
+        File path to Nifti1Image in T1w-warped native diffusion space,
+        restricted to wm-gm interface.
     parcels : list
         List of 3D boolean numpy arrays of atlas parcellation ROI masks from a
         Nifti1Image in T1w-warped native diffusion space.
@@ -417,6 +417,8 @@ def track_ensemble(
     from pynets.dmri.dmri_utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     from pynets.core.utils import save_3d_to_4d
+    from nilearn.masking import intersect_masks
+    from nilearn.image import math_img
 
     cache_dir = f"{cache_dir}/joblib_tracking"
     os.makedirs(cache_dir, exist_ok=True)
@@ -442,7 +444,31 @@ def track_ensemble(
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
-    tissues4d = save_3d_to_4d([B0_mask, labels_im_file, atlas_data_wm_gm_int,
+    # Construct seeding mask
+    seeding_mask = f"{cache_dir}/seeding_mask.nii.gz"
+    if waymask is not None and os.path.isfile(waymask):
+        atlas_data_wm_gm_int_img = intersect_masks(
+            [
+                math_img("img > 0.0075", img=nib.load(waymask)),
+                math_img("img > 0.001", img=nib.load(atlas_data_wm_gm_int)),
+                math_img("img > 0.001", img=nib.load(labels_im_file))
+            ],
+            threshold=0,
+            connected=False,
+        )
+        nib.save(atlas_data_wm_gm_int_img, seeding_mask)
+    else:
+        atlas_data_wm_gm_int_img = intersect_masks(
+            [
+                math_img("img > 0.001", img=nib.load(atlas_data_wm_gm_int)),
+                math_img("img > 0.001", img=nib.load(labels_im_file))
+            ],
+            threshold=0,
+            connected=False,
+        )
+        nib.save(atlas_data_wm_gm_int_img, seeding_mask)
+
+    tissues4d = save_3d_to_4d([B0_mask, labels_im_file, seeding_mask,
                                t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi])
 
     # Commence Ensemble Tractography
@@ -458,13 +484,12 @@ def track_ensemble(
                       verbose=10) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
-                    i, recon_path,
-                    n_seeds_per_iter, directget, maxcrossing, max_length,
-                    pft_back_tracking_dist, pft_front_tracking_dist,
-                    particle_count, roi_neighborhood_tol,
-                    waymask, min_length, track_type,
-                    min_separation_angle, sphere, tiss_class, tissues4d,
-                    cache_dir) for i in
+                    i, recon_path, n_seeds_per_iter, directget, maxcrossing,
+                    max_length, pft_back_tracking_dist,
+                    pft_front_tracking_dist, particle_count,
+                    roi_neighborhood_tol, waymask, min_length,
+                    track_type, min_separation_angle, sphere, tiss_class,
+                    tissues4d, cache_dir) for i in
                 all_combs)
 
             out_streams = [i for i in out_streams if i is not None and i is
@@ -473,7 +498,7 @@ def track_ensemble(
             if len(out_streams) > 1:
                 out_streams = concatenate(out_streams, axis=0)
 
-            if len(out_streams) < 50:
+            if len(out_streams) < 100:
                 ix += 1
                 print("Fewer than 100 streamlines tracked on last iteration."
                       " loosening tolerance and anatomical constraints...")
@@ -528,7 +553,7 @@ def run_tracking(step_curv_combinations, recon_path,
                  pft_back_tracking_dist, pft_front_tracking_dist,
                  particle_count, roi_neighborhood_tol, waymask, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
-                 tissues4d, cache_dir):
+                 tissues4d, cache_dir, min_seeds=100):
 
     import gc
     import os
@@ -649,12 +674,13 @@ def run_tracking(step_curv_combinations, recon_path,
         atlas_data_wm_gm_int_data > 0,
         seeds_count=n_seeds_per_iter,
         seed_count_per_voxel=False,
+    #     seeds_count=1,
+    #     seed_count_per_voxel=True,
         affine=np.eye(4),
     )
-    if len(seeds) == 0:
+    if len(seeds) < min_seeds:
         print(UserWarning(
-            "No valid seed points found in wm-gm "
-            "interface..."
+            f"<{min_seeds} valid seed points found in wm-gm interface..."
         ))
         return None
 
@@ -718,8 +744,7 @@ def run_tracking(step_curv_combinations, recon_path,
                     affine=np.eye(4),
                     rois=parcels,
                     include=parcel_vec,
-                    mode="%s" % ("any" if waymask is not None else
-                                 "both_end"),
+                    mode="any",
                     tol=roi_neighborhood_tol,
                 )
             )
@@ -745,9 +770,8 @@ def run_tracking(step_curv_combinations, recon_path,
         return None
 
     if waymask is not None and os.path.isfile(waymask_tmp_path):
-        from nilearn.image import math_img
-        mask = math_img("img > 0.0075", img=nib.load(waymask_tmp_path))
-        waymask_data = np.asarray(mask.dataobj).astype("bool")
+        waymask_data = np.asarray(nib.load(waymask_tmp_path
+                                           ).dataobj).astype("bool")
         try:
             roi_proximal_streamlines = roi_proximal_streamlines[
                 utils.near_roi(

@@ -1047,7 +1047,7 @@ class CleanGraphs(object):
 
         self.thr = thr
         self.conn_model = conn_model
-        self.est_pathself.est_path = est_path
+        self.est_path = est_path
         self.prune = prune
         self.norm = norm
         self.out_fmt = out_fmt
