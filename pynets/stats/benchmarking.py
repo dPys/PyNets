@@ -554,7 +554,7 @@ if __name__ == "__main__":
         f.close()
         final_missingness_summary = pd.read_csv(missingness_summary)
 
-    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand = True)[0]
+    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
 
     ids = sub_dict_clean.keys()
 
