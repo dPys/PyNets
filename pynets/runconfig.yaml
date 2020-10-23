@@ -8,14 +8,20 @@ StructuralNetworkWeighting:
 tracking:
     step_list: # For ensemble tractography, step-sizes should never exceed the voxel size. By default, PyNets covers 0.1-0.8 which encompasses the typical range of values used in human tractography.
         - 0.1
-        - 0.2
-        - 0.2
+        - 0.3
         - 0.4
+        - 0.4
+        - 0.5
+        - 0.5
+        - 0.6
         - 0.8
     curv_thr_list: # Ensemble tractography, should be [0, 90] degrees.
-        - 60
+        - 80
+        - 50
         - 40
-        - 20
+        - 40
+        - 30
+        - 10
     use_life:  # Filter ensemble tractogram to yield more plausible streamlines.
         - False
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.

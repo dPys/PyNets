@@ -478,7 +478,7 @@ def track_ensemble(
     all_streams = []
     ix = 0
     while float(stream_counter) < float(target_samples) and \
-        float(ix) < 0.75*float(len(all_combs)):
+        float(ix) < 0.50*float(len(all_combs)):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
                       verbose=10) as parallel:
@@ -778,7 +778,7 @@ def run_tracking(step_curv_combinations, recon_path,
                     roi_proximal_streamlines,
                     np.eye(4),
                     waymask_data,
-                    tol=roi_neighborhood_tol,
+                    tol=int(round(roi_neighborhood_tol*0.50, 1)),
                     mode="all"
                 )
             ]
