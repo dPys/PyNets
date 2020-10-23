@@ -8,6 +8,7 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import os
 import numpy as np
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -23,35 +24,42 @@ logger.setLevel(50)
 
 
 @pytest.mark.parametrize("cp", [True, False])
-@pytest.mark.parametrize("thr", [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+@pytest.mark.parametrize("thr",
+                         [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0,
+                          0.2, 0.4, 0.6, 0.8, 1.0])
 @pytest.mark.parametrize("mat_size", [(10, 10), (100, 100)])
 def test_conn_mat_operations(cp, thr, mat_size):
     """ Includes original tests using .npy and new tests from randomly generate arrays, as
         well as additional assert statements.
     """
+
     def test_binarize(x, thr, cp):
         y = thresholding.threshold_proportional(x, thr, copy=cp)
         s = thresholding.binarize(y)
         assert np.sum(s) == np.count_nonzero(y)
 
     def test_normalize(x, thr, cp):
-        x = thresholding.threshold_proportional(x, 1, copy=True) # remove diagonal
+        x = thresholding.threshold_proportional(x, 1,
+                                                copy=True)  # remove diagonal
         s = thresholding.normalize(x)
         assert np.max(s) <= 1 and np.min(s) >= 0
-        assert np.max(s) == 1 and np.min(s) == round(min(x.flatten())/max(x.flatten()), 1)
+        assert np.max(s) == 1 and np.min(s) == round(
+            min(x.flatten()) / max(x.flatten()), 1)
 
     def test_threshold_absolute(x, thr, cp):
         s = thresholding.threshold_absolute(x, thr, copy=cp)
-        s_test = [val for arr in s for val in arr if val >= thr] # search for value > thr
+        s_test = [val for arr in s for val in arr if
+                  val >= thr]  # search for value > thr
         assert round(np.sum(s), 10) == round(np.sum(s_test), 10)
 
     def test_invert(x, thr, cp):
-        x_cp = x.copy() # invert modifies array in place and need orig to assert.
+        x_cp = x.copy()  # invert modifies array in place and need orig to assert.
         x_cp = thresholding.threshold_proportional(x_cp, thr, copy=cp)
         s = thresholding.invert(x_cp)
-        x = x.flatten() # flatten arrays to more easily check s > x.
+        x = x.flatten()  # flatten arrays to more easily check s > x.
         s = s.flatten()
-        s_gt_x = [inv_val > x[idx] for idx, inv_val in enumerate(s) if inv_val > 0]
+        s_gt_x = [inv_val > x[idx] for idx, inv_val in enumerate(s) if
+                  inv_val > 0]
         assert False not in s_gt_x
 
     def test_autofix(x, thr, cp):
@@ -61,7 +69,8 @@ def test_conn_mat_operations(cp, thr, mat_size):
         assert (np.nan not in s) and (np.inf not in s)
 
     def test_density(x, thr):
-        d_known = thresholding.est_density(thresholding.threshold_absolute(x, thr, copy=True))
+        d_known = thresholding.est_density(
+            thresholding.threshold_absolute(x, thr, copy=True))
         x = thresholding.density_thresholding(x, d_known)
         d_test = thresholding.est_density(x)
         assert np.equal(np.round(d_known, 1), np.round(d_test, 1))
@@ -87,7 +96,8 @@ def test_conn_mat_operations(cp, thr, mat_size):
 
         conn_matrix_thr = thresholding.local_thresholding_prop(x, thr)
         assert isinstance(conn_matrix_thr, np.ndarray)
-        conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir, thr)
+        conn_matrix_thr_undir = thresholding.local_thresholding_prop(x_undir,
+                                                                     thr)
         assert isinstance(conn_matrix_thr_undir, np.ndarray)
 
     def test_knn(x, thr):
@@ -118,9 +128,12 @@ def test_conn_mat_operations(cp, thr, mat_size):
         G_undir.add_edge(0, 1, alpha=0.1, weight=0.5)
 
         for mode in ['or', 'and']:
-            B = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight', cut_mode = mode)
+            B = thresholding.disparity_filter_alpha_cut(G_dir, weight='weight',
+                                                        cut_mode=mode)
             assert isinstance(B, nx.Graph)
-            B = thresholding.disparity_filter_alpha_cut(G_undir, weight='weight', cut_mode = mode)
+            B = thresholding.disparity_filter_alpha_cut(G_undir,
+                                                        weight='weight',
+                                                        cut_mode=mode)
             assert isinstance(B, nx.Graph)
 
     def test_weight_conversion(x, cp):
@@ -138,9 +151,10 @@ def test_conn_mat_operations(cp, thr, mat_size):
         w = thresholding.standardize(x)
         assert isinstance(w, np.ndarray)
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = str(Path(__file__).parent / "examples")
     # base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
-    W = np.load(f"{base_dir}/miscellaneous/002_rsn-Default_model-cov_raw_mat.npy")
+    W = np.load(
+        f"{base_dir}/miscellaneous/002_rsn-Default_model-cov_raw_mat.npy")
 
     x_orig = W.copy()
     x_rand = x = np.random.rand(mat_size[0], mat_size[1])
@@ -197,34 +211,37 @@ def test_conn_mat_operations(cp, thr, mat_size):
 @pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 def test_edge_cases(thr):
     # local_thresholding_prop: nng.number_of_edges() == 0 and number_before >= maximum_edges
-    x = np.zeros((10,10))
+    x = np.zeros((10, 10))
     x = nx.to_numpy_array(nx.from_numpy_matrix(x).to_directed())
     coords = [idx for idx, val in enumerate(x)]
     labels = ['ROI_' + str(idx) for idx, val in enumerate(x)]
 
     for idx, i in enumerate(range(0, 10)):
         if idx < 9:
-            x[i][idx+1] = 1
+            x[i][idx + 1] = 1
         if idx < 10 and idx > 0:
-            x[i][idx-1] = 1
+            x[i][idx - 1] = 1
 
     conn_mat_edge_one = thresholding.local_thresholding_prop(x, thr)
     assert isinstance(conn_mat_edge_one, np.ndarray)
 
 
 @pytest.mark.parametrize("type,parc,all_zero,frag_g",
-    [
-        pytest.param('func', True, True, True, marks=pytest.mark.xfail),
-        pytest.param('struct', True, True, True, marks=pytest.mark.xfail),
-        ('either', True, False, True),
-        ('either', False, False, False)
-    ]
-)
+                         [
+                             pytest.param('func', True, True, True,
+                                          marks=pytest.mark.xfail),
+                             pytest.param('struct', True, True, True,
+                                          marks=pytest.mark.xfail),
+                             ('either', True, False, True),
+                             ('either', False, False, False)
+                         ]
+                         )
 @pytest.mark.parametrize("min_span_tree", [True, False])
 @pytest.mark.parametrize("disp_filt", [True, False])
 @pytest.mark.parametrize("dens_thresh", [True, False])
-def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh, frag_g):
-    base_dir = str(Path(__file__).parent/"examples")
+def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
+                     dens_thresh, frag_g):
+    base_dir = str(Path(__file__).parent / "examples")
     dir_path = f"{base_dir}/miscellaneous"
 
     if all_zero == True and type == 'func':
@@ -260,15 +277,18 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     extract_strategy = 'mean'
 
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
-        prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
-        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model, network, ID, dir_path,
-                                 roi, node_size, min_span_tree, smooth, disp_filt, parc, prune,
-                                 atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy,
+    prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
+        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
+                                 network, ID, dir_path,
+                                 roi, node_size, min_span_tree, smooth,
+                                 disp_filt, parc, prune,
+                                 atlas, uatlas, labels, coords, norm, binary,
+                                 hpass, extract_strategy,
                                  check_consistency=False)
 
     assert conn_matrix_thr.size is 100
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
-        assert edge_threshold is None # edge_threshold will be none in one case
+        assert edge_threshold is None  # edge_threshold will be none in one case
     else:
         assert isinstance(edge_threshold, str)
     assert os.path.isfile(est_path) is True
@@ -309,16 +329,17 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     error_margin = 6
 
     conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
-        ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
-        atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(dens_thresh, thr, conn_matrix,
-                                                                               conn_model, network, ID,
-                                                                               dir_path, roi, node_size,
-                                                                               min_span_tree, disp_filt, parc,
-                                                                               prune, atlas, uatlas, labels,
-                                                                               coords, norm, binary,
-                                                                               target_samples, track_type,
-                                                                               atlas_mni, streams, directget,
-                                                                               min_length, error_margin, check_consistency=False)
+    ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
+    atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(
+        dens_thresh, thr, conn_matrix,
+        conn_model, network, ID,
+        dir_path, roi, node_size,
+        min_span_tree, disp_filt, parc,
+        prune, atlas, uatlas, labels,
+        coords, norm, binary,
+        target_samples, track_type,
+        atlas_mni, streams, directget,
+        min_length, error_margin, check_consistency=False)
 
     assert isinstance(dens_thresh, bool)
     assert (0 <= thr <= 1)
@@ -339,7 +360,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert isinstance(atlas, str)
     assert uatlas is None
     assert isinstance(labels, list)
-    assert len(coords) is len(labels) 
+    assert len(coords) is len(labels)
     assert isinstance(coords, list)
     assert isinstance(norm, int)
     assert isinstance(binary, bool)
@@ -348,7 +369,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt, dens_thresh
     assert isinstance(atlas_mni, str)
     assert isinstance(streams, str)
     assert isinstance(directget, str)
-    
+
 def test_thresh_raw_graph():
     from pynets.core import thresholding
 
@@ -357,19 +378,19 @@ def test_thresh_raw_graph():
     min_span_tree = True
     dens_thresh = True
     disp_filt = True
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = str(Path(__file__).parent / "examples")
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
                f"nodetype-parc_model-sps_template-MNI152_T1_thrtype-" \
                f"DENS_thr-0.19.npy"
 
     [thr_type, edge_threshold, conn_matrix_thr, thr, est_path] = \
         thresholding.thresh_raw_graph(
-        conn_matrix,
-        thr,
-        min_span_tree,
-        dens_thresh,
-        disp_filt,
-        est_path)
+            conn_matrix,
+            thr,
+            min_span_tree,
+            dens_thresh,
+            disp_filt,
+            est_path)
     assert isinstance(thr_type, str)
     assert isinstance(edge_threshold, str)
     assert conn_matrix_thr.size is 100

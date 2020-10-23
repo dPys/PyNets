@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 27 16:19:14 2017
-
 @authors: Derek Pisner & Ryan Hammonds
-
 """
 import pytest
 import numpy as np
@@ -386,7 +384,6 @@ def test_iterate_nx_global_measures(true_metric):
 @pytest.mark.parametrize("sim_size", [1, 5, 10])
 def test_community_resolution_selection(sim_num_comms, sim_size):
     """ Test community resolution selection
-
     Note: It is impossible to enter or cover the second while loop in
           netstats.community_resolution_selection.
     """
