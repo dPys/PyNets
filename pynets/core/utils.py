@@ -17,6 +17,9 @@ import numpy as np
 import time
 import logging
 import threading
+import traceback
+import signal
+
 warnings.filterwarnings("ignore")
 
 WATCHDOG_HARD_KILL_TIMEOUT = 90
@@ -1933,6 +1936,18 @@ def save_3d_to_4d(in_files):
     return out_file
 
 
+def dumpstacks(signal, frame):
+    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
+    code = []
+    for threadId, stack in sys._current_frames().items():
+        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                code.append("  %s" % (line.strip()))
+    print("\n".join(code))
+
+
 class watchdog(object):
     def run(self):
         self.shutdown = threading.Event()
@@ -1955,20 +1970,12 @@ class watchdog(object):
             if last_progress_delay < WATCHDOG_HARD_KILL_TIMEOUT:
                 continue
             try:
-                stacks = self._get_thread_stack_traces()
-                log.error(
-                    "no progress in %0.01f seconds\n"
-                    "kill -9 time...\n\n%s",
-                    last_progress_delay, self.last_message,
-                    "\n\n".join(stacks),
-                    extra={"thread_stacks": stacks},
-                )
+                signal.signal(signal.SIGQUIT, dumpstacks)
+                print(f"No progress in {last_progress_delay} seconds...")
             except:
                 pass
-            # Hopefully give logs some time to flush
-            time.sleep(2)
+            time.sleep(1)
             os.kill(0, 9)
-            sys.exit(1)
 
     def _run(self):
         from pynets.cli.pynets_run import main

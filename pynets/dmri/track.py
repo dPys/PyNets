@@ -571,9 +571,12 @@ def run_tracking(step_curv_combinations, recon_path,
     from pynets.dmri.track import prep_tissues
     from nibabel.streamlines.array_sequence import ArraySequence
     from nipype.utils.filemanip import copyfile, fname_presuffix
+    import uuid
+    from time import strftime
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
     recon_path_tmp_path = fname_presuffix(
-        recon_path, suffix=f"_{step_curv_combinations}",
+        recon_path, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -584,7 +587,7 @@ def run_tracking(step_curv_combinations, recon_path,
 
     if waymask is not None:
         waymask_tmp_path = fname_presuffix(
-            waymask, suffix=f"_{step_curv_combinations}",
+            waymask, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
             newpath=cache_dir
         )
         copyfile(
@@ -600,7 +603,7 @@ def run_tracking(step_curv_combinations, recon_path,
     # Order:
     B0_mask = index_img(tissue_img, 0)
     atlas_img = index_img(tissue_img, 1)
-    atlas_data_wm_gm_int = index_img(tissue_img, 2)
+    seeding_mask = index_img(tissue_img, 2)
     t1w2dwi = index_img(tissue_img, 3)
     gm_in_dwi = index_img(tissue_img, 4)
     vent_csf_in_dwi = index_img(tissue_img, 5)
@@ -617,8 +620,8 @@ def run_tracking(step_curv_combinations, recon_path,
 
     B0_mask_data = np.asarray(B0_mask.dataobj).astype("bool")
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
-    atlas_data_wm_gm_int_data = np.asarray(
-        atlas_data_wm_gm_int.dataobj
+    seeding_mask = np.asarray(
+        seeding_mask.dataobj
     ).astype("bool").astype("int16")
 
     # Build mask vector from atlas for later roi filtering
@@ -671,7 +674,7 @@ def run_tracking(step_curv_combinations, recon_path,
 
     # Perform wm-gm interface seeding, using n_seeds at a time
     seeds = utils.random_seeds_from_mask(
-        atlas_data_wm_gm_int_data > 0,
+        seeding_mask > 0,
         seeds_count=n_seeds_per_iter,
         seed_count_per_voxel=False,
     #     seeds_count=1,
@@ -787,12 +790,13 @@ def run_tracking(step_curv_combinations, recon_path,
         except BaseException:
             print('No streamlines remaining in waymask\'s vacinity.')
             return None
+        os.remove(waymask_tmp_path)
 
     out_streams = [s.astype("float32")
                    for s in roi_proximal_streamlines]
 
     del dg, seeds, roi_proximal_streamlines, streamline_generator, \
-        atlas_data_wm_gm_int_data, mod_fit, B0_mask_data
+        seeding_mask, mod_fit, B0_mask_data
 
     os.remove(recon_path_tmp_path)
     gc.collect()

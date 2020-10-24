@@ -27,7 +27,7 @@ tracking:
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'local'
     tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 30,000 = 3 million streamlines!)
-        - 30000
+        - 1000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
@@ -55,7 +55,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 1
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -205,7 +205,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 1)
       - 'run_tracking_node':
-        - (2, 8)
+        - (4, 16)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':

@@ -945,7 +945,7 @@ class ExtractTimeseries(SimpleInterface):
 class _PlotStructInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotStruct"""
 
-    conn_matrix = traits.Array(mandatory=True)
+    conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
     atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
@@ -981,6 +981,9 @@ class PlotStruct(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        if isinstance(self.inputs.conn_matrix, str):
+            self.inputs.conn_matrix = np.load(self.inputs.conn_matrix)
 
         assert (
             len(self.inputs.coords)
@@ -1022,7 +1025,7 @@ class PlotStruct(SimpleInterface):
 class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotFunc"""
 
-    conn_matrix = traits.Array(mandatory=True)
+    conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
     atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
@@ -1058,6 +1061,9 @@ class PlotFunc(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        if isinstance(self.inputs.conn_matrix, str):
+            self.inputs.conn_matrix = np.load(self.inputs.conn_matrix)
 
         assert (
             len(self.inputs.coords)

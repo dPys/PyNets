@@ -1062,7 +1062,6 @@ def thresh_func(
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,
@@ -1311,7 +1310,6 @@ def thresh_struct(
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,

@@ -2693,7 +2693,6 @@ def dmri_connectometry(
         "error_margin"
     ]
     thr_struct_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -2724,7 +2723,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2759,7 +2757,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2927,7 +2924,7 @@ def dmri_connectometry(
                     thr_out_node,
                     plot_all_node,
                     [
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("conn_model", "conn_model"),
                         ("atlas", "atlas"),
                         ("dir_path", "dir_path"),
@@ -5093,7 +5090,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5124,7 +5120,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5295,7 +5290,7 @@ def fmri_connectometry(
                         ("node_size", "node_size"),
                         ("smooth", "smooth"),
                         ("dir_path", "dir_path"),
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("edge_threshold", "edge_threshold"),
                         ("thr", "thr"),
                         ("conn_model", "conn_model"),
