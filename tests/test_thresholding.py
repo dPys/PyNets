@@ -370,7 +370,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert isinstance(streams, str)
     assert isinstance(directget, str)
 
-
 def test_thresh_raw_graph():
     from pynets.core import thresholding
 
