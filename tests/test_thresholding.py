@@ -276,7 +276,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     hpass = False
     extract_strategy = 'mean'
 
-    conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
+    edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
     prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
                                  network, ID, dir_path,
@@ -286,7 +286,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
                                  hpass, extract_strategy,
                                  check_consistency=False)
 
-    assert conn_matrix_thr.size is 100
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
         assert edge_threshold is None  # edge_threshold will be none in one case
     else:
@@ -328,7 +327,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     min_length = 20
     error_margin = 6
 
-    conn_matrix_thr, edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
+    edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
     ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
     atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(
         dens_thresh, thr, conn_matrix,
