@@ -497,7 +497,7 @@ class IndividualClustering(SimpleInterface):
         import gc
         import time
         import nibabel as nib
-        import yaml
+        from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
@@ -524,13 +524,9 @@ class IndividualClustering(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            c_boot = hardcoded_params["c_boot"][0]
-            nthreads = hardcoded_params["nthreads"][0]
-        stream.close()
+        hardcoded_params = load_runconfig()
+        c_boot = hardcoded_params["c_boot"][0]
+        nthreads = hardcoded_params["nthreads"][0]
 
         clust_list = ["kmeans", "ward", "complete", "average", "ncut", "rena"]
 
@@ -2710,8 +2706,7 @@ class Tracking(SimpleInterface):
         from colorama import Fore, Style
         from dipy.data import get_sphere
         from pynets.core import utils
-        import pkg_resources
-        import yaml
+        from pynets.core.utils import load_runconfig
         from pynets.dmri.track import (
             reconstruction,
             create_density_map,
@@ -2722,15 +2717,10 @@ class Tracking(SimpleInterface):
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
 
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            use_life = hardcoded_params['tracking']["use_life"][0]
-            roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
-            sphere = hardcoded_params['tracking']["sphere"][0]
-
-        stream.close()
+        hardcoded_params = load_runconfig()
+        use_life = hardcoded_params['tracking']["use_life"][0]
+        roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+        sphere = hardcoded_params['tracking']["sphere"][0]
 
         dir_path = utils.do_dir_path(
             self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)

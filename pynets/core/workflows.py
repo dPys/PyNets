@@ -94,8 +94,7 @@ def workflow_selector(
     import gc
     import os
     import sys
-    import yaml
-    import pkg_resources
+    from pynets.core.utils import load_runconfig
     from pathlib import Path
     from pynets.core import workflows
     from nipype import Workflow
@@ -120,32 +119,26 @@ def workflow_selector(
     ]
 
     # Available functional and structural connectivity models
-    with open(
-
-
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        template_name = hardcoded_params["template"][0]
-        try:
-            func_models = hardcoded_params["available_models"][
-                "func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    template_name = hardcoded_params["template"][0]
+    try:
+        func_models = hardcoded_params["available_models"][
+            "func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -3026,8 +3019,7 @@ def dmri_connectometry(
                 register_atlas_node,
                 save_coords_and_labels_node,
                 [("coords", "coords"),
-                 ("labels", "labels"),
-                 ('atlas', 'network')],
+                 ("labels", "labels")],
             ),
             (
                 node_gen_node,
@@ -5552,8 +5544,7 @@ def fmri_connectometry(
             (
                 register_atlas_node,
                 save_coords_and_labels_node,
-                [("coords", "coords"), ("labels", "labels"),
-                 ('atlas', 'network')],
+                [("coords", "coords"), ("labels", "labels")],
             ),
             (
                 inputnode,

@@ -308,26 +308,20 @@ def build_asetomes(est_path_iterlist, ID):
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
-    import yaml
-    import pkg_resources
+    from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            n_components = hardcoded_params["gradients"][
-                "n_components"][0]
-        except KeyError:
-            import sys
-            print(
-                "ERROR: available gradient dimensionality presets not "
-                "sucessfully extracted from runconfig.yaml"
-            )
-            sys.exit(1)
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        import sys
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
 
     if isinstance(est_path_iterlist, list):
         est_path_iterlist = list(flatten(est_path_iterlist))
@@ -375,25 +369,20 @@ def build_masetome(est_path_iterlist, ID):
     import numpy as np
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
-    import yaml
-    import pkg_resources
+    from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            n_components = hardcoded_params["gradients"][
-                "n_components"][0]
-        except KeyError:
-            import sys
-            print(
-                "ERROR: available gradient dimensionality presets not "
-                "sucessfully extracted from runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        import sys
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
 
     out_paths = []
     for pairs in est_path_iterlist:
@@ -443,44 +432,39 @@ def build_omnetome(est_path_iterlist, ID):
     """
     import sys
     import numpy as np
-    import yaml
     from pynets.core.utils import flatten
-    import pkg_resources
     from pynets.stats.embeddings import _omni_embed
+    from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            n_components = hardcoded_params["gradients"][
-                "n_components"][0]
-        except KeyError:
-            print(
-                "ERROR: available gradient dimensionality presets not "
-                "sucessfully extracted from runconfig.yaml"
-            )
-            sys.exit(1)
+    hardcoded_params = load_runconfig()
 
-    stream.close()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError:
+        print(
+            "ERROR: available functional models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError:
+        print(
+            "ERROR: available structural models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
 
     if isinstance(est_path_iterlist, list):
         est_path_iterlist = list(flatten(est_path_iterlist))

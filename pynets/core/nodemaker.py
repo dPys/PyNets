@@ -663,24 +663,20 @@ def parcel_masker(
     from nilearn.image import math_img
     from nilearn.image import index_img
     import types
-    import yaml
+    from pynets.core.utils import load_runconfig
     import pkg_resources
     import sys
 
     mask_img = math_img("img > 0", img=nib.load(roi))
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -816,25 +812,21 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     import nibabel as nib
     from nilearn.image import math_img
     from pynets.core.nodemaker import mmToVox
-    import yaml
     import pkg_resources
     import sys
     from nilearn.image import resample_to_img
+    from pynets.core.utils import load_runconfig
 
     mask_img = math_img("img > 0", img=nib.load(roi))
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -1260,26 +1252,23 @@ def parcel_naming(coords, vox_size):
     import nibabel as nib
     from collections import defaultdict
     from nilearn.image import resample_to_img
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            labeling_atlases = hardcoded_params["labeling_atlases"]
-        except KeyError as e:
-            print(e,
-                "No labeling atlases listed in runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        labeling_atlases = hardcoded_params["labeling_atlases"]
+    except KeyError as e:
+        print(e,
+            "No labeling atlases listed in runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"

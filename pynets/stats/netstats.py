@@ -1125,22 +1125,15 @@ class CleanGraphs(object):
             [self.G, _] = prune_disconnected(self.G)
         elif int(self.prune) == 2:
             print("Filtering for hubs...")
-            import pkg_resources
-            import yaml
-
-            with open(
-                pkg_resources.resource_filename("pynets",
-                                                "runconfig.yaml"), "r"
-            ) as stream:
-                try:
-                    hardcoded_params = yaml.load(stream)
-                    hub_detection_method = hardcoded_params[
-                        "hub_detection_method"][0]
-                except FileNotFoundError as e:
-                    import sys
-                    print(e, "Failed to parse runconfig.yaml")
-                    sys.exit(1)
-            stream.close()
+            from pynets.core.utils import load_runconfig
+            hardcoded_params = load_runconfig()
+            try:
+                hub_detection_method = hardcoded_params[
+                    "hub_detection_method"][0]
+            except FileNotFoundError as e:
+                import sys
+                print(e, "Failed to parse runconfig.yaml")
+                sys.exit(1)
             [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "

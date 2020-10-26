@@ -670,14 +670,13 @@ def build_multigraphs(est_path_iterlist, ID):
       Journal of Nonlinear Science. https://doi.org/10.1007/s00332-017-9436-8
 
     """
-    import pkg_resources
-    import yaml
     import os
     import itertools
     import numpy as np
     from pathlib import Path
     from pynets.core.utils import flatten
     from pynets.stats.netmotifs import motif_matching
+    from pynets.core.utils import load_runconfig
 
     raw_est_path_iterlist = list(
         set(
@@ -690,26 +689,22 @@ def build_multigraphs(est_path_iterlist, ID):
     )
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError:
+        print(
+            "ERROR: available functional models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError:
+        print(
+            "ERROR: available structural models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
 
     atlases = list(set([x.split("/")[-3].split("/")[0]
                         for x in raw_est_path_iterlist]))

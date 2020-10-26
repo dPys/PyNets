@@ -533,9 +533,6 @@ def streams2graph(
     """
     import gc
     import time
-    import pkg_resources
-    import sys
-    import yaml
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates
     import networkx as nx
@@ -545,20 +542,17 @@ def streams2graph(
     from pynets.dmri.dmri_utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        fa_wei = hardcoded_params[
-            "StructuralNetworkWeighting"]["fa_weighting"][0]
-        fiber_density = hardcoded_params[
-            "StructuralNetworkWeighting"]["fiber_density"][0]
-        overlap_thr = hardcoded_params[
-            "StructuralNetworkWeighting"]["overlap_thr"][0]
-        roi_neighborhood_tol = \
-        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
-    stream.close()
+    hardcoded_params = load_runconfig()
+    fa_wei = hardcoded_params[
+        "StructuralNetworkWeighting"]["fa_weighting"][0]
+    fiber_density = hardcoded_params[
+        "StructuralNetworkWeighting"]["fiber_density"][0]
+    overlap_thr = hardcoded_params[
+        "StructuralNetworkWeighting"]["overlap_thr"][0]
+    roi_neighborhood_tol = \
+    hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     start = time.time()
 

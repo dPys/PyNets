@@ -178,22 +178,17 @@ def create_est_path_func(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -310,22 +305,17 @@ def create_est_path_diff(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -427,22 +417,17 @@ def create_raw_path_func(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -544,22 +529,17 @@ def create_raw_path_diff(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -727,16 +707,11 @@ def save_mat(conn_matrix, est_path, fmt=None):
     """
     import numpy as np
     import networkx as nx
-    import pkg_resources
-    import yaml
 
     if fmt is None:
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            fmt = hardcoded_params["graph_file_format"][0]
-        stream.close()
+        from pynets.core.utils import load_runconfig
+        hardcoded_params = load_runconfig()
+        fmt = hardcoded_params["graph_file_format"][0]
 
     G = nx.from_numpy_array(conn_matrix)
     G.graph["ecount"] = nx.number_of_edges(G)
@@ -1264,34 +1239,29 @@ def collect_pandas_df(
 
     """
     import sys
-    import yaml
-    import pkg_resources
     from pathlib import Path
-    from pynets.core.utils import flatten
+    from pynets.core.utils import flatten, load_runconfig
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1415,7 +1385,26 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def save_coords_and_labels_to_json(coords, labels, dir_path, network):
+def load_runconfig():
+    import pkg_resources
+    import yaml
+    import tempfile
+    import shutil
+    import os
+
+    fd, temp_path = tempfile.mkstemp()
+    shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
+                 temp_path)
+    with open(temp_path, mode='r') as stream:
+        hardcoded_params = yaml.load(stream)
+    stream.close()
+    os.remove(temp_path)
+
+    return hardcoded_params
+
+
+def save_coords_and_labels_to_json(coords, labels, dir_path,
+                                   network='all_nodes'):
     """
     Save coordinates and labels to json.
 
@@ -1553,23 +1542,19 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
 
     """
     import os
-    import yaml
     import pkg_resources
     import sys
     from nilearn.image import resample_to_img
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
@@ -1834,35 +1819,29 @@ def filter_cols_from_targets(df, targets):
 
 def build_args_from_config(modality, arg_dict):
     import ast
-    import pkg_resources
-    import yaml
+    from pynets.core.utils import load_runconfig
 
     modalities = ["func", "dwi"]
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     arg_list = []
     for mod_ in modalities:

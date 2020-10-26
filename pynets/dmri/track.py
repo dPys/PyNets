@@ -405,11 +405,8 @@ def track_ensemble(
 
     """
     import os
-    import threading
     import gc
     import time
-    import pkg_resources
-    import yaml
     import shutil
     from joblib import Parallel, delayed
     import itertools
@@ -420,31 +417,27 @@ def track_ensemble(
     from pynets.core.utils import save_3d_to_4d
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
+    from pynets.core.utils import load_runconfig
 
     cache_dir = f"{cache_dir}/joblib_tracking"
     os.makedirs(cache_dir, exist_ok=True)
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        nthreads = hardcoded_params["nthreads"][0]
-        n_seeds_per_iter = \
-            hardcoded_params['tracking']["n_seeds_per_iter"][0]
-        max_length = \
-            hardcoded_params['tracking']["max_length"][0]
-        pft_back_tracking_dist = \
-            hardcoded_params['tracking']["pft_back_tracking_dist"][0]
-        pft_front_tracking_dist = \
-            hardcoded_params['tracking']["pft_front_tracking_dist"][0]
-        particle_count = \
-            hardcoded_params['tracking']["particle_count"][0]
-        min_separation_angle = \
-            hardcoded_params['tracking']["min_separation_angle"][0]
-        min_streams = \
-            hardcoded_params['tracking']["min_streams"][0]
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    nthreads = hardcoded_params["nthreads"][0]
+    n_seeds_per_iter = \
+        hardcoded_params['tracking']["n_seeds_per_iter"][0]
+    max_length = \
+        hardcoded_params['tracking']["max_length"][0]
+    pft_back_tracking_dist = \
+        hardcoded_params['tracking']["pft_back_tracking_dist"][0]
+    pft_front_tracking_dist = \
+        hardcoded_params['tracking']["pft_front_tracking_dist"][0]
+    particle_count = \
+        hardcoded_params['tracking']["particle_count"][0]
+    min_separation_angle = \
+        hardcoded_params['tracking']["min_separation_angle"][0]
+    min_streams = \
+        hardcoded_params['tracking']["min_streams"][0]
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 

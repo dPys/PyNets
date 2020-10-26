@@ -163,7 +163,7 @@ def load_pd_dfs(file_):
                               df_dups[col].isnull().all()]
                 # Drop these columns from the dataframe
                 print(f"{Fore.LIGHTYELLOW_EX}"
-                      f"ropping duplicated empty columns: "
+                      f"Dropping duplicated empty columns: "
                       f"{empty_cols}{Style.RESET_ALL}")
                 df.drop(empty_cols,
                         axis=1,
@@ -543,6 +543,22 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
 
     df_pref = df_pref.rename(
         columns=lambda x: re.sub(
+            "mod-",
+            "model-", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "sub-sub-",
+            "sub-", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "ses-ses-",
+            "ses-", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
+            "mod-",
+            "model-", x))
+    df_pref = df_pref.rename(
+        columns=lambda x: re.sub(
             "res-200",
             "res-77", x))
     df_pref = df_pref.rename(
@@ -560,7 +576,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
 
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
-    print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
+    # print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
     df_pref.drop(columns=bad_cols, inplace=True)
 
     print(df_pref)
@@ -780,9 +796,8 @@ def build_collect_workflow(args, retval):
     import warnings
     warnings.filterwarnings("ignore")
     import ast
-    import pkg_resources
     from pathlib import Path
-    import yaml
+    from pynets.core.utils import load_runconfig
     import uuid
     from time import strftime
     import shutil
@@ -827,25 +842,19 @@ def build_collect_workflow(args, retval):
 
     wf = collect_all(working_path, modality, drop_cols)
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        try:
-            hardcoded_params = yaml.load(stream)
-            runtime_dict = {}
-            execution_dict = {}
-            for i in range(len(hardcoded_params["resource_dict"])):
-                runtime_dict[
-                    list(hardcoded_params["resource_dict"][i].keys())[0]
-                ] = ast.literal_eval(
-                    list(hardcoded_params["resource_dict"][i].values())[0][0]
-                )
-            for i in range(len(hardcoded_params["execution_dict"])):
-                execution_dict[
-                    list(hardcoded_params["execution_dict"][i].keys())[0]
-                ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
-        except FileNotFoundError:
-            print("Failed to parse runconfig.yaml")
+    hardcoded_params = load_runconfig()
+    runtime_dict = {}
+    execution_dict = {}
+    for i in range(len(hardcoded_params["resource_dict"])):
+        runtime_dict[
+            list(hardcoded_params["resource_dict"][i].keys())[0]
+        ] = ast.literal_eval(
+            list(hardcoded_params["resource_dict"][i].values())[0][0]
+        )
+    for i in range(len(hardcoded_params["execution_dict"])):
+        execution_dict[
+            list(hardcoded_params["execution_dict"][i].keys())[0]
+        ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     os.makedirs(f"{work_dir}/pynets_out_collection{run_uuid}", exist_ok=True)
