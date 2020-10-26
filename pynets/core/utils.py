@@ -22,8 +22,6 @@ import signal
 
 warnings.filterwarnings("ignore")
 
-WATCHDOG_HARD_KILL_TIMEOUT = 90
-
 log = logging.getLogger(__name__)
 
 
@@ -1417,9 +1415,9 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
+def save_coords_and_labels_to_json(coords, labels, dir_path, network):
     """
-    Save coordinates and labels to pickle files.
+    Save coordinates and labels to json.
 
     Parameters
     ----------
@@ -1431,40 +1429,46 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
-        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
+        Restricted sub-network name.
 
     Returns
     -------
-    coord_path : str
-        Path to pickled coordinates list.
-    labels_path : str
-        Path to pickled labels list.
+    nodes_path : str
+        Path to nodes json metadata file.
 
     """
-    import pickle
+    import json
     import os
+    from pynets.core.utils import prune_suffices
 
     namer_dir = f"{dir_path}/nodes"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    if network is not None:
-        coord_path = f"{namer_dir}{'/'}{network}{'_mni_coords_rsn.pkl'}"
-        labels_path = f"{namer_dir}{'/'}{network}{'_mni_labels_rsn.pkl'}"
-    else:
-        coord_path = f"{namer_dir}/all_mni_coords.pkl"
-        labels_path = f"{namer_dir}/all_mni_labels.pkl"
+    if not isinstance(coords, list):
+        coords = list(tuple(x) for x in coords)
 
-    # Save coords to pickle
-    with open(coord_path, "wb") as f:
-        pickle.dump(coords, f, protocol=2)
+    if not isinstance(labels, list):
+        labels = list(labels)
 
-    # Save labels to pickle
-    with open(labels_path, "wb") as f:
-        pickle.dump(labels, f, protocol=2)
+    assert len(coords) == len(labels)
 
-    return coord_path, labels_path
+    i = 0
+    node_list = []
+    for node in labels:
+        lab, ix = node
+        node_dict = {}
+        node_dict['index'] = int(ix)
+        node_dict['coord'] = coords[i]
+        node_dict['label'] = lab
+        node_list.append(node_dict)
+
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
+
+    with open(nodes_path, 'w') as f:
+        json.dump(node_list, f)
+
+    return nodes_path
 
 
 def missing_elements(L):
@@ -1936,6 +1940,22 @@ def save_3d_to_4d(in_files):
     return out_file
 
 
+def kill_process_family(parent_pid):
+    import os
+    import psutil
+    import signal
+
+    try:
+        parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+        return
+    children = parent.children(recursive=True)
+    for process in children:
+        process.send_signal(signal.SIGTERM)
+    os.kill(int(parent_pid), signal.SIGTERM)
+    return
+
+
 def dumpstacks(signal, frame):
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
@@ -1962,8 +1982,11 @@ class watchdog(object):
         return 0
 
     def _watchdog(self):
+        WATCHDOG_HARD_KILL_TIMEOUT = 720
+
         self.last_progress_time = time.time()
-        while True:
+
+        while self.last_progress_time == time.time():
             if self.shutdown.wait(timeout=5):
                 return
             last_progress_delay = time.time() - self.last_progress_time
@@ -1972,13 +1995,12 @@ class watchdog(object):
             try:
                 signal.signal(signal.SIGQUIT, dumpstacks)
                 print(f"No progress in {last_progress_delay} seconds...")
-            except:
+            except BaseException:
                 pass
             time.sleep(1)
             os.kill(0, 9)
 
     def _run(self):
         from pynets.cli.pynets_run import main
-        while True:
-            self.last_progress_time = time.time()
+        while self.last_progress_time == time.time():
             main()

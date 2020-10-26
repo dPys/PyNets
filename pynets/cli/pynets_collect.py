@@ -237,16 +237,22 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     all_cols = list(set(all_cols))
 
     print('Filling divergent columns across dataframes...')
-    #out_dfs = [fill_columns(df, all_cols) for df in dfs]
+    out_dfs = [fill_columns(df, all_cols) for df in dfs]
 
     # for df in out_dfs:
-    #     print(len(df.columns))
-
+    #     print(df.columns)
+    #
     print('Joining...')
-    frame = pd.concat(dfs, axis=0, join="outer", sort=False,
+    frame = pd.concat(out_dfs, axis=0, join="outer", sort=False,
                       ignore_index=False)
     frame = frame.loc[:, ~frame.columns.str.contains(r"thr_auc$", regex=True)]
     frame.dropna(axis='columns', how='all', inplace=True)
+
+    # column_with_nan = frame.columns[frame.isnull().any()]
+    # for column in column_with_nan:
+    #     if frame[column].isnull().sum() * 100.0 / frame.shape[0] > 90:
+    #         print(column)
+
     for drop_col in drop_cols:
         frame = frame.loc[:, ~frame.columns.str.contains(f"{drop_col}",
                                                          regex=True)]
@@ -257,22 +263,20 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
 
     drop = [i for i in frame.columns if 'participation' in i]
     frame = frame.drop(columns=drop)
-    # drop = [i for i in frame.columns if 'degree_centrality' in i]
-    # frame = frame.drop(columns=drop)
-    # drop = [i for i in frame.columns if 'betweenness_centrality' in i]
-    # frame = frame.drop(columns=drop)
 
-    # if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
-    #     frame_fill = pd.read_csv(f"{working_path}/"
-    #                              f"all_subs_neat_{modality}.csv")
-    #     if len(frame_fill.columns) == len(frame.columns):
-    #         print("Found existing dataframe. Using this to fill in "
-    #               "missing values...")
-    #         try:
-    #             frame_fill = frame_fill.set_index('id')
-    #             frame[frame.isnull()] = frame_fill
-    #         except:
-    #             pass
+    out_path = f"{working_path}/all_subs_neat_{modality}.csv"
+    if os.path.isfile(out_path):
+        frame_fill = pd.read_csv(out_path)
+        if len(frame_fill.columns) == len(frame.columns):
+            print("Found existing dataframe. Using this to fill in "
+                  "missing values...")
+            try:
+                frame_fill = frame_fill.set_index('id')
+                frame[frame.isnull()] = frame_fill
+            except:
+                pass
+    else:
+        frame.to_csv(out_path)
 
     bad_cols1 = frame.columns[frame.columns.str.endswith("_x")]
     if len(bad_cols1) > 0:
@@ -556,8 +560,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
 
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
-    #print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing
-    # exclusionary strings...{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing exclusionary strings...{Style.RESET_ALL}")
     df_pref.drop(columns=bad_cols, inplace=True)
 
     print(df_pref)
@@ -943,7 +946,7 @@ def main():
     args_dict_all = {}
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
-    args_dict_all['pm'] = '128,500'
+    args_dict_all['pm'] = '48,57'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
@@ -956,16 +959,15 @@ def main():
                            'participation_coefficient',
                            'average_local_efficiency',
                            'weighted_transitivity',
-                           'average_clustering',
-                           'average_clustering',
                            'communicability_centrality',
                            'average_local_clustering_nodewise',
                            'average_local_efficiency_nodewise',
                            'degree_centrality',
                         #   "_minlength-0",
                         #   "_minlength-20",
-                        #   'rsn-triple',
-                           'ward', 'tol-None',
+                           'rsn-triple',
+                           'degree_assortativity_coefficient',
+                           'ward',
                            "_minlength-30", "variance",
                            "res-1000", "smooth-2fwhm"]
     args = SimpleNamespace(**args_dict_all)
@@ -1005,7 +1007,7 @@ def main():
     files_ = [i for i in all_files if '_clean.csv' in i]
 
     dfs = []
-    #missingness_dict = {}
+    missingness_dict = {}
     for file_ in files_:
         try:
             df = pd.read_csv(file_, chunksize=100000, encoding="utf-8",
@@ -1020,7 +1022,7 @@ def main():
 
         if "Unnamed: 0" in df.columns:
             df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
-        #missingness_dict[file_] = summarize_missingness(df)[1]
+        missingness_dict[file_] = summarize_missingness(df)[1]
         df.set_index('id', inplace=True)
         df.index = df.index.map(str)
         dfs.append(df)

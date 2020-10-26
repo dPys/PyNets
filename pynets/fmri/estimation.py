@@ -223,6 +223,7 @@ def get_conn_matrix(
 
     """
     import sys
+    from pynets.core import utils
     from pynets.fmri.estimation import get_optimal_cov_estimator
     from nilearn.connectome import ConnectivityMeasure
 
@@ -381,6 +382,14 @@ def get_conn_matrix(
             "\nMatrix estimation selection yielded an empty or"
             " 1-dimensional graph. "
             "Check time-series for errors or try using a different atlas")
+
+    if network is not None:
+        atlas_name = f"{atlas}_{network}_stage-rawgraph"
+    else:
+        atlas_name = f"{atlas}_stage-rawgraph"
+
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name)
 
     coords = np.array(coords)
     labels = np.array(labels)

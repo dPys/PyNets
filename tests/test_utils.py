@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_save_coords_and_labels_to_pickle():
+def test_save_coords_and_labels_to_json():
     """
-    Test save_RSN_coords_and_labels_to_pickle functionality
+    Test save_RSN_coords_and_labels_to_json functionality
     """
     import tempfile
 
@@ -39,12 +39,12 @@ def test_save_coords_and_labels_to_pickle():
     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
-    network = None
+    network = 'Default'
 
-    [coord_path, labels_path] = utils.save_coords_and_labels_to_pickle(coords, labels, dir_path, network)
+    nodes_path = utils.save_coords_and_labels_to_json(coords, labels,
+                                                      dir_path, network)
 
-    assert os.path.isfile(coord_path) is True
-    assert os.path.isfile(labels_path) is True
+    assert os.path.isfile(nodes_path) is True
 
 
 def test_save_nifti_parcels_map():

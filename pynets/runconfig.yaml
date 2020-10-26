@@ -37,7 +37,7 @@ tracking:
     sphere:
         - 'repulsion724'
     n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
-        - 750
+        - 500
     max_length:
         - 500
     tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
@@ -50,12 +50,14 @@ tracking:
         - 15
     min_separation_angle: # For particle tracking
         - 20
+    min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
+        - 50
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 2
+    - 4
 graph_file_format:
     - 'npy'
 low_pass:
@@ -244,7 +246,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

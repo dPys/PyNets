@@ -2139,7 +2139,7 @@ def dmri_connectometry(
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -2276,8 +2276,6 @@ def dmri_connectometry(
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -3028,7 +3026,8 @@ def dmri_connectometry(
                 register_atlas_node,
                 save_coords_and_labels_node,
                 [("coords", "coords"),
-                 ("labels", "labels")],
+                 ("labels", "labels"),
+                 ('atlas', 'network')],
             ),
             (
                 node_gen_node,
@@ -4633,7 +4632,7 @@ def fmri_connectometry(
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -4770,8 +4769,6 @@ def fmri_connectometry(
                 (inputnode, extract_ts_node, [("network", "network")]),
                 (inputnode, get_conn_matrix_node, [("network", "network")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -5555,7 +5552,8 @@ def fmri_connectometry(
             (
                 register_atlas_node,
                 save_coords_and_labels_node,
-                [("coords", "coords"), ("labels", "labels")],
+                [("coords", "coords"), ("labels", "labels"),
+                 ('atlas', 'network')],
             ),
             (
                 inputnode,

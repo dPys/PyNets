@@ -859,9 +859,9 @@ def plot_all_func(
 
             if roi:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}/coords_" \
+                coord_paths = f"{namer_dir}/coords_" \
                              f"{op.basename(roi).split('.')[0]}_plotting.pkl"
-                with open(coord_path, "wb") as f:
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -872,8 +872,8 @@ def plot_all_func(
 
             else:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -1150,8 +1150,8 @@ def plot_all_struct(
             ] = create_gb_palette(conn_matrix, color_theme, coords, labels)
             if roi:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -1160,8 +1160,8 @@ def plot_all_struct(
                     pickle.dump(labels, f, protocol=2)
             else:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle

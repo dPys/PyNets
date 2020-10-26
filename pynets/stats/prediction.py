@@ -756,6 +756,7 @@ def get_coords_labels(embedding):
     coords_file = f"{os.path.dirname(embedding)}/nodes/all_mni_coords.pkl"
     labels_file = f"{os.path.dirname(embedding)}/nodes/all_mni_labels.pkl"
     return coords_file, labels_file
+    # return f"{os.path.dirname(embedding)}/nodes/nodes_{os.path.basename(os.path.dirname(embedding))}.json"
 
 
 def flatten_latent_positions(rsn, subject_dict, ID, ses, modality, grid_param,
@@ -2627,7 +2628,7 @@ def build_predict_workflow(args, retval):
         for setting, value in cfg[key].items():
             ml_meta_wf.config[key][setting] = value
 
-    out = ml_meta_wf.run(plugin='LegacyMultiProc', plugin_args=plugin_args)
+    out = ml_meta_wf.run(plugin='MultiProc', plugin_args=plugin_args)
     #out = ml_meta_wf.run(plugin='Linear')
     return out
 
@@ -2635,8 +2636,8 @@ def build_predict_workflow(args, retval):
 def main():
     import json
 
-    base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_clustering"
+    #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
+    base_dir = "/working/tuning_set/outputs_clustering"
     #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
@@ -2644,13 +2645,12 @@ def main():
     )
 
     # Hard-Coded #
-    embedding_types = ['OMNI', 'ASE', 'topology']
+    #embedding_types = ['OMNI', 'ASE', 'topology']
     #embedding_types = ['OMNI', 'topology']
     #embedding_types = ['topology']
-    #embedding_types = ['OMNI', 'ASE']
-    #embedding_types = ['OMNI', 'ASE']
+    embedding_types = ['ASE']
     #modalities = ["func", "dwi"]
-    modalities = ["func"]
+    modalities = ["dwi"]
     #modalities = ["dwi"]
     #modalities = ["dwi", "func"]
     thr_type = "MST"
@@ -2669,8 +2669,8 @@ def main():
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     # User-Specified #
-    #target_modality = 'dwi'
-    target_modality = 'func'
+    target_modality = 'dwi'
+    #target_modality = 'func'
     #target_vars = ["rum_2", "dep_2"]
     #target_vars = ["rumination_persist_phenotype",
     #"depression_persist_phenotype", "rum_2", "dep_2", "dep_1", "rum_1"]
@@ -2679,11 +2679,11 @@ def main():
     #                'depression_persist_phenotype', 'rum_2', 'dep_2']
     #target_vars = ["rum_1", "dep_1"]
     #target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2']
-    # target_vars = ["rumination_persist_phenotype",
-    #                "depression_persist_phenotype",
-    #                "dep_2", "dep_1"]
     target_vars = ["rumination_persist_phenotype",
-                   "depression_persist_phenotype"]
+                   "depression_persist_phenotype",
+                   "dep_2", "dep_1", 'rum_2', 'rum_1']
+    # target_vars = ["rumination_persist_phenotype",
+    #                "depression_persist_phenotype"]
 
     sessions = ["1"]
 
