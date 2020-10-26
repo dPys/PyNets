@@ -584,6 +584,16 @@ def run_tracking(step_curv_combinations, recon_path,
         copy=True,
         use_hardlink=False)
 
+    tissues4d_tmp_path = fname_presuffix(
+        tissues4d, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+        newpath=cache_dir
+    )
+    copyfile(
+        tissues4d,
+        tissues4d_tmp_path,
+        copy=True,
+        use_hardlink=False)
+
     if waymask is not None:
         waymask_tmp_path = fname_presuffix(
             waymask, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
@@ -597,7 +607,7 @@ def run_tracking(step_curv_combinations, recon_path,
     else:
         waymask_tmp_path = None
 
-    tissue_img = nib.load(tissues4d)
+    tissue_img = nib.load(tissues4d_tmp_path)
 
     # Order:
     B0_mask = index_img(tissue_img, 0)
@@ -624,7 +634,7 @@ def run_tracking(step_curv_combinations, recon_path,
     ).astype("bool").astype("int16")
 
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
-        mod_fit = hf['reconstruction'][:].astype('float32')
+        mod_fit = hf['reconstruction'][:]
     hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
@@ -722,6 +732,19 @@ def run_tracking(step_curv_combinations, recon_path,
               'Check registrations.')
         return None
 
+    del mod_fit, seeds, tiss_classifier, streamline_generator, \
+        B0_mask_data, seeding_mask, dg
+
+    B0_mask.uncache()
+    atlas_img.uncache()
+    t1w2dwi.uncache()
+    gm_in_dwi.uncache()
+    vent_csf_in_dwi.uncache()
+    wm_in_dwi.uncache()
+    atlas_img.uncache()
+    tissue_img.uncache()
+    gc.collect()
+
     # Filter resulting streamlines by roi-intersection
     # characteristics
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
@@ -732,9 +755,6 @@ def run_tracking(step_curv_combinations, recon_path,
     for roi_val in intensities:
         parcels.append(atlas_data == roi_val)
         i += 1
-
-    del atlas_data
-    atlas_img.uncache()
 
     parcel_vec = list(np.ones(len(parcels)).astype("bool"))
 
@@ -792,10 +812,9 @@ def run_tracking(step_curv_combinations, recon_path,
             return None
         os.remove(waymask_tmp_path)
 
-    del dg, seeds, streamline_generator, seeding_mask, mod_fit, B0_mask_data
-
     os.remove(recon_path_tmp_path)
-    gc.collect()
+    os.remove(tissues4d_tmp_path)
+    del parcels, atlas_data
 
     if len(roi_proximal_streamlines) > 0:
         return ArraySequence([s.astype("float32") for s in
