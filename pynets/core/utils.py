@@ -1455,12 +1455,22 @@ def save_coords_and_labels_to_json(coords, labels, dir_path, network):
 
     i = 0
     node_list = []
+
+    if any(isinstance(sub, dict) for sub in labels):
+        consensus_labs = True
+    else:
+        consensus_labs = False
+
     for node in labels:
-        lab, ix = node
         node_dict = {}
-        node_dict['index'] = int(ix)
+        if consensus_labs is True:
+            lab, ix = node
+            node_dict['index'] = int(ix)
+            node_dict['label'] = lab
+        else:
+            node_dict['index'] = node
+            node_dict['label'] = None
         node_dict['coord'] = coords[i]
-        node_dict['label'] = lab
         node_list.append(node_dict)
 
     nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
