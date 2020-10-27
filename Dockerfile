@@ -68,10 +68,6 @@ RUN apt-get update -qq \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
     && dpkg -i /tmp/libxp6.deb && rm -f /tmp/libxp6.deb \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 \
-    && echo "deb http://mirrors.kernel.org/debian/ stretch main" | sudo tee -a /etc/apt/sources.list && apt-get update && sudo apt install -y --allow-unauthenticated libpng12-0 \
-    && apt-get update && apt install -y --allow-unauthenticated libpng12-0 \
     # Add new user.
     && groupadd -r neuro && useradd --no-log-init --create-home --shell /bin/bash -r -g neuro neuro \
     && chmod a+s /opt \
