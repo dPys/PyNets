@@ -478,7 +478,7 @@ def track_ensemble(
         float(ix) < 0.50*float(len(all_combs)):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
-                      verbose=10) as parallel:
+                      verbose=10, max_nbytes=6e9) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
                     i, recon_path, n_seeds_per_iter, directget, maxcrossing,
@@ -634,7 +634,7 @@ def run_tracking(step_curv_combinations, recon_path,
     ).astype("bool").astype("int16")
 
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
-        mod_fit = hf['reconstruction'][:]
+        mod_fit = hf['reconstruction'][:].astype('float32')
     hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))

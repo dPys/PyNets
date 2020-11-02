@@ -1454,10 +1454,10 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_dict = {}
         if consensus_labs is True:
             lab, ix = node
-            node_dict['index'] = int(ix)
-            node_dict['label'] = lab
+            node_dict['index'] = str(ix)
+            node_dict['label'] = str(lab)
         else:
-            node_dict['index'] = node
+            node_dict['index'] = str(node)
             node_dict['label'] = None
         node_dict['coord'] = coords[i]
         node_list.append(node_dict)
@@ -1971,7 +1971,7 @@ class watchdog(object):
         return 0
 
     def _watchdog(self):
-        WATCHDOG_HARD_KILL_TIMEOUT = 720
+        WATCHDOG_HARD_KILL_TIMEOUT = 7200
 
         self.last_progress_time = time.time()
 

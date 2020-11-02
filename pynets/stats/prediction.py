@@ -145,6 +145,9 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
     topology_file = f"{base_dir}/all_subs_neat_{modality}.csv"
     if os.path.isfile(topology_file):
         df_top = pd.read_csv(topology_file)
+        if "Unnamed: 0" in df_top.columns:
+            df_top.drop(df_top.filter(regex="Unnamed: 0"), axis=1,
+                         inplace=True)
         df_top = df_top.dropna(subset=["id"])
         df_top = df_top.rename(
             columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
