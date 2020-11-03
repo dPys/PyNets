@@ -17,9 +17,10 @@ import numpy as np
 import time
 import logging
 import threading
-warnings.filterwarnings("ignore")
+import traceback
+import signal
 
-WATCHDOG_HARD_KILL_TIMEOUT = 90
+warnings.filterwarnings("ignore")
 
 log = logging.getLogger(__name__)
 
@@ -177,22 +178,17 @@ def create_est_path_func(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -309,22 +305,17 @@ def create_est_path_diff(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -426,22 +417,17 @@ def create_raw_path_func(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -543,22 +529,17 @@ def create_raw_path_diff(
 
     """
     import os
-    import yaml
-    import pkg_resources
     import sys
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -726,16 +707,11 @@ def save_mat(conn_matrix, est_path, fmt=None):
     """
     import numpy as np
     import networkx as nx
-    import pkg_resources
-    import yaml
 
     if fmt is None:
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            fmt = hardcoded_params["graph_file_format"][0]
-        stream.close()
+        from pynets.core.utils import load_runconfig
+        hardcoded_params = load_runconfig()
+        fmt = hardcoded_params["graph_file_format"][0]
 
     G = nx.from_numpy_array(conn_matrix)
     G.graph["ecount"] = nx.number_of_edges(G)
@@ -1263,34 +1239,29 @@ def collect_pandas_df(
 
     """
     import sys
-    import yaml
-    import pkg_resources
     from pathlib import Path
-    from pynets.core.utils import flatten
+    from pynets.core.utils import flatten, load_runconfig
     from pynets.stats.netstats import collect_pandas_df_make
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not sucessfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1414,9 +1385,28 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
+def load_runconfig():
+    import pkg_resources
+    import yaml
+    import tempfile
+    import shutil
+    import os
+
+    fd, temp_path = tempfile.mkstemp()
+    shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
+                 temp_path)
+    with open(temp_path, mode='r') as stream:
+        hardcoded_params = yaml.load(stream)
+    stream.close()
+    os.remove(temp_path)
+
+    return hardcoded_params
+
+
+def save_coords_and_labels_to_json(coords, labels, dir_path,
+                                   network='all_nodes'):
     """
-    Save coordinates and labels to pickle files.
+    Save coordinates and labels to json.
 
     Parameters
     ----------
@@ -1428,40 +1418,56 @@ def save_coords_and_labels_to_pickle(coords, labels, dir_path, network):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
-        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
+        Restricted sub-network name.
 
     Returns
     -------
-    coord_path : str
-        Path to pickled coordinates list.
-    labels_path : str
-        Path to pickled labels list.
+    nodes_path : str
+        Path to nodes json metadata file.
 
     """
-    import pickle
+    import json
     import os
+    from pynets.core.utils import prune_suffices
 
     namer_dir = f"{dir_path}/nodes"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    if network is not None:
-        coord_path = f"{namer_dir}{'/'}{network}{'_mni_coords_rsn.pkl'}"
-        labels_path = f"{namer_dir}{'/'}{network}{'_mni_labels_rsn.pkl'}"
+    if not isinstance(coords, list):
+        coords = list(tuple(x) for x in coords)
+
+    if not isinstance(labels, list):
+        labels = list(labels)
+
+    assert len(coords) == len(labels)
+
+    i = 0
+    node_list = []
+
+    if any(isinstance(sub, dict) for sub in labels):
+        consensus_labs = True
     else:
-        coord_path = f"{namer_dir}/all_mni_coords.pkl"
-        labels_path = f"{namer_dir}/all_mni_labels.pkl"
+        consensus_labs = False
 
-    # Save coords to pickle
-    with open(coord_path, "wb") as f:
-        pickle.dump(coords, f, protocol=2)
+    for node in labels:
+        node_dict = {}
+        if consensus_labs is True:
+            lab, ix = node
+            node_dict['index'] = str(ix)
+            node_dict['label'] = str(lab)
+        else:
+            node_dict['index'] = str(node)
+            node_dict['label'] = None
+        node_dict['coord'] = coords[i]
+        node_list.append(node_dict)
 
-    # Save labels to pickle
-    with open(labels_path, "wb") as f:
-        pickle.dump(labels, f, protocol=2)
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
 
-    return coord_path, labels_path
+    with open(nodes_path, 'w') as f:
+        json.dump(node_list, f)
+
+    return nodes_path
 
 
 def missing_elements(L):
@@ -1536,23 +1542,19 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
 
     """
     import os
-    import yaml
     import pkg_resources
     import sys
     from nilearn.image import resample_to_img
+    from pynets.core.utils import load_runconfig
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            template_name = hardcoded_params["template"][0]
-        except KeyError as e:
-            print(e,
-                "No template specified in runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        template_name = hardcoded_params["template"][0]
+    except KeyError as e:
+        print(e,
+            "No template specified in runconfig.yaml"
+        )
+        sys.exit(1)
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
@@ -1817,35 +1819,29 @@ def filter_cols_from_targets(df, targets):
 
 def build_args_from_config(modality, arg_dict):
     import ast
-    import pkg_resources
-    import yaml
+    from pynets.core.utils import load_runconfig
 
     modalities = ["func", "dwi"]
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     arg_list = []
     for mod_ in modalities:
@@ -1933,6 +1929,34 @@ def save_3d_to_4d(in_files):
     return out_file
 
 
+def kill_process_family(parent_pid):
+    import os
+    import psutil
+    import signal
+
+    try:
+        parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+        return
+    children = parent.children(recursive=True)
+    for process in children:
+        process.send_signal(signal.SIGTERM)
+    os.kill(int(parent_pid), signal.SIGTERM)
+    return
+
+
+def dumpstacks(signal, frame):
+    id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
+    code = []
+    for threadId, stack in sys._current_frames().items():
+        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                code.append("  %s" % (line.strip()))
+    print("\n".join(code))
+
+
 class watchdog(object):
     def run(self):
         self.shutdown = threading.Event()
@@ -1947,31 +1971,25 @@ class watchdog(object):
         return 0
 
     def _watchdog(self):
+        WATCHDOG_HARD_KILL_TIMEOUT = 7200
+
         self.last_progress_time = time.time()
-        while True:
+
+        while self.last_progress_time == time.time():
             if self.shutdown.wait(timeout=5):
                 return
             last_progress_delay = time.time() - self.last_progress_time
             if last_progress_delay < WATCHDOG_HARD_KILL_TIMEOUT:
                 continue
             try:
-                stacks = self._get_thread_stack_traces()
-                log.error(
-                    "no progress in %0.01f seconds\n"
-                    "kill -9 time...\n\n%s",
-                    last_progress_delay, self.last_message,
-                    "\n\n".join(stacks),
-                    extra={"thread_stacks": stacks},
-                )
-            except:
+                signal.signal(signal.SIGQUIT, dumpstacks)
+                print(f"No progress in {last_progress_delay} seconds...")
+            except BaseException:
                 pass
-            # Hopefully give logs some time to flush
-            time.sleep(2)
+            time.sleep(1)
             os.kill(0, 9)
-            sys.exit(1)
 
     def _run(self):
         from pynets.cli.pynets_run import main
-        while True:
-            self.last_progress_time = time.time()
+        while self.last_progress_time == time.time():
             main()

@@ -50,12 +50,14 @@ tracking:
         - 15
     min_separation_angle: # For particle tracking
         - 20
+    min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
+        - 75
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 1
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -223,7 +225,7 @@ resource_dict: # Nipype workflow resource settings
       - 'omni_embedding_node':
         - (1, 2)
       - 'join_iters_node_thr':
-        - (1, 2)
+        - (1, 6)
       - 'join_iters_node_nets':
         - (1, 1)
       - 'join_iters_node_atlas':
@@ -233,7 +235,7 @@ resource_dict: # Nipype workflow resource settings
       - 'join_iters_extract_ts_node':
         - (1, 1)
       - 'join_iters_node':
-        - (1, 1)
+        - (1, 4)
       - 'join_iters_prep_spheres_node':
         - (1, 1)
       - 'join_iters_get_conn_matrix_node':
@@ -244,7 +246,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - True
+        - False
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

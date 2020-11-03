@@ -1069,48 +1069,41 @@ def build_workflow(args, retval):
     )
 
     # Hard-coded:
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        try:
-            hardcoded_params = yaml.load(stream)
-            maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
-            local_corr = hardcoded_params["clustering_local_conn"][0]
-            track_type = hardcoded_params['tracking']["tracking_method"][0]
-            tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
-            target_samples = hardcoded_params['tracking']["tracking_samples"][0]
-            use_parcel_naming = hardcoded_params["parcel_naming"][0]
-            step_list = hardcoded_params['tracking']["step_list"]
-            curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
-            nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
-            nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
-            nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
-            local_atlases = hardcoded_params["local_atlases"]
-            template_name = hardcoded_params['template'][0]
-            roi_neighborhood_tol = \
-                hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+    from pynets.core.utils import load_runconfig
+    hardcoded_params = load_runconfig()
 
-            if track_type == "particle":
-                tiss_class = "cmc"
+    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
+    local_corr = hardcoded_params["clustering_local_conn"][0]
+    track_type = hardcoded_params['tracking']["tracking_method"][0]
+    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
+    use_parcel_naming = hardcoded_params["parcel_naming"][0]
+    step_list = hardcoded_params['tracking']["step_list"]
+    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
+    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
+    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
+    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
+    local_atlases = hardcoded_params["local_atlases"]
+    template_name = hardcoded_params['template'][0]
+    roi_neighborhood_tol = \
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
-            # Set paths to templates
-            runtime_dict = {}
-            execution_dict = {}
-            for i in range(len(hardcoded_params["resource_dict"])):
-                runtime_dict[
-                    list(hardcoded_params["resource_dict"][i].keys())[0]
-                ] = ast.literal_eval(
-                    list(hardcoded_params["resource_dict"][i].values())[0][0]
-                )
-            for i in range(len(hardcoded_params["execution_dict"])):
-                execution_dict[
-                    list(hardcoded_params["execution_dict"][i].keys())[0]
-                ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
-        except FileNotFoundError:
-            print("ERROR: Failed to parse runconfig.yaml")
-            retval["return_code"] = 1
-            return retval
-    stream.close()
+    if track_type == "particle":
+        tiss_class = "cmc"
+
+    # Set paths to templates
+    runtime_dict = {}
+    execution_dict = {}
+    for i in range(len(hardcoded_params["resource_dict"])):
+        runtime_dict[
+            list(hardcoded_params["resource_dict"][i].keys())[0]
+        ] = ast.literal_eval(
+            list(hardcoded_params["resource_dict"][i].values())[0][0]
+        )
+    for i in range(len(hardcoded_params["execution_dict"])):
+        execution_dict[
+            list(hardcoded_params["execution_dict"][i].keys())[0]
+        ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
 
     if (min_thr is not None) and (
             max_thr is not None) and (step_thr is not None):

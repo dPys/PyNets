@@ -677,12 +677,11 @@ def plot_all_func(
 
     """
     import os
-    import yaml
+    from pynets.core.utils import load_runconfig
     import sys
     import os.path as op
     import random
     import matplotlib
-
     matplotlib.use("agg")
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
@@ -709,49 +708,46 @@ def plot_all_func(
             print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            if edge_color_override is False:
-                color_theme = hardcoded_params["plotting"]["functional"
-                ]["glassbrain"]["color_theme"][0]
-            else:
-                color_theme = random.choice(
-                    [
-                        "Purples_d",
-                        "Blues_d",
-                        "Greens_d",
-                        "Oranges_d",
-                        "Reds_d",
-                        "YlOrBr_d",
-                        "YlOrRd_d",
-                        "OrRd_d",
-                        "PuRd_d",
-                        "RdPu_d",
-                        "BuPu_d",
-                        "GnBu_d",
-                        "PuBu_d",
-                        "YlGnBu_d",
-                        "PuBuGn_d",
-                        "BuGn_d",
-                        "YlGn_d",
-                    ]
-                )
+    hardcoded_params = load_runconfig()
 
-            connectogram = hardcoded_params["plotting"]["connectogram"][0]
-            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-            adjacency = hardcoded_params["plotting"]["adjacency"][0]
-            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
-            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError as e:
-            print(e,
-                "Plotting configuration not successfully extracted "
-                "from runconfig.yaml"
+    try:
+        if edge_color_override is False:
+            color_theme = hardcoded_params["plotting"]["functional"
+            ]["glassbrain"]["color_theme"][0]
+        else:
+            color_theme = random.choice(
+                [
+                    "Purples_d",
+                    "Blues_d",
+                    "Greens_d",
+                    "Oranges_d",
+                    "Reds_d",
+                    "YlOrBr_d",
+                    "YlOrRd_d",
+                    "OrRd_d",
+                    "PuRd_d",
+                    "RdPu_d",
+                    "BuPu_d",
+                    "GnBu_d",
+                    "PuBu_d",
+                    "YlGnBu_d",
+                    "PuBuGn_d",
+                    "BuGn_d",
+                    "YlGn_d",
+                ]
             )
-            sys.exit(0)
-    stream.close()
+
+        connectogram = hardcoded_params["plotting"]["connectogram"][0]
+        glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
+        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+    except KeyError as e:
+        print(e,
+            "Plotting configuration not successfully extracted "
+            "from runconfig.yaml"
+        )
+        sys.exit(0)
 
     if not isinstance(coords, list):
         coords = list(tuple(x) for x in coords)
@@ -859,9 +855,9 @@ def plot_all_func(
 
             if roi:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}/coords_" \
+                coord_paths = f"{namer_dir}/coords_" \
                              f"{op.basename(roi).split('.')[0]}_plotting.pkl"
-                with open(coord_path, "wb") as f:
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -872,8 +868,8 @@ def plot_all_func(
 
             else:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -991,7 +987,7 @@ def plot_all_struct(
     import matplotlib
     matplotlib.use("agg")
     import os
-    import yaml
+    from pynets.core.utils import load_runconfig
     import sys
     import os.path as op
     from matplotlib import pyplot as plt
@@ -1019,25 +1015,22 @@ def plot_all_struct(
             print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            color_theme = hardcoded_params["plotting"]["structural"][
-                "glassbrain"]["color_theme"][0]
-            connectogram = hardcoded_params["plotting"]["connectogram"][0]
-            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-            adjacency = hardcoded_params["plotting"]["adjacency"][0]
-            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
-            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError as e:
-            print(
-                e, "Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(0)
-    stream.close()
+    hardcoded_params = load_runconfig()
+
+    try:
+        color_theme = hardcoded_params["plotting"]["structural"][
+            "glassbrain"]["color_theme"][0]
+        connectogram = hardcoded_params["plotting"]["connectogram"][0]
+        glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
+        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+    except KeyError as e:
+        print(
+            e, "Plotting configuration not successfully extracted from"
+            " runconfig.yaml"
+        )
+        sys.exit(0)
 
     if not isinstance(coords, list):
         coords = list(tuple(x) for x in coords)
@@ -1150,8 +1143,8 @@ def plot_all_struct(
             ] = create_gb_palette(conn_matrix, color_theme, coords, labels)
             if roi:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -1160,8 +1153,8 @@ def plot_all_struct(
                     pickle.dump(labels, f, protocol=2)
             else:
                 # Save coords to pickle
-                coord_path = f"{namer_dir}{'/coords_plotting.pkl'}"
-                with open(coord_path, "wb") as f:
+                coord_paths = f"{namer_dir}{'/coords_plotting.pkl'}"
+                with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
@@ -1228,7 +1221,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     matplotlib.use("agg")
     import pkg_resources
     import networkx as nx
-    import yaml
+    from pynets.core.utils import load_runconfig
     import sys
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
@@ -1256,27 +1249,24 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             print(e, f"\nCannot load plotting template. Do you have git-lfs "
                   f"installed?")
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            color_theme_func = hardcoded_params["plotting"]["functional"][
-                "glassbrain"]["color_theme"][0]
-            color_theme_struct = hardcoded_params["plotting"]["structural"][
-                "glassbrain"
-            ]["color_theme"][0]
-            glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-            adjacency = hardcoded_params["plotting"]["adjacency"][0]
-            dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
-            labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-        except KeyError as e:
-            print(e,
-                "Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(0)
-    stream.close()
+    hardcoded_params = load_runconfig()
+
+    try:
+        color_theme_func = hardcoded_params["plotting"]["functional"][
+            "glassbrain"]["color_theme"][0]
+        color_theme_struct = hardcoded_params["plotting"]["structural"][
+            "glassbrain"
+        ]["color_theme"][0]
+        glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
+        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
+        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+    except KeyError as e:
+        print(e,
+            "Plotting configuration not successfully extracted from"
+            " runconfig.yaml"
+        )
+        sys.exit(0)
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]

@@ -311,8 +311,7 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
                                                 ses,
                                                 modality, comb_tuple[1:], alg)
             vects.append(vect)
-    vects = [i for i in vects if i is not None and not
-    np.isnan(np.array(i)).all()]
+    vects = [i for i in vects if i is not None and not np.isnan(np.array(i)).all()]
     if len(vects) > 0 and alg == 'topology':
         out = np.concatenate(vects, axis=1)
     elif len(vects) > 0:
@@ -324,8 +323,7 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
     return out
 
 
-def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
-                              int_consist, final_missingness_summary):
+def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc, final_missingness_summary):
     df_summary = pd.DataFrame(
         columns=['grid', 'modality', 'embedding',
                  'discriminability'])
@@ -347,46 +345,13 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
 
     df_summary.at[0, "grid"] = comb_tuple
 
-    missing_sub_seshes = \
-        final_missingness_summary.loc[(final_missingness_summary['alg']==alg)
-                                      & (final_missingness_summary[
-                                             'modality']==modality) &
-                                      (final_missingness_summary[
-                                           'grid']==comb_tuple)
-                                      ].drop_duplicates(subset='id')
-
-    # int_consist
-    if int_consist is True and alg == 'topology':
-        try:
-            import pingouin as pg
-        except ImportError:
-            print(
-                "Cannot evaluate test-retest int_consist. pingouin"
-                " must be installed!")
-        for met in mets:
-            id_dict = {}
-            for ID in ids:
-                id_dict[ID] = {}
-                for ses in sub_dict_clean[ID].keys():
-                    if comb_tuple in sub_dict_clean[ID][ses][
-                        modality][alg].keys():
-                        id_dict[ID][ses] = \
-                        sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
-            df_wide = pd.DataFrame(id_dict).T
-            if df_wide.empty:
-                del df_wide
-                return pd.Series()
-            df_wide = df_wide.add_prefix(f"{met}_visit_")
-            df_wide.replace(0, np.nan, inplace=True)
-            try:
-                c_alpha = pg.cronbach_alpha(data=df_wide)
-            except BaseException:
-                print('FAILED...')
-                print(df_wide)
-                del df_wide
-                return pd.Series()
-            df_summary.at[0, f"cronbach_alpha_{met}"] = c_alpha[0]
-            del df_wide
+    # missing_sub_seshes = \
+    #     final_missingness_summary.loc[(final_missingness_summary['alg']==alg)
+    #                                   & (final_missingness_summary[
+    #                                          'modality']==modality) &
+    #                                   (final_missingness_summary[
+    #                                        'grid']==comb_tuple)
+    #                                   ].drop_duplicates(subset='id')
 
     # icc
     if icc is True and alg == 'topology':
@@ -402,15 +367,12 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
             for ses in [str(i) for i in range(1, 11)]:
                 for ID in ids:
                     id_dict[ID] = {}
-                    if comb_tuple in sub_dict_clean[ID][ses][
-                        modality][alg].keys():
-                        id_dict[ID][ses] = \
-                        sub_dict_clean[ID][ses][modality][alg][comb_tuple][
-                            mets.index(met)][0]
+                    if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
+                        id_dict[ID][str(ses)] = sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
                     df = pd.DataFrame(id_dict).T
                     if df.empty:
-                        del df_long
-                        return pd.Series()
+                        del df
+                        return df_summary
                     df.columns.values[0] = f"{met}"
                     df.replace(0, np.nan, inplace=True)
                     df['id'] = df.index
@@ -419,21 +381,26 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                     dfs.append(df)
             df_long = pd.concat(dfs, names=['id', 'ses', f"{met}"]).drop(
                 columns=[str(i) for i in range(1, 10)])
+            if '10' in df_long.columns:
+                df_long[f"{met}"] = df_long[f"{met}"].fillna(df_long['10'])
+                df_long = df_long.drop(columns='10')
             try:
                 c_icc = pg.intraclass_corr(data=df_long, targets='id',
                                            raters='ses', ratings=f"{met}",
                                            nan_policy='omit').round(3)
                 c_icc = c_icc.set_index("Type")
-                df_summary.at[0, f"icc_{met}"] = pd.DataFrame(
-                    c_icc.drop(index=['ICC1', 'ICC2', 'ICC3'])['ICC']).mean()[
-                    0]
+                c_icc3 = c_icc.drop(index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k', 'ICC3'])
+                df_summary.at[0, f"icc_{met}"] = c_icc3['ICC'].values[0]
+                df_summary.at[0, f"icc_{met}_CI95%_L"] = c_icc3['CI95%'].values[0][0]
+                df_summary.at[0, f"icc_{met}_CI95%_U"] = c_icc3['CI95%'].values[0][1]
             except BaseException:
                 print('FAILED...')
                 print(df_long)
                 del df_long
-                return pd.Series()
+                return df_summary
             del df_long
 
+    # discriminability
     if disc is True:
         vect_all = []
         for ID in ids:
@@ -445,21 +412,27 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                 continue
             # print(out)
             vect_all.append(out)
-        vect_all = [i for i in vect_all if i is not None and not np.isnan(np.array(i)).all()]
+        # ## TODO: Remove the .iloc below to include global efficiency.
+        # vect_all = [pd.DataFrame(i).iloc[1:] for i in vect_all if i is not
+        #             None and not np.isnan(np.array(i)).all()]
+        vect_all = [pd.DataFrame(i).iloc for i in vect_all if i is not
+                    None and not np.isnan(np.array(i)).all()]
         if len(vect_all) > 0:
-            if alg == 'topology':
-                X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
-                bad_ixs = [i[1] for i in
-                           np.argwhere(np.isnan(X_top))]
-                for m in set(bad_ixs):
-                    if (X_top.shape[0] - bad_ixs.count(m)) / \
-                        X_top.shape[0] < 0.50:
-                        X_top = np.delete(X_top, m, axis=1)
+            # if alg == 'topology':
+            #     X_top = np.swapaxes(np.hstack(vect_all), 0, 1)
+            #     bad_ixs = [i[1] for i in
+            #                np.argwhere(np.isnan(X_top))]
+            #     for m in set(bad_ixs):
+            #         if (X_top.shape[0] - bad_ixs.count(m)) / \
+            #             X_top.shape[0] < 0.50:
+            #             X_top = np.delete(X_top, m, axis=1)
+            # else:
+            if len(vect_all) > 0:
+                X_top = np.array(pd.concat(vect_all, axis=0, join="outer"))
             else:
-                if len(vect_all) > 0:
-                    X_top = np.array(pd.concat(vect_all, axis=0))
-                else:
-                    return pd.Series()
+                print('Empty dataframe!')
+                return df_summary
+
             shapes = []
             for ix, i in enumerate(vect_all):
                 shapes.append(i.shape[0] * [list(ids)[ix]])
@@ -474,13 +447,14 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
             X_top = scaler.fit_transform(X_top)
             try:
                 discr_stat_val, rdf = discr_stat(X_top, Y)
+                df_summary.at[0, "discriminability"] = discr_stat_val
+                print(discr_stat_val)
+                print("\n")
+                del discr_stat_val
             except BaseException:
-                return pd.Series()
-            df_summary.at[0, "discriminability"] = discr_stat_val
-            print(discr_stat_val)
-            print("\n")
+                print('Discriminability calculation failed...')
+                return df_summary
             # print(rdf)
-            del discr_stat_val
         del vect_all
     return df_summary
 
@@ -488,15 +462,16 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple_network'
     thr_type = "MST"
     icc = True
     disc = True
     int_consist = True
-    target_modality = 'dwi'
+    target_modality = 'func'
 
     #embedding_types = ['ASE']
-    embedding_types = ['OMNI', 'ASE']
+    embedding_types = ['topology']
+    #embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
     rsns = ['triple', 'kmeans']
     template = 'MNI152_T1'
@@ -614,9 +589,8 @@ if __name__ == "__main__":
                 for comb in grid:
                     outs.append(benchmark_reproducibility(
                         comb, modality, alg, par_dict,
-                        disc, int_consist, final_missingness_summary,
+                        disc, final_missingness_summary,
                     ))
-
                 df_summary = pd.concat(outs, axis=0)
                 df_summary = df_summary.dropna(axis=0, how='all')
                 print(f"Saving to {base_dir}/grid_clean_{modality}_{alg}_"
@@ -624,3 +598,69 @@ if __name__ == "__main__":
                 df_summary.to_csv(f"{base_dir}/grid_clean"
                                   f"_{modality}_{alg}_"
                                   f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv", index=False)
+
+                # int_consist
+                if int_consist is True and alg == 'topology':
+                    try:
+                        import pingouin as pg
+                    except ImportError:
+                        print(
+                            "Cannot evaluate test-retest int_consist. pingouin"
+                            " must be installed!")
+
+                    df_summary_cronbach = pd.DataFrame(
+                        columns=['grid', 'modality', 'embedding',
+                                 'cronbach'])
+                    df_summary_cronbach.at[0, "modality"] = modality
+                    df_summary_cronbach.at[0, "embedding"] = alg
+                    ## TODO: Delete line below if using glob eff in the future
+                    #mets = [i for i in mets if 'global_efficiency' not in i]
+
+                    for met in mets:
+                        cronbach_ses_list = []
+                        for ses in range(1, 10):
+                            id_dict = {}
+                            for ID in ids:
+                                id_dict[ID] = {}
+                                for comb in grid:
+                                    if modality == 'func':
+                                        try:
+                                            extract, hpass, model, res, atlas, smooth = comb
+                                        except BaseException:
+                                            print(f"Missing {comb}...")
+                                            extract, hpass, model, res, atlas = comb
+                                            smooth = '0'
+                                        comb_tuple = (
+                                        atlas, extract, hpass, model, res,
+                                        smooth)
+                                    else:
+                                        directget, minlength, model, res, atlas, tol = comb
+                                        comb_tuple = (
+                                        atlas, directget, minlength, model,
+                                        res, tol)
+                                    if isinstance(par_dict[ID][str(ses)][modality][alg][comb_tuple], np.ndarray):
+                                        id_dict[ID][comb] = par_dict[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                                    else:
+                                        continue
+                            df_wide = pd.DataFrame(id_dict)
+                            if df_wide.empty is True:
+                                continue
+                            else:
+                                df_wide = df_wide.add_prefix(f"{met}_comb_")
+                                df_wide.replace(0, np.nan, inplace=True)
+                                print(df_wide)
+                            try:
+                                c_alpha = pg.cronbach_alpha(data=df_wide.dropna(axis=1, how='all'), nan_policy='listwise')
+                                cronbach_ses_list.append(c_alpha[0])
+                            except BaseException:
+                                print('FAILED...')
+                                print(df_wide)
+                                del df_wide
+                            del df_wide
+                        df_summary_cronbach.at[0, f"average_cronbach_{met}"] = np.nanmean(cronbach_ses_list)
+                        print(f"Saving to {base_dir}/grid_clean_{modality}_{alg}_cronbach_"
+                              f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
+                        df_summary_cronbach.to_csv(f"{base_dir}/grid_clean"
+                                          f"_{modality}_{alg}_cronbach"
+                                          f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv",
+                                          index=False)

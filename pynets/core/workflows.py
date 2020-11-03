@@ -94,8 +94,7 @@ def workflow_selector(
     import gc
     import os
     import sys
-    import yaml
-    import pkg_resources
+    from pynets.core.utils import load_runconfig
     from pathlib import Path
     from pynets.core import workflows
     from nipype import Workflow
@@ -120,32 +119,26 @@ def workflow_selector(
     ]
 
     # Available functional and structural connectivity models
-    with open(
-
-
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        template_name = hardcoded_params["template"][0]
-        try:
-            func_models = hardcoded_params["available_models"][
-                "func_models"]
-        except KeyError as e:
-            print(e,
-                "available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError as e:
-            print(e,
-                "available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    template_name = hardcoded_params["template"][0]
+    try:
+        func_models = hardcoded_params["available_models"][
+            "func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -2139,7 +2132,7 @@ def dmri_connectometry(
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -2276,8 +2269,6 @@ def dmri_connectometry(
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -2693,7 +2684,6 @@ def dmri_connectometry(
         "error_margin"
     ]
     thr_struct_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -2724,7 +2714,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2759,7 +2748,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2927,7 +2915,7 @@ def dmri_connectometry(
                     thr_out_node,
                     plot_all_node,
                     [
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("conn_model", "conn_model"),
                         ("atlas", "atlas"),
                         ("dir_path", "dir_path"),
@@ -4636,7 +4624,7 @@ def fmri_connectometry(
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -4773,8 +4761,6 @@ def fmri_connectometry(
                 (inputnode, extract_ts_node, [("network", "network")]),
                 (inputnode, get_conn_matrix_node, [("network", "network")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -5093,7 +5079,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5124,7 +5109,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5295,7 +5279,7 @@ def fmri_connectometry(
                         ("node_size", "node_size"),
                         ("smooth", "smooth"),
                         ("dir_path", "dir_path"),
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("edge_threshold", "edge_threshold"),
                         ("thr", "thr"),
                         ("conn_model", "conn_model"),

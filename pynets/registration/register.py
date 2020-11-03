@@ -205,7 +205,6 @@ def direct_streamline_norm(
     from pynets.registration import reg_utils as regutils
     # from pynets.plotting import plot_gen
     import pkg_resources
-    import yaml
     import os.path as op
     from pynets.registration.reg_utils import vdc
     from nilearn.image import resample_to_img
@@ -214,21 +213,17 @@ def direct_streamline_norm(
     from dipy.tracking._utils import _mapping_to_voxel
     from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
+    from pynets.core.utils import load_runconfig
 
     # from pynets.core.utils import missing_elements
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        try:
-            hardcoded_params = yaml.load(stream)
-            run_dsn = hardcoded_params['tracking']["DSN"][0]
-        except FileNotFoundError as e:
-            import sys
-            print(e, "Failed to parse runconfig.yaml")
-            exit(1)
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        run_dsn = hardcoded_params['tracking']["DSN"][0]
+    except FileNotFoundError as e:
+        import sys
+        print(e, "Failed to parse runconfig.yaml")
+        exit(1)
 
     if run_dsn is True:
         dsn_dir = f"{basedir_path}/dmri_reg/DSN"

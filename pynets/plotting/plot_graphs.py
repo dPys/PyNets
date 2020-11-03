@@ -33,35 +33,28 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     import matplotlib
     matplotlib.use("agg")
     import sys
-    import pkg_resources
-    import yaml
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
     import matplotlib.ticker as mticker
+    from pynets.core.utils import load_runconfig
 
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
+    hardcoded_params = load_runconfig()
     try:
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            try:
-                labeling_atlas = \
-                hardcoded_params["plotting"]["labeling_atlas"][0]
-            except KeyError as e:
-                print(e,
-                    "Plotting configuration not successfully extracted"
-                    " from runconfig.yaml"
-                )
-                sys.exit(1)
-        stream.close()
+        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+    except KeyError as e:
+        print(e,
+            "Plotting configuration not successfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+
+    if any(isinstance(sub, dict) for sub in labels):
         labels = [i[0][labeling_atlas] for i in labels]
-    except BaseException:
-        pass
 
     try:
         plot_matrix(
@@ -112,8 +105,6 @@ def plot_community_conn_mat(
     import warnings
     warnings.filterwarnings("ignore")
     import sys
-    import pkg_resources
-    import yaml
     import matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
@@ -121,29 +112,25 @@ def plot_community_conn_mat(
     matplotlib.use("agg")
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
+    from pynets.core.utils import load_runconfig
 
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
+    hardcoded_params = load_runconfig()
+
     try:
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            try:
-                labeling_atlas = \
-                hardcoded_params["plotting"]["labeling_atlas"][0]
-            except KeyError as e:
-                print(e,
-                    "Plotting configuration not successfully extracted"
-                    " from runconfig.yaml"
-                )
-                sys.exit(1)
-        stream.close()
+        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
+    except KeyError as e:
+        print(e,
+              "Plotting configuration not successfully extracted"
+              " from runconfig.yaml"
+              )
+        sys.exit(1)
+
+    if any(isinstance(sub, dict) for sub in labels):
         labels = [i[0][labeling_atlas] for i in labels]
-    except BaseException:
-        pass
 
     sorting_array = sorted(
         range(len(community_aff)),
@@ -263,8 +250,7 @@ def plot_conn_mat_func(
         extraction.
     """
     import matplotlib.pyplot as plt
-    import pkg_resources
-    import yaml
+    from pynets.core.utils import load_runconfig
     import sys
     import networkx as nx
     import os.path as op
@@ -302,20 +288,16 @@ def plot_conn_mat_func(
                                                          ".png",
                                                          )
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            cmap_name = hardcoded_params["plotting"]["functional"][
-                "adjacency"]["color_theme"][0]
-        except KeyError as e:
-            print(e,
-                "Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        cmap_name = hardcoded_params["plotting"]["functional"][
+            "adjacency"]["color_theme"][0]
+    except KeyError as e:
+        print(e,
+            "Plotting configuration not successfully extracted from"
+            " runconfig.yaml"
+        )
+        sys.exit(1)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
@@ -435,8 +417,7 @@ def plot_conn_mat_struct(
         Minimum fiber length threshold in mm to restrict tracking.
     """
     import matplotlib.pyplot as plt
-    import pkg_resources
-    import yaml
+    from pynets.core.utils import load_runconfig
     import sys
     from pynets.plotting import plot_graphs
     import networkx as nx
@@ -476,20 +457,16 @@ def plot_conn_mat_struct(
                                                                  ".png",
                                                                  )
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            cmap_name = hardcoded_params["plotting"]["structural"][
-                "adjacency"]["color_theme"][0]
-        except KeyError as e:
-            print(e,
-                "Plotting configuration not successfully extracted from"
-                " runconfig.yaml"
-            )
-            sys.exit(0)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        cmap_name = hardcoded_params["plotting"]["structural"][
+            "adjacency"]["color_theme"][0]
+    except KeyError as e:
+        print(e,
+            "Plotting configuration not successfully extracted from"
+            " runconfig.yaml"
+        )
+        sys.exit(0)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)

@@ -497,7 +497,7 @@ class IndividualClustering(SimpleInterface):
         import gc
         import time
         import nibabel as nib
-        import yaml
+        from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
         from pynets.registration.reg_utils import check_orient_and_dims
@@ -524,13 +524,9 @@ class IndividualClustering(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            c_boot = hardcoded_params["c_boot"][0]
-            nthreads = hardcoded_params["nthreads"][0]
-        stream.close()
+        hardcoded_params = load_runconfig()
+        c_boot = hardcoded_params["c_boot"][0]
+        nthreads = hardcoded_params["nthreads"][0]
 
         clust_list = ["kmeans", "ward", "complete", "average", "ncut", "rena"]
 
@@ -945,7 +941,7 @@ class ExtractTimeseries(SimpleInterface):
 class _PlotStructInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotStruct"""
 
-    conn_matrix = traits.Array(mandatory=True)
+    conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
     atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
@@ -981,6 +977,9 @@ class PlotStruct(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        if isinstance(self.inputs.conn_matrix, str):
+            self.inputs.conn_matrix = np.load(self.inputs.conn_matrix)
 
         assert (
             len(self.inputs.coords)
@@ -1022,7 +1021,7 @@ class PlotStruct(SimpleInterface):
 class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for PlotFunc"""
 
-    conn_matrix = traits.Array(mandatory=True)
+    conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
     atlas = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
@@ -1058,6 +1057,9 @@ class PlotFunc(SimpleInterface):
 
     def _run_interface(self, runtime):
         from pynets.plotting import plot_gen
+
+        if isinstance(self.inputs.conn_matrix, str):
+            self.inputs.conn_matrix = np.load(self.inputs.conn_matrix)
 
         assert (
             len(self.inputs.coords)
@@ -1718,7 +1720,7 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
         self._results["aligned_atlas_t1mni"] = aligned_atlas_t1mni
         self._results["node_size"] = self.inputs.node_size
-        self._results["atlas"] = self.inputs.atlas
+        self._results["atlas"] = atlas_name
         self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
         self._results["uatlas"] = uatlas_out
         self._results["coords"] = coords
@@ -2276,7 +2278,7 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
-
+    atlas = traits.Any()
 
 class RegisterAtlasFunc(SimpleInterface):
     """Interface wrapper for RegisterAtlasFunc."""
@@ -2486,6 +2488,7 @@ class RegisterAtlasFunc(SimpleInterface):
         self._results["aligned_atlas_gm"] = aligned_atlas_gm
         self._results["coords"] = coords
         self._results["labels"] = labels
+        self._results["atlas"] = atlas_name
         self._results["node_size"] = self.inputs.node_size
 
         gc.collect()
@@ -2657,7 +2660,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
 class _TrackingOutputSpec(TraitedSpec):
     """Output interface wrapper for Tracking"""
 
-    streams = File(exists=True, mandatory=True)
+    streams = traits.Any()
     track_type = traits.Str(mandatory=True)
     target_samples = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
@@ -2703,8 +2706,7 @@ class Tracking(SimpleInterface):
         from colorama import Fore, Style
         from dipy.data import get_sphere
         from pynets.core import utils
-        import pkg_resources
-        import yaml
+        from pynets.core.utils import load_runconfig
         from pynets.dmri.track import (
             reconstruction,
             create_density_map,
@@ -2715,15 +2717,10 @@ class Tracking(SimpleInterface):
         from dipy.io.streamline import save_tractogram
         from nipype.utils.filemanip import copyfile, fname_presuffix
 
-        with open(
-            pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-        ) as stream:
-            hardcoded_params = yaml.load(stream)
-            use_life = hardcoded_params['tracking']["use_life"][0]
-            roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
-            sphere = hardcoded_params['tracking']["sphere"][0]
-
-        stream.close()
+        hardcoded_params = load_runconfig()
+        use_life = hardcoded_params['tracking']["use_life"][0]
+        roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+        sphere = hardcoded_params['tracking']["sphere"][0]
 
         dir_path = utils.do_dir_path(
             self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
@@ -2974,119 +2971,127 @@ class Tracking(SimpleInterface):
 
         gc.collect()
 
-        # Save streamlines to trk
-        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
-            runtime.cwd,
-            "/streamlines_",
-            "%s"
-            % (self.inputs.network + "_" if self.inputs.network is not None
-               else ""),
-            "%s"
-            % (
-                op.basename(self.inputs.roi).split(".")[0] + "_"
-                if self.inputs.roi is not None
-                else ""
-            ),
-            self.inputs.conn_model,
-            "_",
-            self.inputs.target_samples,
-            "_",
-            "%s"
-            % (
-                "%s%s" % (self.inputs.node_size, "mm_")
-                if (
-                    (self.inputs.node_size != "parc")
-                    and (self.inputs.node_size is not None)
-                )
-                else "parc_"
-            ),
-            "curv-",
-            str(self.inputs.curv_thr_list).replace(", ", "_"),
-            "_step-",
-            str(self.inputs.step_list).replace(", ", "_"),
-            "_directget-",
-            self.inputs.directget,
-            "_minlength-",
-            self.inputs.min_length,
-            "_tol-",
-            self.inputs.error_margin,
-            ".trk",
-        )
+        if streamlines is not None:
+            # import multiprocessing
+            # from pynets.core.utils import kill_process_family
+            # return kill_process_family(int(multiprocessing.current_process().pid))
 
-        # Linear Fascicle Evaluation (LiFE)
-        if use_life is True:
-            print('Using LiFE to evaluate streamline plausibility...')
-            from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-            dwi_img = nib.load(dwi_file_tmp_path)
-            dwi_data = dwi_img.get_fdata().astype('float32')
-            orig_count = len(streamlines)
-
-            if self.inputs.waymask:
-                mask_data = nib.load(waymask_tmp_path
-                                     ).get_fdata().astype('bool').astype('int')
-            else:
-                mask_data = nib.load(wm_in_dwi_tmp_path
-                                     ).get_fdata().astype('bool').astype('int')
-            try:
-                streamlines = evaluate_streamline_plausibility(
-                    dwi_data, gtab, mask_data, streamlines,
-                    sphere=sphere)
-            except BaseException:
-                print(f"Linear Fascicle Evaluation failed. Visually checking "
-                      f"streamlines output {namer_dir}/{op.basename(streams)}"
-                      f" is recommended.")
-            if len(streamlines) < 0.5*orig_count:
-                raise ValueError('LiFE revealed no plausible streamlines '
-                                 'in the tractogram!')
-            del dwi_data, mask_data
-
-        stf = StatefulTractogram(
-            streamlines,
-            fa_img,
-            origin=Origin.NIFTI,
-            space=Space.VOXMM)
-        stf.remove_invalid_streamlines()
-        save_tractogram(
-            stf,
-            streams,
-        )
-
-        del stf
-
-        copyfile(
-            streams,
-            f"{namer_dir}/{op.basename(streams)}",
-            copy=True,
-            use_hardlink=False,
-        )
-
-        # Create streamline density map
-        try:
-            [dir_path, dm_path] = create_density_map(
-                dwi_img,
-                dir_path,
-                streamlines,
+            # Save streamlines to trk
+            streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+                runtime.cwd,
+                "/streamlines_",
+                "%s"
+                % (self.inputs.network + "_" if self.inputs.network is not None
+                   else ""),
+                "%s"
+                % (
+                    op.basename(self.inputs.roi).split(".")[0] + "_"
+                    if self.inputs.roi is not None
+                    else ""
+                ),
                 self.inputs.conn_model,
+                "_",
                 self.inputs.target_samples,
-                self.inputs.node_size,
-                self.inputs.curv_thr_list,
-                self.inputs.step_list,
-                self.inputs.network,
-                self.inputs.roi,
+                "_",
+                "%s"
+                % (
+                    "%s%s" % (self.inputs.node_size, "mm_")
+                    if (
+                        (self.inputs.node_size != "parc")
+                        and (self.inputs.node_size is not None)
+                    )
+                    else "parc_"
+                ),
+                "curv-",
+                str(self.inputs.curv_thr_list).replace(", ", "_"),
+                "_step-",
+                str(self.inputs.step_list).replace(", ", "_"),
+                "_directget-",
                 self.inputs.directget,
+                "_minlength-",
                 self.inputs.min_length,
+                "_tol-",
                 self.inputs.error_margin,
-                namer_dir,
+                ".trk",
             )
-        except BaseException:
-            print('Density map failed. Check tractography output.')
-            dm_path = None
 
-        del streamlines
-        dwi_img.uncache()
-        gc.collect()
+            # Linear Fascicle Evaluation (LiFE)
+            if use_life is True:
+                print('Using LiFE to evaluate streamline plausibility...')
+                from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+                dwi_img = nib.load(dwi_file_tmp_path)
+                dwi_data = dwi_img.get_fdata().astype('float32')
+                orig_count = len(streamlines)
 
-        self._results["streams"] = streams
+                if self.inputs.waymask:
+                    mask_data = nib.load(waymask_tmp_path
+                                         ).get_fdata().astype('bool').astype('int')
+                else:
+                    mask_data = nib.load(wm_in_dwi_tmp_path
+                                         ).get_fdata().astype('bool').astype('int')
+                try:
+                    streamlines = evaluate_streamline_plausibility(
+                        dwi_data, gtab, mask_data, streamlines,
+                        sphere=sphere)
+                except BaseException:
+                    print(f"Linear Fascicle Evaluation failed. Visually checking "
+                          f"streamlines output {namer_dir}/{op.basename(streams)}"
+                          f" is recommended.")
+                if len(streamlines) < 0.5*orig_count:
+                    raise ValueError('LiFE revealed no plausible streamlines '
+                                     'in the tractogram!')
+                del dwi_data, mask_data
+
+            stf = StatefulTractogram(
+                streamlines,
+                fa_img,
+                origin=Origin.NIFTI,
+                space=Space.VOXMM)
+            stf.remove_invalid_streamlines()
+            save_tractogram(
+                stf,
+                streams,
+            )
+
+            del stf
+
+            copyfile(
+                streams,
+                f"{namer_dir}/{op.basename(streams)}",
+                copy=True,
+                use_hardlink=False,
+            )
+
+            # Create streamline density map
+            try:
+                [dir_path, dm_path] = create_density_map(
+                    dwi_img,
+                    dir_path,
+                    streamlines,
+                    self.inputs.conn_model,
+                    self.inputs.target_samples,
+                    self.inputs.node_size,
+                    self.inputs.curv_thr_list,
+                    self.inputs.step_list,
+                    self.inputs.network,
+                    self.inputs.roi,
+                    self.inputs.directget,
+                    self.inputs.min_length,
+                    self.inputs.error_margin,
+                    namer_dir,
+                )
+            except BaseException:
+                print('Density map failed. Check tractography output.')
+                dm_path = None
+
+            del streamlines
+            dwi_img.uncache()
+            gc.collect()
+
+            self._results["streams"] = streams
+        else:
+            self._results["streams"] = None
+
         self._results["track_type"] = self.inputs.track_type
         self._results["target_samples"] = self.inputs.target_samples
         self._results["conn_model"] = self.inputs.conn_model

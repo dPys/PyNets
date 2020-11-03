@@ -1061,8 +1061,15 @@ def thresh_func(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
+    if network is not None:
+        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    else:
+        atlas_name = f"{atlas}_stage-post_thr"
+
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name)
+
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,
@@ -1310,8 +1317,15 @@ def thresh_struct(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
+    if network is not None:
+        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    else:
+        atlas_name = f"{atlas}_stage-post_thr"
+
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name)
+
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,
