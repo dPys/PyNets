@@ -459,7 +459,8 @@ def create_gb_palette(
         node_size="auto",
         node_cmap=None,
         prune=True,
-        centrality_type='eig'):
+        centrality_type='eig',
+        max_node_size=None):
     """
     Create connectome color palette based on graph topography.
 
@@ -497,7 +498,7 @@ def create_gb_palette(
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
         [G, pruned_nodes] = prune_disconnected(
-            nx.from_numpy_matrix(np.abs(mat)))
+            nx.from_numpy_matrix(np.abs(mat)), fallback_lcc=False)
         pruned_nodes.sort(reverse=True)
         coords_pre = list(coords)
         labels_pre = list(labels)
@@ -526,10 +527,16 @@ def create_gb_palette(
             node_centralities = list(
                 nx.algorithms.degree_centrality(
                     G).values())
+        elif isinstance(centrality_type, list):
+            node_centralities = centrality_type
+
     except BaseException:
         node_centralities = len(coords) * [1]
-    max_node_size = 1 / mat.shape[0] * \
-        1e3 + 0.5 if node_size == "auto" else node_size
+
+    if not max_node_size:
+        max_node_size = 1 / mat.shape[0] * \
+            1e3 + 0.5 if node_size == "auto" else node_size
+
     node_sizes = np.array(
         minmax_scale(node_centralities, feature_range=(1, max_node_size))
     )
@@ -687,6 +694,7 @@ def plot_all_func(
     from nilearn import plotting as niplot
     import pkg_resources
     import pickle
+    from pynets.core.utils import load_mat
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
 
@@ -757,6 +765,17 @@ def plot_all_func(
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
+
+    if not isinstance(conn_matrix, np.ndarray):
+        if isinstance(conn_matrix, str):
+            if os.path.isfile(conn_matrix):
+                conn_matrix = load_mat(conn_matrix)
+            else:
+                raise ValueError(
+                    f"{conn_matrix} type {type(conn_matrix)} not recognized!")
+        else:
+            raise ValueError(f"{conn_matrix} type {type(conn_matrix)} "
+                             f"not recognized!")
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):
@@ -879,7 +898,7 @@ def plot_all_func(
 
             connectome.add_graph(
                 conn_matrix,
-                coords,
+                [tuple(x) for x in coords],
                 edge_cmap=clust_pal_edges,
                 edge_vmax=float(z_max),
                 edge_vmin=float(z_min),
@@ -994,6 +1013,7 @@ def plot_all_struct(
     from nilearn import plotting as niplot
     import pkg_resources
     import pickle
+    from pynets.core.utils import load_mat
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
 
@@ -1040,6 +1060,17 @@ def plot_all_struct(
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
+
+    if not isinstance(conn_matrix, np.ndarray):
+        if isinstance(conn_matrix, str):
+            if os.path.isfile(conn_matrix):
+                conn_matrix = load_mat(conn_matrix)
+            else:
+                raise ValueError(
+                    f"{conn_matrix} type {type(conn_matrix)} not recognized!")
+        else:
+            raise ValueError(f"{conn_matrix} type {type(conn_matrix)} "
+                             f"not recognized!")
 
     if len(coords) > 0:
         if isinstance(atlas, bytes):
@@ -1128,7 +1159,7 @@ def plot_all_struct(
                 np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
                 black_bg=True
             )
-            connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
+            connectome.add_overlay(ch2better_loc, alpha=0.10, cmap=plt.cm.gray)
 
             [
                 conn_matrix,
@@ -1164,7 +1195,7 @@ def plot_all_struct(
 
             connectome.add_graph(
                 conn_matrix,
-                coords,
+                [tuple(x) for x in coords],
                 edge_cmap=clust_pal_edges,
                 edge_vmax=float(1),
                 edge_vmin=float(1),
@@ -1193,20 +1224,24 @@ def plot_all_struct(
 
 def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     """
-    Plot adjacency matrix and glass brain for structural-functional multiplex connectome.
+    Plot adjacency matrix and glass brain for structural-functional multiplex
+    connectome.
 
     Parameters
     ----------
     mG_path : str
-        A gpickle file containing a a MultilayerGraph object (See https://github.com/nkoub/multinetx).
+        A gpickle file containing a a MultilayerGraph object
+        (See https://github.com/nkoub/multinetx).
     namer_dir : str
         Path to output directory for multiplex data.
     name : str
         Concatenation of multimodal graph filenames.
     modality_paths : tuple
-       A tuple of filepath strings to the raw structural and raw functional connectome graph files (.npy).
+        A tuple of filepath strings to the raw structural and raw functional
+        connectome graph files (.npy).
     metadata : dict
-        Dictionary coontaining coords and labels shared by each layer of the multilayer graph.
+        Dictionary coontaining coords and labels shared by each layer of the
+        multilayer graph.
 
     """
     import warnings
@@ -1363,7 +1398,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 
         connectome.add_graph(
             struct_mat,
-            coords,
+            [tuple(x) for x in coords],
             edge_threshold="50%",
             edge_cmap=plt.cm.binary,
             node_size=1,
@@ -1398,7 +1433,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                                prune=False)
         connectome.add_graph(
             func_mat,
-            coords,
+            [tuple(x) for x in coords],
             edge_threshold="50%",
             edge_cmap=clust_pal_edges,
             edge_kwargs={"alpha": 0.75},

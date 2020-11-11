@@ -3473,6 +3473,13 @@ def build_workflow(args, retval):
                         os.remove(file_)
                     except BaseException:
                         continue
+            for file_ in [i for i in glob.glob(
+                    f"{subj_dir}/*/func/*") if os.path.isfile(i)]:
+                if ("reor-RAS" in file_) or ("res-" in file_):
+                    try:
+                        os.remove(file_)
+                    except BaseException:
+                        continue
         if dwi_file:
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)]:
@@ -3482,7 +3489,14 @@ def build_workflow(args, retval):
                         os.remove(file_)
                     except BaseException:
                         continue
-
+            for file_ in [i for i in glob.glob(
+                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)]:
+                if ("reor-RAS" in file_) or ("res-" in file_) or \
+                   ("_bvecs_reor.bvec" in file_):
+                    try:
+                        os.remove(file_)
+                    except BaseException:
+                        continue
     print("\n\n------------FINISHED-----------")
     print("Subject: ", ID)
     print(

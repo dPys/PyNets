@@ -1864,7 +1864,6 @@ def dmri_connectometry(
                 "step_list",
                 "directget",
                 "min_length",
-                "error_margin",
                 "t1_aligned_mni"
             ],
             output_names=[
@@ -1892,7 +1891,6 @@ def dmri_connectometry(
                 "directget",
                 "warped_fa",
                 "min_length",
-                "error_margin"
             ],
             function=register.direct_streamline_norm,
             imports=import_list,
@@ -1968,15 +1966,11 @@ def dmri_connectometry(
 
     if error_margin_list:
         streams2graph_node.iterables = [("error_margin", error_margin_list)]
-        dmri_connectometry_wf.connect(
-            [(inputnode, streams2graph_node,
-              [("error_margin", "error_margin")])]
-        )
     else:
         dmri_connectometry_wf.connect(
             [
                 (
-                    dsn_node, streams2graph_node,
+                    inputnode, streams2graph_node,
                     [("error_margin", "error_margin")],
                 )
             ]
@@ -3142,7 +3136,6 @@ def dmri_connectometry(
                     ("step_list", "step_list"),
                     ("track_type", "track_type"),
                     ("maxcrossing", "maxcrossing"),
-                    ("error_margin", "error_margin")
                 ],
             ),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
@@ -3183,7 +3176,6 @@ def dmri_connectometry(
                     ("fa_path", "fa_path"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
-                    ("error_margin", "error_margin"),
                     ("network", "network")
                 ],
             ),

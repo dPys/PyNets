@@ -648,7 +648,7 @@ def load_mat(est_path):
     elif fmt == ".txt":
         G = nx.from_numpy_array(np.genfromtxt(est_path))
     elif fmt == ".npy":
-        G = nx.from_numpy_array(np.load(est_path))
+        G = nx.from_numpy_array(np.load(est_path, allow_pickle=True))
     else:
         raise ValueError("\nFile format not supported!")
 
@@ -1442,14 +1442,13 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
 
     assert len(coords) == len(labels)
 
-    i = 0
-    node_list = []
-
     if any(isinstance(sub, dict) for sub in labels):
         consensus_labs = True
     else:
         consensus_labs = False
 
+    i = 0
+    node_list = []
     for node in labels:
         node_dict = {}
         if consensus_labs is True:
@@ -1457,10 +1456,11 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
             node_dict['index'] = str(ix)
             node_dict['label'] = str(lab)
         else:
-            node_dict['index'] = str(node)
-            node_dict['label'] = None
+            node_dict['index'] = str(i)
+            node_dict['label'] = str(node)
         node_dict['coord'] = coords[i]
         node_list.append(node_dict)
+        i += 1
 
     nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
 

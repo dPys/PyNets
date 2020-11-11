@@ -52,7 +52,6 @@ def direct_streamline_norm(
     step_list,
     directget,
     min_length,
-    error_margin,
     t1_aligned_mni
 ):
     """
@@ -263,7 +262,7 @@ def direct_streamline_norm(
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -288,12 +287,10 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".trk",
         )
 
-        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -318,8 +315,6 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".nii.gz",
         )
 
@@ -509,8 +504,7 @@ def direct_streamline_norm(
         atlas_mni,
         directget,
         warped_fa,
-        min_length,
-        error_margin
+        min_length
     )
 
 

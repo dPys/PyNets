@@ -976,7 +976,7 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     #args_dict_all['pm'] = '48,67'
-    args_dict_all['pm'] = '128,2000'
+    args_dict_all['pm'] = '224,2000'
     args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
@@ -999,8 +999,9 @@ def main():
                            '_minlength-40',
                            'samples-2000streams',
                            'samples-7700streams',
+                           'rsn-kmeans_',
+                           'rsn-triple_'
                         #   "_minlength-0",
-                        #   "_minlength-20",
                         #   'rsn-triple',
                         #   'degree_assortativity_coefficient',
                            'ward',

@@ -211,7 +211,6 @@ def create_density_map(
     roi,
     directget,
     min_length,
-    error_margin,
     namer_dir,
 ):
     """
@@ -271,7 +270,7 @@ def create_density_map(
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype("float32"), dwi_img.affine)
 
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
         "/density_map_",
         "%s" % (network + "_" if network is not None else ""),
@@ -295,8 +294,6 @@ def create_density_map(
         directget,
         "_minlength-",
         min_length,
-        "_tol-",
-        error_margin,
         ".nii.gz",
     )
     dm_img.to_filename(dm_path)
@@ -438,6 +435,7 @@ def track_ensemble(
         hardcoded_params['tracking']["min_separation_angle"][0]
     min_streams = \
         hardcoded_params['tracking']["min_streams"][0]
+    timeout = hardcoded_params['tracking']["track_timeout"][0]
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
@@ -474,11 +472,13 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
+
     while float(stream_counter) < float(target_samples) and \
         float(ix) < 0.50*float(len(all_combs)):
         with Parallel(n_jobs=nthreads, backend='loky',
                       mmap_mode='r+', temp_folder=cache_dir,
-                      verbose=10, max_nbytes=6e9) as parallel:
+                      verbose=2, max_nbytes='20000M',
+                      timeout=timeout) as parallel:
             out_streams = parallel(
                 delayed(run_tracking)(
                     i, recon_path, n_seeds_per_iter, directget, maxcrossing,
@@ -696,6 +696,7 @@ def run_tracking(step_curv_combinations, recon_path,
             step_size=float(step_curv_combinations[0]),
             fixedstep=False,
             return_all=True,
+            random_seed=42
         )
     elif track_type == "particle":
         streamline_generator = ParticleFilteringTracking(
@@ -711,6 +712,7 @@ def run_tracking(step_curv_combinations, recon_path,
             pft_max_trial=20,
             particle_count=particle_count,
             return_all=True,
+            random_seed=42
         )
     else:
         try:
@@ -810,10 +812,10 @@ def run_tracking(step_curv_combinations, recon_path,
         except BaseException:
             print('No streamlines remaining in waymask\'s vacinity.')
             return None
-        os.remove(waymask_tmp_path)
+        os.system(f"rm -f {waymask_tmp_path} &")
 
-    os.remove(recon_path_tmp_path)
-    os.remove(tissues4d_tmp_path)
+    os.system(f"rm -f {recon_path_tmp_path} &")
+    os.system(f"rm -f {tissues4d_tmp_path} &")
     del parcels, atlas_data
 
     if len(roi_proximal_streamlines) > 0:
