@@ -459,9 +459,6 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 df_summary.at[0, f"icc_sd"] = np.nanstd(
                     df_summary[icc_cols].values)
                 del c_icc
-                tup_name = str(comb_tuple).replace('\', \'', '_').replace('(', '').replace(')', '').replace('\'', '')
-                df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
-                                  index=False)
                 print(df_summary.at[0, f"icc_mean"])
                 print(df_summary.at[0, f"icc_sd"])
             except BaseException:
@@ -469,6 +466,11 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 print(df_long)
                 del c_icc
                 df_summary.at[0, f"icc_{lp}"] = np.nan
+        tup_name = str(comb_tuple).replace('\', \'', '_').replace('(',
+                                                                  '').replace(
+            ')', '').replace('\'', '')
+        df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
+                          index=False)
         del df_long
 
     # discriminability

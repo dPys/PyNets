@@ -580,7 +580,8 @@ def streams2graph(
                 load_tractogram(
                     streams,
                     fa_img,
-                    bbox_valid_check=False,
+                    to_origin=Origin.NIFTI,
+                    to_space=Space.VOXMM
                 ).streamlines
             )
         ]
