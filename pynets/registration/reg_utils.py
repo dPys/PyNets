@@ -103,7 +103,6 @@ def atlas2t1w2dwi_align(
     mni2t1w_warp,
     t1_aligned_mni,
     ap_path,
-    t1w2dwi_bbr_xfm,
     mni2t1_xfm,
     t1w2dwi_xfm,
     wm_gm_int_in_dwi,
@@ -161,7 +160,7 @@ def atlas2t1w2dwi_align(
             time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
-            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_bbr_xfm,
+            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
         except BaseException:
@@ -169,7 +168,7 @@ def atlas2t1w2dwi_align(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
-            combine_xfms(mni2t1_xfm, t1w2dwi_bbr_xfm, mni2dwi_xfm)
+            combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
             regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
@@ -285,6 +284,7 @@ def waymask2dwi_align(
     t1wtissue2dwi_xfm,
     waymask_in_t1w,
     waymask_in_dwi,
+    B0_mask_tmp_path,
     template,
     simple,
 ):
@@ -293,7 +293,6 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from nilearn.image import math_img
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -327,9 +326,9 @@ def waymask2dwi_align(
 
     time.sleep(0.5)
 
-    t_img = nib.load(waymask_in_dwi)
-    mask = math_img("img > 0.01", img=t_img)
-    mask.to_filename(waymask_in_dwi)
+    waymask_in_dwi = regutils.apply_mask_to_image(waymask_in_dwi,
+                                                  B0_mask_tmp_path,
+                                                  waymask_in_dwi)
 
     return waymask_in_dwi
 
@@ -847,9 +846,11 @@ def invert_xfm(in_mat, out_mat):
 
 def apply_mask_to_image(input, mask, output):
     import os
-    cmd = f"fslmaths {input} -mas {mask} {output}"
+
+    cmd = f"fslmaths {input} -mas {mask} -thrp 0.0001 {output}"
     print(cmd)
     os.system(cmd)
+
     return output
 
 

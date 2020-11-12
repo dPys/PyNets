@@ -321,8 +321,10 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
     return out
 
 
-def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
-                              final_missingness_summary):
+def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
+                              final_missingness_summary, icc_tmps_dir):
+    import gc
+
     df_summary = pd.DataFrame(
         columns=['grid', 'modality', 'embedding',
                  'discriminability'])
@@ -366,8 +368,8 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
             for ses in [str(i) for i in range(1, 11)]:
                 for ID in ids:
                     id_dict[ID] = {}
-                    if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
-                        id_dict[ID][str(ses)] = sub_dict_clean[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
+                    if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
+                        id_dict[ID][str(ses)] = par_dict[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
                     df = pd.DataFrame(id_dict).T
                     if df.empty:
                         del df
@@ -408,17 +410,17 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
         dfs = []
         for ses in [str(i) for i in range(1, 11)]:
             for ID in ids:
-                if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
-                    if 'data' in sub_dict_clean[ID][ses][modality][alg][comb_tuple].keys():
-                        if sub_dict_clean[ID][ses][modality][alg][comb_tuple]['data'] is not None:
-                            if isinstance(sub_dict_clean[ID][ses][modality][alg][comb_tuple]['data'], str):
-                                if os.path.isfile(sub_dict_clean[ID][ses][modality][alg][comb_tuple]['data']):
-                                    emb_data = np.load(sub_dict_clean[ID][ses][modality][alg][comb_tuple]['data'])
+                if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
+                    if 'data' in par_dict[ID][ses][modality][alg][comb_tuple].keys():
+                        if par_dict[ID][ses][modality][alg][comb_tuple]['data'] is not None:
+                            if isinstance(par_dict[ID][ses][modality][alg][comb_tuple]['data'], str):
+                                if os.path.isfile(par_dict[ID][ses][modality][alg][comb_tuple]['data']):
+                                    emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
                                 else:
                                     continue
                             else:
-                                emb_data = sub_dict_clean[ID][ses][modality][alg][comb_tuple]['data']
-                            ixs = sub_dict_clean[ID][ses][modality][alg][comb_tuple]['index']
+                                emb_data = par_dict[ID][ses][modality][alg][comb_tuple]['data']
+                            ixs = par_dict[ID][ses][modality][alg][comb_tuple]['index']
                             if len(ixs) == emb_data.shape[0]:
                                 df_raw = pd.DataFrame(emb_data).T
 
@@ -434,7 +436,7 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                                 continue
                     else:
                         print(
-                            f"data not found in {sub_dict_clean[ID][ses][modality][alg][comb_tuple]}. Skipping...")
+                            f"data not found in {par_dict[ID][ses][modality][alg][comb_tuple]}. Skipping...")
                         continue
         if len(dfs) == 0:
             return df_summary
@@ -457,6 +459,11 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                 df_summary.at[0, f"icc_sd"] = np.nanstd(
                     df_summary[icc_cols].values)
                 del c_icc
+                tup_name = str(comb_tuple).replace('\', \'', '_').replace('(', '').replace(')', '').replace('\'', '')
+                df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
+                                  index=False)
+                print(df_summary.at[0, f"icc_mean"])
+                print(df_summary.at[0, f"icc_sd"])
             except BaseException:
                 print('FAILED...')
                 print(df_long)
@@ -464,12 +471,12 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                 df_summary.at[0, f"icc_{lp}"] = np.nan
         del df_long
 
-        # discriminability
+    # discriminability
     if disc is True:
         vect_all = []
         for ID in ids:
             try:
-                out = gen_sub_vec(sub_dict_clean, ID, modality, alg,
+                out = gen_sub_vec(par_dict, ID, modality, alg,
                                   comb_tuple)
             except BaseException:
                 print(f"{ID} {modality} {alg} {comb_tuple} failed...")
@@ -514,6 +521,8 @@ def benchmark_reproducibility(comb, modality, alg, sub_dict_clean, disc,
                 return df_summary
             # print(rdf)
         del vect_all
+
+    gc.collect()
     return df_summary
 
 
@@ -557,7 +566,8 @@ if __name__ == "__main__":
     missingness_summary = (
         f"{base_dir}/pynets_missingness_summary_{target_modality}_{'_'.join(embedding_types)}.csv"
     )
-
+    icc_tmps_dir = f"{base_dir}/icc_tmps/{target_modality}_{'_'.join(embedding_types)}"
+    os.makedirs(icc_tmps_dir, exist_ok=True)
     if not os.path.isfile(subject_dict_file_path):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
             modalities, base_dir, thr_type, mets, embedding_types, template,
@@ -638,13 +648,13 @@ if __name__ == "__main__":
             cache_dir = tempfile.mkdtemp()
 
             with Parallel(
-                n_jobs=128, backend='loky',
+                n_jobs=128, require='sharedmem',
                 verbose=10, temp_folder=cache_dir
             ) as parallel:
                 outs = parallel(
                     delayed(benchmark_reproducibility)(
                         comb, modality, alg, sub_dict_clean,
-                        disc, final_missingness_summary,
+                        disc, final_missingness_summary, icc_tmps_dir
                     )
                     for comb in grid
                 )

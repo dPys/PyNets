@@ -832,6 +832,14 @@ class DmriReg(object):
         """
         import time
 
+        self.ap_path = regutils.apply_mask_to_image(self.ap_path,
+                                                    self.B0_mask,
+                                                    self.ap_path)
+
+        self.fa_path = regutils.apply_mask_to_image(self.fa_path,
+                                                    self.B0_mask,
+                                                    self.fa_path)
+
         # Align T1w-->DWI
         regutils.align(
             self.ap_path,
@@ -919,6 +927,9 @@ class DmriReg(object):
             )
             time.sleep(0.5)
 
+        self.t1w2dwi = regutils.apply_mask_to_image(self.t1w2dwi,
+                                                    self.B0_mask,
+                                                    self.t1w2dwi)
         return
 
     def tissue2dwi_align(self):

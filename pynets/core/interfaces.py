@@ -1622,9 +1622,8 @@ class RegisterAtlasDWI(SimpleInterface):
             mni2t1w_warp_tmp_path,
             t1_aligned_mni_tmp_path,
             ap_tmp_path,
-            t1w2dwi_bbr_xfm_tmp_path,
             mni2t1_xfm_tmp_path,
-            t1w2dwi_xfm_tmp_path,
+            t1wtissue2dwi_xfm_tmp_path,
             wm_gm_int_in_dwi_tmp_path,
             aligned_atlas_t1mni,
             aligned_atlas_skull,
@@ -1669,6 +1668,7 @@ class RegisterAtlasDWI(SimpleInterface):
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
                 waymask_in_dwi,
+                B0_mask_tmp_path,
                 template_tmp_path,
                 self.inputs.simple,
             )
@@ -2827,8 +2827,6 @@ class Tracking(SimpleInterface):
             tractogram = load_tractogram(
                 streams,
                 fa_img,
-                to_origin=Origin.NIFTI,
-                to_space=Space.VOXMM,
                 bbox_valid_check=False,
             )
 
