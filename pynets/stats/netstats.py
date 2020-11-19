@@ -819,7 +819,7 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
                               'grabbing the largest connected component...'))
 
             lcc, pruned_nodes = get_lcc(G_tmp, return_inds=True)
-            return lcc, pruned_nodes
+            return lcc, pruned_nodes.tolist()
         else:
             print(UserWarning('Too many isolates to defragment, '
                               'skipping defragmentation. Consider fallback to'
