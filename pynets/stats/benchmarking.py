@@ -68,6 +68,8 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["smooth"].append(str(file_renamed.split(
                     "smooth-")[1].split("_")[0].split("fwhm")[0]))
         else:
+            if 'smooth' not in hyperparam_dict.keys():
+                hyperparam_dict['smooth'] = [str(0)]
             hyperparam_dict["smooth"].append(str(0))
             hyperparams.append("smooth")
         if "hpass-" in file_renamed:
@@ -324,6 +326,11 @@ def gen_sub_vec(sub_dict_clean, ID, modality, alg, comb_tuple):
 def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                               final_missingness_summary, icc_tmps_dir):
     import gc
+    import json
+    import glob
+    import ast
+    import matplotlib
+    matplotlib.use('Agg')
 
     df_summary = pd.DataFrame(
         columns=['grid', 'modality', 'embedding',
@@ -408,6 +415,8 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 "Cannot evaluate ICC. pingouin"
                 " must be installed!")
         dfs = []
+        coords_frames = []
+        labels_frames = []
         for ses in [str(i) for i in range(1, 11)]:
             for ID in ids:
                 if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
@@ -415,21 +424,54 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                         if par_dict[ID][ses][modality][alg][comb_tuple]['data'] is not None:
                             if isinstance(par_dict[ID][ses][modality][alg][comb_tuple]['data'], str):
                                 if os.path.isfile(par_dict[ID][ses][modality][alg][comb_tuple]['data']):
-                                    emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
+                                    try:
+                                        emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
+                                        node_files = glob.glob(f"{os.path.dirname(par_dict[ID][ses][modality][alg][comb_tuple]['data'])}/nodes/*.json")
+                                    except:
+                                        continue
                                 else:
                                     continue
                             else:
                                 emb_data = par_dict[ID][ses][modality][alg][comb_tuple]['data']
+                                node_files = []
                             ixs = par_dict[ID][ses][modality][alg][comb_tuple]['index']
                             if len(ixs) == emb_data.shape[0]:
-                                df_raw = pd.DataFrame(emb_data).T
-
-                                df_pref = df_raw.add_prefix("ASE_")
-                                df_pref.replace(0, np.nan, inplace=True)
+                                df_pref = pd.DataFrame(emb_data.T, columns=[
+                                    f"{alg}_{i}_rsn-{comb_tuple[0]}_res-{comb_tuple[-2]}"
+                                    for i in ixs])
                                 df_pref['id'] = ID
                                 df_pref['ses'] = ses
+                                df_pref.replace(0, np.nan, inplace=True)
                                 df_pref.reset_index(drop=True, inplace=True)
                                 dfs.append(df_pref)
+                                if len(node_files) > 0:
+                                    label_file = [i for i in node_files if
+                                                  'count' not in i][0]
+                                    with open(label_file, 'r+') as f:
+                                        node_dict = json.load(f)
+                                    indices = [i['index'] for i in
+                                                      node_dict.values()]
+                                    if indices == ixs:
+                                        coords = [i['coord'] for i in
+                                                         node_dict.values()]
+
+                                        df_coords = pd.DataFrame(
+                                            [str(tuple(x)) for x in
+                                             coords]).T
+                                        df_coords.columns = [f"rsn-{comb_tuple[0]}_res-{comb_tuple[-2]}_{i}" for i in ixs]
+                                        labels = [
+                                            list(i['label'].values())[7] for i
+                                            in
+                                            node_dict.values()]
+
+                                        df_labels = pd.DataFrame(
+                                            labels).T
+                                        df_labels.columns = [f"rsn-{comb_tuple[0]}_res-{comb_tuple[-2]}_{i}" for i in ixs]
+                                        coords_frames.append(df_coords)
+                                        labels_frames.append(df_labels)
+                                    else:
+                                        coords_frames.append(pd.Series())
+                                        labels_frames.append(pd.Series())
                             else:
                                 print(
                                     f"{comb_tuple} does not correspond to indices {ixs} for {ID}-{ses}. Skipping...")
@@ -441,10 +483,22 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
         if len(dfs) == 0:
             return df_summary
 
+        if len(coords_frames) > 0 and len(labels_frames) > 0:
+            coords_frames_icc = pd.concat(coords_frames)
+            labels_frames_icc = pd.concat(labels_frames)
+            nodes = True
+        else:
+            nodes = False
+
         df_long = pd.concat(dfs, axis=0)
         df_long = df_long.dropna(axis='columns', thresh=0.75 * len(df_long))
 
+        dict_sum = df_summary.drop(columns=['grid', 'modality', 'embedding',
+                                            'discriminability']).to_dict()
+
         for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not in i]:
+            ix = int(lp.split(f"{alg}_")[1].split('_')[0])
+            rsn = lp.split(f"{alg}_{ix}_")[1]
             try:
                 c_icc = pg.intraclass_corr(data=df_long[['id', 'ses', lp]], targets='id',
                                            raters='ses', ratings=lp,
@@ -452,25 +506,35 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 c_icc = c_icc.set_index("Type")
                 c_icc3 = c_icc.drop(
                     index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k', 'ICC3'])
-                df_summary.at[0, f"icc_{lp}"] = c_icc3['ICC'].values[0]
-                icc_cols = [i for i in df_summary.columns if 'icc' in i]
-                df_summary.at[0, f"icc_mean"] = np.nanmean(
-                    df_summary[icc_cols].values)
-                df_summary.at[0, f"icc_sd"] = np.nanstd(
-                    df_summary[icc_cols].values)
-                del c_icc
-                print(df_summary.at[0, f"icc_mean"])
-                print(df_summary.at[0, f"icc_sd"])
+                icc_val = c_icc3['ICC'].values[0]
+                if nodes is True:
+                    coord_in = np.array(ast.literal_eval(coords_frames_icc[f"{rsn}_{ix}"].mode().values[0]), dtype=np.dtype("O"))
+                    label_in = np.array(labels_frames_icc[f"{rsn}_{ix}"].mode().values[0], dtype=np.dtype("O"))
+                else:
+                    coord_in = np.nan
+                    label_in = np.nan
+                dict_sum[f"{lp}_icc"] = icc_val
+                del c_icc, c_icc3
             except BaseException:
                 print('FAILED...')
                 print(df_long)
+                df_summary.at[0, f"{lp}_icc"] = np.nan
+                coord_in = np.nan
+                label_in = np.nan
                 del c_icc
-                df_summary.at[0, f"icc_{lp}"] = np.nan
+
+            dict_sum[f"{lp}_coord"] = coord_in
+            dict_sum[f"{lp}_label"] = label_in
+
+        df_summary = pd.concat([df_summary, pd.DataFrame(pd.Series(dict_sum).T).T], axis=1)
+
+        print(df_summary)
+
         tup_name = str(comb_tuple).replace('\', \'', '_').replace('(',
                                                                   '').replace(
             ')', '').replace('\'', '')
         df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
-                          index=False)
+                          index=False, header=True)
         del df_long
 
     # discriminability
@@ -531,19 +595,20 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple_network'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     thr_type = "MST"
     icc = True
-    disc = False
+    disc = True
     int_consist = False
-    target_modality = 'func'
+    target_modality = 'dwi'
 
-    #embedding_types = ['ASE']
+    embedding_types = ['ASE']
     #embedding_types = ['topology']
-    embedding_types = ['OMNI']
+    #embedding_types = ['OMNI']
     modalities = ['func', 'dwi']
     rsns = ['triple', 'kmeans']
-    template = 'CN200'
+    #template = 'CN200'
+    template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
             "degree_assortativity_coefficient",
@@ -599,8 +664,9 @@ if __name__ == "__main__":
         with open(subject_mod_grids_file_path, "rb") as f:
             modality_grids = dill.load(f)
         f.close()
-        final_missingness_summary = pd.read_csv(missingness_summary)
-        missingness_frames = []
+        if os.path.isfile(missingness_summary):
+            final_missingness_summary = pd.read_csv(missingness_summary)
+            missingness_frames = []
 
     if len(missingness_frames) > 0:
         final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
@@ -650,8 +716,9 @@ if __name__ == "__main__":
             cache_dir = tempfile.mkdtemp()
 
             with Parallel(
-                n_jobs=128, require='sharedmem',
-                verbose=10, temp_folder=cache_dir
+                n_jobs=128, require="sharedmem", backend='threading',
+                verbose=10, max_nbytes='20000M',
+                temp_folder=cache_dir
             ) as parallel:
                 outs = parallel(
                     delayed(benchmark_reproducibility)(

@@ -977,8 +977,9 @@ def main():
     args_dict_all['v'] = False
     #args_dict_all['pm'] = '48,67'
     args_dict_all['pm'] = '224,2000'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
+    args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple_network/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
@@ -989,23 +990,22 @@ def main():
                            'participation_coefficient',
                            'average_local_efficiency',
                        #    'weighted_transitivity',
-                           'communicability_centrality',
+                       #    'communicability_centrality',
                        #    'average_clustering',
                            'average_local_clustering_nodewise',
                            'average_local_efficiency_nodewise',
                            'degree_centrality',
-                           'csd',
-                           '_minlength-0',
-                           '_minlength-40',
+                        #   'csd',
+                        #   '_minlength-0',
+                        #   '_minlength-40',
                            'samples-2000streams',
                            'samples-7700streams',
-                           'rsn-kmeans_',
-                           'rsn-triple_'
+                        #   'rsn-kmeans_',
+                        #   'rsn-triple_'
                         #   "_minlength-0",
-                        #   'rsn-triple',
                         #   'degree_assortativity_coefficient',
                            'ward',
-                           "_minlength-30", "variance",
+                            "variance",
                            "res-1000", "smooth-2fwhm"]
     args = SimpleNamespace(**args_dict_all)
 

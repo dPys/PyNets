@@ -711,6 +711,11 @@ def local_thresholding_prop(conn_matrix, thr):
 
     fail_tol = 100
     conn_matrix = np.nan_to_num(conn_matrix)
+
+    if np.sum(conn_matrix) == 0:
+        print(UserWarning('Empty connectivity matrix detected!'))
+        return conn_matrix
+
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
 
     maximum_edges = G.number_of_edges()
@@ -721,6 +726,7 @@ def local_thresholding_prop(conn_matrix, thr):
     min_t = nx.minimum_spanning_tree(
         thresholding.weight_to_distance(G0), weight="distance"
     )
+
     min_t.add_nodes_from(G.nodes())
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
@@ -1008,29 +1014,9 @@ def thresh_func(
     import gc
     from pynets.core import utils, thresholding
 
-    if parc is True:
-        node_size = "parc"
-
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("Raw connectivity matrix contains only"
-                         " zeros.")
-
-    # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_func(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            smooth,
-            hpass,
-            parc,
-            extract_strategy,
-        ),
-    )
+        print(UserWarning("Raw connectivity matrix contains only"
+                         " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1264,27 +1250,8 @@ def thresh_struct(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        raise ValueError("Raw connectivity matrix contains only"
-                         " zeros.")
-
-    # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_diff(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            target_samples,
-            track_type,
-            parc,
-            directget,
-            min_length,
-            error_margin
-        ),
-    )
+        print(UserWarning("Raw connectivity matrix contains only"
+                         " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(

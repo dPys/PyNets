@@ -479,7 +479,7 @@ def track_ensemble(
         while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=cache_dir,
-                          verbose=2, max_nbytes='20000M',
+                          verbose=2, max_nbytes='50000M',
                           timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
@@ -498,10 +498,11 @@ def track_ensemble(
                     out_streams = concatenate(out_streams, axis=0)
 
                 if len(out_streams) < min_streams:
-                    ix += 1
+                    ix += 2
                     print(f"Fewer than {min_streams} streamlines tracked on last"
                           f" iteration. Loosening tolerance and anatomical"
-                          f" constraints...")
+                          f" constraints. Check {tissues4d} or {recon_path}"
+                          f" for errors...")
                     if track_type != 'particle':
                         tiss_class = 'wb'
                     roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
@@ -533,8 +534,7 @@ def track_ensemble(
     if ix >= 0.75*len(all_combs) and \
         float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
-              f"iterations with <50 streamlines. Are you using a waymask? "
-              f"If so, it may be too restrictive.")
+              f"iterations with few streamlines.")
         return None
     else:
         print("Tracking Complete: ", str(time.time() - start))
@@ -639,7 +639,6 @@ def run_tracking(step_curv_combinations, recon_path,
 
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
         mod_fit = hf['reconstruction'][:].astype('float32')
-    hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
@@ -818,6 +817,7 @@ def run_tracking(step_curv_combinations, recon_path,
             return None
         os.system(f"rm -f {waymask_tmp_path} &")
 
+    hf.close()
     os.system(f"rm -f {tissues4d_tmp_path} &")
     del parcels, atlas_data
 

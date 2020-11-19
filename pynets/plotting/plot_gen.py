@@ -460,7 +460,8 @@ def create_gb_palette(
         node_cmap=None,
         prune=True,
         centrality_type='eig',
-        max_node_size=None):
+        max_node_size=None,
+        node_aff_mat=None):
     """
     Create connectome color palette based on graph topography.
 
@@ -542,8 +543,10 @@ def create_gb_palette(
     )
 
     # Node communities
-    _, node_comm_aff_mat, resolution, num_comms = \
-        community_resolution_selection(G)
+    if node_aff_mat is None:
+        _, node_aff_mat, _, num_comms = community_resolution_selection(G)
+    else:
+        num_comms = len(set(node_aff_mat))
 
     # Path lengths
     edge_lengths = []
@@ -578,7 +581,7 @@ def create_gb_palette(
 
         try:
             ls_cmap = colors.LinearSegmentedColormap.from_list(
-                node_comm_aff_mat, sns.color_palette(flatui,
+                node_aff_mat, sns.color_palette(flatui,
                                                      n_colors=num_comms)
             )
             matplotlib.cm.register_cmap("community", ls_cmap)

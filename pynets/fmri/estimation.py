@@ -377,6 +377,26 @@ def get_conn_matrix(
     # Enforce symmetry
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
 
+    if parc is True:
+        node_size = "parc"
+
+    # Save unthresholded
+    utils.save_mat(
+        conn_matrix,
+        utils.create_raw_path_func(
+            ID,
+            network,
+            conn_model,
+            roi,
+            dir_path,
+            node_size,
+            smooth,
+            hpass,
+            parc,
+            extract_strategy,
+        ),
+    )
+
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
             "\nMatrix estimation selection yielded an empty or"

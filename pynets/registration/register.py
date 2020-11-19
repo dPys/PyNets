@@ -944,6 +944,10 @@ class DmriReg(object):
         import sys
         import time
         import os.path as op
+        from pynets.core.utils import load_runconfig
+
+        hardcoded_params = load_runconfig()
+        tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
@@ -1080,19 +1084,26 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
+        if tiss_class == 'wb' or tiss_class == 'cmc':
+            csf_thr = 0.50
+            wm_thr = 0.15
+        else:
+            csf_thr = 0.95
+            wm_thr = 0.10
+
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img("img > 0.10", img=thr_img)
+        thr_img = math_img(f"img > {wm_thr}", img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img("img > 0.15", img=thr_img)
+        thr_img = math_img("img > 0.10", img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img = math_img("img > 0.95", img=thr_img)
+        thr_img = math_img(f"img > {csf_thr}", img=thr_img)
         nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space

@@ -1547,8 +1547,12 @@ def populate_subject_dict(
 
                 if os.path.isfile(embedding):
                     # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-                    ixs = get_index_labels(base_dir, ID, ses, modality,
-                                           comb_tuple, np.load(embedding).shape[0])
+                    try:
+                        ixs = get_index_labels(base_dir, ID, ses, modality,
+                                               comb_tuple, np.load(embedding).shape[0])
+                    except BaseException:
+                        print(f"Failed to load {embedding} for {ID}-{ses}")
+                        continue
                     if (
                         alg
                         not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
@@ -2664,7 +2668,8 @@ def main():
     import json
 
     #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    base_dir = "/working/tuning_set/outputs_clustering"
+    #base_dir = "/working/tuning_set/outputs_clustering"
+    base_dir = "/working/tuning_set/outputs_language"
     #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
@@ -2713,7 +2718,8 @@ def main():
     # target_vars = ["rumination_persist_phenotype",
     #                "depression_persist_phenotype"]
 
-    rsns = ["tripleRUM", "kmeansRUM"]
+    #rsns = ["tripleRUM", "kmeansRUM"]
+    rsns = ["language"]
 
     sessions = ["1"]
 
