@@ -1041,8 +1041,6 @@ def bootstrapped_nested_cv(
             {0: 'None'},
         )
 
-    X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
-
     # Remove outliers
     outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
     X = X[outlier_mask]
@@ -1105,6 +1103,7 @@ def bootstrapped_nested_cv(
         )
 
     # Drop sparse columns with >50% zeros
+    X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
     X = X.loc[:, (X == 0).mean() < .50]
 
     if X.empty or len(X.columns) < 5:
@@ -1978,8 +1977,37 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_):
         return None, embedding_type, target_var
 
 
+def copy_json_dict(feature_spaces, modality, embedding_type, tempdir):
+    import uuid
+    import os
+    from time import strftime
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    from nipype.utils.filemanip import fname_presuffix, copyfile
+    import tempfile
+
+    if feature_spaces is not None:
+        input_dict_tmp = feature_spaces[
+            f"{modality}_{embedding_type}"
+        ]
+        if os.path.isfile(input_dict_tmp) is True:
+            json_dict = fname_presuffix(
+                input_dict_tmp, suffix=f"_tmp_{run_uuid}",
+                newpath=tempdir
+            )
+
+            copyfile(input_dict_tmp, json_dict, copy=True)
+
+            return json_dict
+        else:
+            new_file, filename = tempfile.mkstemp()
+            return new_file
+    else:
+        new_file, filename = tempfile.mkstemp()
+        return new_file
+
+
 class _MakeXYInputSpec(BaseInterfaceInputSpec):
-    feature_spaces = traits.Dict(mandatory=True)
+    json_dict = traits.Any(mandatory=True)
     target_var = traits.Str(mandatory=True)
     modality = traits.Str(mandatory=True)
     embedding_type = traits.Str(mandatory=True)
@@ -2006,36 +2034,15 @@ class MakeXY(SimpleInterface):
         import os
         import time
         from ast import literal_eval
-        import numpy as np
-        import pandas as pd
-        import shutil
-        from nipype.utils.filemanip import fname_presuffix, copyfile
-        import uuid
-        from time import strftime
         from pynets.stats.prediction import make_x_y
-
-        run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
         self._results["embedding_type"] = self.inputs.embedding_type
         self._results["grid_param"] = self.inputs.grid_param
         self._results["modality"] = self.inputs.modality
         self._results["target_var"] = self.inputs.target_var
 
-        if self.inputs.feature_spaces is not None:
-
-            json_dict = self.inputs.feature_spaces[
-                f"{self.inputs.modality}_{self.inputs.embedding_type}"
-            ]
-            if os.path.isfile(json_dict):
-                input_dict_tmp = fname_presuffix(
-                    json_dict, suffix=f"_tmp_{run_uuid}",
-                    newpath=runtime.cwd
-                )
-
-                shutil.copy2(json_dict, input_dict_tmp)
-
-                print(f"Loading {input_dict_tmp}...")
-
+        if self.inputs.json_dict is not None:
+            if os.path.isfile(self.inputs.json_dict) and self.inputs.json_dict.endswith('.json'):
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "dep_1", "rum_1", "rum_2", "dep_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
@@ -2057,7 +2064,7 @@ class MakeXY(SimpleInterface):
                                  "dep_1", "rum_1"]
 
                 [X, Y] = make_x_y(
-                    input_dict_tmp,
+                    self.inputs.json_dict,
                     drop_cols,
                     self.inputs.target_var,
                     self.inputs.embedding_type,
@@ -2352,6 +2359,7 @@ def create_wf(modality_grids, modality, basedir):
     ml_wf = pe.Workflow(name=f"ensemble_connectometry_{run_uuid}")
     os.makedirs(f"/{basedir}/{run_uuid}", exist_ok=True)
     ml_wf.base_dir = f"/{basedir}/{run_uuid}"
+    os.makedirs(f"{ml_wf.base_dir}/json_tmps", exist_ok=True)
 
     grid_param_combos = [list(i) for i in modality_grids[modality]]
 
@@ -2390,9 +2398,21 @@ def create_wf(modality_grids, modality, basedir):
         name="inputnode",
     )
 
+    copy_json_dict_node = pe.Node(
+        niu.Function(
+            input_names=["feature_spaces", "modality", "embedding_type",
+                         "tempdir"],
+            output_names=["json_dict"],
+            function=copy_json_dict,
+        ),
+        name="copy_json_dict_node",
+    )
+    copy_json_dict_node.inputs.tempdir = f"{ml_wf.base_dir}/json_tmps"
+
     make_x_y_func_node = pe.Node(MakeXY(), name="make_x_y_func_node")
 
-    make_x_y_func_node.iterables = [("grid_param", [str(i) for i in grid_params_mod[1:]])]
+    make_x_y_func_node.iterables = [("grid_param",
+                                     [str(i) for i in grid_params_mod[1:]])]
     make_x_y_func_node.inputs.grid_param = str(grid_params_mod[0])
     make_x_y_func_node.interface.n_procs = 1
     make_x_y_func_node.interface._mem_gb = 2
@@ -2418,7 +2438,8 @@ def create_wf(modality_grids, modality, basedir):
 
     concatenate_frames_node = pe.Node(
         niu.Function(
-            input_names=["out_dir", "modality", "embedding_type", "target_var", "files_"],
+            input_names=["out_dir", "modality", "embedding_type",
+                         "target_var", "files_"],
             output_names=["out_path", "embedding_type", "target_var"],
             function=concatenate_frames,
         ),
@@ -2434,12 +2455,27 @@ def create_wf(modality_grids, modality, basedir):
         [
             (
                 inputnode,
-                make_x_y_func_node,
+                copy_json_dict_node,
                 [
                     ("feature_spaces", "feature_spaces"),
+                    ("modality", "modality"),
+                    ("embedding_type", "embedding_type")
+                ],
+            ),
+            (
+                inputnode,
+                make_x_y_func_node,
+                [
                     ("target_var", "target_var"),
                     ("modality", "modality"),
                     ("embedding_type", "embedding_type")
+                ],
+            ),
+            (
+                copy_json_dict_node,
+                make_x_y_func_node,
+                [
+                    ("json_dict", "json_dict"),
                 ],
             ),
             (
@@ -2543,7 +2579,6 @@ def build_predict_workflow(args, retval, verbose=True):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_meta_wf = pe.Workflow(name="pynets_multipredict")
-    #ml_meta_wf.base_dir = f"/tmp/pynets_multiperform_{run_uuid}"
     ml_meta_wf.base_dir = f"{base_dir}/pynets_multiperform_{run_uuid}"
 
     os.makedirs(ml_meta_wf.base_dir, exist_ok=True)
@@ -2683,8 +2718,8 @@ def main():
     import json
 
     #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    base_dir = "/working/tuning_set/outputs_clustering"
-    #base_dir = "/working/tuning_set/outputs_language"
+    #base_dir = "/working/tuning_set/outputs_clustering"
+    base_dir = "/working/tuning_set/outputs_language"
     #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
@@ -2692,16 +2727,11 @@ def main():
     )
 
     # Hard-Coded #
-    #embedding_types = ['OMNI']
-    embedding_types = ['OMNI', 'ASE']
-    #embedding_types = ['OMNI', 'ASE', 'topology']
-    #embedding_types = ['OMNI', 'topology']
-    #embedding_types = ['topology']
-    #embedding_types = ['ASE']
-    modalities = ["dwi", "func"]
-    #modalities = ["func"]
+    embedding_types = ['ASE']
+    #embedding_types = ['OMNI', 'ASE']
+    #modalities = ["dwi", "func"]
+    modalities = ["dwi"]
     thr_type = "MST"
-    #thr_type = "PROP"
     template = "MNI152_T1"
     mets = [
         "global_efficiency",
@@ -2718,22 +2748,13 @@ def main():
     # User-Specified #
     target_modality = 'dwi'
     #target_modality = 'func'
-    #target_vars = ["rum_2", "dep_2"]
-    #target_vars = ["rumination_persist_phenotype",
-    #"depression_persist_phenotype", "rum_2", "dep_2", "dep_1", "rum_1"]
-    #target_vars = ["depression_persist_phenotype"]
-    # target_vars = ['rumination_persist_phenotype',
-    #                'depression_persist_phenotype', 'rum_2', 'dep_2']
-    #target_vars = ["rum_1", "dep_1"]
-    #target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2']
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
                    "dep_2", 'rum_2', 'rum_1', 'dep_1']
-    # target_vars = ["rumination_persist_phenotype",
-    #                "depression_persist_phenotype"]
 
     #rsns = ["triple", "kmeans"]
-    rsns = ["tripleRUM", "kmeansRUM", "language"]
+    #rsns = ["tripleRUM", "kmeansRUM", "language"]
+    rsns = ["language"]
 
     sessions = ["1"]
 
