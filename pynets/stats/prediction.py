@@ -13,6 +13,7 @@ import numpy as np
 import itertools
 import warnings
 from nipype.interfaces.base import (
+    BaseInterface,
     BaseInterfaceInputSpec,
     TraitedSpec,
     traits,
@@ -910,7 +911,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=
         del df_tmps
         return df_all, grid_param
     else:
-        return pd.Series(), grid_param
+        return pd.Series(np.nan), grid_param
 
 
 def graph_theory_prep(df, thr_type):
@@ -974,16 +975,15 @@ def bootstrapped_nested_cv(
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
     if X.empty:
-        print("Empty feature-space...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (missingness): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
-
-    X = X.apply(lambda x: np.where(x < 0.0001, 0, x))
 
     # Apply a simple imputer (note that this assumes extreme cases of
     # missingness have already been addressed). The SimpleImputer is better
@@ -993,17 +993,18 @@ def bootstrapped_nested_cv(
     # from sklearn.impute import IterativeImputer
     # imp = IterativeImputer(random_state=0, sample_posterior=True)
     # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
-    imp = SimpleImputer()
-    X = pd.DataFrame(imp.fit_transform(X), columns=X.columns)
+    imp1 = SimpleImputer()
+    X = pd.DataFrame(imp1.fit_transform(X), columns=X.columns)
 
     if X.empty:
-        print("Empty feature-space...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (imputation): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
 
     # Standardize X
@@ -1015,13 +1016,14 @@ def bootstrapped_nested_cv(
     cols_to_drop = nunique[nunique < 10].index
     X.drop(cols_to_drop, axis=1, inplace=True)
     if X.empty:
-        print("Empty feature-space...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (duplication): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
 
     # Remove low-variance columns
@@ -1029,27 +1031,31 @@ def bootstrapped_nested_cv(
     sel.fit(X)
     X = X[X.columns[sel.get_support(indices=True)]]
     if X.empty:
-        print("Empty feature-space...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (low-variance): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
+
+    X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
 
     # Remove outliers
     outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
     X = X[outlier_mask]
     y = y[outlier_mask]
-    if X.empty or len(y) < 50:
-        print("Empty feature-space...")
+    if X.empty and len(y) < 50:
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (outliers): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
 
     # Remove missing y
@@ -1057,14 +1063,17 @@ def bootstrapped_nested_cv(
     X = X[y_missing_mask]
     y = y[y_missing_mask]
     if X.empty or len(y) < 50:
-        print("Empty feature-space...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (missing y): {X}, {y}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
+    # imp2 = SimpleImputer()
+    # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
 
     # Remove multicollinear columns
     if remove_multi is True:
@@ -1085,14 +1094,28 @@ def bootstrapped_nested_cv(
             pass
 
     if X.empty or len(X.columns) < 5:
-        print("Low feature count. Setting performance on this feature-space "
-              "to NA...")
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): {X}{Style.RESET_ALL}\n\n")
         return (
-            grand_mean_best_estimator,
-            grand_mean_best_score,
-            grand_mean_best_error,
-            {},
-            grand_mean_y_predicted,
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
+        )
+
+    # Drop sparse columns with >50% zeros
+    X = X.loc[:, (X == 0).mean() < .50]
+
+    if X.empty or len(X.columns) < 5:
+        from colorama import Fore, Style
+        print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): {X}{Style.RESET_ALL}\n\n")
+        return (
+            {0: 'None'},
+            {0: np.nan},
+            {0: np.nan},
+            {0: np.nan},
+            {0: 'None'},
         )
 
     # Standardize Y
@@ -1838,16 +1861,20 @@ def cleanNullTerms(d):
     return clean
 
 
-def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
+def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
     import pandas as pd
     from time import sleep
     import json
 
     print(target_var)
-    print(alg)
+    print(embedding_type)
     print(grid_param)
-    while not os.path.isfile(input_dict):
-        sleep(1)
+
+    if input_dict is None:
+        return None, None
+
+    if not os.path.isfile(input_dict):
+        return None, None
 
     with open(input_dict) as data_file:
         data_loaded = json.load(data_file)
@@ -1858,77 +1885,70 @@ def make_x_y(input_dict, drop_cols, target_var, alg, grid_param):
         if df_all[target_var].isin([np.nan,1]).all():
             df_all[target_var] = df_all[target_var].replace({np.nan: 0})
         if df_all is None:
-            df_all = pd.Series()
+            return None, None
         else:
-            try:
-                df_all = df_all.loc[:, ~df_all.columns.duplicated()]
-                df_all.reset_index(level=0, inplace=True)
-                df_all.rename(columns={"index": "id"}, inplace=True)
-                # Remove incomplete cases
-                df_all = df_all.loc[
-                    (df_all["id"] != "s057")
-                    & (df_all["id"] != "s054")
-                    & (df_all["id"] != "25667")
-                    & (df_all["id"] != "A00076381")
-                    & (df_all["id"] != "25853")
-                    ]
-                if (
-                    all(
-                        df_all.drop(
-                            columns=[
-                                "id",
-                                "age",
-                                "num_visits",
-                                "sex"
-                            ]
-                        )
-                        .isnull()
-                        .all()
+            df_all = df_all.loc[:, ~df_all.columns.duplicated()]
+            df_all.reset_index(level=0, inplace=True)
+            df_all.rename(columns={"index": "id"}, inplace=True)
+            # Remove incomplete cases
+            df_all = df_all.loc[
+                (df_all["id"] != "s057")
+                & (df_all["id"] != "s054")
+                & (df_all["id"] != "25667")
+                & (df_all["id"] != "A00076381")
+                & (df_all["id"] != "25853")
+                ]
+            if (
+                all(
+                    df_all.drop(
+                        columns=[
+                            "id",
+                            "age",
+                            "num_visits",
+                            "sex"
+                        ]
                     )
-                    or len(df_all.columns) == 1
-                    or (
-                        np.abs(
-                            np.array(
-                                df_all.drop(
-                                    columns=[
-                                        "id",
-                                        "age",
-                                        "num_visits",
-                                        "sex"
-                                    ]
-                                )
+                    .isnull()
+                    .all()
+                )
+                or len(df_all.columns) == 1
+                or (
+                    np.abs(
+                        np.array(
+                            df_all.drop(
+                                columns=[
+                                    "id",
+                                    "age",
+                                    "num_visits",
+                                    "sex"
+                                ]
                             )
                         )
-                        < 0.00001
-                    ).all()
-                ):
-                    df_all = pd.Series()
-                else:
-                    df_all.drop(columns=["id"], inplace=True)
-                    if len(df_all.columns) < 5:
-                        print(f"Too few columns detected for {grid_param}...")
-                        df_all = pd.Series()
-            except BaseException:
-                df_all = pd.Series()
+                    )
+                    < 0.00001
+                ).all()
+            ):
+                return None, None
+            else:
+                df_all.drop(columns=["id"], inplace=True)
+                if len(df_all.columns) < 5:
+                    print(f"Too few columns detected for {grid_param}...")
+                    return None, None
     else:
-        df_all = pd.Series()
+        return None, None
 
     if len(df_all) < 50:
-        X = None
-        Y = None
         print("\nToo few cases in feature-space after preprocessing, "
               "skipping...\n")
+        return None, None
     elif len(df_all) > 50:
-        Y = df_all[target_var].values
-        X = df_all.drop(columns=drop_cols)
+        return df_all.drop(columns=drop_cols), df_all[target_var].values
     else:
-        X = None
-        Y = None
         print("\nEmpty/Missing Feature-space...\n")
-    return X, Y
+        return None, None
 
 
-def concatenate_frames(out_dir, modality, alg, target_var, files_):
+def concatenate_frames(out_dir, modality, embedding_type, target_var, files_):
     import pandas as pd
     import os
 
@@ -1944,36 +1964,35 @@ def concatenate_frames(out_dir, modality, alg, target_var, files_):
         try:
             frame = pd.concat(dfs, axis=0, join="outer", sort=True,
                               ignore_index=False)
-            out_path = f"{out_dir}/final_df_{modality}_{alg}_{target_var}.csv"
+            out_path = f"{out_dir}/final_df_{modality}_{embedding_type}_{target_var}.csv"
             print(f"Saving to {out_path}...")
             if os.path.isfile(out_path):
                 os.remove(out_path)
             frame.to_csv(out_path, index=False)
-        except BaseException:
-            print(f"Dataframe concatenation failed for {modality}, {alg}, "
+        except ValueError:
+            print(f"Dataframe concatenation failed for {modality}, {embedding_type}, "
                   f"{target_var}...")
-            return None, alg, target_var
 
-        return out_path, alg, target_var
+        return out_path, embedding_type, target_var
     else:
-        return None, alg, target_var
+        return None, embedding_type, target_var
 
 
 class _MakeXYInputSpec(BaseInterfaceInputSpec):
-    feature_spaces = traits.Any()
-    target_var = traits.Str()
-    modality = traits.Str()
-    alg = traits.Str()
-    grid_param = traits.List()
+    feature_spaces = traits.Dict(mandatory=True)
+    target_var = traits.Str(mandatory=True)
+    modality = traits.Str(mandatory=True)
+    embedding_type = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
 
 
 class _MakeXYOutputSpec(TraitedSpec):
-    X = traits.Any()
-    Y = traits.Any()
-    alg = traits.Str()
-    modality = traits.Str()
-    grid_param = traits.List()
-    target_var = traits.Str()
+    X = traits.Any(mandatory=False)
+    Y = traits.Any(mandatory=False)
+    embedding_type = traits.Str(mandatory=True)
+    modality = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
+    target_var = traits.Str(mandatory=True)
 
 
 class MakeXY(SimpleInterface):
@@ -1986,8 +2005,10 @@ class MakeXY(SimpleInterface):
         import gc
         import os
         import time
+        from ast import literal_eval
         import numpy as np
         import pandas as pd
+        import shutil
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import uuid
         from time import strftime
@@ -1995,80 +2016,65 @@ class MakeXY(SimpleInterface):
 
         run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
-        json_dict = self.inputs.feature_spaces[
-            f"{self.inputs.modality}_{self.inputs.alg}"
-        ]
-
-        input_dict_tmp = fname_presuffix(
-            json_dict, suffix=f"_tmp_{run_uuid}", newpath=runtime.cwd
-        )
-        copyfile(json_dict, input_dict_tmp, copy=True, use_hardlink=False)
-        print(f"Loading {input_dict_tmp}...")
-        time.sleep(1)
-
-        if self.inputs.target_var == "rumination_persist_phenotype":
-            drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "dep_1", "rum_1", "rum_2", "dep_2"]
-        elif self.inputs.target_var == "depression_persist_phenotype":
-            drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "dep_1", "rum_1", "dep_2", "rum_2"]
-        elif self.inputs.target_var == "rum_1":
-            drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
-                         "rum_2", "dep_2", "dep_1"]
-        elif self.inputs.target_var == "dep_1":
-            drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
-                         "rum_2", "dep_2", "rum_1"]
-        elif self.inputs.target_var == "dep_2":
-            drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
-                         "rum_2", "rum_1"]
-        elif self.inputs.target_var == "rum_2":
-            drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
-                         "dep_2", "dep_1"]
-        else:
-            drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "depression_persist_phenotype",
-                         "dep_1", "rum_1"]
-
-        try:
-            [X, Y] = make_x_y(
-                input_dict_tmp,
-                drop_cols,
-                self.inputs.target_var,
-                self.inputs.alg,
-                tuple(self.inputs.grid_param),
-            )
-        except BaseException:
-            print(f"Failed to make X or Y with {input_dict_tmp}, "
-                  f"{self.inputs.target_var}, {self.inputs.alg}, "
-                  f"{self.inputs.grid_param}...")
-            X = None
-            Y = None
-
-        if isinstance(X, pd.DataFrame):
-            out_X = f"{runtime.cwd}/X_" \
-                    f"{self.inputs.target_var}_" \
-                    f"{self.inputs.modality}_" \
-                    f"{self.inputs.alg}_" \
-                    f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
-
-            # if os.path.isfile(out_X):
-            #     os.remove(out_X)
-            X.to_csv(out_X, index=False)
-        else:
-            out_X = None
-
-        if Y is not None:
-            if np.isnan(Y).all():
-                Y = None
-
-        self._results["X"] = out_X
-        self._results["Y"] = Y
-        self._results["alg"] = self.inputs.alg
-        self._results["grid_param"] = list(self.inputs.grid_param)
+        self._results["embedding_type"] = self.inputs.embedding_type
+        self._results["grid_param"] = self.inputs.grid_param
         self._results["modality"] = self.inputs.modality
         self._results["target_var"] = self.inputs.target_var
 
-        if os.path.isfile(input_dict_tmp):
-            os.remove(input_dict_tmp)
+        if self.inputs.feature_spaces is not None:
 
-        gc.collect()
+            json_dict = self.inputs.feature_spaces[
+                f"{self.inputs.modality}_{self.inputs.embedding_type}"
+            ]
+            if os.path.isfile(json_dict):
+                input_dict_tmp = fname_presuffix(
+                    json_dict, suffix=f"_tmp_{run_uuid}",
+                    newpath=runtime.cwd
+                )
+
+                shutil.copy2(json_dict, input_dict_tmp)
+
+                print(f"Loading {input_dict_tmp}...")
+
+                if self.inputs.target_var == "rumination_persist_phenotype":
+                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "dep_1", "rum_1", "rum_2", "dep_2"]
+                elif self.inputs.target_var == "depression_persist_phenotype":
+                    drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "dep_1", "rum_1", "dep_2", "rum_2"]
+                elif self.inputs.target_var == "rum_1":
+                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                                 "rum_2", "dep_2", "dep_1"]
+                elif self.inputs.target_var == "dep_1":
+                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                                 "rum_2", "dep_2", "rum_1"]
+                elif self.inputs.target_var == "dep_2":
+                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                                 "rum_2", "rum_1"]
+                elif self.inputs.target_var == "rum_2":
+                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                                 "dep_2", "dep_1"]
+                else:
+                    drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "depression_persist_phenotype",
+                                 "dep_1", "rum_1"]
+
+                [X, Y] = make_x_y(
+                    input_dict_tmp,
+                    drop_cols,
+                    self.inputs.target_var,
+                    self.inputs.embedding_type,
+                    tuple(literal_eval(self.inputs.grid_param)),
+                )
+                if X is not None:
+                    self._results["X"] = X
+                    self._results["Y"] = Y
+                else:
+                    self._results["X"] = None
+                    self._results["Y"] = None
+            else:
+                self._results["X"] = None
+                self._results["Y"] = None
+        else:
+            self._results["X"] = None
+            self._results["Y"] = None
 
         return runtime
 
@@ -2076,26 +2082,26 @@ class MakeXY(SimpleInterface):
 class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for BSNestedCV"""
 
-    X = traits.Any()
-    y = traits.Any()
-    target_var = traits.Str()
-    modality = traits.Str()
-    alg = traits.Str()
-    grid_param = traits.List()
+    X = traits.Any(mandatory=False)
+    y = traits.Any(mandatory=False)
+    target_var = traits.Str(mandatory=True)
+    modality = traits.Str(mandatory=True)
+    embedding_type = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
 
 
 class _BSNestedCVOutputSpec(TraitedSpec):
     """Output interface wrapper for BSNestedCV"""
 
-    grand_mean_best_estimator = traits.Any()
-    grand_mean_best_score = traits.Any()
-    grand_mean_y_predicted = traits.Any()
-    grand_mean_best_error = traits.Any()
-    mega_feat_imp_dict = traits.Any()
-    target_var = traits.Str()
-    modality = traits.Str()
-    alg = traits.Str()
-    grid_param = traits.List()
+    grand_mean_best_estimator = traits.Dict({0: 'None'}, mandatory=True, usedefault=True)
+    grand_mean_best_score = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
+    grand_mean_y_predicted = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
+    grand_mean_best_error = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
+    mega_feat_imp_dict = traits.Dict({0: 'None'}, mandatory=True, usedefault=True)
+    target_var = traits.Str(mandatory=True)
+    modality = traits.Str(mandatory=True)
+    embedding_type = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
 
 
 class BSNestedCV(SimpleInterface):
@@ -2109,109 +2115,84 @@ class BSNestedCV(SimpleInterface):
         import os
         from colorama import Fore, Style
 
+        self._results["target_var"] = self.inputs.target_var
+        self._results["modality"] = self.inputs.modality
+        self._results["embedding_type"] = self.inputs.embedding_type
+        self._results["grid_param"] = self.inputs.grid_param
+
         if 'phenotype' in self.inputs.target_var:
             predict_type = 'classifier'
         else:
             predict_type = 'regressor'
 
-        if self.inputs.X is not None and self.inputs.y is not None:
-            if os.path.isfile(self.inputs.X):
-                X = pd.read_csv(self.inputs.X, chunksize=100000).read()
-                # if self.inputs.modality == 'func':
-                #     [
-                #         grand_mean_best_estimator,
-                #         grand_mean_best_score,
-                #         grand_mean_best_error,
-                #         mega_feat_imp_dict,
-                #         grand_mean_y_predicted,
-                #     ] = bootstrapped_nested_cv(X, self.inputs.y,
-                #                                predict_type=predict_type)
-                # else:
-                #     [
-                #         grand_mean_best_estimator,
-                #         grand_mean_best_score,
-                #         grand_mean_best_error,
-                #         mega_feat_imp_dict,
-                #         grand_mean_y_predicted,
-                #     ] = bootstrapped_nested_cv(X, self.inputs.y,
-                #                                predict_type=predict_type,
-                #                                var_thr=.80,
-                #                                remove_multi=False,
-                #                                missingness_thr=0.50)
-                try:
+        if self.inputs.X is None:
+            return runtime
+
+        if not self.inputs.X.empty and not np.isnan(self.inputs.y).all():
+            if isinstance(self.inputs.X, pd.DataFrame):
+                if self.inputs.modality == 'func':
                     [
                         grand_mean_best_estimator,
                         grand_mean_best_score,
                         grand_mean_best_error,
                         mega_feat_imp_dict,
                         grand_mean_y_predicted,
-                    ] = bootstrapped_nested_cv(X, self.inputs.y,
+                    ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
                                                predict_type=predict_type)
-                    if len(mega_feat_imp_dict) > 1:
-                        print(
-                            f"\n\n{Fore.BLUE}Target Outcome: {Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"{Fore.BLUE}Modality: {Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"{Fore.BLUE}Embedding type: {Fore.RED}{self.inputs.alg}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"{Fore.BLUE}Grid Params: {Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"{Fore.BLUE}Best Estimator: {Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"\n{Fore.BLUE}Variance: {Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
-                        )
-                        print(
-                            f"{Fore.BLUE}Error: {Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
-                        )
-                        #print(f"y_actual: {self.inputs.y}")
-                        #print(f"y_predicted: {grand_mean_y_predicted}")
-                        print(
-                            f"{Fore.BLUE}Feature Importance: {Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} with {Fore.RED}{len(mega_feat_imp_dict.keys())} features...{Style.RESET_ALL}\n\n"
-                        )
-                    else:
-                        print(f"{Fore.RED}Empty feature-space!{Style.RESET_ALL}")
-                        grand_mean_best_estimator = {}
-                        grand_mean_best_score = {}
-                        grand_mean_y_predicted = {}
-                        grand_mean_best_error = {}
-                        mega_feat_imp_dict = {}
-                except BaseException:
-                    print(f"{Fore.RED}Empty feature-space!{Style.RESET_ALL}")
-                    grand_mean_best_estimator = {}
-                    grand_mean_best_score = {}
-                    grand_mean_y_predicted = {}
-                    grand_mean_best_error = {}
-                    mega_feat_imp_dict = {}
+                else:
+                    [
+                        grand_mean_best_estimator,
+                        grand_mean_best_score,
+                        grand_mean_best_error,
+                        mega_feat_imp_dict,
+                        grand_mean_y_predicted,
+                    ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
+                                               predict_type=predict_type,
+                                               missingness_thr=0.20,
+                                               std_dev=3)
+                if len(mega_feat_imp_dict.keys()) > 1:
+                    print(
+                        f"\n\n{Fore.BLUE}Target Outcome: {Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"{Fore.BLUE}Modality: {Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"{Fore.BLUE}Embedding type: {Fore.RED}{self.inputs.embedding_type}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"{Fore.BLUE}Grid Params: {Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"{Fore.BLUE}Best Estimator: {Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"\n{Fore.BLUE}Variance: {Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
+                    )
+                    print(
+                        f"{Fore.BLUE}Error: {Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
+                    )
+                    #print(f"y_actual: {self.inputs.y}")
+                    #print(f"y_predicted: {grand_mean_y_predicted}")
+                    print(
+                        f"{Fore.BLUE}Feature Importance: {Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} with {Fore.RED}{len(mega_feat_imp_dict.keys())} features...{Style.RESET_ALL}\n\n"
+                    )
+                    self._results[
+                        "grand_mean_best_estimator"] = grand_mean_best_estimator
+                    self._results[
+                        "grand_mean_best_score"] = grand_mean_best_score
+                    self._results[
+                        "grand_mean_y_predicted"] = grand_mean_y_predicted
+                    self._results[
+                        "grand_mean_best_error"] = grand_mean_best_error
+                    self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
+                else:
+                    print(f"{Fore.RED}Empty feature-space for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
             else:
-                print("Feature-space .csv file not found!")
-                grand_mean_best_estimator = {}
-                grand_mean_best_score = {}
-                grand_mean_y_predicted = {}
-                grand_mean_best_error = {}
-                mega_feat_imp_dict = {}
+                print(f"{Fore.RED}{self.inputs.X} is not pd.DataFrame for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
         else:
-            print(f"{Fore.RED}Empty feature-space!{Style.RESET_ALL}")
-            grand_mean_best_estimator = {}
-            grand_mean_best_score = {}
-            grand_mean_y_predicted = {}
-            grand_mean_best_error = {}
-            mega_feat_imp_dict = {}
-
-        self._results["grand_mean_best_estimator"] = grand_mean_best_estimator
-        self._results["grand_mean_best_score"] = grand_mean_best_score
-        self._results["grand_mean_y_predicted"] = grand_mean_y_predicted
-        self._results["grand_mean_best_error"] = grand_mean_best_error
-        self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
-        self._results["target_var"] = self.inputs.target_var
-        self._results["modality"] = self.inputs.modality
-        self._results["alg"] = self.inputs.alg
-        self._results["grid_param"] = list(self.inputs.grid_param)
+            print(
+                f"{Fore.RED}Empty feature-space for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
 
         gc.collect()
 
@@ -2219,23 +2200,23 @@ class BSNestedCV(SimpleInterface):
 
 
 class _MakeDFInputSpec(BaseInterfaceInputSpec):
-    grand_mean_best_estimator = traits.Any()
-    grand_mean_best_score = traits.Any()
-    grand_mean_y_predicted = traits.Any()
-    grand_mean_best_error = traits.Any()
-    mega_feat_imp_dict = traits.Any()
-    target_var = traits.Str()
-    modality = traits.Str()
-    alg = traits.Str()
-    grid_param = traits.List()
+    grand_mean_best_estimator = traits.Dict(mandatory=True)
+    grand_mean_best_score = traits.Dict(mandatory=True)
+    grand_mean_y_predicted = traits.Dict(mandatory=True)
+    grand_mean_best_error = traits.Dict(mandatory=True)
+    mega_feat_imp_dict = traits.Dict(mandatory=True)
+    target_var = traits.Str(mandatory=True)
+    modality = traits.Str(mandatory=True)
+    embedding_type = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
 
 
 class _MakeDFOutputSpec(TraitedSpec):
-    df_summary = traits.Any()
-    modality = traits.Str()
-    alg = traits.Str()
-    target_var = traits.Str()
-    grid_param = traits.List()
+    df_summary = traits.Any(mandatory=False)
+    modality = traits.Str(mandatory=True)
+    embedding_type = traits.Str(mandatory=True)
+    target_var = traits.Str(mandatory=True)
+    grid_param = traits.Str(mandatory=True)
 
 
 class MakeDF(SimpleInterface):
@@ -2246,8 +2227,10 @@ class MakeDF(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
+        from ast import literal_eval
         import pandas as pd
         import numpy as np
+        from colorama import Fore, Style
 
         def get_CI(stats, alpha=0.95):
             p = ((1.0 - alpha) / 2.0) * 100
@@ -2262,7 +2245,7 @@ class MakeDF(SimpleInterface):
             columns=[
                 "modality",
                 "grid",
-                "alg",
+                "embedding_type",
                 "best_estimator",
                 "Score",
                 "Error",
@@ -2282,11 +2265,11 @@ class MakeDF(SimpleInterface):
 
         df_summary.at[0, "target_variable"] = self.inputs.target_var
         df_summary.at[0, "modality"] = self.inputs.modality
-        df_summary.at[0, "alg"] = self.inputs.alg
-        df_summary.at[0, "grid"] = tuple(self.inputs.grid_param)
+        df_summary.at[0, "embedding_type"] = self.inputs.embedding_type
+        df_summary.at[0, "grid"] = tuple(literal_eval(self.inputs.grid_param))
 
-        if bool(self.inputs.grand_mean_best_score) is True:
-            y_pred_boots = self.inputs.grand_mean_y_predicted.values()
+        if bool(self.inputs.grand_mean_best_score) is True and len(self.inputs.mega_feat_imp_dict.keys()) > 1:
+            y_pred_boots = [i for i in list(self.inputs.grand_mean_y_predicted.values()) if not np.isnan(i).all()]
             if len(y_pred_boots) > 0:
                 max_row_len = max([len(ll) for ll in y_pred_boots])
                 y_pred_vals = np.nanmean(
@@ -2343,14 +2326,13 @@ class MakeDF(SimpleInterface):
         out_df_summary = f"{runtime.cwd}/df_summary_" \
                          f"{self.inputs.target_var}_" \
                          f"{self.inputs.modality}_" \
-                         f"{self.inputs.alg}_" \
-                         f"{'_'.join(str(v) for v in self.inputs.grid_param)}.csv"
-        if os.path.isfile(out_df_summary):
-            os.remove(out_df_summary)
+                         f"{self.inputs.embedding_type}_" \
+                         f"{self.inputs.grid_param.replace(', ','_')}.csv"
+
         df_summary.to_csv(out_df_summary, index=False)
         print(f"Writing dataframe to file {out_df_summary}...")
         self._results["df_summary"] = out_df_summary
-        self._results["alg"] = self.inputs.alg
+        self._results["embedding_type"] = self.inputs.embedding_type
         self._results["modality"] = self.inputs.modality
         self._results["grid_param"] = self.inputs.grid_param
         gc.collect()
@@ -2358,7 +2340,7 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(modality_grids, modality):
+def create_wf(modality_grids, modality, basedir):
     from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
         concatenate_frames
     from nipype.pipeline import engine as pe
@@ -2368,6 +2350,8 @@ def create_wf(modality_grids, modality):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_wf = pe.Workflow(name=f"ensemble_connectometry_{run_uuid}")
+    os.makedirs(f"/{basedir}/{run_uuid}", exist_ok=True)
+    ml_wf.base_dir = f"/{basedir}/{run_uuid}"
 
     grid_param_combos = [list(i) for i in modality_grids[modality]]
 
@@ -2406,18 +2390,15 @@ def create_wf(modality_grids, modality):
         name="inputnode",
     )
 
-    make_x_y_func_node = pe.Node(MakeXY(), name="make_x_y_func_node",
-                                 nested=True)
+    make_x_y_func_node = pe.Node(MakeXY(), name="make_x_y_func_node")
 
+    make_x_y_func_node.iterables = [("grid_param", [str(i) for i in grid_params_mod[1:]])]
+    make_x_y_func_node.inputs.grid_param = str(grid_params_mod[0])
     make_x_y_func_node.interface.n_procs = 1
-    make_x_y_func_node._mem_gb = 1
-
-    x_y_iters = []
-    x_y_iters.append(("grid_param", grid_params_mod))
-    make_x_y_func_node.iterables = x_y_iters
+    make_x_y_func_node.interface._mem_gb = 2
 
     bootstrapped_nested_cv_node = pe.Node(
-        BSNestedCV(), name="bootstrapped_nested_cv_node", nested=True)
+        BSNestedCV(), name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
     bootstrapped_nested_cv_node.interface._mem_gb = 4
@@ -2428,7 +2409,7 @@ def create_wf(modality_grids, modality):
     make_df_node.interface._mem_gb = 1
 
     df_join_node = pe.JoinNode(
-        niu.IdentityInterface(fields=["df_summary", "modality", "alg",
+        niu.IdentityInterface(fields=["df_summary", "modality", "embedding_type",
                                       "target_var", "grid_param"]),
         name="df_join_node",
         joinfield=["df_summary", "grid_param"],
@@ -2437,8 +2418,8 @@ def create_wf(modality_grids, modality):
 
     concatenate_frames_node = pe.Node(
         niu.Function(
-            input_names=["out_dir", "modality", "alg", "target_var", "files_"],
-            output_names=["out_path", "alg", "target_var"],
+            input_names=["out_dir", "modality", "embedding_type", "target_var", "files_"],
+            output_names=["out_path", "embedding_type", "target_var"],
             function=concatenate_frames,
         ),
         name="concatenate_frames_node",
@@ -2446,7 +2427,7 @@ def create_wf(modality_grids, modality):
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["target_var", "df_summary",
-                                      "alg"]), name="outputnode"
+                                      "embedding_type"]), name="outputnode"
     )
 
     ml_wf.connect(
@@ -2458,7 +2439,7 @@ def create_wf(modality_grids, modality):
                     ("feature_spaces", "feature_spaces"),
                     ("target_var", "target_var"),
                     ("modality", "modality"),
-                    ("embedding_type", "alg")
+                    ("embedding_type", "embedding_type")
                 ],
             ),
             (
@@ -2469,7 +2450,7 @@ def create_wf(modality_grids, modality):
                     ("Y", "y"),
                     ("target_var", "target_var"),
                     ("modality", "modality"),
-                    ("alg", "alg"),
+                    ("embedding_type", "embedding_type"),
                     ("grid_param", "grid_param"),
                 ],
             ),
@@ -2484,7 +2465,7 @@ def create_wf(modality_grids, modality):
                     ("mega_feat_imp_dict", "mega_feat_imp_dict"),
                     ("target_var", "target_var"),
                     ("modality", "modality"),
-                    ("alg", "alg"),
+                    ("embedding_type", "embedding_type"),
                     ("grid_param", "grid_param"),
                 ],
             ),
@@ -2501,7 +2482,7 @@ def create_wf(modality_grids, modality):
                 df_join_node,
                 [
                     ("modality", "modality"),
-                    ("embedding_type", "alg"),
+                    ("embedding_type", "embedding_type"),
                     ("target_var", "target_var"),
                 ],
             ),
@@ -2514,20 +2495,38 @@ def create_wf(modality_grids, modality):
                 inputnode,
                 concatenate_frames_node,
                 [("out_dir", "out_dir"),
-                 ("modality", "modality"), ("embedding_type", "alg"),
+                 ("modality", "modality"), ("embedding_type", "embedding_type"),
                  ("target_var", "target_var")],
             ),
             (concatenate_frames_node, outputnode,
-             [("out_path", "df_summary"), ("alg", "alg"),
+             [("out_path", "df_summary"), ("embedding_type", "embedding_type"),
               ("target_var", "target_var")]),
         ]
     )
 
     print("Running workflow...")
+    execution_dict = {}
+    execution_dict["crashdump_dir"] = str(ml_wf.base_dir)
+    execution_dict["poll_sleep_duration"] = 0.5
+    execution_dict["crashfile_format"] = "txt"
+    execution_dict["local_hash_check"] = False
+    execution_dict["stop_on_first_crash"] = False
+    execution_dict['hash_method'] = 'timestamp'
+    execution_dict["keep_inputs"] = True
+    execution_dict["use_relative_paths"] = False
+    execution_dict["remove_unnecessary_outputs"] = False
+    execution_dict["remove_node_directories"] = False
+    execution_dict["raise_insufficient"] = False
+    cfg = dict(execution=execution_dict)
+
+    for key in cfg.keys():
+        for setting, value in cfg[key].items():
+            ml_wf.config[key][setting] = value
+
     return ml_wf
 
 
-def build_predict_workflow(args, retval):
+def build_predict_workflow(args, retval, verbose=True):
     from pynets.stats.prediction import create_wf
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
@@ -2587,12 +2586,13 @@ def build_predict_workflow(args, retval):
     vars_embeddings_iters_list.append(("embedding_type", embedding_types_list))
     meta_iter_info_node.iterables = vars_embeddings_iters_list
 
-    create_wf_node = create_wf(modality_grids, modality)
+    create_wf_node = create_wf(modality_grids, modality, ml_meta_wf.base_dir)
 
     final_join_node = pe.JoinNode(
-        niu.IdentityInterface(fields=["df_summary", "alg", "target_var"]),
+        niu.IdentityInterface(fields=["df_summary", "embedding_type",
+                                      "target_var"]),
         name="final_join_node",
-        joinfield=["df_summary", "alg", "target_var"],
+        joinfield=["df_summary", "embedding_type", "target_var"],
         joinsource=meta_iter_info_node,
     )
 
@@ -2625,7 +2625,7 @@ def build_predict_workflow(args, retval):
                 [
                     ("outputnode.df_summary", "df_summary"),
                     ("outputnode.target_var", "target_var"),
-                    ("outputnode.alg", "alg"),
+                    ("outputnode.embedding_type", "embedding_type"),
                 ],
             ),
             (final_join_node, meta_outputnode,
@@ -2639,12 +2639,12 @@ def build_predict_workflow(args, retval):
     execution_dict["local_hash_check"] = False
     execution_dict["stop_on_first_crash"] = False
     execution_dict['hash_method'] = 'timestamp'
-    execution_dict["keep_inputs"] = False
-    execution_dict["remove_unnecessary_outputs"] = True
+    execution_dict["keep_inputs"] = True
+    execution_dict["use_relative_paths"] = False
+    execution_dict["remove_unnecessary_outputs"] = False
     execution_dict["remove_node_directories"] = False
     execution_dict["raise_insufficient"] = False
-    execution_dict["plugin"] = "MultiProc"
-    nthreads = psutil.cpu_count() * 4
+    nthreads = psutil.cpu_count() * 2
     procmem = [int(nthreads),
                int(list(psutil.virtual_memory())[4] / 1000000000) - 2]
     plugin_args = {
@@ -2654,6 +2654,21 @@ def build_predict_workflow(args, retval):
     }
     execution_dict["plugin_args"] = plugin_args
     cfg = dict(execution=execution_dict)
+
+    # if verbose is True:
+    #     from nipype import config, logging
+    #
+    #     cfg_v = dict(
+    #         logging={
+    #             "workflow_level": "DEBUG",
+    #             "utils_level": "DEBUG",
+    #             "log_to_file": True,
+    #             "interface_level": "DEBUG",
+    #             "filemanip_level": "DEBUG",
+    #         }
+    #     )
+    #     logging.update_logging(config)
+    #     config.update_config(cfg_v)
 
     for key in cfg.keys():
         for setting, value in cfg[key].items():
@@ -2668,8 +2683,8 @@ def main():
     import json
 
     #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_clustering"
-    base_dir = "/working/tuning_set/outputs_language"
+    base_dir = "/working/tuning_set/outputs_clustering"
+    #base_dir = "/working/tuning_set/outputs_language"
     #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
@@ -2677,15 +2692,14 @@ def main():
     )
 
     # Hard-Coded #
-    #embedding_types = ['OMNI', 'ASE']
+    #embedding_types = ['OMNI']
+    embedding_types = ['OMNI', 'ASE']
     #embedding_types = ['OMNI', 'ASE', 'topology']
     #embedding_types = ['OMNI', 'topology']
     #embedding_types = ['topology']
-    embedding_types = ['ASE']
-    #modalities = ["func", "dwi"]
-    modalities = ["dwi"]
-    #modalities = ["dwi"]
-    #modalities = ["dwi", "func"]
+    #embedding_types = ['ASE']
+    modalities = ["dwi", "func"]
+    #modalities = ["func"]
     thr_type = "MST"
     #thr_type = "PROP"
     template = "MNI152_T1"
@@ -2714,12 +2728,12 @@ def main():
     #target_vars = ['rumination_persist_phenotype', 'rum_1', 'rum_2']
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
-                   "dep_2", "dep_1", 'rum_2', 'rum_1']
+                   "dep_2", 'rum_2', 'rum_1', 'dep_1']
     # target_vars = ["rumination_persist_phenotype",
     #                "depression_persist_phenotype"]
 
-    #rsns = ["tripleRUM", "kmeansRUM"]
-    rsns = ["language"]
+    #rsns = ["triple", "kmeans"]
+    rsns = ["tripleRUM", "kmeansRUM", "language"]
 
     sessions = ["1"]
 
@@ -2773,9 +2787,7 @@ def main():
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
     df['sex'] = df['sex'].map({1:0, 2:1})
     df = df[
-        ["participant_id", "rumination_persist_phenotype",
-         "depression_persist_phenotype", "rum_1", "dep_1",
-         "age", "rum_2", "dep_2", "num_visits", "sex"]
+        ["participant_id", "age", "num_visits", "sex"] + target_vars
     ]
 
     ml_dfs_dict = {}
@@ -2835,6 +2847,8 @@ def main():
                 print(f"{recipe} recipe not found...")
                 continue
         out_json_path = f"{base_dir}/{iter}.json"
+        if os.path.isfile(out_json_path):
+            os.remove(out_json_path)
         with open(out_json_path, "w", encoding="utf-8") as f:
             json.dump(out_dict, f, ensure_ascii=False, indent=4)
         f.close()

@@ -508,6 +508,7 @@ def track_ensemble(
                     roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                     min_length = float(min_length) * 0.95
                     continue
+                    continue
                 else:
                     ix -= 1
 

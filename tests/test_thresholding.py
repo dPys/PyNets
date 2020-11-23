@@ -50,7 +50,7 @@ def test_conn_mat_operations(cp, thr, mat_size):
         s = thresholding.threshold_absolute(x, thr, copy=cp)
         s_test = [val for arr in s for val in arr if
                   val >= thr]  # search for value > thr
-        assert round(np.sum(s), 10) == round(np.sum(s_test), 10)
+        assert np.round(np.sum(s), 4) == np.round(np.sum(s_test), 4)
 
     def test_invert(x, thr, cp):
         x_cp = x.copy()  # invert modifies array in place and need orig to assert.

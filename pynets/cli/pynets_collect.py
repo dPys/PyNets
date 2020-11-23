@@ -306,7 +306,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     #frame = frame.loc[:, frame.isnull().mean() <= 0.20]
 
     # If > 50% of a column is zero
-    frame = frame.loc[:, (frame == 0).mean() < .5]
+    #frame = frame.loc[:, (frame == 0).mean() < .5]
 
     # If > 50% of a row is NA/missing
     #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
@@ -314,7 +314,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     missingness_dict = summarize_missingness(frame)[0]
     bad_cols = []
     for col in missingness_dict.keys():
-        if missingness_dict[col] > 0.10:
+        if missingness_dict[col] > 0.20:
             bad_cols.append(col)
     del col
 
@@ -327,7 +327,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
           'otherwise create an inventory of missingness...')
     par_dict = rerun_dict.copy()
     cache_dir = tempfile.mkdtemp()
-    with Parallel(n_jobs=-1, require='sharedmem', verbose=10,
+    with Parallel(n_jobs=224, require='sharedmem', verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                  par_dict, modality,
@@ -367,7 +367,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
 
 
 def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
-                    working_path, drop_cols, frame, regen=True):
+                    working_path, drop_cols, frame, regen=False):
     import glob
     import os
     atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
@@ -979,13 +979,14 @@ def main():
     args_dict_all['pm'] = '224,2000'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple_network/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['work'] = '/tmp/work/dwi'
-    args_dict_all['modality'] = 'dwi'
+    args_dict_all['work'] = '/tmp/work/func'
+    args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',

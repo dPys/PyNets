@@ -53,7 +53,7 @@ tracking:
     min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
         - 25
     track_timeout:
-        - 10800 # number of seconds before tracking with automatically terminate (prevents endless runtimes, default 3 hours).
+        - 10800 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
@@ -217,7 +217,7 @@ resource_dict: # Nipype workflow resource settings
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (4, 4)
+        - (3, 4)
       - 'build_multigraphs_node':
         - (2, 8)
       - 'plot_all_struct_func_node':
