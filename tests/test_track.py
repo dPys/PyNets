@@ -60,7 +60,7 @@ def test_create_density_map():
 
     [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streams_final_filt_final, conn_model,
                                                    target_samples, node_size, curv_thr_list, step_list,
-                                                   network, roi, directget, max_length, 8, '/tmp')
+                                                   network, roi, directget, max_length, '/tmp')
 
     assert dir_path is not None
     assert dm_path is not None

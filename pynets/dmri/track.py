@@ -211,7 +211,6 @@ def create_density_map(
     roi,
     directget,
     min_length,
-    error_margin,
     namer_dir,
 ):
     """
@@ -271,7 +270,7 @@ def create_density_map(
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype("float32"), dwi_img.affine)
 
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
         "/density_map_",
         "%s" % (network + "_" if network is not None else ""),
@@ -295,8 +294,6 @@ def create_density_map(
         directget,
         "_minlength-",
         min_length,
-        "_tol-",
-        error_margin,
         ".nii.gz",
     )
     dm_img.to_filename(dm_path)
@@ -438,19 +435,22 @@ def track_ensemble(
         hardcoded_params['tracking']["min_separation_angle"][0]
     min_streams = \
         hardcoded_params['tracking']["min_streams"][0]
+    timeout = hardcoded_params['tracking']["track_timeout"][0]
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
     # Construct seeding mask
     seeding_mask = f"{cache_dir}/seeding_mask.nii.gz"
     if waymask is not None and os.path.isfile(waymask):
+        waymask_img = math_img("img > 0.0075", img=nib.load(waymask))
+        waymask_img.to_filename(waymask)
         atlas_data_wm_gm_int_img = intersect_masks(
             [
-                math_img("img > 0.0075", img=nib.load(waymask)),
+                waymask_img,
                 math_img("img > 0.001", img=nib.load(atlas_data_wm_gm_int)),
                 math_img("img > 0.001", img=nib.load(labels_im_file))
             ],
-            threshold=0,
+            threshold=1,
             connected=False,
         )
         nib.save(atlas_data_wm_gm_int_img, seeding_mask)
@@ -460,7 +460,7 @@ def track_ensemble(
                 math_img("img > 0.001", img=nib.load(atlas_data_wm_gm_int)),
                 math_img("img > 0.001", img=nib.load(labels_im_file))
             ],
-            threshold=0,
+            threshold=1,
             connected=False,
         )
         nib.save(atlas_data_wm_gm_int_img, seeding_mask)
@@ -474,63 +474,68 @@ def track_ensemble(
 
     all_streams = []
     ix = 0
-    while float(stream_counter) < float(target_samples) and \
-        float(ix) < 0.50*float(len(all_combs)):
-        with Parallel(n_jobs=nthreads, backend='loky',
-                      mmap_mode='r+', temp_folder=cache_dir,
-                      verbose=10, max_nbytes=6e9) as parallel:
-            out_streams = parallel(
-                delayed(run_tracking)(
-                    i, recon_path, n_seeds_per_iter, directget, maxcrossing,
-                    max_length, pft_back_tracking_dist,
-                    pft_front_tracking_dist, particle_count,
-                    roi_neighborhood_tol, waymask, min_length,
-                    track_type, min_separation_angle, sphere, tiss_class,
-                    tissues4d, cache_dir) for i in
-                all_combs)
 
-            out_streams = [i for i in out_streams if i is not None and i is
-                           not ArraySequence() and len(i) > 0]
+    try:
+        while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
+            with Parallel(n_jobs=nthreads, backend='loky',
+                          mmap_mode='r+', temp_folder=cache_dir,
+                          verbose=2, max_nbytes='50000M',
+                          timeout=timeout) as parallel:
+                out_streams = parallel(
+                    delayed(run_tracking)(
+                        i, recon_path, n_seeds_per_iter, directget, maxcrossing,
+                        max_length, pft_back_tracking_dist,
+                        pft_front_tracking_dist, particle_count,
+                        roi_neighborhood_tol, waymask, min_length,
+                        track_type, min_separation_angle, sphere, tiss_class,
+                        tissues4d, cache_dir) for i in
+                    all_combs)
 
-            if len(out_streams) > 1:
-                out_streams = concatenate(out_streams, axis=0)
+                out_streams = [i for i in out_streams if i is not None and i is
+                               not ArraySequence() and len(i) > 0]
 
-            if len(out_streams) < min_streams:
-                ix += 1
-                print(f"Fewer than {min_streams} streamlines tracked on last"
-                      f" iteration. Loosening tolerance and anatomical"
-                      f" constraints...")
-                if track_type != 'particle':
-                    tiss_class = 'wb'
-                roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
-                min_length = float(min_length) * 0.95
-                continue
-            else:
-                ix -= 1
+                if len(out_streams) > 1:
+                    out_streams = concatenate(out_streams, axis=0)
 
-            # Append streamline generators to prevent exponential growth
-            # in memory consumption
-            all_streams.extend([generate_sl(i) for i in out_streams])
-            stream_counter += len(out_streams)
-            del out_streams
+                if len(out_streams) < min_streams:
+                    ix += 2
+                    print(f"Fewer than {min_streams} streamlines tracked on last"
+                          f" iteration. Loosening tolerance and anatomical"
+                          f" constraints. Check {tissues4d} or {recon_path}"
+                          f" for errors...")
+                    if track_type != 'particle':
+                        tiss_class = 'wb'
+                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
+                    min_length = float(min_length) * 0.95
+                    continue
+                    continue
+                else:
+                    ix -= 1
 
-            print(
-                "%s%s%s%s"
-                % (
-                    "\nCumulative Streamline Count: ",
-                    Fore.CYAN,
-                    stream_counter,
-                    "\n",
+                # Append streamline generators to prevent exponential growth
+                # in memory consumption
+                all_streams.extend([generate_sl(i) for i in out_streams])
+                stream_counter += len(out_streams)
+                del out_streams
+
+                print(
+                    "%s%s%s%s"
+                    % (
+                        "\nCumulative Streamline Count: ",
+                        Fore.CYAN,
+                        stream_counter,
+                        "\n",
+                    )
                 )
-            )
-            gc.collect()
-            print(Style.RESET_ALL)
+                gc.collect()
+                print(Style.RESET_ALL)
+    except BaseException:
+        return None
 
     if ix >= 0.75*len(all_combs) and \
         float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
-              f"iterations with <50 streamlines. Are you using a waymask? "
-              f"If so, it may be too restrictive.")
+              f"iterations with few streamlines.")
         return None
     else:
         print("Tracking Complete: ", str(time.time() - start))
@@ -635,7 +640,6 @@ def run_tracking(step_curv_combinations, recon_path,
 
     with h5py.File(recon_path_tmp_path, 'r+') as hf:
         mod_fit = hf['reconstruction'][:].astype('float32')
-    hf.close()
 
     print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
@@ -696,6 +700,7 @@ def run_tracking(step_curv_combinations, recon_path,
             step_size=float(step_curv_combinations[0]),
             fixedstep=False,
             return_all=True,
+            random_seed=42
         )
     elif track_type == "particle":
         streamline_generator = ParticleFilteringTracking(
@@ -711,6 +716,7 @@ def run_tracking(step_curv_combinations, recon_path,
             pft_max_trial=20,
             particle_count=particle_count,
             return_all=True,
+            random_seed=42
         )
     else:
         try:
@@ -725,7 +731,7 @@ def run_tracking(step_curv_combinations, recon_path,
     try:
         roi_proximal_streamlines = utils.target(
             streamline_generator, np.eye(4),
-            B0_mask_data, include=True
+            B0_mask_data.astype('bool'), include=True
         )
     except BaseException:
         print('No streamlines found inside the brain! '
@@ -810,10 +816,10 @@ def run_tracking(step_curv_combinations, recon_path,
         except BaseException:
             print('No streamlines remaining in waymask\'s vacinity.')
             return None
-        os.remove(waymask_tmp_path)
+        os.system(f"rm -f {waymask_tmp_path} &")
 
-    os.remove(recon_path_tmp_path)
-    os.remove(tissues4d_tmp_path)
+    hf.close()
+    os.system(f"rm -f {tissues4d_tmp_path} &")
     del parcels, atlas_data
 
     if len(roi_proximal_streamlines) > 0:

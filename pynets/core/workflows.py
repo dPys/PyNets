@@ -252,6 +252,20 @@ def workflow_selector(
         sub_struct_wf._mem_gb = procmem[1]
         sub_struct_wf.n_procs = procmem[0]
         sub_struct_wf.mem_gb = procmem[1]
+        if verbose is True:
+            from nipype import config, logging
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                }
+            )
+            sub_struct_wf.config.update_config(cfg_v)
+            sub_struct_wf.config.enable_resource_monitor()
     else:
         outdir_mod_struct = None
 
@@ -319,6 +333,22 @@ def workflow_selector(
         sub_func_wf._mem_gb = procmem[1]
         sub_func_wf.n_procs = procmem[0]
         sub_func_wf.mem_gb = procmem[1]
+        if verbose is True:
+            from nipype import config, logging
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                }
+            )
+
+            logging.update_logging(config)
+            config.update_config(cfg_v)
+            config.enable_resource_monitor()
     else:
         outdir_mod_func = None
 
@@ -332,22 +362,17 @@ def workflow_selector(
 
         cfg_v = dict(
             logging={
-                "workflow_level": "DEBUG",
-                "utils_level": "DEBUG",
-                "log_to_file": True,
+                "workflow_level": "INFO",
+                "utils_level": "INFO",
+                "log_to_file": False,
                 "interface_level": "DEBUG",
                 "filemanip_level": "DEBUG",
-            },
-            monitoring={
-                "enabled": True,
-                "sample_frequency": "0.1",
-                "summary_append": True,
-            },
+            }
         )
         logging.update_logging(config)
         config.update_config(cfg_v)
-        config.enable_debug_mode()
         config.enable_resource_monitor()
+
     execution_dict["plugin_args"] = {
         "n_procs": int(procmem[0]),
         "memory_gb": int(procmem[1]),
@@ -1864,7 +1889,6 @@ def dmri_connectometry(
                 "step_list",
                 "directget",
                 "min_length",
-                "error_margin",
                 "t1_aligned_mni"
             ],
             output_names=[
@@ -1892,7 +1916,6 @@ def dmri_connectometry(
                 "directget",
                 "warped_fa",
                 "min_length",
-                "error_margin"
             ],
             function=register.direct_streamline_norm,
             imports=import_list,
@@ -1968,15 +1991,11 @@ def dmri_connectometry(
 
     if error_margin_list:
         streams2graph_node.iterables = [("error_margin", error_margin_list)]
-        dmri_connectometry_wf.connect(
-            [(inputnode, streams2graph_node,
-              [("error_margin", "error_margin")])]
-        )
     else:
         dmri_connectometry_wf.connect(
             [
                 (
-                    dsn_node, streams2graph_node,
+                    inputnode, streams2graph_node,
                     [("error_margin", "error_margin")],
                 )
             ]
@@ -3142,7 +3161,6 @@ def dmri_connectometry(
                     ("step_list", "step_list"),
                     ("track_type", "track_type"),
                     ("maxcrossing", "maxcrossing"),
-                    ("error_margin", "error_margin")
                 ],
             ),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
@@ -3183,7 +3201,6 @@ def dmri_connectometry(
                     ("fa_path", "fa_path"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
-                    ("error_margin", "error_margin"),
                     ("network", "network")
                 ],
             ),
@@ -3458,6 +3475,13 @@ def dmri_connectometry(
         "memory_gb": int(procmem[1]),
         "scheduler": "mem_thread",
     }
+    execution_dict["logging"] = {
+            "workflow_level": "INFO",
+            "utils_level": "INFO",
+            "log_to_file": False,
+            "interface_level": "DEBUG",
+            "filemanip_level": "DEBUG",
+        }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -5700,6 +5724,13 @@ def fmri_connectometry(
         "memory_gb": int(procmem[1]),
         "scheduler": "mem_thread",
     }
+    execution_dict["logging"] = {
+            "workflow_level": "INFO",
+            "utils_level": "INFO",
+            "log_to_file": False,
+            "interface_level": "DEBUG",
+            "filemanip_level": "DEBUG",
+        }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():

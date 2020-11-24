@@ -776,7 +776,7 @@ def streams2graph(
         print(UserWarning('No valid streamlines detected. '
                           'Proceeding with an empty graph...'))
         mx = len(np.unique(atlas_data.astype("uint16"))) - 1
-        conn_matrix = np.zeros(mx, mx)
+        conn_matrix = np.zeros((mx, mx))
 
     assert len(coords) == len(labels) == conn_matrix.shape[0]
 
@@ -790,6 +790,28 @@ def streams2graph(
 
     coords = np.array(coords)
     labels = np.array(labels)
+
+    if parc is True:
+        node_size = "parc"
+
+    # Save unthresholded
+    utils.save_mat(
+        conn_matrix,
+        utils.create_raw_path_diff(
+            ID,
+            network,
+            conn_model,
+            roi,
+            dir_path,
+            node_size,
+            target_samples,
+            track_type,
+            parc,
+            directget,
+            min_length,
+            error_margin
+        ),
+    )
 
     return (
         atlas_mni,

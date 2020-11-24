@@ -724,8 +724,9 @@ class IndividualClustering(SimpleInterface):
                 gc.collect()
 
                 for i in boot_parcellations:
-                    if os.path.isfile(i):
-                        os.remove(i)
+                    if i is not None:
+                        if os.path.isfile(i):
+                            os.system(f"rm -f {i} &")
             else:
                 print(
                     "Creating spatially-constrained parcellation...")
@@ -779,7 +780,8 @@ class IndividualClustering(SimpleInterface):
         ]
         for j in reg_tmp:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         gc.collect()
 
@@ -1620,9 +1622,8 @@ class RegisterAtlasDWI(SimpleInterface):
             mni2t1w_warp_tmp_path,
             t1_aligned_mni_tmp_path,
             ap_tmp_path,
-            t1w2dwi_bbr_xfm_tmp_path,
             mni2t1_xfm_tmp_path,
-            t1w2dwi_xfm_tmp_path,
+            t1wtissue2dwi_xfm_tmp_path,
             wm_gm_int_in_dwi_tmp_path,
             aligned_atlas_t1mni,
             aligned_atlas_skull,
@@ -1667,11 +1668,12 @@ class RegisterAtlasDWI(SimpleInterface):
                 t1wtissue2dwi_xfm_tmp_path,
                 waymask_in_t1w,
                 waymask_in_dwi,
+                B0_mask_tmp_path,
                 template_tmp_path,
                 self.inputs.simple,
             )
             time.sleep(0.5)
-            os.remove(waymask_tmp_path)
+            os.system(f"rm -f {waymask_tmp_path} &")
         else:
             waymask_in_dwi = None
 
@@ -1720,7 +1722,7 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
         self._results["aligned_atlas_t1mni"] = aligned_atlas_t1mni
         self._results["node_size"] = self.inputs.node_size
-        self._results["atlas"] = atlas_name
+        self._results["atlas"] = self.inputs.atlas
         self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
         self._results["uatlas"] = uatlas_out
         self._results["coords"] = coords
@@ -1746,7 +1748,8 @@ class RegisterAtlasDWI(SimpleInterface):
         ]
         for j in reg_tmp:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         gc.collect()
 
@@ -1922,7 +1925,8 @@ class RegisterROIDWI(SimpleInterface):
         ]
         for j in reg_tmp:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         gc.collect()
 
@@ -2238,7 +2242,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
 
         for j in reg_tmp:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         gc.collect()
 
@@ -2469,7 +2474,8 @@ class RegisterAtlasFunc(SimpleInterface):
 
             for j in reg_tmp:
                 if j is not None:
-                    os.remove(j)
+                    if os.path.isfile(j):
+                        os.system(f"rm -f {j} &")
 
         # Use for debugging check
         parcellation_img = nib.load(aligned_atlas_gm)
@@ -2488,7 +2494,7 @@ class RegisterAtlasFunc(SimpleInterface):
         self._results["aligned_atlas_gm"] = aligned_atlas_gm
         self._results["coords"] = coords
         self._results["labels"] = labels
-        self._results["atlas"] = atlas_name
+        self._results["atlas"] = self.inputs.atlas
         self._results["node_size"] = self.inputs.node_size
 
         gc.collect()
@@ -2609,7 +2615,8 @@ class RegisterROIEPI(SimpleInterface):
         ]
         for j in reg_tmp:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
         gc.collect()
 
         return runtime
@@ -2630,7 +2637,6 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     step_list = traits.List(mandatory=True)
     track_type = traits.Str(mandatory=True)
     min_length = traits.Any(mandatory=True)
-    error_margin = traits.Any(mandatory=True)
     maxcrossing = traits.Any(mandatory=True)
     directget = traits.Str(mandatory=True)
     conn_model = traits.Str(mandatory=True)
@@ -2688,7 +2694,6 @@ class _TrackingOutputSpec(TraitedSpec):
     directget = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
     min_length = traits.Any()
-    error_margin = traits.Any()
 
 
 class Tracking(SimpleInterface):
@@ -2701,6 +2706,7 @@ class Tracking(SimpleInterface):
         import gc
         import os
         import sys
+        import time
         import os.path as op
         from dipy.io import load_pickle
         from colorama import Fore, Style
@@ -2754,6 +2760,15 @@ class Tracking(SimpleInterface):
             use_hardlink=False)
         fa_img = nib.load(fa_file_tmp_path, mmap=True)
 
+        labels_im_file_tmp_path = fname_presuffix(
+            self.inputs.labels_im_file, suffix="_tmp", newpath=runtime.cwd
+        )
+        copyfile(
+            self.inputs.labels_im_file,
+            labels_im_file_tmp_path,
+            copy=True,
+            use_hardlink=False)
+
         # Load B0 mask
         B0_mask_tmp_path = fname_presuffix(
             self.inputs.B0_mask, suffix="_tmp",
@@ -2765,11 +2780,9 @@ class Tracking(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        # Fit diffusion model
-        # Save reconstruction to .npy
-        recon_path = "%s%s%s%s%s%s%s%s" % (
+        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             runtime.cwd,
-            "/reconstruction_",
+            "/streamlines_",
             "%s"
             % (self.inputs.network + "_" if self.inputs.network is not None
                else ""),
@@ -2781,286 +2794,44 @@ class Tracking(SimpleInterface):
             ),
             self.inputs.conn_model,
             "_",
+            self.inputs.target_samples,
+            "_",
             "%s"
             % (
-                "%s%s" % (self.inputs.node_size, "mm")
+                "%s%s" % (self.inputs.node_size, "mm_")
                 if (
                     (self.inputs.node_size != "parc")
                     and (self.inputs.node_size is not None)
                 )
-                else "parc"
+                else "parc_"
             ),
-            ".hdf5",
-        )
-
-        gtab_file_tmp_path = fname_presuffix(
-            self.inputs.gtab_file, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.gtab_file,
-            gtab_file_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        gtab = load_pickle(gtab_file_tmp_path)
-
-        # Only re-run the reconstruction if we have to
-        if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
-            import h5py
-            model, _ = reconstruction(
-                self.inputs.conn_model,
-                gtab,
-                dwi_data,
-                B0_mask_tmp_path,
-            )
-            with h5py.File(recon_path, 'w') as hf:
-                hf.create_dataset("reconstruction",
-                                  data=model.astype('float32'), dtype='f4')
-            hf.close()
-
-            copyfile(
-                recon_path,
-                f"{namer_dir}/{op.basename(recon_path)}",
-                copy=True,
-                use_hardlink=False,
-            )
-            del model
-        else:
-            print(
-                f"Found existing reconstruction with "
-                f"{self.inputs.conn_model}. Loading...")
-            copyfile(
-                f"{namer_dir}/{op.basename(recon_path)}",
-                recon_path,
-                copy=True,
-                use_hardlink=False,
-            )
-
-        dwi_img.uncache()
-        del dwi_data
-
-        # Load atlas parcellation (and its wm-gm interface reduced version for
-        # seeding)
-        labels_im_file_tmp_path = fname_presuffix(
-            self.inputs.labels_im_file, suffix="_tmp", newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.labels_im_file,
-            labels_im_file_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        labels_im_file_tmp_path_wm_gm_int = fname_presuffix(
-            self.inputs.labels_im_file_wm_gm_int, suffix="_tmp",
-            newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.labels_im_file_wm_gm_int,
-            labels_im_file_tmp_path_wm_gm_int,
-            copy=True,
-            use_hardlink=False)
-
-        t1w2dwi_tmp_path = fname_presuffix(
-            self.inputs.t1w2dwi, suffix="_tmp",
-            newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.t1w2dwi,
-            t1w2dwi_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        gm_in_dwi_tmp_path = fname_presuffix(
-            self.inputs.gm_in_dwi, suffix="_tmp",
-            newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.gm_in_dwi,
-            gm_in_dwi_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        vent_csf_in_dwi_tmp_path = fname_presuffix(
-            self.inputs.vent_csf_in_dwi, suffix="_tmp",
-            newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.vent_csf_in_dwi,
-            vent_csf_in_dwi_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        wm_in_dwi_tmp_path = fname_presuffix(
-            self.inputs.wm_in_dwi, suffix="_tmp",
-            newpath=runtime.cwd
-        )
-        copyfile(
-            self.inputs.wm_in_dwi,
-            wm_in_dwi_tmp_path,
-            copy=True,
-            use_hardlink=False)
-
-        if self.inputs.waymask:
-            waymask_tmp_path = fname_presuffix(
-                self.inputs.waymask, suffix="_tmp",
-                newpath=runtime.cwd
-            )
-            copyfile(
-                self.inputs.waymask,
-                waymask_tmp_path,
-                copy=True,
-                use_hardlink=False)
-        else:
-            waymask_tmp_path = None
-
-        # Iteratively build a list of streamlines for each ROI while tracking
-        print(
-            f"{Fore.GREEN}Target number of cumulative streamlines: "
-            f"{Fore.BLUE} "
-            f"{self.inputs.target_samples}"
-        )
-        print(Style.RESET_ALL)
-        print(
-            f"{Fore.GREEN}Curvature threshold(s): {Fore.BLUE} "
-            f"{self.inputs.curv_thr_list}"
-        )
-        print(Style.RESET_ALL)
-        print(f"{Fore.GREEN}Step size(s): {Fore.BLUE} "
-              f"{self.inputs.step_list}")
-        print(Style.RESET_ALL)
-        print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} "
-              f"{self.inputs.track_type}")
-        print(Style.RESET_ALL)
-        if self.inputs.directget == "prob":
-            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}"
-                  f"Probabilistic")
-        elif self.inputs.directget == "clos":
-            print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest "
-                  f"Peak")
-        elif self.inputs.directget == "det":
-            print(
-                f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic"
-                f" Maximum"
-            )
-        else:
-            raise ValueError("Direction-getting type not recognized!")
-
-        print(Style.RESET_ALL)
-
-        # Commence Ensemble Tractography
-        streamlines = track_ensemble(
-            self.inputs.target_samples,
-            labels_im_file_tmp_path_wm_gm_int,
-            labels_im_file_tmp_path,
-            recon_path,
-            get_sphere(sphere),
+            "curv-",
+            str(self.inputs.curv_thr_list).replace(", ", "_"),
+            "_step-",
+            str(self.inputs.step_list).replace(", ", "_"),
+            "_directget-",
             self.inputs.directget,
-            self.inputs.curv_thr_list,
-            self.inputs.step_list,
-            self.inputs.track_type,
-            self.inputs.maxcrossing,
-            int(roi_neighborhood_tol),
+            "_minlength-",
             self.inputs.min_length,
-            waymask_tmp_path,
-            B0_mask_tmp_path,
-            t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
-            vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-            self.inputs.tiss_class,
-            runtime.cwd
+            ".trk",
         )
 
-        gc.collect()
-
-        if streamlines is not None:
-            # import multiprocessing
-            # from pynets.core.utils import kill_process_family
-            # return kill_process_family(int(multiprocessing.current_process().pid))
-
-            # Save streamlines to trk
-            streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
-                runtime.cwd,
-                "/streamlines_",
-                "%s"
-                % (self.inputs.network + "_" if self.inputs.network is not None
-                   else ""),
-                "%s"
-                % (
-                    op.basename(self.inputs.roi).split(".")[0] + "_"
-                    if self.inputs.roi is not None
-                    else ""
-                ),
-                self.inputs.conn_model,
-                "_",
-                self.inputs.target_samples,
-                "_",
-                "%s"
-                % (
-                    "%s%s" % (self.inputs.node_size, "mm_")
-                    if (
-                        (self.inputs.node_size != "parc")
-                        and (self.inputs.node_size is not None)
-                    )
-                    else "parc_"
-                ),
-                "curv-",
-                str(self.inputs.curv_thr_list).replace(", ", "_"),
-                "_step-",
-                str(self.inputs.step_list).replace(", ", "_"),
-                "_directget-",
-                self.inputs.directget,
-                "_minlength-",
-                self.inputs.min_length,
-                "_tol-",
-                self.inputs.error_margin,
-                ".trk",
-            )
-
-            # Linear Fascicle Evaluation (LiFE)
-            if use_life is True:
-                print('Using LiFE to evaluate streamline plausibility...')
-                from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
-                dwi_img = nib.load(dwi_file_tmp_path)
-                dwi_data = dwi_img.get_fdata().astype('float32')
-                orig_count = len(streamlines)
-
-                if self.inputs.waymask:
-                    mask_data = nib.load(waymask_tmp_path
-                                         ).get_fdata().astype('bool').astype('int')
-                else:
-                    mask_data = nib.load(wm_in_dwi_tmp_path
-                                         ).get_fdata().astype('bool').astype('int')
-                try:
-                    streamlines = evaluate_streamline_plausibility(
-                        dwi_data, gtab, mask_data, streamlines,
-                        sphere=sphere)
-                except BaseException:
-                    print(f"Linear Fascicle Evaluation failed. Visually checking "
-                          f"streamlines output {namer_dir}/{op.basename(streams)}"
-                          f" is recommended.")
-                if len(streamlines) < 0.5*orig_count:
-                    raise ValueError('LiFE revealed no plausible streamlines '
-                                     'in the tractogram!')
-                del dwi_data, mask_data
-
-            stf = StatefulTractogram(
-                streamlines,
-                fa_img,
-                origin=Origin.NIFTI,
-                space=Space.VOXMM)
-            stf.remove_invalid_streamlines()
-            save_tractogram(
-                stf,
-                streams,
-            )
-
-            del stf
-
+        if os.path.isfile(f"{namer_dir}/{op.basename(streams)}"):
+            from dipy.io.streamline import load_tractogram
             copyfile(
-                streams,
                 f"{namer_dir}/{op.basename(streams)}",
+                streams,
                 copy=True,
                 use_hardlink=False,
             )
+            tractogram = load_tractogram(
+                streams,
+                fa_img,
+                bbox_valid_check=False,
+            )
+
+            fa_img.uncache()
+            streamlines = tractogram.streamlines
 
             # Create streamline density map
             try:
@@ -3077,20 +2848,307 @@ class Tracking(SimpleInterface):
                     self.inputs.roi,
                     self.inputs.directget,
                     self.inputs.min_length,
-                    self.inputs.error_margin,
                     namer_dir,
                 )
             except BaseException:
                 print('Density map failed. Check tractography output.')
                 dm_path = None
 
-            del streamlines
+            del streamlines, tractogram
             dwi_img.uncache()
             gc.collect()
-
+            self._results["dm_path"] = dm_path
             self._results["streams"] = streams
+            recon_path = None
         else:
-            self._results["streams"] = None
+            # Fit diffusion model
+            # Save reconstruction to .npy
+            recon_path = "%s%s%s%s%s%s%s%s" % (
+                runtime.cwd,
+                "/reconstruction_",
+                "%s"
+                % (self.inputs.network + "_" if self.inputs.network is not None
+                   else ""),
+                "%s"
+                % (
+                    op.basename(self.inputs.roi).split(".")[0] + "_"
+                    if self.inputs.roi is not None
+                    else ""
+                ),
+                self.inputs.conn_model,
+                "_",
+                "%s"
+                % (
+                    "%s%s" % (self.inputs.node_size, "mm")
+                    if (
+                        (self.inputs.node_size != "parc")
+                        and (self.inputs.node_size is not None)
+                    )
+                    else "parc"
+                ),
+                ".hdf5",
+            )
+
+            gtab_file_tmp_path = fname_presuffix(
+                self.inputs.gtab_file, suffix="_tmp", newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.gtab_file,
+                gtab_file_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            gtab = load_pickle(gtab_file_tmp_path)
+
+            # Only re-run the reconstruction if we have to
+            if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
+                import h5py
+                model, _ = reconstruction(
+                    self.inputs.conn_model,
+                    gtab,
+                    dwi_data,
+                    B0_mask_tmp_path,
+                )
+                with h5py.File(recon_path, 'w') as hf:
+                    hf.create_dataset("reconstruction",
+                                      data=model.astype('float32'), dtype='f4')
+                hf.close()
+
+                copyfile(
+                    recon_path,
+                    f"{namer_dir}/{op.basename(recon_path)}",
+                    copy=True,
+                    use_hardlink=False,
+                )
+                time.sleep(1)
+                del model
+            else:
+                print(
+                    f"Found existing reconstruction with "
+                    f"{self.inputs.conn_model}. Loading...")
+                copyfile(
+                    f"{namer_dir}/{op.basename(recon_path)}",
+                    recon_path,
+                    copy=True,
+                    use_hardlink=False,
+                )
+                time.sleep(1)
+
+            dwi_img.uncache()
+            del dwi_data
+
+            # Load atlas wm-gm interface reduced version for seeding
+            labels_im_file_tmp_path_wm_gm_int = fname_presuffix(
+                self.inputs.labels_im_file_wm_gm_int, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.labels_im_file_wm_gm_int,
+                labels_im_file_tmp_path_wm_gm_int,
+                copy=True,
+                use_hardlink=False)
+
+            t1w2dwi_tmp_path = fname_presuffix(
+                self.inputs.t1w2dwi, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.t1w2dwi,
+                t1w2dwi_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            gm_in_dwi_tmp_path = fname_presuffix(
+                self.inputs.gm_in_dwi, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.gm_in_dwi,
+                gm_in_dwi_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            vent_csf_in_dwi_tmp_path = fname_presuffix(
+                self.inputs.vent_csf_in_dwi, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.vent_csf_in_dwi,
+                vent_csf_in_dwi_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            wm_in_dwi_tmp_path = fname_presuffix(
+                self.inputs.wm_in_dwi, suffix="_tmp",
+                newpath=runtime.cwd
+            )
+            copyfile(
+                self.inputs.wm_in_dwi,
+                wm_in_dwi_tmp_path,
+                copy=True,
+                use_hardlink=False)
+
+            if self.inputs.waymask:
+                waymask_tmp_path = fname_presuffix(
+                    self.inputs.waymask, suffix="_tmp",
+                    newpath=runtime.cwd
+                )
+                copyfile(
+                    self.inputs.waymask,
+                    waymask_tmp_path,
+                    copy=True,
+                    use_hardlink=False)
+            else:
+                waymask_tmp_path = None
+
+            # Iteratively build a list of streamlines for each ROI while tracking
+            print(
+                f"{Fore.GREEN}Target number of cumulative streamlines: "
+                f"{Fore.BLUE} "
+                f"{self.inputs.target_samples}"
+            )
+            print(Style.RESET_ALL)
+            print(
+                f"{Fore.GREEN}Curvature threshold(s): {Fore.BLUE} "
+                f"{self.inputs.curv_thr_list}"
+            )
+            print(Style.RESET_ALL)
+            print(f"{Fore.GREEN}Step size(s): {Fore.BLUE} "
+                  f"{self.inputs.step_list}")
+            print(Style.RESET_ALL)
+            print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} "
+                  f"{self.inputs.track_type}")
+            print(Style.RESET_ALL)
+            if self.inputs.directget == "prob":
+                print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}"
+                      f"Probabilistic")
+            elif self.inputs.directget == "clos":
+                print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest "
+                      f"Peak")
+            elif self.inputs.directget == "det":
+                print(
+                    f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic"
+                    f" Maximum"
+                )
+            else:
+                raise ValueError("Direction-getting type not recognized!")
+
+            print(Style.RESET_ALL)
+
+            # Commence Ensemble Tractography
+            streamlines = track_ensemble(
+                self.inputs.target_samples,
+                labels_im_file_tmp_path_wm_gm_int,
+                labels_im_file_tmp_path,
+                recon_path,
+                get_sphere(sphere),
+                self.inputs.directget,
+                self.inputs.curv_thr_list,
+                self.inputs.step_list,
+                self.inputs.track_type,
+                self.inputs.maxcrossing,
+                int(roi_neighborhood_tol),
+                self.inputs.min_length,
+                waymask_tmp_path,
+                B0_mask_tmp_path,
+                t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
+                vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
+                self.inputs.tiss_class,
+                runtime.cwd
+            )
+
+            gc.collect()
+
+            if streamlines is not None:
+                # import multiprocessing
+                # from pynets.core.utils import kill_process_family
+                # return kill_process_family(int(multiprocessing.current_process().pid))
+
+
+                # Linear Fascicle Evaluation (LiFE)
+                if use_life is True:
+                    print('Using LiFE to evaluate streamline plausibility...')
+                    from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+                    dwi_img = nib.load(dwi_file_tmp_path)
+                    dwi_data = dwi_img.get_fdata().astype('float32')
+                    orig_count = len(streamlines)
+
+                    if self.inputs.waymask:
+                        mask_data = nib.load(waymask_tmp_path
+                                             ).get_fdata().astype('bool').astype('int')
+                    else:
+                        mask_data = nib.load(wm_in_dwi_tmp_path
+                                             ).get_fdata().astype('bool').astype('int')
+                    try:
+                        streamlines = evaluate_streamline_plausibility(
+                            dwi_data, gtab, mask_data, streamlines,
+                            sphere=sphere)
+                    except BaseException:
+                        print(f"Linear Fascicle Evaluation failed. Visually checking "
+                              f"streamlines output {namer_dir}/{op.basename(streams)}"
+                              f" is recommended.")
+                    if len(streamlines) < 0.5*orig_count:
+                        raise ValueError('LiFE revealed no plausible streamlines '
+                                         'in the tractogram!')
+                    del dwi_data, mask_data
+
+                # Save streamlines to trk
+                stf = StatefulTractogram(
+                    streamlines,
+                    fa_img,
+                    origin=Origin.NIFTI,
+                    space=Space.VOXMM)
+                stf.remove_invalid_streamlines()
+
+                save_tractogram(
+                    stf,
+                    streams,
+                )
+
+                del stf
+
+                copyfile(
+                    streams,
+                    f"{namer_dir}/{op.basename(streams)}",
+                    copy=True,
+                    use_hardlink=False,
+                )
+
+                # Create streamline density map
+                try:
+                    [dir_path, dm_path] = create_density_map(
+                        dwi_img,
+                        dir_path,
+                        streamlines,
+                        self.inputs.conn_model,
+                        self.inputs.target_samples,
+                        self.inputs.node_size,
+                        self.inputs.curv_thr_list,
+                        self.inputs.step_list,
+                        self.inputs.network,
+                        self.inputs.roi,
+                        self.inputs.directget,
+                        self.inputs.min_length,
+                        namer_dir,
+                    )
+                except BaseException:
+                    print('Density map failed. Check tractography output.')
+                    dm_path = None
+
+                del streamlines
+                dwi_img.uncache()
+                gc.collect()
+                self._results["dm_path"] = dm_path
+                self._results["streams"] = streams
+            else:
+                self._results["streams"] = None
+                self._results["dm_path"] = None
+            tmp_files = [gtab_file_tmp_path, labels_im_file_tmp_path_wm_gm_int]
+
+            for j in tmp_files:
+                if j is not None:
+                    if os.path.isfile(j):
+                        os.system(f"rm -f {j} &")
 
         self._results["track_type"] = self.inputs.track_type
         self._results["target_samples"] = self.inputs.target_samples
@@ -3116,18 +3174,16 @@ class Tracking(SimpleInterface):
         self._results["curv_thr_list"] = self.inputs.curv_thr_list
         self._results["step_list"] = self.inputs.step_list
         self._results["fa_path"] = fa_file_tmp_path
-        self._results["dm_path"] = dm_path
         self._results["directget"] = self.inputs.directget
         self._results["labels_im_file"] = labels_im_file_tmp_path
         self._results["min_length"] = self.inputs.min_length
-        self._results["error_margin"] = self.inputs.error_margin
 
-        tmp_files = [B0_mask_tmp_path, gtab_file_tmp_path,
-                     labels_im_file_tmp_path_wm_gm_int, dwi_file_tmp_path]
+        tmp_files = [B0_mask_tmp_path, dwi_file_tmp_path, recon_path]
 
         for j in tmp_files:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         return runtime
 
@@ -3266,6 +3322,7 @@ class MakeGtabBmask(SimpleInterface):
         tmp_files = [fbval_tmp_path, fbvec_tmp_path, dwi_file_tmp_path]
         for j in tmp_files:
             if j is not None:
-                os.remove(j)
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         return runtime

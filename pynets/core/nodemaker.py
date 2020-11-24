@@ -952,7 +952,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     [coords, label_intensities] = find_parcellation_cut_coords(
         uatlas, background_label, return_label_names=True
     )
-    print(f"Region intensities:\n{label_intensities}")
+    print(f"Parcel intensities:\n{label_intensities}")
 
     par_max = len(coords)
 

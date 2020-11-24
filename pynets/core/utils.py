@@ -648,7 +648,7 @@ def load_mat(est_path):
     elif fmt == ".txt":
         G = nx.from_numpy_array(np.genfromtxt(est_path))
     elif fmt == ".npy":
-        G = nx.from_numpy_array(np.load(est_path))
+        G = nx.from_numpy_array(np.load(est_path, allow_pickle=True))
     else:
         raise ValueError("\nFile format not supported!")
 
@@ -1442,14 +1442,13 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
 
     assert len(coords) == len(labels)
 
-    i = 0
-    node_list = []
-
     if any(isinstance(sub, dict) for sub in labels):
         consensus_labs = True
     else:
         consensus_labs = False
 
+    i = 0
+    node_list = []
     for node in labels:
         node_dict = {}
         if consensus_labs is True:
@@ -1457,10 +1456,11 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
             node_dict['index'] = str(ix)
             node_dict['label'] = str(lab)
         else:
-            node_dict['index'] = str(node)
-            node_dict['label'] = None
+            node_dict['index'] = str(i)
+            node_dict['label'] = str(node)
         node_dict['coord'] = coords[i]
         node_list.append(node_dict)
+        i += 1
 
     nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
 
@@ -1921,9 +1921,12 @@ def save_4d_to_3d(in_file):
 
 def save_3d_to_4d(in_files):
     from nipype.utils.filemanip import fname_presuffix
+    from nilearn.image import concat_imgs
 
-    img_4d = nib.funcs.concat_images([nib.load(img_3d) for img_3d in in_files])
+    img_4d = concat_imgs([nib.load(img_3d) for img_3d in in_files],
+                         auto_resample=True, ensure_ndim=4)
     out_file = fname_presuffix(in_files[0], suffix="_merged")
+    img_4d.affine[3][3] = len(in_files)
     img_4d.to_filename(out_file)
     del img_4d
     return out_file

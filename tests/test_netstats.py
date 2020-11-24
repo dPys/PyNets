@@ -156,7 +156,7 @@ def test_prune_disconnected(connected_case):
     assert type(G_out) is nx.Graph
     assert type(pruned_nodes) is list
     if connected_case is True:
-        assert len(pruned_nodes) == 0
+        assert len(pruned_nodes) == 3
     elif connected_case is False:
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))

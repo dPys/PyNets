@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore")
 
 DEFAULT_TIMEOUT = 720
 
+
 @timeout(DEFAULT_TIMEOUT)
 def average_shortest_path_length_for_all(G):
     """
@@ -774,7 +775,7 @@ def weighted_transitivity(G):
     return 0 if triangles == 0 else triangles / contri
 
 
-def prune_disconnected(G):
+def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
     """
     Returns a copy of G with isolates pruned.
 
@@ -809,8 +810,21 @@ def prune_disconnected(G):
     components = list(nx.connected_components(G_tmp))
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
-
     isolates = [n for (n, d) in G_tmp.degree() if d == 0]
+
+    if len(G_tmp.nodes()) - len(isolates) < min_nodes:
+        if fallback_lcc is True:
+            from graspy.utils import get_lcc
+            print(UserWarning('Too many isolates to defragment, '
+                              'grabbing the largest connected component...'))
+
+            lcc, pruned_nodes = get_lcc(G_tmp, return_inds=True)
+            return lcc, pruned_nodes.tolist()
+        else:
+            print(UserWarning('Too many isolates to defragment, '
+                              'skipping defragmentation. Consider fallback to'
+                              ' lcc...'))
+            return G_tmp, []
 
     # Remove disconnected nodes
     pruned_nodes = []
@@ -1042,7 +1056,7 @@ class CleanGraphs(object):
             est_path,
             prune,
             norm,
-            out_fmt="edgelist_ssv"):
+            out_fmt="gpickle"):
         from pynets.core import utils
 
         self.thr = thr
@@ -1112,7 +1126,8 @@ class CleanGraphs(object):
 
         return self.G
 
-    def prune_graph(self):
+    def prune_graph(self, remove_self_loops=True):
+        import os
         from pynets.core import utils
         from graspy.utils import remove_loops, symmetrize, get_lcc
 
@@ -1141,6 +1156,11 @@ class CleanGraphs(object):
             self.G = self.G.subgraph(get_lcc(self.G))
         else:
             print("No graph anti-fragmentation applied...")
+
+        if remove_self_loops is True:
+            self.in_mat = remove_loops(symmetrize(self.in_mat))
+        else:
+            self.in_mat = symmetrize(self.in_mat)
 
         self.G = nx.from_numpy_array(self.in_mat)
 

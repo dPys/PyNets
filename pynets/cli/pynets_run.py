@@ -602,11 +602,10 @@ def get_parser():
         action="store_true",
         help="Verbose print for debugging.\n")
     parser.add_argument(
-        "-clean",
+        "-noclean",
         default=False,
         action="store_true",
-        help="Clean up temporary runtime directory after "
-             "workflow termination.\n",
+        help="Disable post-workflow clean-up of temporary runtime metadata.\n",
     )
     parser.add_argument(
         "-work",
@@ -2424,21 +2423,15 @@ def build_workflow(args, retval):
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
-                    "log_to_file": True,
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
-                },
-                monitoring={
-                    "enabled": True,
-                    "sample_frequency": "0.1",
-                    "summary_append": True,
-                },
+                }
             )
             logging.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
 
         execution_dict["crashdump_dir"] = str(wf.base_dir)
@@ -3190,15 +3183,17 @@ def build_workflow(args, retval):
             f"{work_dir}/wf_multi_subject_{'_'.join(ID)}",
             exist_ok=True)
         wf_multi.base_dir = f"{work_dir}/wf_multi_subject_{'_'.join(ID)}"
-        retval["run_uuid"] = None
+        retval["run_uuid"] = 'GROUP'
 
         if verbose is True:
-            from nipype import config, logging
+            import logging
+            from nipype import config, logging as lg
+            from nipype.utils.profiler import log_nodes_cb
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf_multi.base_dir),
@@ -3211,29 +3206,14 @@ def build_workflow(args, retval):
                     "summary_file": str(wf_multi.base_dir),
                 },
             )
-            logging.update_logging(config)
+            lg.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
             callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
-
-        execution_dict["crashdump_dir"] = str(wf_multi.base_dir)
-        execution_dict["plugin"] = str(plugin_type)
-        cfg = dict(execution=execution_dict)
-        for key in cfg.keys():
-            for setting, value in cfg[key].items():
-                wf_multi.config[key][setting] = value
-        try:
-            wf_multi.write_graph(graph2use="colored", format="png")
-        except BaseException:
-            pass
-        if verbose is True:
-            from nipype.utils.profiler import log_nodes_cb
-
             plugin_args = {
                 "n_procs": int(procmem[0]),
                 "memory_gb": int(procmem[1]),
@@ -3246,6 +3226,18 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
+
+        execution_dict["crashdump_dir"] = str(wf_multi.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf_multi.config[key][setting] = value
+        try:
+            wf_multi.write_graph(graph2use="colored", format="png")
+        except BaseException:
+            pass
+
         print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
@@ -3255,10 +3247,14 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
 
-            print("Plotting resource profile from run...")
-            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
-            handler.close()
-            logger.removeHandler(handler)
+            if os.path.isfile(callback_log_path):
+                print("Plotting resource profile from run...")
+                generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+                handler.close()
+                logger.removeHandler(handler)
+            else:
+                print(f"Cannot plot resource usage. {callback_log_path} not "
+                      f"found...")
 
         # Clean up temporary directories
         print("Cleaning up...")
@@ -3395,12 +3391,14 @@ def build_workflow(args, retval):
         wf.base_dir = f"{work_dir}/{ID}_{run_uuid}_{base_dirname}"
 
         if verbose is True:
-            from nipype import config, logging
+            import logging
+            from nipype import config, logging as lg
+            from nipype.utils.profiler import log_nodes_cb
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf.base_dir),
@@ -3413,28 +3411,14 @@ def build_workflow(args, retval):
                     "summary_file": str(wf.base_dir),
                 },
             )
-            logging.update_logging(config)
+            lg.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
             callback_log_path = f"{wf.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
-
-        execution_dict["crashdump_dir"] = str(wf.base_dir)
-        execution_dict["plugin"] = str(plugin_type)
-        cfg = dict(execution=execution_dict)
-        for key in cfg.keys():
-            for setting, value in cfg[key].items():
-                wf.config[key][setting] = value
-        try:
-            wf.write_graph(graph2use="colored", format="png")
-        except BaseException:
-            pass
-        if verbose is True:
-            from nipype.utils.profiler import log_nodes_cb
 
             plugin_args = {
                 "n_procs": int(procmem[0]),
@@ -3448,6 +3432,17 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
+        execution_dict["crashdump_dir"] = str(wf.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf.config[key][setting] = value
+        try:
+            wf.write_graph(graph2use="colored", format="png")
+        except BaseException:
+            pass
+
         print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
@@ -3458,16 +3453,23 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
 
-            print("Plotting resource profile from run...")
-            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
-            handler.close()
-            logger.removeHandler(handler)
-
+            if os.path.isfile(callback_log_path):
+                print("Plotting resource profile from run...")
+                generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+                handler.close()
+                logger.removeHandler(handler)
+            else:
+                print(f"Cannot plot resource usage. {callback_log_path} not "
+                      f"found...")
         # Clean up temporary directories
         print("Cleaning up...")
         if func_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/func/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/func/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3475,7 +3477,11 @@ def build_workflow(args, retval):
                         continue
         if dwi_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/dwi/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:
@@ -3544,7 +3550,7 @@ def main():
 
     mgr.shutdown()
 
-    if args.clean is True and work_dir:
+    if args.noclean is False and work_dir:
         from shutil import rmtree
 
         rmtree(work_dir, ignore_errors=True)

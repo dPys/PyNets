@@ -52,7 +52,6 @@ def direct_streamline_norm(
     step_list,
     directget,
     min_length,
-    error_margin,
     t1_aligned_mni
 ):
     """
@@ -263,7 +262,7 @@ def direct_streamline_norm(
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -288,12 +287,10 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".trk",
         )
 
-        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -318,8 +315,6 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".nii.gz",
         )
 
@@ -509,8 +504,7 @@ def direct_streamline_norm(
         atlas_mni,
         directget,
         warped_fa,
-        min_length,
-        error_margin
+        min_length
     )
 
 
@@ -838,6 +832,14 @@ class DmriReg(object):
         """
         import time
 
+        self.ap_path = regutils.apply_mask_to_image(self.ap_path,
+                                                    self.B0_mask,
+                                                    self.ap_path)
+
+        self.fa_path = regutils.apply_mask_to_image(self.fa_path,
+                                                    self.B0_mask,
+                                                    self.fa_path)
+
         # Align T1w-->DWI
         regutils.align(
             self.ap_path,
@@ -925,6 +927,9 @@ class DmriReg(object):
             )
             time.sleep(0.5)
 
+        self.t1w2dwi = regutils.apply_mask_to_image(self.t1w2dwi,
+                                                    self.B0_mask,
+                                                    self.t1w2dwi)
         return
 
     def tissue2dwi_align(self):
@@ -939,6 +944,10 @@ class DmriReg(object):
         import sys
         import time
         import os.path as op
+        from pynets.core.utils import load_runconfig
+
+        hardcoded_params = load_runconfig()
+        tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
@@ -1075,19 +1084,26 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
+        if tiss_class == 'wb' or tiss_class == 'cmc':
+            csf_thr = 0.50
+            wm_thr = 0.15
+        else:
+            csf_thr = 0.95
+            wm_thr = 0.10
+
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img("img > 0.10", img=thr_img)
+        thr_img = math_img(f"img > {wm_thr}", img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img("img > 0.15", img=thr_img)
+        thr_img = math_img("img > 0.10", img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img = math_img("img > 0.95", img=thr_img)
+        thr_img = math_img(f"img > {csf_thr}", img=thr_img)
         nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
