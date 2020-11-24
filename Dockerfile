@@ -123,9 +123,10 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         cython \
         libgfortran \
         matplotlib \
-#        openblas \
+        openblas \
     && pip install certifi -U --ignore-installed \
-#    && pip install skggm python-dateutil==2.8.0 \
+    && pip install python-dateutil==2.8.0 \
+#    && pip install skggm \
     # Precaching fonts, set 'Agg' as default backend for matplotlib
     && python -c "from matplotlib import font_manager" \
     && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" ) \

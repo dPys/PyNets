@@ -650,10 +650,15 @@ if __name__ == "__main__":
             if len(missingness_frames) > 0:
                 if len(missingness_frames) > 1:
                     final_missingness_summary = pd.concat(missingness_frames)
+                    final_missingness_summary.to_csv(missingness_summary,
+                                                     index=False)
+                    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
                 elif len(missingness_frames) == 1:
                     final_missingness_summary = missingness_frames[0]
-                final_missingness_summary.to_csv(missingness_summary, index=False)
-
+                    final_missingness_summary.to_csv(missingness_summary, index=False)
+                    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
+                else:
+                    final_missingness_summary = pd.Series()
         with open(subject_dict_file_path, "wb") as f:
             dill.dump(sub_dict_clean, f)
         f.close()
@@ -669,13 +674,9 @@ if __name__ == "__main__":
         f.close()
         if os.path.isfile(missingness_summary):
             final_missingness_summary = pd.read_csv(missingness_summary)
-            missingness_frames = []
-
-    if len(missingness_frames) > 0:
-        final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
-    else:
-        final_missingness_summary = pd.Series()
-
+            final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
+        else:
+            final_missingness_summary = pd.Series()
     ids = sub_dict_clean.keys()
 
     def tuple_insert(tup, pos, ele):

@@ -1290,6 +1290,8 @@ def make_subject_dict(
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
     import tempfile
+    import psutil
+    import shutil
     import gc
 
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
@@ -1337,8 +1339,6 @@ def make_subject_dict(
                         print("Missing topology outputs.")
                         continue
                 else:
-                    ensembles = None
-                    df_top = None
                     continue
 
                 ensembles = list(set([i for i in ensembles if i is not None]))
@@ -1366,10 +1366,10 @@ def make_subject_dict(
                 cache_dir = tempfile.mkdtemp()
 
                 with Parallel(
-                    n_jobs=-1,
+                    n_jobs=len(ids),
                     backend='loky',
-                    verbose=10,
-                    max_nbytes=None,
+                    verbose=1,
+                    max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
                     temp_folder=cache_dir,
                 ) as parallel:
                     outs_tup = parallel(
@@ -1387,8 +1387,11 @@ def make_subject_dict(
                         )
                         for id in ids
                     )
+                del par_dict
+                gc.collect()
                 outs = [i[0] for i in outs_tup]
                 miss_frames = [i[1] for i in outs_tup if not i[1].empty]
+                del outs_tup
                 if len(miss_frames) > 1:
                     miss_frames = pd.concat(miss_frames)
                 miss_frames_all.append(miss_frames)
@@ -1396,6 +1399,7 @@ def make_subject_dict(
                     subject_dict_all = dict(mergedicts(subject_dict_all, d))
                 del outs, df_top, miss_frames
                 gc.collect()
+                shutil.rmtree(cache_dir, ignore_errors=True)
             del ses_name, grid, hyperparam_dict
             gc.collect()
         del alg, hyperparams
@@ -1418,8 +1422,9 @@ def populate_subject_dict(
     mets=None,
     df_top=None,
 ):
-    from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
+    from joblib import Parallel, delayed
+    import gc
 
     # print(id)
     ID = id.split("_")[0].split("sub-")[1]
@@ -1446,406 +1451,465 @@ def populate_subject_dict(
 
     # Functional case
     if modality == "func":
-        for comb in grid:
-            try:
-                extract, hpass, model, res, atlas, smooth = comb
-            except:
-                try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
-                except:
-                    raise ValueError(f"Failed to parse recipe: {comb}")
-            comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
-            # print(comb_tuple)
-            subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-                if smooth == "0":
-                    embeddings = [
-                        i
-                        for i in glob.glob(
-                            f"{base_dir}/embeddings_all_"
-                            f"{modality}/sub-{ID}/ses-{ses}/rsn-"
-                            f"{atlas}_res-{res}/"
-                            f"gradient-{alg}_{res}_*{ID}"
-                            f"*modality-{modality}*model-"
-                            f"{model}*template-{template}*"
-                            f"hpass-{hpass}Hz*extract-"
-                            f"{extract}*npy"
-                        )
-                        if "smooth" not in i
-                    ]
-                else:
-                    embeddings = [
-                        i
-                        for i in glob.glob(
-                            f"{base_dir}/embeddings_all_"
-                            f"{modality}/sub-{ID}/ses-{ses}/"
-                            f"rsn-{atlas}"
-                            f"_res-{res}/"
-                            f"gradient*{alg}*{res}*"
-                            f"*{ID}*modality-{modality}*model-"
-                            f"{model}*template-{template}*"
-                            f"hpass-{hpass}Hz*extract-"
-                            f"{extract}*npy"
-                        )
-                        if f"smooth-{smooth}fwhm" in i
-                    ]
-                if len(embeddings) == 0:
-                    if smooth == "0":
-                        embeddings = [
-                            i
-                            for i in glob.glob(
-                                f"{base_dir}/embeddings_all_"
-                                f"{modality}/sub-{ID}/ses-{ses}"
-                                f"/rsn-"
-                                f"{atlas}_res-{res}/"
-                                f"gradient*{alg}*{res}*"
-                                f"{atlas}*{ID}"
-                                f"*modality-{modality}*model-"
-                                f"{model}*template-{template}*"
-                                f"hpass-{hpass}Hz*extract-"
-                                f"{extract}*npy"
-                            )
-                            if "smooth" not in i
-                        ]
-                    else:
-                        embeddings = [
-                            i
-                            for i in glob.glob(
-                                f"{base_dir}/embeddings_all_"
-                                f"{modality}/sub-{ID}/ses-{ses}"
-                                f"/rsn-{atlas}"
-                                f"_res-{res}/"
-                                f"gradient*{alg}*{res}*{atlas}"
-                                f"*{ID}*modality-{modality}*model-"
-                                f"{model}*template-{template}*"
-                                f"hpass-{hpass}Hz*extract-"
-                                f"{extract}*npy"
-                            )
-                            if f"smooth-{smooth}fwhm" in i
-                        ]
-                if len(embeddings) == 0:
-                    print(
-                        f"No functional embeddings found for {id} and"
-                        f" recipe {comb_tuple} & {alg}..."
-                    )
-                    missingness_frame = missingness_frame.append(
-                        {
-                            "id": id,
-                            "ses": ses,
-                            "modality": modality,
-                            "alg": alg,
-                            "grid": comb_tuple,
-                        },
-                        ignore_index=True,
-                    )
-                    completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                    continue
-                elif len(embeddings) == 1:
-                    embedding = embeddings[0]
-                else:
-                    embeddings_raw = [i for i in embeddings if "thrtype"
-                                      not in i]
-                    if len(embeddings_raw) == 1:
-                        embedding = embeddings[0]
+        with Parallel(
+            n_jobs=4,
+            require='sharedmem',
+            verbose=1,
+        ) as parallel:
+            parallel(
+                delayed(func_grabber)(comb, subject_dict, missingness_frame,
+                                      completion_status,
+                                      ID, ses, modality, alg, mets, thr_type,
+                                      base_dir,
+                                      template,
+                                      df_top)
+                for comb in grid
+            )
 
-                    elif len(embeddings_raw) > 1:
-                        sorted_embeddings = sorted(embeddings_raw,
-                                                   key=os.path.getmtime)
-                        print(
-                            f"Multiple functional embeddings found for {id} and"
-                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                            f" recent..."
-                        )
-                        embedding = sorted_embeddings[0]
-                    else:
-                        sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
-                        print(
-                            f"Multiple functional embeddings found for {id} and"
-                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                            f" recent..."
-                        )
-                        embedding = sorted_embeddings[0]
-
-                if os.path.isfile(embedding):
-                    # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-                    try:
-                        ixs = get_index_labels(base_dir, ID, ses, modality,
-                                               comb_tuple, np.load(embedding).shape[0])
-                    except BaseException:
-                        print(f"Failed to load {embedding} for {ID}-{ses}")
-                        continue
-                    if (
-                        alg
-                        not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
-                    ):
-                        subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-                    subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-                    #subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-                    subject_dict[ID][ses][modality][alg][comb_tuple]["data"] = embedding
-                    # print(data)
-                else:
-                    print(
-                        f"Functional embedding not found for {id} and"
-                        f" recipe {comb_tuple} & {alg}..."
-                    )
-                    missingness_frame = missingness_frame.append(
-                        {
-                            "id": id,
-                            "ses": ses,
-                            "modality": modality,
-                            "alg": alg,
-                            "grid": comb_tuple,
-                        },
-                        ignore_index=True,
-                    )
-                    completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                    continue
-            elif alg == "topology":
-                data = np.empty([len(mets), 1], dtype=np.float32)
-                data[:] = np.nan
-                if smooth == '0':
-                    targets = [
-                        f"extract-{extract}",
-                        f"hpass-{hpass}Hz",
-                        f"model-{model}",
-                        f"res-{res}",
-                        f"rsn-{atlas}",
-                        f"thrtype-{thr_type}",
-                    ]
-                else:
-                    targets = [
-                        f"extract-{extract}",
-                        f"hpass-{hpass}Hz",
-                        f"model-{model}",
-                        f"res-{res}",
-                        f"rsn-{atlas}",
-                        f"smooth-{smooth}fwhm",
-                        f"thrtype-{thr_type}",
-                    ]
-
-                cols = filter_cols_from_targets(df_top, targets)
-                i = 0
-                for met in mets:
-                    col_met = [j for j in cols if met in j]
-                    if len(col_met) == 1:
-                        col = col_met[0]
-                    elif len(col_met) > 1:
-                        if comb_tuple[-1] == '0':
-                            col = [i for i in col_met if "fwhm" not in i][0]
-                        else:
-                            print(f"Multiple columns detected: {col_met}")
-                            col = col_met[0]
-                    else:
-                        data[i] = np.nan
-                        i += 1
-                        missingness_frame = missingness_frame.append(
-                            {
-                                "id": id,
-                                "ses": ses,
-                                "modality": modality,
-                                "alg": alg,
-                                "grid": comb_tuple,
-                            },
-                            ignore_index=True,
-                        )
-                        completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                        continue
-
-                    out = df_top[df_top["id"] == f"sub-{ID}_ses-{ses}"][col].values
-                    if len(out) == 0:
-                        print(
-                            f"Functional topology not found for {id}, {met}, "
-                            f"and recipe {comb_tuple}..."
-                        )
-                        data[i] = np.nan
-                    else:
-                        data[i] = out
-
-                    del col, out
-                    i += 1
-                if (np.abs(data) < 0.0000001).all():
-                    data[:] = np.nan
-                elif (np.abs(data) < 0.0000001).any():
-                    data[data < 0.0000001] = np.nan
-                subject_dict[ID][ses][modality][alg][comb_tuple] = data
-                # print(data)
-            del comb, comb_tuple
     # Structural case
     elif modality == "dwi":
-        for comb in grid:
-            try:
-                directget, minlength, model, res, atlas, tol = comb
-            except:
-                raise ValueError(f"Failed to parse recipe: {comb}")
-            comb_tuple = (atlas, directget, minlength, model, res, tol)
-            # print(comb_tuple)
-            subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-                embeddings = glob.glob(
-                    f"{base_dir}/embeddings_all"
-                    f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
-                    f"res-{res}/"
-                    f"gradient*{alg}*{res}*{atlas}*{ID}"
-                    f"*modality-{modality}*model-{model}"
-                    f"*template-{template}*directget-"
-                    f"{directget}"
-                    f"*minlength-{minlength}*tol-{tol}*npy"
-                )
-                if len(embeddings) == 0 and 'RUM' in atlas:
-                    embeddings = glob.glob(
-                        f"{base_dir}/embeddings_all"
-                        f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas.replace('RUM','')}_"
-                        f"res-{res}/"
-                        f"gradient*{alg}*{res}*{atlas.replace('RUM','')}*{ID}"
-                        f"*modality-{modality}*model-{model}"
-                        f"*template-{template}*directget-"
-                        f"{directget}"
-                        f"*minlength-{minlength}*tol-{tol}*npy"
-                    )
-                if len(embeddings) == 0:
-                    print(
-                        f"No structural embeddings found for {id} and"
-                        f" recipe {comb_tuple} & {alg}..."
-                    )
-                    missingness_frame = missingness_frame.append(
-                        {
-                            "id": id,
-                            "ses": ses,
-                            "modality": modality,
-                            "alg": alg,
-                            "grid": comb_tuple,
-                        },
-                        ignore_index=True,
-                    )
-                    completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                    continue
-                elif len(embeddings) == 1:
-                    embedding = embeddings[0]
-                else:
-                    embeddings_raw = [i for i in embeddings if "thrtype" not
-                                      in i]
-                    if len(embeddings_raw) == 1:
-                        embedding = embeddings[0]
-
-                    elif len(embeddings_raw) > 1:
-                        sorted_embeddings = sorted(embeddings_raw,
-                                                   key=os.path.getmtime)
-                        print(
-                            f"Multiple functional embeddings found for {id} and"
-                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                            f" recent..."
-                        )
-                        embedding = sorted_embeddings[0]
-                    else:
-                        sorted_embeddings = sorted(embeddings,
-                                                   key=os.path.getmtime)
-                        print(
-                            f"Multiple functional embeddings found for {id} and"
-                            f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                            f" recent..."
-                        )
-                        embedding = sorted_embeddings[0]
-
-                if os.path.isfile(embedding):
-                    # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-                    ixs = get_index_labels(base_dir, ID, ses, modality,
-                                           comb_tuple,
-                                           np.load(embedding).shape[0])
-                    if (
-                        alg
-                        not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
-                    ):
-                        subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-                    subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-                    # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-                    subject_dict[ID][ses][modality][alg][comb_tuple]["data"] = embedding
-                    # print(data)
-                else:
-                    print(
-                        f"Structural embedding not found for {id} and"
-                        f" recipe {comb_tuple} & {alg}..."
-                    )
-                    missingness_frame = missingness_frame.append(
-                        {
-                            "id": id,
-                            "ses": ses,
-                            "modality": modality,
-                            "alg": alg,
-                            "grid": comb_tuple,
-                        },
-                        ignore_index=True,
-                    )
-                    completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                    continue
-            elif alg == "topology":
-                data = np.empty([len(mets), 1], dtype=np.float32)
-                data[:] = np.nan
-                targets = [
-                    f"minlength-{minlength}",
-                    f"directget-{directget}",
-                    f"model-{model}",
-                    f"res-{res}",
-                    f"rsn-{atlas}",
-                    f"tol-{tol}",
-                    f"thrtype-{thr_type}",
-                ]
-
-                cols = filter_cols_from_targets(df_top, targets)
-                i = 0
-                for met in mets:
-                    col_met = [j for j in cols if met in j]
-                    if len(col_met) == 1:
-                        col = col_met[0]
-                    elif len(col_met) > 1:
-                        print(f"Multiple columns detected: {col_met}")
-                        col = col_met[0]
-                    else:
-                        print(
-                            f"Structural topology not found for {id}, "
-                            f"{met}, and recipe {comb_tuple}..."
-                        )
-                        data[i] = np.nan
-                        i += 1
-                        missingness_frame = missingness_frame.append(
-                            {
-                                "id": id,
-                                "ses": ses,
-                                "modality": modality,
-                                "alg": alg,
-                                "grid": comb_tuple,
-                            },
-                            ignore_index=True,
-                        )
-                        completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                        continue
-
-                    out = df_top[df_top["id"] == "sub-" + ID + "_ses-" + ses][
-                        col
-                    ].values
-                    if len(out) == 0:
-                        print(
-                            f"Structural topology not found for {id}, "
-                            f"{met}, and recipe {comb_tuple}..."
-                        )
-                        data[i] = np.nan
-                    else:
-                        data[i] = out
-
-                    del col, out
-                    i += 1
-                if (np.abs(data) < 0.0000001).all():
-                    data[:] = np.nan
-                elif (np.abs(data) < 0.0000001).any():
-                    data[data < 0.0000001] = np.nan
-                subject_dict[ID][ses][modality][alg][comb_tuple] = data
-                # print(data)
-            del comb, comb_tuple
-
+        with Parallel(
+            n_jobs=4,
+            require='sharedmem',
+            verbose=1,
+        ) as parallel:
+            parallel(
+                delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
+                                      completion_status,
+                                      ID, ses, modality, alg, mets, thr_type,
+                                      base_dir,
+                                      template,
+                                      df_top)
+                for comb in grid
+            )
     print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-    del modality, ID, ses
-
+    del modality, ID, ses, df_top
+    gc.collect()
     return subject_dict, missingness_frame
+
+
+def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
+                 ID, ses, modality, alg, mets, thr_type, base_dir, template,
+                 df_top):
+    from pynets.core.utils import filter_cols_from_targets
+    from colorama import Fore, Style
+    import gc
+
+    try:
+        directget, minlength, model, res, atlas, tol = comb
+    except BaseException:
+        print(UserWarning(f"Failed to parse recipe: {comb}"))
+        return subject_dict, missingness_frame, completion_status
+
+    comb_tuple = (atlas, directget, minlength, model, res, tol)
+    # print(comb_tuple)
+    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
+    if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
+        embeddings = glob.glob(
+            f"{base_dir}/embeddings_all"
+            f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
+            f"res-{res}/"
+            f"gradient*{alg}*{res}*{atlas}*{ID}"
+            f"*modality-{modality}*model-{model}"
+            f"*template-{template}*directget-"
+            f"{directget}"
+            f"*minlength-{minlength}*tol-{tol}*npy"
+        )
+        if len(embeddings) == 0 and 'RUM' in atlas:
+            embeddings = glob.glob(
+                f"{base_dir}/embeddings_all"
+                f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas.replace('RUM', '')}_"
+                f"res-{res}/"
+                f"gradient*{alg}*{res}*{atlas.replace('RUM', '')}*{ID}"
+                f"*modality-{modality}*model-{model}"
+                f"*template-{template}*directget-"
+                f"{directget}"
+                f"*minlength-{minlength}*tol-{tol}*npy"
+            )
+        if len(embeddings) == 0:
+            print(
+                f"No structural embeddings found for {ID} and"
+                f" recipe {comb_tuple} & {alg}..."
+            )
+            missingness_frame = missingness_frame.append(
+                {
+                    "id": ID,
+                    "ses": ses,
+                    "modality": modality,
+                    "alg": alg,
+                    "grid": comb_tuple,
+                },
+                ignore_index=True,
+            )
+            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            return subject_dict, missingness_frame, completion_status
+        elif len(embeddings) == 1:
+            embedding = embeddings[0]
+        else:
+            embeddings_raw = [i for i in embeddings if "thrtype" not
+                              in i]
+            if len(embeddings_raw) == 1:
+                embedding = embeddings[0]
+
+            elif len(embeddings_raw) > 1:
+                sorted_embeddings = sorted(embeddings_raw,
+                                           key=os.path.getmtime)
+                print(
+                    f"Multiple functional embeddings found for {id} and"
+                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" recent..."
+                )
+                embedding = sorted_embeddings[0]
+            else:
+                sorted_embeddings = sorted(embeddings,
+                                           key=os.path.getmtime)
+                print(
+                    f"Multiple functional embeddings found for {id} and"
+                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" recent..."
+                )
+                embedding = sorted_embeddings[0]
+
+        if os.path.isfile(embedding):
+            # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+            ixs = get_index_labels(base_dir, ID, ses, modality,
+                                   comb_tuple,
+                                   np.load(embedding).shape[0])
+            if (
+                alg
+                not in subject_dict[ID][ses][modality][alg][
+                comb_tuple].keys()
+            ):
+                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
+            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
+            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][ses][modality][alg][comb_tuple][
+                "data"] = embedding
+            # print(data)
+        else:
+            print(
+                f"Structural embedding not found for {ID} and"
+                f" recipe {comb_tuple} & {alg}..."
+            )
+            missingness_frame = missingness_frame.append(
+                {
+                    "id": ID,
+                    "ses": ses,
+                    "modality": modality,
+                    "alg": alg,
+                    "grid": comb_tuple,
+                },
+                ignore_index=True,
+            )
+            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            return subject_dict, missingness_frame, completion_status
+    elif alg == "topology":
+        data = np.empty([len(mets), 1], dtype=np.float32)
+        data[:] = np.nan
+        targets = [
+            f"minlength-{minlength}",
+            f"directget-{directget}",
+            f"model-{model}",
+            f"res-{res}",
+            f"rsn-{atlas}",
+            f"tol-{tol}",
+            f"thrtype-{thr_type}",
+        ]
+
+        cols = filter_cols_from_targets(df_top, targets)
+        i = 0
+        for met in mets:
+            col_met = [j for j in cols if met in j]
+            if len(col_met) == 1:
+                col = col_met[0]
+            elif len(col_met) > 1:
+                print(f"Multiple columns detected: {col_met}")
+                col = col_met[0]
+            else:
+                print(
+                    f"Structural topology not found for {id}, "
+                    f"{met}, and recipe {comb_tuple}..."
+                )
+                data[i] = np.nan
+                i += 1
+                missingness_frame = missingness_frame.append(
+                    {
+                        "id": ID,
+                        "ses": ses,
+                        "modality": modality,
+                        "alg": alg,
+                        "grid": comb_tuple,
+                    },
+                    ignore_index=True,
+                )
+                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+                return subject_dict, missingness_frame, completion_status
+
+            out = df_top[df_top["id"] == "sub-" + ID + "_ses-" + ses][
+                col
+            ].values
+            if len(out) == 0:
+                print(
+                    f"Structural topology not found for {id}, "
+                    f"{met}, and recipe {comb_tuple}..."
+                )
+                data[i] = np.nan
+            else:
+                data[i] = out
+
+            del col, out
+            i += 1
+        if (np.abs(data) < 0.0000001).all():
+            data[:] = np.nan
+        elif (np.abs(data) < 0.0000001).any():
+            data[data < 0.0000001] = np.nan
+        subject_dict[ID][ses][modality][alg][comb_tuple] = data
+        # print(data)
+    del comb, comb_tuple
+    gc.collect()
+
+    return subject_dict, missingness_frame, completion_status
+
+
+def func_grabber(comb, subject_dict, missingness_frame, completion_status,
+                 ID, ses, modality, alg, mets, thr_type, base_dir, template,
+                 df_top):
+    from pynets.core.utils import filter_cols_from_targets
+    from colorama import Fore, Style
+    import gc
+
+    try:
+        extract, hpass, model, res, atlas, smooth = comb
+    except:
+        try:
+            extract, hpass, model, res, atlas = comb
+            smooth = "0"
+        except BaseException:
+            print(UserWarning(f"Failed to parse recipe: {comb}"))
+            return subject_dict, missingness_frame, completion_status
+
+    comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
+    # print(comb_tuple)
+    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
+    if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
+        if smooth == "0":
+            embeddings = [
+                i
+                for i in glob.glob(
+                    f"{base_dir}/embeddings_all_"
+                    f"{modality}/sub-{ID}/ses-{ses}/rsn-"
+                    f"{atlas}_res-{res}/"
+                    f"gradient-{alg}_{res}_*{ID}"
+                    f"*modality-{modality}*model-"
+                    f"{model}*template-{template}*"
+                    f"hpass-{hpass}Hz*extract-"
+                    f"{extract}*npy"
+                )
+                if "smooth" not in i
+            ]
+        else:
+            embeddings = [
+                i
+                for i in glob.glob(
+                    f"{base_dir}/embeddings_all_"
+                    f"{modality}/sub-{ID}/ses-{ses}/"
+                    f"rsn-{atlas}"
+                    f"_res-{res}/"
+                    f"gradient*{alg}*{res}*"
+                    f"*{ID}*modality-{modality}*model-"
+                    f"{model}*template-{template}*"
+                    f"hpass-{hpass}Hz*extract-"
+                    f"{extract}*npy"
+                )
+                if f"smooth-{smooth}fwhm" in i
+            ]
+        if len(embeddings) == 0:
+            if smooth == "0":
+                embeddings = [
+                    i
+                    for i in glob.glob(
+                        f"{base_dir}/embeddings_all_"
+                        f"{modality}/sub-{ID}/ses-{ses}"
+                        f"/rsn-"
+                        f"{atlas}_res-{res}/"
+                        f"gradient*{alg}*{res}*"
+                        f"{atlas}*{ID}"
+                        f"*modality-{modality}*model-"
+                        f"{model}*template-{template}*"
+                        f"hpass-{hpass}Hz*extract-"
+                        f"{extract}*npy"
+                    )
+                    if "smooth" not in i
+                ]
+            else:
+                embeddings = [
+                    i
+                    for i in glob.glob(
+                        f"{base_dir}/embeddings_all_"
+                        f"{modality}/sub-{ID}/ses-{ses}"
+                        f"/rsn-{atlas}"
+                        f"_res-{res}/"
+                        f"gradient*{alg}*{res}*{atlas}"
+                        f"*{ID}*modality-{modality}*model-"
+                        f"{model}*template-{template}*"
+                        f"hpass-{hpass}Hz*extract-"
+                        f"{extract}*npy"
+                    )
+                    if f"smooth-{smooth}fwhm" in i
+                ]
+        if len(embeddings) == 0:
+            print(
+                f"No functional embeddings found for {ID} and"
+                f" recipe {comb_tuple} & {alg}..."
+            )
+            missingness_frame = missingness_frame.append(
+                {
+                    "id": ID,
+                    "ses": ses,
+                    "modality": modality,
+                    "alg": alg,
+                    "grid": comb_tuple,
+                },
+                ignore_index=True,
+            )
+            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            return subject_dict, missingness_frame, completion_status
+
+        elif len(embeddings) == 1:
+            embedding = embeddings[0]
+        else:
+            embeddings_raw = [i for i in embeddings if "thrtype"
+                              not in i]
+            if len(embeddings_raw) == 1:
+                embedding = embeddings[0]
+
+            elif len(embeddings_raw) > 1:
+                sorted_embeddings = sorted(embeddings_raw,
+                                           key=os.path.getmtime)
+                print(
+                    f"Multiple functional embeddings found for {ID} and"
+                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" recent..."
+                )
+                embedding = sorted_embeddings[0]
+            else:
+                sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
+                print(
+                    f"Multiple functional embeddings found for {ID} and"
+                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" recent..."
+                )
+                embedding = sorted_embeddings[0]
+
+        if os.path.isfile(embedding):
+            # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+            try:
+                ixs = get_index_labels(base_dir, ID, ses, modality,
+                                       comb_tuple, np.load(embedding).shape[0])
+            except BaseException:
+                print(f"Failed to load {embedding} for {ID}-{ses}")
+                return subject_dict, missingness_frame, completion_status
+            if (
+                alg
+                not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
+            ):
+                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
+            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
+            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][ses][modality][alg][comb_tuple][
+                "data"] = embedding
+            # print(data)
+        else:
+            print(
+                f"Functional embedding not found for {ID} and"
+                f" recipe {comb_tuple} & {alg}..."
+            )
+            missingness_frame = missingness_frame.append(
+                {
+                    "id": ID,
+                    "ses": ses,
+                    "modality": modality,
+                    "alg": alg,
+                    "grid": comb_tuple,
+                },
+                ignore_index=True,
+            )
+            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            return subject_dict, missingness_frame, completion_status
+
+    elif alg == "topology":
+        data = np.empty([len(mets), 1], dtype=np.float32)
+        data[:] = np.nan
+        if smooth == '0':
+            targets = [
+                f"extract-{extract}",
+                f"hpass-{hpass}Hz",
+                f"model-{model}",
+                f"res-{res}",
+                f"rsn-{atlas}",
+                f"thrtype-{thr_type}",
+            ]
+        else:
+            targets = [
+                f"extract-{extract}",
+                f"hpass-{hpass}Hz",
+                f"model-{model}",
+                f"res-{res}",
+                f"rsn-{atlas}",
+                f"smooth-{smooth}fwhm",
+                f"thrtype-{thr_type}",
+            ]
+
+        cols = filter_cols_from_targets(df_top, targets)
+        i = 0
+        for met in mets:
+            col_met = [j for j in cols if met in j]
+            if len(col_met) == 1:
+                col = col_met[0]
+            elif len(col_met) > 1:
+                if comb_tuple[-1] == '0':
+                    col = [i for i in col_met if "fwhm" not in i][0]
+                else:
+                    print(f"Multiple columns detected: {col_met}")
+                    col = col_met[0]
+            else:
+                data[i] = np.nan
+                i += 1
+                missingness_frame = missingness_frame.append(
+                    {
+                        "id": ID,
+                        "ses": ses,
+                        "modality": modality,
+                        "alg": alg,
+                        "grid": comb_tuple,
+                    },
+                    ignore_index=True,
+                )
+                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+                return subject_dict, missingness_frame, completion_status
+
+            out = df_top[df_top["id"] == f"sub-{ID}_ses-{ses}"][col].values
+            if len(out) == 0:
+                print(
+                    f"Functional topology not found for {ID}, {met}, "
+                    f"and recipe {comb_tuple}..."
+                )
+                data[i] = np.nan
+            else:
+                data[i] = out
+
+            del col, out
+            i += 1
+        if (np.abs(data) < 0.0000001).all():
+            data[:] = np.nan
+        elif (np.abs(data) < 0.0000001).any():
+            data[data < 0.0000001] = np.nan
+        subject_dict[ID][ses][modality][alg][comb_tuple] = data
+        # print(data)
+    del comb, comb_tuple
+    gc.collect()
+
+    return subject_dict, missingness_frame, completion_status
 
 
 def cleanNullTerms(d):
