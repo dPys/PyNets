@@ -603,8 +603,8 @@ def get_parser():
         help="Verbose print for debugging.\n")
     parser.add_argument(
         "-noclean",
-        default=True,
-        action="store_false",
+        default=False,
+        action="store_true",
         help="Disable post-workflow clean-up of temporary runtime metadata.\n",
     )
     parser.add_argument(
@@ -3550,7 +3550,7 @@ def main():
 
     mgr.shutdown()
 
-    if args.clean is True and work_dir:
+    if args.noclean is False and work_dir:
         from shutil import rmtree
 
         rmtree(work_dir, ignore_errors=True)
