@@ -367,7 +367,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
 
 
 def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
-                    working_path, drop_cols, frame, regen=False):
+                    working_path, drop_cols, frame, regen=True):
     import glob
     import os
     atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
