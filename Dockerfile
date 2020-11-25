@@ -126,7 +126,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         openblas \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
-    && pip install skggm \
+#    && pip install skggm \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
