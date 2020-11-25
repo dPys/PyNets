@@ -659,6 +659,10 @@ if __name__ == "__main__":
                     final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
                 else:
                     final_missingness_summary = pd.Series()
+            else:
+                final_missingness_summary = pd.Series()
+        else:
+            final_missingness_summary = pd.Series()
         with open(subject_dict_file_path, "wb") as f:
             dill.dump(sub_dict_clean, f)
         f.close()
@@ -684,7 +688,8 @@ if __name__ == "__main__":
         return tup
 
     # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    rsns = ["triple", "kmeans"]
+    #rsns = ["triple", "kmeans"]
+    rsns = ["language"]
 
     for modality in modalities:
         print(f"MODALITY: {modality}")
