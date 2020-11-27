@@ -416,8 +416,10 @@ def track_ensemble(
     from nilearn.image import math_img
     from pynets.core.utils import load_runconfig
 
-    cache_dir = f"{cache_dir}/joblib_tracking"
-    os.makedirs(cache_dir, exist_ok=True)
+    tmp_files_dir = f"{cache_dir}/tmp_files"
+    joblib_dir = f"{cache_dir}/joblib_tracking"
+    os.makedirs(tmp_files_dir, exist_ok=True)
+    os.makedirs(joblib_dir, exist_ok=True)
 
     hardcoded_params = load_runconfig()
     nthreads = hardcoded_params["nthreads"][0]
@@ -440,7 +442,7 @@ def track_ensemble(
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
     # Construct seeding mask
-    seeding_mask = f"{cache_dir}/seeding_mask.nii.gz"
+    seeding_mask = f"{tmp_files_dir}/seeding_mask.nii.gz"
     if waymask is not None and os.path.isfile(waymask):
         waymask_img = math_img("img > 0.0075", img=nib.load(waymask))
         waymask_img.to_filename(waymask)
@@ -478,7 +480,7 @@ def track_ensemble(
     try:
         while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
-                          mmap_mode='r+', temp_folder=cache_dir,
+                          mmap_mode='r+', temp_folder=joblib_dir,
                           verbose=2, max_nbytes='50000M',
                           timeout=timeout) as parallel:
                 out_streams = parallel(
@@ -488,7 +490,7 @@ def track_ensemble(
                         pft_front_tracking_dist, particle_count,
                         roi_neighborhood_tol, waymask, min_length,
                         track_type, min_separation_angle, sphere, tiss_class,
-                        tissues4d, cache_dir) for i in
+                        tissues4d, tmp_files_dir) for i in
                     all_combs)
 
                 out_streams = [i for i in out_streams if i is not None and i is
@@ -507,7 +509,6 @@ def track_ensemble(
                         tiss_class = 'wb'
                     roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
                     min_length = float(min_length) * 0.95
-                    continue
                     continue
                 else:
                     ix -= 1
@@ -529,6 +530,7 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
+            os.system(f"rm -f {joblib_dir}/* &")
     except BaseException:
         return None
 
@@ -541,7 +543,8 @@ def track_ensemble(
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
-    shutil.rmtree(cache_dir, ignore_errors=True)
+    gc.collect()
+    os.system(f"rm -f {tmp_files_dir} &")
 
     if stream_counter != 0:
         print('Generating final ArraySequence...')

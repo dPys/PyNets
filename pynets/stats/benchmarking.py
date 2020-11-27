@@ -445,8 +445,7 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                                 df_pref.reset_index(drop=True, inplace=True)
                                 dfs.append(df_pref)
                                 if len(node_files) > 0:
-                                    label_file = [i for i in node_files if
-                                                  'count' not in i][0]
+                                    label_file = node_files[0]
                                     with open(label_file, 'r+') as f:
                                         node_dict = json.load(f)
                                     indices = [i['index'] for i in
@@ -533,7 +532,7 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
         tup_name = str(comb_tuple).replace('\', \'', '_').replace('(',
                                                                   '').replace(
             ')', '').replace('\'', '')
-        df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
+        df_summary.to_csv(f"{icc_tmps_dir}/{alg}_{tup_name}.csv",
                           index=False, header=True)
         del df_long
 
@@ -604,9 +603,9 @@ if __name__ == "__main__":
     target_modality = 'func'
 
     #embedding_types = ['ASE']
-    #embedding_types = ['topology']
+    embedding_types = ['topology']
     #embedding_types = ['OMNI']
-    embedding_types = ['OMNI', 'ASE']
+    #embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
     #rsns = ['triple', 'kmeans']
     rsns = ['language']
