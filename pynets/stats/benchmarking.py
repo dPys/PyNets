@@ -786,8 +786,11 @@ if __name__ == "__main__":
                                     comb_tuple = (
                                     atlas, directget, minlength, model,
                                     res, tol)
-                                if isinstance(sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple], np.ndarray):
-                                    id_dict[ID][comb] = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                                if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
+                                    if isinstance(sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple], np.ndarray):
+                                        id_dict[ID][comb] = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                                    else:
+                                        continue
                                 else:
                                     continue
                         df_wide = pd.DataFrame(id_dict)

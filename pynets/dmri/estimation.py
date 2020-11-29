@@ -532,6 +532,7 @@ def streams2graph(
       https://doi.org/10.1089/brain.2016.0481
     """
     import gc
+    import os
     import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates
@@ -589,7 +590,8 @@ def streams2graph(
         # from fury import actor, window
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
-        #                                         color=(50, 50, 50), opacity=0.05)
+        #                                         color=(50, 50, 50),
+        #                                         opacity=0.05)
         # renderer.add(template_actor)
         # lines_actor = actor.streamtube(streamlines, window.colors.orange,
         #                                linewidth=0.3)
@@ -812,6 +814,12 @@ def streams2graph(
             error_margin
         ),
     )
+
+    tmp_files = [streams, warped_fa, atlas_mni]
+    for j in tmp_files:
+        if j is not None:
+            if os.path.isfile(j):
+                os.system(f"rm -f {j} &")
 
     return (
         atlas_mni,

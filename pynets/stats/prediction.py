@@ -914,7 +914,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=
         return pd.Series(np.nan), grid_param
 
 
-def graph_theory_prep(df, thr_type):
+def graph_theory_prep(df, thr_type, drop_thr=0.50):
     from sklearn.impute import KNNImputer
     from sklearn.preprocessing import MinMaxScaler
     cols = [
@@ -928,7 +928,7 @@ def graph_theory_prep(df, thr_type):
 
     id_col = df["id"]
 
-    df = df.dropna(thresh=len(df) * .80, axis=1)
+    df = df.dropna(thresh=len(df) * drop_thr, axis=1)
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     scaler = MinMaxScaler(feature_range=(0, 1))
     imp = KNNImputer(n_neighbors=7)

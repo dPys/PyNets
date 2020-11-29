@@ -404,7 +404,6 @@ def track_ensemble(
     import os
     import gc
     import time
-    import shutil
     from joblib import Parallel, delayed
     import itertools
     from pynets.dmri.track import run_tracking
@@ -532,19 +531,21 @@ def track_ensemble(
                 print(Style.RESET_ALL)
             os.system(f"rm -f {joblib_dir}/* &")
     except BaseException:
+        os.system(f"rm -f {tmp_files_dir} &")
         return None
 
     if ix >= 0.75*len(all_combs) and \
         float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
+        os.system(f"rm -f {tmp_files_dir} &")
         return None
     else:
+        os.system(f"rm -f {tmp_files_dir} &")
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
     gc.collect()
-    os.system(f"rm -f {tmp_files_dir} &")
 
     if stream_counter != 0:
         print('Generating final ArraySequence...')
@@ -819,11 +820,15 @@ def run_tracking(step_curv_combinations, recon_path,
         except BaseException:
             print('No streamlines remaining in waymask\'s vacinity.')
             return None
-        os.system(f"rm -f {waymask_tmp_path} &")
 
     hf.close()
-    os.system(f"rm -f {tissues4d_tmp_path} &")
     del parcels, atlas_data
+
+    tmp_files = [tissues4d_tmp_path, waymask_tmp_path, recon_path_tmp_path]
+    for j in tmp_files:
+        if j is not None:
+            if os.path.isfile(j):
+                os.system(f"rm -f {j} &")
 
     if len(roi_proximal_streamlines) > 0:
         return ArraySequence([s.astype("float32") for s in

@@ -3143,7 +3143,10 @@ class Tracking(SimpleInterface):
             else:
                 self._results["streams"] = None
                 self._results["dm_path"] = None
-            tmp_files = [gtab_file_tmp_path, labels_im_file_tmp_path_wm_gm_int]
+            tmp_files = [gtab_file_tmp_path,
+                         labels_im_file_tmp_path_wm_gm_int,
+                         wm_in_dwi_tmp_path, gm_in_dwi_tmp_path,
+                         vent_csf_in_dwi_tmp_path, t1w2dwi_tmp_path]
 
             for j in tmp_files:
                 if j is not None:
