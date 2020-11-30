@@ -113,7 +113,6 @@ def load_pd_dfs(file_):
                 except:
                     print(f"Cannot load {file_}")
                     df = pd.DataFrame()
-                    return df
             if "Unnamed: 0" in df.columns:
                 df.drop(df.filter(regex="Unnamed: 0"), axis=1, inplace=True)
             id = op.basename(file_).split("_topology")[0].split('auc_')[1]
@@ -175,14 +174,13 @@ def load_pd_dfs(file_):
                 os.remove(f"{file_.split('.csv')[0]}{'_clean.csv'}")
             df.to_csv(f"{file_.split('.csv')[0]}{'_clean.csv'}", index=False)
             del id
-
+            gc.collect()
         else:
             print(f"{Fore.RED}Cleaned {file_} missing...{Style.RESET_ALL}")
             df = pd.DataFrame()
     else:
         print(f"{Fore.RED}{file_} missing...{Style.RESET_ALL}")
         df = pd.DataFrame()
-    gc.collect()
 
     return df
 
@@ -531,6 +529,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
     from colorama import Fore, Style
     import pandas as pd
     import re
+    import numpy as np
     import os
 
     pd.set_option("display.float_format", lambda x: f"{x:.8f}")
@@ -545,8 +544,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 auc_file, chunksize=100000, compression="gzip",
                 encoding="utf-8", engine='python').read()
         except:
-            df_pref = pd.DataFrame()
-            return df_pref
+            df = pd.DataFrame()
 
     #print(f"{'Atlas: '}{atlas_name}")
     prefix = f"{atlas_name}{'_'}{prefix}{'_'}"
@@ -813,6 +811,7 @@ def collect_all(working_path, modality, drop_cols):
 def build_collect_workflow(args, retval):
     import os
     import glob
+    import psutil
     import warnings
     warnings.filterwarnings("ignore")
     import ast
@@ -862,20 +861,6 @@ def build_collect_workflow(args, retval):
 
     wf = collect_all(working_path, modality, drop_cols)
 
-    hardcoded_params = load_runconfig()
-    runtime_dict = {}
-    execution_dict = {}
-    for i in range(len(hardcoded_params["resource_dict"])):
-        runtime_dict[
-            list(hardcoded_params["resource_dict"][i].keys())[0]
-        ] = ast.literal_eval(
-            list(hardcoded_params["resource_dict"][i].values())[0][0]
-        )
-    for i in range(len(hardcoded_params["execution_dict"])):
-        execution_dict[
-            list(hardcoded_params["execution_dict"][i].keys())[0]
-        ] = list(hardcoded_params["execution_dict"][i].values())[0][0]
-
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     os.makedirs(f"{work_dir}/pynets_out_collection{run_uuid}", exist_ok=True)
     wf.base_dir = f"{work_dir}/pynets_out_collection{run_uuid}"
@@ -912,9 +897,30 @@ def build_collect_workflow(args, retval):
         handler = logging.FileHandler(callback_log_path)
         logger.addHandler(handler)
 
+    execution_dict = {}
     execution_dict["crashdump_dir"] = str(wf.base_dir)
     execution_dict["plugin"] = str(plugin_type)
+    execution_dict["poll_sleep_duration"] = 0.5
+    execution_dict["crashfile_format"] = "txt"
+    execution_dict["local_hash_check"] = False
+    execution_dict["stop_on_first_crash"] = False
+    execution_dict['hash_method'] = 'timestamp'
+    execution_dict["keep_inputs"] = True
+    execution_dict["use_relative_paths"] = False
+    execution_dict["remove_unnecessary_outputs"] = False
+    execution_dict["remove_node_directories"] = False
+    execution_dict["raise_insufficient"] = False
+    nthreads = psutil.cpu_count() * 2
+    procmem = [int(nthreads),
+               int(list(psutil.virtual_memory())[4] / 1000000000) - 2]
+    plugin_args = {
+        "n_procs": int(procmem[0]),
+        "memory_gb": int(procmem[1]),
+        "scheduler": "topological_sort",
+    }
+    execution_dict["plugin_args"] = plugin_args
     cfg = dict(execution=execution_dict)
+
     for key in cfg.keys():
         for setting, value in cfg[key].items():
             wf.config[key][setting] = value
@@ -976,7 +982,8 @@ def main():
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
     #args_dict_all['pm'] = '48,67'
-    args_dict_all['pm'] = '224,2000'
+    args_dict_all['pm'] = '128,500'
+    #args_dict_all['pm'] = '224,2000'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'

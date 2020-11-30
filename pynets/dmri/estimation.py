@@ -815,7 +815,7 @@ def streams2graph(
         ),
     )
 
-    tmp_files = [streams, warped_fa, atlas_mni]
+    tmp_files = [streams, warped_fa]
     for j in tmp_files:
         if j is not None:
             if os.path.isfile(j):
