@@ -48,6 +48,7 @@ RUN apt-get update -qq \
         libglu1-mesa-dev \
         libglib2.0-0 \
         libglw1-mesa \
+        libxkbcommon-x11-0 \
 	liblapack-dev \
 	libopenblas-base \
 	sqlite3 \
@@ -190,6 +191,7 @@ ENV PATH="/opt/conda/bin":$PATH
 ENV OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
+ENV QT_QPA_PLATFORM=offscreen
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets"]

@@ -562,7 +562,6 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 print('Empty dataframe!')
                 return df_summary
 
-
             shapes = []
             for ix, i in enumerate(vect_all):
                 shapes.append(i.shape[0] * [list(ids)[ix]])
@@ -594,23 +593,23 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
-    icc = True
+    icc = False
     disc = True
-    int_consist = True
-    target_modality = 'func'
+    int_consist = False
+    target_modality = 'dwi'
 
     #embedding_types = ['ASE']
-    embedding_types = ['topology']
+    #embedding_types = ['topology']
     #embedding_types = ['OMNI']
-    #embedding_types = ['OMNI', 'ASE']
+    embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
-    #rsns = ['triple', 'kmeans']
-    rsns = ['language']
-    template = 'CN200'
-    #template = 'MNI152_T1'
+    rsns = ['kmeans']
+    #rsns = ['language']
+    #template = 'CN200'
+    template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
             "degree_assortativity_coefficient",
@@ -685,10 +684,6 @@ if __name__ == "__main__":
     def tuple_insert(tup, pos, ele):
         tup = tup[:pos] + (ele,) + tup[pos:]
         return tup
-
-    # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    #rsns = ["triple", "kmeans"]
-    rsns = ["language"]
 
     for modality in modalities:
         print(f"MODALITY: {modality}")

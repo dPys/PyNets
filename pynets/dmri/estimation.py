@@ -553,7 +553,7 @@ def streams2graph(
     overlap_thr = hardcoded_params[
         "StructuralNetworkWeighting"]["overlap_thr"][0]
     roi_neighborhood_tol = \
-    hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     start = time.time()
 
@@ -709,7 +709,7 @@ def streams2graph(
         # Adapted from the nnormalized fiber-density estimation routines of
         # Sebastian Tourbier.
         if fiber_density is True:
-            print("Weighting edges by fiber density...")
+            print("Redefining edges on the basis of fiber density...")
             # Summarize total fibers and total label volumes
             total_fibers = 0
             total_volume = 0
@@ -736,7 +736,7 @@ def streams2graph(
                 ix += 1
 
         if fa_wei is True:
-            print("Weighting edges by FA...")
+            print("Re-weighting edges by FA...")
             # Add FA attributes for each edge
             ix = 0
             for u, v, d in g.edges(data=True):
@@ -814,12 +814,6 @@ def streams2graph(
             error_margin
         ),
     )
-
-    tmp_files = [streams, warped_fa]
-    for j in tmp_files:
-        if j is not None:
-            if os.path.isfile(j):
-                os.system(f"rm -f {j} &")
 
     return (
         atlas_mni,
