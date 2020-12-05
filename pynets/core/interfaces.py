@@ -1154,6 +1154,7 @@ class RegisterDWI(SimpleInterface):
         import gc
         import time
         import glob
+        import os
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -1346,6 +1347,22 @@ class RegisterDWI(SimpleInterface):
         self._results["t1w2dwi_bbr_xfm"] = reg.t1w2dwi_bbr_xfm
         self._results["t1w2dwi_xfm"] = reg.t1w2dwi_xfm
         self._results["wm_gm_int_in_dwi"] = reg.wm_gm_int_in_dwi
+
+        reg_tmp = [
+            fa_tmp_path,
+            mask_tmp_path,
+            reg.warp_t1w2mni,
+            reg.t1w_head,
+            reg.wm_edge,
+            reg.vent_mask_dwi,
+            reg.vent_mask_t1w,
+            reg.corpuscallosum_mask_t1w,
+            reg.corpuscallosum_dwi
+        ]
+        for j in reg_tmp:
+            if j is not None:
+                if os.path.isfile(j):
+                    os.system(f"rm -f {j} &")
 
         gc.collect()
 
@@ -1745,6 +1762,8 @@ class RegisterAtlasDWI(SimpleInterface):
             t1w2dwi_bbr_xfm_tmp_path,
             t1w2dwi_xfm_tmp_path,
             wm_gm_int_in_dwi_tmp_path,
+            aligned_atlas_skull,
+            t1w_brain_tmp_path
         ]
         for j in reg_tmp:
             if j is not None:
@@ -1922,6 +1941,9 @@ class RegisterROIDWI(SimpleInterface):
             mni2t1w_warp_tmp_path,
             t1wtissue2dwi_xfm_tmp_path,
             mni2t1_xfm_tmp_path,
+            template_tmp_path,
+            roi_in_t1w,
+            roi_file_tmp_path
         ]
         for j in reg_tmp:
             if j is not None:
@@ -2238,6 +2260,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             uatlas_tmp_path,
             template_tmp_path,
             t1w2mni_xfm_tmp_path,
+            t1w2mni_warp_tmp_path,
+            template_mask_tmp_path
         ]
 
         for j in reg_tmp:
@@ -2612,6 +2636,7 @@ class RegisterROIEPI(SimpleInterface):
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
             roi_file_tmp_path,
+            template_tmp_path
         ]
         for j in reg_tmp:
             if j is not None:
@@ -3036,34 +3061,36 @@ class Tracking(SimpleInterface):
             print(Style.RESET_ALL)
 
             # Commence Ensemble Tractography
-            streamlines = track_ensemble(
-                self.inputs.target_samples,
-                labels_im_file_tmp_path_wm_gm_int,
-                labels_im_file_tmp_path,
-                recon_path,
-                get_sphere(sphere),
-                self.inputs.directget,
-                self.inputs.curv_thr_list,
-                self.inputs.step_list,
-                self.inputs.track_type,
-                self.inputs.maxcrossing,
-                int(roi_neighborhood_tol),
-                self.inputs.min_length,
-                waymask_tmp_path,
-                B0_mask_tmp_path,
-                t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
-                vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-                self.inputs.tiss_class,
-                runtime.cwd
-            )
-
-            gc.collect()
+            try:
+                streamlines = track_ensemble(
+                    self.inputs.target_samples,
+                    labels_im_file_tmp_path_wm_gm_int,
+                    labels_im_file_tmp_path,
+                    recon_path,
+                    get_sphere(sphere),
+                    self.inputs.directget,
+                    self.inputs.curv_thr_list,
+                    self.inputs.step_list,
+                    self.inputs.track_type,
+                    self.inputs.maxcrossing,
+                    int(roi_neighborhood_tol),
+                    self.inputs.min_length,
+                    waymask_tmp_path,
+                    B0_mask_tmp_path,
+                    t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
+                    vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
+                    self.inputs.tiss_class,
+                    runtime.cwd
+                )
+                gc.collect()
+            except BaseException:
+                print(UserWarning("Tractography failed..."))
+                streamlines = None
 
             if streamlines is not None:
                 # import multiprocessing
                 # from pynets.core.utils import kill_process_family
                 # return kill_process_family(int(multiprocessing.current_process().pid))
-
 
                 # Linear Fascicle Evaluation (LiFE)
                 if use_life is True:
@@ -3143,7 +3170,10 @@ class Tracking(SimpleInterface):
             else:
                 self._results["streams"] = None
                 self._results["dm_path"] = None
-            tmp_files = [gtab_file_tmp_path, labels_im_file_tmp_path_wm_gm_int]
+            tmp_files = [gtab_file_tmp_path,
+                         labels_im_file_tmp_path_wm_gm_int,
+                         wm_in_dwi_tmp_path, gm_in_dwi_tmp_path,
+                         vent_csf_in_dwi_tmp_path, t1w2dwi_tmp_path]
 
             for j in tmp_files:
                 if j is not None:

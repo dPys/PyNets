@@ -532,6 +532,7 @@ def streams2graph(
       https://doi.org/10.1089/brain.2016.0481
     """
     import gc
+    import os
     import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates
@@ -552,7 +553,7 @@ def streams2graph(
     overlap_thr = hardcoded_params[
         "StructuralNetworkWeighting"]["overlap_thr"][0]
     roi_neighborhood_tol = \
-    hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     start = time.time()
 
@@ -589,7 +590,8 @@ def streams2graph(
         # from fury import actor, window
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
-        #                                         color=(50, 50, 50), opacity=0.05)
+        #                                         color=(50, 50, 50),
+        #                                         opacity=0.05)
         # renderer.add(template_actor)
         # lines_actor = actor.streamtube(streamlines, window.colors.orange,
         #                                linewidth=0.3)
@@ -707,7 +709,7 @@ def streams2graph(
         # Adapted from the nnormalized fiber-density estimation routines of
         # Sebastian Tourbier.
         if fiber_density is True:
-            print("Weighting edges by fiber density...")
+            print("Redefining edges on the basis of fiber density...")
             # Summarize total fibers and total label volumes
             total_fibers = 0
             total_volume = 0
@@ -734,7 +736,7 @@ def streams2graph(
                 ix += 1
 
         if fa_wei is True:
-            print("Weighting edges by FA...")
+            print("Re-weighting edges by FA...")
             # Add FA attributes for each edge
             ix = 0
             for u, v, d in g.edges(data=True):

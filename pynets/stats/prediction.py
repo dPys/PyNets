@@ -310,11 +310,12 @@ class RazorCV(object):
             if self.scoring.startswith("neg_"):
                 self.greater_is_better = True
             else:
-                raise KeyError(f"Scoring metric {self.scoring} not " f"recognized.")
+                raise KeyError(f"Scoring metric {self.scoring} not "
+                               f"recognized.")
         else:
             self.greater_is_better = [
-                value for key, value in self.scoring_dict.items() if self.scoring in key
-            ][0]
+                value for key, value in self.scoring_dict.items() if
+                self.scoring in key][0]
         return self.greater_is_better
 
     def _best_low_complexity(self):
@@ -322,12 +323,13 @@ class RazorCV(object):
         Balance model complexity with cross-validated score.
         """
         # Check parameter whose complexity we seek to restrict
-        if not any(self.param in x for x in self.cv_results["params"][0].keys()):
+        if not any(self.param in x for x in
+                   self.cv_results["params"][0].keys()):
             raise KeyError("Parameter not found in cv grid.")
         else:
             self.param = [
-                i for i in self.cv_results["params"][0].keys() if i.endswith(self.param)
-            ][0]
+                i for i in self.cv_results["params"][0].keys() if
+                i.endswith(self.param)][0]
 
         if self.method == "onese":
             threshold = self.call_standard_error()
@@ -434,7 +436,8 @@ class RazorCV(object):
         else:
             best_score_idx = np.argmin(best_mean_score)
 
-        outstandard_error = (np.abs(best_mean_score[best_score_idx]) - tol) / tol
+        outstandard_error = (np.abs(best_mean_score[best_score_idx]) -
+                             tol) / tol
         return outstandard_error
 
     def standard_error(param, greater_is_complex, scoring):
@@ -452,10 +455,12 @@ class RazorCV(object):
         """
         from functools import partial
 
-        def razor_pass(cv_results, param, greater_is_complex, scoring, method="onese"):
+        def razor_pass(cv_results, param, greater_is_complex, scoring,
+                       method="onese"):
             # from sklearn.model_selection._search import RazorCV
 
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method)
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
+                          method)
             best_idx = rcv._best_low_complexity()
             return best_idx
 
@@ -485,11 +490,13 @@ class RazorCV(object):
         from functools import partial
 
         def razor_pass(
-            cv_results, param, greater_is_complex, scoring, alpha, method="ranksum"
+            cv_results, param, greater_is_complex, scoring, alpha,
+            method="ranksum"
         ):
             # from sklearn.model_selection._search import RazorCV
 
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method, alpha)
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
+                          method, alpha)
             best_idx = rcv._best_low_complexity()
             return best_idx
 
@@ -521,11 +528,13 @@ class RazorCV(object):
         from functools import partial
 
         def razor_pass(
-            cv_results, param, greater_is_complex, scoring, tol, method="percentile"
+            cv_results, param, greater_is_complex, scoring, tol,
+            method="percentile"
         ):
             # from sklearn.model_selection._search import RazorCV
 
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method, tol)
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
+                          method, tol)
             best_idx = rcv._best_low_complexity()
             return best_idx
 
@@ -557,7 +566,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if predict_type == 'regressor':
         feature_selector = f_regression
-        alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5, 0.75, 1, 5]
+        alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5,
+                  0.75, 1, 5]
     elif predict_type == 'classifier':
         feature_selector = f_classif
         Cs = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
@@ -830,7 +840,8 @@ def flatten_latent_positions(subject_dict, ID, ses, modality, grid_param,
                 else:
                     raise ValueError(
                         f"Number of dimensions {rsn_dict['data'].shape[1]} "
-                        f"not supported. See flatten_latent_positions function..."
+                        f"not supported. See flatten_latent_positions "
+                        f"function..."
                     )
                 # print(df_lps)
             else:
@@ -853,7 +864,8 @@ def flatten_latent_positions(subject_dict, ID, ses, modality, grid_param,
     return df_lps
 
 
-def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=None):
+def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
+                         mets=None):
     df_tmps = []
 
     for ID in df["participant_id"]:
@@ -866,12 +878,14 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=
             continue
 
         if modality not in subject_dict[ID][str(ses)].keys():
-            print(f"Modality: {modality} not found for ID {ID}, ses-{ses}...")
+            print(f"Modality: {modality} not found for ID {ID}, "
+                  f"ses-{ses}...")
             continue
 
         if alg not in subject_dict[ID][str(ses)][modality].keys():
             print(
-                f"Modality: {modality} not found for ID {ID}, ses-{ses}, " f"{alg}..."
+                f"Modality: {modality} not found for ID {ID}, ses-{ses}, "
+                f"{alg}..."
             )
             continue
 
@@ -903,7 +917,8 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=
             continue
 
     if len(df_tmps) > 0:
-        dfs = [dff.set_index("participant_id") for dff in df_tmps if not dff.empty]
+        dfs = [dff.set_index("participant_id"
+                             ) for dff in df_tmps if not dff.empty]
         df_all = pd.concat(dfs, axis=0)
         df_all = df_all.replace({0: np.nan})
         # df_all = df_all.apply(lambda x: np.where(x < 0.00001, np.nan, x))
@@ -914,7 +929,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg, mets=
         return pd.Series(np.nan), grid_param
 
 
-def graph_theory_prep(df, thr_type):
+def graph_theory_prep(df, thr_type, drop_thr=0.50):
     from sklearn.impute import KNNImputer
     from sklearn.preprocessing import MinMaxScaler
     cols = [
@@ -928,7 +943,7 @@ def graph_theory_prep(df, thr_type):
 
     id_col = df["id"]
 
-    df = df.dropna(thresh=len(df) * .80, axis=1)
+    df = df.dropna(thresh=len(df) * drop_thr, axis=1)
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     scaler = MinMaxScaler(feature_range=(0, 1))
     imp = KNNImputer(n_neighbors=7)
@@ -976,7 +991,8 @@ def bootstrapped_nested_cv(
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
     if X.empty:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (missingness): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (missingness): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -998,7 +1014,8 @@ def bootstrapped_nested_cv(
 
     if X.empty:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (imputation): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (imputation): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1017,7 +1034,8 @@ def bootstrapped_nested_cv(
     X.drop(cols_to_drop, axis=1, inplace=True)
     if X.empty:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (duplication): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (duplication): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1032,7 +1050,8 @@ def bootstrapped_nested_cv(
     X = X[X.columns[sel.get_support(indices=True)]]
     if X.empty:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (low-variance): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1047,7 +1066,8 @@ def bootstrapped_nested_cv(
     y = y[outlier_mask]
     if X.empty and len(y) < 50:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (outliers): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1062,7 +1082,8 @@ def bootstrapped_nested_cv(
     y = y[y_missing_mask]
     if X.empty or len(y) < 50:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (missing y): {X}, {y}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
+              f"{X}, {y}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1093,7 +1114,8 @@ def bootstrapped_nested_cv(
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1108,7 +1130,8 @@ def bootstrapped_nested_cv(
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): {X}{Style.RESET_ALL}\n\n")
+        print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
+              f"{X}{Style.RESET_ALL}\n\n")
         return (
             {0: 'None'},
             {0: np.nan},
@@ -1184,7 +1207,8 @@ def bootstrapped_nested_cv(
                 pca = fitted.named_steps["feature_select"]
                 pca.fit_transform(X)
                 comps_all = pd.DataFrame(pca.components_, columns=X.columns)
-                coefs = np.abs(fitted.named_steps[best_estimator.split(f"{predict_type}-")[1].split('_')[0]].coef_)
+                coefs = np.abs(fitted.named_steps[best_estimator.split(
+                    f"{predict_type}-")[1].split('_')[0]].coef_)
                 feat_imp_dict = OrderedDict(
                     sorted(
                         dict(zip(comps_all, coefs)).items(),
@@ -1222,7 +1246,8 @@ def bootstrapped_nested_cv(
                         if column[1]
                     ]
 
-                coefs = np.abs(fitted.named_steps[best_estimator.split(f"{predict_type}-")[1].split('_')[0]].coef_)
+                coefs = np.abs(fitted.named_steps[best_estimator.split(
+                    f"{predict_type}-")[1].split('_')[0]].coef_)
 
                 feat_imp_dict = OrderedDict(
                     sorted(
@@ -1285,8 +1310,8 @@ def bootstrapped_nested_cv(
 
 
 def make_subject_dict(
-    modalities, base_dir, thr_type, mets, embedding_types, template, sessions, rsns
-):
+    modalities, base_dir, thr_type, mets, embedding_types, template, sessions,
+    rsns):
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
     import tempfile
@@ -1555,7 +1580,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                 sorted_embeddings = sorted(embeddings_raw,
                                            key=os.path.getmtime)
                 print(
-                    f"Multiple functional embeddings found for {id} and"
+                    f"Multiple functional embeddings found for {ID} and"
                     f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
@@ -1564,7 +1589,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                 sorted_embeddings = sorted(embeddings,
                                            key=os.path.getmtime)
                 print(
-                    f"Multiple functional embeddings found for {id} and"
+                    f"Multiple functional embeddings found for {ID} and"
                     f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
@@ -1627,7 +1652,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                 col = col_met[0]
             else:
                 print(
-                    f"Structural topology not found for {id}, "
+                    f"Structural topology not found for {ID}, "
                     f"{met}, and recipe {comb_tuple}..."
                 )
                 data[i] = np.nan
@@ -1650,7 +1675,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
             ].values
             if len(out) == 0:
                 print(
-                    f"Structural topology not found for {id}, "
+                    f"Structural topology not found for {ID}, "
                     f"{met}, and recipe {comb_tuple}..."
                 )
                 data[i] = np.nan
@@ -2027,14 +2052,15 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_):
         try:
             frame = pd.concat(dfs, axis=0, join="outer", sort=True,
                               ignore_index=False)
-            out_path = f"{out_dir}/final_df_{modality}_{embedding_type}_{target_var}.csv"
+            out_path = f"{out_dir}/final_df_{modality}_{embedding_type}" \
+                       f"_{target_var}.csv"
             print(f"Saving to {out_path}...")
             if os.path.isfile(out_path):
                 os.remove(out_path)
             frame.to_csv(out_path, index=False)
         except ValueError:
-            print(f"Dataframe concatenation failed for {modality}, {embedding_type}, "
-                  f"{target_var}...")
+            print(f"Dataframe concatenation failed for {modality}, "
+                  f"{embedding_type}, {target_var}...")
 
         return out_path, embedding_type, target_var
     else:
@@ -2108,23 +2134,37 @@ class MakeXY(SimpleInterface):
         if self.inputs.json_dict is not None:
             if os.path.isfile(self.inputs.json_dict) and self.inputs.json_dict.endswith('.json'):
                 if self.inputs.target_var == "rumination_persist_phenotype":
-                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "dep_1", "rum_1", "rum_2", "dep_2"]
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype", "dep_1",
+                                 "rum_1", "rum_2", "dep_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
-                    drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "dep_1", "rum_1", "dep_2", "rum_2"]
+                    drop_cols = [self.inputs.target_var,
+                                 "rumination_persist_phenotype",
+                                 "dep_1", "rum_1", "dep_2", "rum_2"]
                 elif self.inputs.target_var == "rum_1":
-                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype",
+                                 "rumination_persist_phenotype",
                                  "rum_2", "dep_2", "dep_1"]
                 elif self.inputs.target_var == "dep_1":
-                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype",
+                                 "rumination_persist_phenotype",
                                  "rum_2", "dep_2", "rum_1"]
                 elif self.inputs.target_var == "dep_2":
-                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype",
+                                 "rumination_persist_phenotype",
                                  "rum_2", "rum_1"]
                 elif self.inputs.target_var == "rum_2":
-                    drop_cols = [self.inputs.target_var, "depression_persist_phenotype", "rumination_persist_phenotype",
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype",
+                                 "rumination_persist_phenotype",
                                  "dep_2", "dep_1"]
                 else:
-                    drop_cols = [self.inputs.target_var, "rumination_persist_phenotype", "depression_persist_phenotype",
+                    drop_cols = [self.inputs.target_var,
+                                 "rumination_persist_phenotype",
+                                 "depression_persist_phenotype",
                                  "dep_1", "rum_1"]
 
                 [X, Y] = make_x_y(
@@ -2164,11 +2204,16 @@ class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
 class _BSNestedCVOutputSpec(TraitedSpec):
     """Output interface wrapper for BSNestedCV"""
 
-    grand_mean_best_estimator = traits.Dict({0: 'None'}, mandatory=True, usedefault=True)
-    grand_mean_best_score = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
-    grand_mean_y_predicted = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
-    grand_mean_best_error = traits.Dict({0: np.nan}, mandatory=True, usedefault=True)
-    mega_feat_imp_dict = traits.Dict({0: 'None'}, mandatory=True, usedefault=True)
+    grand_mean_best_estimator = traits.Dict({0: 'None'}, mandatory=True,
+                                            usedefault=True)
+    grand_mean_best_score = traits.Dict({0: np.nan}, mandatory=True,
+                                        usedefault=True)
+    grand_mean_y_predicted = traits.Dict({0: np.nan}, mandatory=True,
+                                         usedefault=True)
+    grand_mean_best_error = traits.Dict({0: np.nan}, mandatory=True,
+                                        usedefault=True)
+    mega_feat_imp_dict = traits.Dict({0: 'None'}, mandatory=True,
+                                     usedefault=True)
     target_var = traits.Str(mandatory=True)
     modality = traits.Str(mandatory=True)
     embedding_type = traits.Str(mandatory=True)
@@ -2223,30 +2268,40 @@ class BSNestedCV(SimpleInterface):
                                                std_dev=3)
                 if len(mega_feat_imp_dict.keys()) > 1:
                     print(
-                        f"\n\n{Fore.BLUE}Target Outcome: {Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
+                        f"\n\n{Fore.BLUE}Target Outcome: "
+                        f"{Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
                     )
                     print(
-                        f"{Fore.BLUE}Modality: {Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
+                        f"{Fore.BLUE}Modality: "
+                        f"{Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
                     )
                     print(
-                        f"{Fore.BLUE}Embedding type: {Fore.RED}{self.inputs.embedding_type}{Style.RESET_ALL}"
+                        f"{Fore.BLUE}Embedding type: "
+                        f"{Fore.RED}{self.inputs.embedding_type}{Style.RESET_ALL}"
                     )
                     print(
-                        f"{Fore.BLUE}Grid Params: {Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
+                        f"{Fore.BLUE}Grid Params: "
+                        f"{Fore.RED}{self.inputs.grid_param}{Style.RESET_ALL}"
                     )
                     print(
-                        f"{Fore.BLUE}Best Estimator: {Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
+                        f"{Fore.BLUE}Best Estimator: "
+                        f"{Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
                     )
                     print(
-                        f"\n{Fore.BLUE}Variance: {Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
+                        f"\n{Fore.BLUE}Variance: "
+                        f"{Fore.RED}{grand_mean_best_score}{Style.RESET_ALL}"
                     )
                     print(
-                        f"{Fore.BLUE}Error: {Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
+                        f"{Fore.BLUE}Error: "
+                        f"{Fore.RED}{grand_mean_best_error}{Style.RESET_ALL}\n"
                     )
                     #print(f"y_actual: {self.inputs.y}")
                     #print(f"y_predicted: {grand_mean_y_predicted}")
                     print(
-                        f"{Fore.BLUE}Feature Importance: {Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} with {Fore.RED}{len(mega_feat_imp_dict.keys())} features...{Style.RESET_ALL}\n\n"
+                        f"{Fore.BLUE}Feature Importance: "
+                        f"{Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} "
+                        f"with {Fore.RED}{len(mega_feat_imp_dict.keys())} "
+                        f"features...{Style.RESET_ALL}\n\n"
                     )
                     self._results[
                         "grand_mean_best_estimator"] = grand_mean_best_estimator
@@ -2258,12 +2313,21 @@ class BSNestedCV(SimpleInterface):
                         "grand_mean_best_error"] = grand_mean_best_error
                     self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
                 else:
-                    print(f"{Fore.RED}Empty feature-space for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
+                    print(f"{Fore.RED}Empty feature-space for "
+                          f"{self.inputs.grid_param}, "
+                          f"{self.inputs.target_var}, "
+                          f"{self.inputs.embedding_type}, "
+                          f"{self.inputs.modality}{Style.RESET_ALL}")
             else:
-                print(f"{Fore.RED}{self.inputs.X} is not pd.DataFrame for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
+                print(f"{Fore.RED}{self.inputs.X} is not pd.DataFrame for"
+                      f" {self.inputs.grid_param}, {self.inputs.target_var},"
+                      f" {self.inputs.embedding_type}, "
+                      f"{self.inputs.modality}{Style.RESET_ALL}")
         else:
             print(
-                f"{Fore.RED}Empty feature-space for {self.inputs.grid_param}, {self.inputs.target_var}, {self.inputs.embedding_type}, {self.inputs.modality}{Style.RESET_ALL}")
+                f"{Fore.RED}Empty feature-space for {self.inputs.grid_param},"
+                f" {self.inputs.target_var}, {self.inputs.embedding_type},"
+                f" {self.inputs.modality}{Style.RESET_ALL}")
 
         gc.collect()
 
@@ -2339,8 +2403,11 @@ class MakeDF(SimpleInterface):
         df_summary.at[0, "embedding_type"] = self.inputs.embedding_type
         df_summary.at[0, "grid"] = tuple(literal_eval(self.inputs.grid_param))
 
-        if bool(self.inputs.grand_mean_best_score) is True and len(self.inputs.mega_feat_imp_dict.keys()) > 1:
-            y_pred_boots = [i for i in list(self.inputs.grand_mean_y_predicted.values()) if not np.isnan(i).all()]
+        if bool(self.inputs.grand_mean_best_score) is True and \
+            len(self.inputs.mega_feat_imp_dict.keys()) > 1:
+            y_pred_boots = [i for i in
+                            list(self.inputs.grand_mean_y_predicted.values())
+                            if not np.isnan(i).all()]
             if len(y_pred_boots) > 0:
                 max_row_len = max([len(ll) for ll in y_pred_boots])
                 y_pred_vals = np.nanmean(

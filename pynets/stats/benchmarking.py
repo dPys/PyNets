@@ -445,8 +445,7 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                                 df_pref.reset_index(drop=True, inplace=True)
                                 dfs.append(df_pref)
                                 if len(node_files) > 0:
-                                    label_file = [i for i in node_files if
-                                                  'count' not in i][0]
+                                    label_file = node_files[0]
                                     with open(label_file, 'r+') as f:
                                         node_dict = json.load(f)
                                     indices = [i['index'] for i in
@@ -533,7 +532,7 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
         tup_name = str(comb_tuple).replace('\', \'', '_').replace('(',
                                                                   '').replace(
             ')', '').replace('\'', '')
-        df_summary.to_csv(f"{icc_tmps_dir}/{tup_name}.csv",
+        df_summary.to_csv(f"{icc_tmps_dir}/{alg}_{tup_name}.csv",
                           index=False, header=True)
         del df_long
 
@@ -562,7 +561,6 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
             else:
                 print('Empty dataframe!')
                 return df_summary
-
 
             shapes = []
             for ix, i in enumerate(vect_all):
@@ -595,23 +593,23 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
-    icc = True
+    icc = False
     disc = True
-    int_consist = True
-    target_modality = 'func'
+    int_consist = False
+    target_modality = 'dwi'
 
     #embedding_types = ['ASE']
     #embedding_types = ['topology']
     #embedding_types = ['OMNI']
     embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
-    #rsns = ['triple', 'kmeans']
-    rsns = ['language']
-    template = 'CN200'
-    #template = 'MNI152_T1'
+    rsns = ['kmeans']
+    #rsns = ['language']
+    #template = 'CN200'
+    template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
             "degree_assortativity_coefficient",
@@ -686,10 +684,6 @@ if __name__ == "__main__":
     def tuple_insert(tup, pos, ele):
         tup = tup[:pos] + (ele,) + tup[pos:]
         return tup
-
-    # rsns = ['SalVentAttnA', 'DefaultA', 'ContB']
-    #rsns = ["triple", "kmeans"]
-    rsns = ["language"]
 
     for modality in modalities:
         print(f"MODALITY: {modality}")
@@ -787,8 +781,11 @@ if __name__ == "__main__":
                                     comb_tuple = (
                                     atlas, directget, minlength, model,
                                     res, tol)
-                                if isinstance(sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple], np.ndarray):
-                                    id_dict[ID][comb] = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                                if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
+                                    if isinstance(sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple], np.ndarray):
+                                        id_dict[ID][comb] = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                                    else:
+                                        continue
                                 else:
                                     continue
                         df_wide = pd.DataFrame(id_dict)

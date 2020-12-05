@@ -1203,7 +1203,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     )
     out_path = f"{dir_path}" \
                f"/{op.basename(uatlas).split(op.splitext(uatlas)[1])[0]}_" \
-               f"{network}{'_parcels.nii.gz'}"
+               f"{network}_parcels.nii.gz"
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
     del net_parcels_concatted, img_list
     gc.collect()

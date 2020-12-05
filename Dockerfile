@@ -48,6 +48,7 @@ RUN apt-get update -qq \
         libglu1-mesa-dev \
         libglib2.0-0 \
         libglw1-mesa \
+        libxkbcommon-x11-0 \
 	liblapack-dev \
 	libopenblas-base \
 	sqlite3 \
@@ -84,7 +85,10 @@ RUN apt-get update -qq \
     && cp fsl/bin/* $FSLDIR/bin/ \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
-    && chmod 777 -R /usr/lib/fsl/5.0
+    && chmod 777 -R /usr/lib/fsl/5.0 \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab
+#    && wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /tmp \
+#    && rm -rf examples.tar.gz
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -127,6 +131,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
+    && pip install --upgrade --force-reinstall numpy \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
@@ -188,6 +193,7 @@ ENV PATH="/opt/conda/bin":$PATH
 ENV OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
+ENV QT_QPA_PLATFORM=offscreen
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets"]
