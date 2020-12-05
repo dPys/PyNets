@@ -795,7 +795,7 @@ def build_workflow(args, retval):
         import psutil
         nthreads = psutil.cpu_count()
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 2]
+                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1

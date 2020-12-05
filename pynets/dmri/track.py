@@ -404,6 +404,7 @@ def track_ensemble(
     import os
     import gc
     import time
+    import warnings
     from joblib import Parallel, delayed
     import itertools
     from pynets.dmri.track import run_tracking
@@ -414,6 +415,7 @@ def track_ensemble(
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
     from pynets.core.utils import load_runconfig
+    warnings.filterwarnings("ignore")
 
     tmp_files_dir = f"{cache_dir}/tmp_files"
     joblib_dir = f"{cache_dir}/joblib_tracking"
@@ -480,7 +482,7 @@ def track_ensemble(
         while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
-                          verbose=2, max_nbytes='25000M',
+                          verbose=0, max_nbytes='50000M',
                           timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
@@ -529,7 +531,7 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
-            os.system(f"rm -f {joblib_dir}/* &")
+            os.system(f"rm -f {joblib_dir}/*")
     except BaseException:
         os.system(f"rm -f {tmp_files_dir} &")
         return None
