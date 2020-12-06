@@ -508,8 +508,8 @@ def track_ensemble(
                           f" for errors...")
                     if track_type != 'particle':
                         tiss_class = 'wb'
-                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
-                    min_length = float(min_length) * 0.95
+                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.25
+                    min_length = float(min_length) * 0.9875
                     continue
                 else:
                     ix -= 1
@@ -531,19 +531,19 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
-            os.system(f"rm -f {joblib_dir}/*")
+        os.system(f"rm -rf {joblib_dir}/*")
     except BaseException:
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         return None
 
     if ix >= 0.75*len(all_combs) and \
         float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         return None
     else:
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
