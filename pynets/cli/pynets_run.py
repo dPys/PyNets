@@ -3515,6 +3515,7 @@ def main():
             "PyNets not installed! Ensure that you are referencing the correct"
             " site-packages and using Python3.6+"
         )
+        sys.exit(1)
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
@@ -3541,11 +3542,9 @@ def main():
         run_uuid = retval.get("run_uuid", None)
 
         retcode = retcode or int(pynets_wf is None)
-        if retcode != 0:
-            sys.exit(retcode)
+        if retcode == 1:
+            return retcode
 
-        # Clean up master process before running workflow, which may create
-        # forks
         gc.collect()
 
     mgr.shutdown()
@@ -3555,7 +3554,7 @@ def main():
 
         rmtree(work_dir, ignore_errors=True)
 
-    sys.exit(0)
+    return 0
 
 
 if __name__ == "__main__":

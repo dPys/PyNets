@@ -69,7 +69,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
             )
         except ValueError:
             import sys
-            sys.exit(0)
+            sys.exit(1)
 
     del dwi_data
 
@@ -191,7 +191,7 @@ def prep_tissues(
             raise ValueError("Tissue classifier cannot be none.")
         except ValueError:
             import sys
-            sys.exit(0)
+            sys.exit(1)
 
     del gm_data, wm_data, vent_csf_in_dwi_data
 
@@ -482,8 +482,7 @@ def track_ensemble(
         while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
-                          verbose=0, max_nbytes='50000M',
-                          timeout=timeout) as parallel:
+                          verbose=0, timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
                         i, recon_path, n_seeds_per_iter, directget, maxcrossing,
@@ -502,14 +501,15 @@ def track_ensemble(
 
                 if len(out_streams) < min_streams:
                     ix += 2
-                    print(f"Fewer than {min_streams} streamlines tracked on last"
-                          f" iteration. Loosening tolerance and anatomical"
-                          f" constraints. Check {tissues4d} or {recon_path}"
-                          f" for errors...")
-                    if track_type != 'particle':
-                        tiss_class = 'wb'
-                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
-                    min_length = float(min_length) * 0.95
+                    print(f"Fewer than {min_streams} streamlines tracked "
+                          f"on last iteration with cache directory: "
+                          f"{cache_dir}. Loosening tolerance and "
+                          f"anatomical constraints. Check {tissues4d} or "
+                          f"{recon_path} for errors...")
+                    # if track_type != 'particle':
+                    #     tiss_class = 'wb'
+                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.25
+                    # min_length = float(min_length) * 0.9875
                     continue
                 else:
                     ix -= 1
@@ -531,19 +531,19 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
-            os.system(f"rm -f {joblib_dir}/*")
+        os.system(f"rm -rf {joblib_dir}/*")
     except BaseException:
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         return None
 
     if ix >= 0.75*len(all_combs) and \
         float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         return None
     else:
-        os.system(f"rm -f {tmp_files_dir} &")
+        os.system(f"rm -rf {tmp_files_dir} &")
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
@@ -730,7 +730,7 @@ def run_tracking(step_curv_combinations, recon_path,
                 "ERROR: No valid tracking method(s) specified.")
         except ValueError:
             import sys
-            sys.exit(0)
+            sys.exit(1)
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain
