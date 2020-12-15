@@ -1973,8 +1973,7 @@ class watchdog(object):
             watchdog_thread.join()
         return 0
 
-    def _watchdog(self):
-        WATCHDOG_HARD_KILL_TIMEOUT = 7200
+    def _watchdog(self, watchdog_timeout=10800):
 
         self.last_progress_time = time.time()
 
@@ -1982,7 +1981,7 @@ class watchdog(object):
             if self.shutdown.wait(timeout=5):
                 return
             last_progress_delay = time.time() - self.last_progress_time
-            if last_progress_delay < WATCHDOG_HARD_KILL_TIMEOUT:
+            if last_progress_delay < watchdog_timeout:
                 continue
             try:
                 signal.signal(signal.SIGQUIT, dumpstacks)

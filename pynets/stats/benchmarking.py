@@ -449,19 +449,19 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                                     with open(label_file, 'r+') as f:
                                         node_dict = json.load(f)
                                     indices = [i['index'] for i in
-                                                      node_dict.values()]
+                                                      node_dict]
                                     if indices == ixs:
                                         coords = [i['coord'] for i in
-                                                         node_dict.values()]
+                                                         node_dict]
 
                                         df_coords = pd.DataFrame(
                                             [str(tuple(x)) for x in
                                              coords]).T
                                         df_coords.columns = [f"rsn-{comb_tuple[0]}_res-{comb_tuple[-2]}_{i}" for i in ixs]
                                         labels = [
-                                            list(i['label'].values())[7] for i
+                                            list(i['label'])[7] for i
                                             in
-                                            node_dict.values()]
+                                            node_dict]
 
                                         df_labels = pd.DataFrame(
                                             labels).T
@@ -520,7 +520,6 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
                 df_summary.at[0, f"{lp}_icc"] = np.nan
                 coord_in = np.nan
                 label_in = np.nan
-                del c_icc
 
             dict_sum[f"{lp}_coord"] = coord_in
             dict_sum[f"{lp}_label"] = label_in
@@ -593,11 +592,11 @@ def benchmark_reproducibility(comb, modality, alg, par_dict, disc,
 if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
                "frozen_importlib.BuiltinImporter'>)"
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
-    icc = False
-    disc = True
+    icc = True
+    disc = False
     int_consist = False
     target_modality = 'dwi'
 
@@ -606,8 +605,10 @@ if __name__ == "__main__":
     #embedding_types = ['OMNI']
     embedding_types = ['OMNI', 'ASE']
     modalities = ['func', 'dwi']
-    rsns = ['kmeans']
-    #rsns = ['language']
+    #rsns = ['kmeans', 'triple']
+    #rsns = ['triple']
+    #rsns = ['kmeans']
+    rsns = ['language']
     #template = 'CN200'
     template = 'MNI152_T1'
     mets = ["global_efficiency",
@@ -719,7 +720,7 @@ if __name__ == "__main__":
             cache_dir = tempfile.mkdtemp()
 
             with Parallel(
-                n_jobs=128, require="sharedmem", backend='threading',
+                n_jobs=-1, require="sharedmem", backend='threading',
                 verbose=10, max_nbytes='20000M',
                 temp_folder=cache_dir
             ) as parallel:
@@ -734,8 +735,8 @@ if __name__ == "__main__":
             # outs = []
             # for comb in grid:
             #     outs.append(benchmark_reproducibility(
-            #         comb, modality, alg, par_dict,
-            #         disc, final_missingness_summary,
+            #         comb, modality, alg, sub_dict_clean,
+            #         disc, final_missingness_summary, icc_tmps_dir,
             #     ))
             df_summary = pd.concat([i for i in outs if i is not None and not i.empty], axis=0)
             df_summary = df_summary.dropna(axis=0, how='all')
