@@ -145,6 +145,7 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
 
 
 def make_feature_space_dict(
+    base_dir,
     ml_dfs,
     df,
     target_modality,
@@ -195,6 +196,7 @@ def make_feature_space_dict(
     ) as parallel:
         outs = parallel(
             delayed(create_feature_space)(
+                base_dir,
                 df,
                 grid_param,
                 par_dict,
@@ -763,31 +765,16 @@ def build_grid(modality, hyperparam_dict, hyperparams, ensembles):
 
 
 def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
-    import os
-    import json
     import ast
 
-    label_file = glob.glob(
-        f"{base_dir}/embeddings_all_dwi/sub-{ID}/ses-{ses}/rsn-{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
-    if len(label_file) > 0:
-        label_file = label_file[0]
-        try:
-            with open(label_file, 'r+') as f:
-                node_dict = json.loads(f.read())
-            f.close()
-        except:
-            print(UserWarning(f"Failed to parse {label_file}..."))
-            return [None]
+    node_files = glob.glob(
+        f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-"
+        f"{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
+
+    if len(node_files) > 0:
+        ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
     else:
-        label_file = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
-        if len(label_file) > 0:
-            label_file = label_file[0]
-            with open(label_file, 'r+') as f:
-                node_dict = json.loads(f.read())
-            f.close()
-        else:
-            return [None]
+        return [None]
 
     # Correct labels/index if needed
     if isinstance(node_dict, list):
@@ -811,48 +798,99 @@ def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
         return [None]
 
 
-def flatten_latent_positions(subject_dict, ID, ses, modality, grid_param,
-                             alg):
+def parse_closest_ixs(node_files, emb_shape):
+    import json
+
+    if len(node_files) > 0:
+        node_files = [i for i in node_files if
+                      f"{emb_shape}" in i]
+        if len(node_files) > 0:
+            if len(node_files) == 1:
+                with open(node_files[0],
+                          'r+') as f:
+                    node_dict = json.load(f)
+                ixs_corr = [int(i['index']) for i
+                            in node_dict]
+            else:
+                with open(node_files[0],
+                          'r+') as f:
+                    node_dict = json.load(f)
+                ixs_corr = [int(i['index']) for i
+                            in node_dict]
+                j = 0
+                while len(ixs_corr) != emb_shape and j < len(
+                    node_files):
+                    with open(node_files[j],
+                              'r+') as f:
+                        node_dict = json.load(
+                            f)
+                    ixs_corr = [int(i['index'])
+                                for i
+                                in node_dict]
+                    j += 1
+
+            return ixs_corr, node_dict
+        else:
+            print(UserWarning('Node files empty!'))
+            return [], {}
+    else:
+        print(UserWarning('Node files empty!'))
+        return [], {}
+
+def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
+                             grid_param, alg):
 
     if grid_param in subject_dict[ID][str(ses)][modality][alg].keys():
         rsn_dict = subject_dict[ID][str(ses)][modality][alg][grid_param]
 
         if 'data' in rsn_dict.keys():
+            ixs = [i for i in rsn_dict['index'] if i is not None]
+
             if not isinstance(rsn_dict["data"], np.ndarray):
-                rsn_dict["data"] = np.load(rsn_dict["data"])
+                data_path = rsn_dict["data"]
+                rsn_dict["data"] = np.load(data_path)
 
-            ixs = rsn_dict["index"]
+            emb_shape = rsn_dict["data"].shape[0]
 
-            if len(ixs) == rsn_dict["data"].shape[0]:
-                rsn_arr = rsn_dict["data"].T.reshape(
-                    1, rsn_dict["data"].T.shape[0] * rsn_dict["data"].T.shape[1]
-                )
-                if rsn_dict["data"].shape[1] == 1:
-                    df_lps = pd.DataFrame(rsn_arr, columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1"
-                                                            for i in ixs])
-                elif rsn_dict["data"].shape[1] == 3:
-                    df_lps = pd.DataFrame(
-                        rsn_arr,
-                        columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1" for i in ixs]
-                        + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim2" for i in ixs]
-                        + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim3" for i in ixs],
+            if len(ixs) != emb_shape:
+                node_files = glob.glob(
+                    f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
+                ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
+
+            if len(ixs) > 0:
+                if len(ixs) == emb_shape:
+                    rsn_arr = rsn_dict["data"].T.reshape(
+                        1, rsn_dict["data"].T.shape[0] * rsn_dict["data"].T.shape[1]
                     )
+                    if rsn_dict["data"].shape[1] == 1:
+                        df_lps = pd.DataFrame(rsn_arr, columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1"
+                                                                for i in ixs])
+                    elif rsn_dict["data"].shape[1] == 3:
+                        df_lps = pd.DataFrame(
+                            rsn_arr,
+                            columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1" for i in ixs]
+                            + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim2" for i in ixs]
+                            + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim3" for i in ixs],
+                        )
+                    else:
+                        raise ValueError(
+                            f"Number of dimensions {rsn_dict['data'].shape[1]} "
+                            f"not supported. See flatten_latent_positions "
+                            f"function..."
+                        )
+                    # print(df_lps)
                 else:
-                    raise ValueError(
-                        f"Number of dimensions {rsn_dict['data'].shape[1]} "
-                        f"not supported. See flatten_latent_positions "
-                        f"function..."
+                    print(
+                        f"Length of indices {len(ixs)} does not equal the "
+                        f"number of rows {rsn_dict['data'].shape[0]} in the "
+                        f"embedding-space for {ID} {ses} {modality} "
+                        f"{grid_param}. This means that at some point a"
+                        f" node index was dropped from the parcellation, but "
+                        f"not from the final graph..."
                     )
-                # print(df_lps)
+                    df_lps = None
             else:
-                print(
-                    f"Length of indices {len(ixs)} does not equal the "
-                    f"number of rows {rsn_dict['data'].shape[0]} in the "
-                    f"embedding-space for {ID} {ses} {modality} "
-                    f"{grid_param}. This means that at some point a"
-                    f" node index was dropped from the parcellation, but "
-                    f"not from the final graph..."
-                )
+                print(UserWarning(f"Missing indices for {grid_param} universe..."))
                 df_lps = None
         else:
             print(UserWarning(f"Missing {grid_param} universe..."))
@@ -864,8 +902,8 @@ def flatten_latent_positions(subject_dict, ID, ses, modality, grid_param,
     return df_lps
 
 
-def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
-                         mets=None):
+def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
+                         modality, alg, mets=None):
     df_tmps = []
 
     for ID in df["participant_id"]:
@@ -891,7 +929,7 @@ def create_feature_space(df, grid_param, subject_dict, ses, modality, alg,
 
         if alg == "OMNI" or alg == "ASE":
             df_lps = flatten_latent_positions(
-                subject_dict, ID, ses, modality, grid_param, alg
+                base_dir, subject_dict, ID, ses, modality, grid_param, alg
             )
         else:
             if grid_param in subject_dict[ID][str(ses)][modality][alg].keys():
@@ -1345,7 +1383,6 @@ def make_subject_dict(
                         if os.path.basename(i).startswith("sub")
                     ]
 
-                ids = [i for i in ids if 's030' not in i]
                 if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
                     df_top = None
                     ensembles = get_ensembles_embedding(modality, alg,
@@ -2951,6 +2988,7 @@ def main():
                 os.path.isfile(dict_file_path):
                 ml_dfs = {}
                 ml_dfs = make_feature_space_dict(
+                    base_dir,
                     ml_dfs,
                     df,
                     modality,

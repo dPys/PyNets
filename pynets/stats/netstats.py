@@ -13,7 +13,7 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-DEFAULT_TIMEOUT = 720
+DEFAULT_TIMEOUT = 14400
 
 
 @timeout(DEFAULT_TIMEOUT)
@@ -918,7 +918,6 @@ def most_important(G, method="betweenness", sd=1):
     return Gt, pruned_nodes
 
 
-@timeout(1800)
 def raw_mets(G, i):
     """
     API that iterates across NetworkX algorithms for a G.
