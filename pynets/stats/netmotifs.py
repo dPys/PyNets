@@ -424,6 +424,31 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     return mG_path
 
 
+def get_brainnetome_node_attributes(node_files, emb_shape):
+    import ast
+    import re
+    from pynets.stats.prediction import parse_closest_ixs
+
+    ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
+
+    coords = [(i['coord']) for
+              i in node_dict]
+    if isinstance(node_dict[0]['label'], str):
+        labels = [
+            ast.literal_eval(
+                re.search('({.+})',
+                          i['label']).group(0))[
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+    else:
+        labels = [
+            list(i['label'])[0][
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+
+    return coords, labels, ixs
+
+
 def motif_matching(
     paths,
     ID,
@@ -449,49 +474,13 @@ def motif_matching(
     struct_mat = np.load(struct_graph_path)
     func_mat = np.load(func_graph_path)
 
-    if rsn is not None:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-    else:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
+    [struct_coords, struct_labels, struct_ixs] = get_brainnetome_node_attributes(glob.glob(
+        f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
+        struct_mat.shape[0])
 
-    with open(struct_coords_path, "rb") as file_:
-        struct_coords = pickle.load(file_)
-    with open(func_coords_path, "rb") as file_:
-        func_coords = pickle.load(file_)
-    with open(struct_labels_path, "rb") as file_:
-        struct_labels = pickle.load(file_)
-    with open(func_labels_path, "rb") as file_:
-        func_labels = pickle.load(file_)
+    [func_coords, func_labels, func_ixs] = get_brainnetome_node_attributes(glob.glob(
+        f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
+        func_mat.shape[0])
 
     # Find intersecting nodes across modalities (i.e. assuming the same
     # parcellation, but accomodating for the possibility of dropped nodes)

@@ -156,9 +156,15 @@ def workflow_selector(
             if len(func_model_list) == 1:
                 conn_model_func = func_model_list[0]
                 func_model_list = None
+                # print(f"conn_model_func: {conn_model_func}")
             if len(dwi_model_list) == 1:
                 conn_model_dwi = dwi_model_list[0]
                 dwi_model_list = None
+                # print(f"conn_model_dwi: {conn_model_dwi}")
+            # if len(func_model_list) > 0:
+            #     print(f"func_model_list: {func_model_list}")
+            # if len(dwi_model_list) > 0:
+            #     print(f"dwi_model_list: {dwi_model_list}")
         else:
             raise RuntimeError(
                 "Multimodal fMRI-dMRI pipeline specified, but "
@@ -170,12 +176,14 @@ def workflow_selector(
         dwi_model_list = conn_model_list
         conn_model_func = None
         func_model_list = None
+        print(f"dwi_model_list: {dwi_model_list}")
     elif (func_file is not None) and (dwi_file is None):
         print("Parsing functional models...")
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
         dwi_model_list = None
+        print(f"func_model_list: {func_model_list}")
 
     # for each file input, delete corresponding t1w anatomical copies.
     if clean is True:

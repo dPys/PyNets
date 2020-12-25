@@ -31,7 +31,10 @@ from collections import OrderedDict
 from operator import itemgetter
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pynets.core.utils import flatten, mergedicts
-from sklearn.utils.testing import ignore_warnings
+try:
+    from sklearn.utils._testing import ignore_warnings
+except:
+    from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 
 warnings.simplefilter("ignore")
@@ -654,7 +657,6 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 refit=refit,
                 n_jobs=1,
                 cv=inner_cv,
-                iid=False,
             )
         elif search_method == 'random':
             pipe_grid_cv = RandomizedSearchCV(
@@ -664,7 +666,6 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 refit=refit,
                 n_jobs=1,
                 cv=inner_cv,
-                iid=False,
             )
         else:
             raise ValueError(f"Search method {search_method} not "
@@ -800,6 +801,7 @@ def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
 
 def parse_closest_ixs(node_files, emb_shape):
     import json
+    import ast
 
     if len(node_files) > 0:
         node_files = [i for i in node_files if
@@ -809,24 +811,87 @@ def parse_closest_ixs(node_files, emb_shape):
                 with open(node_files[0],
                           'r+') as f:
                     node_dict = json.load(f)
-                ixs_corr = [int(i['index']) for i
-                            in node_dict]
+                if isinstance(node_dict, list):
+                    if all(v is None for v in
+                           [i['label'] for i in node_dict]):
+                        node_dict_revised = {}
+                        for i in range(len(node_dict)):
+                            node_dict_revised[i] = {}
+                            node_dict_revised[i]['label'], \
+                            node_dict_revised[i][
+                                'index'] = ast.literal_eval(
+                                node_dict[i]['index'].replace('\n', ','))
+                        ixs_corr = [int(i['index']) for i in
+                                    node_dict_revised.values()]
+                    else:
+                        ixs_corr = [int(i['index'])
+                                    for i
+                                    in node_dict]
+                else:
+                    ixs_corr = [int(i['index'])
+                                for i
+                                in node_dict.values()]
             else:
-                with open(node_files[0],
-                          'r+') as f:
-                    node_dict = json.load(f)
-                ixs_corr = [int(i['index']) for i
-                            in node_dict]
-                j = 0
-                while len(ixs_corr) != emb_shape and j < len(
-                    node_files):
-                    with open(node_files[j],
+                try:
+                    with open(node_files[0],
                               'r+') as f:
                         node_dict = json.load(
                             f)
+                    j = 0
+                except:
+                    with open(node_files[1], 'r+') as f:
+                        node_dict = json.load(f)
+                    j = 1
+
+                if isinstance(node_dict, list):
+                    if all(v is None for v in
+                           [i['label'] for i in node_dict]):
+                        node_dict_revised = {}
+                        for i in range(len(node_dict)):
+                            node_dict_revised[i] = {}
+                            node_dict_revised[i]['label'], \
+                            node_dict_revised[i][
+                                'index'] = ast.literal_eval(
+                                node_dict[i]['index'].replace('\n', ','))
+                        ixs_corr = [int(i['index']) for i in
+                                    node_dict_revised.values()]
+                    else:
+                        ixs_corr = [int(i['index'])
+                                    for i
+                                    in node_dict]
+                else:
                     ixs_corr = [int(i['index'])
                                 for i
-                                in node_dict]
+                                in node_dict.values()]
+                while len(ixs_corr) != emb_shape and j < len(
+                    node_files):
+                    try:
+                        with open(node_files[j],
+                                  'r+') as f:
+                            node_dict = json.load(
+                                f)
+                    except:
+                        continue
+                    if isinstance(node_dict, list):
+                        if all(v is None for v in
+                               [i['label'] for i in node_dict]):
+                            node_dict_revised = {}
+                            for i in range(len(node_dict)):
+                                node_dict_revised[i] = {}
+                                node_dict_revised[i]['label'], \
+                                node_dict_revised[i][
+                                    'index'] = ast.literal_eval(
+                                    node_dict[i]['index'].replace('\n', ','))
+                            ixs_corr = [int(i['index']) for i in
+                                        node_dict_revised.values()]
+                        else:
+                            ixs_corr = [int(i['index'])
+                                        for i
+                                        in node_dict]
+                    else:
+                        ixs_corr = [int(i['index'])
+                                    for i
+                                    in node_dict.values()]
                     j += 1
 
             return ixs_corr, node_dict
@@ -836,6 +901,7 @@ def parse_closest_ixs(node_files, emb_shape):
     else:
         print(UserWarning('Node files empty!'))
         return [], {}
+
 
 def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                              grid_param, alg):
@@ -1561,6 +1627,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
         directget, minlength, model, res, atlas, tol = comb
     except BaseException:
         print(UserWarning(f"Failed to parse recipe: {comb}"))
+        completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+        print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
         return subject_dict, missingness_frame, completion_status
 
     comb_tuple = (atlas, directget, minlength, model, res, tol)
@@ -1570,8 +1638,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
         embeddings = glob.glob(
             f"{base_dir}/embeddings_all"
             f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
-            f"res-{res}/"
-            f"gradient*{alg}*{res}*{atlas}*{ID}"
+            f"res-{res}/gradient*{alg}*{res}*{atlas}*{ID}"
             f"*modality-{modality}*model-{model}"
             f"*template-{template}*directget-"
             f"{directget}"
@@ -1604,6 +1671,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                 ignore_index=True,
             )
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
             return subject_dict, missingness_frame, completion_status
         elif len(embeddings) == 1:
             embedding = embeddings[0]
@@ -1664,6 +1732,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                 ignore_index=True,
             )
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
             return subject_dict, missingness_frame, completion_status
     elif alg == "topology":
         data = np.empty([len(mets), 1], dtype=np.float32)
@@ -1705,6 +1774,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
                     ignore_index=True,
                 )
                 completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+                print(
+                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
                 return subject_dict, missingness_frame, completion_status
 
             out = df_top[df_top["id"] == "sub-" + ID + "_ses-" + ses][
@@ -1748,6 +1819,8 @@ def func_grabber(comb, subject_dict, missingness_frame, completion_status,
             smooth = "0"
         except BaseException:
             print(UserWarning(f"Failed to parse recipe: {comb}"))
+            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
             return subject_dict, missingness_frame, completion_status
 
     comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
@@ -1835,6 +1908,7 @@ def func_grabber(comb, subject_dict, missingness_frame, completion_status,
                 ignore_index=True,
             )
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
             return subject_dict, missingness_frame, completion_status
 
         elif len(embeddings) == 1:
@@ -1870,6 +1944,9 @@ def func_grabber(comb, subject_dict, missingness_frame, completion_status,
                                        comb_tuple, np.load(embedding).shape[0])
             except BaseException:
                 print(f"Failed to load {embedding} for {ID}-{ses}")
+                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+                print(
+                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
                 return subject_dict, missingness_frame, completion_status
             if (
                 alg
@@ -1897,6 +1974,7 @@ def func_grabber(comb, subject_dict, missingness_frame, completion_status,
                 ignore_index=True,
             )
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
             return subject_dict, missingness_frame, completion_status
 
     elif alg == "topology":
@@ -1948,6 +2026,8 @@ def func_grabber(comb, subject_dict, missingness_frame, completion_status,
                     ignore_index=True,
                 )
                 completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
+                print(
+                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
                 return subject_dict, missingness_frame, completion_status
 
             out = df_top[df_top["id"] == f"sub-{ID}_ses-{ses}"][col].values
@@ -2005,6 +2085,9 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
         data_loaded = json.load(data_file)
     data_file.close()
 
+    if data_loaded == '{}':
+        return None, None
+
     if str(grid_param) in data_loaded.keys():
         df_all = pd.read_json(data_loaded[str(grid_param)])
         if df_all[target_var].isin([np.nan,1]).all():
@@ -2016,13 +2099,13 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
             df_all.reset_index(level=0, inplace=True)
             df_all.rename(columns={"index": "id"}, inplace=True)
             # Remove incomplete cases
-            df_all = df_all.loc[
-                (df_all["id"] != "s057")
-                & (df_all["id"] != "s054")
-                & (df_all["id"] != "25667")
-                & (df_all["id"] != "A00076381")
-                & (df_all["id"] != "25853")
-                ]
+            # df_all = df_all.loc[
+            #     (df_all["id"] != "s057")
+            #     & (df_all["id"] != "s054")
+            #     & (df_all["id"] != "25667")
+            #     & (df_all["id"] != "A00076381")
+            #     & (df_all["id"] != "25853")
+            #     ]
             if (
                 all(
                     df_all.drop(
@@ -2099,38 +2182,64 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_):
             print(f"Dataframe concatenation failed for {modality}, "
                   f"{embedding_type}, {target_var}...")
 
-        return out_path, embedding_type, target_var
+        return out_path, embedding_type, target_var, modality
     else:
-        return None, embedding_type, target_var
+        return None, embedding_type, target_var, modality
 
 
-def copy_json_dict(feature_spaces, modality, embedding_type, tempdir):
-    import uuid
-    import os
-    from time import strftime
-    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-    from nipype.utils.filemanip import fname_presuffix, copyfile
-    import tempfile
+class _copy_json_dictInputSpec(BaseInterfaceInputSpec):
+    feature_spaces = traits.Any(mandatory=True)
+    modality = traits.Any(mandatory=True)
+    embedding_type = traits.Any(mandatory=True)
+    target_var = traits.Any(mandatory=True)
 
-    if feature_spaces is not None:
-        input_dict_tmp = feature_spaces[
-            f"{modality}_{embedding_type}"
-        ]
-        if os.path.isfile(input_dict_tmp) is True:
+
+class _copy_json_dictOutputSpec(TraitedSpec):
+    json_dict = traits.Any(mandatory=True)
+    modality = traits.Any(mandatory=True)
+    embedding_type = traits.Any(mandatory=True)
+    target_var = traits.Any(mandatory=True)
+
+
+class copy_json_dict(SimpleInterface):
+    """Interface wrapper for copy_json_dict"""
+
+    input_spec = _copy_json_dictInputSpec
+    output_spec = _copy_json_dictOutputSpec
+
+    def _run_interface(self, runtime):
+        import uuid
+        import os
+        # import time
+        # import random
+        from time import strftime
+        run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+
+        #time.sleep(random.randint(1, 30))
+        if self.inputs.feature_spaces is not None and self.inputs.modality is \
+            not None and self.inputs.embedding_type is not None and \
+            self.inputs.target_var is not None:
+            input_dict_tmp = self.inputs.feature_spaces[
+                f"{self.inputs.modality}_{self.inputs.embedding_type}"
+            ]
             json_dict = fname_presuffix(
-                input_dict_tmp, suffix=f"_tmp_{run_uuid}",
-                newpath=tempdir
+                input_dict_tmp, suffix=f"_{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json",
+                newpath=runtime.cwd
             )
-
-            copyfile(input_dict_tmp, json_dict, copy=True)
-
-            return json_dict
+            copyfile(input_dict_tmp, json_dict, use_hardlink=False)
         else:
-            new_file, filename = tempfile.mkstemp()
-            return new_file
-    else:
-        new_file, filename = tempfile.mkstemp()
-        return new_file
+            json_dict = f"{runtime.cwd}/{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json"
+            os.mknod(json_dict)
+
+        # time.sleep(random.randint(1, 30))
+
+        self._results["json_dict"] = json_dict
+        self._results["modality"] = self.inputs.modality
+        self._results["embedding_type"] = self.inputs.embedding_type
+        self._results["target_var"] = self.inputs.target_var
+
+        return runtime
 
 
 class _MakeXYInputSpec(BaseInterfaceInputSpec):
@@ -2169,7 +2278,7 @@ class MakeXY(SimpleInterface):
         self._results["target_var"] = self.inputs.target_var
 
         if self.inputs.json_dict is not None:
-            if os.path.isfile(self.inputs.json_dict) and self.inputs.json_dict.endswith('.json'):
+            if os.path.isfile(self.inputs.json_dict) and self.inputs.json_dict.endswith('.json') and os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype", "dep_1",
@@ -2340,33 +2449,48 @@ class BSNestedCV(SimpleInterface):
                         f"with {Fore.RED}{len(mega_feat_imp_dict.keys())} "
                         f"features...{Style.RESET_ALL}\n\n"
                     )
-                    self._results[
-                        "grand_mean_best_estimator"] = grand_mean_best_estimator
-                    self._results[
-                        "grand_mean_best_score"] = grand_mean_best_score
-                    self._results[
-                        "grand_mean_y_predicted"] = grand_mean_y_predicted
-                    self._results[
-                        "grand_mean_best_error"] = grand_mean_best_error
-                    self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
                 else:
                     print(f"{Fore.RED}Empty feature-space for "
                           f"{self.inputs.grid_param}, "
                           f"{self.inputs.target_var}, "
                           f"{self.inputs.embedding_type}, "
                           f"{self.inputs.modality}{Style.RESET_ALL}")
+                    grand_mean_best_estimator = {0: 'None'}
+                    grand_mean_best_score = {0: np.nan}
+                    grand_mean_y_predicted = {0: np.nan}
+                    grand_mean_best_error = {0: np.nan}
+                    mega_feat_imp_dict = {0: 'None'}
             else:
                 print(f"{Fore.RED}{self.inputs.X} is not pd.DataFrame for"
                       f" {self.inputs.grid_param}, {self.inputs.target_var},"
                       f" {self.inputs.embedding_type}, "
                       f"{self.inputs.modality}{Style.RESET_ALL}")
+                grand_mean_best_estimator = {0: 'None'}
+                grand_mean_best_score = {0: np.nan}
+                grand_mean_y_predicted = {0: np.nan}
+                grand_mean_best_error = {0: np.nan}
+                mega_feat_imp_dict = {0: 'None'}
         else:
             print(
                 f"{Fore.RED}Empty feature-space for {self.inputs.grid_param},"
                 f" {self.inputs.target_var}, {self.inputs.embedding_type},"
                 f" {self.inputs.modality}{Style.RESET_ALL}")
-
+            grand_mean_best_estimator = {0: 'None'}
+            grand_mean_best_score = {0: np.nan}
+            grand_mean_y_predicted = {0: np.nan}
+            grand_mean_best_error = {0: np.nan}
+            mega_feat_imp_dict = {0: 'None'}
         gc.collect()
+
+        self._results[
+            "grand_mean_best_estimator"] = grand_mean_best_estimator
+        self._results[
+            "grand_mean_best_score"] = grand_mean_best_score
+        self._results[
+            "grand_mean_y_predicted"] = grand_mean_y_predicted
+        self._results[
+            "grand_mean_best_error"] = grand_mean_best_error
+        self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
 
         return runtime
 
@@ -2515,67 +2639,31 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(modality_grids, modality, basedir):
+def create_wf(grid_params_mod, basedir):
     from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
         concatenate_frames
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     import uuid
+    import os
     from time import strftime
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_wf = pe.Workflow(name=f"ensemble_connectometry_{run_uuid}")
     os.makedirs(f"/{basedir}/{run_uuid}", exist_ok=True)
     ml_wf.base_dir = f"/{basedir}/{run_uuid}"
-    os.makedirs(f"{ml_wf.base_dir}/json_tmps", exist_ok=True)
-
-    grid_param_combos = [list(i) for i in modality_grids[modality]]
-
-    grid_params_mod = []
-    if modality == "func":
-        for comb in grid_param_combos:
-            try:
-                extract, hpass, model, res, atlas, smooth = comb
-            except:
-                try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
-                except:
-                    raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([atlas, extract, hpass, model, res,
-                                    str(smooth)])
-    elif modality == "dwi":
-        for comb in grid_param_combos:
-            try:
-                directget, minlength, model, res, atlas, tol = comb
-            except:
-                raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([atlas, directget, minlength, model, res,
-                                    tol])
 
     inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "feature_spaces",
-                "out_dir",
                 "modality",
                 "target_var",
                 "embedding_type",
+                "json_dict",
             ]
         ),
         name="inputnode",
     )
-
-    copy_json_dict_node = pe.Node(
-        niu.Function(
-            input_names=["feature_spaces", "modality", "embedding_type",
-                         "tempdir"],
-            output_names=["json_dict"],
-            function=copy_json_dict,
-        ),
-        name="copy_json_dict_node",
-    )
-    copy_json_dict_node.inputs.tempdir = f"{ml_wf.base_dir}/json_tmps"
 
     make_x_y_func_node = pe.Node(MakeXY(), name="make_x_y_func_node")
 
@@ -2608,42 +2696,30 @@ def create_wf(modality_grids, modality, basedir):
         niu.Function(
             input_names=["out_dir", "modality", "embedding_type",
                          "target_var", "files_"],
-            output_names=["out_path", "embedding_type", "target_var"],
+            output_names=["out_path", "embedding_type", "target_var",
+                          "modality"],
             function=concatenate_frames,
         ),
         name="concatenate_frames_node",
     )
+    concatenate_frames_node.inputs.out_dir = ml_wf.base_dir
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["target_var", "df_summary",
-                                      "embedding_type"]), name="outputnode"
+                                      "embedding_type", "modality"]),
+        name="outputnode"
     )
 
     ml_wf.connect(
         [
             (
                 inputnode,
-                copy_json_dict_node,
-                [
-                    ("feature_spaces", "feature_spaces"),
-                    ("modality", "modality"),
-                    ("embedding_type", "embedding_type")
-                ],
-            ),
-            (
-                inputnode,
                 make_x_y_func_node,
                 [
                     ("target_var", "target_var"),
                     ("modality", "modality"),
-                    ("embedding_type", "embedding_type")
-                ],
-            ),
-            (
-                copy_json_dict_node,
-                make_x_y_func_node,
-                [
-                    ("json_dict", "json_dict"),
+                    ("embedding_type", "embedding_type"),
+                    ("json_dict", "json_dict")
                 ],
             ),
             (
@@ -2698,13 +2774,13 @@ def create_wf(modality_grids, modality, basedir):
             (
                 inputnode,
                 concatenate_frames_node,
-                [("out_dir", "out_dir"),
-                 ("modality", "modality"), ("embedding_type", "embedding_type"),
+                [("modality", "modality"),
+                 ("embedding_type", "embedding_type"),
                  ("target_var", "target_var")],
             ),
             (concatenate_frames_node, outputnode,
              [("out_path", "df_summary"), ("embedding_type", "embedding_type"),
-              ("target_var", "target_var")]),
+              ("target_var", "target_var"), ("modality", "modality")]),
         ]
     )
 
@@ -2742,7 +2818,7 @@ def build_predict_workflow(args, retval, verbose=True):
     feature_spaces = args["feature_spaces"]
     modality_grids = args["modality_grids"]
     target_vars = args["target_vars"]
-    embedding_types = args["embedding_types"]
+    embedding_type = args["embedding_type"]
     modality = args["modality"]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
@@ -2751,12 +2827,39 @@ def build_predict_workflow(args, retval, verbose=True):
 
     os.makedirs(ml_meta_wf.base_dir, exist_ok=True)
 
+    grid_param_combos = [list(i) for i in modality_grids[modality]]
+
+    grid_params_mod = []
+    if modality == "func":
+        for comb in grid_param_combos:
+            try:
+                extract, hpass, model, res, atlas, smooth = comb
+            except:
+                try:
+                    extract, hpass, model, res, atlas = comb
+                    smooth = "0"
+                except:
+                    raise ValueError(f"Failed to parse recipe: {comb}")
+            grid_params_mod.append([atlas, extract, hpass, model, res,
+                                    str(smooth)])
+    elif modality == "dwi":
+        for comb in grid_param_combos:
+            try:
+                directget, minlength, model, res, atlas, tol = comb
+            except:
+                raise ValueError(f"Failed to parse recipe: {comb}")
+            grid_params_mod.append([atlas, directget, minlength, model, res,
+                                    tol])
+
     meta_inputnode = pe.Node(
         niu.IdentityInterface(
             fields=[
                 "feature_spaces",
                 "base_dir",
                 "modality"
+                "modality_grids",
+                "grid_params_mod",
+                "embedding_type"
             ]
         ),
         name="meta_inputnode",
@@ -2766,60 +2869,67 @@ def build_predict_workflow(args, retval, verbose=True):
     meta_inputnode.inputs.feature_spaces = feature_spaces
     meta_inputnode.inputs.modality = modality
     meta_inputnode.inputs.modality_grids = modality_grids
+    meta_inputnode.inputs.grid_params_mod = grid_params_mod
+    meta_inputnode.inputs.embedding_type = embedding_type
 
-    meta_iter_info_node = pe.Node(
+    target_var_iter_info_node = pe.Node(
         niu.IdentityInterface(
             fields=[
-                "target_var",
-                "embedding_type",
+                "target_var"
             ]
         ),
-        name="meta_iter_info_node", nested=True
+        name="target_var_iter_info_node", nested=True
     )
 
-    # Set up as iterables
-    vars_embeddings_iters = list(
-        itertools.product(target_vars, embedding_types)
+    copy_json_dict_node = pe.Node(
+        copy_json_dict(),
+        name="copy_json_dict_node",
     )
-    target_vars_list = [i[0] for i in vars_embeddings_iters]
-    embedding_types_list = [i[1] for i in vars_embeddings_iters]
 
-    vars_embeddings_iters_list = []
-    vars_embeddings_iters_list.append(("target_var", target_vars_list))
-    vars_embeddings_iters_list.append(("embedding_type", embedding_types_list))
-    meta_iter_info_node.iterables = vars_embeddings_iters_list
+    target_var_iter_info_node.iterables = [("target_var", target_vars)]
 
-    create_wf_node = create_wf(modality_grids, modality, ml_meta_wf.base_dir)
+    create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir)
 
     final_join_node = pe.JoinNode(
         niu.IdentityInterface(fields=["df_summary", "embedding_type",
-                                      "target_var"]),
+                                      "target_var", "modality"]),
         name="final_join_node",
-        joinfield=["df_summary", "embedding_type", "target_var"],
-        joinsource=meta_iter_info_node,
+        joinfield=["df_summary", "embedding_type", "target_var", "modality"],
+        joinsource=target_var_iter_info_node,
     )
 
     meta_outputnode = pe.Node(
-        niu.IdentityInterface(fields=["df_summary"]), name="meta_outputnode"
+        niu.IdentityInterface(fields=["df_summary", "embedding_type",
+                                      "target_var", "modality"]),
+        name="meta_outputnode"
     )
 
     ml_meta_wf.connect(
         [
             (
                 meta_inputnode,
-                create_wf_node,
+                copy_json_dict_node,
                 [
-                    ("base_dir", "inputnode.out_dir"),
-                    ("feature_spaces", "inputnode.feature_spaces"),
-                    ("modality", "inputnode.modality"),
+                    ("modality", "modality"),
+                    ("feature_spaces", "feature_spaces"),
+                    ("embedding_type", "embedding_type")
                 ],
             ),
             (
-                meta_iter_info_node,
+                target_var_iter_info_node,
+                copy_json_dict_node,
+                [
+                    ("target_var", "target_var"),
+                ],
+            ),
+            (
+                copy_json_dict_node,
                 create_wf_node,
                 [
+                    ("json_dict", "inputnode.json_dict"),
                     ("target_var", "inputnode.target_var"),
-                    ("embedding_type", "inputnode.embedding_type")
+                    ("embedding_type", "inputnode.embedding_type"),
+                    ("modality", "inputnode.modality")
                 ],
             ),
             (
@@ -2827,17 +2937,22 @@ def build_predict_workflow(args, retval, verbose=True):
                 final_join_node,
                 [
                     ("outputnode.df_summary", "df_summary"),
+                    ("outputnode.modality", "modality"),
                     ("outputnode.target_var", "target_var"),
-                    ("outputnode.embedding_type", "embedding_type"),
+                    ("outputnode.embedding_type", "embedding_type")
                 ],
             ),
             (final_join_node, meta_outputnode,
-             [("df_summary", "df_summary")]),
+             [("df_summary", "df_summary"),
+              ("modality", "modality"),
+              ("target_var", "target_var"),
+              ("embedding_type", "embedding_type")
+              ]),
         ]
     )
     execution_dict = {}
     execution_dict["crashdump_dir"] = str(ml_meta_wf.base_dir)
-    execution_dict["poll_sleep_duration"] = 0.5
+    execution_dict["poll_sleep_duration"] = 1
     execution_dict["crashfile_format"] = "txt"
     execution_dict["local_hash_check"] = False
     execution_dict["stop_on_first_crash"] = False
@@ -2886,19 +3001,29 @@ def main():
     import json
 
     #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_clustering"
-    base_dir = "/working/tuning_set/outputs_language"
+    #base_dir = "/working/tuning_set/outputs_shaeffer"
+    base_dir = "/working/tuning_set/outputs_clustering"
+    #base_dir = "/working/tuning_set/outputs_language"
     #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
         index_col=False
     )
 
+    # User-Specified #
+    embedding_type = 'ASE'
+    modality = "dwi"
+    target_vars = ["rumination_persist_phenotype",
+                   "depression_persist_phenotype",
+                   "dep_2", 'rum_2', 'rum_1', 'dep_1']
+
+    rsns = ["triple", "kmeans"]
+    #rsns = ["tripleRUM", "kmeansRUM"]
+    #rsns = ["language"]
+
+    sessions = ["1"]
+
     # Hard-Coded #
-    embedding_types = ['ASE']
-    #embedding_types = ['OMNI', 'ASE']
-    #modalities = ["dwi", "func"]
-    modalities = ["dwi"]
     thr_type = "MST"
     template = "MNI152_T1"
     mets = [
@@ -2913,34 +3038,21 @@ def main():
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
-    # User-Specified #
-    target_modality = 'dwi'
-    #target_modality = 'func'
-    target_vars = ["rumination_persist_phenotype",
-                   "depression_persist_phenotype",
-                   "dep_2", 'rum_2', 'rum_1', 'dep_1']
-
-    #rsns = ["triple", "kmeans"]
-    #rsns = ["tripleRUM", "kmeansRUM", "language"]
-    rsns = ["language"]
-
-    sessions = ["1"]
-
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{target_modality}_{'_'.join(embedding_types)}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{target_modality}_{'_'.join(embedding_types)}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{target_modality}_{'_'.join(embedding_types)}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path
     ):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
-            modalities, base_dir, thr_type, mets, embedding_types, template,
+            [modality], base_dir, thr_type, mets, [embedding_type], template,
             sessions, rsns
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
@@ -2980,39 +3092,36 @@ def main():
     ]
 
     ml_dfs_dict = {}
-    for modality in modalities:
-        ml_dfs_dict[modality] = {}
-        for alg in embedding_types:
-            dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_{alg}.pkl"
-            if not os.path.isfile(dict_file_path) or not \
-                os.path.isfile(dict_file_path):
-                ml_dfs = {}
-                ml_dfs = make_feature_space_dict(
-                    base_dir,
-                    ml_dfs,
-                    df,
-                    modality,
-                    sub_dict_clean,
-                    sessions[0],
-                    modality_grids,
-                    alg,
-                    mets
-                )
+    ml_dfs_dict[modality] = {}
+    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_{'_'.join(rsns)}_" \
+                     f"{embedding_type}_{template}_{thr_type}.pkl"
+    if not os.path.isfile(dict_file_path) or not \
+        os.path.isfile(dict_file_path):
+        ml_dfs = {}
+        ml_dfs = make_feature_space_dict(
+            base_dir,
+            ml_dfs,
+            df,
+            modality,
+            sub_dict_clean,
+            sessions[0],
+            modality_grids,
+            embedding_type,
+            mets
+        )
 
-                with open(dict_file_path, "wb") as f:
-                    dill.dump(ml_dfs, f)
-                f.close()
-                ml_dfs_dict[modality][alg] = dict_file_path
-                del ml_dfs
-            else:
-                ml_dfs_dict[modality][alg] = dict_file_path
+        with open(dict_file_path, "wb") as f:
+            dill.dump(ml_dfs, f)
+        f.close()
+        ml_dfs_dict[modality][embedding_type] = dict_file_path
+        del ml_dfs
+    else:
+        ml_dfs_dict[modality][embedding_type] = dict_file_path
 
     outs = []
-    for modality in modalities:
-        for alg in embedding_types:
-            with open(ml_dfs_dict[modality][alg], "rb") as f:
-                outs.append(dill.load(f))
-            f.close()
+    with open(ml_dfs_dict[modality][embedding_type], "rb") as f:
+        outs.append(dill.load(f))
+    f.close()
 
     ml_dfs = outs[0]
     for d in outs:
@@ -3022,27 +3131,23 @@ def main():
     #     ml_dfs = dill.load(f)
     # f.close()
 
-    tables = list(itertools.product(modalities, embedding_types))
-
     feature_spaces = {}
-    for comb in tables:
-        modality = comb[0]
-        alg = comb[1]
-        iter = f"{modality}_{alg}"
-        out_dict = {}
-        for recipe in ml_dfs[modality][alg].keys():
-            try:
-                out_dict[str(recipe)] = ml_dfs[modality][alg][recipe].to_json()
-            except:
-                print(f"{recipe} recipe not found...")
-                continue
-        out_json_path = f"{base_dir}/{iter}.json"
-        if os.path.isfile(out_json_path):
-            os.remove(out_json_path)
-        with open(out_json_path, "w", encoding="utf-8") as f:
-            json.dump(out_dict, f, ensure_ascii=False, indent=4)
-        f.close()
-        feature_spaces[iter] = out_json_path
+
+    iter = f"{modality}_{embedding_type}"
+    out_dict = {}
+    for recipe in ml_dfs[modality][embedding_type].keys():
+        try:
+            out_dict[str(recipe)] = ml_dfs[modality][embedding_type][recipe].to_json()
+        except:
+            print(f"{recipe} recipe not found...")
+            continue
+    out_json_path = f"{base_dir}/{iter}.json"
+    if os.path.isfile(out_json_path):
+        os.remove(out_json_path)
+    with open(out_json_path, "w", encoding="utf-8") as f:
+        json.dump(out_dict, f, ensure_ascii=False, indent=4)
+    f.close()
+    feature_spaces[iter] = out_json_path
 
     del ml_dfs
 
@@ -3051,8 +3156,8 @@ def main():
     args["feature_spaces"] = feature_spaces
     args["modality_grids"] = modality_grids
     args["target_vars"] = target_vars
-    args["embedding_types"] = embedding_types
-    args["modality"] = target_modality
+    args["embedding_type"] = embedding_type
+    args["modality"] = modality
 
     return args
 

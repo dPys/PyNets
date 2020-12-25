@@ -246,6 +246,10 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
       - 'clust_join_node':
         - (1, 1)
+      - 'NetworkAnalysis':
+        - (1, 4)
+      - 'AggregateOutputs':
+        - (1, 2)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
         - False

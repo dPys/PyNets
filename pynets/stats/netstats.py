@@ -473,7 +473,7 @@ def participation_coef_sign(W, ci):
     return Ppos, Pneg
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULTTIMEOUT_)
 def diversity_coef_sign(W, ci):
     """
     The Shannon-entropy based diversity coefficient measures the diversity
@@ -1325,6 +1325,7 @@ def community_resolution_selection(G):
     return dict(zip(G.nodes(), ci)), ci, resolution, num_comms
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_community(G, net_met_val_list_final, metric_list_names):
     import community
 
@@ -1338,6 +1339,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
     return net_met_val_list_final, metric_list_names, ci
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     if len(in_mat[in_mat < 0.0]) > 0:
         pc_vector = participation_coef_sign(in_mat, ci)[0]
@@ -1372,6 +1374,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_vector = diversity_coef_sign(in_mat, ci)[0]
     print("\nCalculating Diversity Coefficients...")
@@ -1402,6 +1405,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     le_vector = local_efficiency(G)
     print("\nCalculating Local Efficiencies...")
@@ -1430,6 +1434,7 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_clustering(G, metric_list_names, net_met_val_list_final):
 
     cl_vector = nx.clustering(G, weight="weight")
@@ -1460,6 +1465,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import degree_centrality
 
@@ -1492,6 +1498,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_betweenness_centrality(
         G_len,
         metric_list_names,
@@ -1529,6 +1536,7 @@ def get_betweenness_centrality(
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import eigenvector_centrality
 
@@ -1562,6 +1570,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
+@timeout(DEFAULT_TIMEOUT)
 def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import communicability_betweenness_centrality
 
@@ -1711,6 +1720,9 @@ def extractnetstats(
     else:
         tmp_graph_path = None
 
+    if 'modality-func' in est_path and 'model-sps' not in est_path:
+        binary = True
+
     if binary is True:
         in_mat, G = cg.binarize_graph()
     else:
@@ -1787,8 +1799,18 @@ def extractnetstats(
             print(e, "Failed to parse local_graph_measures.yaml")
             sys.exit(1)
 
-    # Note the use of bare excepts in preceding blocks. Typically, this is considered bad practice in python. Here,
-    # we are exploiting it intentionally to facilitate uninterrupted, automated graph analysis even when algorithms are
+    # Deal with empty graphs
+    if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all():
+        out_path_neat = save_netmets(
+            dir_path, est_path, metric_list_global_names,
+            len(metric_list_global_names)*[np.nan],
+        )
+        return out_path_neat
+
+    # Note the use of bare excepts in preceding blocks. Typically, this is
+    # considered bad practice in python. Here,
+    # we are exploiting it intentionally to facilitate uninterrupted,
+    # automated graph analysis even when algorithms are
     # undefined. In those instances, solutions are assigned NaN's.
 
     # Iteratively run functions from above metric list that generate single

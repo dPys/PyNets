@@ -1718,13 +1718,13 @@ def timeout(seconds):
     import os
     import signal
 
-    class TimeoutError(Exception):
+    class TimeoutWarning(Exception):
         pass
 
     def decorator(func):
         def _handle_timeout(signum, frame):
             error_message = os.strerror(errno.ETIME)
-            raise TimeoutError(error_message)
+            raise TimeoutWarning(error_message)
 
         def wrapper(*args, **kwargs):
             signal.signal(signal.SIGALRM, _handle_timeout)
