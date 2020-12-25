@@ -1363,6 +1363,31 @@ def parcel_naming(coords, vox_size):
     return labels
 
 
+def get_brainnetome_node_attributes(node_files, emb_shape):
+    import ast
+    import re
+    from pynets.stats.prediction import parse_closest_ixs
+
+    ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
+
+    coords = [(i['coord']) for
+              i in node_dict]
+    if isinstance(node_dict[0]['label'], str):
+        labels = [
+            ast.literal_eval(
+                re.search('({.+})',
+                          i['label']).group(0))[
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+    else:
+        labels = [
+            list(i['label'])[0][
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+
+    return coords, labels, ixs
+
+
 # def psycho_naming(coords, node_size):
 #     """
 #     Perform Automated Sentiment Labeling of each coordinate from a list of

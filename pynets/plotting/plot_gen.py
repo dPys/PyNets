@@ -491,10 +491,14 @@ def create_gb_palette(
     import seaborn as sns
     import networkx as nx
     from pynets.core import thresholding
+    import matplotlib.pyplot as plt
+    import mplcyberpunk
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.stats.netstats import community_resolution_selection, \
         prune_disconnected
+
+    plt.style.use("cyberpunk")
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
@@ -697,6 +701,7 @@ def plot_all_func(
     from nilearn import plotting as niplot
     import pkg_resources
     import pickle
+    from scipy.spatial import distance
     from pynets.core.utils import load_mat
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
@@ -917,6 +922,36 @@ def plot_all_func(
                     line.set_lw(edge_size)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+
+            for view in views:
+                coord_anns = []
+                for coord, label in list(zip(coords, labels)):
+                    if view == 'x':
+                        coord_ann = (coord[1], coord[2])
+                    if view == 'y':
+                        coord_ann = (coord[0], coord[2])
+                    if view == 'z':
+                        coord_ann = (coord[0], coord[1])
+
+                    if len(coord_anns) > 0:
+                        dists = []
+                        for c in coord_anns:
+                            dists.append(distance.euclidean(coord_ann, c))
+                        if any([i < 20 for i in dists]):
+                            continue
+                    coord_anns.append(coord_ann)
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
+                                                      xytext=(0, 3),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.75',
+                                                      fontweight='bold',
+                                                      zorder=1000,
+                                                      color='black')
+
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
             raise RuntimeError(
@@ -1016,9 +1051,13 @@ def plot_all_struct(
     from nilearn import plotting as niplot
     import pkg_resources
     import pickle
+    from scipy.spatial import distance
     from pynets.core.utils import load_mat
     from pynets.plotting import plot_gen, plot_graphs
     from pynets.plotting.plot_gen import create_gb_palette
+    import mplcyberpunk
+
+    plt.style.use("cyberpunk")
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/ch2better.nii.gz"
@@ -1204,16 +1243,50 @@ def plot_all_struct(
                 edge_vmin=float(1),
                 node_size=node_sizes,
                 node_color=clust_pal_nodes,
-                edge_kwargs={"alpha": 0.50, "lineStyle": "dashed"},
+                edge_kwargs={"alpha": 0.50},
             )
             for view in views:
                 mod_lines = []
                 for line, edge_size in list(
                     zip(connectome.axes[view].ax.lines, edge_sizes)
                 ):
-                    line.set_lw(edge_size)
+                    line.set_lw(edge_size * 0.5)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+                mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
+                                             n_glow_lines=20,
+                                             diff_linewidth=1.0,
+                                             alpha_line=0.05)
+
+            for view in views:
+                coord_anns = []
+                for coord, label in list(zip(coords, labels)):
+                    if view == 'x':
+                        coord_ann = (coord[1], coord[2])
+                    if view == 'y':
+                        coord_ann = (coord[0], coord[2])
+                    if view == 'z':
+                        coord_ann = (coord[0], coord[1])
+
+                    if len(coord_anns) > 0:
+                        dists = []
+                        for c in coord_anns:
+                            dists.append(distance.euclidean(coord_ann, c))
+                        if any([i < 20 for i in dists]):
+                            continue
+                    coord_anns.append(coord_ann)
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
+                                                      xytext=(0, 3),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.75',
+                                                      fontweight='bold',
+                                                      zorder=1000,
+                                                      color='black')
+
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
             raise RuntimeError(
@@ -1265,6 +1338,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from nilearn import plotting as niplot
     from pynets.core import thresholding
     from pynets.plotting.plot_gen import create_gb_palette
+    import mplcyberpunk
+    from scipy.spatial import distance
 
     coords = metadata["coords"]
     labels = metadata["labels"]
@@ -1377,6 +1452,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             dpi=dpi_resolution)
 
     if glassbrain is True:
+        plt.style.use("cyberpunk")
+
         # Multiplex glass brain
         views = ["x", "y", "z"]
         connectome = niplot.plot_connectome(
@@ -1402,10 +1479,10 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         connectome.add_graph(
             struct_mat,
             [tuple(x) for x in coords],
-            edge_threshold="50%",
+            edge_threshold="10%",
             edge_cmap=plt.cm.binary,
             node_size=1,
-            edge_kwargs={"alpha": 0.50, "lineStyle": "dashed"},
+            edge_kwargs={"alpha": 0.20, "lineStyle": "dashed"},
             node_kwargs={"alpha": 0.95},
             edge_vmax=float(1),
             edge_vmin=float(1),
@@ -1416,10 +1493,11 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             for line, edge_size in list(
                 zip(connectome.axes[view].ax.lines, edge_sizes_struct)
             ):
-                line.set_lw(edge_size)
+                line.set_lw(edge_size*0.5)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines = mod_lines
-
+            mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
+                                         n_glow_lines=10, diff_linewidth=0.80, alpha_line=0.15)
         [func_mat,
          clust_pal_edges,
          clust_pal_nodes,
@@ -1437,7 +1515,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         connectome.add_graph(
             func_mat,
             [tuple(x) for x in coords],
-            edge_threshold="50%",
+            edge_threshold="0%",
             edge_cmap=clust_pal_edges,
             edge_kwargs={"alpha": 0.75},
             edge_vmax=float(z_max),
@@ -1457,6 +1535,33 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines[len(edge_sizes_struct):] = mod_lines
+
+        for view in views:
+            coord_anns = []
+            for coord, label in list(zip(coords, labels)):
+                if view == 'x':
+                    coord_ann = (coord[1], coord[2])
+                if view == 'y':
+                    coord_ann = (coord[0], coord[2])
+                if view == 'z':
+                    coord_ann = (coord[0], coord[1])
+
+                if len(coord_anns) > 0:
+                    dists = []
+                    for c in coord_anns:
+                        dists.append(distance.euclidean(coord_ann, c))
+                    if any([i < 20 for i in dists]):
+                        continue
+                coord_anns.append(coord_ann)
+                connectome.axes[view].ax.annotate(label,
+                                      coord_ann,
+                                      xycoords='data',
+                                      textcoords='offset points',
+                                      xytext=(0, 3),
+                                      horizontalalignment='center',
+                                                  verticalalignment='top',
+                                      fontsize='2.75', fontweight='bold',
+                                                  zorder=1000, color='black')
 
         connectome.savefig(
             f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution

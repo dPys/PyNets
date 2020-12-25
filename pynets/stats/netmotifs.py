@@ -424,31 +424,6 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     return mG_path
 
 
-def get_brainnetome_node_attributes(node_files, emb_shape):
-    import ast
-    import re
-    from pynets.stats.prediction import parse_closest_ixs
-
-    ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
-
-    coords = [(i['coord']) for
-              i in node_dict]
-    if isinstance(node_dict[0]['label'], str):
-        labels = [
-            ast.literal_eval(
-                re.search('({.+})',
-                          i['label']).group(0))[
-                'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
-    else:
-        labels = [
-            list(i['label'])[0][
-                'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
-
-    return coords, labels, ixs
-
-
 def motif_matching(
     paths,
     ID,
@@ -469,23 +444,24 @@ def motif_matching(
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
     from graspy.utils import remove_loops, symmetrize, get_lcc
+    from pynets.core.nodemaker import get_brainnetome_node_attributes
 
     [struct_graph_path, func_graph_path] = paths
     struct_mat = np.load(struct_graph_path)
     func_mat = np.load(func_graph_path)
 
-    [struct_coords, struct_labels, struct_ixs] = get_brainnetome_node_attributes(glob.glob(
+    [struct_coords, struct_labels, struct_label_intensities] = \
+        get_brainnetome_node_attributes(glob.glob(
         f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
         struct_mat.shape[0])
 
-    [func_coords, func_labels, func_ixs] = get_brainnetome_node_attributes(glob.glob(
+    [func_coords, func_labels, func_label_intensities] = \
+        get_brainnetome_node_attributes(glob.glob(
         f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
         func_mat.shape[0])
 
     # Find intersecting nodes across modalities (i.e. assuming the same
     # parcellation, but accomodating for the possibility of dropped nodes)
-    func_label_intensities = [i[1] for i in func_labels]
-    struct_label_intensities = [i[1] for i in struct_labels]
     diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
     diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
     G_struct = nx.from_numpy_array(struct_mat)
