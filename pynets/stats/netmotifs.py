@@ -444,59 +444,24 @@ def motif_matching(
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
     from graspy.utils import remove_loops, symmetrize, get_lcc
+    from pynets.core.nodemaker import get_brainnetome_node_attributes
 
     [struct_graph_path, func_graph_path] = paths
     struct_mat = np.load(struct_graph_path)
     func_mat = np.load(func_graph_path)
 
-    if rsn is not None:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-    else:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
+    [struct_coords, struct_labels, struct_label_intensities] = \
+        get_brainnetome_node_attributes(glob.glob(
+        f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
+        struct_mat.shape[0])
 
-    with open(struct_coords_path, "rb") as file_:
-        struct_coords = pickle.load(file_)
-    with open(func_coords_path, "rb") as file_:
-        func_coords = pickle.load(file_)
-    with open(struct_labels_path, "rb") as file_:
-        struct_labels = pickle.load(file_)
-    with open(func_labels_path, "rb") as file_:
-        func_labels = pickle.load(file_)
+    [func_coords, func_labels, func_label_intensities] = \
+        get_brainnetome_node_attributes(glob.glob(
+        f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
+        func_mat.shape[0])
 
     # Find intersecting nodes across modalities (i.e. assuming the same
     # parcellation, but accomodating for the possibility of dropped nodes)
-    func_label_intensities = [i[1] for i in func_labels]
-    struct_label_intensities = [i[1] for i in struct_labels]
     diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
     diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
     G_struct = nx.from_numpy_array(struct_mat)

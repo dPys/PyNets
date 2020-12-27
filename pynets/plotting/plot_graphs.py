@@ -31,30 +31,19 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    import mplcyberpunk
+    from matplotlib import pyplot as plt
     matplotlib.use("agg")
-    import sys
+    plt.style.use("cyberpunk")
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
     import matplotlib.ticker as mticker
-    from pynets.core.utils import load_runconfig
+
 
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
-
-    hardcoded_params = load_runconfig()
-    try:
-        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-    except KeyError as e:
-        print(e,
-            "Plotting configuration not successfully extracted"
-            " from runconfig.yaml"
-        )
-        sys.exit(1)
-
-    if any(isinstance(sub, dict) for sub in labels):
-        labels = [i[0][labeling_atlas] for i in labels]
 
     try:
         plot_matrix(
@@ -72,9 +61,11 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    tick_interval = int(np.around(len(labels)))/20
+    tick_interval = int(np.around(len(labels)))/10
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
+        plt.rcParams[param] = '#000000'
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
@@ -104,33 +95,21 @@ def plot_community_conn_mat(
     """
     import warnings
     warnings.filterwarnings("ignore")
-    import sys
-    import matplotlib
-    import matplotlib.pyplot as plt
+    from matplotlib import pyplot as plt
+    matplotlib.use("agg")
+    import mplcyberpunk
+    plt.style.use("cyberpunk")
     import matplotlib.patches as patches
     import matplotlib.ticker as mticker
     matplotlib.use("agg")
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
-    from pynets.core.utils import load_runconfig
+
+    plt.style.use("cyberpunk")
 
     conn_matrix_bin = thresholding.binarize(conn_matrix)
     conn_matrix = thresholding.standardize(conn_matrix)
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
-
-    hardcoded_params = load_runconfig()
-
-    try:
-        labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
-    except KeyError as e:
-        print(e,
-              "Plotting configuration not successfully extracted"
-              " from runconfig.yaml"
-              )
-        sys.exit(1)
-
-    if any(isinstance(sub, dict) for sub in labels):
-        labels = [i[0][labeling_atlas] for i in labels]
 
     sorting_array = sorted(
         range(len(community_aff)),
@@ -186,9 +165,11 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    tick_interval = int(np.around(len(labels)))/20
+    tick_interval = int(np.around(len(labels)))/10
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
+    for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
+        plt.rcParams[param] = '#000000'
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
     plt.close()
     return

@@ -651,8 +651,8 @@ def streams2graph(
                 pc = pcN
                 print(f"{pcN}%")
 
-            # Map the streamlines coordinates to voxel coordinates and get labels
-            # for label_volume
+            # Map the streamlines coordinates to voxel coordinates and get
+            # labels for label_volume
             vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
 
             lab_coords = [
@@ -683,7 +683,8 @@ def streams2graph(
                     if not (edge[0], edge[1]) in fiberlengths.keys():
                         fiberlengths[(edge[0], edge[1])] = [len(vox_coords)]
                     else:
-                        fiberlengths[(edge[0], edge[1])].append(len(vox_coords))
+                        fiberlengths[(edge[0],
+                                      edge[1])].append(len(vox_coords))
 
                 # Get FA values along edge
                 if fa_wei is True:
@@ -757,7 +758,8 @@ def streams2graph(
                 g.edges[u, v].update({"final_weight": d['fiber_density']})
         elif fa_wei is True and fiber_density is False:
             for u, v, d in g.edges(data=True):
-                g.edges[u, v].update({"final_weight": d['fa_weight']*d['weight']})
+                g.edges[u, v].update({"final_weight":
+                                          d['fa_weight']*d['weight']})
         else:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight": d['weight']})

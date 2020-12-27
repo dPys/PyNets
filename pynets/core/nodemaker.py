@@ -1108,7 +1108,7 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
             print('Inconsistent number of intensities and labels. '
                   'Correcting parcellation...')
             diff = [i for i in list(set(label_intensities) - set(intensities))
-                    if i != 0]
+                    if str(i) != '0']
             for val in diff:
                 bad_idxs.append(label_intensities.index(val))
             if len(bad_idxs) > 0:
@@ -1121,21 +1121,22 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                     del labels[j], coords[j]
 
             diff = [i for i in list(set(intensities) -
-                                    set(label_intensities)) if i != 0]
+                                    set(label_intensities)) if str(i) != '0']
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
                 print(f"Removing: {str(val)}...")
                 parlist_img_data[np.where(parlist_img_data == val)] = 0
 
             parcellation = fname_presuffix(
-            parcellation, suffix="_mod", newpath=os.path.dirname(parcellation))
+            parcellation, suffix="_mod",
+                newpath=os.path.dirname(parcellation))
             nib.save(
                 nib.Nifti1Image(parlist_img_data,
                                 affine=parcellation_img.affine),
                 parcellation)
 
             intensity_count = len([i for i in np.unique(
-                parlist_img_data.astype("int")) if i != 0])
+                parlist_img_data.astype("int")) if str(i) != '0'])
         else:
             intensity_count = len(intensities)
     else:
@@ -1361,6 +1362,31 @@ def parcel_naming(coords, vox_size):
     assert len(labels) == len(coords)
 
     return labels
+
+
+def get_brainnetome_node_attributes(node_files, emb_shape):
+    import ast
+    import re
+    from pynets.stats.prediction import parse_closest_ixs
+
+    ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
+
+    coords = [(i['coord']) for
+              i in node_dict]
+    if isinstance(node_dict[0]['label'], str):
+        labels = [
+            ast.literal_eval(
+                re.search('({.+})',
+                          i['label']).group(0))[
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+    else:
+        labels = [
+            list(i['label'])[0][
+                'BrainnetomeAtlasFan2016'] for i in
+            node_dict]
+
+    return coords, labels, ixs
 
 
 # def psycho_naming(coords, node_size):
