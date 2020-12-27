@@ -13,10 +13,10 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-DEFAULT_TIMEOUT = 14400
+# DEFAULT_TIMEOUT = 14400
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def average_shortest_path_length_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -44,7 +44,7 @@ def average_shortest_path_length_for_all(G):
         sg, weight="weight") for sg in subgraphs) / len(subgraphs)
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def subgraph_number_of_cliques_for_all(G):
     """
     Helper function, in the case of graph disconnectedness,
@@ -92,7 +92,6 @@ def subgraph_number_of_cliques_for_all(G):
                              for sg in subgraphs) / len(subgraphs))
 
 
-@timeout(DEFAULT_TIMEOUT)
 def global_efficiency(G, weight="weight"):
     """
     Return the global efficiency of the G
@@ -143,7 +142,6 @@ def global_efficiency(G, weight="weight"):
     return sum(inv_lengths) / (N * (N - 1))
 
 
-@timeout(DEFAULT_TIMEOUT)
 def local_efficiency(G, weight="weight"):
     """
     Return the local efficiency of each node in the G
@@ -199,7 +197,7 @@ def local_efficiency(G, weight="weight"):
     return efficiencies
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def average_local_efficiency(G, weight="weight"):
     """
     Return the average local efficiency of all of the nodes in the G
@@ -232,7 +230,7 @@ def average_local_efficiency(G, weight="weight"):
     return np.nanmean(e_loc_vec)
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def smallworldness(
         G,
         niter=1,
@@ -369,7 +367,7 @@ def create_communities(node_comm_aff_mat, node_num):
     return com_assign
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def participation_coef(W, ci, degree="undirected"):
     """
     Participation coefficient is a measure of diversity of intermodular
@@ -418,7 +416,7 @@ def participation_coef(W, ci, degree="undirected"):
     return P
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def participation_coef_sign(W, ci):
     """
     Participation coefficient is a measure of diversity of intermodular
@@ -731,7 +729,6 @@ def link_communities(W, type_clustering="single"):
     return M
 
 
-@timeout(DEFAULT_TIMEOUT)
 def weighted_transitivity(G):
     r"""
     Compute weighted graph transitivity, the fraction of all possible
@@ -1325,7 +1322,7 @@ def community_resolution_selection(G):
     return dict(zip(G.nodes(), ci)), ci, resolution, num_comms
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_community(G, net_met_val_list_final, metric_list_names):
     import community
 
@@ -1339,7 +1336,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
     return net_met_val_list_final, metric_list_names, ci
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     if len(in_mat[in_mat < 0.0]) > 0:
         pc_vector = participation_coef_sign(in_mat, ci)[0]
@@ -1374,7 +1371,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_vector = diversity_coef_sign(in_mat, ci)[0]
     print("\nCalculating Diversity Coefficients...")
@@ -1405,7 +1402,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     le_vector = local_efficiency(G)
     print("\nCalculating Local Efficiencies...")
@@ -1434,7 +1431,7 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_clustering(G, metric_list_names, net_met_val_list_final):
 
     cl_vector = nx.clustering(G, weight="weight")
@@ -1465,7 +1462,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import degree_centrality
 
@@ -1498,7 +1495,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_betweenness_centrality(
         G_len,
         metric_list_names,
@@ -1536,7 +1533,7 @@ def get_betweenness_centrality(
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import eigenvector_centrality
 
@@ -1570,7 +1567,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import communicability_betweenness_centrality
 
@@ -1606,7 +1603,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     return metric_list_names, net_met_val_list_final
 
 
-@timeout(DEFAULT_TIMEOUT)
+# @timeout(DEFAULT_TIMEOUT)
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import rich_club_coefficient
 

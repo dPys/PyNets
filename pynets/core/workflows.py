@@ -176,14 +176,14 @@ def workflow_selector(
         dwi_model_list = conn_model_list
         conn_model_func = None
         func_model_list = None
-        print(f"dwi_model_list: {dwi_model_list}")
+        # print(f"dwi_model_list: {dwi_model_list}")
     elif (func_file is not None) and (dwi_file is None):
         print("Parsing functional models...")
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
         dwi_model_list = None
-        print(f"func_model_list: {func_model_list}")
+        # print(f"func_model_list: {func_model_list}")
 
     # for each file input, delete corresponding t1w anatomical copies.
     if clean is True:

@@ -154,7 +154,7 @@ plotting:
     dpi:
         - 300
     labeling_atlas:
-        - 'AAL2zourioMazoyer2002'
+        - 'BrainnetomeAtlasFan2016'
     functional:
         glassbrain:
             color_theme:
@@ -168,7 +168,7 @@ plotting:
               - 'binary' # Recommend keeping the default here, as it produces white edges "resembling" white-matter fibers
         adjacency:
             color_theme:
-                - 'RdBu_r'
+              - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
         - (4, 6)

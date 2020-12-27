@@ -768,11 +768,17 @@ def plot_all_func(
     if not isinstance(coords, list):
         coords = list(tuple(x) for x in coords)
 
-    if not isinstance(labels, list):
-        labels = list(labels)
-
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, str):
+        import ast
+        if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
+            labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, list):
+        labels = [i[0][labeling_atlas] for i in labels]
+    else:
+        if not isinstance(labels, list):
+            labels = list(labels)
 
     if not isinstance(conn_matrix, np.ndarray):
         if isinstance(conn_matrix, str):
@@ -1094,14 +1100,17 @@ def plot_all_struct(
         )
         sys.exit(0)
 
-    if not isinstance(coords, list):
-        coords = list(tuple(x) for x in coords)
-
-    if not isinstance(labels, list):
-        labels = list(labels)
-
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, str):
+        import ast
+        if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
+            labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, list):
+        labels = [i[0][labeling_atlas] for i in labels]
+    else:
+        if not isinstance(labels, list):
+            labels = list(labels)
 
     if not isinstance(conn_matrix, np.ndarray):
         if isinstance(conn_matrix, str):
@@ -1383,6 +1392,15 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, str):
+        import ast
+        if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
+            labels = [lab[labeling_atlas] for lab in labels]
+    elif isinstance(labels, list):
+        labels = [i[0][labeling_atlas] for i in labels]
+    else:
+        if not isinstance(labels, list):
+            labels = list(labels)
 
     [struct_mat, func_mat] = [
         np.load(modality_paths[0]), np.load(modality_paths[1])]
@@ -1497,7 +1515,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 mod_lines.append(line)
             connectome.axes[view].ax.lines = mod_lines
             mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
-                                         n_glow_lines=10, diff_linewidth=0.80, alpha_line=0.15)
+                                         n_glow_lines=10, diff_linewidth=0.80,
+                                         alpha_line=0.15)
         [func_mat,
          clust_pal_edges,
          clust_pal_nodes,
