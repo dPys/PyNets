@@ -778,17 +778,16 @@ def save_mat_thresholded(
     norm,
     binary,
 ):
+    import numpy as np
     from pynets.core.utils import save_mat
     from nipype.utils.filemanip import fname_presuffix
 
+    est_path = fname_presuffix(est_path_orig,
+                               suffix=f"_thrtype-{thr_type}_thr-{thr}")
+
     if (np.abs(conn_matrix) < 0.0000001).all():
-        est_path = fname_presuffix(est_path_orig,
-                                   suffix=f"_thrtype-{thr_type}_thr-{thr}"
-                                          f"_EMPTY")
         print(UserWarning(f"Empty graph detected for: {est_path}"))
-    else:
-        est_path = fname_presuffix(est_path_orig,
-                                   suffix=f"_thrtype-{thr_type}_thr-{thr}")
+
     save_mat(conn_matrix, est_path, fmt="npy")
 
     return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
