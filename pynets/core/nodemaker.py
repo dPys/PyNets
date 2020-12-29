@@ -373,14 +373,12 @@ def get_node_membership(
             print(e,
                   f"\nCannot load MNI reference. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             template_img = nib.load(infile)
         except ImportError as e:
             print(e, f"\nCannot load MNI reference. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     bna_aff = template_img.affine
 
@@ -494,14 +492,12 @@ def get_node_membership(
             print(e,
                   f"\nCannot load RSN reference image. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
             print(e, f"\nCannot load RSN reference image. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
@@ -676,7 +672,6 @@ def parcel_masker(
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -689,14 +684,12 @@ def parcel_masker(
             print(e,
                   f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -826,7 +819,6 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -839,14 +831,12 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             print(e,
                   f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     mask_img_res = resample_to_img(
         mask_img, template_img,
@@ -904,7 +894,6 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             "Restrictive masking. No coords remain after masking with"
             " brain mask/roi..."
         )
-        sys.exit(1)
 
     if len(coords) <= 1:
         raise ValueError(
@@ -1146,12 +1135,10 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     try:
         assert len(coords) == len(labels) == intensity_count
     except ValueError as e:
-        import sys
         print(e, 'Failed!')
         print(f"# Coords: {len(coords)}")
         print(f"# Labels: {len(labels)}")
         print(f"# Intensities: {intensity_count}")
-        sys.exit(1)
 
     return parcellation, coords, labels
 
@@ -1262,14 +1249,12 @@ def parcel_naming(coords, vox_size):
         print(e,
             "No labeling atlases listed in runconfig.yaml"
         )
-        sys.exit(1)
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -1282,14 +1267,12 @@ def parcel_naming(coords, vox_size):
             print(e,
                   f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     coords_vox = []
     for i in coords:

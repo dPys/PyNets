@@ -188,7 +188,6 @@ def create_est_path_func(
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -315,7 +314,6 @@ def create_est_path_diff(
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -427,7 +425,6 @@ def create_raw_path_func(
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -539,7 +536,6 @@ def create_raw_path_diff(
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -785,8 +781,14 @@ def save_mat_thresholded(
     from pynets.core.utils import save_mat
     from nipype.utils.filemanip import fname_presuffix
 
-    est_path = fname_presuffix(est_path_orig,
-                               suffix=f"_thrtype-{thr_type}_thr-{thr}")
+    if (np.abs(conn_matrix) < 0.0000001).all():
+        est_path = fname_presuffix(est_path_orig,
+                                   suffix=f"_thrtype-{thr_type}_thr-{thr}"
+                                          f"_EMPTY")
+        print(UserWarning(f"Empty graph detected for: {est_path}"))
+    else:
+        est_path = fname_presuffix(est_path_orig,
+                                   suffix=f"_thrtype-{thr_type}_thr-{thr}")
     save_mat(conn_matrix, est_path, fmt="npy")
 
     return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
@@ -1252,7 +1254,6 @@ def collect_pandas_df(
             "available functional models not sucessfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
@@ -1261,7 +1262,6 @@ def collect_pandas_df(
             "available structural models not sucessfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1554,7 +1554,6 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         print(e,
             "No template specified in runconfig.yaml"
         )
-        sys.exit(1)
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
@@ -1579,14 +1578,12 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
             print(e,
                   f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
-            sys.exit(1)
 
     net_parcels_map_nifti = resample_to_img(
         net_parcels_map_nifti, template_img, interpolation="nearest"
@@ -1832,7 +1829,6 @@ def build_args_from_config(modality, arg_dict):
             "available functional models not successfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
@@ -1841,7 +1837,6 @@ def build_args_from_config(modality, arg_dict):
             "available structural models not successfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
 
     arg_list = []
     for mod_ in modalities:
@@ -1894,7 +1889,6 @@ def check_template_loads(template, template_mask, template_name):
             print(e,
                   f"\nCannot load template {template_name} image or template "
                   f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
     else:
         try:
             nib.load(template)
@@ -1903,7 +1897,6 @@ def check_template_loads(template, template_mask, template_name):
         except ImportError as e:
             print(e, f"\nCannot load template {template_name} image or template "
                   f"mask. Do you have git-lfs installed?")
-            sys.exit(1)
 
 
 def save_4d_to_3d(in_file):

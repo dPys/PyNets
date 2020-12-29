@@ -204,8 +204,6 @@ class FetchNodesLabels(SimpleInterface):
                     "Either you have specified the name of an atlas that does"
                     " not exist in the nilearn or local repository or you have"
                     " not supplied a 3d atlas parcellation image!")
-                import sys
-                sys.exit(1)
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -250,8 +248,6 @@ class FetchNodesLabels(SimpleInterface):
                     "Either you have specified the name of an atlas that does"
                     " not exist in the nilearn or local repository or you have"
                     " not supplied a 3d atlas parcellation image!")
-                import sys
-                sys.exit(1)
             labels = None
             networks_list = None
         else:
@@ -2345,10 +2341,8 @@ class RegisterAtlasFunc(SimpleInterface):
                         self.inputs.labels)
 
             except FileNotFoundError as e:
-                import sys
                 print(e, 'T1w-space parcellation not found. Did you delete '
                       'outputs?')
-                sys.exit(1)
         else:
             if self.inputs.uatlas is None:
                 uatlas_tmp_path = None

@@ -443,7 +443,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                             ixs = [i for i in par_dict[ID][ses][modality][alg][
                                 comb_tuple]['index'] if i is not None]
 
-                            if len(node_files) > 0 and len(ixs) != emb_shape:
+                            if len(node_files) > 0:
                                 ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
                                 coords = [(i['coord']) for
@@ -636,7 +636,7 @@ if __name__ == "__main__":
     modality = 'dwi'
 
     embedding_types = ['ASE']
-    rsns = ['triple']
+    rsns = ['triple', 'kmeans']
     template = 'CN200'
     #template = 'MNI152_T1'
     mets = ["global_efficiency",
@@ -727,6 +727,7 @@ if __name__ == "__main__":
             modality, hyperparam_dict, sorted(list(set(hyperparams))),
             ensembles)[1]
 
+        grid = [i for i in grid if '200' not in i and '400' not in i and '600' not in i and '800' not in i]
         # In the case that we are using all of the 3 RSN connectomes
         # (pDMN, coSN, and fECN) in the feature-space,
         # rather than varying them as hyperparameters (i.e. we assume

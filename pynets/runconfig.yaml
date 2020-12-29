@@ -260,7 +260,7 @@ execution_dict: # Nipype workflow global settings
     - 'display_variable':
         - ':0'
     - 'job_finished_timeout':
-        - 60
+        - 240
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':

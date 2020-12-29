@@ -129,7 +129,6 @@ def workflow_selector(
             "available functional models not successfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
@@ -138,7 +137,6 @@ def workflow_selector(
             "available structural models not successfully extracted"
             " from runconfig.yaml"
         )
-        sys.exit(1)
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):

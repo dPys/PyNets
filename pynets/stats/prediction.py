@@ -804,8 +804,8 @@ def parse_closest_ixs(node_files, emb_shape):
     import ast
 
     if len(node_files) > 0:
-        node_files = [i for i in node_files if
-                      f"{emb_shape}" in i]
+        # node_files = [i for i in node_files if
+        #               f"{emb_shape}" in i]
         if len(node_files) > 0:
             if len(node_files) == 1:
                 with open(node_files[0],

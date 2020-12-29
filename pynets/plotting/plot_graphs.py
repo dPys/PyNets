@@ -278,7 +278,6 @@ def plot_conn_mat_func(
             "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(1)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
@@ -447,7 +446,6 @@ def plot_conn_mat_struct(
             "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(0)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)

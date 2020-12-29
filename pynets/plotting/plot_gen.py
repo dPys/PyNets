@@ -763,7 +763,6 @@ def plot_all_func(
             "Plotting configuration not successfully extracted "
             "from runconfig.yaml"
         )
-        sys.exit(0)
 
     if not isinstance(coords, list):
         coords = list(tuple(x) for x in coords)
@@ -1099,7 +1098,6 @@ def plot_all_struct(
             e, "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(0)
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
@@ -1390,7 +1388,6 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(0)
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
