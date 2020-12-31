@@ -111,6 +111,21 @@ def get_ensembles_embedding(modality, alg, base_dir):
     return ensembles
 
 
+# def stack_ensemble(X, y, estimator_files, meta_estimator):
+#     import joblib
+#     from mlens.ensemble import SuperLearner
+#
+#     ensemble = SuperLearner()
+#     ests = []
+#     for est_file in estimator_files:
+#         ests.append(joblib.load(est_file))
+#
+#     ensemble.add(ests)
+#     ensemble.add_meta(meta_estimator)
+#     ensemble.fit(X, y)
+#     return ensemble
+
+
 def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
     topology_file = f"{base_dir}/all_subs_neat_{modality}.csv"
     if os.path.isfile(topology_file):
@@ -1110,6 +1125,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Apply a simple imputer (note that this assumes extreme cases of
@@ -1133,6 +1149,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Standardize X
@@ -1153,6 +1170,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Remove low-variance columns
@@ -1169,6 +1187,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Remove outliers
@@ -1185,6 +1204,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Remove missing y
@@ -1201,6 +1221,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
     # imp2 = SimpleImputer()
     # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
@@ -1233,6 +1254,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Drop sparse columns with >50% zeros
@@ -1249,6 +1271,7 @@ def bootstrapped_nested_cv(
             {0: np.nan},
             {0: np.nan},
             {0: 'None'},
+            None
         )
 
     # Standardize Y
@@ -1262,6 +1285,8 @@ def bootstrapped_nested_cv(
         raise ValueError('Prediction method not recognized')
 
     print(f"\nX: {X}\ny: {y}\n")
+
+    final_est = None
 
     # Bootstrap nested CV's "simulates" the variability of incoming data,
     # particularly when training on smaller datasets

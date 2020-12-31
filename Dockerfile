@@ -152,7 +152,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 /opt/conda/bin/pynets_bids \
-    && chmod 777 /opt/conda/bin/pynets_collect \
+#    && chmod 777 /opt/conda/bin/pynets_collect \
     && chmod 777 /opt/conda/bin/pynets_cloud \
 #    && chmod 777 /opt/conda/bin/pynets_benchmark \
 #    && chmod 777 /opt/conda/bin/pynets_predict \
