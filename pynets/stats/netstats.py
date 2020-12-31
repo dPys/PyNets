@@ -13,7 +13,7 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-DEFAULT_TIMEOUT = 720
+DEFAULT_TIMEOUT = 120
 
 
 @timeout(DEFAULT_TIMEOUT)
