@@ -1329,7 +1329,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
     ci_dict, ci, resolution, num_comms = community_resolution_selection(G)
     modularity = community.community_louvain.modularity(ci_dict, G)
     metric_list_names.append("modularity")
-    if modularity == 1.0:
+    if modularity == 1 or modularity == 0:
         modularity = np.nan
         print("Louvain modularity is undefined for G")
     net_met_val_list_final.append(modularity)
@@ -1338,7 +1338,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
 
 @timeout(DEFAULT_TIMEOUT)
 def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
-    if len(in_mat[in_mat < 0.0]) > 0:
+    if len(in_mat[in_mat < 0]) > 0:
         pc_vector = participation_coef_sign(in_mat, ci)[0]
     else:
         pc_vector = participation_coef(in_mat, ci)

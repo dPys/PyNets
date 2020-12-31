@@ -3515,12 +3515,12 @@ def main():
             "PyNets not installed! Ensure that you are referencing the correct"
             " site-packages and using Python3.6+"
         )
-        sys.exit(1)
+        return 1
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
               " flag.\n")
-        sys.exit(1)
+        return 1
 
     args = get_parser().parse_args()
 
@@ -3530,8 +3530,6 @@ def main():
         p = mp.Process(target=build_workflow, args=(args, retval))
         p.start()
         p.join()
-        if p.is_alive():
-            p.terminate()
 
         retcode = p.exitcode or retval.get("return_code", 0)
 
@@ -3542,19 +3540,17 @@ def main():
         run_uuid = retval.get("run_uuid", None)
 
         retcode = retcode or int(pynets_wf is None)
-        if retcode == 1:
-            return retcode
 
-        gc.collect()
-
+    if p.is_alive():
+        p.terminate()
     mgr.shutdown()
-
+    gc.collect()
     if args.noclean is False and work_dir:
         from shutil import rmtree
 
         rmtree(work_dir, ignore_errors=True)
 
-    return 0
+    return retcode
 
 
 if __name__ == "__main__":

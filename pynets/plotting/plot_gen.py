@@ -956,7 +956,7 @@ def plot_all_func(
                                                       fontsize='2.75',
                                                       fontweight='bold',
                                                       zorder=1000,
-                                                      color='black')
+                                                      color='red')
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1294,7 +1294,7 @@ def plot_all_struct(
                                                       fontsize='2.75',
                                                       fontweight='bold',
                                                       zorder=1000,
-                                                      color='black')
+                                                      color='red')
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1580,7 +1580,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                                       horizontalalignment='center',
                                                   verticalalignment='top',
                                       fontsize='2.75', fontweight='bold',
-                                                  zorder=1000, color='black')
+                                                  zorder=1000, color='red')
 
         connectome.savefig(
             f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution

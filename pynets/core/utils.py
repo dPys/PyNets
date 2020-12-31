@@ -1965,7 +1965,8 @@ class watchdog(object):
             watchdog_thread.join()
         return 0
 
-    def _watchdog(self, watchdog_timeout=10800):
+    # Default timeout to 2 hours of inactivity
+    def _watchdog(self, watchdog_timeout=7200):
 
         self.last_progress_time = time.time()
 
@@ -1975,11 +1976,9 @@ class watchdog(object):
             last_progress_delay = time.time() - self.last_progress_time
             if last_progress_delay < watchdog_timeout:
                 continue
-            try:
-                signal.signal(signal.SIGQUIT, dumpstacks)
-                print(f"No progress in {last_progress_delay} seconds...")
-            except BaseException:
-                pass
+            signal.signal(signal.SIGQUIT, dumpstacks)
+            print(f"WATCHDOG: No progress in {last_progress_delay} "
+                  f"seconds...")
             time.sleep(1)
             os.kill(0, 9)
 

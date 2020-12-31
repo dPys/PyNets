@@ -19,6 +19,7 @@ try:
     FSLDIR = os.environ["FSLDIR"]
 except KeyError as e:
     print(e, "FSLDIR environment variable not set!")
+    sys.exit(1)
 
 
 def gen_mask(t1w_head, t1w_brain, mask):

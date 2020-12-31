@@ -20,6 +20,7 @@ try:
     FSLDIR = os.environ["FSLDIR"]
 except KeyError as e:
     print(e, "FSLDIR environment variable not set!")
+    sys.exit(1)
 
 
 def direct_streamline_norm(
