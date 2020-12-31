@@ -154,8 +154,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 /opt/conda/bin/pynets_bids \
     && chmod 777 /opt/conda/bin/pynets_collect \
     && chmod 777 /opt/conda/bin/pynets_cloud \
-    && chmod 777 /opt/conda/bin/pynets_benchmark \
-    && chmod 777 /opt/conda/bin/pynets_predict \
+#    && chmod 777 /opt/conda/bin/pynets_benchmark \
+#    && chmod 777 /opt/conda/bin/pynets_predict \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \

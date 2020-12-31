@@ -2591,9 +2591,9 @@ def build_workflow(args, retval):
             nested=True,
             imports=import_list,
         )
-        net_mets_node.synchronize = True
+        # net_mets_node.synchronize = True
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 4
+        net_mets_node._mem_gb = 5
 
         collect_pd_list_net_csv_node = pe.Node(
             niu.Function(
@@ -2604,7 +2604,8 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._mem_gb = 2
+        collect_pd_list_net_csv_node._n_procs = 1
+        collect_pd_list_net_csv_node._mem_gb = 3
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(

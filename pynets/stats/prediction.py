@@ -1082,6 +1082,7 @@ def bootstrapped_nested_cv(
     alpha=0.95,
     missingness_thr=0.20,
 ):
+
     # y = df_all[target_var].values
     # X = df_all.drop(columns=drop_cols)
     if predict_type == 'regressor':
@@ -1391,7 +1392,6 @@ def bootstrapped_nested_cv(
         else:
             raise ValueError('Prediction method not recognized')
         grand_mean_y_predicted[boot] = final_est.predict(X)
-        del final_est
 
     unq_best_positions = list(flatten(list(np.unique(best_positions_list))))
 
@@ -1416,6 +1416,7 @@ def bootstrapped_nested_cv(
         grand_mean_best_error,
         mega_feat_imp_dict,
         grand_mean_y_predicted,
+        final_est
     )
 
 
@@ -2370,6 +2371,7 @@ class _BSNestedCVOutputSpec(TraitedSpec):
     modality = traits.Str(mandatory=True)
     embedding_type = traits.Str(mandatory=True)
     grid_param = traits.Str(mandatory=True)
+    out_path_est = traits.Any()
 
 
 class BSNestedCV(SimpleInterface):
@@ -2382,6 +2384,7 @@ class BSNestedCV(SimpleInterface):
         import gc
         import os
         from colorama import Fore, Style
+        from joblib import dump
 
         self._results["target_var"] = self.inputs.target_var
         self._results["modality"] = self.inputs.modality
@@ -2405,6 +2408,7 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_best_error,
                         mega_feat_imp_dict,
                         grand_mean_y_predicted,
+                        final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
                                                predict_type=predict_type)
                 else:
@@ -2414,10 +2418,22 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_best_error,
                         mega_feat_imp_dict,
                         grand_mean_y_predicted,
+                        final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
                                                predict_type=predict_type,
                                                missingness_thr=0.20,
                                                std_dev=3)
+                if final_est:
+                    out_path_est = f"{runtime.cwd}/estimator_" \
+                                   f"{self.inputs.target_var}_" \
+                                   f"{self.inputs.modality}_" \
+                                   f"{self.inputs.embedding_type}_" \
+                                   f"{self.inputs.grid_param.replace(', ', '_')}.joblib"
+
+                    dump(final_est, out_path_est)
+                else:
+                    out_path_est = None
+
                 if len(mega_feat_imp_dict.keys()) > 1:
                     print(
                         f"\n\n{Fore.BLUE}Target Outcome: "
@@ -2476,6 +2492,7 @@ class BSNestedCV(SimpleInterface):
                 grand_mean_y_predicted = {0: np.nan}
                 grand_mean_best_error = {0: np.nan}
                 mega_feat_imp_dict = {0: 'None'}
+                out_path_est = None
         else:
             print(
                 f"{Fore.RED}Empty feature-space for {self.inputs.grid_param},"
@@ -2486,6 +2503,7 @@ class BSNestedCV(SimpleInterface):
             grand_mean_y_predicted = {0: np.nan}
             grand_mean_best_error = {0: np.nan}
             mega_feat_imp_dict = {0: 'None'}
+            out_path_est = None
         gc.collect()
 
         self._results[
@@ -2497,6 +2515,7 @@ class BSNestedCV(SimpleInterface):
         self._results[
             "grand_mean_best_error"] = grand_mean_best_error
         self._results["mega_feat_imp_dict"] = mega_feat_imp_dict
+        self._results["out_path_est"] = out_path_est
 
         return runtime
 

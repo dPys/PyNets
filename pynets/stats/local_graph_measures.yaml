@@ -3,7 +3,7 @@ metric_list_nodal:
 #    - 'diversity_coefficient'
 #    - 'local_efficiency'
 #    - 'local_clustering'
-    - 'degree_centrality'
+#    - 'degree_centrality'
     - 'betweenness_centrality'
     - 'eigenvector_centrality'
     - 'louvain_modularity'
