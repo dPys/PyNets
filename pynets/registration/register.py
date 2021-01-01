@@ -22,6 +22,7 @@ except KeyError as e:
     print(e, "FSLDIR environment variable not set!")
     sys.exit(1)
 
+
 def direct_streamline_norm(
     streams,
     fa_path,
@@ -220,9 +221,7 @@ def direct_streamline_norm(
     try:
         run_dsn = hardcoded_params['tracking']["DSN"][0]
     except FileNotFoundError as e:
-        import sys
         print(e, "Failed to parse runconfig.yaml")
-        exit(1)
 
     if run_dsn is True:
         dsn_dir = f"{basedir_path}/dmri_reg/DSN"
@@ -249,14 +248,12 @@ def direct_streamline_norm(
                 print(e,
                       f"\nCannot load FA template. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
         else:
             try:
                 template_img = nib.load(template_path)
             except ImportError as e:
                 print(e, f"\nCannot load FA template. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
 
         uatlas_mni_img = nib.load(atlas_mni)
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
@@ -715,12 +712,10 @@ class DmriReg(object):
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
             except RuntimeError as e:
-                import sys
                 print(e,
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
-                sys.exit(1)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -977,14 +972,12 @@ class DmriReg(object):
                 print(e,
                       f"\nCannot load ventricle ROI. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
         else:
             try:
                 nib.load(self.mni_vent_loc)
             except ImportError as e:
                 print(e, f"\nCannot load ventricle ROI. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(
@@ -1013,14 +1006,12 @@ class DmriReg(object):
                     print(e,
                           f"\nCannot load Corpus Callosum ROI. "
                           f"Do you have git-lfs installed?")
-                    sys.exit(1)
             else:
                 try:
                     nib.load(self.corpuscallosum)
                 except ImportError as e:
                     print(e, f"\nCannot load Corpus Callosum ROI. "
                           f"Do you have git-lfs installed?")
-                    sys.exit(1)
 
             regutils.apply_warp(
                 self.t1w_brain,
@@ -1276,7 +1267,6 @@ class FmriReg(object):
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
-                sys.exit(1)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)

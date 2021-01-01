@@ -2591,9 +2591,9 @@ def build_workflow(args, retval):
             nested=True,
             imports=import_list,
         )
-        net_mets_node.synchronize = True
+        # net_mets_node.synchronize = True
         net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 4
+        net_mets_node._mem_gb = 5
 
         collect_pd_list_net_csv_node = pe.Node(
             niu.Function(
@@ -2604,7 +2604,8 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._mem_gb = 2
+        collect_pd_list_net_csv_node._n_procs = 1
+        collect_pd_list_net_csv_node._mem_gb = 3
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
@@ -3515,12 +3516,12 @@ def main():
             "PyNets not installed! Ensure that you are referencing the correct"
             " site-packages and using Python3.6+"
         )
-        sys.exit(1)
+        return 1
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
               " flag.\n")
-        sys.exit(1)
+        return 1
 
     args = get_parser().parse_args()
 
@@ -3530,8 +3531,6 @@ def main():
         p = mp.Process(target=build_workflow, args=(args, retval))
         p.start()
         p.join()
-        if p.is_alive():
-            p.terminate()
 
         retcode = p.exitcode or retval.get("return_code", 0)
 
@@ -3542,19 +3541,17 @@ def main():
         run_uuid = retval.get("run_uuid", None)
 
         retcode = retcode or int(pynets_wf is None)
-        if retcode == 1:
-            return retcode
 
-        gc.collect()
-
+    if p.is_alive():
+        p.terminate()
     mgr.shutdown()
-
+    gc.collect()
     if args.noclean is False and work_dir:
         from shutil import rmtree
 
         rmtree(work_dir, ignore_errors=True)
 
-    return 0
+    return retcode
 
 
 if __name__ == "__main__":

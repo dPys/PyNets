@@ -284,12 +284,9 @@ def get_conn_matrix(
             print("\nComputing covariance matrix...\n")
             kind = "covariance"
         else:
-            try:
-                raise ValueError(
-                    "\nERROR! No connectivity model specified at runtime. Select a"
-                    " valid estimator using the -mod flag.")
-            except ValueError:
-                sys.exit(1)
+            raise ValueError(
+                "\nERROR! No connectivity model specified at runtime. Select a"
+                " valid estimator using the -mod flag.")
 
         # Try with the best-fitting Lasso estimator
         if estimator:
@@ -307,7 +304,6 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError as e:
                 print(e, "Cannot run QuicGraphLasso. Skggm not installed!")
-                sys.exit(1)
 
             # Compute the sparse inverse covariance via QuicGraphLasso
             # credit: skggm
@@ -322,7 +318,6 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLassoCV
             except ImportError as e:
                 print(e, "Cannot run QuicGraphLassoCV. Skggm not installed!")
-                sys.exit(1)
 
             # Compute the sparse inverse covariance via QuicGraphLassoCV
             # credit: skggm
@@ -336,7 +331,6 @@ def get_conn_matrix(
                 from inverse_covariance import QuicGraphicalLassoEBIC
             except ImportError as e:
                 print(e, "Cannot run QuicGraphLassoEBIC. Skggm not installed!")
-                sys.exit(1)
 
             # Compute the sparse inverse covariance via QuicGraphLassoEBIC
             # credit: skggm
@@ -353,7 +347,6 @@ def get_conn_matrix(
                 )
             except ImportError as e:
                 print(e, "Cannot run AdaptiveGraphLasso. Skggm not installed!")
-                sys.exit(1)
 
             # Compute the sparse inverse covariance via
             # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
@@ -366,13 +359,9 @@ def get_conn_matrix(
             model.fit(time_series)
             conn_matrix = model.estimator_.precision_
         else:
-            try:
-                raise ValueError(
-                    "\nNo connectivity model specified at runtime. "
-                    "Select a valid estimator using the -mod flag.")
-            except ValueError:
-                import sys
-                sys.exit(1)
+            raise ValueError(
+                "\nNo connectivity model specified at runtime. "
+                "Select a valid estimator using the -mod flag.")
 
     # Enforce symmetry
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
@@ -552,7 +541,6 @@ class TimeseriesExtraction(object):
                 "ERROR: Plotting configuration not successfully extracted "
                 "from runconfig.yaml"
             )
-            sys.exit(1)
 
     def prepare_inputs(self):
         """Helper function to creating temporary nii's and prepare inputs from

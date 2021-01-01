@@ -17,9 +17,8 @@ import warnings
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
-except KeyError:
-    import sys
-    print("FSLDIR environment variable not set!")
+except KeyError as e:
+    print(e, "FSLDIR environment variable not set!")
     sys.exit(1)
 
 
@@ -1299,11 +1298,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
             if bvec_array.shape[0] != 3:
                 bvec_array = bvec_array.T
             if not bvec_array.shape[0] == transform_orientation.shape[0]:
-                try:
-                    raise ValueError("Unrecognized bvec format")
-                except ValueError:
-                    import sys
-                    sys.exit(1)
+                raise ValueError("Unrecognized bvec format")
 
             output_array = np.zeros_like(bvec_array)
             for this_axnum, (axnum, flip) in enumerate(transform_orientation):

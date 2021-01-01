@@ -61,7 +61,15 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     except RuntimeWarning:
         print("Connectivity matrix too sparse for plotting...")
 
-    tick_interval = int(np.around(len(labels)))/10
+    if len(labels) > 500:
+        tick_interval = int(np.around(len(labels)))/10
+    elif len(labels) > 100:
+        tick_interval = int(np.around(len(labels)))/4
+    elif len(labels) > 50:
+        tick_interval = int(np.around(len(labels)))/2
+    else:
+        tick_interval = int(np.around(len(labels)))
+
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
@@ -165,7 +173,14 @@ def plot_community_conn_mat(
         )
         total_size += size
 
-    tick_interval = int(np.around(len(labels)))/10
+    if len(labels) > 500:
+        tick_interval = int(np.around(len(labels)))/10
+    elif len(labels) > 100:
+        tick_interval = int(np.around(len(labels)))/4
+    elif len(labels) > 50:
+        tick_interval = int(np.around(len(labels)))/2
+    else:
+        tick_interval = int(np.around(len(labels)))
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
@@ -278,7 +293,6 @@ def plot_conn_mat_func(
             "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(1)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
@@ -447,7 +461,6 @@ def plot_conn_mat_struct(
             "Plotting configuration not successfully extracted from"
             " runconfig.yaml"
         )
-        sys.exit(0)
 
     plot_graphs.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)

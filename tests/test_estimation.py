@@ -43,7 +43,7 @@ from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
         pytest.param('QuicGraphicalLassoCV', marks=pytest.mark.xfail),
         pytest.param('QuicGraphicalLassoEBIC', marks=pytest.mark.xfail),
         pytest.param('AdaptiveQuicGraphicalLasso', marks=pytest.mark.xfail),
-        pytest.param( None, marks=pytest.mark.xfail(raises=SystemExit))
+        pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))
     ]
 )
 @pytest.mark.parametrize("time_series",

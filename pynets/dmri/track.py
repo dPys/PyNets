@@ -62,14 +62,10 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
-        try:
-            raise ValueError(
-                "Error: No valid reconstruction model specified. See the "
-                "`-mod` flag."
-            )
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError(
+            "Error: No valid reconstruction model specified. See the "
+            "`-mod` flag."
+        )
 
     del dwi_data
 
@@ -187,11 +183,7 @@ def prep_tissues(
             )
         )
     else:
-        try:
-            raise ValueError("Tissue classifier cannot be none.")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError("Tissue classifier cannot be none.")
 
     del gm_data, wm_data, vent_csf_in_dwi_data
 
@@ -725,12 +717,8 @@ def run_tracking(step_curv_combinations, recon_path,
             random_seed=42
         )
     else:
-        try:
-            raise ValueError(
-                "ERROR: No valid tracking method(s) specified.")
-        except ValueError:
-            import sys
-            sys.exit(1)
+        raise ValueError(
+            "ERROR: No valid tracking method(s) specified.")
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain

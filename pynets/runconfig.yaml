@@ -247,9 +247,9 @@ resource_dict: # Nipype workflow resource settings
       - 'clust_join_node':
         - (1, 1)
       - 'NetworkAnalysis':
-        - (1, 4)
+        - (1, 5)
       - 'AggregateOutputs':
-        - (1, 2)
+        - (1, 3)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
         - False
@@ -260,7 +260,7 @@ execution_dict: # Nipype workflow global settings
     - 'display_variable':
         - ':0'
     - 'job_finished_timeout':
-        - 60
+        - 120
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':
