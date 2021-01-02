@@ -2591,9 +2591,9 @@ def build_workflow(args, retval):
             nested=True,
             imports=import_list,
         )
-        # net_mets_node.synchronize = True
-        net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 5
+        net_mets_node.synchronize = True
+        net_mets_node._n_procs = runtime_dict["NetworkAnalysis"][0]
+        net_mets_node._mem_gb = runtime_dict["NetworkAnalysis"][1]
 
         collect_pd_list_net_csv_node = pe.Node(
             niu.Function(
@@ -2604,16 +2604,16 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._n_procs = 1
-        collect_pd_list_net_csv_node._mem_gb = 3
+        collect_pd_list_net_csv_node._n_procs = runtime_dict["AggregateOutputs"][0]
+        collect_pd_list_net_csv_node._mem_gb = runtime_dict["AggregateOutputs"][1]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
             interface=CombineOutputs(),
             name="CombineOutputs",
             imports=import_list)
-        combine_pandas_dfs_node._n_procs = 1
-        combine_pandas_dfs_node._mem_gb = 2
+        combine_pandas_dfs_node._n_procs = runtime_dict["CombineOutputs"][0]
+        combine_pandas_dfs_node._mem_gb = runtime_dict["CombineOutputs"][1]
 
         final_outputnode = pe.Node(
             niu.IdentityInterface(fields=["combination_complete"]),
@@ -2679,6 +2679,7 @@ def build_workflow(args, retval):
                 step_thr,
                 wf,
                 net_mets_node,
+                runtime_dict
             )
         else:
             wf.connect(

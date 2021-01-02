@@ -78,7 +78,7 @@ def countmotifs(A, N=4):
     return umotifs
 
 
-def adaptivethresh(in_mat, thr, mlib, N):
+def adaptivethresh(in_mat, thr, mlib, N, use_gt=False):
     """
     Counts number of motifs with a given absolute threshold.
 
@@ -104,9 +104,20 @@ def adaptivethresh(in_mat, thr, mlib, N):
       https://doi.org/10.1063/1.4979282
 
     """
-    from pynets.stats.netmotifs import countmotifs
 
-    mf = countmotifs((in_mat > thr).astype(int), N=N)
+    if use_gt is True:
+        try:
+            import graph_tool.all as gt
+            from pynets.stats.netstats import np2gt
+
+            g = np2gt((in_mat > thr).astype(int))
+            mlib, mf = gt.motifs(gt.GraphView(g, directed=False), k=N)
+        except ImportError as e:
+            print(e, "graph_tool not installed!")
+    else:
+        from pynets.stats.netmotifs import countmotifs
+        mf = countmotifs((in_mat > thr).astype(int), N=N)
+
     try:
         mf = np.array([mf[k] for k in mlib])
     except BaseException:

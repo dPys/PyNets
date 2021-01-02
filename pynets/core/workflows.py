@@ -5766,6 +5766,7 @@ def raw_graph_workflow(
     step_thr,
     wf,
     net_mets_node,
+    runtime_dict
 ):
     import numpy as np
     from pynets.core.utils import load_mat, load_mat_ext, save_mat_thresholded
@@ -5859,6 +5860,8 @@ def raw_graph_workflow(
             name="save_mat_thresholded_node",
             imports=import_list,
         )
+        save_mat_thresholded_node._n_procs = runtime_dict["save_mat_thresholded_node"][0]
+        save_mat_thresholded_node._mem_gb = runtime_dict["save_mat_thresholded_node"][1]
 
     if multi_graph:
         inputinfo = pe.Node(
@@ -5922,6 +5925,9 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_g._n_procs = runtime_dict["join_iters_node_g"][0]
+        join_iters_node_g._mem_gb = runtime_dict["join_iters_node_g"][1]
+
         if multi_thr is True or float(thr) != 1.0:
             load_mat_node = pe.Node(
                 niu.Function(
@@ -5957,6 +5963,8 @@ def raw_graph_workflow(
                 name="load_mat_ext_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_ext_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_ext_node"][1]
 
             wf.connect(
                 [
@@ -6042,6 +6050,8 @@ def raw_graph_workflow(
                 name="load_mat_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_node"][1]
 
             wf.connect(
                 [
@@ -6113,6 +6123,8 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_thr._n_procs = runtime_dict["join_iters_node_thr"][0]
+        join_iters_node_thr._mem_gb = runtime_dict["join_iters_node_thr"][1]
 
         thr_info_node.iterables = ("thr", iter_thresh)
         thr_info_node.synchronize = True

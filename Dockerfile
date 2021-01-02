@@ -54,6 +54,7 @@ RUN apt-get update -qq \
 	sqlite3 \
 	libsqlite3-dev \
 	libquadmath0 \
+        gcc-multilib \
     # Configure ssh
     && mkdir /var/run/sshd \
     && echo 'root:screencast' | chpasswd \
@@ -86,10 +87,8 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-#    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
-#    && wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -q -O examples.tar.gz "https://osf.io/ye4vf/download" && tar -xvzf examples.tar.gz -C /tmp \
-#    && rm -rf examples.tar.gz
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -129,7 +128,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         libgfortran \
         matplotlib \
         openblas \
-        dask \
+#        dask \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
@@ -138,9 +137,9 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
+#    && pip install dask[dataframe] --upgrade \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && pip install dask[dataframe] --upgrade \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -161,7 +160,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
-	gcc \
+#	gcc \
 	wget \
 	curl \
 	build-essential \
@@ -172,6 +171,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	git-lfs \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /opt/conda/pkgs \
+    && find /opt/conda/ -type f,l -name '*.pyc' -delete \
     && mkdir /inputs && \
     chmod -R 777 /inputs \
     && mkdir /outputs && \
