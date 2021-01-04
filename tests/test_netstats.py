@@ -137,7 +137,8 @@ def test_link_communities(clustering):
     assert np.sum(M) == 24
 
 @pytest.mark.parametrize("connected_case", [True, False])
-def test_prune_disconnected(connected_case):
+@pytest.mark.parametrize("fallback_lcc", [True, False])
+def test_prune_disconnected(connected_case, fallback_lcc):
     """
     Test pruning functionality
     """
@@ -161,8 +162,8 @@ def test_prune_disconnected(connected_case):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-
-def test_most_important():
+@pytest.mark.parametrize("method", ["betweenness", "coreness", "richclub", "eigenvector"])
+def test_most_important(method):
     """
     Test pruning for most important nodes functionality
     """
@@ -181,6 +182,7 @@ def test_most_important():
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
+@pytest.mark.parametrize("est_path", ['0', '1', '2', '3', '4', '5', '6'])
 def test_extractnetstats(binary, prune, norm):
     """
     Test extractnetstats functionality
@@ -191,9 +193,9 @@ def test_extractnetstats(binary, prune, norm):
     thr = 0.95
     conn_model = 'cov'
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
-    prune = 1
-    norm = 1
-    binary = False
+    #prune = 1
+    #norm = 1
+    #binary = False
     roi = None
 
     start_time = time.time()
@@ -259,7 +261,22 @@ def test_subgraph_number_of_cliques_for_all():
     assert cliques > 0
 
 
-def test_smallworldness():
+@pytest.mark.parametrize("approach",
+    [
+    'clustering',
+    'transitivity',
+    pytest.param('impossible', marks=pytest.mark.xfail(raises=ValueError))
+    ]
+)
+@pytest.mark.parametrize("reference",
+    [
+    'random',
+    'lattice',
+    'fast',
+    pytest.param('impossible', marks=pytest.mark.xfail(raises=ValueError))
+    ]
+)
+def test_smallworldness(approach, reference):
     """
     Test small-world coefficient (omega) computation
     """
@@ -269,13 +286,13 @@ def test_smallworldness():
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
 
-    sigma = netstats.smallworldness(G, niter=5, nrand=5, approach='clustering', reference='random')
+    sigma = netstats.smallworldness(G, niter=5, nrand=5, approach=approach, reference=reference)
 
     # A network is smallworld if sigma > 1
     assert sigma > 1
 
-
-def test_participation_coef_sign():
+@pytest.mark.parametrize("degree", ['in', 'out'])
+def test_participation_coef_sign(degree):
     """
     Test participation coefficient computation
     """
