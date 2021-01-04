@@ -182,7 +182,6 @@ def test_most_important(method):
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
-@pytest.mark.parametrize("est_path", ['0', '1', '2', '3', '4', '5', '6'])
 def test_extractnetstats(binary, prune, norm):
     """
     Test extractnetstats functionality
