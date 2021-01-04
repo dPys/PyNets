@@ -35,7 +35,6 @@ def test_nilearn_atlas_helper(atlas, parc):
     print(parlistfile)
     assert len(labels) > 0
 
-#@pytest.mark.parametrize("parc", [False, True])
 def test_nodemaker_tools_parlistfile_RSN():
     """
     Test nodemaker_tools_parlistfile_RSN functionality
@@ -83,7 +82,6 @@ def test_nodemaker_tools_parlistfile_RSN():
 
 
 @pytest.mark.parametrize("atlas", ['coords_dosenbach_2010', 'coords_power_2011'])
-#@pytest.mark.parametrize("parc", [False, True])
 def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     """
     Test nodemaker_tools_nilearn_coords_RSN functionality
@@ -109,7 +107,6 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     assert net_labels is not None
     assert network is not None
 
-#@pytest.mark.parametrize("parc", [False, True])
 def test_nodemaker_tools_masking_parlistfile_RSN():
     """
     Test nodemaker_tools_masking_parlistfile_RSN functionality
@@ -171,7 +168,6 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
 
 @pytest.mark.parametrize("atlas", ['coords_dosenbach_2010', 'coords_power_2011'])
-#@pytest.mark.parametrize("parc", [False, True])
 def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     Test nodemaker_tools_masking_coords_RSN functionality
@@ -251,7 +247,6 @@ def test_nodemaker_tools_nilearn_coords_WB(atlas):
     assert WB_coords is not None
     assert WB_labels is not None
 
-#@pytest.mark.parametrize("parc", [False, True])
 def test_nodemaker_tools_masking_parlistfile_WB():
     """
     Test nodemaker_tools_masking_parlistfile_WB functionality
