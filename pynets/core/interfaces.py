@@ -1433,12 +1433,13 @@ class RegisterAtlasDWI(SimpleInterface):
         import gc
         import time
         import os
+        import os.path as op
         from pynets.registration import reg_utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
-        from scipy.ndimage import binary_opening
+        from pynets.core import utils
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -1747,6 +1748,41 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["gtab_file"] = self.inputs.gtab_file
         self._results["dwi_file"] = self.inputs.dwi_file
         self._results["waymask_in_dwi"] = waymask_in_dwi
+
+        dir_path = utils.do_dir_path(
+            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
+        )
+
+        namer_dir = "{}/tractography".format(dir_path)
+
+        if not os.path.isfile(f"{namer_dir}/{op.basename(self.inputs.fa_path)}"):
+            copyfile(
+                self.inputs.fa_path,
+                f"{namer_dir}/{op.basename(self.inputs.fa_path)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/{op.basename(self.inputs.ap_path)}"):
+            copyfile(
+                self.inputs.ap_path,
+                f"{namer_dir}/{op.basename(self.inputs.ap_path)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/{op.basename(self.inputs.B0_mask)}"):
+            copyfile(
+                self.inputs.B0_mask,
+                f"{namer_dir}/{op.basename(self.inputs.B0_mask)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/{op.basename(self.inputs.gtab_file)}"):
+            copyfile(
+                self.inputs.gtab_file,
+                f"{namer_dir}/{op.basename(self.inputs.gtab_file)}",
+                copy=True,
+                use_hardlink=False,
+            )
 
         reg_tmp = [
             fa_tmp_path,
@@ -2777,6 +2813,7 @@ class Tracking(SimpleInterface):
             fa_file_tmp_path,
             copy=True,
             use_hardlink=False)
+
         fa_img = nib.load(fa_file_tmp_path, mmap=True)
 
         labels_im_file_tmp_path = fname_presuffix(

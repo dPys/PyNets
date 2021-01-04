@@ -1395,7 +1395,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
-    # orig_img = img_file
+    orig_img = img_file
     img = nib.load(img_file, mmap=False)
 
     hdr = img.header
@@ -1440,7 +1440,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             nib.save(img, img_file_nores)
             img_file = img_file_nores
 
-    # if os.path.isfile(orig_img):
-    #     os.remove(orig_img)
+    if os.path.isfile(orig_img):
+        os.remove(orig_img)
 
     return img_file

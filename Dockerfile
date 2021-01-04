@@ -42,18 +42,18 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-	openssh-server \
+        openssh-server \
         jq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
         libglw1-mesa \
         libxkbcommon-x11-0 \
-	liblapack-dev \
-	libopenblas-base \
-	sqlite3 \
-	libsqlite3-dev \
-	libquadmath0 \
+        liblapack-dev \
+        libopenblas-base \
+        sqlite3 \
+        libsqlite3-dev \
+        libquadmath0 \
         gcc-multilib \
     # Configure ssh
     && mkdir /var/run/sshd \
