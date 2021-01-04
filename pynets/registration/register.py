@@ -18,8 +18,9 @@ from nilearn.image import math_img
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
-except KeyError:
-    print("FSLDIR environment variable not set!")
+except KeyError as e:
+    print(e, "FSLDIR environment variable not set!")
+    sys.exit(1)
 
 
 def direct_streamline_norm(
@@ -52,7 +53,6 @@ def direct_streamline_norm(
     step_list,
     directget,
     min_length,
-    error_margin,
     t1_aligned_mni
 ):
     """
@@ -205,7 +205,6 @@ def direct_streamline_norm(
     from pynets.registration import reg_utils as regutils
     # from pynets.plotting import plot_gen
     import pkg_resources
-    import yaml
     import os.path as op
     from pynets.registration.reg_utils import vdc
     from nilearn.image import resample_to_img
@@ -214,21 +213,15 @@ def direct_streamline_norm(
     from dipy.tracking._utils import _mapping_to_voxel
     from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
+    from pynets.core.utils import load_runconfig
 
     # from pynets.core.utils import missing_elements
 
-    with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        try:
-            hardcoded_params = yaml.load(stream)
-            run_dsn = hardcoded_params['tracking']["DSN"][0]
-        except FileNotFoundError:
-            import sys
-            print("Failed to parse runconfig.yaml")
-            exit(1)
-
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        run_dsn = hardcoded_params['tracking']["DSN"][0]
+    except FileNotFoundError as e:
+        print(e, "Failed to parse runconfig.yaml")
 
     if run_dsn is True:
         dsn_dir = f"{basedir_path}/dmri_reg/DSN"
@@ -255,20 +248,18 @@ def direct_streamline_norm(
                 print(e,
                       f"\nCannot load FA template. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
         else:
             try:
                 template_img = nib.load(template_path)
-            except ImportError:
-                print(f"\nCannot load FA template. Do you have git-lfs "
+            except ImportError as e:
+                print(e, f"\nCannot load FA template. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
 
         uatlas_mni_img = nib.load(atlas_mni)
         t1_aligned_mni_img = nib.load(t1_aligned_mni)
         brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -293,12 +284,10 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".trk",
         )
 
-        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_mni_",
             "%s" % (network + "_" if network is not None else ""),
@@ -323,8 +312,6 @@ def direct_streamline_norm(
             directget,
             "_minlength-",
             min_length,
-            "_tol-",
-            error_margin,
             ".nii.gz",
         )
 
@@ -372,13 +359,10 @@ def direct_streamline_norm(
             print(len(streams_final_filt)/len(streams_in_curr_grid))
             adjusted_affine = affine_map.affine.copy()
             if i > len(combs) - 1:
-                try:
-                    raise ValueError('DSN failed. Header orientation '
-                                     'information may be corrupted. '
-                                     'Is your dataset oblique?')
-                except ValueError:
-                    import sys
-                    sys.exit(1)
+                raise ValueError('DSN failed. Header orientation '
+                                 'information may be corrupted. '
+                                 'Is your dataset oblique?')
+
             adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
             adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
             adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
@@ -517,8 +501,7 @@ def direct_streamline_norm(
         atlas_mni,
         directget,
         warped_fa,
-        min_length,
-        error_margin
+        min_length
     )
 
 
@@ -728,17 +711,15 @@ class DmriReg(object):
                 wm_mask = maps["wm_prob"]
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
-            except RuntimeError:
-                import sys
-                print(
+            except RuntimeError as e:
+                print(e,
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
-                sys.exit(1)
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
-        mask = math_img("img > 0.20", img=t_img)
+        mask = math_img("img > 0.10", img=t_img)
         mask.to_filename(self.wm_mask_thr)
 
         # Extract wm edge
@@ -846,6 +827,14 @@ class DmriReg(object):
         """
         import time
 
+        self.ap_path = regutils.apply_mask_to_image(self.ap_path,
+                                                    self.B0_mask,
+                                                    self.ap_path)
+
+        self.fa_path = regutils.apply_mask_to_image(self.fa_path,
+                                                    self.B0_mask,
+                                                    self.fa_path)
+
         # Align T1w-->DWI
         regutils.align(
             self.ap_path,
@@ -933,6 +922,9 @@ class DmriReg(object):
             )
             time.sleep(0.5)
 
+        self.t1w2dwi = regutils.apply_mask_to_image(self.t1w2dwi,
+                                                    self.B0_mask,
+                                                    self.t1w2dwi)
         return
 
     def tissue2dwi_align(self):
@@ -947,14 +939,15 @@ class DmriReg(object):
         import sys
         import time
         import os.path as op
+        from pynets.core.utils import load_runconfig
+
+        hardcoded_params = load_runconfig()
+        tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
-            try:
-                raise FileNotFoundError("FSL atlas for ventricle reference not"
-                                        " found!")
-            except FileNotFoundError:
-                sys.exit(1)
+            raise FileNotFoundError("FSL atlas for ventricle reference not"
+                                    " found!")
 
         # Create transform to MNI atlas to T1w using flirt. This will be use to
         # transform the ventricles to dwi space.
@@ -979,14 +972,12 @@ class DmriReg(object):
                 print(e,
                       f"\nCannot load ventricle ROI. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
         else:
             try:
                 nib.load(self.mni_vent_loc)
-            except ImportError:
-                print(f"\nCannot load ventricle ROI. Do you have git-lfs "
+            except ImportError as e:
+                print(e, f"\nCannot load ventricle ROI. Do you have git-lfs "
                       f"installed?")
-                sys.exit(1)
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(
@@ -1015,14 +1006,12 @@ class DmriReg(object):
                     print(e,
                           f"\nCannot load Corpus Callosum ROI. "
                           f"Do you have git-lfs installed?")
-                    sys.exit(1)
             else:
                 try:
                     nib.load(self.corpuscallosum)
-                except ImportError:
-                    print(f"\nCannot load Corpus Callosum ROI. "
+                except ImportError as e:
+                    print(e, f"\nCannot load Corpus Callosum ROI. "
                           f"Do you have git-lfs installed?")
-                    sys.exit(1)
 
             regutils.apply_warp(
                 self.t1w_brain,
@@ -1086,19 +1075,26 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
+        if tiss_class == 'wb' or tiss_class == 'cmc':
+            csf_thr = 0.50
+            wm_thr = 0.15
+        else:
+            csf_thr = 0.95
+            wm_thr = 0.10
+
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img("img > 0.10", img=thr_img)
+        thr_img = math_img(f"img > {wm_thr}", img=thr_img)
         nib.save(thr_img, self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img("img > 0.15", img=thr_img)
+        thr_img = math_img("img > 0.10", img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
         thr_img = nib.load(self.csf_mask_dwi)
-        thr_img = math_img("img > 0.95", img=thr_img)
+        thr_img = math_img(f"img > {csf_thr}", img=thr_img)
         nib.save(thr_img, self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
@@ -1265,13 +1261,12 @@ class FmriReg(object):
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
                 gm_mask = maps["gm_prob"]
                 wm_mask = maps["wm_prob"]
-            except RuntimeError:
+            except RuntimeError as e:
                 import sys
-                print(
+                print(e,
                     "Segmentation failed. Does the input anatomical image "
                     "still contained skull?"
                 )
-                sys.exit(1)
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
@@ -1281,6 +1276,7 @@ class FmriReg(object):
                                                     self.gm_mask_thr,
                                                     self.gm_mask)
         time.sleep(0.5)
+
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
         mask = math_img("img > 0.50", img=t_img)

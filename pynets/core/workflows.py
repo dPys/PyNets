@@ -94,8 +94,7 @@ def workflow_selector(
     import gc
     import os
     import sys
-    import yaml
-    import pkg_resources
+    from pynets.core.utils import load_runconfig
     from pathlib import Path
     from pynets.core import workflows
     from nipype import Workflow
@@ -120,32 +119,24 @@ def workflow_selector(
     ]
 
     # Available functional and structural connectivity models
-    with open(
-
-
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        template_name = hardcoded_params["template"][0]
-        try:
-            func_models = hardcoded_params["available_models"][
-                "func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not successfully extracted"
-                " from runconfig.yaml"
-            )
-            sys.exit(1)
-    stream.close()
+    hardcoded_params = load_runconfig()
+    template_name = hardcoded_params["template"][0]
+    try:
+        func_models = hardcoded_params["available_models"][
+            "func_models"]
+    except KeyError as e:
+        print(e,
+            "available functional models not successfully extracted"
+            " from runconfig.yaml"
+        )
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError as e:
+        print(e,
+            "available structural models not successfully extracted"
+            " from runconfig.yaml"
+        )
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -163,17 +154,19 @@ def workflow_selector(
             if len(func_model_list) == 1:
                 conn_model_func = func_model_list[0]
                 func_model_list = None
+                # print(f"conn_model_func: {conn_model_func}")
             if len(dwi_model_list) == 1:
                 conn_model_dwi = dwi_model_list[0]
                 dwi_model_list = None
+                # print(f"conn_model_dwi: {conn_model_dwi}")
+            # if len(func_model_list) > 0:
+            #     print(f"func_model_list: {func_model_list}")
+            # if len(dwi_model_list) > 0:
+            #     print(f"dwi_model_list: {dwi_model_list}")
         else:
-            try:
-                raise RuntimeError(
-                    "Multimodal fMRI-dMRI pipeline specified, but "
-                    "only one connectivity model specified.")
-            except RuntimeError:
-                import sys
-                sys.exit(0)
+            raise RuntimeError(
+                "Multimodal fMRI-dMRI pipeline specified, but "
+                "only one connectivity model specified.")
 
     elif (dwi_file is not None) and (func_file is None):
         print("Parsing diffusion models...")
@@ -181,12 +174,14 @@ def workflow_selector(
         dwi_model_list = conn_model_list
         conn_model_func = None
         func_model_list = None
+        # print(f"dwi_model_list: {dwi_model_list}")
     elif (func_file is not None) and (dwi_file is None):
         print("Parsing functional models...")
         conn_model_func = conn_model
         func_model_list = conn_model_list
         conn_model_dwi = None
         dwi_model_list = None
+        # print(f"func_model_list: {func_model_list}")
 
     # for each file input, delete corresponding t1w anatomical copies.
     if clean is True:
@@ -263,6 +258,20 @@ def workflow_selector(
         sub_struct_wf._mem_gb = procmem[1]
         sub_struct_wf.n_procs = procmem[0]
         sub_struct_wf.mem_gb = procmem[1]
+        if verbose is True:
+            from nipype import config, logging
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                }
+            )
+            sub_struct_wf.config.update_config(cfg_v)
+            sub_struct_wf.config.enable_resource_monitor()
     else:
         outdir_mod_struct = None
 
@@ -330,6 +339,22 @@ def workflow_selector(
         sub_func_wf._mem_gb = procmem[1]
         sub_func_wf.n_procs = procmem[0]
         sub_func_wf.mem_gb = procmem[1]
+        if verbose is True:
+            from nipype import config, logging
+
+            cfg_v = dict(
+                logging={
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
+                    "interface_level": "DEBUG",
+                    "filemanip_level": "DEBUG",
+                }
+            )
+
+            logging.update_logging(config)
+            config.update_config(cfg_v)
+            config.enable_resource_monitor()
     else:
         outdir_mod_func = None
 
@@ -343,22 +368,17 @@ def workflow_selector(
 
         cfg_v = dict(
             logging={
-                "workflow_level": "DEBUG",
-                "utils_level": "DEBUG",
-                "log_to_file": True,
+                "workflow_level": "INFO",
+                "utils_level": "INFO",
+                "log_to_file": False,
                 "interface_level": "DEBUG",
                 "filemanip_level": "DEBUG",
-            },
-            monitoring={
-                "enabled": True,
-                "sample_frequency": "0.1",
-                "summary_append": True,
-            },
+            }
         )
         logging.update_logging(config)
         config.update_config(cfg_v)
-        config.enable_debug_mode()
         config.enable_resource_monitor()
+
     execution_dict["plugin_args"] = {
         "n_procs": int(procmem[0]),
         "memory_gb": int(procmem[1]),
@@ -1411,11 +1431,7 @@ def dmri_connectometry(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -1879,7 +1895,6 @@ def dmri_connectometry(
                 "step_list",
                 "directget",
                 "min_length",
-                "error_margin",
                 "t1_aligned_mni"
             ],
             output_names=[
@@ -1907,7 +1922,6 @@ def dmri_connectometry(
                 "directget",
                 "warped_fa",
                 "min_length",
-                "error_margin"
             ],
             function=register.direct_streamline_norm,
             imports=import_list,
@@ -1983,15 +1997,11 @@ def dmri_connectometry(
 
     if error_margin_list:
         streams2graph_node.iterables = [("error_margin", error_margin_list)]
-        dmri_connectometry_wf.connect(
-            [(inputnode, streams2graph_node,
-              [("error_margin", "error_margin")])]
-        )
     else:
         dmri_connectometry_wf.connect(
             [
                 (
-                    dsn_node, streams2graph_node,
+                    inputnode, streams2graph_node,
                     [("error_margin", "error_margin")],
                 )
             ]
@@ -2147,7 +2157,7 @@ def dmri_connectometry(
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -2284,8 +2294,6 @@ def dmri_connectometry(
                 (inputnode, run_tracking_node, [("network", "network")]),
                 (run_tracking_node, dsn_node, [("uatlas", "uatlas")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -2649,11 +2657,7 @@ def dmri_connectometry(
                                             map_connects),
                                            ])
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
@@ -2705,7 +2709,6 @@ def dmri_connectometry(
         "error_margin"
     ]
     thr_struct_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -2736,7 +2739,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2771,7 +2773,6 @@ def dmri_connectometry(
             niu.Function(
                 input_names=thr_struct_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -2855,7 +2856,6 @@ def dmri_connectometry(
                     thresh_diff_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),
@@ -2940,7 +2940,7 @@ def dmri_connectometry(
                     thr_out_node,
                     plot_all_node,
                     [
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("conn_model", "conn_model"),
                         ("atlas", "atlas"),
                         ("dir_path", "dir_path"),
@@ -3167,7 +3167,6 @@ def dmri_connectometry(
                     ("step_list", "step_list"),
                     ("track_type", "track_type"),
                     ("maxcrossing", "maxcrossing"),
-                    ("error_margin", "error_margin")
                 ],
             ),
             (get_anisopwr_node, dsn_node, [("anisopwr_path", "ap_path")]),
@@ -3208,7 +3207,6 @@ def dmri_connectometry(
                     ("fa_path", "fa_path"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
-                    ("error_margin", "error_margin"),
                     ("network", "network")
                 ],
             ),
@@ -3483,6 +3481,13 @@ def dmri_connectometry(
         "memory_gb": int(procmem[1]),
         "scheduler": "mem_thread",
     }
+    execution_dict["logging"] = {
+            "workflow_level": "INFO",
+            "utils_level": "INFO",
+            "log_to_file": False,
+            "interface_level": "DEBUG",
+            "filemanip_level": "DEBUG",
+        }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -3594,11 +3599,7 @@ def fmri_connectometry(
             template_name, vox_size)
 
     if not op.isfile(template) or not op.isfile(template_mask):
-        try:
-            raise FileNotFoundError("Template or mask not found!")
-        except FileNotFoundError:
-            import sys
-            sys.exit(1)
+        raise FileNotFoundError("Template or mask not found!")
 
     # Create input/output nodes
     inputnode = pe.Node(
@@ -4646,15 +4647,14 @@ def fmri_connectometry(
                                         ),
                                        (check_orient_and_dims_roi_node,
                                         register_roi_node,
-                                        [("outfile",
-                                          "roi")],
+                                        [("outfile", "roi")],
                                         ),
                                        ])
 
     save_coords_and_labels_node = pe.Node(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "network"],
-            function=utils.save_coords_and_labels_to_pickle,
+            function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
         name="save_coords_and_labels_node",
@@ -4791,8 +4791,6 @@ def fmri_connectometry(
                 (inputnode, extract_ts_node, [("network", "network")]),
                 (inputnode, get_conn_matrix_node, [("network", "network")]),
                 (inputnode, register_atlas_node, [("network", "network")]),
-                (inputnode, save_coords_and_labels_node,
-                 [("network", "network")]),
                 (
                     fetch_nodes_and_labels_node,
                     node_gen_node,
@@ -5037,11 +5035,7 @@ def fmri_connectometry(
                 ]
             )
         else:
-            try:
-                raise RuntimeError("\nERROR: Unknown join context.")
-            except RuntimeError:
-                import sys
-                sys.exit(1)
+            raise RuntimeError("\nUnknown join context.")
 
         no_iters = False
     else:
@@ -5089,7 +5083,6 @@ def fmri_connectometry(
         "extract_strategy",
     ]
     thr_func_iter_fields = [
-        "conn_matrix_thr",
         "edge_threshold",
         "est_path",
         "thr",
@@ -5116,7 +5109,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5147,7 +5139,6 @@ def fmri_connectometry(
             niu.Function(
                 input_names=thr_func_fields,
                 output_names=[
-                    "conn_matrix_thr",
                     "edge_threshold",
                     "est_path",
                     "thr",
@@ -5223,7 +5214,6 @@ def fmri_connectometry(
                     thresh_func_node,
                     join_iters_node_thr,
                     [
-                        ("conn_matrix_thr", "conn_matrix_thr"),
                         ("edge_threshold", "edge_threshold"),
                         ("est_path", "est_path"),
                         ("thr", "thr"),
@@ -5319,7 +5309,7 @@ def fmri_connectometry(
                         ("node_size", "node_size"),
                         ("smooth", "smooth"),
                         ("dir_path", "dir_path"),
-                        ("conn_matrix_thr", "conn_matrix"),
+                        ("est_path", "conn_matrix"),
                         ("edge_threshold", "edge_threshold"),
                         ("thr", "thr"),
                         ("conn_model", "conn_model"),
@@ -5740,6 +5730,13 @@ def fmri_connectometry(
         "memory_gb": int(procmem[1]),
         "scheduler": "mem_thread",
     }
+    execution_dict["logging"] = {
+            "workflow_level": "INFO",
+            "utils_level": "INFO",
+            "log_to_file": False,
+            "interface_level": "DEBUG",
+            "filemanip_level": "DEBUG",
+        }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -5769,6 +5766,7 @@ def raw_graph_workflow(
     step_thr,
     wf,
     net_mets_node,
+    runtime_dict
 ):
     import numpy as np
     from pynets.core.utils import load_mat, load_mat_ext, save_mat_thresholded
@@ -5862,6 +5860,8 @@ def raw_graph_workflow(
             name="save_mat_thresholded_node",
             imports=import_list,
         )
+        save_mat_thresholded_node._n_procs = runtime_dict["save_mat_thresholded_node"][0]
+        save_mat_thresholded_node._mem_gb = runtime_dict["save_mat_thresholded_node"][1]
 
     if multi_graph:
         inputinfo = pe.Node(
@@ -5925,6 +5925,9 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_g._n_procs = runtime_dict["join_iters_node_g"][0]
+        join_iters_node_g._mem_gb = runtime_dict["join_iters_node_g"][1]
+
         if multi_thr is True or float(thr) != 1.0:
             load_mat_node = pe.Node(
                 niu.Function(
@@ -5960,6 +5963,8 @@ def raw_graph_workflow(
                 name="load_mat_ext_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_ext_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_ext_node"][1]
 
             wf.connect(
                 [
@@ -6045,6 +6050,8 @@ def raw_graph_workflow(
                 name="load_mat_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_node"][1]
 
             wf.connect(
                 [
@@ -6116,6 +6123,8 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_thr._n_procs = runtime_dict["join_iters_node_thr"][0]
+        join_iters_node_thr._mem_gb = runtime_dict["join_iters_node_thr"][1]
 
         thr_info_node.iterables = ("thr", iter_thresh)
         thr_info_node.synchronize = True

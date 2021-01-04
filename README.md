@@ -18,8 +18,8 @@ docker pull dpys/pynets
 ```
 
 ## Manual
-(REQUIRES a local dependency install of FSL version >=5.0.9. See:
-<https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation>):
+(REQUIRES a local dependency install of [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9, as well as an
+installation of [Python3.6+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
 ```
 [sudo] pip install pynets [--user]
 ```
@@ -38,7 +38,13 @@ cd PyNets
 Hardware Requirements
 ---------------------
 4 vCPUs, 8+ GB free RAM, and at least 15-20 GB of free disk space.
-UNIX/MacOS 64-bit platforms (guaranteed) and Windows PC platforms (experimental)
+
+Operating Systems
+-----------------
+UNIX/MacOS 64-bit platforms
+
+Windows 10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
+
 
 Documentation
 -------------
@@ -94,7 +100,7 @@ where the `-config` flag specifies that path to a .json configuration spec that 
             "spheres":  "False", # Use spheres as nodes (vs. parcel labels, the default).
             "ns":  "None", # If `spheres` is True, this indicates integer radius size(s) of spherical centroid nodes.
             "p":  "['1']", # Apply anti-fragmentation, largest connected-component subgraph selection, or any of a variety of hub-detection methods to graph(s).
-            "plt":  "False", # Activate plotting (adjancency matrix and glass-brain included by default).
+            "plt":  "False", # Activate plotting (adjacency matrix and glass-brain included by default).
             "thr":  1.0, # A threshold (0.0-1.0). This can be left as "None" if multi-thresholding is used.
             "max_thr":  0.80, # If performing multi-thresholding, a minimum threshold.
             "min_thr":  0.20, # If performing multi-thresholding, a maximum threshold.

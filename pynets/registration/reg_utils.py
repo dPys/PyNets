@@ -17,10 +17,9 @@ import warnings
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
-except KeyError:
-    import sys
-    print("FSLDIR environment variable not set!")
-    sys.exit(0)
+except KeyError as e:
+    print(e, "FSLDIR environment variable not set!")
+    sys.exit(1)
 
 
 def gen_mask(t1w_head, t1w_brain, mask):
@@ -49,12 +48,9 @@ def gen_mask(t1w_head, t1w_brain, mask):
         t1w_data = img.get_fdata().astype('float32')
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
-        except RuntimeError:
-            try:
-                print('Deepbrain extraction failed...')
-            except ValueError:
-                import sys
-                sys.exit(1)
+        except RuntimeError as e:
+            print(e, 'Deepbrain extraction failed...')
+
         del t1w_data
 
     # Threshold T1w brain to binary in anat space
@@ -106,7 +102,6 @@ def atlas2t1w2dwi_align(
     mni2t1w_warp,
     t1_aligned_mni,
     ap_path,
-    t1w2dwi_bbr_xfm,
     mni2t1_xfm,
     t1w2dwi_xfm,
     wm_gm_int_in_dwi,
@@ -164,7 +159,7 @@ def atlas2t1w2dwi_align(
             time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
-            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_bbr_xfm,
+            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
         except BaseException:
@@ -172,7 +167,7 @@ def atlas2t1w2dwi_align(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
-            combine_xfms(mni2t1_xfm, t1w2dwi_bbr_xfm, mni2dwi_xfm)
+            combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
             regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
@@ -288,6 +283,7 @@ def waymask2dwi_align(
     t1wtissue2dwi_xfm,
     waymask_in_t1w,
     waymask_in_dwi,
+    B0_mask_tmp_path,
     template,
     simple,
 ):
@@ -296,7 +292,6 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from nilearn.image import math_img
     from pynets.registration import reg_utils as regutils
     from nilearn.image import resample_to_img
 
@@ -330,9 +325,9 @@ def waymask2dwi_align(
 
     time.sleep(0.5)
 
-    t_img = nib.load(waymask_in_dwi)
-    mask = math_img("img > 0.01", img=t_img)
-    mask.to_filename(waymask_in_dwi)
+    waymask_in_dwi = regutils.apply_mask_to_image(waymask_in_dwi,
+                                                  B0_mask_tmp_path,
+                                                  waymask_in_dwi)
 
     return waymask_in_dwi
 
@@ -850,9 +845,11 @@ def invert_xfm(in_mat, out_mat):
 
 def apply_mask_to_image(input, mask, output):
     import os
-    cmd = f"fslmaths {input} -mas {mask} {output}"
+
+    cmd = f"fslmaths {input} -mas {mask} -thrp 0.0001 {output}"
     print(cmd)
     os.system(cmd)
+
     return output
 
 
@@ -1301,11 +1298,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
             if bvec_array.shape[0] != 3:
                 bvec_array = bvec_array.T
             if not bvec_array.shape[0] == transform_orientation.shape[0]:
-                try:
-                    raise ValueError("Unrecognized bvec format")
-                except ValueError:
-                    import sys
-                    sys.exit(1)
+                raise ValueError("Unrecognized bvec format")
 
             output_array = np.zeros_like(bvec_array)
             for this_axnum, (axnum, flip) in enumerate(transform_orientation):

@@ -48,11 +48,13 @@ RUN apt-get update -qq \
         libglu1-mesa-dev \
         libglib2.0-0 \
         libglw1-mesa \
+        libxkbcommon-x11-0 \
 	liblapack-dev \
 	libopenblas-base \
 	sqlite3 \
 	libsqlite3-dev \
 	libquadmath0 \
+        gcc-multilib \
     # Configure ssh
     && mkdir /var/run/sshd \
     && echo 'root:screencast' | chpasswd \
@@ -84,7 +86,9 @@ RUN apt-get update -qq \
     && cp fsl/bin/* $FSLDIR/bin/ \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
-    && chmod 777 -R /usr/lib/fsl/5.0
+    && chmod 777 -R /usr/lib/fsl/5.0 \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -124,15 +128,16 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         libgfortran \
         matplotlib \
         openblas \
+#        dask \
     && pip install certifi -U --ignore-installed \
-    && pip install skggm python-dateutil==2.8.0 \
-    # Precaching fonts, set 'Agg' as default backend for matplotlib
-    && python -c "from matplotlib import font_manager" \
-    && sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" ) \
+    && pip install python-dateutil==2.8.0 \
+#    && pip install skggm \
+    && pip install --upgrade --force-reinstall numpy \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
+#    && pip install dask[dataframe] --upgrade \
     && pip uninstall -y pandas \
     && pip install pandas -U \
     && cd / \
@@ -146,14 +151,16 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 /opt/conda/bin/pynets_bids \
-    && chmod 777 /opt/conda/bin/pynets_collect \
+#    && chmod 777 /opt/conda/bin/pynets_collect \
     && chmod 777 /opt/conda/bin/pynets_cloud \
+#    && chmod 777 /opt/conda/bin/pynets_benchmark \
+#    && chmod 777 /opt/conda/bin/pynets_predict \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
-	gcc \
+#	gcc \
 	wget \
 	curl \
 	build-essential \
@@ -164,6 +171,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	git-lfs \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /opt/conda/pkgs \
+    && find /opt/conda/ -type f,l -name '*.pyc' -delete \
     && mkdir /inputs && \
     chmod -R 777 /inputs \
     && mkdir /outputs && \
@@ -190,6 +199,7 @@ ENV PATH="/opt/conda/bin":$PATH
 ENV OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
+ENV QT_QPA_PLATFORM=offscreen
 
 # and add it as an entrypoint
 #ENTRYPOINT ["pynets"]

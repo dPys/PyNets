@@ -67,7 +67,7 @@ def test_make_local_connectivity_tcorr():
 
     out_img = clustools.parcellate_ncut(W, 200, mask_img)
 
-    assert out_img is not None
+    assert isinstance(out_img, nib.Nifti1Image)
 
 
 def test_make_local_connectivity_scorr():
@@ -81,7 +81,8 @@ def test_make_local_connectivity_scorr():
         f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
-    W = clustools.make_local_connectivity_scorr(func_img, mask_img, thresh=0.50)
+    W = clustools.make_local_connectivity_scorr(func_img, mask_img,
+                                                thresh=0.50)
 
     assert W is not None
 

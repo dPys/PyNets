@@ -43,7 +43,7 @@ from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
         pytest.param('QuicGraphicalLassoCV', marks=pytest.mark.xfail),
         pytest.param('QuicGraphicalLassoEBIC', marks=pytest.mark.xfail),
         pytest.param('AdaptiveQuicGraphicalLasso', marks=pytest.mark.xfail),
-        pytest.param( None, marks=pytest.mark.xfail(raises=SystemExit))
+        pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))
     ]
 )
 @pytest.mark.parametrize("time_series",
@@ -55,16 +55,46 @@ from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
 def test_get_conn_matrix(conn_model_in, time_series):
     """ Test computing a functional connectivity matrix."""
 
-    pass_args = np.random.rand(len(getargspec(get_conn_matrix).args)-2)
+    network = 'Default'
+    ID = '002'
+    smooth = 2
+    coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
+    node_size = 8
+    extract_strategy = 'zscore'
+    roi = None
+    atlas = None
+    uatlas = None
+    labels = [1, 2, 3]
 
-    outs = get_conn_matrix(time_series, conn_model_in, *pass_args)
+    outs = get_conn_matrix(
+        time_series,
+        conn_model_in,
+        tempfile.TemporaryDirectory(),
+        node_size,
+        smooth,
+        False,
+        network,
+        ID,
+        roi,
+        False,
+        False,
+        True,
+        True,
+        atlas,
+        uatlas,
+        labels,
+        coords,
+        3,
+        False,
+        0,
+        extract_strategy,
+    )
 
     conn_matrix_out, conn_model_out = outs[0], outs[1]
 
     assert isinstance(conn_matrix_out, np.ndarray)
     assert np.shape(conn_matrix_out) == np.shape(time_series)
     assert conn_model_in == conn_model_out
-    assert (pass_args == outs[2:]).all()
 
 
 def test_timeseries_bootstrap():
@@ -138,10 +168,13 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
     network = 'Default'
     ID = '002'
     smooth = 2
-    coords = [[10]*3, [15]*3, [20]*3]
+    coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
     node_size = 8
     extract_strategy = 'zscore'
-    roi, labels, atlas, uatlas = [None]*4
+    roi = None
+    atlas = None
+    uatlas = None
+    labels = [1, 2, 3]
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
                               conf=conf, func_file=func_file, roi=roi,
@@ -211,11 +244,13 @@ def test_timseries_extraction_extract(conf):
     ID = '002'
     smooth = 2
     hpass = 100
-    coords = [[10]*3, [15]*3, [20]*3]
-    node_size = 2
     extract_strategy = 'mean'
-
-    roi, labels, atlas, uatlas = [None]*4
+    coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
+    node_size = 2
+    roi = None
+    atlas = None
+    uatlas = None
+    labels = [1, 2, 3]
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
                               conf=conf, func_file=func_file.name,

@@ -95,11 +95,8 @@ def threshold_proportional(W, p, copy=True):
 
     """
     if p > 1 or p < 0:
-        try:
-            raise ValueError("Threshold must be in range [0,1]")
-        except ValueError:
-            import sys
-            sys.exit(0)
+        raise ValueError("Threshold must be in range [0,1]")
+
     if copy:
         W = W.copy()
     n = len(W)
@@ -714,6 +711,11 @@ def local_thresholding_prop(conn_matrix, thr):
 
     fail_tol = 100
     conn_matrix = np.nan_to_num(conn_matrix)
+
+    if np.sum(conn_matrix) == 0:
+        print(UserWarning('Empty connectivity matrix detected!'))
+        return conn_matrix
+
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
 
     maximum_edges = G.number_of_edges()
@@ -724,6 +726,7 @@ def local_thresholding_prop(conn_matrix, thr):
     min_t = nx.minimum_spanning_tree(
         thresholding.weight_to_distance(G0), weight="distance"
     )
+
     min_t.add_nodes_from(G.nodes())
     len_edges = min_t.number_of_edges()
     upper_values = np.triu_indices(np.shape(conn_matrix)[0], k=1)
@@ -787,11 +790,9 @@ def local_thresholding_prop(conn_matrix, thr):
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
         return conn_matrix_thr
 
-    except ValueError:
-        import sys
-        print("MST thresholding failed. Check raw graph output manually for"
+    except ValueError as e:
+        print(e, f"MST thresholding failed. Check raw graph output manually for"
               " debugging.")
-        sys.exit(1)
 
 
 def perform_thresholding(
@@ -1013,33 +1014,9 @@ def thresh_func(
     import gc
     from pynets.core import utils, thresholding
 
-    if parc is True:
-        node_size = "parc"
-
     if np.count_nonzero(conn_matrix) == 0:
-        try:
-            raise ValueError("ERROR: Raw connectivity matrix contains only"
-                             " zeros.")
-        except ValueError:
-            import sys
-            sys.exit(1)
-
-    # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_func(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            smooth,
-            hpass,
-            parc,
-            extract_strategy,
-        ),
-    )
+        print(UserWarning("Raw connectivity matrix contains only"
+                         " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1070,8 +1047,15 @@ def thresh_func(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
+    if network is not None:
+        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    else:
+        atlas_name = f"{atlas}_stage-post_thr"
+
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name)
+
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,
@@ -1266,31 +1250,8 @@ def thresh_struct(
         node_size = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        try:
-            raise ValueError("ERROR: Raw connectivity matrix contains only"
-                             " zeros.")
-        except ValueError:
-            import sys
-            sys.exit(1)
-
-    # Save unthresholded
-    utils.save_mat(
-        conn_matrix,
-        utils.create_raw_path_diff(
-            ID,
-            network,
-            conn_model,
-            roi,
-            dir_path,
-            node_size,
-            target_samples,
-            track_type,
-            parc,
-            directget,
-            min_length,
-            error_margin
-        ),
-    )
+        print(UserWarning("Raw connectivity matrix contains only"
+                         " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1323,8 +1284,15 @@ def thresh_struct(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
+    if network is not None:
+        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    else:
+        atlas_name = f"{atlas}_stage-post_thr"
+
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name)
+
     return (
-        conn_matrix_thr,
         edge_threshold,
         est_path,
         thr,
