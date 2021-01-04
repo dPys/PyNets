@@ -9,6 +9,8 @@ from pynets.stats.prediction import *
 
 def main():
     import json
+    import pandas as pd
+    import os
     from colorama import Fore, Style
     try:
         import pynets

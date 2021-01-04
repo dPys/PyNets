@@ -1093,7 +1093,7 @@ def bootstrapped_nested_cv(
     k_folds_inner=5,
     pca_reduce=False,
     remove_multi=True,
-    std_dev=3,
+    std_dev=5,
     alpha=0.95,
     missingness_thr=0.20,
 ):
@@ -2310,7 +2310,9 @@ class MakeXY(SimpleInterface):
         self._results["target_var"] = self.inputs.target_var
 
         if self.inputs.json_dict is not None:
-            if os.path.isfile(self.inputs.json_dict) and self.inputs.json_dict.endswith('.json') and os.stat(self.inputs.json_dict).st_size != 0:
+            if os.path.isfile(self.inputs.json_dict) and \
+                self.inputs.json_dict.endswith('.json') and \
+                os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype", "dep_1",

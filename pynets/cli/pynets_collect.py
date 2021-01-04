@@ -2148,8 +2148,8 @@ def main():
     args_dict_all = {}
     args_dict_all['plug'] = 'MultiProc'
     args_dict_all['v'] = False
-    #args_dict_all['pm'] = '48,67'
-    args_dict_all['pm'] = '128,500'
+    args_dict_all['pm'] = '48,67'
+    #args_dict_all['pm'] = '128,500'
     #args_dict_all['pm'] = '224,2000'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
@@ -2159,8 +2159,8 @@ def main():
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
     args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/outputs_shaeffer/pynets'
-    args_dict_all['work'] = '/tmp/work/func'
-    args_dict_all['modality'] = 'func'
+    args_dict_all['work'] = '/tmp/work/dwi'
+    args_dict_all['modality'] = 'dwi'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
                            'average_local_efficiency',
