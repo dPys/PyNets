@@ -36,6 +36,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         The name of an atlas (indicating the node definition).
     graph_pathlist : list
     ID : str
+        An arbitrary subject identifier.
     subgraph_name : str
 
     Returns
