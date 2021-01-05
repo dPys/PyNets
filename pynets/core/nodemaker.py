@@ -945,7 +945,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     atlas = uatlas.split("/")[-1].split(".")[0]
 
@@ -985,7 +985,7 @@ def gen_img_list(uatlas):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that the"
-            " file(s) specified with the -ua flag exist(s)")
+            " file(s) specified with the -a flag exist(s)")
 
     bna_img = nib.load(uatlas)
     bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
@@ -1187,7 +1187,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     img_list = nodemaker.gen_img_list(uatlas)
     print(

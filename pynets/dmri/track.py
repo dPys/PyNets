@@ -556,6 +556,7 @@ def run_tracking(step_curv_combinations, recon_path,
                  particle_count, roi_neighborhood_tol, waymask, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
                  tissues4d, cache_dir, min_seeds=100):
+#docstring
 
     import gc
     import os
