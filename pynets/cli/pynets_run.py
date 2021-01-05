@@ -158,7 +158,7 @@ def get_parser():
         default=None,
         help="Specify the path to the atlas reference .txt file that maps "
              "labels to intensities corresponding to the atlas parcellation "
-             "file specified with the -ua flag.\n",
+             "file specified with the -a flag.\n",
     )
     parser.add_argument(
         "-way",
@@ -169,19 +169,6 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    parser.add_argument(
-        "-ua",
-        metavar="Path to custom parcellation file",
-        default=None,
-        nargs="+",
-        help="(metaparameter): Optionally specify a path to a "
-             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
-             "be spatially distinct across hemispheres and ordered with "
-             "consecutive integers with a value of 0 as the background label."
-             "If specifying a list of paths to multiple parcellations, "
-             "separate them by space.\n",
-    )
-
     # Modality-pervasive metaparameters
     parser.add_argument(
         "-mod",
@@ -250,9 +237,14 @@ def get_parser():
             'sub-colin27_label-L2018_desc-scale4_atlas',
             'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
-        help="(metaparameter): Specify an atlas parcellation from nilearn or "
-             "local libraries. If you wish to iterate your pynets run over "
-             "multiple atlases, separate them by space. Available nilearn "
+        help="(metaparameter): Specify an atlas name from nilearn or "
+             "local (pynets) library, and/or specify a path to a custom "
+             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
+             "be spatially distinct across hemispheres and ordered with "
+             "consecutive integers with a value of 0 as the background label."
+             "If specifying a list of paths to multiple parcellations, "
+             "separate them by space. If you wish to iterate your pynets run "
+             "over multiple atlases, separate them by space. Available nilearn "
              "atlases are:"
         "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba"
              "\natlas_talairach_lobe\n"
@@ -602,11 +594,10 @@ def get_parser():
         action="store_true",
         help="Verbose print for debugging.\n")
     parser.add_argument(
-        "-clean",
+        "-noclean",
         default=False,
         action="store_true",
-        help="Clean up temporary runtime directory after "
-             "workflow termination.\n",
+        help="Disable post-workflow clean-up of temporary runtime metadata.\n",
     )
     parser.add_argument(
         "-work",
@@ -796,7 +787,7 @@ def build_workflow(args, retval):
         import psutil
         nthreads = psutil.cpu_count()
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 2]
+                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1
@@ -982,7 +973,17 @@ def build_workflow(args, retval):
             multi_nets = None
     else:
         multi_nets = None
-    uatlas = args.ua
+
+    atlas_ins = args.a
+    # Parse uatlas files from atlas names
+    uatlas = []
+    atlas = []
+    for atl in atlas_ins:
+        if os.path.isfile(atl):
+            uatlas.append(atl)
+        else:
+            atlas.append(atl)
+
     if uatlas:
         if len(uatlas) > 1:
             user_atlas_list = uatlas
@@ -995,7 +996,7 @@ def build_workflow(args, retval):
             user_atlas_list = None
     else:
         user_atlas_list = None
-    atlas = args.a
+
     if atlas:
         if (isinstance(atlas, list)) and (len(atlas) > 1):
             multi_atlas = atlas
@@ -1011,6 +1012,7 @@ def build_workflow(args, retval):
             multi_atlas = None
     else:
         multi_atlas = None
+
     min_length = args.ml
     if min_length:
         if (isinstance(min_length, list)) and (len(min_length) > 1):
@@ -1716,7 +1718,7 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "ERROR: the -ua flag cannot be used alone with the clustering"
+                "ERROR: the -a flag cannot be used alone with the clustering"
                 " option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
@@ -2424,21 +2426,15 @@ def build_workflow(args, retval):
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
-                    "log_to_file": True,
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
+                    "log_to_file": False,
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
-                },
-                monitoring={
-                    "enabled": True,
-                    "sample_frequency": "0.1",
-                    "summary_append": True,
-                },
+                }
             )
             logging.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
 
         execution_dict["crashdump_dir"] = str(wf.base_dir)
@@ -2599,8 +2595,8 @@ def build_workflow(args, retval):
             imports=import_list,
         )
         net_mets_node.synchronize = True
-        net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 4
+        net_mets_node._n_procs = runtime_dict["NetworkAnalysis"][0]
+        net_mets_node._mem_gb = runtime_dict["NetworkAnalysis"][1]
 
         collect_pd_list_net_csv_node = pe.Node(
             niu.Function(
@@ -2611,15 +2607,16 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._mem_gb = 2
+        collect_pd_list_net_csv_node._n_procs = runtime_dict["AggregateOutputs"][0]
+        collect_pd_list_net_csv_node._mem_gb = runtime_dict["AggregateOutputs"][1]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
             interface=CombineOutputs(),
             name="CombineOutputs",
             imports=import_list)
-        combine_pandas_dfs_node._n_procs = 1
-        combine_pandas_dfs_node._mem_gb = 2
+        combine_pandas_dfs_node._n_procs = runtime_dict["CombineOutputs"][0]
+        combine_pandas_dfs_node._mem_gb = runtime_dict["CombineOutputs"][1]
 
         final_outputnode = pe.Node(
             niu.IdentityInterface(fields=["combination_complete"]),
@@ -2685,6 +2682,7 @@ def build_workflow(args, retval):
                 step_thr,
                 wf,
                 net_mets_node,
+                runtime_dict
             )
         else:
             wf.connect(
@@ -3190,15 +3188,17 @@ def build_workflow(args, retval):
             f"{work_dir}/wf_multi_subject_{'_'.join(ID)}",
             exist_ok=True)
         wf_multi.base_dir = f"{work_dir}/wf_multi_subject_{'_'.join(ID)}"
-        retval["run_uuid"] = None
+        retval["run_uuid"] = 'GROUP'
 
         if verbose is True:
-            from nipype import config, logging
+            import logging
+            from nipype import config, logging as lg
+            from nipype.utils.profiler import log_nodes_cb
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf_multi.base_dir),
@@ -3211,29 +3211,14 @@ def build_workflow(args, retval):
                     "summary_file": str(wf_multi.base_dir),
                 },
             )
-            logging.update_logging(config)
+            lg.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
             callback_log_path = f"{wf_multi.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
-
-        execution_dict["crashdump_dir"] = str(wf_multi.base_dir)
-        execution_dict["plugin"] = str(plugin_type)
-        cfg = dict(execution=execution_dict)
-        for key in cfg.keys():
-            for setting, value in cfg[key].items():
-                wf_multi.config[key][setting] = value
-        try:
-            wf_multi.write_graph(graph2use="colored", format="png")
-        except BaseException:
-            pass
-        if verbose is True:
-            from nipype.utils.profiler import log_nodes_cb
-
             plugin_args = {
                 "n_procs": int(procmem[0]),
                 "memory_gb": int(procmem[1]),
@@ -3246,6 +3231,18 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
+
+        execution_dict["crashdump_dir"] = str(wf_multi.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf_multi.config[key][setting] = value
+        try:
+            wf_multi.write_graph(graph2use="colored", format="png")
+        except BaseException:
+            pass
+
         print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
@@ -3255,10 +3252,14 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
 
-            print("Plotting resource profile from run...")
-            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
-            handler.close()
-            logger.removeHandler(handler)
+            if os.path.isfile(callback_log_path):
+                print("Plotting resource profile from run...")
+                generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+                handler.close()
+                logger.removeHandler(handler)
+            else:
+                print(f"Cannot plot resource usage. {callback_log_path} not "
+                      f"found...")
 
         # Clean up temporary directories
         print("Cleaning up...")
@@ -3395,12 +3396,14 @@ def build_workflow(args, retval):
         wf.base_dir = f"{work_dir}/{ID}_{run_uuid}_{base_dirname}"
 
         if verbose is True:
-            from nipype import config, logging
+            import logging
+            from nipype import config, logging as lg
+            from nipype.utils.profiler import log_nodes_cb
 
             cfg_v = dict(
                 logging={
-                    "workflow_level": "DEBUG",
-                    "utils_level": "DEBUG",
+                    "workflow_level": "INFO",
+                    "utils_level": "INFO",
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf.base_dir),
@@ -3413,28 +3416,14 @@ def build_workflow(args, retval):
                     "summary_file": str(wf.base_dir),
                 },
             )
-            logging.update_logging(config)
+            lg.update_logging(config)
             config.update_config(cfg_v)
-            config.enable_debug_mode()
             config.enable_resource_monitor()
             callback_log_path = f"{wf.base_dir}/run_stats.log"
             logger = logging.getLogger("callback")
             logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(callback_log_path)
             logger.addHandler(handler)
-
-        execution_dict["crashdump_dir"] = str(wf.base_dir)
-        execution_dict["plugin"] = str(plugin_type)
-        cfg = dict(execution=execution_dict)
-        for key in cfg.keys():
-            for setting, value in cfg[key].items():
-                wf.config[key][setting] = value
-        try:
-            wf.write_graph(graph2use="colored", format="png")
-        except BaseException:
-            pass
-        if verbose is True:
-            from nipype.utils.profiler import log_nodes_cb
 
             plugin_args = {
                 "n_procs": int(procmem[0]),
@@ -3448,6 +3437,17 @@ def build_workflow(args, retval):
                 "memory_gb": int(procmem[1]),
                 "scheduler": "mem_thread",
             }
+        execution_dict["crashdump_dir"] = str(wf.base_dir)
+        execution_dict["plugin"] = str(plugin_type)
+        cfg = dict(execution=execution_dict)
+        for key in cfg.keys():
+            for setting, value in cfg[key].items():
+                wf.config[key][setting] = value
+        try:
+            wf.write_graph(graph2use="colored", format="png")
+        except BaseException:
+            pass
+
         print(f"Running with {str(plugin_args)}\n")
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
@@ -3458,23 +3458,23 @@ def build_workflow(args, retval):
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
 
-            print("Plotting resource profile from run...")
-            generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
-            handler.close()
-            logger.removeHandler(handler)
-
+            if os.path.isfile(callback_log_path):
+                print("Plotting resource profile from run...")
+                generate_gantt_chart(callback_log_path, cores=int(procmem[0]))
+                handler.close()
+                logger.removeHandler(handler)
+            else:
+                print(f"Cannot plot resource usage. {callback_log_path} not "
+                      f"found...")
         # Clean up temporary directories
         print("Cleaning up...")
         if func_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/func/*") if os.path.isfile(i)]:
-                if ("reor-RAS" in file_) or ("res-" in file_):
-                    try:
-                        os.remove(file_)
-                    except BaseException:
-                        continue
-            for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/func/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3482,21 +3482,18 @@ def build_workflow(args, retval):
                         continue
         if dwi_file:
             for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/dwi/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)] + \
+                         [i for i in glob.glob(
+                    f"{subj_dir}/*/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:
                         os.remove(file_)
                     except BaseException:
                         continue
-            for file_ in [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)]:
-                if ("reor-RAS" in file_) or ("res-" in file_) or \
-                   ("_bvecs_reor.bvec" in file_):
-                    try:
-                        os.remove(file_)
-                    except BaseException:
-                        continue
+
     print("\n\n------------FINISHED-----------")
     print("Subject: ", ID)
     print(
@@ -3523,11 +3520,12 @@ def main():
             "PyNets not installed! Ensure that you are referencing the correct"
             " site-packages and using Python3.6+"
         )
+        return 1
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
               " flag.\n")
-        sys.exit(1)
+        return 1
 
     args = get_parser().parse_args()
 
@@ -3537,8 +3535,6 @@ def main():
         p = mp.Process(target=build_workflow, args=(args, retval))
         p.start()
         p.join()
-        if p.is_alive():
-            p.terminate()
 
         retcode = p.exitcode or retval.get("return_code", 0)
 
@@ -3549,21 +3545,17 @@ def main():
         run_uuid = retval.get("run_uuid", None)
 
         retcode = retcode or int(pynets_wf is None)
-        if retcode != 0:
-            sys.exit(retcode)
 
-        # Clean up master process before running workflow, which may create
-        # forks
-        gc.collect()
-
+    if p.is_alive():
+        p.terminate()
     mgr.shutdown()
-
-    if args.clean is True and work_dir:
+    gc.collect()
+    if args.noclean is False and work_dir:
         from shutil import rmtree
 
         rmtree(work_dir, ignore_errors=True)
 
-    sys.exit(0)
+    return retcode
 
 
 if __name__ == "__main__":
