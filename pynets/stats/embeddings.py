@@ -33,6 +33,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         If list of ndarray, each array must have shape (n_vertices, n_vertices).
         If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
     atlas : str
+        The name of an atlas (indicating the node definition).
     graph_pathlist : list
     ID : str
     subgraph_name : str
@@ -212,6 +213,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
     mat : ndarray or nx.Graph
         An nxn adjacency matrix or graph object.
     atlas : str
+        The name of an atlas (indicating the node definition).
     graph_path : str
     ID : str
     subgraph_name : str
