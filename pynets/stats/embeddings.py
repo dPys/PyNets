@@ -28,7 +28,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
 
     Parameters
     ----------
-    graphs : list of nx.Graph or ndarray, or ndarray
+    pop_array : list of nx.Graph or ndarray, or ndarray
         If list of nx.Graph, each Graph must contain same number of nodes.
         If list of ndarray, each array must have shape (n_vertices, n_vertices).
         If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
@@ -138,7 +138,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
 
     Parameters
     ----------
-    graphs : list of nx.Graph or ndarray, or ndarray
+    pop_array : list of nx.Graph or ndarray, or ndarray
         If list of nx.Graph, each Graph must contain same number of nodes.
         If list of ndarray, each array must have shape (n_vertices, n_vertices).
         If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
@@ -146,6 +146,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     graph_path : str
     ID : str
     subgraph_name : str
+    n_components : int
 
     Returns
     -------
@@ -208,10 +209,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_componen
 
     Parameters
     ----------
-    graphs : list of nx.Graph or ndarray, or ndarray
-        If list of nx.Graph, each Graph must contain same number of nodes.
-        If list of ndarray, each array must have shape (n_vertices, n_vertices).
-        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+    mat : ndarray or nx.Graph
+        An nxn adjacency matrix or graph object.
     atlas : str
     graph_path : str
     ID : str
