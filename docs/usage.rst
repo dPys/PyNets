@@ -23,7 +23,7 @@ Required
 
 :(B): A supported connectivity model specified with the `-mod` flag. If PyNets is executed in multimodal mode (i.e. with both fMRI and dMRI inputs in the same command-line call), multiple modality-applicable connectivity models should be specified (minimally providing at least one for either modality). PyNets will automatically parse which model is appropriate for which data.
 
-:(C): If an atlas is not specified with the `-a` flag, then a parcellation file must be specified with the `-ua` flag. The following curated list of atlases is currently supported:
+:(C): If an atlas is not specified with the `-a` flag, then a parcellation file must be specified with the `-a` flag. The following curated list of atlases is currently supported:
 
 :Atlas Library:
     - 'atlas_harvard_oxford'
@@ -90,9 +90,9 @@ Custom File Inputs
 
 :`-roi`: (*fMRI + dMRI*) A binarized ROI mask used to constrain connectome node-making to restricted brain regions of the parcellation being used. ROI inputs should be in MNI space.
 
-:`-ua`: (*fMRI + dMRI*) A parcellation/atlas image (in MNI space) used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
+:`-a`: (*fMRI + dMRI*) A parcellation/atlas image (in MNI space) used to define nodes of a connectome. Labels should be spatially distinct across hemispheres and ordered with consecutive integers with a value of 0 as the background label. This flag can uniquely be listed with multiple, space-separated file inputs.
 
-:`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-ua` flag. This label map is used only to delineate node labels manually. Otherwise, PyNets will attempt to perform automated node labeling via AAL, else sequential numeric labels will be used.
+:`-ref`: (*fMRI + dMRI*) An atlas reference .txt file that indices intensities corresponding to atlas labels of the parcellation specified with the `-a` flag. This label map is used only to delineate node labels manually. Otherwise, PyNets will attempt to perform automated node labeling via AAL, else sequential numeric labels will be used.
 
 :`-way`: (*dMRI*) A binarized white-matter ROI mask (in MNI template space) used to constrain tractography in native diffusion space such that streamlines are retained only if they pass within the vicinity of the mask. Like with ROI inputs, waymasks should be in MNI space.
 
@@ -178,7 +178,7 @@ Building upon the previous examples, let's say you now wish to analyze the Defau
     pynets -id '002_1' '/Users/dPys/outputs/pynets' \
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
-    -ua '/Users/dPys/PyNets/pynets/atlases/MyCustomAtlas.nii.gz' \ # A user-supplied atlas parcellation.
+    -a '/Users/dPys/PyNets/pynets/atlases/MyCustomAtlas.nii.gz' \ # A user-supplied atlas parcellation.
     -mod 'partcorr' \ # The connectivity model.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.
     -n 'Default' 'Cont' # The resting-state network definitions to restrict node-making from each of the input atlas.
@@ -203,7 +203,7 @@ You wish to generate a structural connectome, using deterministic and probabilis
     -bval '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVAL.bval' \ # The b-values.
     -bvec '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVEC.bvec' \ # The b-vectors.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
-    -ua '/Users/dPys/.atlases/DesikanKlein2012.nii.gz' '/Users/dPys/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
+    -a '/Users/dPys/.atlases/DesikanKlein2012.nii.gz' '/Users/dPys/.atlases/AALTzourioMazoyer2002.nii.gz' \ # The atlases.
     -mod 'csd' 'csa' 'sfm' \ # The connectivity model.
     -dg 'prob' 'det'  \ # The tractography settings.
     -dt -min_thr 0.05 -max_thr 0.10 -step_thr 0.01 -p 1 \ # The thresholding settings.

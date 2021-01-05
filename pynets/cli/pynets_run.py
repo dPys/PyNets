@@ -158,7 +158,7 @@ def get_parser():
         default=None,
         help="Specify the path to the atlas reference .txt file that maps "
              "labels to intensities corresponding to the atlas parcellation "
-             "file specified with the -ua flag.\n",
+             "file specified with the -a flag.\n",
     )
     parser.add_argument(
         "-way",
@@ -169,19 +169,6 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    parser.add_argument(
-        "-ua",
-        metavar="Path to custom parcellation file",
-        default=None,
-        nargs="+",
-        help="(metaparameter): Optionally specify a path to a "
-             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
-             "be spatially distinct across hemispheres and ordered with "
-             "consecutive integers with a value of 0 as the background label."
-             "If specifying a list of paths to multiple parcellations, "
-             "separate them by space.\n",
-    )
-
     # Modality-pervasive metaparameters
     parser.add_argument(
         "-mod",
@@ -250,9 +237,14 @@ def get_parser():
             'sub-colin27_label-L2018_desc-scale4_atlas',
             'sub-colin27_label-L2018_desc-scale5_atlas'
         ],
-        help="(metaparameter): Specify an atlas parcellation from nilearn or "
-             "local libraries. If you wish to iterate your pynets run over "
-             "multiple atlases, separate them by space. Available nilearn "
+        help="(metaparameter): Specify an atlas name from nilearn or "
+             "local (pynets) library, and/or specify a path to a custom "
+             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
+             "be spatially distinct across hemispheres and ordered with "
+             "consecutive integers with a value of 0 as the background label."
+             "If specifying a list of paths to multiple parcellations, "
+             "separate them by space. If you wish to iterate your pynets run "
+             "over multiple atlases, separate them by space. Available nilearn "
              "atlases are:"
         "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba"
              "\natlas_talairach_lobe\n"
@@ -981,7 +973,17 @@ def build_workflow(args, retval):
             multi_nets = None
     else:
         multi_nets = None
-    uatlas = args.ua
+
+    atlas_ins = args.a
+    # Parse uatlas files from atlas names
+    uatlas = []
+    atlas = []
+    for atl in atlas_ins:
+        if os.path.isfile(atl):
+            uatlas.append(atl)
+        else:
+            atlas.append(atl)
+
     if uatlas:
         if len(uatlas) > 1:
             user_atlas_list = uatlas
@@ -994,7 +996,7 @@ def build_workflow(args, retval):
             user_atlas_list = None
     else:
         user_atlas_list = None
-    atlas = args.a
+
     if atlas:
         if (isinstance(atlas, list)) and (len(atlas) > 1):
             multi_atlas = atlas
@@ -1010,6 +1012,7 @@ def build_workflow(args, retval):
             multi_atlas = None
     else:
         multi_atlas = None
+
     min_length = args.ml
     if min_length:
         if (isinstance(min_length, list)) and (len(min_length) > 1):
@@ -1715,7 +1718,7 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "ERROR: the -ua flag cannot be used alone with the clustering"
+                "ERROR: the -a flag cannot be used alone with the clustering"
                 " option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
