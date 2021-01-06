@@ -14,7 +14,7 @@ def main():
     from joblib import Parallel, delayed
     import tempfile
     import dill
-    from pynets.stats.prediction import make_subject_dict, cleanNullTerms, \
+    from pynets.stats.utils import make_subject_dict, cleanNullTerms, \
         get_ensembles_top, get_ensembles_embedding, \
         build_grid
     from colorama import Fore, Style
@@ -32,16 +32,17 @@ def main():
         sys.exit(1)
 
     #### Parse inputs
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    # base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
-    disc = True
+    disc = False
     int_consist = True
-    modality = 'dwi'
+    modality = 'func'
 
-    embedding_types = ['ASE']
-    rsns = ['triple', 'kmeans']
+    embedding_types = ['topology']
+    rsns = ['language']
+    #rsns = ['triple', 'kmeans']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",

@@ -11,6 +11,11 @@ def main():
     import json
     import pandas as pd
     import os
+    import sys
+    import dill
+    from pynets.stats.utils import make_feature_space_dict, \
+        make_subject_dict, cleanNullTerms
+    from pynets.core.utils import mergedicts
     from colorama import Fore, Style
     try:
         import pynets
@@ -25,11 +30,7 @@ def main():
               " flag.\n")
         sys.exit(1)
 
-    #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_shaeffer"
-    base_dir = "/working/tuning_set/outputs_clustering"
-    #base_dir = "/working/tuning_set/outputs_language"
-    #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
+    base_dir = "/working/tuning_set/outputs_final"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
         index_col=False
@@ -42,9 +43,7 @@ def main():
                    "depression_persist_phenotype",
                    "dep_2", 'rum_2', 'rum_1', 'dep_1']
 
-    rsns = ["triple", "kmeans"]
-    #rsns = ["tripleRUM", "kmeansRUM"]
-    #rsns = ["language"]
+    rsns = ["triple", "kmeans", "language"]
 
     sessions = ["1"]
 
@@ -152,9 +151,7 @@ def main():
     for d in outs:
         ml_dfs = dict(mergedicts(ml_dfs, d))
 
-    # with open('pynets_ml_dict_func_topology.pkl', "rb") as f:
-    #     ml_dfs = dill.load(f)
-    # f.close()
+    ml_dfs = cleanNullTerms(ml_dfs)
 
     feature_spaces = {}
 

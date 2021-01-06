@@ -185,7 +185,7 @@ def load_pd_dfs(file_):
     return df
 
 
-def df_concat(dfs, working_path, modality, drop_cols, args):
+def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
     import os
     import pandas as pd
     import numpy as np
@@ -269,9 +269,6 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
     except:
         pass
 
-    # drop = [i for i in frame.columns if 'participation' in i or 'diversity' in i]
-    # frame = frame.drop(columns=drop)
-
     out_path = f"{working_path}/all_subs_neat_{modality}.csv"
     if os.path.isfile(out_path):
         frame_fill = pd.read_csv(out_path)
@@ -311,13 +308,13 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
         del col
 
     # If > 50% of a column is NA/missing
-    #frame = frame.loc[:, frame.isnull().mean() <= 0.20]
+    frame = frame.loc[:, frame.isnull().mean() <= 0.50]
 
     # If > 50% of a column is zero
-    #frame = frame.loc[:, (frame == 0).mean() < .5]
+    frame = frame.loc[:, (frame == 0).mean() < .5]
 
     # If > 50% of a row is NA/missing
-    #frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
+    frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
 
     missingness_dict = summarize_missingness(frame)[0]
     bad_cols = []
@@ -335,32 +332,30 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
           'otherwise create an inventory of missingness...')
     par_dict = rerun_dict.copy()
     cache_dir = tempfile.mkdtemp()
-    with Parallel(n_jobs=224, require='sharedmem', verbose=10,
+    with Parallel(n_jobs=-1, require='sharedmem', verbose=10,
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                  par_dict, modality,
-                        working_path, drop_cols, frame) for
+                        working_path, drop_cols, frame, regen) for
                         bad_col in list(bad_cols_dict.keys()))
 
     if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
         os.remove(f"{working_path}/all_subs_neat_{modality}.csv")
     frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=True)
 
-    # frame = frame.drop(frame.filter(regex="thrtype-PROP"), axis=1)
-    # frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=True)
+    if regen is True:
+        rerun_dicts = []
+        reruns = []
+        for rd, rerun in outs:
+            rerun_dicts.append(rd)
+            reruns.append(rerun)
 
-    rerun_dicts = []
-    reruns = []
-    for rd, rerun in outs:
-        rerun_dicts.append(rd)
-        reruns.append(rerun)
+        for rd in rerun_dicts:
+            rerun_dict = dict(mergedicts(rerun_dict, rd))
 
-    for rd in rerun_dicts:
-        rerun_dict = dict(mergedicts(rerun_dict, rd))
-
-    # # Re-run collection...
-    # if sum(reruns) > 1:
-    #     build_collect_workflow(args, outs)
+        # Re-run collection...
+        if sum(reruns) > 1:
+            build_collect_workflow(args, outs)
 
     # if len(bad_cols) > 0:
         # print(f"{Fore.LIGHTYELLOW_EX}Dropping columns with excessive "
@@ -375,7 +370,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args):
 
 
 def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
-                    working_path, drop_cols, frame, regen=True):
+                    working_path, drop_cols, frame, regen):
     import glob
     import os
     atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
@@ -400,14 +395,7 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                 f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology"):
                 print(f"Missing graph analysis for {sub}, {ses} for "
                       f"{atlas}...")
-            else:
-                if regen is True:
-                    from pynets.stats.netstats import collect_pandas_df_make
-                    collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
-                                                     f"{modality}/{atlas}/"
-                                                     f"topology/*_neat.csv"),
-                                           f"{sub}_{ses}", None, False)
-                rerun = True
+
         outs = [i for i in glob.glob(f"{working_path}/{sub}/{ses}/{modality}/"
                                      f"{atlas}/topology/auc/*")
                 if search_str in i]
@@ -590,26 +578,6 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         columns=lambda x: re.sub(
             "topology_auc",
             "", x))
-    df_pref = df_pref.rename(
-        columns=lambda x: re.sub(
-            "mod-",
-            "model-", x))
-    df_pref = df_pref.rename(
-        columns=lambda x: re.sub(
-            "res-200",
-            "res-77", x))
-    df_pref = df_pref.rename(
-        columns=lambda x: re.sub(
-            "res-400",
-            "res-135", x))
-    df_pref = df_pref.rename(
-        columns=lambda x: re.sub(
-            "res-600",
-            "res-180", x))
-    df_pref = df_pref.rename(
-        columns=lambda x: re.sub(
-            "res-800",
-            "res-228", x))
 
     bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                   drop_cols)]
@@ -954,13 +922,13 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             del col
 
         # If > 50% of a column is NA/missing
-        # frame = frame.loc[:, frame.isnull().mean() <= 0.20]
+        frame = frame.loc[:, frame.isnull().mean() <= 0.50]
 
         # If > 50% of a column is zero
-        # frame = frame.loc[:, (frame == 0).mean() < .5]
+        frame = frame.loc[:, (frame == 0).mean() < .50]
 
         # If > 50% of a row is NA/missing
-        # frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
+        frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
 
         missingness_dict = summarize_missingness(frame)[0]
         bad_cols = []
@@ -978,7 +946,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
               'otherwise create an inventory of missingness...')
         par_dict = rerun_dict.copy()
         cache_dir = tempfile.mkdtemp()
-        with Parallel(n_jobs=224, require='sharedmem', verbose=10,
+        with Parallel(n_jobs=-1, require='sharedmem', verbose=10,
                       temp_folder=cache_dir) as parallel:
             outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                      par_dict, modality,
@@ -1019,7 +987,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         return frame, rerun_dict
 
     def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
-                        working_path, drop_cols, frame, regen=True):
+                        working_path, drop_cols, frame, regen=False):
         import glob
         import os
         atlas = bad_col.split('_')[0] + '_' + bad_col.split('_')[1]
@@ -1220,7 +1188,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         if modality == 'dwi':
             df_pref = df_pref.rename(
                 columns=lambda x: re.sub(
-                    "nodetype-parc_samples-\d{1,5}0000streams_tracktype-local_",
+                    "nodetype-parc_samples-*streams_tracktype-local_",
                     "", x))
 
         df_pref = df_pref.rename(
@@ -1239,26 +1207,6 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             columns=lambda x: re.sub(
                 "topology_auc",
                 "", x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "mod-",
-                "model-", x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "res-200",
-                "res-77", x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "res-400",
-                "res-135", x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "res-600",
-                "res-180", x))
-        df_pref = df_pref.rename(
-            columns=lambda x: re.sub(
-                "res-800",
-                "res-228", x))
 
         bad_cols = [i for i in df_pref.columns if any(ele in i for ele in
                                                       drop_cols)]
@@ -2172,10 +2120,12 @@ def main():
                            'degree_centrality',
                            'samples-2000streams',
                            'samples-7700streams',
+                           'MNI152_T1',
                         #   'rsn-kmeans_',
                         #   'rsn-triple_'
                         #   "_minlength-0",
                         #   'degree_assortativity_coefficient',
+                        #   'smallworldness',
                            'ward',
                             "variance",
                            "res-1000", "smooth-2fwhm"]
@@ -2265,3 +2215,4 @@ if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen" \
                "_importlib.BuiltinImporter'>)"
     main()
+

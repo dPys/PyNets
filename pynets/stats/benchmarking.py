@@ -19,109 +19,9 @@ import pandas as pd
 import numpy as np
 import warnings
 from sklearn.preprocessing import StandardScaler
-from pynets.stats.prediction import flatten_latent_positions
+from pynets.stats.utils import flatten_latent_positions
 from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
-
-
-def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
-    """
-    A function to build a hyperparameter dictionary by parsing a given
-    file path.
-    """
-
-    for hyperparam in hyperparams:
-        if (
-            hyperparam != "smooth"
-            and hyperparam != "hpass"
-            and hyperparam != "track_type"
-            and hyperparam != "directget"
-            and hyperparam != "tol"
-            and hyperparam != "minlength"
-            and hyperparam != "samples"
-            and hyperparam != "nodetype"
-            and hyperparam != "template"
-            and hyperparam != "extract"
-
-        ):
-            if hyperparam not in hyperparam_dict.keys():
-                hyperparam_dict[hyperparam] = [
-                    str(file_renamed.split(hyperparam + "-")[1].split("_")[0])
-                ]
-            else:
-                hyperparam_dict[hyperparam].append(
-                    str(file_renamed.split(hyperparam + "-")[1].split("_")[0])
-                )
-
-    if modality == "func":
-        if "smooth-" in file_renamed:
-            if "smooth" not in hyperparam_dict.keys():
-                hyperparam_dict["smooth"] = [str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0])]
-            else:
-                hyperparam_dict["smooth"].append(str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0]))
-        else:
-            if 'smooth' not in hyperparam_dict.keys():
-                hyperparam_dict['smooth'] = [str(0)]
-            hyperparam_dict["smooth"].append(str(0))
-            hyperparams.append("smooth")
-        if "hpass-" in file_renamed:
-            if "hpass" not in hyperparam_dict.keys():
-                hyperparam_dict["hpass"] = [str(file_renamed.split(
-                    "hpass-")[1].split("_")[0].split("Hz")[0])]
-            else:
-                hyperparam_dict["hpass"].append(
-                    str(file_renamed.split("hpass-"
-                                       )[1].split("_")[0].split("Hz")[0]))
-            hyperparams.append("hpass")
-        if "extract-" in file_renamed:
-            if "extract" not in hyperparam_dict.keys():
-                hyperparam_dict["extract"] = [
-                    str(file_renamed.split("extract-")[1].split("_")[0])
-                ]
-            else:
-                hyperparam_dict["extract"].append(
-                    str(file_renamed.split("extract-")[1].split("_")[0])
-                )
-            hyperparams.append("extract")
-
-    elif modality == "dwi":
-        if "directget-" in file_renamed:
-            if "directget" not in hyperparam_dict.keys():
-                hyperparam_dict["directget"] = [
-                    str(file_renamed.split("directget-")[1].split("_")[0])
-                ]
-            else:
-                hyperparam_dict["directget"].append(
-                    str(file_renamed.split("directget-")[1].split("_")[0])
-                )
-            hyperparams.append("directget")
-        if "minlength-" in file_renamed:
-            if "minlength" not in hyperparam_dict.keys():
-                hyperparam_dict["minlength"] = [
-                    str(file_renamed.split("minlength-")[1].split("_")[0])
-                ]
-            else:
-                hyperparam_dict["minlength"].append(
-                    str(file_renamed.split("minlength-")[1].split("_")[0])
-                )
-            hyperparams.append("minlength")
-        if "tol-" in file_renamed:
-            if "tol" not in hyperparam_dict.keys():
-                hyperparam_dict["tol"] = [
-                    str(file_renamed.split("tol-")[1].split("_")[0])
-                ]
-            else:
-                hyperparam_dict["tol"].append(
-                    str(file_renamed.split("tol-")[1].split("_")[0])
-                )
-            hyperparams.append("tol")
-
-    for key in hyperparam_dict:
-        hyperparam_dict[key] = list(set(hyperparam_dict[key]))
-
-    return hyperparam_dict, hyperparams
 
 
 def discr_stat(
@@ -294,29 +194,6 @@ def beta_lin_comb(beta, GVDAT, meta):
     return gv_array
 
 
-def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
-    vects = []
-    for ses in sub_dict_clean[ID].keys():
-        #print(ses)
-        if comb_tuple in sub_dict_clean[ID][ses][modality][alg].keys():
-            if alg == 'topology':
-                vect = sub_dict_clean[ID][ses][modality][alg][comb_tuple]
-            else:
-                vect = flatten_latent_positions(base_dir, sub_dict_clean, ID,
-                                                ses, modality, comb_tuple, alg)
-            vects.append(vect)
-    vects = [i for i in vects if i is not None and not np.isnan(np.array(i)).all()]
-    if len(vects) > 0 and alg == 'topology':
-        out = np.concatenate(vects, axis=1)
-    elif len(vects) > 0:
-        out = pd.concat(vects, axis=0)
-        del vects
-    else:
-        out = None
-    #print(out)
-    return out
-
-
 def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                               final_missingness_summary, icc_tmps_dir, icc,
                               mets, ids):
@@ -325,6 +202,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     import glob
     import ast
     import matplotlib
+    from pynets.stats.utils import gen_sub_vec
     matplotlib.use('Agg')
 
     df_summary = pd.DataFrame(
@@ -633,9 +511,4 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     gc.collect()
     return df_summary
-
-
-def tuple_insert(tup, pos, ele):
-    tup = tup[:pos] + (ele,) + tup[pos:]
-    return tup
 
