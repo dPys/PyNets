@@ -37,7 +37,7 @@ cd PyNets
 
 Hardware Requirements
 ---------------------
-4 vCPUs, 8+ GB free RAM, and at least 15-20 GB of free disk space.
+4 vCPUs, 8+ GB free RAM, and at least 8-16 GB of free disk space.
 
 Operating Systems
 -----------------
@@ -77,7 +77,7 @@ where the `-config` flag specifies that path to a .json configuration spec that 
 ```
 {
     "func": { # fMRI options. If you only have functional (i.e. BOLD) data, set each of the `dwi` options to "None"
-            "ct": "None", # Indicates the type(s) of clustering that will be used to generate a clustering-based parcellation. This should be left as "None" if no clustering will be performed, but can be included simultaneously with the `-a` and `-ua` parcellation options.
+            "ct": "None", # Indicates the type(s) of clustering that will be used to generate a clustering-based parcellation. This should be left as "None" if no clustering will be performed, but can be included simultaneously with `-a`.
             "k": "None", # Indicates the number of clusters to generate in a clustering-based parcellation. This should be left as "None" if no clustering will be performed.
             "hp": "['0', '0.028', '0.080']", # Indicates the high-pass frequenc(ies) to apply to signal extraction from nodes.
             "mod": "['partcorr', 'cov']", # Indicates the functional connectivity estimator(s) to use. At least 1 is required for functional connectometry.
@@ -119,7 +119,7 @@ No problem-- you can still run pynets manually:
     pynets -id '002_1' '/Users/dPys/outputs/pynets' \ # where `-id` is an arbitrary subject identifier and the first path is an arbitrary output directory to store derivatives of the workflow.
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image. This is mandatory -- PyNets requires a T1/T2-weighted anatomical image unless you are analyzing raw graphs that ahve already been produced.
-    -a 'BrainnetomeAtlasFan2016' \ # An anatomical atlas name. Note that if were to omit the `-a` flag, a custom parcellation file would need to be specified using the `-ua` flag instead or a valid clustering mask (`-cm`) would be needed to generate an individual parcellation. For a complete catalogue of anatomical atlases available in PyNets, see the `Usage` section of the documentation.
+    -a 'BrainnetomeAtlasFan2016' \ # An anatomical atlas name. Note that if were to omit the `-a` flag, a custom parcellation file would need to be specified using the `-a` flag instead or a valid clustering mask (`-cm`) would be needed to generate an individual parcellation. For a complete catalogue of anatomical atlases available in PyNets, see the `Usage` section of the documentation.
     -mod 'partcorr' \ # The connectivity model. In the case of structural connectometry, this becomes the diffusion model type.
     -thr 0.20 \ # Optionally apply a single proportional threshold to the generated graph.
 ```
@@ -130,7 +130,7 @@ No problem-- you can still run pynets manually:
     -bval '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVAL.bval' \ # The b-values.
     -bvec '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/dwi/BVEC.bvec' \ # The b-vectors.
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
-    -ua '/Users/dPys/.atlases/MyCustomParcellation-scale1.nii.gz' '/Users/dPys/.atlases/MyCustomParcellation-scale2.nii.gz' \ # The parcellations.
+    -a '/Users/dPys/.atlases/MyCustomParcellation-scale1.nii.gz' '/Users/dPys/.atlases/MyCustomParcellation-scale2.nii.gz' \ # The parcellations.
     -mod 'csd' 'csa' 'sfm' \ # The (diffusion) connectivity model(s).
     -dg 'prob' 'det'  \ # The tractography direction-getting method.
     -mst -min_thr 0.20 -max_thr 0.80 -step_thr 0.10 # Multi-thresholding from the Minimum-Spanning Tree, with AUC graph analysis.

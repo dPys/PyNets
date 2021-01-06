@@ -1422,7 +1422,7 @@ def community_resolution_selection(G):
     elif num_comms > len(G.edges()) / 10:
         resolution = 0.1
         tries = 0
-        while num_comms == 1:
+        while num_comms > len(G.edges()) / 10:
             ci = np.array(
                 list(
                     community.best_partition(
