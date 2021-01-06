@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-@pytest.mark.parametrize("value", [True, 3.14, "word", {"project":"PyNets"}])
+@pytest.mark.parametrize("value", [True, 3.14, "word", {}])
 def test_get_prop_type(value):
     """
     Test for get_prop_type() functionality
@@ -437,7 +437,6 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert resolution is not None
 
 
-#@pytest.mark.parametrize("metric", ['rich_club_coeff'])
 @pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
                                     'comm_centrality', 'rich_club_coeff'])
 def test_get_metrics(metric):
