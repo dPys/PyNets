@@ -1419,27 +1419,27 @@ def community_resolution_selection(G):
                     "\nWARNING: Louvain community detection failed. "
                     "Proceeding with single community affiliation vector...")
                 break
-    # elif num_comms > len(G.edges()) / 10:
-    #     resolution = 0.1
-    #     tries = 0
-    #     while num_comms == 1:
-    #         ci = np.array(
-    #             list(
-    #                 community.best_partition(
-    #                     G,
-    #                     resolution=resolution).values()))
-    #         num_comms = len(np.unique(ci))
-    #         print(
-    #             f"{'Found '}{num_comms}{' communities at resolution: '}"
-    #             f"{resolution}{'...'}"
-    #         )
-    #         resolution = resolution / 10
-    #         tries = tries + 1
-    #         if tries > 100:
-    #             print(
-    #                 "\nWARNING: Louvain community detection failed. "
-    #                 "Proceeding with single community affiliation vector...")
-    #             break
+    elif num_comms > len(G.edges()) / 10:
+        resolution = 0.1
+        tries = 0
+        while num_comms > len(G.edges()) / 10:
+            ci = np.array(
+                list(
+                    community.best_partition(
+                        G,
+                        resolution=resolution).values()))
+            num_comms = len(np.unique(ci))
+            print(
+                f"{'Found '}{num_comms}{' communities at resolution: '}"
+                f"{resolution}{'...'}"
+            )
+            resolution = resolution / 10
+            tries = tries + 1
+            if tries > 100:
+                print(
+                    "\nWARNING: Louvain community detection failed. "
+                    "Proceeding with single community affiliation vector...")
+                break
     else:
         print(
             f"{'Found '}{num_comms}{' communities at resolution: '}"
