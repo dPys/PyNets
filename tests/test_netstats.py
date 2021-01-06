@@ -16,6 +16,31 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
+@pytest.mark.parametrize("value", [True, 3.14, "word", {"project":"PyNets"}])
+def test_get_prop_type(value):
+    """
+    Test for get_prop_type() functionality
+    """
+    start_time = time.time()
+    tname, value, key = netstats.get_prop_type(value)
+    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+                      np.round(time.time() - start_time, 1), 's'))
+    assert tname is not None
+
+def test_nx2gt():
+    """
+    Test for nx2gt() functionality
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    nxG = nx.from_numpy_array(in_mat)
+
+    start_time = time.time()
+    gtG = netstats.nx2gt(nxG)
+    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+                      np.round(time.time() - start_time, 1), 's'))
+    assert gtG is not None
+
 def test_average_shortest_path_length_for_all():
     """
     Test for average_shortest_path_length_for_all functionality
@@ -182,7 +207,8 @@ def test_most_important(method):
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
-def test_extractnetstats(binary, prune, norm):
+@pytest.mark.parametrize("conn_model", ['corr', 'cov', 'sps', 'partcorr'])
+def test_extractnetstats(binary, prune, norm, conn_model):
     """
     Test extractnetstats functionality
     """
@@ -190,7 +216,7 @@ def test_extractnetstats(binary, prune, norm):
     ID = '002'
     network = 'Default'
     thr = 0.95
-    conn_model = 'cov'
+    #conn_model = 'cov'
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     #prune = 1
     #norm = 1
