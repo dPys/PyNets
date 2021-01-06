@@ -350,7 +350,7 @@ def smallworldness(
         niter=1,
         nrand=10,
         approach="clustering",
-        reference="fast"):
+        reference="lattice"):
     """
     Returns the small-world coefficient of a graph
 
@@ -380,14 +380,13 @@ def smallworldness(
         Specifies whether to use clustering coefficient `clustering` or
         `transitivity` method of counting triangles. Default is `clustering`.
     reference : str
-        Specifies whether to use a random `random`, lattice
-        `lattice` reference, or fast `fast` erdos-renyi sample for
-        clustering/transitivity. Default is `fast`.
+        Specifies whether to use a random `random` or lattice
+        `lattice` reference. Default is `lattice`.
 
     Returns
     -------
     omega : float
-        The small-work coefficient
+        The smallworld coefficient
 
     References
     ----------
@@ -400,25 +399,19 @@ def smallworldness(
 
     from networkx.algorithms.smallworld import random_reference, \
         lattice_reference
-    from graspy.models import DCSBMEstimator
 
-    dcer = DCSBMEstimator(directed=False, loops=False)
-    dcer.fit(nx.to_numpy_array(G))
     # Compute the mean clustering coefficient and average shortest path length
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
-        if reference != "fast":
-            Gr = random_reference(G, niter=niter, seed=i)
-            if reference == "random":
-                Gl = random_reference(G, niter=niter, seed=i)
-            elif reference == "lattice":
-                Gl = lattice_reference(G, niter=niter, seed=i)
-            else:
-                raise ValueError(f"{reference}' graph type not recognized!")
+        Gr = random_reference(G, niter=niter, seed=i)
+        if reference == "random":
+            Gl = random_reference(G, niter=niter, seed=i)
+        elif reference == "lattice":
+            Gl = lattice_reference(G, niter=niter, seed=i)
         else:
-            Gr = nx.from_numpy_array(dcer.sample()[0])
-            Gl = Gr.copy()
+            raise ValueError(f"{reference}' graph type not recognized!")
+
         if approach == "clustering":
             randMetrics["C"].append(nx.average_clustering(Gl, weight='weight'))
         elif approach == "transitivity":
@@ -426,8 +419,7 @@ def smallworldness(
         else:
             raise ValueError(f"{approach}' approach not recognized!")
 
-        randMetrics["L"].append(
-            nx.average_shortest_path_length(Gr, weight="weight"))
+        randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight="weight"))
         del Gr, Gl
 
     if approach == "clustering":
@@ -988,9 +980,10 @@ def most_important(G, method="betweenness", sd=1):
             algorithm.detect(G)
             ranking = algorithm.get_coreness().items()
         except ImportError as e:
+            import sys
             print(e, "Cannot run coreness detection. "
                      "cpalgorithm not installed!")
-
+            sys.exit(1)
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
@@ -1103,23 +1096,24 @@ def raw_mets(G, i):
             try:
                 net_met_val = float(i(H))
             except BaseException as e:
-                print(UserWarning(f"Warning {e}: Pruning failed for "
-                                  f"degree assortativity coefficient measure!"))
-                try:
-                    from networkx.algorithms.assortativity import (
-                        degree_pearson_correlation_coefficient,
-                    )
-
-                    net_met_val = float(
-                        degree_pearson_correlation_coefficient(
-                            H, weight="weight"))
-                except BaseException:
-                    print(e, f"WARNING: {net_name} failed for G.")
-                    # np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
-                    #         np.array(nx.to_numpy_matrix(H)))
-                    net_met_val = np.nan
+                print(UserWarning(f"Warning {e}: "
+                                  f"Degree assortativity coefficient measure "
+                                  f"failed!"))
+                net_met_val = np.nan
         else:
-            net_met_val = np.nan
+            try:
+                from networkx.algorithms.assortativity import (
+                    degree_pearson_correlation_coefficient,
+                )
+
+                net_met_val = float(
+                    degree_pearson_correlation_coefficient(
+                        H, weight="weight"))
+            except BaseException as e:
+                print(e, f"WARNING: {net_name} failed for G.")
+                # np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
+                #         np.array(nx.to_numpy_matrix(H)))
+                net_met_val = np.nan
     else:
         try:
             net_met_val = float(i(G))
@@ -1267,11 +1261,12 @@ class CleanGraphs(object):
             try:
                 hub_detection_method = hardcoded_params[
                     "hub_detection_method"][0]
+                [self.G, _] = most_important(self.G,
+                                             method=hub_detection_method)
             except FileNotFoundError as e:
                 import sys
                 print(e, "Failed to parse runconfig.yaml")
 
-            [self.G, _] = most_important(self.G, method=hub_detection_method)
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
                   "component subgraph...")
@@ -1944,10 +1939,7 @@ def extractnetstats(
 
         tmp_graph_path = None
         if float(prune) >= 1:
-            try:
-                [_, tmp_graph_path] = cg.prune_graph()
-            except ValueError as e:
-                print(e, f"Graph pruning failed for {est_path}.")
+            [_, tmp_graph_path] = cg.prune_graph()
 
         if float(norm) >= 1:
             try:
@@ -1963,6 +1955,8 @@ def extractnetstats(
                 in_mat, G = cg.binarize_graph()
             except ValueError as e:
                 print(e, f"Graph binarization failed for {est_path}.")
+                in_mat = np.zeros(1, 1)
+                G = nx.Graph()
         else:
             in_mat, G = cg.in_mat, cg.G
 
@@ -1983,6 +1977,7 @@ def extractnetstats(
                 in_mat_len, G_len = cg.create_length_matrix()
             except ValueError as e:
                 print(e, f"Failed to create length matrix for {est_path}.")
+                G_len = None
 
             # Iteratively run functions from above metric list that generate single
             # scalar output
@@ -2003,10 +1998,13 @@ def extractnetstats(
                     print("Louvain modularity calculation is undefined for G")
                     # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
                     #         np.array(nx.to_numpy_matrix(G)))
+                    ci = None
                     pass
+            else:
+                ci = None
 
             # Participation Coefficient by louvain community
-            if "participation_coefficient" in metric_list_nodal:
+            if "participation_coefficient" in metric_list_nodal and ci is not None:
                 try:
                     if ci is None:
                         raise KeyError(
@@ -2021,9 +2019,12 @@ def extractnetstats(
                     print("Participation coefficient cannot be calculated for G")
                     # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
                     pass
+            else:
+                if ci is None and "participation_coefficient" in metric_list_nodal:
+                    print(UserWarning("Skipping participation coefficient because community affiliation is empty for G..."))
 
             # Diversity Coefficient by louvain community
-            if "diversity_coefficient" in metric_list_nodal:
+            if "diversity_coefficient" in metric_list_nodal and ci is not None:
                 try:
                     if ci is None:
                         raise KeyError(
@@ -2038,6 +2039,9 @@ def extractnetstats(
                     print("Diversity coefficient cannot be calculated for G")
                     # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
                     pass
+            else:
+                if ci is None and "diversity_coefficient" in metric_list_nodal:
+                    print(UserWarning("Skipping diversity coefficient because community affiliation is empty for G..."))
 
             # # Link communities
             # if "link_communities" in metric_list_nodal:
@@ -2099,7 +2103,7 @@ def extractnetstats(
                     pass
 
             # Betweenness Centrality
-            if "betweenness_centrality" in metric_list_nodal:
+            if "betweenness_centrality" in metric_list_nodal and G_len is not None:
                 try:
                     start_time = time.time()
                     metric_list_names, net_met_val_list_final = get_betweenness_centrality(
@@ -2110,6 +2114,9 @@ def extractnetstats(
                     # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
                     #         np.array(nx.to_numpy_matrix(G_len)))
                     pass
+            else:
+                if G_len is None and "betweenness_centrality" in metric_list_nodal:
+                    print(UserWarning("Skipping betweenness centrality because length matrix is empty for G..."))
 
             # Eigenvector Centrality
             if "eigenvector_centrality" in metric_list_nodal:
