@@ -47,7 +47,7 @@ def main():
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
-            "degree_assortativity_coefficient",
+            # "degree_assortativity_coefficient",
             "average_betweenness_centrality",
             "average_eigenvector_centrality",
             "smallworldness",

@@ -1270,7 +1270,8 @@ class CleanGraphs(object):
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
                   "component subgraph...")
-            self.G = self.G.subgraph(get_lcc(self.G))
+            #self.G = self.G.subgraph(get_lcc(self.G))
+            self.G = get_lcc(self.G)
         else:
             print("No graph anti-fragmentation applied...")
 
@@ -1413,27 +1414,6 @@ def community_resolution_selection(G):
                 f"{resolution}{'...'}"
             )
             resolution = resolution + 10
-            tries = tries + 1
-            if tries > 100:
-                print(
-                    "\nWARNING: Louvain community detection failed. "
-                    "Proceeding with single community affiliation vector...")
-                break
-    elif num_comms > len(G.edges()) / 10:
-        resolution = 0.1
-        tries = 0
-        while num_comms > len(G.edges()) / 10:
-            ci = np.array(
-                list(
-                    community.best_partition(
-                        G,
-                        resolution=resolution).values()))
-            num_comms = len(np.unique(ci))
-            print(
-                f"{'Found '}{num_comms}{' communities at resolution: '}"
-                f"{resolution}{'...'}"
-            )
-            resolution = resolution / 10
             tries = tries + 1
             if tries > 100:
                 print(
@@ -2227,7 +2207,7 @@ def collect_pandas_df_make(
     import os.path as op
     import pandas as pd
     from pynets.core import utils
-    from pynets.stats.benchmarking import build_hp_dict
+    from pynets.stats.utils import build_hp_dict
     from itertools import groupby
     import re
 

@@ -839,10 +839,6 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 print(f"Multiple columns detected: {col_met}")
                 col = col_met[0]
             else:
-                print(
-                    f"Structural topology not found for {ID}, "
-                    f"{met}, and recipe {comb_tuple}..."
-                )
                 data[i] = np.nan
                 i += 1
                 missingness_frame = missingness_frame.append(
@@ -855,8 +851,6 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                     },
                     ignore_index=True,
                 )
-                print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
-                      f"SESSION: {ses}{Style.RESET_ALL}")
                 continue
             out = df_top[df_top["id"] == "sub-" + ID + "_ses-" + ses][
                 col
@@ -866,6 +860,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                     f"Structural topology not found for {ID}, "
                     f"{met}, and recipe {comb_tuple}..."
                 )
+                print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
+                      f"SESSION: {ses}{Style.RESET_ALL}")
                 data[i] = np.nan
             else:
                 data[i] = out
@@ -879,7 +875,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
-            completion_status = f"{Fore.ORANGE}X{Style.RESET_ALL}"
+            completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
                 f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
         subject_dict[ID][ses][modality][alg][comb_tuple] = data
@@ -1061,7 +1057,6 @@ def func_grabber(comb, subject_dict, missingness_frame,
                     },
                     ignore_index=True,
                 )
-                print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, SESSION: {ses}{Style.RESET_ALL}")
                 continue
             out = df_top[df_top["id"] == f"sub-{ID}_ses-{ses}"][col].values
             if len(out) == 0:
@@ -1069,6 +1064,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                     f"Functional topology not found for {ID}, {met}, "
                     f"and recipe {comb_tuple}..."
                 )
+                print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
+                      f"SESSION: {ses}{Style.RESET_ALL}")
                 data[i] = np.nan
             else:
                 data[i] = out
@@ -1082,7 +1079,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
-            completion_status = f"{Fore.ORANGE}X{Style.RESET_ALL}"
+            completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
                 f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
         subject_dict[ID][ses][modality][alg][comb_tuple] = data

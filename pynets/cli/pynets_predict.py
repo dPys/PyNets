@@ -37,7 +37,7 @@ def main():
     )
 
     # User-Specified #
-    embedding_type = 'ASE'
+    embedding_type = 'OMNI'
     modality = "dwi"
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
@@ -53,7 +53,7 @@ def main():
     mets = [
         "global_efficiency",
         "average_shortest_path_length",
-        "degree_assortativity_coefficient",
+        "average_degree_centrality",
         "average_eigenvector_centrality",
         "average_betweenness_centrality",
         "modularity",

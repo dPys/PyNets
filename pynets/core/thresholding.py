@@ -749,7 +749,7 @@ def local_thresholding_prop(conn_matrix, thr):
         and (len(len_edge_list[-fail_tol:]) -
              len(set(len_edge_list[-fail_tol:])))
         < (fail_tol - 1)
-    ):
+    ) and nx.is_connected(min_t) is True:
         # print(k)
         # print(len_edges)
         len_edge_list.append(len_edges)

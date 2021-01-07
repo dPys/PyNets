@@ -930,6 +930,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         # If > 50% of a row is NA/missing
         frame.dropna(thresh=0.50*len(frame.columns), inplace=True)
 
+        # frame.dropna(thresh=0.50 * len(frame.id), axis=1, inplace=True)
+
         missingness_dict = summarize_missingness(frame)[0]
         bad_cols = []
         for col in missingness_dict.keys():

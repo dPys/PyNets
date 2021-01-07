@@ -202,41 +202,6 @@ def get_parser():
         metavar="Atlas",
         default=None,
         nargs="+",
-        choices=[
-            "atlas_aal",
-            "atlas_talairach_gyrus",
-            "atlas_talairach_ba",
-            "atlas_talairach_lobe",
-            "atlas_harvard_oxford",
-            "atlas_destrieux_2009",
-            "atlas_msdl",
-            "coords_dosenbach_2010",
-            "coords_power_2011",
-            "atlas_pauli_2017",
-            "destrieux2009_rois",
-            "BrainnetomeAtlasFan2016",
-            "VoxelwiseParcellationt0515kLeadDBS",
-            "Juelichgmthr252mmEickhoff2005",
-            "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014",
-            "whole_brain_cluster_labels_PCA100",
-            "AICHAreorderedJoliot2015",
-            "HarvardOxfordThr252mmWholeBrainMakris2006",
-            "VoxelwiseParcellationt058kLeadDBS",
-        "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
-            "Hammers_mithAtlasn30r83Hammers2003Gousias2008",
-            "AALTzourioMazoyer2002",
-            "DesikanKlein2012",
-            "AAL2zourioMazoyer2002",
-            "VoxelwiseParcellationt0435kLeadDBS",
-            "AICHAJoliot2015",
-            "whole_brain_cluster_labels_PCA200",
-            "RandomParcellationsc05meanalll43Craddock2011",
-            'sub-colin27_label-L2018_desc-scale1_atlas',
-            'sub-colin27_label-L2018_desc-scale2_atlas',
-            'sub-colin27_label-L2018_desc-scale3_atlas',
-            'sub-colin27_label-L2018_desc-scale4_atlas',
-            'sub-colin27_label-L2018_desc-scale5_atlas'
-        ],
         help="(metaparameter): Specify an atlas name from nilearn or "
              "local (pynets) library, and/or specify a path to a custom "
              "parcellation/atlas Nifti1Image file in MNI space. Labels should"
@@ -666,6 +631,26 @@ def build_workflow(args, retval):
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
 
+    # Hard-coded:
+    from pynets.core.utils import load_runconfig
+    hardcoded_params = load_runconfig()
+
+    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
+    local_corr = hardcoded_params["clustering_local_conn"][0]
+    track_type = hardcoded_params['tracking']["tracking_method"][0]
+    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
+    use_parcel_naming = hardcoded_params["parcel_naming"][0]
+    step_list = hardcoded_params['tracking']["step_list"]
+    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
+    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
+    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
+    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
+    local_atlases = hardcoded_params["local_atlases"]
+    template_name = hardcoded_params['template'][0]
+    roi_neighborhood_tol = \
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+
     # Set Arguments to global variables
     ID = args.id
     outdir = f"{args.output_dir}/pynets"
@@ -975,43 +960,60 @@ def build_workflow(args, retval):
         multi_nets = None
 
     atlas_ins = args.a
-    # Parse uatlas files from atlas names
-    uatlas = []
-    atlas = []
-    for atl in atlas_ins:
-        if os.path.isfile(atl):
-            uatlas.append(atl)
-        else:
-            atlas.append(atl)
+    if atlas_ins is not None:
+        # Parse uatlas files from atlas names
+        uatlas = []
+        atlas = []
 
-    if uatlas:
-        if len(uatlas) > 1:
-            user_atlas_list = uatlas
-            uatlas = None
-        elif uatlas == ["None"]:
-            uatlas = None
-            user_atlas_list = None
-        else:
-            uatlas = uatlas[0]
-            user_atlas_list = None
-    else:
-        user_atlas_list = None
+        for atl in atlas_ins:
+            if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or atl in nilearn_prob_atlases or atl in local_atlases:
+                atlas.append(atl)
+            elif '/' in atl:
+                uatlas.append(atl)
+                if not os.path.isfile(atl):
+                    print(f"{atl} may not be an existing file path. You can safely ignore this warning if you are using container-mounted directory paths.")
+            else:
+                raise ValueError(f"{atl} is not in the pynets atlas library nor is it a file path to a parcellation file")
 
-    if atlas:
-        if (isinstance(atlas, list)) and (len(atlas) > 1):
-            multi_atlas = atlas
-            atlas = None
-        elif atlas == ["None"]:
-            multi_atlas = None
-            atlas = None
-        elif isinstance(atlas, list):
-            atlas = atlas[0]
-            multi_atlas = None
+        if len(atlas) == 0:
+           atlas = None
+
+        if len(uatlas) == 0:
+           uatlas = None
+
+        if uatlas:
+            if len(uatlas) > 1:
+                user_atlas_list = uatlas
+                uatlas = None
+            elif uatlas == ["None"]:
+                uatlas = None
+                user_atlas_list = None
+            else:
+                uatlas = uatlas[0]
+                user_atlas_list = None
         else:
-            atlas = None
+            user_atlas_list = None
+
+        if atlas:
+            if (isinstance(atlas, list)) and (len(atlas) > 1):
+                multi_atlas = atlas
+                atlas = None
+            elif atlas == ["None"]:
+                multi_atlas = None
+                atlas = None
+            elif isinstance(atlas, list):
+                atlas = atlas[0]
+                multi_atlas = None
+            else:
+                atlas = None
+                multi_atlas = None
+        else:
             multi_atlas = None
     else:
+        uatlas = None
+        atlas = None
         multi_atlas = None
+        user_atlas_list = None
 
     min_length = args.ml
     if min_length:
@@ -1069,26 +1071,6 @@ def build_workflow(args, retval):
         "\n\n\n---------------------------------------------------------------"
         "---------\n"
     )
-
-    # Hard-coded:
-    from pynets.core.utils import load_runconfig
-    hardcoded_params = load_runconfig()
-
-    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
-    local_corr = hardcoded_params["clustering_local_conn"][0]
-    track_type = hardcoded_params['tracking']["tracking_method"][0]
-    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
-    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
-    use_parcel_naming = hardcoded_params["parcel_naming"][0]
-    step_list = hardcoded_params['tracking']["step_list"]
-    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
-    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
-    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
-    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
-    local_atlases = hardcoded_params["local_atlases"]
-    template_name = hardcoded_params['template'][0]
-    roi_neighborhood_tol = \
-        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     if track_type == "particle":
         tiss_class = "cmc"

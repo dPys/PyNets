@@ -612,14 +612,15 @@ def bootstrapped_nested_cv(
     y,
     predict_type='regressor',
     n_boots=10,
-    var_thr=.50,
+    var_thr=.20,
     k_folds_outer=5,
     k_folds_inner=5,
     pca_reduce=False,
-    remove_multi=True,
+    remove_multi=False,
     std_dev=3,
     alpha=0.95,
-    missingness_thr=0.20,
+    missingness_thr=0.50,
+    zero_thr=0.25
 ):
 
     # y = df_all[target_var].values
@@ -782,8 +783,9 @@ def bootstrapped_nested_cv(
         )
 
     # Drop sparse columns with >50% zeros
-    X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
-    X = X.loc[:, (X == 0).mean() < .50]
+    if zero_thr > 0:
+        X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
+        X = X.loc[:, (X == 0).mean() < zero_thr]
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
@@ -1571,8 +1573,8 @@ def create_wf(grid_params_mod, basedir):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_wf = pe.Workflow(name=f"ensemble_connectometry_{run_uuid}")
-    os.makedirs(f"/{basedir}/{run_uuid}", exist_ok=True)
-    ml_wf.base_dir = f"/{basedir}/{run_uuid}"
+    os.makedirs(f"{basedir}/{run_uuid}", exist_ok=True)
+    ml_wf.base_dir = f"{basedir}/{run_uuid}"
 
     inputnode = pe.Node(
         niu.IdentityInterface(
