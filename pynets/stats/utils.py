@@ -76,12 +76,18 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
         df_top = df_top.rename(
             columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
         )
-        df_top = df_top.rename(columns=lambda x: re.sub("_corr", "_model-corr", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_cov", "_model-cov", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_sfm", "_model-sfm", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csa", "_model-csa", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_tensor", "_model-tensor", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csd", "_model-csd", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_corr",
+                                                        "_model-corr", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_cov",
+                                                        "_model-cov", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_sfm",
+                                                        "_model-sfm", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_csa",
+                                                        "_model-csa", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_tensor",
+                                                        "_model-tensor", x))
+        df_top = df_top.rename(columns=lambda x: re.sub("_csd",
+                                                        "_model-csd", x))
         df_top = df_top.rename(
             columns=lambda x: re.sub("thrtype-PROP", "thrtype-MST", x))
         # df_top = df_top.dropna(how='all')
@@ -129,12 +135,14 @@ def make_feature_space_dict(
         for comb in grid_params:
             try:
                 extract, hpass, model, res, atlas, smooth = comb
-                grid_params_mod.append((extract, hpass, model, res, atlas, str(smooth)))
+                grid_params_mod.append((extract, hpass, model, res, atlas,
+                                        str(smooth)))
             except:
                 try:
                     extract, hpass, model, res, atlas = comb
                     smooth = "0"
-                    grid_params_mod.append((extract, hpass, model, res, atlas, str(smooth)))
+                    grid_params_mod.append((extract, hpass, model, res, atlas,
+                                            str(smooth)))
                 except:
                     print(f"Failed to parse recipe: {comb}")
 
@@ -142,7 +150,8 @@ def make_feature_space_dict(
         for comb in grid_params:
             try:
                 directget, minlength, model, res, atlas, tol = comb
-                grid_params_mod.append((directget, minlength, model, res, atlas, tol))
+                grid_params_mod.append((directget, minlength, model, res,
+                                        atlas, tol))
             except:
                 print(f"Failed to parse recipe: {comb}")
 
@@ -327,7 +336,8 @@ def parse_closest_ixs(node_files, emb_shape):
         node_files_named = [i for i in node_files if
                       f"{emb_shape}" in i]
         if len(node_files_named) > 0:
-            ixs_corr, node_dict = node_files_search(node_files_named, emb_shape)
+            ixs_corr, node_dict = node_files_search(node_files_named,
+                                                    emb_shape)
         else:
             ixs_corr, node_dict = node_files_search(node_files, emb_shape)
         return ixs_corr, node_dict
@@ -353,23 +363,33 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
             if len(ixs) != emb_shape:
                 node_files = glob.glob(
-                    f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-{grid_param[-2]}_res-{grid_param[-3]}/nodes/*.json")
+                    f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-"
+                    f"{ses}/rsn-{grid_param[-2]}_res-{grid_param[-3]}/nodes"
+                    f"/*.json")
                 ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
             if len(ixs) > 0:
                 if len(ixs) == emb_shape:
                     rsn_arr = rsn_dict["data"].T.reshape(
-                        1, rsn_dict["data"].T.shape[0] * rsn_dict["data"].T.shape[1]
+                        1, rsn_dict["data"].T.shape[0] *
+                           rsn_dict["data"].T.shape[1]
                     )
                     if rsn_dict["data"].shape[1] == 1:
-                        df_lps = pd.DataFrame(rsn_arr, columns=[f"{i}_rsn-{grid_param[-2]}_res-{grid_param[-3]}_dim1"
-                                                                for i in ixs])
+                        df_lps = pd.DataFrame(rsn_arr,
+                                              columns=[f"{i}_rsn-"
+                                                       f"{grid_param[-2]}_"
+                                                       f"res-{grid_param[-3]}_"
+                                                       f"dim1" for i in ixs])
                     elif rsn_dict["data"].shape[1] == 3:
                         df_lps = pd.DataFrame(
                             rsn_arr,
-                            columns=[f"{i}_rsn-{grid_param[-2]}_res-{grid_param[-3]}_dim1" for i in ixs]
-                            + [f"{i}_rsn-{grid_param[-2]}_res-{grid_param[-3]}_dim2" for i in ixs]
-                            + [f"{i}_rsn-{grid_param[-2]}_res-{grid_param[-3]}_dim3" for i in ixs],
+                            columns=[f"{i}_rsn-{grid_param[-2]}_"
+                                     f"res-{grid_param[-3]}_dim1" for
+                                     i in ixs]
+                            + [f"{i}_rsn-{grid_param[-2]}_"
+                               f"res-{grid_param[-3]}_dim2" for i in ixs]
+                            + [f"{i}_rsn-{grid_param[-2]}_"
+                               f"res-{grid_param[-3]}_dim3" for i in ixs],
                         )
                     else:
                         df_lps = None
@@ -391,7 +411,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                     )
                     df_lps = None
             else:
-                print(UserWarning(f"Missing indices for {grid_param} universe..."))
+                print(UserWarning(f"Missing indices for "
+                                  f"{grid_param} universe..."))
                 df_lps = None
         else:
             print(UserWarning(f"Missing {grid_param} universe..."))
@@ -729,10 +750,14 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
             f"res-{res}/gradient-*")
 
-        embeddings = [i for i in embeddings if (alg in i) and (f"res-{res}" in i) and
-                      (f"rsn-{atlas}" in i) and (f"template-{template}" in i) and
-                      (f"model-{model}" in i) and (f"directget-{directget}" in i) and
-                      (f"minlength-{minlength}" in i) and (f"tol-{tol}" in i)]
+        embeddings = [i for i in embeddings if (alg in i) and
+                      (f"res-{res}" in i) and
+                      (f"rsn-{atlas}" in i) and
+                      (f"template-{template}" in i) and
+                      (f"model-{model}" in i) and
+                      (f"directget-{directget}" in i) and
+                      (f"minlength-{minlength}" in i) and
+                      (f"tol-{tol}" in i)]
 
         if len(embeddings) == 0:
             print(
@@ -783,7 +808,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        comb_tuple, np.load(embedding).shape[0])
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for {ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Failed to load {embedding} for "
+                      f"{ID}-{ses}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
 
             if (
@@ -915,8 +941,10 @@ def func_grabber(comb, subject_dict, missingness_frame,
             f"res-{res}/gradient-*")
 
         embeddings = [i for i in embeddings if (alg in i) and (res in i) and
-                      (atlas in i) and (template in i) and (f"model-{model}" in i)
-                      and (f"hpass-{hpass}" in i) and (f"extract-{extract}" in i)]
+                      (atlas in i) and (template in i) and
+                      (f"model-{model}" in i)
+                      and (f"hpass-{hpass}" in i) and
+                      (f"extract-{extract}" in i)]
 
         if smooth == "0":
             embeddings = [
@@ -979,7 +1007,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        comb_tuple, np.load(embedding).shape[0])
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for {ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Failed to load {embedding} for "
+                      f"{ID}-{ses}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
             if (
                 alg
@@ -1113,7 +1142,8 @@ def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
                 vect = flatten_latent_positions(base_dir, sub_dict_clean, ID,
                                                 ses, modality, comb_tuple, alg)
             vects.append(vect)
-    vects = [i for i in vects if i is not None and not np.isnan(np.array(i)).all()]
+    vects = [i for i in vects if i is not None and
+             not np.isnan(np.array(i)).all()]
     if len(vects) > 0 and alg == 'topology':
         out = np.concatenate(vects, axis=1)
     elif len(vects) > 0:

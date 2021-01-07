@@ -63,13 +63,16 @@ def main():
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
@@ -117,8 +120,9 @@ def main():
 
     ml_dfs_dict = {}
     ml_dfs_dict[modality] = {}
-    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_{'_'.join(rsns)}_" \
-                     f"{embedding_type}_{template}_{thr_type}.pkl"
+    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
+                     f"{'_'.join(rsns)}_{embedding_type}_{template}_" \
+                     f"{thr_type}.pkl"
     if not os.path.isfile(dict_file_path) or not \
         os.path.isfile(dict_file_path):
         ml_dfs = {}
@@ -197,7 +201,8 @@ if __name__ == "__main__":
     except:
         pass
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
     args = main()
 
     with Manager() as mgr:

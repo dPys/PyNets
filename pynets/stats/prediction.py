@@ -616,11 +616,11 @@ def bootstrapped_nested_cv(
     k_folds_outer=5,
     k_folds_inner=5,
     pca_reduce=False,
-    remove_multi=False,
+    remove_multi=True,
     std_dev=3,
     alpha=0.95,
     missingness_thr=0.50,
-    zero_thr=0.25
+    zero_thr=0.50
 ):
 
     # y = df_all[target_var].values
@@ -1003,14 +1003,6 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
             df_all = df_all.loc[:, ~df_all.columns.duplicated()]
             df_all.reset_index(level=0, inplace=True)
             df_all.rename(columns={"index": "id"}, inplace=True)
-            # Remove incomplete cases
-            # df_all = df_all.loc[
-            #     (df_all["id"] != "s057")
-            #     & (df_all["id"] != "s054")
-            #     & (df_all["id"] != "25667")
-            #     & (df_all["id"] != "A00076381")
-            #     & (df_all["id"] != "25853")
-            #     ]
             if (
                 all(
                     df_all.drop(
@@ -1129,12 +1121,16 @@ class copy_json_dict(SimpleInterface):
                 f"{self.inputs.modality}_{self.inputs.embedding_type}"
             ]
             json_dict = fname_presuffix(
-                input_dict_tmp, suffix=f"_{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json",
+                input_dict_tmp, suffix=f"_{run_uuid}_{self.inputs.modality}_"
+                                       f"{self.inputs.embedding_type}_"
+                                       f"{self.inputs.target_var}.json",
                 newpath=runtime.cwd
             )
             copyfile(input_dict_tmp, json_dict, use_hardlink=False)
         else:
-            json_dict = f"{runtime.cwd}/{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json"
+            json_dict = f"{runtime.cwd}/{run_uuid}_{self.inputs.modality}_" \
+                        f"{self.inputs.embedding_type}_" \
+                        f"{self.inputs.target_var}.json"
             os.mknod(json_dict)
 
         # time.sleep(random.randint(1, 30))

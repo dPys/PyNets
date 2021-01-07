@@ -13,7 +13,7 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-DEFAULT_TIMEOUT = 120
+DEFAULT_TIMEOUT = 240
 
 
 def get_prop_type(value, key=None):
@@ -2166,13 +2166,13 @@ def collect_pandas_df_make(
     ID,
     network,
     plot_switch,
-    nc_collect=False,
+    embed=False,
     create_summary=True,
     sql_out=False,
 ):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to
-    each unique combination of hyperparameters.
+    each unique combination of metaparameters.
 
     Parameters
     ----------
@@ -2271,10 +2271,10 @@ def collect_pandas_df_make(
         dfs_non_auc = []
         hyperparam_dict["id"] = ID
         gen_hyperparams = ["nodetype", "model", "template"]
+        node_cols = None
         if max([len(i) for i in models_grouped]) > 1:
             print(
-                "Multiple thresholds detected. Computing Area Under the Curve "
-                "(AUC)..."
+                "Multiple thresholds detected. Computing AUC..."
             )
             meta = dict()
             non_decimal = re.compile(r"[^\d.]+")
@@ -2297,7 +2297,7 @@ def collect_pandas_df_make(
                             if isinstance(s, int) or any(c.isdigit() for c in
                                                          s)
                         ]
-                        if nc_collect is False:
+                        if embed is False:
                             df = df.drop(node_cols, axis=1)
                         meta[thr_set]["dataframes"][thr] = df
                     else:
@@ -2383,6 +2383,27 @@ def collect_pandas_df_make(
                     compression="gzip",
                     encoding="utf-8",
                 )
+                if embed is True and node_cols is not None:
+                    from pathlib import Path
+                    embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                    if not os.path.isdir(embed_dir):
+                        os.makedirs(embed_dir, exist_ok=True)
+
+                    node_cols_auc = [f"{i}_auc" for i in node_cols if
+                                     f"{i}_auc" in df_summary_auc.columns]
+                    df_summary_auc_nodes = df_summary_auc[node_cols_auc]
+                    node_embeddings_grouped = [{k: list(g)} for k, g in
+                                               groupby(df_summary_auc_nodes,
+                                                       lambda s: s.split("_")[1])]
+                    for node_dict in node_embeddings_grouped:
+                        node_top_type = list(node_dict.keys())[0]
+                        node_top_cols = list(node_dict.values())[0]
+                        embedding_frame = df_summary_auc_nodes[node_top_cols]
+                        out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                                   f"rsn-{atlas}_auc_nodes_" \
+                                   f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
+                        embedding_frame.to_csv(out_path, index=False)
+
                 if sql_out is True:
                     sql_db.create_modality_table(modality)
                     sql_db.add_hp_columns(

@@ -338,7 +338,7 @@ def build_asetomes(est_path_iterlist, ID):
         res = prune_suffices("_".join(file_.split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
         if "rsn" in res:
-            subgraph = res.split("rsn-")[1]
+            subgraph = res.split("rsn-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
         out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
@@ -396,7 +396,7 @@ def build_masetome(est_path_iterlist, ID):
         res = prune_suffices("_".join(pairs[0].split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
         if "rsn" in res:
-            subgraph = res.split("rsn-")[1]
+            subgraph = res.split("rsn-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
         out_path = _mase_embed(

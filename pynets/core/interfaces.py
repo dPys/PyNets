@@ -416,7 +416,7 @@ class CombineOutputsInputSpec(BaseInterfaceInputSpec):
     plot_switch = traits.Bool(False, usedefault=True)
     multi_nets = traits.Any(mandatory=False)
     multimodal = traits.Bool(False, usedefault=True)
-
+    embed = traits.Bool(False, usedefault=True)
 
 class CombineOutputsOutputSpec(TraitedSpec):
     """Output interface wrapper for CombineOutputs"""
@@ -440,6 +440,7 @@ class CombineOutputs(SimpleInterface):
             self.inputs.plot_switch,
             self.inputs.multi_nets,
             self.inputs.multimodal,
+            self.inputs.embed,
         )
         setattr(self, "_combination_complete", combination_complete)
         return runtime

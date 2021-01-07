@@ -108,7 +108,9 @@ def test_check_est_path_existence():
     assert est_path_list_ex is not None
 
 
-def test_collect_pandas_df():
+@pytest.mark.parametrize("embed", [False, True])
+@pytest.mark.parametrize("plot_switch", [False, True])
+def test_collect_pandas_df(plot_switch, embed):
     """
     Test collect_pandas_df_make functionality
     """
@@ -118,11 +120,10 @@ def test_collect_pandas_df():
     multimodal = False
     network = None
     ID = '002'
-    plot_switch = False
     net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv")
                          if '_neat.csv' not in i]
     out = utils.collect_pandas_df(network, ID, net_mets_csv_list,
-                                  plot_switch, multi_nets, multimodal)
+                                  plot_switch, multi_nets, multimodal, embed)
     assert out is True
     assert isinstance(net_mets_csv_list, list)
     assert len(net_mets_csv_list) == 9
@@ -449,7 +450,7 @@ def test_timeout(s):
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
 def test_build_hp_dict(modality):
     import tempfile
-    from pynets.stats.benchmarking import build_hp_dict
+    from pynets.stats.utils import build_hp_dict
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")

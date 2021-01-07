@@ -966,14 +966,19 @@ def build_workflow(args, retval):
         atlas = []
 
         for atl in atlas_ins:
-            if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or atl in nilearn_prob_atlases or atl in local_atlases:
+            if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or \
+                atl in nilearn_prob_atlases or atl in local_atlases:
                 atlas.append(atl)
             elif '/' in atl:
                 uatlas.append(atl)
                 if not os.path.isfile(atl):
-                    print(f"{atl} may not be an existing file path. You can safely ignore this warning if you are using container-mounted directory paths.")
+                    print(f"{atl} may not be an existing file path. "
+                          f"You can safely ignore this warning if you are "
+                          f"using container-mounted directory paths.")
             else:
-                raise ValueError(f"{atl} is not in the pynets atlas library nor is it a file path to a parcellation file")
+                raise ValueError(f"{atl} is not in the pynets atlas library "
+                                 f"nor is it a file path to a parcellation "
+                                 f"file")
 
         if len(atlas) == 0:
            atlas = None
@@ -1750,6 +1755,8 @@ def build_workflow(args, retval):
                 )
                 retval["return_code"] = 1
                 return retval
+            else:
+                print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
         else:
             if (
                 (uatlas is None)
@@ -2398,6 +2405,7 @@ def build_workflow(args, retval):
                     "norm",
                     "binary",
                     "multimodal",
+                    "embed",
                 ]
             ),
             name="inputnode",
@@ -2439,6 +2447,7 @@ def build_workflow(args, retval):
         inputnode.inputs.norm = norm
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
+        inputnode.inputs.embed = embed
 
         if func_file or dwi_file:
             meta_wf = workflow_selector(
@@ -2698,6 +2707,7 @@ def build_workflow(args, retval):
                         ("plot_switch", "plot_switch"),
                         ("multi_nets", "multi_nets"),
                         ("multimodal", "multimodal"),
+                        ("embed", "embed"),
                     ],
                 ),
                 (

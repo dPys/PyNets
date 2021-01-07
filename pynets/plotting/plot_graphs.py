@@ -62,13 +62,13 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
         print("Connectivity matrix too sparse for plotting...")
 
     if len(labels) > 500:
-        tick_interval = int(np.around(len(labels)))/10
+        tick_interval = 5
     elif len(labels) > 100:
-        tick_interval = int(np.around(len(labels)))/4
+        tick_interval = 4
     elif len(labels) > 50:
-        tick_interval = int(np.around(len(labels)))/2
+        tick_interval = 2
     else:
-        tick_interval = int(np.around(len(labels)))
+        tick_interval = 1
 
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
@@ -174,13 +174,14 @@ def plot_community_conn_mat(
         total_size += size
 
     if len(labels) > 500:
-        tick_interval = int(np.around(len(labels)))/10
+        tick_interval = 5
     elif len(labels) > 100:
-        tick_interval = int(np.around(len(labels)))/4
+        tick_interval = 4
     elif len(labels) > 50:
-        tick_interval = int(np.around(len(labels)))/2
+        tick_interval = 2
     else:
-        tick_interval = int(np.around(len(labels)))
+        tick_interval = 1
+
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:

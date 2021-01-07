@@ -70,15 +70,19 @@ def main():
     print(Style.RESET_ALL)
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(embedding_types)}_{template}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(embedding_types)}_{template}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(embedding_types)}_{template}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.csv"
     )
-    icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_{'_'.join(embedding_types)}"
+    icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_" \
+                   f"{'_'.join(embedding_types)}"
     os.makedirs(icc_tmps_dir, exist_ok=True)
     if not os.path.isfile(subject_dict_file_path):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(

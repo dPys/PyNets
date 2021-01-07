@@ -945,15 +945,17 @@ def plot_all_func(
                             dists.append(distance.euclidean(coord_ann, c))
                         if any([i < 20 for i in dists]):
                             continue
+                    if label == 'Unlabeled':
+                        continue
                     coord_anns.append(coord_ann)
                     connectome.axes[view].ax.annotate(label,
                                                       coord_ann,
                                                       xycoords='data',
                                                       textcoords='offset points',
-                                                      xytext=(0, 3),
+                                                      xytext=(0, 0),
                                                       horizontalalignment='center',
                                                       verticalalignment='top',
-                                                      fontsize='2.75',
+                                                      fontsize='2.65',
                                                       fontweight='bold',
                                                       zorder=1000,
                                                       color='red')
@@ -1283,15 +1285,17 @@ def plot_all_struct(
                             dists.append(distance.euclidean(coord_ann, c))
                         if any([i < 20 for i in dists]):
                             continue
+                    if label == 'Unlabeled':
+                        continue
                     coord_anns.append(coord_ann)
                     connectome.axes[view].ax.annotate(label,
                                                       coord_ann,
                                                       xycoords='data',
                                                       textcoords='offset points',
-                                                      xytext=(0, 3),
+                                                      xytext=(0, 0),
                                                       horizontalalignment='center',
                                                       verticalalignment='top',
-                                                      fontsize='2.75',
+                                                      fontsize='2.65',
                                                       fontweight='bold',
                                                       zorder=1000,
                                                       color='red')
@@ -1571,16 +1575,20 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                         dists.append(distance.euclidean(coord_ann, c))
                     if any([i < 20 for i in dists]):
                         continue
+                if label == 'Unlabeled':
+                    continue
                 coord_anns.append(coord_ann)
                 connectome.axes[view].ax.annotate(label,
-                                      coord_ann,
-                                      xycoords='data',
-                                      textcoords='offset points',
-                                      xytext=(0, 3),
-                                      horizontalalignment='center',
+                                                  coord_ann,
+                                                  xycoords='data',
+                                                  textcoords='offset points',
+                                                  xytext=(0, 0),
+                                                  horizontalalignment='center',
                                                   verticalalignment='top',
-                                      fontsize='2.75', fontweight='bold',
-                                                  zorder=1000, color='red')
+                                                  fontsize='2.65',
+                                                  fontweight='bold',
+                                                  zorder=1000,
+                                                  color='red')
 
         connectome.savefig(
             f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution
