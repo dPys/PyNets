@@ -37,8 +37,8 @@ def main():
     )
 
     # User-Specified #
-    embedding_type = 'OMNI'
-    modality = "dwi"
+    embedding_type = 'topology'
+    modality = "func"
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
                    "dep_2", 'rum_2', 'rum_1', 'dep_1']
@@ -57,6 +57,7 @@ def main():
         "average_eigenvector_centrality",
         "average_betweenness_centrality",
         "modularity",
+        "degree_assortativity_coefficient"
         "smallworldness",
     ]
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]

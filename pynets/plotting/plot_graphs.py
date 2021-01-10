@@ -166,7 +166,7 @@ def plot_community_conn_mat(
                 size,
                 size,
                 fill=False,
-                edgecolor="black",
+                edgecolor="white",
                 alpha=None,
                 linewidth=1,
             )

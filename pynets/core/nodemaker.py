@@ -1350,7 +1350,7 @@ def parcel_naming(coords, vox_size):
 def get_brainnetome_node_attributes(node_files, emb_shape):
     import ast
     import re
-    from pynets.stats.prediction import parse_closest_ixs
+    from pynets.stats.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 

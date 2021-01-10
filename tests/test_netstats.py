@@ -457,13 +457,13 @@ def test_get_metrics(metric):
 
 @pytest.mark.parametrize("plot_switch", [True, False])
 @pytest.mark.parametrize("sql_out", [True, False])
-@pytest.mark.parametrize("nc_collect", [True, False])
+@pytest.mark.parametrize("embed", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
 @pytest.mark.parametrize("graph_num", [pytest.param(-1, marks=pytest.mark.xfail(raises=UserWarning)),
                                        pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
                                        1,
                                        2])
-def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary, graph_num):
+def test_collect_pandas_df_make(plot_switch, sql_out, embed, create_summary, graph_num):
     """
     """
     base_dir = str(Path(__file__).parent/"examples")
@@ -481,7 +481,7 @@ def test_collect_pandas_df_make(plot_switch, sql_out, nc_collect, create_summary
                              f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.3.csv"]
 
     combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
-                                                           nc_collect=nc_collect, create_summary=create_summary,
+                                                           embed=embed, create_summary=create_summary,
                                                            sql_out=sql_out)
 
     assert combination_complete is True

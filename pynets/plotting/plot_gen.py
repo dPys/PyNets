@@ -676,7 +676,7 @@ def plot_all_func(
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
+        File path to atlas parcellation Nifti1Image.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -918,7 +918,8 @@ def plot_all_func(
                 edge_vmin=float(z_min),
                 node_size=node_sizes,
                 node_color=clust_pal_nodes,
-                edge_kwargs={"alpha": 0.45},
+                edge_kwargs={"alpha": 0.45, 'zorder': 1},
+                node_kwargs={'zorder': 1000}
             )
             for view in views:
                 mod_lines = []
@@ -929,6 +930,7 @@ def plot_all_func(
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
 
+            zorder = 10000
             for view in views:
                 coord_anns = []
                 for coord, label in list(zip(coords, labels)):
@@ -952,13 +954,27 @@ def plot_all_func(
                                                       coord_ann,
                                                       xycoords='data',
                                                       textcoords='offset points',
+                                                      xytext=(-0.0001, -0.0001),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.7',
+                                                      fontweight='extra bold',
+                                                      zorder=zorder,
+                                                      color='black')
+                    zorder += 10
+
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
                                                       xytext=(0, 0),
                                                       horizontalalignment='center',
                                                       verticalalignment='top',
                                                       fontsize='2.65',
                                                       fontweight='bold',
-                                                      zorder=1000,
-                                                      color='red')
+                                                      zorder=zorder,
+                                                      color='white')
+                    zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1032,7 +1048,7 @@ def plot_all_struct(
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
+        File path to atlas parcellation Nifti1Image.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     norm : int
@@ -1212,7 +1228,7 @@ def plot_all_struct(
                 np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
                 black_bg=True
             )
-            connectome.add_overlay(ch2better_loc, alpha=0.10, cmap=plt.cm.gray)
+            connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
 
             [
                 conn_matrix,
@@ -1254,21 +1270,25 @@ def plot_all_struct(
                 edge_vmin=float(1),
                 node_size=node_sizes,
                 node_color=clust_pal_nodes,
-                edge_kwargs={"alpha": 0.50},
+                edge_kwargs={"alpha": 0.30, 'zorder': 1},
+                node_kwargs={'zorder': 1000}
             )
+
             for view in views:
                 mod_lines = []
                 for line, edge_size in list(
                     zip(connectome.axes[view].ax.lines, edge_sizes)
                 ):
-                    line.set_lw(edge_size * 0.5)
+                    line.set_lw(edge_size * 0.20)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
                 mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
-                                             n_glow_lines=20,
-                                             diff_linewidth=1.0,
-                                             alpha_line=0.05)
+                                             n_glow_lines=10,
+                                             diff_linewidth=0.80,
+                                             alpha_line=0.075)
+                connectome.axes[view].ax.set_axisbelow(True)
 
+            zorder = 10000
             for view in views:
                 coord_anns = []
                 for coord, label in list(zip(coords, labels)):
@@ -1288,6 +1308,20 @@ def plot_all_struct(
                     if label == 'Unlabeled':
                         continue
                     coord_anns.append(coord_ann)
+                    connectome.axes[view].ax.set_axisbelow(False)
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
+                                                      xytext=(-0.0001, -0.0001),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.7',
+                                                      fontweight='extra bold',
+                                                      zorder=zorder,
+                                                      color='black')
+                    zorder += 10
+
                     connectome.axes[view].ax.annotate(label,
                                                       coord_ann,
                                                       xycoords='data',
@@ -1297,8 +1331,9 @@ def plot_all_struct(
                                                       verticalalignment='top',
                                                       fontsize='2.65',
                                                       fontweight='bold',
-                                                      zorder=1000,
-                                                      color='red')
+                                                      zorder=zorder,
+                                                      color='orange')
+                    zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1540,11 +1575,12 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             [tuple(x) for x in coords],
             edge_threshold="0%",
             edge_cmap=clust_pal_edges,
-            edge_kwargs={"alpha": 0.75},
+            edge_kwargs={"alpha": 0.75, 'zorder': 1},
             edge_vmax=float(z_max),
             edge_vmin=float(z_min),
             node_size=node_sizes,
             node_color=clust_pal_nodes,
+            node_kwargs={'zorder': 1000}
         )
 
         for view in views:
@@ -1558,7 +1594,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines[len(edge_sizes_struct):] = mod_lines
+            connectome.axes[view].ax.set_axisbelow(True)
 
+        zorder = 10000
         for view in views:
             coord_anns = []
             for coord, label in list(zip(coords, labels)):
@@ -1578,6 +1616,20 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 if label == 'Unlabeled':
                     continue
                 coord_anns.append(coord_ann)
+                connectome.axes[view].ax.set_axisbelow(False)
+                connectome.axes[view].ax.annotate(label,
+                                                  coord_ann,
+                                                  xycoords='data',
+                                                  textcoords='offset points',
+                                                  xytext=(-0.0001, -0.0001),
+                                                  horizontalalignment='center',
+                                                  verticalalignment='top',
+                                                  fontsize='2.7',
+                                                  fontweight='extra bold',
+                                                  zorder=zorder,
+                                                  color='black')
+                zorder += 10
+
                 connectome.axes[view].ax.annotate(label,
                                                   coord_ann,
                                                   xycoords='data',
@@ -1587,8 +1639,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                                                   verticalalignment='top',
                                                   fontsize='2.65',
                                                   fontweight='bold',
-                                                  zorder=1000,
+                                                  zorder=zorder,
                                                   color='red')
+                zorder += 100
 
         connectome.savefig(
             f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution

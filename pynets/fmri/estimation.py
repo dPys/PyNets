@@ -235,7 +235,7 @@ def get_conn_matrix(
     conn_matrix = None
     estimator = get_optimal_cov_estimator(time_series)
 
-    def fallback_covariance(time_series):
+    def _fallback_covariance(time_series):
         from sklearn.ensemble import IsolationForest
         from sklearn import covariance
 
@@ -295,9 +295,9 @@ def get_conn_matrix(
             try:
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
             except (np.linalg.linalg.LinAlgError, FloatingPointError):
-                conn_matrix = fallback_covariance(time_series)
+                conn_matrix = _fallback_covariance(time_series)
         else:
-            conn_matrix = fallback_covariance(time_series)
+            conn_matrix = _fallback_covariance(time_series)
     else:
         if conn_model == "QuicGraphicalLasso":
             try:

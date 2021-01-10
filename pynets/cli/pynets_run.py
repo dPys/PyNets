@@ -3464,9 +3464,7 @@ def build_workflow(args, retval):
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/func/*") if os.path.isfile(i)] + \
                          [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3476,9 +3474,7 @@ def build_workflow(args, retval):
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
                          [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:

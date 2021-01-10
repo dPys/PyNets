@@ -2101,7 +2101,7 @@ def main():
     args_dict_all['pm'] = '48,67'
     #args_dict_all['pm'] = '128,500'
     #args_dict_all['pm'] = '224,2000'
-    #args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
+    #args_dict_all['basedir'] = '/working/tuning_set/outputs_final/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
     #args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'
     #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'

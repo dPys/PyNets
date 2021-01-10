@@ -283,7 +283,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             del df_long
     elif icc is True and alg != 'topology':
         import re
-        from pynets.stats.prediction import parse_closest_ixs
+        from pynets.stats.utils import parse_closest_ixs
         try:
             import pingouin as pg
         except ImportError:

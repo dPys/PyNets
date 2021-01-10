@@ -152,7 +152,7 @@ plotting:
     adjacency:
         - True
     dpi:
-        - 300
+        - 600
     labeling_atlas:
         - 'BrainnetomeAtlasFan2016'
     functional:

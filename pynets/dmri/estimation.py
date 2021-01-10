@@ -363,7 +363,7 @@ def sfm_mod_est(gtab, data, B0_mask):
 
 
 def streams2graph(
-    atlas_mni,
+    atlas_for_streams,
     streams,
     dir_path,
     track_type,
@@ -394,8 +394,8 @@ def streams2graph(
 
     Parameters
     ----------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     dir_path : str
@@ -458,8 +458,8 @@ def streams2graph(
 
     Returns
     -------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     conn_matrix : array
@@ -568,7 +568,7 @@ def streams2graph(
     fa_img = nib.load(warped_fa)
 
     # Load parcellation
-    roi_img = nib.load(atlas_mni)
+    roi_img = nib.load(atlas_for_streams)
     atlas_data = np.around(np.asarray(roi_img.dataobj))
     roi_zooms = roi_img.header.get_zooms()
     roi_shape = roi_img.shape
@@ -818,7 +818,7 @@ def streams2graph(
     )
 
     return (
-        atlas_mni,
+        atlas_for_streams,
         streams,
         conn_matrix,
         track_type,
