@@ -180,7 +180,10 @@ def test_match_target_vox_res():
     anat_img_file = f"{test_out}/sub-003_T1w_pre_res_res-2mm.nii.gz"
     anat_vox_size = '2mm'
     anat_out_dir = test_out
-    anat_img_file = reg_utils.match_target_vox_res(anat_img_file, anat_vox_size, anat_out_dir)
+    anat_img_file = reg_utils.match_target_vox_res(anat_img_file,
+                                                   anat_vox_size,
+                                                   anat_out_dir,
+                                                   remove_orig=False)
     anat_new_img = nib.load(anat_img_file)
     anat_dims = anat_new_img.header.get_zooms()
     anat_success = True
@@ -192,7 +195,9 @@ def test_match_target_vox_res():
     dwi_img_file = f"{test_out}/sub-003_dwi_pre_res_res-1mm.nii.gz"
     dwi_vox_size = '1mm'
     dwi_out_dir = test_out
-    dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size, dwi_out_dir)
+    dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size,
+                                                  dwi_out_dir,
+                                                  remove_orig=False)
     dwi_new_img = nib.load(dwi_img_file)
     dwi_dims = dwi_new_img.header.get_zooms()
     dwi_success = True
@@ -307,8 +312,10 @@ def test_check_orient_and_dims():
     dmri_RAStoRAS = nib.load(dmri_RAStoRAS)
 
     # Assert that output arrays are identical.
-    anat_check = np.allclose(anat_LAStoRAS.affine.astype('int'), anat_RAStoRAS.affine.astype('int'))
-    dmri_check = np.allclose(dmri_LAStoRAS.affine.astype('int'), dmri_RAStoRAS.affine.astype('int'))
+    anat_check = np.allclose(anat_LAStoRAS.affine.astype('int'),
+                             anat_RAStoRAS.affine.astype('int'))
+    dmri_check = np.allclose(dmri_LAStoRAS.affine.astype('int'),
+                             dmri_RAStoRAS.affine.astype('int'))
 
     # Assert that voxel dimensions in ouputs are correct.
     anat_LAStoRAS_dims = anat_LAStoRAS.header.get_zooms()

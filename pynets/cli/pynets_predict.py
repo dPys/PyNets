@@ -11,6 +11,11 @@ def main():
     import json
     import pandas as pd
     import os
+    import sys
+    import dill
+    from pynets.stats.utils import make_feature_space_dict, \
+        make_subject_dict, cleanNullTerms
+    from pynets.core.utils import mergedicts
     from colorama import Fore, Style
     try:
         import pynets
@@ -25,26 +30,20 @@ def main():
               " flag.\n")
         sys.exit(1)
 
-    #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_shaeffer"
-    base_dir = "/working/tuning_set/outputs_clustering"
-    #base_dir = "/working/tuning_set/outputs_language"
-    #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
+    base_dir = "/working/tuning_set/outputs_final"
     df = pd.read_csv(
         "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
         index_col=False
     )
 
     # User-Specified #
-    embedding_type = 'ASE'
-    modality = "dwi"
+    embedding_type = 'topology'
+    modality = "func"
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
                    "dep_2", 'rum_2', 'rum_1', 'dep_1']
 
-    rsns = ["triple", "kmeans"]
-    #rsns = ["tripleRUM", "kmeansRUM"]
-    #rsns = ["language"]
+    rsns = ["triple", "kmeans", "language"]
 
     sessions = ["1"]
 
@@ -54,23 +53,27 @@ def main():
     mets = [
         "global_efficiency",
         "average_shortest_path_length",
-        "degree_assortativity_coefficient",
+        "average_degree_centrality",
         "average_eigenvector_centrality",
         "average_betweenness_centrality",
         "modularity",
+        "degree_assortativity_coefficient"
         "smallworldness",
     ]
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
@@ -118,8 +121,9 @@ def main():
 
     ml_dfs_dict = {}
     ml_dfs_dict[modality] = {}
-    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_{'_'.join(rsns)}_" \
-                     f"{embedding_type}_{template}_{thr_type}.pkl"
+    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
+                     f"{'_'.join(rsns)}_{embedding_type}_{template}_" \
+                     f"{thr_type}.pkl"
     if not os.path.isfile(dict_file_path) or not \
         os.path.isfile(dict_file_path):
         ml_dfs = {}
@@ -152,9 +156,7 @@ def main():
     for d in outs:
         ml_dfs = dict(mergedicts(ml_dfs, d))
 
-    # with open('pynets_ml_dict_func_topology.pkl', "rb") as f:
-    #     ml_dfs = dill.load(f)
-    # f.close()
+    ml_dfs = cleanNullTerms(ml_dfs)
 
     feature_spaces = {}
 
@@ -200,7 +202,8 @@ if __name__ == "__main__":
     except:
         pass
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
     args = main()
 
     with Manager() as mgr:

@@ -321,7 +321,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
 
     target_samples = 2
     track_type = 'local'
-    atlas_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    atlas_for_streams = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
     directget = 'prob'
     min_length = 20
@@ -337,7 +337,7 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
         prune, atlas, uatlas, labels,
         coords, norm, binary,
         target_samples, track_type,
-        atlas_mni, streams, directget,
+        atlas_for_streams, streams, directget,
         min_length, error_margin, check_consistency=False)
 
     assert isinstance(dens_thresh, bool)

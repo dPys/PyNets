@@ -47,13 +47,13 @@ def direct_streamline_norm(
     coords,
     norm,
     binary,
-    atlas_mni,
+    atlas_t1w,
     basedir_path,
     curv_thr_list,
     step_list,
     directget,
     min_length,
-    t1_aligned_mni
+    t1w_brain
 ):
     """
     A Function to perform normalization of streamlines tracked in native
@@ -115,8 +115,8 @@ def direct_streamline_norm(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_t1w : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     basedir_path : str
         Path to directory to output direct-streamline normalized temp files
         and outputs.
@@ -129,8 +129,8 @@ def direct_streamline_norm(
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
-    t1_aligned_mni : str
-        File path to the T1w Nifti1Image in template MNI space.
+    t1w_brain : str
+        File path to the T1w Nifti1Image.
 
     Returns
     -------
@@ -182,8 +182,9 @@ def direct_streamline_norm(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in the same
+        morphological space as the streamlines.
     directget : str
         The statistical approach to tracking. Options are: det
         (deterministic), closest (clos), boot (bootstrapped),
@@ -237,31 +238,16 @@ def direct_streamline_norm(
         # Run SyN and normalize streamlines
         fa_img = nib.load(fa_path)
         vox_size = fa_img.header.get_zooms()[0]
-        template_path = pkg_resources.resource_filename(
-            "pynets", f"templates/FA_{int(vox_size)}mm.nii.gz"
-        )
 
-        if sys.platform.startswith('win') is False:
-            try:
-                template_img = nib.load(template_path)
-            except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load FA template. Do you have git-lfs "
-                      f"installed?")
-        else:
-            try:
-                template_img = nib.load(template_path)
-            except ImportError as e:
-                print(e, f"\nCannot load FA template. Do you have git-lfs "
-                      f"installed?")
+        atlas_for_streams = atlas_t1w
 
-        uatlas_mni_img = nib.load(atlas_mni)
-        t1_aligned_mni_img = nib.load(t1_aligned_mni)
-        brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
+        atlas_t1w_img = nib.load(atlas_t1w)
+        t1w_brain_img = nib.load(t1w_brain)
+        brain_mask = np.asarray(t1w_brain_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
-            "/streamlines_mni_",
+            "/streamlines_t1w_",
             "%s" % (network + "_" if network is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
@@ -394,7 +380,7 @@ def direct_streamline_norm(
         )
         stf.remove_invalid_streamlines()
         streams_final_filt_final = stf.streamlines
-        save_tractogram(stf, streams_mni, bbox_valid_check=True)
+        save_tractogram(stf, streams_t1w, bbox_valid_check=True)
         warped_fa_img.uncache()
 
         # DSN QC plotting
@@ -473,12 +459,12 @@ def direct_streamline_norm(
         print(
             "Skipping Direct Streamline Normalization (DSN). Will proceed to "
             "define fiber connectivity in native diffusion space...")
-        streams_mni = streams
+        streams_t1w = streams
         warped_fa = fa_path
-        atlas_mni = labels_im_file
+        atlas_for_streams = labels_im_file
 
     return (
-        streams_mni,
+        streams_t1w,
         dir_path,
         track_type,
         target_samples,
@@ -498,7 +484,7 @@ def direct_streamline_norm(
         coords,
         norm,
         binary,
-        atlas_mni,
+        atlas_for_streams,
         directget,
         warped_fa,
         min_length

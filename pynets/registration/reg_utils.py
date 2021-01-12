@@ -167,12 +167,18 @@ def atlas2t1w2dwi_align(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
+            regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                              aligned_atlas_skull, interp="nearestneighbour")
+            time.sleep(0.5)
             combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
             regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
     else:
+        regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                          aligned_atlas_skull, interp="nearestneighbour")
+        time.sleep(0.5)
         combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
         time.sleep(0.5)
         regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
@@ -228,7 +234,7 @@ def atlas2t1w2dwi_align(
     wm_gm_img.uncache()
     wm_gm_mask_img.uncache()
 
-    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
+    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_skull
 
 
 def roi2dwi_align(
@@ -1372,7 +1378,8 @@ def reorient_img(img, out_dir, overwrite=True):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
+def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
+                         remove_orig=True):
     """
     A function to resample an image to a given isotropic voxel resolution.
 
@@ -1440,7 +1447,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             nib.save(img, img_file_nores)
             img_file = img_file_nores
 
-    if os.path.isfile(orig_img):
+    if os.path.isfile(orig_img) and remove_orig is True:
         os.remove(orig_img)
 
     return img_file

@@ -1210,7 +1210,7 @@ def proportional(k, voxels_list):
 
 
 def collect_pandas_df(
-    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
+    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
 ):
     """
     API for summarizing independent lists of pickled pandas dataframes of
@@ -1282,7 +1282,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_dwi = collect_pandas_df_make(
-                    net_mets_csv_list_dwi, ID, network, plot_switch
+                    net_mets_csv_list_dwi, ID, network, plot_switch, embed
                 )
                 net_mets_csv_list_func = list(
                     set(
@@ -1295,7 +1295,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_func = collect_pandas_df_make(
-                    net_mets_csv_list_func, ID, network, plot_switch
+                    net_mets_csv_list_func, ID, network, plot_switch, embed
                 )
 
                 if (
@@ -1307,7 +1307,7 @@ def collect_pandas_df(
                     combination_complete = False
             else:
                 combination_complete = collect_pandas_df_make(
-                    net_mets_csv_list, ID, network, plot_switch
+                    net_mets_csv_list, ID, network, plot_switch, embed
                 )
     else:
         if multimodal is True:
@@ -1321,7 +1321,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_dwi = collect_pandas_df_make(
-                net_mets_csv_list_dwi, ID, network, plot_switch
+                net_mets_csv_list_dwi, ID, network, plot_switch, embed
             )
             net_mets_csv_list_func = list(
                 set(
@@ -1333,7 +1333,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_func = collect_pandas_df_make(
-                net_mets_csv_list_func, ID, network, plot_switch
+                net_mets_csv_list_func, ID, network, plot_switch, embed
             )
 
             if combination_complete_dwi is \
@@ -1343,7 +1343,7 @@ def collect_pandas_df(
                 combination_complete = False
         else:
             combination_complete = collect_pandas_df_make(
-                net_mets_csv_list, ID, network, plot_switch
+                net_mets_csv_list, ID, network, plot_switch, embed
             )
 
     return combination_complete

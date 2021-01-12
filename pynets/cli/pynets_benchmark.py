@@ -14,7 +14,7 @@ def main():
     from joblib import Parallel, delayed
     import tempfile
     import dill
-    from pynets.stats.prediction import make_subject_dict, cleanNullTerms, \
+    from pynets.stats.utils import make_subject_dict, cleanNullTerms, \
         get_ensembles_top, get_ensembles_embedding, \
         build_grid
     from colorama import Fore, Style
@@ -32,21 +32,22 @@ def main():
         sys.exit(1)
 
     #### Parse inputs
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    # base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
-    disc = True
+    disc = False
     int_consist = True
-    modality = 'dwi'
+    modality = 'func'
 
-    embedding_types = ['ASE']
-    rsns = ['triple', 'kmeans']
+    embedding_types = ['topology']
+    rsns = ['language']
+    #rsns = ['triple', 'kmeans']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
-            "degree_assortativity_coefficient",
+            # "degree_assortativity_coefficient",
             "average_betweenness_centrality",
             "average_eigenvector_centrality",
             "smallworldness",
@@ -69,15 +70,19 @@ def main():
     print(Style.RESET_ALL)
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(embedding_types)}_{template}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(embedding_types)}_{template}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(embedding_types)}_{template}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_"
+        f"{'_'.join(embedding_types)}_{template}.csv"
     )
-    icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_{'_'.join(embedding_types)}"
+    icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_" \
+                   f"{'_'.join(embedding_types)}"
     os.makedirs(icc_tmps_dir, exist_ok=True)
     if not os.path.isfile(subject_dict_file_path):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(

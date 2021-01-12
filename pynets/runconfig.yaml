@@ -138,7 +138,7 @@ available_models:
       - 'sfm'
 gradients:
     n_components:
-        - null
+        - 1
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
@@ -152,7 +152,7 @@ plotting:
     adjacency:
         - True
     dpi:
-        - 300
+        - 600
     labeling_atlas:
         - 'BrainnetomeAtlasFan2016'
     functional:
