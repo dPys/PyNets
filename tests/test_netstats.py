@@ -11,21 +11,39 @@ import time
 from pathlib import Path
 from pynets.stats import netstats
 import logging
+import graph_tool.all as gt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-@pytest.mark.parametrize("value", [True, 3.14, "word", {}])
+@pytest.mark.parametrize("value", [True, 2, 3.14, "word", {}])
 def test_get_prop_type(value):
     """
     Test for get_prop_type() functionality
     """
     start_time = time.time()
     tname, value, key = netstats.get_prop_type(value)
+    if value == 2:
+        value = int(value)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert tname is not None
+
+
+    if type(value) == bool:
+        assert tname is 'bool'
+
+    elif type(value) == float or type(value) == int:
+        assert tname is 'float'
+
+    elif type(value) == dict:
+        assert tname is 'object'
+
+    elif type(value) == bytes:
+        assert tname is 'string'
+
+
+
 
 def test_nx2gt():
     """
@@ -39,7 +57,20 @@ def test_nx2gt():
     gtG = netstats.nx2gt(nxG)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert gtG is not None
+    assert type(gtG) is gt.graph_tool.Graph
+
+
+def test_np2gt():
+    """
+    Test for np2gt() functionality
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+
+    Gt = netstats.np2gt(in_mat)
+    print(type(gt))
+    assert type(Gt) is gt.graph_tool.Graph
+
 
 def test_average_shortest_path_length_for_all():
     """
