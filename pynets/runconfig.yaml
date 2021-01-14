@@ -81,6 +81,20 @@ embed:
     - 'degree'
     - 'local_efficiency'
     - 'local_clustering'
+metaparams_func:
+    - 'rsn'
+    - 'res'
+    - 'model'
+    - 'hpass'
+    - 'extract'
+    - 'smooth'
+metaparams_dwi:
+    - 'rsn'
+    - 'res'
+    - 'model'
+    - 'directget'
+    - 'minlength'
+    - 'tol'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
