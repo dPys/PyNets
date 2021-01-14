@@ -673,8 +673,8 @@ def streams2graph(
                         bad_idxs.append(jx)
                         print(
                             f"Label {lab} missing from parcellation. Check "
-                            f"registration and ensure valid input parcellation "
-                            f"file.")
+                            f"registration and ensure valid input "
+                            f"parcellation file.")
 
             edges = combinations(endlabels, 2)
             for edge in edges:

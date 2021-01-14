@@ -121,6 +121,7 @@ def workflow_selector(
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
     template_name = hardcoded_params["template"][0]
+    embedding_methods = hardcoded_params["embed"]
     try:
         func_models = hardcoded_params["available_models"][
             "func_models"]
@@ -1078,40 +1079,46 @@ def workflow_selector(
             ]
         )
         if embed is True:
-            omni_embedding_node_func = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths_dwi", "out_paths_func"],
-                    function=embeddings.build_omnetome,
-                ),
-                name="omni_embedding_node_func",
-                imports=import_list,
-            )
-            ase_embedding_node_func = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths"],
-                    function=embeddings.build_asetomes,
-                ),
-                name="ase_embedding_node_func",
-                imports=import_list,
-            )
-            meta_wf.connect(
-                [
-                    (
-                        pass_meta_ins_func_node,
-                        omni_embedding_node_func,
-                        [("est_path_iterlist", "est_path_iterlist")],
+            if 'OMNI' in embedding_methods:
+                omni_embedding_node_func = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths_dwi", "out_paths_func"],
+                        function=embeddings.build_omnetome,
                     ),
-                    (meta_inputnode, omni_embedding_node_func, [("ID", "ID")]),
-                    (
-                        pass_meta_ins_func_node,
-                        ase_embedding_node_func,
-                        [("est_path_iterlist", "est_path_iterlist")],
+                    name="omni_embedding_node_func",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_func_node,
+                            omni_embedding_node_func,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, omni_embedding_node_func, [("ID", "ID")])
+                    ]
+                )
+            if 'ASE' in embedding_methods:
+                ase_embedding_node_func = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths"],
+                        function=embeddings.build_asetomes,
                     ),
-                    (meta_inputnode, ase_embedding_node_func, [("ID", "ID")]),
-                ]
-            )
+                    name="ase_embedding_node_func",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_func_node,
+                            ase_embedding_node_func,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, ase_embedding_node_func, [("ID", "ID")]),
+                    ]
+                )
     if dwi_file and not func_file:
         meta_wf.connect(
             [
@@ -1133,42 +1140,48 @@ def workflow_selector(
             ]
         )
         if embed is True:
-            omni_embedding_node_struct = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths_dwi", "out_paths_func"],
-                    function=embeddings.build_omnetome,
-                ),
-                name="omni_embedding_node_struct",
-                imports=import_list,
-            )
-            ase_embedding_node_struct = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths"],
-                    function=embeddings.build_asetomes,
-                ),
-                name="ase_embedding_node_struct",
-                imports=import_list,
-            )
-            meta_wf.connect(
-                [
-                    (
-                        pass_meta_ins_struct_node,
-                        omni_embedding_node_struct,
-                        [("est_path_iterlist", "est_path_iterlist")],
+            if 'OMNI' in embedding_methods:
+                omni_embedding_node_struct = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths_dwi", "out_paths_func"],
+                        function=embeddings.build_omnetome,
                     ),
-                    (meta_inputnode, omni_embedding_node_struct,
-                    [("ID", "ID")]),
-                    (
-                        pass_meta_ins_struct_node,
-                        ase_embedding_node_struct,
-                        [("est_path_iterlist", "est_path_iterlist")],
+                    name="omni_embedding_node_struct",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_struct_node,
+                            omni_embedding_node_struct,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, omni_embedding_node_struct,
+                        [("ID", "ID")])
+                    ]
+                )
+            if 'ASE' in embedding_methods:
+                ase_embedding_node_struct = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths"],
+                        function=embeddings.build_asetomes,
                     ),
-                    (meta_inputnode, ase_embedding_node_struct,
-                     [("ID", "ID")]),
-                ]
-            )
+                    name="ase_embedding_node_struct",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_struct_node,
+                            ase_embedding_node_struct,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, ase_embedding_node_struct,
+                         [("ID", "ID")]),
+                    ]
+                )
     if multimodal is True:
         mase_embedding_node = pe.Node(
             niu.Function(
@@ -1270,7 +1283,7 @@ def workflow_selector(
                     ]
                 )
 
-            if embed is True:
+            if embed is True and 'MASE' in embedding_methods:
                 meta_wf.connect(
                     [
                         (

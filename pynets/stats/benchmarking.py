@@ -219,10 +219,12 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             print(f"Missing {comb}...")
             extract, hpass, model, res, atlas = comb
             smooth = '0'
-        comb_tuple = (atlas, extract, hpass, model, res, smooth)
+        # comb_tuple = (atlas, extract, hpass, model, res, smooth)
+        comb_tuple = comb
     else:
         directget, minlength, model, res, atlas, tol = comb
-        comb_tuple = (atlas, directget, minlength, model, res, tol)
+        # comb_tuple = (atlas, directget, minlength, model, res, tol)
+        comb_tuple = comb
 
     df_summary.at[0, "grid"] = comb_tuple
 
@@ -254,7 +256,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                     df = pd.DataFrame(id_dict).T
                     if df.empty:
                         del df
-                        return df_summary
+                        #return df_summary
                     df.columns.values[0] = f"{met}"
                     df.replace(0, np.nan, inplace=True)
                     df['id'] = df.index
@@ -295,105 +297,110 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         labels_frames = []
         for ses in [str(i) for i in range(1, 11)]:
             for ID in ids:
-                if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
-                    if 'data' in par_dict[ID][ses][modality][alg][comb_tuple].keys():
-                        if par_dict[ID][ses][modality][alg][comb_tuple]['data'] is not None:
-                            if isinstance(par_dict[ID][ses][modality][alg][comb_tuple]['data'], str):
-                                if os.path.isfile(par_dict[ID][ses][modality][alg][comb_tuple]['data']):
-                                    try:
-                                        emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
-                                        node_files = glob.glob(f"{os.path.dirname(par_dict[ID][ses][modality][alg][comb_tuple]['data'])}/nodes/*.json")
-                                    except:
-                                        continue
-                                else:
-                                    continue
-                            else:
-                                node_files = glob.glob(
-                                    f"{base_dir}/embeddings_all_{modality}/"
-                                    f"sub-{ID}/ses-{ses}/rsn-{comb_tuple[0]}"
-                                    f"_res-{comb_tuple[-2]}/nodes/*.json")
-                                emb_data = par_dict[ID][ses][modality][alg][comb_tuple]['data']
-
-                            emb_shape = emb_data.shape[0]
-                            ixs = [i for i in par_dict[ID][ses][modality][alg][
-                                comb_tuple]['index'] if i is not None]
-
-                            if len(node_files) > 0:
-                                ixs, node_dict = parse_closest_ixs(node_files,
-                                                                   emb_shape)
-
-                                coords = [(i['coord']) for
-                                          i in node_dict]
-                                if isinstance(node_dict[0]['label'], str):
-                                    labels = [
-                                        ast.literal_eval(
-                                        re.search('({.+})',
-                                                  i['label']).group(0))[
-                                            'BrainnetomeAtlasFan2016'] for i in
-                                        node_dict]
-                                else:
-                                    try:
-                                        labels = [
-                                            list(i['label'])[0][
-                                                'BrainnetomeAtlasFan2016'] for i in
-                                            node_dict]
-                                    except:
+                if ses in par_dict[ID].keys():
+                    if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
+                        if 'data' in par_dict[ID][ses][modality][alg][comb_tuple].keys():
+                            if par_dict[ID][ses][modality][alg][comb_tuple]['data'] is not None:
+                                if isinstance(par_dict[ID][ses][modality][alg][comb_tuple]['data'], str):
+                                    if os.path.isfile(par_dict[ID][ses][modality][alg][comb_tuple]['data']):
                                         try:
-                                            labels = [ast.literal_eval(
-                                                i['label'].replace('[',
-                                                                   '').replace(
-                                                    '\n 1]', ''))[
-                                                          'BrainnetomeAtlasFan2016']
-                                                      for i in node_dict]
+                                            emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
+                                            node_files = glob.glob(f"{os.path.dirname(par_dict[ID][ses][modality][alg][comb_tuple]['data'])}/nodes/*.json")
                                         except:
                                             continue
+                                    else:
+                                        continue
+                                else:
+                                    node_files = glob.glob(
+                                        f"{base_dir}/embeddings_all_{modality}/"
+                                        f"sub-{ID}/ses-{ses}/rsn-{comb_tuple[0]}"
+                                        f"_res-{comb_tuple[-2]}/nodes/*.json")
+                                    emb_data = par_dict[ID][ses][modality][alg][comb_tuple]['data']
 
-                                df_coords = pd.DataFrame(
-                                    [str(tuple(x)) for x in
-                                     coords]).T
-                                df_coords.columns = [
-                                    f"rsn-{comb_tuple[0]}_res-" \
-                                    f"{comb_tuple[-2]}_{i}"
-                                    for i in ixs]
-                                # labels = [
-                                #     list(i['label'])[7] for i
-                                #     in
-                                #     node_dict]
-                                df_labels = pd.DataFrame(
-                                    labels).T
-                                df_labels.columns = [
-                                    f"rsn-{comb_tuple[0]}_res-" \
-                                    f"{comb_tuple[-2]}_{i}"
-                                    for i in ixs]
-                                coords_frames.append(df_coords)
-                                labels_frames.append(df_labels)
-                            else:
-                                print(f"No node files detected for "
-                                      f"{comb_tuple} and {ID}-{ses}...")
-                                coords_frames.append(pd.Series())
-                                labels_frames.append(pd.Series())
+                                emb_shape = emb_data.shape[0]
+                                ixs = [i for i in par_dict[ID][ses][modality][alg][
+                                    comb_tuple]['index'] if i is not None]
 
-                            if len(ixs) == emb_shape:
-                                df_pref = pd.DataFrame(emb_data.T, columns=[
-                                    f"{alg}_{i}_rsn-{comb_tuple[0]}_res-"
-                                    f"{comb_tuple[-2]}"
-                                    for i in ixs])
-                                df_pref['id'] = ID
-                                df_pref['ses'] = ses
-                                df_pref.replace(0, np.nan, inplace=True)
-                                df_pref.reset_index(drop=True, inplace=True)
-                                dfs.append(df_pref)
-                            else:
-                                print(
-                                    f"Embedding shape {emb_shape} for "
-                                    f"{comb_tuple} does not correspond to "
-                                    f"{len(ixs)} indices found for {ID}-{ses}."
-                                    f" Skipping...")
-                                continue
-                    else:
-                        print(
-                            f"data not found in {comb_tuple}. Skipping...")
-                        continue
+                                if len(node_files) > 0:
+                                    ixs, node_dict = parse_closest_ixs(node_files,
+                                                                       emb_shape)
+
+                                    coords = [(i['coord']) for
+                                              i in node_dict]
+                                    if isinstance(node_dict[0]['label'], str):
+                                        labels = [
+                                            ast.literal_eval(
+                                            re.search('({.+})',
+                                                      i['label']).group(0))[
+                                                'BrainnetomeAtlasFan2016'] for i in
+                                            node_dict]
+                                    else:
+                                        try:
+                                            labels = [
+                                                list(i['label'])[0][
+                                                    'BrainnetomeAtlasFan2016'] for i in
+                                                node_dict]
+                                        except:
+                                            try:
+                                                labels = [ast.literal_eval(
+                                                    i['label'].replace('[',
+                                                                       '').replace(
+                                                        '\n 1]', ''))[
+                                                              'BrainnetomeAtlasFan2016']
+                                                          for i in node_dict]
+                                            except:
+                                                continue
+
+                                    df_coords = pd.DataFrame(
+                                        [str(tuple(x)) for x in
+                                         coords]).T
+                                    df_coords.columns = [
+                                        f"rsn-{comb_tuple[0]}_res-" \
+                                        f"{comb_tuple[-2]}_{i}"
+                                        for i in ixs]
+                                    # labels = [
+                                    #     list(i['label'])[7] for i
+                                    #     in
+                                    #     node_dict]
+                                    df_labels = pd.DataFrame(
+                                        labels).T
+                                    df_labels.columns = [
+                                        f"rsn-{comb_tuple[0]}_res-" \
+                                        f"{comb_tuple[-2]}_{i}"
+                                        for i in ixs]
+                                    coords_frames.append(df_coords)
+                                    labels_frames.append(df_labels)
+                                else:
+                                    print(f"No node files detected for "
+                                          f"{comb_tuple} and {ID}-{ses}...")
+                                    coords_frames.append(pd.Series())
+                                    labels_frames.append(pd.Series())
+
+                                if len(ixs) == emb_shape:
+                                    df_pref = pd.DataFrame(emb_data.T,
+                                                           columns=[
+                                        f"{alg}_{i}_rsn-{comb_tuple[0]}_res-"
+                                        f"{comb_tuple[-2]}"
+                                        for i in ixs])
+                                    df_pref['id'] = ID
+                                    df_pref['ses'] = ses
+                                    df_pref.replace(0, np.nan, inplace=True)
+                                    df_pref.reset_index(drop=True,
+                                                        inplace=True)
+                                    dfs.append(df_pref)
+                                else:
+                                    print(
+                                        f"Embedding shape {emb_shape} for "
+                                        f"{comb_tuple} does not correspond to "
+                                        f"{len(ixs)} indices found for "
+                                        f"{ID}-{ses}. Skipping...")
+                                    continue
+                        else:
+                            print(
+                                f"data not found in {comb_tuple}. Skipping...")
+                            continue
+                else:
+                    continue
 
         if len(dfs) == 0:
             return df_summary
@@ -431,8 +438,12 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                     index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k', 'ICC3'])
                 icc_val = c_icc3['ICC'].values[0]
                 if nodes is True:
-                    coord_in = np.array(ast.literal_eval(coords_frames_icc[f"{rsn}_{ix}"].mode().values[0]), dtype=np.dtype("O"))
-                    label_in = np.array(labels_frames_icc[f"{rsn}_{ix}"].mode().values[0], dtype=np.dtype("O"))
+                    coord_in = np.array(ast.literal_eval(
+                        coords_frames_icc[f"{rsn}_{ix}"].mode().values[0]),
+                        dtype=np.dtype("O"))
+                    label_in = np.array(
+                        labels_frames_icc[f"{rsn}_{ix}"].mode().values[0],
+                        dtype=np.dtype("O"))
                 else:
                     coord_in = np.nan
                     label_in = np.nan
@@ -448,7 +459,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             dict_sum[f"{lp}_coord"] = coord_in
             dict_sum[f"{lp}_label"] = label_in
 
-        df_summary = pd.concat([df_summary, pd.DataFrame(pd.Series(dict_sum).T).T], axis=1)
+        df_summary = pd.concat([df_summary,
+                                pd.DataFrame(pd.Series(dict_sum).T).T], axis=1)
 
         print(df_summary)
 
@@ -480,7 +492,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         if len(vect_all) > 0:
             if len(vect_all) > 0:
                 X_top = pd.concat(vect_all, axis=0, join="outer")
-                X_top = np.array(X_top.dropna(axis='columns', thresh=0.50 * len(X_top)))
+                X_top = np.array(X_top.dropna(axis='columns',
+                                              thresh=0.50 * len(X_top)))
             else:
                 print('Empty dataframe!')
                 return df_summary

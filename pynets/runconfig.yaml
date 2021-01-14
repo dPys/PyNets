@@ -72,6 +72,15 @@ template: # `MNI152_T1` is the default and, along with `colin27` is provided by 
 #    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
     - 'betweenness'
+embed:
+    - 'ASE'
+    - 'OMNI'
+    - 'MASE'
+    - 'eigenvector'
+    - 'betweenness'
+    - 'degree'
+    - 'local_efficiency'
+    - 'local_clustering'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'

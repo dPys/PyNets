@@ -1461,7 +1461,8 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_list.append(node_dict)
         i += 1
 
-    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_" \
+                 f"count-{len(labels)}.json"
 
     with open(nodes_path, 'w') as f:
         json.dump(node_list, f)
@@ -1894,8 +1895,8 @@ def check_template_loads(template, template_mask, template_name):
             nib.load(template_mask)
             return print('Local template detected...')
         except ImportError as e:
-            print(e, f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
+            print(e, f"\nCannot load template {template_name} image or "
+                     f"template mask. Do you have git-lfs installed?")
 
 
 def save_4d_to_3d(in_file):

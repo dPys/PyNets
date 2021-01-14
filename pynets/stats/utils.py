@@ -144,7 +144,7 @@ def make_feature_space_dict(
                     grid_params_mod.append((extract, hpass, model, res, atlas,
                                             str(smooth)))
                 except:
-                    print(f"Failed to parse recipe: {comb}")
+                    print(f"Failed to parse: {comb}")
 
     elif target_modality == "dwi":
         for comb in grid_params:
@@ -153,7 +153,7 @@ def make_feature_space_dict(
                 grid_params_mod.append((directget, minlength, model, res,
                                         atlas, tol))
             except:
-                print(f"Failed to parse recipe: {comb}")
+                print(f"Failed to parse: {comb}")
 
     par_dict = subject_dict.copy()
 
@@ -426,6 +426,7 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
 def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
                          modality, alg, mets=None):
+    from colorama import Fore, Style
     df_tmps = []
 
     for ID in df["participant_id"]:
@@ -449,7 +450,15 @@ def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
             )
             continue
 
+        if grid_param not in subject_dict[ID][str(ses)][modality][alg].keys():
+            print(
+                f"Grid param {grid_param} not found for ID {ID}, ses-{ses}, "
+                f"{alg} and {modality}..."
+            )
+            continue
+
         if alg == "OMNI" or alg == "ASE":
+            print(f"{Fore.GREEN}✓{Style.RESET_ALL} Grid Param: {grid_param} found for {ID}")
             df_lps = flatten_latent_positions(
                 base_dir, subject_dict, ID, ses, modality, grid_param, alg
             )
@@ -735,7 +744,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     try:
         directget, minlength, model, res, atlas, tol = comb
     except BaseException:
-        print(UserWarning(f"{Fore.YELLOW}Failed to parse recipe: "
+        print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                           f"{comb}{Style.RESET_ALL}"))
         return subject_dict, missingness_frame
 
@@ -762,7 +771,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
         if len(embeddings) == 0:
             print(
                 f"{Fore.YELLOW}No structural embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -788,7 +797,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
@@ -797,7 +806,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
@@ -825,11 +834,11 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         else:
             print(
                 f"{Fore.YELLOW}Structural embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -884,7 +893,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if len(out) == 0:
                 print(
                     f"Structural topology not found for {ID}, "
-                    f"{met}, and recipe {comb_tuple}..."
+                    f"{met}, and {comb_tuple}..."
                 )
                 print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
                       f"SESSION: {ses}{Style.RESET_ALL}")
@@ -898,12 +907,12 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         subject_dict[ID][ses][modality][alg][comb_tuple] = data
         # print(data)
     del comb, comb_tuple
@@ -926,7 +935,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
             extract, hpass, model, res, atlas = comb
             smooth = "0"
         except BaseException:
-            print(UserWarning(f"{Fore.YELLOW}Failed to parse recipe: "
+            print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                               f"{comb}{Style.RESET_ALL}"))
             return subject_dict, missingness_frame
     # comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
@@ -961,7 +970,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
         if len(embeddings) == 0:
             print(
                 f"{Fore.YELLOW}No functional embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -988,7 +997,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
@@ -996,7 +1005,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
@@ -1024,7 +1033,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
         else:
             print(
                 f"{Fore.YELLOW}Functional embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -1091,7 +1100,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
             if len(out) == 0:
                 print(
                     f"Functional topology not found for {ID}, {met}, "
-                    f"and recipe {comb_tuple}..."
+                    f"and {comb_tuple}..."
                 )
                 print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
                       f"SESSION: {ses}{Style.RESET_ALL}")
@@ -1105,12 +1114,12 @@ def func_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         subject_dict[ID][ses][modality][alg][comb_tuple] = data
         # print(data)
     del comb, comb_tuple

@@ -36,18 +36,18 @@ def main():
     base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
-    disc = False
-    int_consist = True
-    modality = 'func'
+    disc = True
+    int_consist = False
+    modality = 'dwi'
 
-    embedding_types = ['topology']
+    embedding_types = ['betweenness']
     rsns = ['language']
     #rsns = ['triple', 'kmeans']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
             "average_shortest_path_length",
-            # "degree_assortativity_coefficient",
+            "degree_assortativity_coefficient",
             "average_betweenness_centrality",
             "average_eigenvector_centrality",
             "smallworldness",
@@ -98,11 +98,11 @@ def main():
                     final_missingness_summary = pd.concat(missingness_frames)
                     final_missingness_summary.to_csv(missingness_summary,
                                                      index=False)
-                    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
+                    final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
                 elif len(missingness_frames) == 1:
                     final_missingness_summary = missingness_frames[0]
                     final_missingness_summary.to_csv(missingness_summary, index=False)
-                    final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
+                    final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
                 else:
                     final_missingness_summary = pd.Series()
             else:
@@ -124,7 +124,7 @@ def main():
         f.close()
         if os.path.isfile(missingness_summary):
             final_missingness_summary = pd.read_csv(missingness_summary)
-            final_missingness_summary.id = final_missingness_summary.id.str.split('_', expand=True)[0]
+            final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
         else:
             final_missingness_summary = pd.Series()
     ids = sub_dict_clean.keys()
