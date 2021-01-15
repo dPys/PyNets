@@ -169,7 +169,7 @@ def main():
 
     # args["modality"] = pre_args.modality[0]
     # modality = args["modality"]
-    modality = "func"
+    modality = "dwi"
 
     # args["thr_type"] = pre_args.thrtype[0]
     # thr_type = pre_args.thrtype
@@ -179,7 +179,7 @@ def main():
     # template = pre_args.temp
     template = "MNI152_T1"
 
-    data_file = "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv"
+    data_file = "/working/tuning_set/outputs_final/df_rum_persist_all.csv"
 
     rsns = ["triple", "kmeans", "language"]
 

@@ -32,8 +32,8 @@ def main():
         sys.exit(1)
 
     #### Parse inputs
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
     disc = True
@@ -41,8 +41,8 @@ def main():
     modality = 'dwi'
 
     embedding_types = ['betweenness', 'ASE', 'degree', 'OMNI']
-    rsns = ['language']
-    #rsns = ['triple', 'kmeans']
+    #rsns = ['language']
+    rsns = ['triple', 'kmeans']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",

@@ -88,7 +88,8 @@ RUN apt-get update -qq \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
-    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
+    && ulimit -Hn 4096
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -178,7 +179,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir /outputs && \
     chmod -R 777 /outputs \
     && mkdir /working && \
-    chmod -R 777 /working
+    chmod -R 777 /working \
+    && ulimit -Sn 4096
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH

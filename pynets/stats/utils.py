@@ -206,11 +206,11 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
     return hyperparam_dict, grid
 
 
-def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
+def get_index_labels(base_dir, ID, ses, modality, atlas, res, emb_shape):
 
     node_files = glob.glob(
         f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
-        f"{grid_param[-2]}_res-{grid_param[-3]}/nodes/*.json")
+        f"{atlas}_res-{res}/nodes/*.json")
 
     if len(node_files) > 0:
         ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
@@ -275,6 +275,7 @@ def node_files_search(node_files, emb_shape):
         with open(node_files[0],
                   'r+') as f:
             node_dict = json.load(f)
+        f.close()
         ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
     else:
         node_files = sorted(node_files, key=os.path.getmtime)
@@ -283,10 +284,12 @@ def node_files_search(node_files, emb_shape):
                       'r+') as f:
                 node_dict = json.load(
                     f)
+            f.close()
             j = 0
         except:
             with open(node_files[1], 'r+') as f:
                 node_dict = json.load(f)
+            f.close()
             j = 1
 
         ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
@@ -298,6 +301,7 @@ def node_files_search(node_files, emb_shape):
                           'r+') as f:
                     node_dict = json.load(
                         f)
+                f.close()
             except:
                 j += 1
                 continue
@@ -309,8 +313,7 @@ def node_files_search(node_files, emb_shape):
 
 def parse_closest_ixs(node_files, emb_shape):
     if len(node_files) > 0:
-        node_files_named = [i for i in node_files if
-                      f"{emb_shape}" in i]
+        node_files_named = [i for i in node_files if f"{emb_shape}" in i]
         if len(node_files_named) > 0:
             node_files_named = sorted(node_files_named, key=os.path.getmtime)
             ixs_corr, node_dict = node_files_search(node_files_named,
@@ -795,7 +798,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                                           f"currently supported.")
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       comb_tuple, emb_shape)
+                                       atlas, res, emb_shape)
             except BaseException:
                 print(f"{Fore.YELLOW}Failed to load {embedding} for "
                       f"{ID}-{ses}{Style.RESET_ALL}")
@@ -811,7 +814,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         else:
             print(
@@ -885,13 +889,14 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
-                f"COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
         # print(data)
@@ -932,11 +937,12 @@ def func_grabber(comb, subject_dict, missingness_frame,
             f"embeddings/gradient-{alg}*"
         )
 
-        embeddings = [i for i in embeddings if (alg in i) and (res in i) and
-                      (atlas in i) and (template in i) and
+        embeddings = [i for i in embeddings if ((alg in i) and
+                      (f"res-{res}" in i) and
+                      (f"rsn-{atlas}" in i) and (template in i) and
                       (f"model-{model}" in i)
-                      and (f"hpass-{hpass}" in i) and
-                      (f"extract-{extract}" in i)]
+                      and (f"hpass-{hpass}Hz" in i) and
+                      (f"extract-{extract}" in i))]
 
         if smooth == "0":
             embeddings = [
@@ -997,7 +1003,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                           f"currently supported.")
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       comb_tuple, emb_shape)
+                                       atlas, res, emb_shape)
             except BaseException:
                 print(f"{Fore.YELLOW}Failed to load {embedding} for "
                       f"{ID}-{ses}{Style.RESET_ALL}")
@@ -1011,6 +1017,10 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 "data"] = embedding
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
+            print(
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         else:
             print(
                 f"{Fore.YELLOW}Functional embedding not found for {ID} and"
@@ -1095,13 +1105,15 @@ def func_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
         # print(data)
