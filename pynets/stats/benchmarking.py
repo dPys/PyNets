@@ -252,11 +252,11 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                     id_dict[ID] = {}
                     if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
                         id_dict[ID][str(ses)] = \
-                            par_dict[ID][ses][modality][alg][comb_tuple][mets.index(met)][0]
+                            par_dict[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
                     df = pd.DataFrame(id_dict).T
                     if df.empty:
                         del df
-                        #return df_summary
+                        return df_summary
                     df.columns.values[0] = f"{met}"
                     df.replace(0, np.nan, inplace=True)
                     df['id'] = df.index
@@ -299,26 +299,25 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             for ID in ids:
                 if ses in par_dict[ID].keys():
                     if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
-                        if 'data' in par_dict[ID][ses][modality][alg][comb_tuple].keys():
-                            if par_dict[ID][ses][modality][alg][comb_tuple]['data'] is not None:
-                                if isinstance(par_dict[ID][ses][modality][alg][comb_tuple]['data'], str):
-                                    if os.path.isfile(par_dict[ID][ses][modality][alg][comb_tuple]['data']):
+                        if 'data' in par_dict[ID][str(ses)][modality][alg][comb_tuple].keys():
+                            if par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'] is not None:
+                                if isinstance(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'], str):
+                                    if os.path.isfile(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']):
                                         try:
-                                            emb_data = np.load(par_dict[ID][ses][modality][alg][comb_tuple]['data'])
-                                            node_files = glob.glob(f"{os.path.dirname(par_dict[ID][ses][modality][alg][comb_tuple]['data'])}/nodes/*.json")
+                                            emb_data = np.load(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])
+                                            node_files = glob.glob(f"{os.path.dirname(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])}/nodes/*.json")
                                         except:
                                             continue
                                     else:
                                         continue
                                 else:
                                     node_files = glob.glob(
-                                        f"{base_dir}/embeddings_all_{modality}/"
-                                        f"sub-{ID}/ses-{ses}/rsn-{comb_tuple[0]}"
-                                        f"_res-{comb_tuple[-2]}/nodes/*.json")
-                                    emb_data = par_dict[ID][ses][modality][alg][comb_tuple]['data']
+                                        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+                                        f"{atlas}_res-{res}/nodes/*.json")
+                                    emb_data = par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']
 
                                 emb_shape = emb_data.shape[0]
-                                ixs = [i for i in par_dict[ID][ses][modality][alg][
+                                ixs = [i for i in par_dict[ID][str(ses)][modality][alg][
                                     comb_tuple]['index'] if i is not None]
 
                                 if len(node_files) > 0:
@@ -355,8 +354,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"rsn-{comb_tuple[0]}_res-" \
-                                        f"{comb_tuple[-2]}_{i}"
+                                        f"rsn-{atlas}_res-" \
+                                        f"{res}_{i}"
                                         for i in ixs]
                                     # labels = [
                                     #     list(i['label'])[7] for i
@@ -365,8 +364,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"rsn-{comb_tuple[0]}_res-" \
-                                        f"{comb_tuple[-2]}_{i}"
+                                        f"rsn-{atlas}_res-" \
+                                        f"{res}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
                                     labels_frames.append(df_labels)
@@ -379,8 +378,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 if len(ixs) == emb_shape:
                                     df_pref = pd.DataFrame(emb_data.T,
                                                            columns=[
-                                        f"{alg}_{i}_rsn-{comb_tuple[0]}_res-"
-                                        f"{comb_tuple[-2]}"
+                                        f"{alg}_{i}_rsn-{atlas}_res-"
+                                        f"{res}"
                                         for i in ixs])
                                     df_pref['id'] = ID
                                     df_pref['ses'] = ses

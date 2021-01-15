@@ -207,7 +207,6 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
 
 
 def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
-    import ast
 
     node_files = glob.glob(
         f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
@@ -218,63 +217,59 @@ def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
     else:
         return [None]
 
-    # Correct labels/index if needed
-    if isinstance(node_dict, list):
-        if all(v is None for v in [i['label'] for i in node_dict]):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                node_dict_revised[i]['label'], node_dict_revised[i][
-                    'index'] = ast.literal_eval(
-                    node_dict[i]['index'].replace('\n', ','))
-            ixs = [i['index'] for i in node_dict_revised.values()]
-        else:
-            ixs = [i['index'] for i in node_dict]
-    else:
-        ixs = [i['index'] for i in node_dict.values()]
-
     if emb_shape == len(ixs):
         return ixs
     else:
         return [None]
 
 
-def node_files_search(node_files, emb_shape):
+def get_ixs_from_node_dict(node_dict):
     import ast
-    import json
-
-    def get_ixs_from_node_dict(node_dict):
-        if isinstance(node_dict, list):
-            if all(v is None for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'], \
-                    node_dict_revised[i]['index'] = ast.literal_eval(
-                        node_dict[i]['index'].replace('\n', ','))
-                ixs_corr = [int(k['index']) for k in
-                            node_dict_revised.values()]
-            elif all(isinstance(v, str) for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'] = ast.literal_eval(node_dict[i]['label'])[0]
-                    node_dict_revised[i]['index'] = ast.literal_eval(node_dict[i]['label'])[1]
-                ixs_corr = [int(k['index']) for k in
-                            node_dict_revised.values()]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict]
-                node_dict_revised = node_dict
+    if isinstance(node_dict, list):
+        if all(v is None for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'], \
+                node_dict_revised[i]['index'] = ast.literal_eval(
+                    node_dict[i]['index'].replace('\n', ','))
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
+        elif all(isinstance(v, str) for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'] = ast.literal_eval(node_dict[i]['label'])[0]
+                node_dict_revised[i]['index'] = ast.literal_eval(node_dict[i]['label'])[1]
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
+        elif all(isinstance(v, tuple) for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'] = node_dict[i]['label'][0]
+                node_dict_revised[i]['index'] = node_dict[i]['label'][1]
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
         else:
             ixs_corr = [int(i['index'])
                         for i
-                        in node_dict.values()]
+                        in node_dict]
             node_dict_revised = node_dict
-        return ixs_corr, node_dict_revised
+    else:
+        ixs_corr = [int(i['index'])
+                    for i
+                    in node_dict.values()]
+        node_dict_revised = node_dict
+    return ixs_corr, node_dict_revised
+
+
+def node_files_search(node_files, emb_shape):
+    import os
+    import json
 
     if len(node_files) == 1:
         with open(node_files[0],
@@ -282,6 +277,7 @@ def node_files_search(node_files, emb_shape):
             node_dict = json.load(f)
         ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
     else:
+        node_files = sorted(node_files, key=os.path.getmtime)
         try:
             with open(node_files[0],
                       'r+') as f:
@@ -316,6 +312,7 @@ def parse_closest_ixs(node_files, emb_shape):
         node_files_named = [i for i in node_files if
                       f"{emb_shape}" in i]
         if len(node_files_named) > 0:
+            node_files_named = sorted(node_files_named, key=os.path.getmtime)
             ixs_corr, node_dict = node_files_search(node_files_named,
                                                     emb_shape)
         else:
@@ -339,7 +336,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                 if rsn_dict["data"].endswith('.npy'):
                     rsn_dict["data"] = np.load(rsn_dict["data"])
                 elif rsn_dict["data"].endswith('.csv'):
-                    rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])).reshape(-1,1)
+                    rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])
+                                                ).reshape(-1, 1)
 
             emb_shape = rsn_dict["data"].shape[0]
 
@@ -584,7 +582,7 @@ def make_subject_dict(
                 cache_dir = tempfile.mkdtemp()
 
                 with Parallel(
-                    n_jobs=len(ids),
+                    n_jobs=-1,
                     backend='loky',
                     verbose=1,
                     max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
@@ -669,44 +667,45 @@ def populate_subject_dict(
 
     # Functional case
     if modality == "func":
-        # with Parallel(
-        #     n_jobs=4,
-        #     require='sharedmem',
-        #     verbose=1,
-        # ) as parallel:
-        #     parallel(
-        #         delayed(func_grabber)(comb, subject_dict, missingness_frame,
-        #                               ID, ses, modality, alg, mets, thr_type,
-        #                               base_dir,
-        #                               template,
-        #                               df_top)
-        #         for comb in grid
-        #     )
-        for comb in grid:
-            [subject_dict, missingness_frame] = func_grabber(comb, subject_dict,
-                                                            missingness_frame,
-                        ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top)
+        with Parallel(
+            n_jobs=4,
+            require='sharedmem',
+            verbose=1,
+        ) as parallel:
+            parallel(
+                delayed(func_grabber)(comb, subject_dict, missingness_frame,
+                                      ID, ses, modality, alg, mets, thr_type,
+                                      base_dir,
+                                      template,
+                                      df_top)
+                for comb in grid
+            )
+        # for comb in grid:
+        #     [subject_dict, missingness_frame] = func_grabber(comb,
+        #                                                      subject_dict,
+        #                                                      missingness_frame,
+        #                 ID, ses, modality, alg, mets,
+        #                 thr_type, base_dir, template, df_top)
     # Structural case
     elif modality == "dwi":
-        # with Parallel(
-        #     n_jobs=4,
-        #     require='sharedmem',
-        #     verbose=1,
-        # ) as parallel:
-        #     parallel(
-        #         delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
-        #                               ID, ses, modality, alg, mets, thr_type,
-        #                               base_dir,
-        #                               template,
-        #                               df_top)
-        #         for comb in grid
-        #     )
-        for comb in grid:
-            [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
-                                                            missingness_frame,
-                        ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top)
+        with Parallel(
+            n_jobs=4,
+            require='sharedmem',
+            verbose=1,
+        ) as parallel:
+            parallel(
+                delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
+                                      ID, ses, modality, alg, mets, thr_type,
+                                      base_dir,
+                                      template,
+                                      df_top)
+                for comb in grid
+            )
+        # for comb in grid:
+        #     [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
+        #                                                     missingness_frame,
+        #                 ID, ses, modality, alg, mets,
+        #                 thr_type, base_dir, template, df_top)
     del modality, ID, ses, df_top
     gc.collect()
     return subject_dict, missingness_frame
@@ -802,7 +801,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                       f"{ID}-{ses}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
 
-            if not isinstance(subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+            if not isinstance(
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
             subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
             # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
@@ -811,7 +811,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         else:
             print(
                 f"{Fore.YELLOW}Structural embedding not found for {ID} and"
@@ -884,12 +885,14 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
         # print(data)
     del comb, comb_tuple
@@ -999,7 +1002,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 print(f"{Fore.YELLOW}Failed to load {embedding} for "
                       f"{ID}-{ses}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
-            if not isinstance(subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+            if not isinstance(
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
             subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
             # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
@@ -1114,7 +1118,8 @@ def cleanNullTerms(d):
             nested = cleanNullTerms(v)
             if len(nested.keys()) > 0:
                 clean[k] = nested
-        elif v is not None and v is not np.nan and not isinstance(v, pd.Series):
+        elif v is not None and v is not np.nan and not \
+            isinstance(v, pd.Series):
             clean[k] = v
     return clean
 

@@ -160,7 +160,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
-#	gcc \
+	gcc \
 	wget \
 	curl \
 	build-essential \

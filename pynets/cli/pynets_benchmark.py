@@ -40,7 +40,7 @@ def main():
     int_consist = False
     modality = 'dwi'
 
-    embedding_types = ['betweenness']
+    embedding_types = ['betweenness', 'ASE', 'degree', 'OMNI']
     rsns = ['language']
     #rsns = ['triple', 'kmeans']
     template = 'CN200'
@@ -53,9 +53,9 @@ def main():
             "smallworldness",
             "modularity"]
 
-    hyperparams_func = ["rsn", "res", "model", 'hpass', 'extract',
+    metaparams_func = ["rsn", "res", "model", 'hpass', 'extract',
                         'smooth']
-    hyperparams_dwi = ["rsn", "res", "model", 'directget', 'minlength',
+    metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength',
                        'tol']
 
     sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -130,7 +130,7 @@ def main():
     ids = sub_dict_clean.keys()
 
     print(f"MODALITY: {modality}")
-    hyperparams = eval(f"hyperparams_{modality}")
+    metaparams = eval(f"metaparams_{modality}")
     hyperparam_dict = {}
 
     for alg in embedding_types:
@@ -145,15 +145,10 @@ def main():
             ensembles = get_ensembles_embedding(modality, alg,
                                                 base_dir)
         grid = build_grid(
-            modality, hyperparam_dict, sorted(list(set(hyperparams))),
+            modality, hyperparam_dict, sorted(list(set(metaparams))),
             ensembles)[1]
 
         grid = [i for i in grid if '200' not in i and '400' not in i and '600' not in i and '800' not in i]
-        # In the case that we are using all of the 3 RSN connectomes
-        # (pDMN, coSN, and fECN) in the feature-space,
-        # rather than varying them as hyperparameters (i.e. we assume
-        # they each add distinct variance
-        # from one another) Create an abridged grid, where
 
         if modality == "func":
             modality_grids[modality] = grid
