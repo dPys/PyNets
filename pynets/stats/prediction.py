@@ -1009,7 +1009,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                         columns=[
                             "id",
                             "age",
-                            "num_visits",
+                            # "num_visits",
                             "sex"
                         ]
                     )
@@ -1024,7 +1024,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                                 columns=[
                                     "id",
                                     "age",
-                                    "num_visits",
+                                    # "num_visits",
                                     "sex"
                                 ]
                             )

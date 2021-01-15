@@ -165,7 +165,7 @@ def main():
 
     # args["embedding_type"] = pre_args.et[0]
     # embedding_type = args["embedding_type"]
-    embedding_type = 'OMNI'
+    embedding_type = 'ASE'
 
     # args["modality"] = pre_args.modality[0]
     # modality = args["modality"]
@@ -261,7 +261,7 @@ def main():
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
     df['sex'] = df['sex'].map({1:0, 2:1})
     df = df[
-        ["participant_id", "age", "num_visits", "sex"] + target_vars
+        ["participant_id", "age", "sex"] + target_vars
     ]
 
     good_grids = []

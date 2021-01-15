@@ -448,9 +448,9 @@ def test_timeout(s):
 
 
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
-def test_build_hp_dict(modality):
+def test_build_mp_dict(modality):
     import tempfile
-    from pynets.stats.utils import build_hp_dict
+    from pynets.stats.utils import build_mp_dict
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")
@@ -459,24 +459,24 @@ def test_build_hp_dict(modality):
         file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_modality-func_rsn-Default_model-cov_template-MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
     elif modality == 'dwi':
         file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
-    gen_hyperparams = ['modality', 'model', 'nodetype', 'template']
+    gen_metaparams = ['modality', 'model', 'nodetype', 'template']
 
     hyperparam_dict = {}
     file_renamed = file_renamed.split('graphs/')[1]
-    hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+    hyperparam_dict, metaparams = build_mp_dict(file_renamed,
                                                  modality,
                                                  hyperparam_dict,
-                                                 gen_hyperparams)
+                                                 gen_metaparams)
 
     # test_build_sql_db
     if modality == 'func':
         import pandas as pd
         ID = '002'
-        hyperparams.append('atlas')
-        hyperparams.append('AUC')
+        metaparams.append('atlas')
+        metaparams.append('AUC')
         df_summary_auc = {'AUC': 0.8}
         db = utils.build_sql_db(dir_path, ID)
         db.create_modality_table('func')
-        db.add_hp_columns(hyperparams)
+        db.add_hp_columns(metaparams)
         db.add_row_from_df(pd.DataFrame([{'AUC': 0.8}], index=[0]),
                            hyperparam_dict)

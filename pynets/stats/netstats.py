@@ -2207,7 +2207,7 @@ def collect_pandas_df_make(
     import os.path as op
     import pandas as pd
     from pynets.core import utils
-    from pynets.stats.utils import build_hp_dict
+    from pynets.stats.utils import build_mp_dict
     from itertools import groupby
     import re
     from pynets.core.utils import load_runconfig
@@ -2349,7 +2349,7 @@ def collect_pandas_df_make(
                 modality = file_renamed.split("modality-")[1].split("_")[0]
 
                 # Build hyperparameter dictionary
-                hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+                hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
                                                              modality,
                                                              hyperparam_dict,
                                                              gen_hyperparams)
