@@ -79,7 +79,7 @@ RUN apt-get update -qq \
     && curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
-    apt-get update -qq && apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
+    apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
     apt-get clean && cd /tmp \
     && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
@@ -87,9 +87,12 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
+    && echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" >> /etc/apt/sources.list \
+    && (apt-key adv --no-tty --keyserver keys.openpgp.org --recv-key 612DEFB798507F25 || true) \
+    && apt-get update -qq && apt-get install -y --no-install-recommends python3-graph-tool \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && ulimit -Hn 4096
+    && echo "neuro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/neuro
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -179,8 +182,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir /outputs && \
     chmod -R 777 /outputs \
     && mkdir /working && \
-    chmod -R 777 /working \
-    && ulimit -Sn 4096
+    chmod -R 777 /working
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH

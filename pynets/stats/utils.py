@@ -264,6 +264,9 @@ def get_ixs_from_node_dict(node_dict):
                     for i
                     in node_dict.values()]
         node_dict_revised = node_dict
+
+    for i in range(len(node_dict)):
+        node_dict_revised[i]['coord'] = node_dict[i]['coord']
     return ixs_corr, node_dict_revised
 
 
@@ -311,7 +314,27 @@ def node_files_search(node_files, emb_shape):
     return ixs_corr, node_dict_revised
 
 
-def parse_closest_ixs(node_files, emb_shape):
+def retrieve_indices_from_parcellation(node_files, emb_shape, vox_size, template):
+    from pathlib import Path
+    from pynets.core.nodemaker import get_names_and_coords_of_parcels, \
+        parcel_naming
+    from pynets.core.utils import save_coords_and_labels_to_json
+    dir_path = str(Path(node_files[0]).parent.parent)
+    template_parc = f"{dir_path}/parcellations/parcellation_space-{template}.nii.gz"
+    if os.path.isfile(template_parc):
+        coords, _, _, label_intensities = get_names_and_coords_of_parcels(
+            template_parc)
+        labels = parcel_naming(coords, vox_size)
+        node_file = save_coords_and_labels_to_json(coords, tuple(
+            zip(labels, label_intensities)), dir_path, network='all_nodes')
+        ixs_corr, node_dict = node_files_search([node_file], emb_shape)
+        return ixs_corr, node_dict
+    else:
+        return [], {}
+
+
+def parse_closest_ixs(node_files, emb_shape, vox_size='2mm',
+                      template='MNI152_T1'):
     if len(node_files) > 0:
         node_files_named = [i for i in node_files if f"{emb_shape}" in i]
         if len(node_files_named) > 0:
@@ -320,10 +343,19 @@ def parse_closest_ixs(node_files, emb_shape):
                                                     emb_shape)
         else:
             ixs_corr, node_dict = node_files_search(node_files, emb_shape)
+
+        if len(ixs_corr) != emb_shape:
+            ixs_corr, node_dict = retrieve_indices_from_parcellation(
+                node_files, emb_shape, vox_size, template)
         return ixs_corr, node_dict
     else:
-        print(UserWarning('Node files empty!'))
-        return [], {}
+        print(UserWarning('Node files empty. Attempting to retrieve manually '
+                          'from parcellations...'))
+        ixs_corr, node_dict = retrieve_indices_from_parcellation(node_files,
+                                                                 emb_shape,
+                                                                 vox_size,
+                                                                 template)
+        return ixs_corr, node_dict
 
 
 def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
@@ -670,45 +702,45 @@ def populate_subject_dict(
 
     # Functional case
     if modality == "func":
-        with Parallel(
-            n_jobs=4,
-            require='sharedmem',
-            verbose=1,
-        ) as parallel:
-            parallel(
-                delayed(func_grabber)(comb, subject_dict, missingness_frame,
-                                      ID, ses, modality, alg, mets, thr_type,
-                                      base_dir,
-                                      template,
-                                      df_top)
-                for comb in grid
-            )
-        # for comb in grid:
-        #     [subject_dict, missingness_frame] = func_grabber(comb,
-        #                                                      subject_dict,
-        #                                                      missingness_frame,
-        #                 ID, ses, modality, alg, mets,
-        #                 thr_type, base_dir, template, df_top)
+        # with Parallel(
+        #     n_jobs=4,
+        #     require='sharedmem',
+        #     verbose=1,
+        # ) as parallel:
+        #     parallel(
+        #         delayed(func_grabber)(comb, subject_dict, missingness_frame,
+        #                               ID, ses, modality, alg, mets, thr_type,
+        #                               base_dir,
+        #                               template,
+        #                               df_top)
+        #         for comb in grid
+        #     )
+        for comb in grid:
+            [subject_dict, missingness_frame] = func_grabber(comb,
+                                                             subject_dict,
+                                                             missingness_frame,
+                        ID, ses, modality, alg, mets,
+                        thr_type, base_dir, template, df_top)
     # Structural case
     elif modality == "dwi":
-        with Parallel(
-            n_jobs=4,
-            require='sharedmem',
-            verbose=1,
-        ) as parallel:
-            parallel(
-                delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
-                                      ID, ses, modality, alg, mets, thr_type,
-                                      base_dir,
-                                      template,
-                                      df_top)
-                for comb in grid
-            )
-        # for comb in grid:
-        #     [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
-        #                                                     missingness_frame,
-        #                 ID, ses, modality, alg, mets,
-        #                 thr_type, base_dir, template, df_top)
+        # with Parallel(
+        #     n_jobs=4,
+        #     require='sharedmem',
+        #     verbose=1,
+        # ) as parallel:
+        #     parallel(
+        #         delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
+        #                               ID, ses, modality, alg, mets, thr_type,
+        #                               base_dir,
+        #                               template,
+        #                               df_top)
+        #         for comb in grid
+        #     )
+        for comb in grid:
+            [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
+                                                            missingness_frame,
+                        ID, ses, modality, alg, mets,
+                        thr_type, base_dir, template, df_top)
     del modality, ID, ses, df_top
     gc.collect()
     return subject_dict, missingness_frame
@@ -754,8 +786,9 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
 
         if len(embeddings) == 0:
             print(
-                f"{Fore.YELLOW}No structural embeddings found for {ID} and"
-                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Structural embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -800,8 +833,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        atlas, res, emb_shape)
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for "
-                      f"{ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
+                      f"{embedding}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
 
             if not isinstance(
@@ -819,8 +852,9 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"COMPLETENESS: {completion_status}")
         else:
             print(
-                f"{Fore.YELLOW}Structural embedding not found for {ID} and"
-                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Structural embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -959,8 +993,9 @@ def func_grabber(comb, subject_dict, missingness_frame,
 
         if len(embeddings) == 0:
             print(
-                f"{Fore.YELLOW}No functional embeddings found for {ID} and"
-                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}No functional embeddings found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -1005,8 +1040,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        atlas, res, emb_shape)
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for "
-                      f"{ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
+                      f"{embedding} {Style.RESET_ALL}")
                 return subject_dict, missingness_frame
             if not isinstance(
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
@@ -1023,8 +1058,9 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 f"COMPLETENESS: {completion_status}")
         else:
             print(
-                f"{Fore.YELLOW}Functional embedding not found for {ID} and"
-                f" {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Functional embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {

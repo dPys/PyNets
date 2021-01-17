@@ -196,10 +196,11 @@ def beta_lin_comb(beta, GVDAT, meta):
 
 def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                               final_missingness_summary, icc_tmps_dir, icc,
-                              mets, ids):
+                              mets, ids, template):
     import gc
     import json
     import glob
+    from pathlib import Path
     import ast
     import matplotlib
     from pynets.stats.utils import gen_sub_vec
@@ -302,11 +303,18 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                         if 'data' in par_dict[ID][str(ses)][modality][alg][comb_tuple].keys():
                             if par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'] is not None:
                                 if isinstance(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'], str):
-                                    if os.path.isfile(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']):
+                                    data_path = par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']
+                                    if os.path.isfile(data_path):
                                         try:
-                                            emb_data = np.load(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])
-                                            node_files = glob.glob(f"{os.path.dirname(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])}/nodes/*.json")
+                                            if data_path.endswith('.npy'):
+                                                emb_data = np.load(data_path)
+                                            elif data_path.endswith('.csv'):
+                                                emb_data = np.array(pd.read_csv(data_path)).reshape(-1, 1)
+                                            else:
+                                                emb_data = np.nan
+                                            node_files = glob.glob(f"{Path(os.path.dirname(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])).parent}/nodes/*.json")
                                         except:
+                                            print(f"Failed to load data from {data_path}..")
                                             continue
                                     else:
                                         continue
@@ -317,39 +325,20 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     emb_data = par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']
 
                                 emb_shape = emb_data.shape[0]
-                                ixs = [i for i in par_dict[ID][str(ses)][modality][alg][
-                                    comb_tuple]['index'] if i is not None]
 
                                 if len(node_files) > 0:
                                     ixs, node_dict = parse_closest_ixs(node_files,
-                                                                       emb_shape)
-
-                                    coords = [(i['coord']) for
-                                              i in node_dict]
-                                    if isinstance(node_dict[0]['label'], str):
-                                        labels = [
-                                            ast.literal_eval(
-                                            re.search('({.+})',
-                                                      i['label']).group(0))[
-                                                'BrainnetomeAtlasFan2016'] for i in
-                                            node_dict]
+                                                                       emb_shape, template=template)
+                                    if len(ixs) != emb_shape:
+                                        ixs, node_dict = parse_closest_ixs(
+                                            node_files,
+                                            emb_shape)
+                                    if isinstance(node_dict, dict):
+                                        coords = [node_dict[i]['coord'] for i in node_dict.keys()]
+                                        labels = [node_dict[i]['label']['BrainnetomeAtlasFan2016'] for i in node_dict.keys()]
                                     else:
-                                        try:
-                                            labels = [
-                                                list(i['label'])[0][
-                                                    'BrainnetomeAtlasFan2016'] for i in
-                                                node_dict]
-                                        except:
-                                            try:
-                                                labels = [ast.literal_eval(
-                                                    i['label'].replace('[',
-                                                                       '').replace(
-                                                        '\n 1]', ''))[
-                                                              'BrainnetomeAtlasFan2016']
-                                                          for i in node_dict]
-                                            except:
-                                                continue
-
+                                        print(f"Failed to parse coords/labels from {node_files}. Skipping...")
+                                        continue
                                     df_coords = pd.DataFrame(
                                         [str(tuple(x)) for x in
                                          coords]).T
@@ -372,6 +361,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 else:
                                     print(f"No node files detected for "
                                           f"{comb_tuple} and {ID}-{ses}...")
+                                    ixs = [i for i in par_dict[ID][str(ses)][modality][alg][
+                                        comb_tuple]['index'] if i is not None]
                                     coords_frames.append(pd.Series())
                                     labels_frames.append(pd.Series())
 
@@ -447,7 +438,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                     coord_in = np.nan
                     label_in = np.nan
                 dict_sum[f"{lp}_icc"] = icc_val
-                del c_icc, c_icc3
+                del c_icc, c_icc3, icc_val
             except BaseException:
                 print(f"FAILED for {lp}...")
                 #print(df_long)

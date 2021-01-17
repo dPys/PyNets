@@ -40,7 +40,7 @@ def main():
     int_consist = False
     modality = 'dwi'
 
-    embedding_types = ['betweenness', 'ASE', 'degree', 'OMNI']
+    embedding_types = ['betweenness', 'ASE', 'OMNI']
     #rsns = ['language']
     rsns = ['triple', 'kmeans']
     template = 'CN200'
@@ -166,10 +166,15 @@ def main():
                 delayed(benchmark_reproducibility)(
                     base_dir, comb, modality, embedding_type, sub_dict_clean,
                     disc, final_missingness_summary, icc_tmps_dir, icc,
-                    mets, ids
+                    mets, ids, template
                 )
                 for comb in grid
             )
+        # outs = []
+        # for comb in grid:
+        #     outs.append(benchmark_reproducibility(base_dir, comb, modality, embedding_type, sub_dict_clean,
+        #             disc, final_missingness_summary, icc_tmps_dir, icc,
+        #             mets, ids))
 
         df_summary = pd.concat([i for i in outs if i is not None and not i.empty], axis=0)
         df_summary = df_summary.dropna(axis=0, how='all')

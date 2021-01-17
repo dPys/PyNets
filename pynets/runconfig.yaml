@@ -78,7 +78,6 @@ embed:
     - 'MASE'
     - 'eigenvector'
     - 'betweenness'
-    - 'degree'
     - 'local_efficiency'
     - 'local_clustering'
 metaparams_func:

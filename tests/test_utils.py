@@ -461,11 +461,11 @@ def test_build_mp_dict(modality):
         file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
     gen_metaparams = ['modality', 'model', 'nodetype', 'template']
 
-    hyperparam_dict = {}
+    metaparam_dict = {}
     file_renamed = file_renamed.split('graphs/')[1]
-    hyperparam_dict, metaparams = build_mp_dict(file_renamed,
+    metaparam_dict, metaparams = build_mp_dict(file_renamed,
                                                  modality,
-                                                 hyperparam_dict,
+                                                 metaparam_dict,
                                                  gen_metaparams)
 
     # test_build_sql_db
@@ -479,4 +479,4 @@ def test_build_mp_dict(modality):
         db.create_modality_table('func')
         db.add_hp_columns(metaparams)
         db.add_row_from_df(pd.DataFrame([{'AUC': 0.8}], index=[0]),
-                           hyperparam_dict)
+                           metaparam_dict)
