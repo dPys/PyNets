@@ -17,7 +17,7 @@ warnings.simplefilter("ignore")
 
 
 def get_ensembles_embedding(modality, alg, base_dir):
-    if alg == "OMNI":
+    if alg == "OMNI" or alg == "ASE":
         ensembles_pre = list(
             set(
                 [
@@ -26,9 +26,11 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     + "_res-"
                     + i.split('res-')[1].split("/")[0]
                     + "_"
-                    + os.path.basename(i).split(modality + "_")[1].replace(".npy", "")
+                    + os.path.basename(i).split(modality + "_")[1].replace(
+                        ".npy", "")
                     for i in glob.glob(
-                        f"{base_dir}/embeddings_all_{modality}/*/*/*/*{alg}*.npy"
+                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/rsn-*/"
+                        f"embeddings/gradient-{alg}*.npy"
                     )
                 ]
             )
@@ -39,7 +41,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                 ensembles.append(i.split('_thrtype')[0])
             else:
                 ensembles.append(i)
-    elif alg == "ASE":
+    elif alg == 'eigenvector' or alg == 'betweenness' or alg == 'degree' or alg == 'local_efficiency' or alg == 'local_clustering':
         ensembles_pre = list(
             set(
                 [
@@ -48,9 +50,12 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     + "_res-"
                     + i.split('res-')[1].split("/")[0]
                     + "_"
-                    + os.path.basename(i).split(modality + "_")[1].replace(".npy", "")
+                    + os.path.basename(i).split(modality + "_")[1].replace(
+                        ".csv", "")
                     for i in glob.glob(
-                        f"{base_dir}/embeddings_all_{modality}/*/*/*/*{alg}*.npy")
+                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/rsn-*/"
+                        f"embeddings/gradient-{alg}*.csv"
+                    )
                 ]
             )
         )
@@ -73,23 +78,23 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
             df_top.drop(df_top.filter(regex="Unnamed: 0"), axis=1,
                          inplace=True)
         df_top = df_top.dropna(subset=["id"])
-        df_top = df_top.rename(
-            columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
-        )
-        df_top = df_top.rename(columns=lambda x: re.sub("_corr",
-                                                        "_model-corr", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_cov",
-                                                        "_model-cov", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_sfm",
-                                                        "_model-sfm", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csa",
-                                                        "_model-csa", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_tensor",
-                                                        "_model-tensor", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csd",
-                                                        "_model-csd", x))
-        df_top = df_top.rename(
-            columns=lambda x: re.sub("thrtype-PROP", "thrtype-MST", x))
+        # df_top = df_top.rename(
+        #     columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
+        # )
+        # df_top = df_top.rename(columns=lambda x: re.sub("_corr",
+        #                                                 "_model-corr", x))
+        # df_top = df_top.rename(columns=lambda x: re.sub("_cov",
+        #                                                 "_model-cov", x))
+        # df_top = df_top.rename(columns=lambda x: re.sub("_sfm",
+        #                                                 "_model-sfm", x))
+        # df_top = df_top.rename(columns=lambda x: re.sub("_csa",
+        #                                                 "_model-csa", x))
+        # df_top = df_top.rename(columns=lambda x: re.sub("_tensor",
+        #                                                 "_model-tensor", x))
+        # df_top = df_top.rename(columns=lambda x: re.sub("_csd",
+        #                                                 "_model-csd", x))
+        # df_top = df_top.rename(
+        #     columns=lambda x: re.sub("thrtype-PROP", "thrtype-MST", x))
         # df_top = df_top.dropna(how='all')
         # df_top = df_top.dropna(axis='columns',
         #                        thresh=drop_thr * len(df_top)
@@ -144,7 +149,7 @@ def make_feature_space_dict(
                     grid_params_mod.append((extract, hpass, model, res, atlas,
                                             str(smooth)))
                 except:
-                    print(f"Failed to parse recipe: {comb}")
+                    print(f"Failed to parse: {comb}")
 
     elif target_modality == "dwi":
         for comb in grid_params:
@@ -153,7 +158,7 @@ def make_feature_space_dict(
                 grid_params_mod.append((directget, minlength, model, res,
                                         atlas, tol))
             except:
-                print(f"Failed to parse recipe: {comb}")
+                print(f"Failed to parse: {comb}")
 
     par_dict = subject_dict.copy()
 
@@ -180,10 +185,10 @@ def make_feature_space_dict(
     return ml_dfs
 
 
-def build_grid(modality, hyperparam_dict, hyperparams, ensembles):
+def build_grid(modality, hyperparam_dict, metaparams, ensembles):
     for ensemble in ensembles:
         try:
-            build_hp_dict(ensemble, modality, hyperparam_dict, hyperparams)
+            build_mp_dict(ensemble, modality, hyperparam_dict, metaparams)
         except:
             print(f"Failed to parse ensemble {ensemble}...")
 
@@ -201,33 +206,16 @@ def build_grid(modality, hyperparam_dict, hyperparams, ensembles):
     return hyperparam_dict, grid
 
 
-def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
-    import ast
+def get_index_labels(base_dir, ID, ses, modality, atlas, res, emb_shape):
 
     node_files = glob.glob(
-        f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-"
-        f"{grid_param[-2]}_res-{grid_param[-3]}/nodes/*.json")
+        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+        f"{atlas}_res-{res}/nodes/*.json")
 
     if len(node_files) > 0:
         ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
     else:
         return [None]
-
-    # Correct labels/index if needed
-    if isinstance(node_dict, list):
-        if all(v is None for v in [i['label'] for i in node_dict]):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                node_dict_revised[i]['label'], node_dict_revised[i][
-                    'index'] = ast.literal_eval(
-                    node_dict[i]['index'].replace('\n', ','))
-            ixs = [i['index'] for i in node_dict_revised.values()]
-        else:
-            ixs = [i['index'] for i in node_dict]
-
-    else:
-        ixs = [i['index'] for i in node_dict.values()]
 
     if emb_shape == len(ixs):
         return ixs
@@ -235,66 +223,79 @@ def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
         return [None]
 
 
-def node_files_search(node_files, emb_shape):
+def get_ixs_from_node_dict(node_dict):
     import ast
+    if isinstance(node_dict, list):
+        if all(v is None for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'], \
+                node_dict_revised[i]['index'] = ast.literal_eval(
+                    node_dict[i]['index'].replace('\n', ','))
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
+        elif all(isinstance(v, str) for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'] = ast.literal_eval(node_dict[i]['label'])[0]
+                node_dict_revised[i]['index'] = ast.literal_eval(node_dict[i]['label'])[1]
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
+        elif all(isinstance(v, tuple) for v in
+               [i['label'] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]['label'] = node_dict[i]['label'][0]
+                node_dict_revised[i]['index'] = node_dict[i]['label'][1]
+            ixs_corr = [int(k['index']) for k in
+                        node_dict_revised.values()]
+        else:
+            ixs_corr = [int(i['index'])
+                        for i
+                        in node_dict]
+            node_dict_revised = node_dict
+    else:
+        ixs_corr = [int(i['index'])
+                    for i
+                    in node_dict.values()]
+        node_dict_revised = node_dict
+
+    for i in range(len(node_dict)):
+        node_dict_revised[i]['coord'] = node_dict[i]['coord']
+    return ixs_corr, node_dict_revised
+
+
+def node_files_search(node_files, emb_shape):
+    import os
     import json
 
     if len(node_files) == 1:
         with open(node_files[0],
                   'r+') as f:
             node_dict = json.load(f)
-        if isinstance(node_dict, list):
-            if all(v is None for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'], \
-                    node_dict_revised[i][
-                        'index'] = ast.literal_eval(
-                        node_dict[i]['index'].replace('\n', ','))
-                ixs_corr = [int(i['index']) for i in
-                            node_dict_revised.values()]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict]
-        else:
-            ixs_corr = [int(i['index'])
-                        for i
-                        in node_dict.values()]
+        f.close()
+        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
     else:
+        node_files = sorted(node_files, key=os.path.getmtime)
         try:
             with open(node_files[0],
                       'r+') as f:
                 node_dict = json.load(
                     f)
+            f.close()
             j = 0
         except:
             with open(node_files[1], 'r+') as f:
                 node_dict = json.load(f)
+            f.close()
             j = 1
 
-        if isinstance(node_dict, list):
-            if all(v is None for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'], \
-                    node_dict_revised[i][
-                        'index'] = ast.literal_eval(
-                        node_dict[i]['index'].replace('\n', ','))
-                ixs_corr = [int(k['index']) for k in
-                            node_dict_revised.values()]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict]
-        else:
-            ixs_corr = [int(i['index'])
-                        for i
-                        in node_dict.values()]
+        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
 
         while len(ixs_corr) != emb_shape and j < len(
             node_files):
@@ -303,47 +304,58 @@ def node_files_search(node_files, emb_shape):
                           'r+') as f:
                     node_dict = json.load(
                         f)
+                f.close()
             except:
                 j += 1
                 continue
-            if isinstance(node_dict, list):
-                if all(v is None for v in
-                       [i['label'] for i in node_dict]):
-                    node_dict_revised = {}
-                    for i in range(len(node_dict)):
-                        node_dict_revised[i] = {}
-                        node_dict_revised[i]['label'], \
-                        node_dict_revised[i][
-                            'index'] = ast.literal_eval(
-                            node_dict[i]['index'].replace('\n', ','))
-                    ixs_corr = [int(i['index']) for i in
-                                node_dict_revised.values()]
-                else:
-                    ixs_corr = [int(i['index'])
-                                for i
-                                in node_dict]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict.values()]
+            ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
             j += 1
 
-    return ixs_corr, node_dict
+    return ixs_corr, node_dict_revised
 
 
-def parse_closest_ixs(node_files, emb_shape):
+def retrieve_indices_from_parcellation(node_files, emb_shape, vox_size, template):
+    from pathlib import Path
+    from pynets.core.nodemaker import get_names_and_coords_of_parcels, \
+        parcel_naming
+    from pynets.core.utils import save_coords_and_labels_to_json
+    dir_path = str(Path(node_files[0]).parent.parent)
+    template_parc = f"{dir_path}/parcellations/parcellation_space-{template}.nii.gz"
+    if os.path.isfile(template_parc):
+        coords, _, _, label_intensities = get_names_and_coords_of_parcels(
+            template_parc)
+        labels = parcel_naming(coords, vox_size)
+        node_file = save_coords_and_labels_to_json(coords, tuple(
+            zip(labels, label_intensities)), dir_path, network='all_nodes')
+        ixs_corr, node_dict = node_files_search([node_file], emb_shape)
+        return ixs_corr, node_dict
+    else:
+        return [], {}
+
+
+def parse_closest_ixs(node_files, emb_shape, vox_size='2mm',
+                      template='MNI152_T1'):
     if len(node_files) > 0:
-        node_files_named = [i for i in node_files if
-                      f"{emb_shape}" in i]
+        node_files_named = [i for i in node_files if f"{emb_shape}" in i]
         if len(node_files_named) > 0:
+            node_files_named = sorted(node_files_named, key=os.path.getmtime)
             ixs_corr, node_dict = node_files_search(node_files_named,
                                                     emb_shape)
         else:
             ixs_corr, node_dict = node_files_search(node_files, emb_shape)
+
+        if len(ixs_corr) != emb_shape:
+            ixs_corr, node_dict = retrieve_indices_from_parcellation(
+                node_files, emb_shape, vox_size, template)
         return ixs_corr, node_dict
     else:
-        print(UserWarning('Node files empty!'))
-        return [], {}
+        print(UserWarning('Node files empty. Attempting to retrieve manually '
+                          'from parcellations...'))
+        ixs_corr, node_dict = retrieve_indices_from_parcellation(node_files,
+                                                                 emb_shape,
+                                                                 vox_size,
+                                                                 template)
+        return ixs_corr, node_dict
 
 
 def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
@@ -356,16 +368,18 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
             ixs = [i for i in rsn_dict['index'] if i is not None]
 
             if not isinstance(rsn_dict["data"], np.ndarray):
-                data_path = rsn_dict["data"]
-                rsn_dict["data"] = np.load(data_path)
+                if rsn_dict["data"].endswith('.npy'):
+                    rsn_dict["data"] = np.load(rsn_dict["data"])
+                elif rsn_dict["data"].endswith('.csv'):
+                    rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])
+                                                ).reshape(-1, 1)
 
             emb_shape = rsn_dict["data"].shape[0]
 
             if len(ixs) != emb_shape:
                 node_files = glob.glob(
-                    f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-"
-                    f"{ses}/rsn-{grid_param[-2]}_res-{grid_param[-3]}/nodes"
-                    f"/*.json")
+                    f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+                    f"{grid_param[-2]}_res-{grid_param[-3]}/nodes/*.json")
                 ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
             if len(ixs) > 0:
@@ -426,7 +440,12 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
 def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
                          modality, alg, mets=None):
+    from colorama import Fore, Style
+    from pynets.core.utils import load_runconfig
     df_tmps = []
+
+    hardcoded_params = load_runconfig()
+    embedding_methods = hardcoded_params["embed"]
 
     for ID in df["participant_id"]:
         if ID not in subject_dict.keys():
@@ -449,7 +468,16 @@ def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
             )
             continue
 
-        if alg == "OMNI" or alg == "ASE":
+        if grid_param not in subject_dict[ID][str(ses)][modality][alg].keys():
+            print(
+                f"Grid param {grid_param} not found for ID {ID}, ses-{ses}, "
+                f"{alg} and {modality}..."
+            )
+            continue
+
+        if alg != "topology" and alg in embedding_methods:
+            print(f"{Fore.GREEN}✓{Style.RESET_ALL} Grid Param: {grid_param} "
+                  f"found for {ID}")
             df_lps = flatten_latent_positions(
                 base_dir, subject_dict, ID, ses, modality, grid_param, alg
             )
@@ -523,38 +551,36 @@ def make_subject_dict(
     rsns):
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
+    from pynets.core.utils import load_runconfig
     import tempfile
     import psutil
     import shutil
     import gc
 
-    hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
-    hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
+    hardcoded_params = load_runconfig()
+    embedding_methods = hardcoded_params["embed"]
+    metaparams_func = hardcoded_params["metaparams_func"]
+    metaparams_dwi = hardcoded_params["metaparams_dwi"]
+
+    # metaparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
+    # metaparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     miss_frames_all = []
     subject_dict_all = {}
     modality_grids = {}
     for modality in modalities:
         print(f"MODALITY: {modality}")
-        hyperparams = eval(f"hyperparams_{modality}")
+        metaparams = eval(f"metaparams_{modality}")
         for alg in embedding_types:
             print(f"EMBEDDING TYPE: {alg}")
             for ses_name in sessions:
-                if alg == "ASE" or alg == "OMNI":
-                    ids = [
-                        f"{os.path.basename(i)}_ses-{ses_name}"
-                        for i in
-                        glob.glob(f"{base_dir}/embeddings_all_{modality}/*")
-                        if os.path.basename(i).startswith("sub")
-                    ]
-                else:
-                    ids = [
-                        f"{os.path.basename(i)}_ses-{ses_name}"
-                        for i in glob.glob(f"{base_dir}/pynets/*")
-                        if os.path.basename(i).startswith("sub")
-                    ]
+                ids = [
+                    f"{os.path.basename(i)}_ses-{ses_name}"
+                    for i in glob.glob(f"{base_dir}/pynets/*")
+                    if os.path.basename(i).startswith("sub")
+                ]
 
-                if alg == "ASE" or alg == "OMNI":
+                if alg != "topology" and alg in embedding_methods:
                     df_top = None
                     ensembles = get_ensembles_embedding(modality, alg,
                                                         base_dir)
@@ -579,17 +605,11 @@ def make_subject_dict(
                 hyperparam_dict = {}
 
                 grid = build_grid(
-                    modality, hyperparam_dict, sorted(list(set(hyperparams))),
+                    modality, hyperparam_dict, sorted(list(set(metaparams))),
                     ensembles)[1]
 
                 grid = list(set([i for i in grid if i != () and
                                  len(list(i)) > 0]))
-
-                # In the case that we are using all of the 3 RSN connectomes
-                # (pDMN, coSN, and fECN) in the feature-space,
-                # rather than varying them as hyperparameters (i.e. we assume
-                # they each add distinct variance
-                # from one another) Create an abridged grid, where
 
                 modality_grids[modality] = grid
 
@@ -597,7 +617,7 @@ def make_subject_dict(
                 cache_dir = tempfile.mkdtemp()
 
                 with Parallel(
-                    n_jobs=len(ids),
+                    n_jobs=-1,
                     backend='loky',
                     verbose=1,
                     max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
@@ -633,7 +653,7 @@ def make_subject_dict(
                 shutil.rmtree(cache_dir, ignore_errors=True)
             del ses_name, grid, hyperparam_dict
             gc.collect()
-        del alg, hyperparams
+        del alg, metaparams
         gc.collect()
     del modality
     gc.collect()
@@ -667,15 +687,15 @@ def populate_subject_dict(
         subject_dict[ID] = {}
 
     if ses not in subject_dict[ID].keys():
-        subject_dict[ID][ses] = {}
+        subject_dict[ID][str(ses)] = {}
 
-    if modality not in subject_dict[ID][ses].keys():
-        subject_dict[ID][ses][modality] = {}
+    if modality not in subject_dict[ID][str(ses)].keys():
+        subject_dict[ID][str(ses)][modality] = {}
 
-    if alg not in subject_dict[ID][ses][modality].keys():
-        subject_dict[ID][ses][modality][alg] = {}
+    if alg not in subject_dict[ID][str(ses)][modality].keys():
+        subject_dict[ID][str(ses)][modality][alg] = {}
 
-    subject_dict[ID][ses][modality][alg] = dict.fromkeys(grid, np.nan)
+    subject_dict[ID][str(ses)][modality][alg] = dict.fromkeys(grid, np.nan)
 
     missingness_frame = pd.DataFrame(columns=["id", "ses", "modality", "alg",
                                               "grid"])
@@ -696,8 +716,9 @@ def populate_subject_dict(
         #         for comb in grid
         #     )
         for comb in grid:
-            [subject_dict, missingness_frame] = func_grabber(comb, subject_dict,
-                                                            missingness_frame,
+            [subject_dict, missingness_frame] = func_grabber(comb,
+                                                             subject_dict,
+                                                             missingness_frame,
                         ID, ses, modality, alg, mets,
                         thr_type, base_dir, template, df_top)
     # Structural case
@@ -728,14 +749,18 @@ def populate_subject_dict(
 def dwi_grabber(comb, subject_dict, missingness_frame,
                  ID, ses, modality, alg, mets, thr_type, base_dir, template,
                  df_top):
+    import gc
     from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
-    import gc
+    from pynets.core.utils import load_runconfig
+
+    hardcoded_params = load_runconfig()
+    embedding_methods = hardcoded_params["embed"]
 
     try:
         directget, minlength, model, res, atlas, tol = comb
     except BaseException:
-        print(UserWarning(f"{Fore.YELLOW}Failed to parse recipe: "
+        print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                           f"{comb}{Style.RESET_ALL}"))
         return subject_dict, missingness_frame
 
@@ -743,12 +768,12 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     comb_tuple = comb
 
     # print(comb_tuple)
-    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-    if alg == "ASE" or alg == "OMNI":
+    subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
+    if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/embeddings_all"
-            f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
-            f"res-{res}/gradient-*")
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-*/"
+            f"embeddings/gradient-{alg}*"
+        )
 
         embeddings = [i for i in embeddings if (alg in i) and
                       (f"res-{res}" in i) and
@@ -761,8 +786,9 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
 
         if len(embeddings) == 0:
             print(
-                f"{Fore.YELLOW}No structural embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Structural embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -782,54 +808,53 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                               in i]
             if len(embeddings_raw) == 1:
                 embedding = embeddings[0]
-
-            elif len(embeddings_raw) > 1:
-                sorted_embeddings = sorted(embeddings_raw,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
             else:
                 sorted_embeddings = sorted(embeddings,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
 
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+            if embedding.endswith('.npy'):
+                emb_shape = np.load(embedding).shape[0]
+            elif embedding.endswith('.csv'):
+                emb_shape = len(pd.read_csv(embedding).columns)
+            else:
+                raise NotImplementedError(f"Format of {embedding} "
+                                          f"not recognized! "
+                                          f"Only .npy and .csv "
+                                          f"currently supported.")
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       comb_tuple, np.load(embedding).shape[0])
+                                       atlas, res, emb_shape)
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for "
-                      f"{ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
+                      f"{embedding}{Style.RESET_ALL}")
                 return subject_dict, missingness_frame
 
-            if (
-                alg
-                not in subject_dict[ID][ses][modality][alg][
-                comb_tuple].keys()
-            ):
-                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-            subject_dict[ID][ses][modality][alg][comb_tuple][
+            if not isinstance(
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         else:
             print(
-                f"{Fore.YELLOW}Structural embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Structural embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -884,7 +909,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if len(out) == 0:
                 print(
                     f"Structural topology not found for {ID}, "
-                    f"{met}, and recipe {comb_tuple}..."
+                    f"{met}, and {comb_tuple}..."
                 )
                 print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
                       f"SESSION: {ses}{Style.RESET_ALL}")
@@ -898,13 +923,16 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-        subject_dict[ID][ses][modality][alg][comb_tuple] = data
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
+        subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
         # print(data)
     del comb, comb_tuple
     gc.collect()
@@ -915,10 +943,13 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
 def func_grabber(comb, subject_dict, missingness_frame,
                  ID, ses, modality, alg, mets, thr_type, base_dir, template,
                  df_top):
+    import gc
     from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
-    import gc
+    from pynets.core.utils import load_runconfig
 
+    hardcoded_params = load_runconfig()
+    embedding_methods = hardcoded_params["embed"]
     try:
         extract, hpass, model, res, atlas, smooth = comb
     except:
@@ -926,25 +957,26 @@ def func_grabber(comb, subject_dict, missingness_frame,
             extract, hpass, model, res, atlas = comb
             smooth = "0"
         except BaseException:
-            print(UserWarning(f"{Fore.YELLOW}Failed to parse recipe: "
+            print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                               f"{comb}{Style.RESET_ALL}"))
             return subject_dict, missingness_frame
     # comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
     comb_tuple = comb
 
     # print(comb_tuple)
-    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-    if alg == "ASE" or alg == "OMNI":
+    subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
+    if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/embeddings_all"
-            f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
-            f"res-{res}/gradient-*")
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-*/"
+            f"embeddings/gradient-{alg}*"
+        )
 
-        embeddings = [i for i in embeddings if (alg in i) and (res in i) and
-                      (atlas in i) and (template in i) and
+        embeddings = [i for i in embeddings if ((alg in i) and
+                      (f"res-{res}" in i) and
+                      (f"rsn-{atlas}" in i) and (template in i) and
                       (f"model-{model}" in i)
-                      and (f"hpass-{hpass}" in i) and
-                      (f"extract-{extract}" in i)]
+                      and (f"hpass-{hpass}Hz" in i) and
+                      (f"extract-{extract}" in i))]
 
         if smooth == "0":
             embeddings = [
@@ -958,10 +990,12 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 for i in embeddings
                 if f"smooth-{smooth}fwhm" in i
             ]
+
         if len(embeddings) == 0:
             print(
-                f"{Fore.YELLOW}No functional embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}No functional embeddings found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -982,49 +1016,51 @@ def func_grabber(comb, subject_dict, missingness_frame,
                               not in i]
             if len(embeddings_raw) == 1:
                 embedding = embeddings[0]
-
-            elif len(embeddings_raw) > 1:
-                sorted_embeddings = sorted(embeddings_raw,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
             else:
                 sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
                 print(
                     f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
+                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
                 embedding = sorted_embeddings[0]
 
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
+            if embedding.endswith('.npy'):
+                emb_shape = np.load(embedding).shape[0]
+            elif embedding.endswith('.csv'):
+                emb_shape = len(pd.read_csv(embedding).columns)
+            else:
+                raise NotImplementedError(f"Format of {embedding} "
+                                          f"not recognized! "
+                                          f"Only .npy and .csv "
+                                          f"currently supported.")
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       comb_tuple, np.load(embedding).shape[0])
+                                       atlas, res, emb_shape)
             except BaseException:
-                print(f"{Fore.YELLOW}Failed to load {embedding} for "
-                      f"{ID}-{ses}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
+                      f"{embedding} {Style.RESET_ALL}")
                 return subject_dict, missingness_frame
-            if (
-                alg
-                not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
-            ):
-                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-            subject_dict[ID][ses][modality][alg][comb_tuple][
+            if not isinstance(
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+                subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)
             completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
+            print(
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         else:
             print(
-                f"{Fore.YELLOW}Functional embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}...{Style.RESET_ALL}"
+                f"{Fore.YELLOW}Functional embedding not found for ID: {ID}, "
+                f"SESSION: {ses}, EMBEDDING: {alg}, and UNIVERSE: "
+                f"{comb_tuple}...{Style.RESET_ALL}"
             )
             missingness_frame = missingness_frame.append(
                 {
@@ -1091,7 +1127,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
             if len(out) == 0:
                 print(
                     f"Functional topology not found for {ID}, {met}, "
-                    f"and recipe {comb_tuple}..."
+                    f"and {comb_tuple}..."
                 )
                 print(f"{Fore.YELLOW}Missing metric {met} for ID: {ID}, "
                       f"SESSION: {ses}{Style.RESET_ALL}")
@@ -1105,13 +1141,17 @@ def func_grabber(comb, subject_dict, missingness_frame,
             data[:] = np.nan
             completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
         elif (np.abs(data) < 0.0000001).any():
             data[data < 0.0000001] = np.nan
             completion_status = f"{Fore.YELLOW}X{Style.RESET_ALL}"
             print(
-                f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-        subject_dict[ID][ses][modality][alg][comb_tuple] = data
+                f"ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, "
+                f"UNIVERSE: {comb_tuple}, "
+                f"COMPLETENESS: {completion_status}")
+        subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
         # print(data)
     del comb, comb_tuple
     gc.collect()
@@ -1126,7 +1166,8 @@ def cleanNullTerms(d):
             nested = cleanNullTerms(v)
             if len(nested.keys()) > 0:
                 clean[k] = nested
-        elif v is not None and v is not np.nan and not isinstance(v, pd.Series):
+        elif v is not None and v is not np.nan and not \
+            isinstance(v, pd.Series):
             clean[k] = v
     return clean
 
@@ -1135,9 +1176,9 @@ def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
     vects = []
     for ses in sub_dict_clean[ID].keys():
         #print(ses)
-        if comb_tuple in sub_dict_clean[ID][ses][modality][alg].keys():
+        if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
             if alg == 'topology':
-                vect = sub_dict_clean[ID][ses][modality][alg][comb_tuple]
+                vect = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple]
             else:
                 vect = flatten_latent_positions(base_dir, sub_dict_clean, ID,
                                                 ses, modality, comb_tuple, alg)
@@ -1160,13 +1201,13 @@ def tuple_insert(tup, pos, ele):
     return tup
 
 
-def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
+def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
     """
-    A function to build a hyperparameter dictionary by parsing a given
+    A function to build a metaparameter dictionary by parsing a given
     file path.
     """
 
-    for hyperparam in hyperparams:
+    for hyperparam in metaparams:
         if (
             hyperparam != "smooth"
             and hyperparam != "hpass"
@@ -1201,7 +1242,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
             if 'smooth' not in hyperparam_dict.keys():
                 hyperparam_dict['smooth'] = [str(0)]
             hyperparam_dict["smooth"].append(str(0))
-            hyperparams.append("smooth")
+            metaparams.append("smooth")
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
                 hyperparam_dict["hpass"] = [str(file_renamed.split(
@@ -1210,7 +1251,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["hpass"].append(
                     str(file_renamed.split("hpass-"
                                        )[1].split("_")[0].split("Hz")[0]))
-            hyperparams.append("hpass")
+            metaparams.append("hpass")
         if "extract-" in file_renamed:
             if "extract" not in hyperparam_dict.keys():
                 hyperparam_dict["extract"] = [
@@ -1220,7 +1261,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["extract"].append(
                     str(file_renamed.split("extract-")[1].split("_")[0])
                 )
-            hyperparams.append("extract")
+            metaparams.append("extract")
 
     elif modality == "dwi":
         if "directget-" in file_renamed:
@@ -1232,7 +1273,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["directget"].append(
                     str(file_renamed.split("directget-")[1].split("_")[0])
                 )
-            hyperparams.append("directget")
+            metaparams.append("directget")
         if "minlength-" in file_renamed:
             if "minlength" not in hyperparam_dict.keys():
                 hyperparam_dict["minlength"] = [
@@ -1242,7 +1283,7 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["minlength"].append(
                     str(file_renamed.split("minlength-")[1].split("_")[0])
                 )
-            hyperparams.append("minlength")
+            metaparams.append("minlength")
         if "tol-" in file_renamed:
             if "tol" not in hyperparam_dict.keys():
                 hyperparam_dict["tol"] = [
@@ -1252,9 +1293,9 @@ def build_hp_dict(file_renamed, modality, hyperparam_dict, hyperparams):
                 hyperparam_dict["tol"].append(
                     str(file_renamed.split("tol-")[1].split("_")[0])
                 )
-            hyperparams.append("tol")
+            metaparams.append("tol")
 
     for key in hyperparam_dict:
         hyperparam_dict[key] = list(set(hyperparam_dict[key]))
 
-    return hyperparam_dict, hyperparams
+    return hyperparam_dict, metaparams

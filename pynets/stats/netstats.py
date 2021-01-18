@@ -1967,7 +1967,7 @@ def extractnetstats(
 
             # Run miscellaneous functions that generate multiple outputs
             # Calculate modularity using the Louvain algorithm
-            if "louvain_modularity" in metric_list_nodal:
+            if "louvain_modularity" in metric_list_global:
                 try:
                     start_time = time.time()
                     net_met_val_list_final, metric_list_names, ci = get_community(
@@ -2207,9 +2207,13 @@ def collect_pandas_df_make(
     import os.path as op
     import pandas as pd
     from pynets.core import utils
-    from pynets.stats.utils import build_hp_dict
+    from pynets.stats.utils import build_mp_dict
     from itertools import groupby
     import re
+    from pynets.core.utils import load_runconfig
+
+    hardcoded_params = load_runconfig()
+    embedding_methods = hardcoded_params["embed"]
 
     # from sklearn.decomposition import PCA
 
@@ -2345,7 +2349,7 @@ def collect_pandas_df_make(
                 modality = file_renamed.split("modality-")[1].split("_")[0]
 
                 # Build hyperparameter dictionary
-                hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+                hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
                                                              modality,
                                                              hyperparam_dict,
                                                              gen_hyperparams)
@@ -2383,13 +2387,15 @@ def collect_pandas_df_make(
                     compression="gzip",
                     encoding="utf-8",
                 )
-                if embed is True and node_cols is not None:
+                node_cols_embed = [i for i in node_cols if i in embedding_methods]
+
+                if embed is True and len(node_cols_embed) > 0:
                     from pathlib import Path
                     embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
                     if not os.path.isdir(embed_dir):
                         os.makedirs(embed_dir, exist_ok=True)
 
-                    node_cols_auc = [f"{i}_auc" for i in node_cols if
+                    node_cols_auc = [f"{i}_auc" for i in node_cols_embed if
                                      f"{i}_auc" in df_summary_auc.columns]
                     df_summary_auc_nodes = df_summary_auc[node_cols_auc]
                     node_embeddings_grouped = [{k: list(g)} for k, g in
@@ -2421,6 +2427,32 @@ def collect_pandas_df_make(
                                          warn_bad_lines=True,
                                          error_bad_lines=False
                                          ).read())
+                node_cols = [
+                    s
+                    for s in list(dfs_non_auc.columns)
+                    if isinstance(s, int) or any(c.isdigit() for c in
+                                                 s)
+                ]
+                if embed is False:
+                    dfs_non_auc = dfs_non_auc.drop(node_cols, axis=1)
+                elif len(node_cols) > 1:
+                    node_cols_embed = [i for i in node_cols if i in embedding_methods]
+                    if len(node_cols_embed) > 0:
+                        from pathlib import Path
+                        embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                        df_nodes = dfs_non_auc[node_cols_embed]
+                        node_embeddings_grouped = [{k: list(g)} for k, g in
+                                                   groupby(df_nodes,
+                                                           lambda s: s.split("_")[1])]
+                        atlas = os.path.basename(net_mets_csv_list[0]).split('rsn-')[1].split('_')[0]
+                        for node_dict in node_embeddings_grouped:
+                            node_top_type = list(node_dict.keys())[0]
+                            node_top_cols = list(node_dict.values())[0]
+                            embedding_frame = df_nodes[node_top_cols]
+                            out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                                       f"rsn-{atlas}_nodes_" \
+                                       f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
+                            embedding_frame.to_csv(out_path, index=False)
 
         if create_summary is True:
             try:

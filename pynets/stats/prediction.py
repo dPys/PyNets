@@ -612,9 +612,9 @@ def bootstrapped_nested_cv(
     y,
     predict_type='regressor',
     n_boots=10,
-    var_thr=.20,
-    k_folds_outer=5,
-    k_folds_inner=5,
+    var_thr=.50,
+    k_folds_outer=10,
+    k_folds_inner=10,
     pca_reduce=False,
     remove_multi=True,
     std_dev=3,
@@ -1184,8 +1184,8 @@ class MakeXY(SimpleInterface):
                 os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype", "dep_1",
-                                 "rum_1", "rum_2", "dep_2"]
+                                 "depression_persist_phenotype",
+                                 "rum_2", "dep_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
@@ -1316,7 +1316,8 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_y_predicted,
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                               predict_type=predict_type)
+                                               predict_type=predict_type,
+                                               var_thr=.20, zero_thr=0.75)
                 if final_est:
                     out_path_est = f"{runtime.cwd}/estimator_" \
                                    f"{self.inputs.target_var}_" \

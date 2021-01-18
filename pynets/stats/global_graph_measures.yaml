@@ -7,3 +7,4 @@ metric_list_global:
 #    - 'graph_number_of_cliques'
     - 'smallworldness'
 #    - 'weighted_transitivity'
+    - 'louvain_modularity'

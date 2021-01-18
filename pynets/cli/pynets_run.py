@@ -694,7 +694,8 @@ def build_workflow(args, retval):
                         multi_subject_multigraph = []
                         for id in ID:
                             # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g) and modality in str(g)])
+                            #     [str(g) for g in graph_iter if id in str(g)
+                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
@@ -1868,8 +1869,8 @@ def build_workflow(args, retval):
         else:
             for em in error_margin_list:
                 if float(roi_neighborhood_tol) <= float(em):
-                    print('\nERROR: roi_neighborhood_tol preset cannot be less '
-                          'than the value of the structural connectome '
+                    print('\nERROR: roi_neighborhood_tol preset cannot be '
+                          'less than the value of the structural connectome '
                           'error_margin parameter.')
                     retval["return_code"] = 1
                     return retval
@@ -1921,7 +1922,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                print(f"\nERROR: {dwi_file} does not exist. Ensure that you are"
+                print(f"\nERROR: {dwi_file} does not exist. "
+                      f"Ensure that you are"
                       f" only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -1940,7 +1942,8 @@ def build_workflow(args, retval):
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                print(f"\nERROR: {waymask} does not exist. Ensure that you are "
+                print(f"\nERROR: {waymask} does not exist. "
+                      f"Ensure that you are "
                       f"only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -2003,9 +2006,9 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    print(f"\nERROR: ERROR: {_func_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
+                    print(f"\nERROR: ERROR: {_func_file} does not exist. "
+                          f"Ensure that you are only specifying "
+                          f"absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -2598,8 +2601,10 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._n_procs = runtime_dict["AggregateOutputs"][0]
-        collect_pd_list_net_csv_node._mem_gb = runtime_dict["AggregateOutputs"][1]
+        collect_pd_list_net_csv_node._n_procs = \
+            runtime_dict["AggregateOutputs"][0]
+        collect_pd_list_net_csv_node._mem_gb = \
+            runtime_dict["AggregateOutputs"][1]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
@@ -2648,7 +2653,8 @@ def build_workflow(args, retval):
                     elif 'dwi' in op.dirname(graph):
                         outdir = f"{outdir}/dwi"
                 else:
-                    graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
+                    graph_name = op.basename(graph
+                                             ).split(op.splitext(graph)[1])[0]
                     print("Using single custom graph input...")
                     print(graph_name)
                     atlas = f"{graph_name}_{ID}"

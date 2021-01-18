@@ -271,16 +271,20 @@ def get_conn_matrix(
         return conn_matrix
 
     if conn_model in nilearn_kinds:
-        if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
+        if conn_model == "corr" or conn_model == "cor" or \
+             conn_model == "correlation":
             print("\nComputing correlation matrix...\n")
             kind="correlation"
-        elif conn_model == "partcorr" or conn_model == "parcorr" or conn_model == "partialcorrelation":
+        elif conn_model == "partcorr" or conn_model == "parcorr" or \
+             conn_model == "partialcorrelation":
             print("\nComputing partial correlation matrix...\n")
             kind="partial correlation"
-        elif conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
+        elif conn_model == "sps" or conn_model == "sparse" or \
+             conn_model == "precision":
             print("\nComputing precision matrix...\n")
             kind="precision"
-        elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
+        elif conn_model == "cov" or conn_model == "covariance" or \
+             conn_model == "covar":
             print("\nComputing covariance matrix...\n")
             kind = "covariance"
         else:

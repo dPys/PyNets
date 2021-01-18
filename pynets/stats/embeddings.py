@@ -200,15 +200,16 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     return out_path
 
 
-def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None, prune=0, norm=1):
+def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
+               n_components=None, prune=0, norm=1):
     """
 
     Class for computing the adjacency spectral embedding of a graph.
 
-    The adjacency spectral embedding (ASE) is a k-dimensional Euclidean representation
-    of the graph based on its adjacency matrix. It relies on an SVD to reduce
-    the dimensionality to the specified k, or if k is unspecified, can find a number of
-    dimensions automatically
+    The adjacency spectral embedding (ASE) is a k-dimensional Euclidean
+    representation of the graph based on its adjacency matrix. It relies on an
+    SVD to reduce the dimensionality to the specified k, or if k is
+    unspecified, can find a number of dimensions automatically
 
     Parameters
     ----------
@@ -595,8 +596,8 @@ def build_omnetome(est_path_iterlist, ID):
                         out_paths_func.append(out_path)
                     else:
                         print(
-                            "WARNING: Only one graph sampled, omnibus embedding"
-                            " not appropriate."
+                            "WARNING: Only one graph sampled, omnibus "
+                            "embedding not appropriate."
                         )
                         pass
 
@@ -644,8 +645,8 @@ def build_omnetome(est_path_iterlist, ID):
                         out_paths_dwi.append(out_path)
                     else:
                         print(
-                            "WARNING: Only one graph sampled, omnibus embedding"
-                            " not appropriate."
+                            "WARNING: Only one graph sampled, omnibus "
+                            "embedding not appropriate."
                         )
                         pass
     else:

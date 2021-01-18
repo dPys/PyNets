@@ -607,6 +607,34 @@ def get_node_membership(
     return coords_mm, RSN_parcels, net_labels, network
 
 
+def drop_badixs_from_parcellation(uatlas, bad_idxs):
+    import os
+    import nibabel as nib
+    import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
+
+    parcellation_img = nib.load(uatlas)
+
+    bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+
+    parlist_img_data = parcellation_img.get_fdata()
+    for val in bad_idxs:
+        print(f"Removing: {str(val)}...")
+        parlist_img_data[np.where(parlist_img_data == val)] = 0
+
+    parcellation = fname_presuffix(
+        uatlas, suffix="_pruned",
+        newpath=os.path.dirname(uatlas))
+    nib.save(
+        nib.Nifti1Image(parlist_img_data,
+                        affine=parcellation_img.affine),
+        parcellation)
+
+    print(f"{len(np.unique(parlist_img_data))} parcels remaining")
+    parcellation = enforce_hem_distinct_consecutive_labels(parcellation)[0]
+    return parcellation
+
+
 def parcel_masker(
         roi,
         coords,
