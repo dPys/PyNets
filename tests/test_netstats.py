@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 from pynets.stats import netstats
 import logging
-import graph_tool.all as gt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -57,7 +56,12 @@ def test_nx2gt():
     gtG = netstats.nx2gt(nxG)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
-    assert type(gtG) is gt.graph_tool.Graph
+    try:
+        import graph_tool.all as gt
+        assert type(gtG) is gt.graph_tool.Graph
+    except ImportError as e:
+        print(e, "graph_tool not installed!")
+        assert gtG is not None
 
 
 def test_np2gt():
@@ -67,9 +71,18 @@ def test_np2gt():
     base_dir = str(Path(__file__).parent/"examples")
     in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
 
+    start_time = time.time()
     Gt = netstats.np2gt(in_mat)
-    print(type(gt))
-    assert type(Gt) is gt.graph_tool.Graph
+    print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
+                      np.round(time.time() - start_time, 1), 's'))
+    try:
+        import graph_tool.all as gt
+        assert type(Gt) is gt.graph_tool.Graph
+    except ImportError as e:
+        print(e, "graph_tool not installed!")
+        assert Gt is not None
+
+
 
 
 def test_average_shortest_path_length_for_all():
@@ -119,7 +132,7 @@ def test_create_communities():
                       np.round(time.time() - start_time, 1), 's'))
     assert len(com_assign) > 0
 
-@pytest.mark.parametrize("degree", ['in', 'out'])
+@pytest.mark.parametrize("degree", ['undirected', 'in', 'out'])
 def test_participation_coef(degree):
     """
     Test for participation_coef functionality
@@ -131,7 +144,7 @@ def test_participation_coef(degree):
     W = np.random.rand(ci_dim, ci_dim)
 
     start_time = time.time()
-    P = netstats.participation_coef(W, ci, degree='undirected')
+    P = netstats.participation_coef(W, ci, degree=degree)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert P.size > 0
@@ -207,7 +220,7 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         G.add_edge(1, 2)
         G.add_node(3)
     start_time = time.time()
-    [G_out, pruned_nodes] = netstats.prune_disconnected(G)
+    [G_out, pruned_nodes] = netstats.prune_disconnected(G, fallback_lcc = fallback_lcc)
     print("%s%s%s" % ('Pruning disconnected test --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     assert type(G_out) is nx.Graph
@@ -218,7 +231,7 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-@pytest.mark.parametrize("method", ["betweenness", "coreness", "richclub", "eigenvector"])
+@pytest.mark.parametrize("method", ["betweenness", "richclub", "eigenvector"])
 def test_most_important(method):
     """
     Test pruning for most important nodes functionality
@@ -228,9 +241,10 @@ def test_most_important(method):
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    [Gt, pruned_nodes] = netstats.most_important(G)
+    Gt, pruned_nodes = netstats.most_important(G, method=method)
     print("%s%s%s" % ('thresh_and_fit (Functional, proportional thresholding) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
+
     assert Gt is not None
     assert pruned_nodes is not None
 
@@ -297,8 +311,6 @@ def test_raw_mets():
                         graph_number_of_cliques, transitivity]
     for i in metric_list_glob:
         net_met_val = netstats.raw_mets(G, i)
-        print(i)
-        print(net_met_val)
         assert net_met_val is not np.nan
         assert type(net_met_val) == float
 
@@ -378,6 +390,7 @@ def test_weighted_transitivity(binarize):
     in_mat = np.load(est_path)
     if binarize:
         in_mat = binarize(in_mat)
+
 
     G = nx.from_numpy_array(in_mat)
 
@@ -467,7 +480,6 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert num_comms == sim_num_comms
     assert resolution is not None
 
-
 @pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
                                     'comm_centrality', 'rich_club_coeff'])
 def test_get_metrics(metric):
@@ -521,6 +533,7 @@ def test_get_metrics(metric):
                                        2])
 def test_collect_pandas_df_make(plot_switch, sql_out, embed, create_summary, graph_num):
     """
+    Test for collect_pandas_df_make() functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
     network = None
@@ -536,7 +549,7 @@ def test_collect_pandas_df_make(plot_switch, sql_out, embed, create_summary, gra
         net_mets_csv_list = [f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.2.csv",
                              f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_nodetype-parc_model-csa_thrtype-PROP_thr-0.3.csv"]
 
-    combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch,
+    combination_complete = netstats.collect_pandas_df_make(net_mets_csv_list, ID, network, plot_switch=plot_switch,
                                                            embed=embed, create_summary=create_summary,
                                                            sql_out=sql_out)
 
