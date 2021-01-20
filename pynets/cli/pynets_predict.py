@@ -169,7 +169,7 @@ def main():
 
     # args["modality"] = pre_args.modality[0]
     # modality = args["modality"]
-    modality = "dwi"
+    modality = "func"
 
     # args["thr_type"] = pre_args.thrtype[0]
     # thr_type = pre_args.thrtype
@@ -244,7 +244,6 @@ def main():
             modality_grids = dill.load(f)
         f.close()
 
-
     # Load in data
     df = pd.read_csv(
         data_file,
@@ -261,7 +260,8 @@ def main():
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
     df['sex'] = df['sex'].map({1:0, 2:1})
     df = df[
-        ["participant_id", "age", "sex"] + target_vars
+        ["participant_id", "age", "sex", "num_visits", "DAY_LAG",
+         'dataset'] + target_vars
     ]
 
     good_grids = []
@@ -343,7 +343,11 @@ def main():
     out_dict = {}
     for recipe in ml_dfs[modality][embedding_type].keys():
         try:
-            out_dict[str(recipe)] = ml_dfs[modality][embedding_type][recipe].to_json()
+            df = ml_dfs[modality][embedding_type][recipe]
+            df.reset_index(inplace=True)
+            if 'index' in df.columns:
+                df = df.drop(columns=['index'])
+            out_dict[str(recipe)] = df.to_json()
         except:
             print(f"{recipe} recipe not found...")
             continue

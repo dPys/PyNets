@@ -256,7 +256,7 @@ def create_density_map(
     # Create density map
     dm = utils.density_map(
         streamlines,
-        affine=dwi_img.affine,
+        affine=np.eye(4),
         vol_dims=dwi_img.shape)
 
     # Save density map

@@ -1661,6 +1661,7 @@ def show_template_bundles(final_streamlines, template_path, fname):
     lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
                                    linewidth=0.3)
     renderer.add(lines_actor)
+    #window.show(renderer)
     window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
     return
 

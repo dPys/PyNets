@@ -13,7 +13,17 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-DEFAULT_TIMEOUT = 240
+from pynets.core.utils import load_runconfig
+
+hardcoded_params = load_runconfig()
+try:
+    DEFAULT_TIMEOUT = hardcoded_params["graph_analysis_timeout"][0]
+    DEFAULT_ENGINE = hardcoded_params["graph_analysis_engine"][0]
+except FileNotFoundError as e:
+    import sys
+    print(e, "Failed to parse runconfig.yaml")
+
+
 
 
 def get_prop_type(value, key=None):
@@ -57,8 +67,8 @@ def nx2gt(nxG):
     """
     try:
         import graph_tool.all as gt
-    except ImportError as e:
-        print(e, "graph_tool not installed!")
+    except ImportWarning as e:
+        print(e, "Graph Tool not installed!")
     gtG = gt.Graph(directed=nxG.is_directed())
 
     for key, value in nxG.graph.items():
@@ -118,7 +128,7 @@ def np2gt(adj):
     try:
         import graph_tool.all as gt
     except ImportError as e:
-        print(e, "graph_tool not installed!")
+        print(e, "Graph Tool not installed!")
     g = gt.Graph(directed=False)
     edge_weights = g.new_edge_property('double')
     g.edge_properties['weight'] = edge_weights
@@ -128,6 +138,26 @@ def np2gt(adj):
                                                             (nedges, 1))]),
                     eprops=[edge_weights])
     return g
+
+
+def average_shortest_path_length_fast(G, weight="weight"):
+    try:
+        import graph_tool.all as gt
+    except ImportWarning as e:
+        print(e, "Graph Tool not installed!")
+    if type(G) == nx.classes.graph.Graph:
+        n = len(G)
+        g = nx2gt(G)
+    else:
+        g = G
+        n = len(g.get_vertices())
+    if weight == "weight":
+        dist = gt.shortest_distance(g, weights=g.edge_properties['weight'],
+                                    directed=False)
+    else:
+        dist = gt.shortest_distance(g, directed=False)
+    sum_of_all_dists = sum([sum(i.a[(i.a>1e-9)&(i.a<1e9)]) for i in dist])
+    return sum_of_all_dists / (n * (n - 1))
 
 
 @timeout(DEFAULT_TIMEOUT)
@@ -206,7 +236,7 @@ def subgraph_number_of_cliques_for_all(G):
                              for sg in subgraphs) / len(subgraphs))
 
 
-def global_efficiency(G, weight="weight"):
+def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     """
     Return the global efficiency of the G
 
@@ -245,18 +275,30 @@ def global_efficiency(G, weight="weight"):
     """
     N = len(G)
     if N < 2:
-        return 0
+        return np.nan
 
-    lengths = list(nx.all_pairs_dijkstra_path_length(G, weight=weight))
+    if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
+        lengths = list(nx.all_pairs_dijkstra_path_length(G, weight=weight))
+    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
+        try:
+            import graph_tool.all as gt
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
+        g = nx2gt(G)
+        vertices = list(g.get_vertices())
+        all_shortest_dist = [dict(zip(vertices, list(i))) for i in gt.shortest_distance(g, weights=g.edge_properties['weight'], directed=False)]
+        lengths = tuple(dict(zip(vertices, all_shortest_dist)).items())
+    else:
+        raise ValueError(f"Engine {engine} not recognized.")
     inv_lengths = []
     for length in lengths:
-        inv = [1 / x for x in length[1].values() if x is not 0]
+        inv = [1 / x for x in length[1].values() if float(x) != float(0)]
         inv_lengths.extend(inv)
-
     return sum(inv_lengths) / (N * (N - 1))
 
 
-def local_efficiency(G, weight="weight"):
+def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     """
     Return the local efficiency of each node in the G
 
@@ -291,6 +333,8 @@ def local_efficiency(G, weight="weight"):
       in weighted networks. Eur Phys J B 32, 249-263.
 
     """
+    from graspy.utils import get_lcc
+
     new_graph = nx.Graph
 
     efficiencies = dict()
@@ -306,13 +350,24 @@ def local_efficiency(G, weight="weight"):
             for (n1, n2) in temp_G.edges():
                 temp_G[n1][n2][weight] = np.abs(G[n1][n2][weight])
 
-        efficiencies[node] = global_efficiency(temp_G, weight)
+        temp_G = get_lcc(temp_G, return_inds=False)
 
+        if nx.is_empty(temp_G) is True or len(temp_G) < 2 or nx.number_of_edges(temp_G) == 0:
+            efficiencies[node] = 0
+        else:
+            try:
+                if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                    engine.upper() == 'GRAPHTOOL':
+                    efficiencies[node] = global_efficiency(temp_G, weight, engine='gt')
+                else:
+                    efficiencies[node] = global_efficiency(temp_G, weight, engine='nx')
+            except BaseException:
+                efficiencies[node] = np.nan
     return efficiencies
 
 
 @timeout(DEFAULT_TIMEOUT)
-def average_local_efficiency(G, weight="weight"):
+def average_local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     """
     Return the average local efficiency of all of the nodes in the G
 
@@ -338,7 +393,17 @@ def average_local_efficiency(G, weight="weight"):
       in weighted networks. Eur Phys J B 32, 249-263.
 
     """
-    eff = local_efficiency(G, weight)
+    N = len(G)
+
+    if N < 2:
+        return np.nan
+
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
+        eff = local_efficiency(G, weight, engine='gt')
+    else:
+        eff = local_efficiency(G, weight, engine='nx')
+
     e_loc_vec = np.array(list(eff.values()))
     e_loc_vec = np.array(e_loc_vec[e_loc_vec != 0.])
     return np.nanmean(e_loc_vec)
@@ -347,16 +412,17 @@ def average_local_efficiency(G, weight="weight"):
 @timeout(DEFAULT_TIMEOUT)
 def smallworldness(
         G,
-        niter=1,
+        niter=5,
         nrand=10,
         approach="clustering",
-        reference="lattice"):
+        reference="lattice",
+        engine=DEFAULT_ENGINE):
     """
     Returns the small-world coefficient of a graph
 
     The small-world coefficient of a G is:
 
-    omega = Lr/L - C/Cl
+    omega/sigma = Lr/L - C/Cl
 
     where C and L are respectively the average clustering
     coefficient/ transitivity and average shortest path length of G. Lr is
@@ -368,24 +434,23 @@ def smallworldness(
     ----------
     G : NetworkX graph
         An undirected graph.
-
     niter: integer (optional, default=5)
         Approximate number of rewiring per edge to compute the equivalent
         random graph.
-
     nrand: integer (optional, default=10)
         Number of random graphs generated to compute the average clustering
         coefficient (Cr) and average shortest path length (Lr).
     approach : str
-        Specifies whether to use clustering coefficient `clustering` or
-        `transitivity` method of counting triangles. Default is `clustering`.
+        Specifies whether to use clustering coefficient directly `clustering`
+        or `transitivity` method of counting weighted triangles.
+        Default is `clustering`.
     reference : str
         Specifies whether to use a random `random` or lattice
         `lattice` reference. Default is `lattice`.
 
     Returns
     -------
-    omega : float
+    omega/sigma : float
         The smallworld coefficient
 
     References
@@ -396,44 +461,133 @@ def smallworldness(
       doi:10.1089/brain.2011.0038.
 
     """
-
     from networkx.algorithms.smallworld import random_reference, \
         lattice_reference
+
+    N = len(G)
+
+    if N < 2:
+        return np.nan
+
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
+        try:
+            import graph_tool.all as gt
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
+
+    def get_random(G, reference, engine, niter, i):
+        nnodes = len(G)
+        nedges = nx.number_of_edges(G)
+        shape = np.array([nnodes, nnodes])
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+            engine.upper() == 'GRAPHTOOL':
+            if reference == "random":
+                def sample_k(max):
+                    accept = False
+                    while not accept:
+                        k = np.random.randint(1, max + 1)
+                        accept = np.random.random() < 1.0 / k
+                    return k
+
+                G_rand = gt.random_graph(nnodes, lambda: sample_k(nedges),
+                                model="configuration",
+                                directed=False,
+                                n_iter=niter)
+            else:
+                raise NotImplementedError(f"{reference}' graph type not yet"
+                                          f" available using graph_tool "
+                                          f"engine")
+        else:
+            if reference == "random":
+                G_rand = random_reference(G, niter=niter, seed=i)
+            elif reference == "lattice":
+                G_rand = lattice_reference(G, niter=niter, seed=i)
+            else:
+                raise NotImplementedError(f"{reference}' graph type not "
+                                          f"recognized!")
+        return G_rand
 
     # Compute the mean clustering coefficient and average shortest path length
     # for an equivalent random graph
     randMetrics = {"C": [], "L": []}
     for i in range(nrand):
-        Gr = random_reference(G, niter=niter, seed=i)
-        if reference == "random":
-            Gl = random_reference(G, niter=niter, seed=i)
-        elif reference == "lattice":
-            Gl = lattice_reference(G, niter=niter, seed=i)
+        Gr = get_random(G, "random", engine, niter, i)
+        if reference == "lattice":
+            Gl = get_random(G, reference, "nx", niter, i)
+            if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                engine.upper() == 'GRAPHTOOL':
+                Gl = nx2gt(Gl)
         else:
-            raise ValueError(f"{reference}' graph type not recognized!")
-
+            Gl = Gr
         if approach == "clustering":
-            randMetrics["C"].append(nx.average_clustering(Gl, weight='weight'))
-        elif approach == "transitivity":
+            if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                engine.upper() == 'GRAPHTOOL':
+                clust_coef_ = gt.global_clustering(Gl, weight=Gl.edge_properties['weight'])[0]
+            else:
+                clust_coef_ = nx.average_clustering(Gl, weight='weight')
+            randMetrics["C"].append(clust_coef_)
+        elif approach == "transitivity" and engine == 'nx':
             randMetrics["C"].append(weighted_transitivity(Gl))
         else:
             raise ValueError(f"{approach}' approach not recognized!")
 
-        randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight="weight"))
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+            randMetrics["L"].append(average_shortest_path_length_fast(Gr, weight=None))
+        else:
+            randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight=None))
         del Gr, Gl
 
     if approach == "clustering":
-        C = nx.average_clustering(G, weight="weight")
-    elif approach == "transitivity":
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+            g = nx2gt(G)
+            C = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
+        else:
+            C = nx.average_clustering(G, weight='weight')
+    elif approach == "transitivity" and engine == 'nx':
         C = weighted_transitivity(G)
     else:
         raise ValueError(f"{approach}' approach not recognized!")
 
-    L = nx.average_shortest_path_length(G, weight="weight")
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+        L = average_shortest_path_length_fast(G, weight=None)
+    else:
+        L = nx.average_shortest_path_length(G, weight=None)
+
     Cl = np.nanmean(randMetrics["C"], dtype=np.float32)
     Lr = np.nanmean(randMetrics["L"], dtype=np.float32)
 
     return np.nan_to_num(Lr / L) - np.nan_to_num(C / Cl)
+
+
+def rich_club_coefficient(G, engine=DEFAULT_ENGINE):
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
+        try:
+            import graph_tool.all as gt
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
+
+        g = nx2gt(G)
+
+        deghist = gt.vertex_hist(g, 'total')[0]
+        total = sum(deghist)
+        rc = {}
+        # Compute the number of nodes with degree greater than `k`, for each
+        # degree `k` (omitting the last entry, which is zero).
+        nks = (total - cs for cs in np.cumsum(deghist) if total - cs > 1)
+        deg = g.degree_property_map('total')
+        for k, nk in enumerate(nks):
+            if nk == 0:
+                continue
+            sub_g = gt.GraphView(g, vfilt=lambda v: deg[v] > k)
+            ek = sub_g.num_edges()
+            rc[k] = 2 * ek / (nk * (nk - 1))
+    else:
+        from networkx.algorithms import rich_club_coefficient
+        rc = rich_club_coefficient(G, seed=42, Q=100)
+
+    return rc
 
 
 def create_communities(node_comm_aff_mat, node_num):
@@ -987,7 +1141,7 @@ def most_important(G, method="betweenness", sd=1):
     elif method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
-        ranking = nx.algorithms.rich_club_coefficient(G).items()
+        ranking = rich_club_coefficient(G).items()
     else:
         ranking = nx.betweenness_centrality(G, weight="weight").items()
 
@@ -1021,7 +1175,7 @@ def most_important(G, method="betweenness", sd=1):
     return Gt, pruned_nodes
 
 
-def raw_mets(G, i):
+def raw_mets(G, i, engine=DEFAULT_ENGINE):
     """
     API that iterates across NetworkX algorithms for a G.
 
@@ -1041,13 +1195,26 @@ def raw_mets(G, i):
 
     # import random
     from functools import partial
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
+        try:
+            import graph_tool.all as gt
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
 
     if isinstance(i, partial):
         net_name = str(i.func)
     else:
         net_name = str(i)
     if "average_shortest_path_length" in net_name:
-        if nx.is_connected(G) is True:
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+             engine.upper() == 'GRAPHTOOL':
+            try:
+                net_met_val = average_shortest_path_length_fast(G,
+                                                                weight='weight')
+            except BaseException:
+                net_met_val = np.nan
+        else:
             try:
                 net_met_val = float(i(G))
             except BaseException:
@@ -1059,9 +1226,13 @@ def raw_mets(G, i):
                     # np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
                     #         np.array(nx.to_numpy_matrix(H)))
                     net_met_val = np.nan
-        else:
+    elif "average_clustering" in net_name and (engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL'):
+        try:
+            g = nx2gt(G)
+            net_met_val = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
+        except BaseException as e:
+            print(e, f"WARNING: {net_name} failed for G.")
             net_met_val = np.nan
-
     elif "graph_number_of_cliques" in net_name:
         if nx.is_connected(G) is True:
             try:
@@ -1078,15 +1249,12 @@ def raw_mets(G, i):
             net_met_val = np.nan
 
     elif "smallworldness" in net_name:
-        if nx.is_connected(G) is True:
-            try:
-                net_met_val = float(i(G))
-            except BaseException as e:
-                print(e, f"WARNING: {net_name} failed for G.")
-                # np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
-                #         np.array(nx.to_numpy_matrix(H)))
-                net_met_val = np.nan
-        else:
+        try:
+            net_met_val = float(i(G))
+        except BaseException as e:
+            print(e, f"WARNING: {net_name} failed for G.")
+            # np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
+            #         np.array(nx.to_numpy_matrix(H)))
             net_met_val = np.nan
     elif "degree_assortativity_coefficient" in net_name:
         H = G.copy()
@@ -1370,8 +1538,8 @@ def iterate_nx_global_measures(G, metric_list_glob):
                 net_met_val = np.nan
         except BaseException:
             print(f"{'WARNING: '}{str(i)}{' is undefined for G'}")
-            # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
-            #         np.array(nx.to_numpy_matrix(G)))
+            # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1,
+            # 400), '.npy'), np.array(nx.to_numpy_matrix(G)))
             net_met_val = np.nan
         net_met_arr[j, 0] = net_met
         net_met_arr[j, 1] = net_met_val
@@ -1448,7 +1616,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
         pc_vector = participation_coef_sign(in_mat, ci)[0]
     else:
         pc_vector = participation_coef(in_mat, ci)
-    print("\nCalculating Participation Coefficients...")
+    print("\nExtracting Participation Coefficients...")
     pc_vals = list(pc_vector)
     pc_edges = list(range(len(pc_vector)))
     num_edges = len(pc_edges)
@@ -1480,7 +1648,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
 @timeout(DEFAULT_TIMEOUT)
 def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     dc_vector = diversity_coef_sign(in_mat, ci)[0]
-    print("\nCalculating Diversity Coefficients...")
+    print("\nExtracting Diversity Coefficients...")
     dc_vals = list(dc_vector)
     dc_edges = list(range(len(dc_vector)))
     num_edges = len(dc_edges)
@@ -1511,7 +1679,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
 @timeout(DEFAULT_TIMEOUT)
 def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     le_vector = local_efficiency(G)
-    print("\nCalculating Local Efficiencies...")
+    print("\nExtracting Local Efficiencies...")
     le_vals = list(le_vector.values())
     le_nodes = list(le_vector.keys())
     num_nodes = len(le_nodes)
@@ -1538,22 +1706,23 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
 
 
 @timeout(DEFAULT_TIMEOUT)
-def get_clustering(G, metric_list_names, net_met_val_list_final, engine='nx'):
+def get_clustering(G, metric_list_names, net_met_val_list_final, engine=DEFAULT_ENGINE):
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         cl_vector = nx.clustering(G, weight="weight")
-    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
-        except ImportError as e:
-            print(e, "graph_tool not installed!")
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
         g = nx2gt(G)
         cl_vector = dict(zip(list(g.get_vertices()), list(
             gt.local_clustering(g, weight=g.ep["weight"]).get_array())))
     else:
         raise ValueError(f"Engine {engine} not recognized.")
 
-    print("\nCalculating Local Clusterings...")
+    print("\nExtracting Local Clusterings...")
     cl_vals = list(cl_vector.values())
     cl_nodes = list(cl_vector.keys())
     num_nodes = len(cl_nodes)
@@ -1572,8 +1741,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final, engine='nx'):
     nonzero_arr_cl = np.delete(cl_arr[:, 1], [0])
     cl_arr[num_nodes, 1] = np.nanmean(nonzero_arr_cl.astype('float32'),
                                       dtype=np.float32)
-    print(
-        f"{'Mean Local Clustering across nodes: '}{str(cl_arr[num_nodes, 1])}")
+    print(f"{str(cl_arr[num_nodes, 1])}")
     for i in cl_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(cl_arr[:, 1])
@@ -1585,7 +1753,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import degree_centrality
 
     dc_vector = degree_centrality(G)
-    print("\nCalculating Local Degree Centralities...")
+    print("\nExtracting Local Degree Centralities...")
     dc_vals = list(dc_vector.values())
     dc_nodes = list(dc_vector.keys())
     num_nodes = len(dc_nodes)
@@ -1605,7 +1773,6 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     dc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_dc.astype('float32'),
                                       dtype=np.float32)
     print(
-        f"{'Mean Degree Centrality across nodes: '}"
         f"{str(dc_arr[num_nodes, 1])}")
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1617,7 +1784,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
 def get_betweenness_centrality(
         G_len,
         metric_list_names,
-        net_met_val_list_final, engine='nx'):
+        net_met_val_list_final, engine=DEFAULT_ENGINE):
     from networkx.algorithms import betweenness_centrality
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
@@ -1625,15 +1792,15 @@ def get_betweenness_centrality(
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
-        except ImportError as e:
-            print(e, "graph_tool not installed!")
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
         g = nx2gt(G_len)
         bc_vector = dict(zip(list(g.get_vertices()), list(
             gt.betweenness(g, weight=g.ep["weight"])[0].get_array())))
     else:
         raise ValueError(f"Engine {engine} not recognized.")
 
-    print("\nCalculating Local Betweenness Centralities...")
+    print("\nExtracting Local Betweenness Centralities...")
     bc_vals = list(bc_vector.values())
     bc_nodes = list(bc_vector.keys())
     num_nodes = len(bc_nodes)
@@ -1655,7 +1822,7 @@ def get_betweenness_centrality(
     bc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_betw_cent.astype('float32'),
                                       dtype=np.float32)
     print(
-        f"{'Mean Betweenness Centrality across nodes: '}"
+        f"{'Mean Betweenness Centrality: '}"
         f"{str(bc_arr[num_nodes, 1])}")
     for i in bc_arr[:, 0]:
         metric_list_names.append(i)
@@ -1665,23 +1832,24 @@ def get_betweenness_centrality(
 
 @timeout(DEFAULT_TIMEOUT)
 def get_eigen_centrality(G, metric_list_names, net_met_val_list_final,
-                         engine='nx'):
+                         engine=DEFAULT_ENGINE):
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         from networkx.algorithms import eigenvector_centrality
         ec_vector = eigenvector_centrality(G, max_iter=1000)
-    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
-        except ImportError as e:
-            print(e, "graph_tool not installed!")
+        except ImportWarning as e:
+            print(e, "Graph Tool not installed!")
         g = nx2gt(G)
         ec_vector = dict(zip(list(g.get_vertices()), list(
             gt.eigenvector(g, weight=g.ep["weight"])[1].get_array())))
     else:
         raise ValueError(f"Engine {engine} not recognized.")
 
-    print("\nCalculating Local Eigenvector Centralities...")
+    print("\nExtracting Local Eigenvector Centralities...")
     ec_vals = list(ec_vector.values())
     ec_nodes = list(ec_vector.keys())
     num_nodes = len(ec_nodes)
@@ -1702,7 +1870,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final,
     ec_arr[num_nodes, 1] = np.nanmean(nonzero_arr_eig_cent.astype('float32'),
                                       dtype=np.float32)
     print(
-        f"{'Mean Eigenvector Centrality across nodes: '}"
+        f"{'Mean Eigenvector Centrality: '}"
         f"{str(ec_arr[num_nodes, 1])}")
     for i in ec_arr[:, 0]:
         metric_list_names.append(i)
@@ -1715,7 +1883,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import communicability_betweenness_centrality
 
     cc_vector = communicability_betweenness_centrality(G, normalized=True)
-    print("\nCalculating Local Communicability Centralities...")
+    print("\nExtracting Local Communicability Centralities...")
     cc_vals = list(cc_vector.values())
     cc_nodes = list(cc_vector.keys())
     num_nodes = len(cc_nodes)
@@ -1737,7 +1905,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     cc_arr[num_nodes, 1] = np.nanmean(nonzero_arr_comm_cent.astype('float32'),
                                       dtype=np.float32)
     print(
-        f"{'Mean Communicability Centrality across nodes: '}"
+        f"{'Mean Communicability Centrality: '}"
         f"{str(cc_arr[num_nodes, 1])}"
     )
     for i in cc_arr[:, 0]:
@@ -1748,10 +1916,9 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
 
 @timeout(DEFAULT_TIMEOUT)
 def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
-    from networkx.algorithms import rich_club_coefficient
 
-    rc_vector = rich_club_coefficient(G, normalized=True, seed=42, Q=100)
-    print("\nCalculating Local Rich Club Coefficients...")
+    print("\nExtracting Rich Club Coefficient...")
+    rc_vector = rich_club_coefficient(G)
     rc_vals = list(rc_vector.values())
     rc_edges = list(rc_vector.keys())
     num_edges = len(rc_edges)
@@ -1946,7 +2113,7 @@ def extractnetstats(
 
         # Deal with empty graphs
         if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
-            G.number_of_edges() == 0:
+            G.number_of_edges() == 0 or len(G) < 3:
             out_path_neat = save_netmets(
                 dir_path, est_path, metric_list_global_names,
                 len(metric_list_global_names)*[np.nan],

@@ -1402,7 +1402,7 @@ def load_runconfig():
     return hardcoded_params
 
 
-def save_coords_and_labels_to_json(coords, labels, dir_path,
+def save_coords_and_labels_to_json(coords, labels, indices, dir_path,
                                    network='all_nodes'):
     """
     Save coordinates and labels to json.
@@ -1450,12 +1450,12 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
     node_list = []
     for node in labels:
         node_dict = {}
-        if consensus_labs is True:
+        if consensus_labs is True and isinstance(node, tuple):
             lab, ix = node
             node_dict['index'] = str(ix)
             node_dict['label'] = str(lab)
         else:
-            node_dict['index'] = str(i)
+            node_dict['index'] = str(indices[i])
             node_dict['label'] = str(node)
         node_dict['coord'] = coords[i]
         node_list.append(node_dict)

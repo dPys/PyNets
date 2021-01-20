@@ -37,7 +37,7 @@ tracking:
     sphere:
         - 'repulsion724'
     n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
-        - 750
+        - 500
     max_length:
         - 500
     tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
@@ -72,13 +72,16 @@ template: # `MNI152_T1` is the default and, along with `colin27` is provided by 
 #    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
     - 'betweenness'
+graph_analysis_timeout: # Number of seconds before timing out a graph analysis algorithm
+    - 240
+graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former requires an additional installation of graph_tool (See https://graph-tool.skewed.de/).
+    - 'gt'
 embed:
     - 'ASE'
     - 'OMNI'
     - 'MASE'
     - 'eigenvector'
     - 'betweenness'
-    - 'local_efficiency'
     - 'local_clustering'
 metaparams_func:
     - 'rsn'

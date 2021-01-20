@@ -1757,6 +1757,8 @@ class RegisterAtlasDWI(SimpleInterface):
         )
 
         namer_dir = "{}/tractography".format(dir_path)
+        if not op.isdir(namer_dir):
+            os.mkdir(namer_dir)
 
         if not os.path.isfile(f"{namer_dir}/"
                               f"{op.basename(self.inputs.fa_path)}"):
@@ -1799,7 +1801,6 @@ class RegisterAtlasDWI(SimpleInterface):
             )
 
         reg_tmp = [
-            fa_tmp_path,
             uatlas_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
@@ -1967,7 +1968,6 @@ class RegisterROIDWI(SimpleInterface):
                 t1w_brain_tmp_path2,
                 roi_in_t1w,
                 roi_in_dwi,
-                ap_tmp_path,
                 mni2t1w_warp_tmp_path2,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
@@ -1981,7 +1981,6 @@ class RegisterROIDWI(SimpleInterface):
         self._results["roi"] = roi_in_dwi
 
         reg_tmp = [
-            ap_tmp_path,
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
             t1wtissue2dwi_xfm_tmp_path,
