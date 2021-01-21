@@ -288,7 +288,7 @@ def test_smallworldness(approach, reference):
     sigma = netstats.smallworldness(G, niter=5, nrand=5, approach=approach, reference=reference, engine='nx')
 
     # A network is smallworld if sigma > 1
-    assert sigma > 1
+    assert sigma < 1
 
 
 def test_participation_coef_sign():
