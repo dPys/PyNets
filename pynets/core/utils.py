@@ -1454,8 +1454,11 @@ def save_coords_and_labels_to_json(coords, labels, indices, dir_path,
             lab, ix = node
             node_dict['index'] = str(ix)
             node_dict['label'] = str(lab)
-        else:
+        elif indices is not None:
             node_dict['index'] = str(indices[i])
+            node_dict['label'] = str(node)
+        else:
+            node_dict['index'] = str(i)
             node_dict['label'] = str(node)
         node_dict['coord'] = coords[i]
         node_list.append(node_dict)

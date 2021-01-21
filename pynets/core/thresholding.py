@@ -1052,7 +1052,7 @@ def thresh_func(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
                                          atlas_name)
 
     return (
@@ -1291,7 +1291,7 @@ def thresh_struct(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
                                          atlas_name)
 
     return (

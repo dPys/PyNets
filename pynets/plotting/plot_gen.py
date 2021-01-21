@@ -638,15 +638,17 @@ def plot_all_func(
     edge_color_override=False,
 ):
     """
-    Plot adjacency matrix, connectogram, and glass brain for functional connectome.
+    Plot adjacency matrix, connectogram, and glass brain for functional
+    connectome.
 
     Parameters
     ----------
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -654,25 +656,27 @@ def plot_all_func(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+        List of (x, y, z) tuples corresponding to an a-priori defined set
+        (e.g. a coordinate atlas).
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     edge_threshold : float
-        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
-        successfully obtained.
+        The actual value, between 0 and 1, that the graph was thresholded
+        (can differ from thr if target was not successfully obtained.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
@@ -685,7 +689,8 @@ def plot_all_func(
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
     edge_color_override : bool
         Switch that enables random sequential colormap selection for edges.
 
@@ -1019,8 +1024,9 @@ def plot_all_struct(
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -1028,23 +1034,24 @@ def plot_all_struct(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+        List of (x, y, z) tuples corresponding to an a-priori defined set
+        (e.g. a coordinate atlas).
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     edge_threshold : float
-        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
-        successfully obtained.
+        The actual value, between 0 and 1, that the graph was thresholded
+        (can differ from thr if target was not successfully obtained.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
@@ -1059,7 +1066,8 @@ def plot_all_struct(
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
@@ -1699,9 +1707,9 @@ def view_tractogram(streams, atlas):
         clean_template_img.get_fdata(), clean_template_img.affine,
         FA_template_img.get_fdata(), FA_template_img.affine)
     warped_aff = affine_map.affine_inv.copy()
-    warped_aff_scaled = rescale_affine_to_center(warped_aff,
-                                                 voxel_dims=[4, 4, 4],
-                                                 target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
+    warped_aff_scaled = rescale_affine_to_center(
+        warped_aff, voxel_dims=[4, 4, 4],
+        target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
     streamlines = transform_streamlines(
         tractogram.streamlines, warped_aff_scaled)
 

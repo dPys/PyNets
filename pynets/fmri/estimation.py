@@ -401,7 +401,7 @@ def get_conn_matrix(
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
                                          atlas_name)
 
     coords = np.array(coords)

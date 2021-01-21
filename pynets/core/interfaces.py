@@ -2354,6 +2354,7 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     node_size = traits.Any()
     atlas = traits.Any()
 
+
 class RegisterAtlasFunc(SimpleInterface):
     """Interface wrapper for RegisterAtlasFunc."""
 
@@ -2816,7 +2817,7 @@ class Tracking(SimpleInterface):
             use_hardlink=False)
 
         dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
-        dwi_data = dwi_img.get_fdata().astype('float32')
+        dwi_data = dwi_img.get_fdata(dtype=np.float32)
 
         # Load FA data
         fa_file_tmp_path = fname_presuffix(
@@ -3145,7 +3146,7 @@ class Tracking(SimpleInterface):
                     from pynets.dmri.dmri_utils import \
                         evaluate_streamline_plausibility
                     dwi_img = nib.load(dwi_file_tmp_path)
-                    dwi_data = dwi_img.get_fdata().astype('float32')
+                    dwi_data = dwi_img.get_fdata(dtype=np.float32)
                     orig_count = len(streamlines)
 
                     if self.inputs.waymask:

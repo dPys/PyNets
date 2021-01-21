@@ -45,7 +45,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     else:
         # Perform skull-stripping if mask not provided.
         img = nib.load(t1w_head)
-        t1w_data = img.get_fdata().astype('float32')
+        t1w_data = img.get_fdata(dtype=np.float32)
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
         except RuntimeError as e:
@@ -1429,7 +1429,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
             pass
         else:
             import gc
-            data = img.get_fdata().astype('float32')
+            data = img.get_fdata(dtype=np.float32)
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(
                 data, img.affine, zooms, new_zooms

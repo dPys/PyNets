@@ -1095,7 +1095,7 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
     return G_tmp, pruned_nodes
 
 
-def most_important(G, method="betweenness", sd=1):
+def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
     """
     Returns a copy of G with hubs as defined by centrality,
     core topology, or rich-club topology.
@@ -1139,11 +1139,13 @@ def most_important(G, method="betweenness", sd=1):
                      "cpalgorithm not installed!")
             sys.exit(1)
     elif method == "eigenvector":
-        ranking = nx.eigenvector_centrality(G, weight="weight").items()
+        ranking = nx.eigenvector_centrality(G, weight="weight",
+                                            engine=engine).items()
     elif method == "richclub" and len(G.nodes()) > 4:
         ranking = rich_club_coefficient(G).items()
     else:
-        ranking = nx.betweenness_centrality(G, weight="weight").items()
+        ranking = nx.betweenness_centrality(G, weight="weight",
+                                            engine=engine).items()
 
     # print(ranking)
     r = [x[1] for x in ranking]
@@ -1915,10 +1917,11 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
 
 
 @timeout(DEFAULT_TIMEOUT)
-def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final):
+def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final,
+                        engine=DEFAULT_ENGINE):
 
     print("\nExtracting Rich Club Coefficient...")
-    rc_vector = rich_club_coefficient(G)
+    rc_vector = rich_club_coefficient(G, engine=engine)
     rc_vals = list(rc_vector.values())
     rc_edges = list(rc_vector.keys())
     num_edges = len(rc_edges)
