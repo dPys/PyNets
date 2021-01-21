@@ -337,8 +337,8 @@ def make_node_dict_from_parcellation(parcellation, dir_path, vox_size='2mm'):
         get_names_and_coords_of_parcels(parcellation)
     labels = parcel_naming(coords, vox_size)
     node_file = save_coords_and_labels_to_json(coords, labels,
-                                               label_intensities,
-                                               dir_path, network='regen')
+                                               dir_path, network='regen',
+                                               indices=label_intensities)
     return node_file
 
 

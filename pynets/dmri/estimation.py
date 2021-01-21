@@ -789,8 +789,8 @@ def streams2graph(
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
-    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
-                                         atlas_name)
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name, indices=None)
 
     coords = np.array(coords)
     labels = np.array(labels)

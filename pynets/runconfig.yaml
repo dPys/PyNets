@@ -80,8 +80,9 @@ embed:
     - 'ASE'
     - 'OMNI'
     - 'MASE'
-    - 'eigenvector'
-    - 'betweenness'
+    - 'eigenvector_centrality'
+    - 'degree_centrality'
+    - 'betweenness_centrality'
     - 'local_clustering'
 metaparams_func:
     - 'rsn'

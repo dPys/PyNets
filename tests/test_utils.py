@@ -42,8 +42,9 @@ def test_save_coords_and_labels_to_json():
     network = 'Default'
     indices = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
-    nodes_path = utils.save_coords_and_labels_to_json(coords, labels, indices,
-                                                      dir_path, network)
+    nodes_path = utils.save_coords_and_labels_to_json(coords, labels,
+                                                      dir_path, network,
+                                                      indices)
 
     assert os.path.isfile(nodes_path) is True
 

@@ -1402,8 +1402,8 @@ def load_runconfig():
     return hardcoded_params
 
 
-def save_coords_and_labels_to_json(coords, labels, indices, dir_path,
-                                   network='all_nodes'):
+def save_coords_and_labels_to_json(coords, labels, dir_path,
+                                   network='all_nodes', indices=None):
     """
     Save coordinates and labels to json.
 

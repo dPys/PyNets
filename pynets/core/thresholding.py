@@ -1052,8 +1052,8 @@ def thresh_func(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
-                                         atlas_name)
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name, indices=None)
 
     return (
         edge_threshold,
@@ -1291,8 +1291,8 @@ def thresh_struct(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, None, dir_path,
-                                         atlas_name)
+    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
+                                         atlas_name, indices=None)
 
     return (
         edge_threshold,
