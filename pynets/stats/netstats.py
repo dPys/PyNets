@@ -1139,13 +1139,11 @@ def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
                      "cpalgorithm not installed!")
             sys.exit(1)
     elif method == "eigenvector":
-        ranking = nx.eigenvector_centrality(G, weight="weight",
-                                            engine=engine).items()
+        ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
         ranking = rich_club_coefficient(G).items()
     else:
-        ranking = nx.betweenness_centrality(G, weight="weight",
-                                            engine=engine).items()
+        ranking = nx.betweenness_centrality(G, weight="weight").items()
 
     # print(ranking)
     r = [x[1] for x in ranking]
