@@ -1943,7 +1943,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final,
     rc_arr[num_edges, 1] = np.nanmean(nonzero_arr_rich_club.astype('float32'),
                                       dtype=np.float32)
     print(
-        f"{'Mean Rich Club Coefficient across edges: '}"
+        f"{'Mean Rich Club Coefficient: '}"
         f"{str(rc_arr[num_edges, 1])}")
     for i in rc_arr[:, 0]:
         metric_list_names.append(i)
