@@ -70,7 +70,7 @@ template: # `MNI152_T1` is the default and, along with `colin27` is provided by 
 #    - 'colin27'
     - 'MNI152_T1'
 #    - 'CN200'
-hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
+hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality.
     - 'betweenness'
 graph_analysis_timeout: # Number of seconds before timing out a graph analysis algorithm
     - 240

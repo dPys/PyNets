@@ -1127,18 +1127,7 @@ def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
     """
 
     print(f"Detecting hubs using {method} with SE: {sd}...")
-    if method == "coreness":
-        try:
-            import cpalgorithm as cp
-            algorithm = cp.KM_config()
-            algorithm.detect(G)
-            ranking = algorithm.get_coreness().items()
-        except ImportError as e:
-            import sys
-            print(e, "Cannot run coreness detection. "
-                     "cpalgorithm not installed!")
-            sys.exit(1)
-    elif method == "eigenvector":
+    if method == "eigenvector":
         ranking = nx.eigenvector_centrality(G, weight="weight").items()
     elif method == "richclub" and len(G.nodes()) > 4:
         ranking = rich_club_coefficient(G).items()
