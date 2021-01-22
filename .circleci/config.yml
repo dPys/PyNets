@@ -201,7 +201,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             sudo apt-get update
-            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
+            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa graph-tool
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
