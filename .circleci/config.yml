@@ -206,7 +206,7 @@ jobs:
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
             sudo apt-get upgrade
-            sudo apt-get install openssh-client openssl openssh-server
+            sudo apt-get install -y openssh-client openssl openssh-server
             sudo apt-get install -y git-lfs
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -240,12 +240,12 @@ jobs:
             sudo chmod 777 -R /usr/local/fsl/bin
       - run:
           name: Install graph_tool
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: |
-            sudo echo "deb http://downloads.skewed.de/apt/stretch stretch main" | tee -a /etc/apt/sources.list && echo "deb-src http://downloads.skewed.de/apt/stretch stretch main" | tee -a /etc/apt/sources.list
-            sudo apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
-            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7A80C8ED4FCCBE09
-            sudo apt-get update && apt-get install python3-graph-tool
+            sudo echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" >> /etc/apt/sources.list
+            sudo apt-key adv --keyserver keys.openpgp.org --recv-key 612DEFB798507F25
+            sudo apt-get update -qq
+            sudo apt-get install -y python3-graph-tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
