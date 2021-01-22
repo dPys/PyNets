@@ -1008,9 +1008,12 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                     df_all.drop(
                         columns=[
                             "id",
+                            "participant_id",
                             "age",
                             "num_visits",
-                            "sex"
+                            "sex",
+                            "dataset",
+                            "DAY_LAG"
                         ]
                     )
                     .isnull()
@@ -1023,9 +1026,12 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                             df_all.drop(
                                 columns=[
                                     "id",
+                                    "participant_id",
                                     "age",
                                     "num_visits",
-                                    "sex"
+                                    "sex",
+                                    "dataset",
+                                    "DAY_LAG"
                                 ]
                             )
                         )
@@ -1047,6 +1053,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
               "skipping...\n")
         return None, None
     elif len(df_all) > 50:
+        drop_cols = [i for i in drop_cols if i in df_all.columns]
         return df_all.drop(columns=drop_cols), df_all[target_var].values
     else:
         print("\nEmpty/Missing Feature-space...\n")
@@ -1185,7 +1192,7 @@ class MakeXY(SimpleInterface):
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
-                                 "rum_2", "dep_2"]
+                                 "dep_1", "rum_1", "dep_2", "rum_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
@@ -1215,6 +1222,8 @@ class MakeXY(SimpleInterface):
                                  "rumination_persist_phenotype",
                                  "depression_persist_phenotype",
                                  "dep_1", "rum_1"]
+
+                drop_cols = drop_cols + ["id", "participant_id"]
 
                 [X, Y] = make_x_y(
                     self.inputs.json_dict,

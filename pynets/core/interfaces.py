@@ -1757,6 +1757,8 @@ class RegisterAtlasDWI(SimpleInterface):
         )
 
         namer_dir = "{}/tractography".format(dir_path)
+        if not op.isdir(namer_dir):
+            os.mkdir(namer_dir)
 
         if not os.path.isfile(f"{namer_dir}/"
                               f"{op.basename(self.inputs.fa_path)}"):
@@ -1769,16 +1771,16 @@ class RegisterAtlasDWI(SimpleInterface):
         if not os.path.isfile(f"{namer_dir}/"
                               f"{op.basename(self.inputs.ap_path)}"):
             copyfile(
-                self.inputs.ap_path.replace('_tmp', ''),
-                f"{namer_dir}/{op.basename(self.inputs.ap_path)}",
+                self.inputs.ap_path,
+                f"{namer_dir}/{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )
         if not os.path.isfile(f"{namer_dir}/"
                               f"{op.basename(self.inputs.B0_mask)}"):
             copyfile(
-                self.inputs.B0_mask.replace('_tmp', ''),
-                f"{namer_dir}/{op.basename(self.inputs.B0_mask)}",
+                self.inputs.B0_mask,
+                f"{namer_dir}/{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )
@@ -1799,7 +1801,6 @@ class RegisterAtlasDWI(SimpleInterface):
             )
 
         reg_tmp = [
-            fa_tmp_path,
             uatlas_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
@@ -1967,7 +1968,6 @@ class RegisterROIDWI(SimpleInterface):
                 t1w_brain_tmp_path2,
                 roi_in_t1w,
                 roi_in_dwi,
-                ap_tmp_path,
                 mni2t1w_warp_tmp_path2,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
@@ -1981,7 +1981,6 @@ class RegisterROIDWI(SimpleInterface):
         self._results["roi"] = roi_in_dwi
 
         reg_tmp = [
-            ap_tmp_path,
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
             t1wtissue2dwi_xfm_tmp_path,
@@ -2354,6 +2353,7 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
     atlas = traits.Any()
+
 
 class RegisterAtlasFunc(SimpleInterface):
     """Interface wrapper for RegisterAtlasFunc."""
@@ -2817,7 +2817,7 @@ class Tracking(SimpleInterface):
             use_hardlink=False)
 
         dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
-        dwi_data = dwi_img.get_fdata().astype('float32')
+        dwi_data = dwi_img.get_fdata(dtype=np.float32)
 
         # Load FA data
         fa_file_tmp_path = fname_presuffix(
@@ -3146,7 +3146,7 @@ class Tracking(SimpleInterface):
                     from pynets.dmri.dmri_utils import \
                         evaluate_streamline_plausibility
                     dwi_img = nib.load(dwi_file_tmp_path)
-                    dwi_data = dwi_img.get_fdata().astype('float32')
+                    dwi_data = dwi_img.get_fdata(dtype=np.float32)
                     orig_count = len(streamlines)
 
                     if self.inputs.waymask:

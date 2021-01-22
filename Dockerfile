@@ -87,12 +87,8 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" >> /etc/apt/sources.list \
-    && (apt-key adv --no-tty --keyserver keys.openpgp.org --recv-key 612DEFB798507F25 || true) \
-    && apt-get update -qq && apt-get install -y --no-install-recommends python3-graph-tool \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
-    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && echo "neuro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/neuro
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -132,6 +128,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         libgfortran \
         matplotlib \
         openblas \
+        graph-tool \
 #        dask \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \

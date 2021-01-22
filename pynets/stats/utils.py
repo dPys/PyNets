@@ -314,23 +314,32 @@ def node_files_search(node_files, emb_shape):
     return ixs_corr, node_dict_revised
 
 
-def retrieve_indices_from_parcellation(node_files, emb_shape, vox_size, template):
+def retrieve_indices_from_parcellation(node_files, emb_shape, template,
+                                       vox_size='2mm'):
     from pathlib import Path
-    from pynets.core.nodemaker import get_names_and_coords_of_parcels, \
-        parcel_naming
-    from pynets.core.utils import save_coords_and_labels_to_json
     dir_path = str(Path(node_files[0]).parent.parent)
-    template_parc = f"{dir_path}/parcellations/parcellation_space-{template}.nii.gz"
+    template_parc = f"{dir_path}/parcellations/parcellation_space-" \
+                    f"{template}.nii.gz"
+    node_file = make_node_dict_from_parcellation(template_parc, dir_path,
+                                                 vox_size)
     if os.path.isfile(template_parc):
-        coords, _, _, label_intensities = get_names_and_coords_of_parcels(
-            template_parc)
-        labels = parcel_naming(coords, vox_size)
-        node_file = save_coords_and_labels_to_json(coords, tuple(
-            zip(labels, label_intensities)), dir_path, network='all_nodes')
         ixs_corr, node_dict = node_files_search([node_file], emb_shape)
         return ixs_corr, node_dict
     else:
         return [], {}
+
+
+def make_node_dict_from_parcellation(parcellation, dir_path, vox_size='2mm'):
+    from pynets.core.nodemaker import get_names_and_coords_of_parcels, \
+        parcel_naming
+    from pynets.core.utils import save_coords_and_labels_to_json
+    coords, _, _, label_intensities = \
+        get_names_and_coords_of_parcels(parcellation)
+    labels = parcel_naming(coords, vox_size)
+    node_file = save_coords_and_labels_to_json(coords, labels,
+                                               dir_path, network='regen',
+                                               indices=label_intensities)
+    return node_file
 
 
 def parse_closest_ixs(node_files, emb_shape, vox_size='2mm',
@@ -346,15 +355,15 @@ def parse_closest_ixs(node_files, emb_shape, vox_size='2mm',
 
         if len(ixs_corr) != emb_shape:
             ixs_corr, node_dict = retrieve_indices_from_parcellation(
-                node_files, emb_shape, vox_size, template)
+                node_files, emb_shape, template, vox_size)
         return ixs_corr, node_dict
     else:
         print(UserWarning('Node files empty. Attempting to retrieve manually '
                           'from parcellations...'))
         ixs_corr, node_dict = retrieve_indices_from_parcellation(node_files,
                                                                  emb_shape,
-                                                                 vox_size,
-                                                                 template)
+                                                                 template,
+                                                                 vox_size)
         return ixs_corr, node_dict
 
 
@@ -561,9 +570,6 @@ def make_subject_dict(
     embedding_methods = hardcoded_params["embed"]
     metaparams_func = hardcoded_params["metaparams_func"]
     metaparams_dwi = hardcoded_params["metaparams_dwi"]
-
-    # metaparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
-    # metaparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     miss_frames_all = []
     subject_dict_all = {}

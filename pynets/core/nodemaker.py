@@ -1383,19 +1383,17 @@ def get_brainnetome_node_attributes(node_files, emb_shape):
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
     coords = [(i['coord']) for
-              i in node_dict]
+              i in node_dict.values()]
     if isinstance(node_dict[0]['label'], str):
         labels = [
             ast.literal_eval(
                 re.search('({.+})',
                           i['label']).group(0))[
                 'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
+            node_dict.values()]
     else:
-        labels = [
-            list(i['label'])[0][
-                'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
+        labels = [i['label']['BrainnetomeAtlasFan2016'] for i in
+                  node_dict.values()]
 
     return coords, labels, ixs
 

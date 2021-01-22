@@ -2169,7 +2169,7 @@ def dmri_connectometry(
                                        ])
     save_coords_and_labels_node = pe.Node(
         niu.Function(
-            input_names=["coords", "labels", "dir_path", "network"],
+            input_names=["coords", "labels", "dir_path", "network", "indices"],
             function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
@@ -4666,7 +4666,7 @@ def fmri_connectometry(
 
     save_coords_and_labels_node = pe.Node(
         niu.Function(
-            input_names=["coords", "labels", "dir_path", "network"],
+            input_names=["coords", "labels", "dir_path", "network", "indices"],
             function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),

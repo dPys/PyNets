@@ -48,7 +48,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    data = nib.load(dwi_file, mmap=False).get_fdata()
+    data = nib.load(dwi_file, mmap=False).get_fdata(dtype=np.float32)
 
     print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask, mmap=False)
@@ -144,8 +144,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     else:
         print("Generating anisotropic power map to use for registrations...")
         nodif_B0_img = nib.load(B0_mask)
-
-        dwi_data = np.asarray(img.dataobj, dtype=np.float32)
+        dwi_data = img.get_fdata(dtype=np.float32)
         for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
             dwi_data = np.delete(dwi_data, b0, 3)
 
@@ -161,6 +160,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
         del anisomap
+        img.uncache()
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
@@ -790,7 +790,7 @@ def streams2graph(
         atlas_name = f"{atlas}_stage-rawgraph"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     coords = np.array(coords)
     labels = np.array(labels)
