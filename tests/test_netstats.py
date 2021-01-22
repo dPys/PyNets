@@ -231,7 +231,7 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-@pytest.mark.parametrize("method", ["betweenness", "richclub", "eigenvector"])
+@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness", "eigenvector"])
 def test_most_important(method):
     """
     Test pruning for most important nodes functionality
@@ -310,13 +310,7 @@ def test_raw_mets():
                         average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient,
                         graph_number_of_cliques, transitivity]
     for i in metric_list_glob:
-<<<<<<< HEAD
-        net_met_val = netstats.raw_mets(G, i)
-=======
         net_met_val = netstats.raw_mets(G, i, engine='nx')
-        print(i)
-        print(net_met_val)
->>>>>>> upstream/development
         assert net_met_val is not np.nan
         assert type(net_met_val) == float
 
