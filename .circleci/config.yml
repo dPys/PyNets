@@ -246,12 +246,12 @@ jobs:
           command: |
             sudo apt-get upgrade
             sudo apt-get update
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt bionic main" | sudo tee -a /etc/apt/sources.list
+            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt xenial main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
-            sudo apt-get install -y libboost1.65-all-dev libcgal-dev
-            sudo apt-get install -y python3-graph-tool
+            sudo apt-get install -y libboost-all-dev libcgal-dev
+            sudo apt-get install -f -y python3-graph-tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
