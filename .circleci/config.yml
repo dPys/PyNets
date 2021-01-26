@@ -191,6 +191,8 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
+            python -v
+            which python
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
       - run:
@@ -242,10 +244,10 @@ jobs:
           name: Install graph_tool
           no_output_timeout: 30m
           command: |
-            sudo echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" >> /etc/apt/sources.list
+            sudo echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt xenial main" >> /etc/apt/sources.list
             sudo apt-key adv --keyserver keys.openpgp.org --recv-key 612DEFB798507F25
             sudo apt-get update -qq
-            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/bin/python3.6 10
+            sudo update-alternatives --install /usr/bin/python python /usr/local/bin/python3 10
             sudo apt-get install -y python3-graph-tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
