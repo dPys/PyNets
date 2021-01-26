@@ -40,7 +40,7 @@ def main():
     int_consist = False
     modality = 'dwi'
 
-    embedding_types = ['betweenness']
+    embedding_types = ['degree']
     #rsns = ['language']
     rsns = ['triple', 'kmeans']
     template = 'CN200'

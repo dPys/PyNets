@@ -245,6 +245,7 @@ jobs:
             sudo echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" >> /etc/apt/sources.list
             sudo apt-key adv --keyserver keys.openpgp.org --recv-key 612DEFB798507F25
             sudo apt-get update -qq
+            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/bin/python3.6 10
             sudo apt-get install -y python3-graph-tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime

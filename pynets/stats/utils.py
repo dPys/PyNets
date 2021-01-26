@@ -378,7 +378,7 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
             if not isinstance(rsn_dict["data"], np.ndarray):
                 if rsn_dict["data"].endswith('.npy'):
-                    rsn_dict["data"] = np.load(rsn_dict["data"])
+                    rsn_dict["data"] = np.load(rsn_dict["data"], allow_pickle=True)
                 elif rsn_dict["data"].endswith('.csv'):
                     rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])
                                                 ).reshape(-1, 1)
@@ -657,10 +657,10 @@ def make_subject_dict(
                 del outs, df_top, miss_frames
                 gc.collect()
                 shutil.rmtree(cache_dir, ignore_errors=True)
-            del ses_name, grid, hyperparam_dict
-            gc.collect()
-        del alg, metaparams
-        gc.collect()
+                del ses_name, grid, hyperparam_dict
+                gc.collect()
+            del alg
+        del metaparams
     del modality
     gc.collect()
 
@@ -818,7 +818,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 sorted_embeddings = sorted(embeddings,
                                            key=os.path.getmtime)
                 print(
-                    f"Multiple functional embeddings found for {ID} and"
+                    f"Multiple structural embeddings found for {ID} and"
                     f" {comb_tuple}:\n{embeddings}\nTaking the most"
                     f" recent..."
                 )
@@ -826,15 +826,33 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
 
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-            if embedding.endswith('.npy'):
-                emb_shape = np.load(embedding).shape[0]
-            elif embedding.endswith('.csv'):
-                emb_shape = len(pd.read_csv(embedding).columns)
-            else:
-                raise NotImplementedError(f"Format of {embedding} "
-                                          f"not recognized! "
-                                          f"Only .npy and .csv "
-                                          f"currently supported.")
+            try:
+                if embedding.endswith('.npy'):
+                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                elif embedding.endswith('.csv'):
+                    emb_shape = len(pd.read_csv(embedding).columns)
+                else:
+                    raise NotImplementedError(f"Format of {embedding} "
+                                              f"not recognized! "
+                                              f"Only .npy and .csv "
+                                              f"currently supported.")
+            except:
+                print(
+                    f"{Fore.RED}Failed to load functional embeddings found "
+                    f"for ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, and "
+                    f"UNIVERSE: {comb_tuple}...{Style.RESET_ALL}"
+                )
+                missingness_frame = missingness_frame.append(
+                    {
+                        "id": ID,
+                        "ses": ses,
+                        "modality": modality,
+                        "alg": alg,
+                        "grid": comb_tuple,
+                    },
+                    ignore_index=True,
+                )
+                return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        atlas, res, emb_shape)
@@ -1033,15 +1051,33 @@ def func_grabber(comb, subject_dict, missingness_frame,
 
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-            if embedding.endswith('.npy'):
-                emb_shape = np.load(embedding).shape[0]
-            elif embedding.endswith('.csv'):
-                emb_shape = len(pd.read_csv(embedding).columns)
-            else:
-                raise NotImplementedError(f"Format of {embedding} "
-                                          f"not recognized! "
-                                          f"Only .npy and .csv "
-                                          f"currently supported.")
+            try:
+                if embedding.endswith('.npy'):
+                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                elif embedding.endswith('.csv'):
+                    emb_shape = len(pd.read_csv(embedding).columns)
+                else:
+                    raise NotImplementedError(f"Format of {embedding} "
+                                              f"not recognized! "
+                                              f"Only .npy and .csv "
+                                              f"currently supported.")
+            except:
+                print(
+                    f"{Fore.RED}Failed to load functional embeddings found "
+                    f"for ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, and "
+                    f"UNIVERSE: {comb_tuple}...{Style.RESET_ALL}"
+                )
+                missingness_frame = missingness_frame.append(
+                    {
+                        "id": ID,
+                        "ses": ses,
+                        "modality": modality,
+                        "alg": alg,
+                        "grid": comb_tuple,
+                    },
+                    ignore_index=True,
+                )
+                return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
                                        atlas, res, emb_shape)
