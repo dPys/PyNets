@@ -249,7 +249,7 @@ jobs:
             sudo apt-get update -qq
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
             sudo apt-get install -y libboost-all-dev libcgal-dev
-            sudo apt-get install -–no-install-recommends -y python3-graph-tool
+            sudo apt-get install -–no-install-recommends python3-graph-tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
