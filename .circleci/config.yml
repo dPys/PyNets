@@ -243,7 +243,7 @@ jobs:
           name: Install graph_tool
           no_output_timeout: 30m
           command: |
-            sudo echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt xenial main" >> /etc/apt/sources.list
+            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt xenial main" | sudo tee -a /etc/apt/sources.list
             sudo apt-key adv --keyserver keys.openpgp.org --recv-key 612DEFB798507F25
             sudo apt-get update -qq
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
