@@ -2029,7 +2029,7 @@ def extractnetstats(
             ]
             metric_dict_global = yaml.load(stream)
             metric_list_global = metric_dict_global["metric_list_global"]
-            if len(metric_list_global) > 0 and None not in metric_list_global:
+            if metric_list_global is not None:
                 metric_list_global = [
                                          getattr(networkx.algorithms, i)
                                          for i in metric_list_global
@@ -2057,6 +2057,7 @@ def extractnetstats(
                     f"\n{metric_list_global_names}\n")
             else:
                 print("No global topographic metrics selected!")
+                metric_list_global = []
                 metric_list_global_names = []
         except FileNotFoundError as e:
             import sys
@@ -2070,10 +2071,11 @@ def extractnetstats(
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
-            if len(metric_list_nodal) > 0:
+            if metric_list_nodal is not None:
                 print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
             else:
                 print("No nodal topographic metrics selected!")
+                metric_list_nodal = []
                 metric_list_names = []
         except FileNotFoundError as e:
             import sys
@@ -2158,10 +2160,9 @@ def extractnetstats(
 
             if len(metric_list_nodal) > 0:
                 # Participation Coefficient by louvain community
-                if "participation_coefficient" in metric_list_nodal and \
-                    ci is not None:
+                if ci and "participation_coefficient" in metric_list_nodal:
                     try:
-                        if ci is None:
+                        if not ci:
                             raise KeyError(
                                 "Participation coefficient cannot be "
                                 "calculated for G in the absence of a "
@@ -2180,17 +2181,16 @@ def extractnetstats(
                         # random.randint(1, 400), '.npy'), in_mat)
                         pass
                 else:
-                    if ci is None and "participation_coefficient" in \
+                    if not ci and "participation_coefficient" in \
                         metric_list_nodal:
                         print(UserWarning("Skipping participation coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
 
                 # Diversity Coefficient by louvain community
-                if "diversity_coefficient" in metric_list_nodal and ci is \
-                    not None:
+                if ci and "diversity_coefficient" in metric_list_nodal:
                     try:
-                        if ci is None:
+                        if not ci:
                             raise KeyError(
                                 "Diversity coefficient cannot be calculated "
                                 "for G in the absence of a community "
@@ -2208,7 +2208,7 @@ def extractnetstats(
                         # random.randint(1, 400), '.npy'), in_mat)
                         pass
                 else:
-                    if ci is None and "diversity_coefficient" in \
+                    if not ci and "diversity_coefficient" in \
                         metric_list_nodal:
                         print(UserWarning("Skipping diversity coefficient "
                                           "because community affiliation is "
@@ -2426,7 +2426,6 @@ def collect_pandas_df_make(
       NeuroImage. https://doi.org/10.1016/j.neuroimage.2015.05.011
 
     """
-    import sys
     import gc
     import os
     import os.path as op

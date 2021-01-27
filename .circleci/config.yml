@@ -249,8 +249,9 @@ jobs:
             sudo apt-get update
             sudo apt-get upgrade
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
-            sudo apt-get install -y libboost-all-dev libcgal-dev
-            sudo apt-get install --yes --no-install-recommends --allow-unauthenticated python3-graph-tool libcgal12- libboost-context1.62.0- libboost-coroutine1.62.0- libboost-iostreams1.62.0- libboost-python1.62.0- libboost-regex1.62.0- libboost-thread1.62.0- libcgal12- libboost-graph1.62.0- libboost-system1.62.0-
+            sudo apt-get install -y libboost-dev libboost-all-dev libcgal-dev
+            sudo apt-get install --yes --no-install-recommends --allow-unauthenticated python3-graph-tool
+            sudo apt-get install -f
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
