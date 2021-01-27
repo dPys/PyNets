@@ -248,14 +248,8 @@ jobs:
             echo "deb http://archive.ubuntu.com/ubuntu xenial-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
-            # install boost
-            cd /tmp
-            wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
-            tar xzvf boost_1_65_1.tar.gz
-            cd boost_1_65_1
-            sudo ./bootstrap.sh --prefix=/usr/local
-            sudo ./b2
-            sudo ./b2 install
+            sudo apt-get install aptitude
+            sudo aptitude install libboost-all-dev
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
             sudo apt-get install --yes --no-install-recommends --allow-unauthenticated python3-graph-tool
       - run:
