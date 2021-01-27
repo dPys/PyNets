@@ -2133,9 +2133,7 @@ def extractnetstats(
                 # Iteratively run functions from above metric list that
                 # generate single scalar output
                 net_met_val_list_final, metric_list_names = \
-                    iterate_nx_global_measures(
-                    G, metric_list_global
-                )
+                    iterate_nx_global_measures(G, metric_list_global)
 
                 # Run miscellaneous functions that generate multiple outputs
                 # Calculate modularity using the Louvain algorithm
@@ -2143,9 +2141,8 @@ def extractnetstats(
                     try:
                         start_time = time.time()
                         net_met_val_list_final, metric_list_names, ci = \
-                            get_community(
-                            G, net_met_val_list_final, metric_list_names
-                        )
+                            get_community(G, net_met_val_list_final,
+                                          metric_list_names)
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Louvain modularity calculation is undefined for"
@@ -2157,6 +2154,8 @@ def extractnetstats(
                         pass
                 else:
                     ci = None
+            else:
+                ci = None
 
             if len(metric_list_nodal) > 0:
                 # Participation Coefficient by louvain community
@@ -2169,10 +2168,8 @@ def extractnetstats(
                                 "community affiliation vector")
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
-                            get_participation(
-                            in_mat, ci, metric_list_names,
-                                net_met_val_list_final
-                        )
+                            get_participation(in_mat, ci, metric_list_names,
+                                              net_met_val_list_final)
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Participation coefficient cannot be calculated "
@@ -2182,7 +2179,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "participation_coefficient" in \
-                        metric_list_nodal:
+                         metric_list_nodal:
                         print(UserWarning("Skipping participation coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2209,7 +2206,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "diversity_coefficient" in \
-                        metric_list_nodal:
+                         metric_list_nodal:
                         print(UserWarning("Skipping diversity coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2240,9 +2237,8 @@ def extractnetstats(
                     try:
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
-                            get_local_efficiency(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                            get_local_efficiency(G, metric_list_names,
+                                                 net_met_val_list_final)
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Local efficiency cannot be calculated for G")
@@ -2285,7 +2281,7 @@ def extractnetstats(
 
                 # Betweenness Centrality
                 if "betweenness_centrality" in metric_list_nodal and \
-                    G_len is not None:
+                     G_len is not None:
                     try:
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
@@ -2301,7 +2297,7 @@ def extractnetstats(
                         pass
                 else:
                     if G_len is None and "betweenness_centrality" in \
-                        metric_list_nodal:
+                         metric_list_nodal:
                         print(UserWarning("Skipping betweenness centrality "
                                           "because length matrix is empty for "
                                           "G..."))
