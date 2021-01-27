@@ -245,7 +245,6 @@ jobs:
           no_output_timeout: 30m
           command: |
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" | sudo tee -a /etc/apt/sources.list
-            echo "deb-src [ arch=amd64 ] https://downloads.skewed.de/apt stretch main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
             sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/versions/3.6.5/bin/python 10
