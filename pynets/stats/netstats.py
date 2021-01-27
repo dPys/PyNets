@@ -2029,31 +2029,35 @@ def extractnetstats(
             ]
             metric_dict_global = yaml.load(stream)
             metric_list_global = metric_dict_global["metric_list_global"]
-            metric_list_global = [
-                                     getattr(networkx.algorithms, i)
-                                     for i in metric_list_global
-                                     if i in nx_algs
-                                 ] + [
-                                     getattr(pynets.stats.netstats, i)
-                                     for i in metric_list_global
-                                     if i in pynets_algs
-                                 ]
-            metric_list_global_names = [
-                str(i).split("<function ")[1].split(" at")[0]
-                for i in metric_list_global
-            ]
-            if binary is False:
-                from functools import partial
-
+            if len(metric_list_global) > 0 and None not in metric_list_global:
                 metric_list_global = [
-                    partial(i, weight="weight")
-                    if "weight" in i.__code__.co_varnames
-                    else i
+                                         getattr(networkx.algorithms, i)
+                                         for i in metric_list_global
+                                         if i in nx_algs
+                                     ] + [
+                                         getattr(pynets.stats.netstats, i)
+                                         for i in metric_list_global
+                                         if i in pynets_algs
+                                     ]
+                metric_list_global_names = [
+                    str(i).split("<function ")[1].split(" at")[0]
                     for i in metric_list_global
                 ]
-            print(
-                f"\n\nGlobal Topographic Metrics:"
-                f"\n{metric_list_global_names}\n")
+                if binary is False:
+                    from functools import partial
+
+                    metric_list_global = [
+                        partial(i, weight="weight")
+                        if "weight" in i.__code__.co_varnames
+                        else i
+                        for i in metric_list_global
+                    ]
+                print(
+                    f"\n\nGlobal Topographic Metrics:"
+                    f"\n{metric_list_global_names}\n")
+            else:
+                print("No global topographic metrics selected!")
+                metric_list_global_names = []
         except FileNotFoundError as e:
             import sys
             print(e, "Failed to parse global_graph_measures.yaml")
@@ -2066,7 +2070,11 @@ def extractnetstats(
         try:
             metric_dict_nodal = yaml.load(stream)
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
-            print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
+            if len(metric_list_nodal) > 0:
+                print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
+            else:
+                print("No nodal topographic metrics selected!")
+                metric_list_names = []
         except FileNotFoundError as e:
             import sys
             print(e, "Failed to parse local_graph_measures.yaml")
@@ -2104,11 +2112,14 @@ def extractnetstats(
         # Deal with empty graphs
         if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
             G.number_of_edges() == 0 or len(G) < 3:
+            if len(metric_list_global_names) == 0:
+                metric_list_global_names = [""]
             out_path_neat = save_netmets(
                 dir_path, est_path, metric_list_global_names,
                 len(metric_list_global_names)*[np.nan],
             )
-            print(UserWarning(f"Warning: Empty graph detected for {ID}: {est_path}..."))
+            print(UserWarning(f"Warning: Empty graph detected for {ID}: "
+                              f"{est_path}..."))
         else:
             try:
                 in_mat_len, G_len = cg.create_length_matrix()
@@ -2116,204 +2127,261 @@ def extractnetstats(
                 print(e, f"Failed to create length matrix for {est_path}.")
                 G_len = None
 
-            # Iteratively run functions from above metric list that generate single
-            # scalar output
-            net_met_val_list_final, metric_list_names = iterate_nx_global_measures(
-                G, metric_list_global
-            )
+            if len(metric_list_global) > 0:
+                # Iteratively run functions from above metric list that
+                # generate single scalar output
+                net_met_val_list_final, metric_list_names = \
+                    iterate_nx_global_measures(
+                    G, metric_list_global
+                )
 
-            # Run miscellaneous functions that generate multiple outputs
-            # Calculate modularity using the Louvain algorithm
-            if "louvain_modularity" in metric_list_global:
-                try:
-                    start_time = time.time()
-                    net_met_val_list_final, metric_list_names, ci = get_community(
-                        G, net_met_val_list_final, metric_list_names
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Louvain modularity calculation is undefined for G")
-                    # np.save("%s%s%s" % ('/tmp/community_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
+                # Run miscellaneous functions that generate multiple outputs
+                # Calculate modularity using the Louvain algorithm
+                if "louvain_modularity" in metric_list_global:
+                    try:
+                        start_time = time.time()
+                        net_met_val_list_final, metric_list_names, ci = \
+                            get_community(
+                            G, net_met_val_list_final, metric_list_names
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Louvain modularity calculation is undefined for"
+                              " G")
+                        # np.save("%s%s%s" % ('/tmp/community_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        ci = None
+                        pass
+                else:
                     ci = None
-                    pass
+
+            if len(metric_list_nodal) > 0:
+                # Participation Coefficient by louvain community
+                if "participation_coefficient" in metric_list_nodal and \
+                    ci is not None:
+                    try:
+                        if ci is None:
+                            raise KeyError(
+                                "Participation coefficient cannot be "
+                                "calculated for G in the absence of a "
+                                "community affiliation vector")
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_participation(
+                            in_mat, ci, metric_list_names,
+                                net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Participation coefficient cannot be calculated "
+                              "for G")
+                        # np.save("%s%s%s" % ('/tmp/partic_coeff_failure',
+                        # random.randint(1, 400), '.npy'), in_mat)
+                        pass
+                else:
+                    if ci is None and "participation_coefficient" in \
+                        metric_list_nodal:
+                        print(UserWarning("Skipping participation coefficient "
+                                          "because community affiliation is "
+                                          "empty for G..."))
+
+                # Diversity Coefficient by louvain community
+                if "diversity_coefficient" in metric_list_nodal and ci is \
+                    not None:
+                    try:
+                        if ci is None:
+                            raise KeyError(
+                                "Diversity coefficient cannot be calculated "
+                                "for G in the absence of a community "
+                                "affiliation vector")
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_diversity(in_mat, ci, metric_list_names,
+                                net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Diversity coefficient cannot be calculated for "
+                              "G")
+                        # np.save("%s%s%s" % ('/tmp/div_coeff_failure',
+                        # random.randint(1, 400), '.npy'), in_mat)
+                        pass
+                else:
+                    if ci is None and "diversity_coefficient" in \
+                        metric_list_nodal:
+                        print(UserWarning("Skipping diversity coefficient "
+                                          "because community affiliation is "
+                                          "empty for G..."))
+
+                # # Link communities
+                # if "link_communities" in metric_list_nodal:
+                #     try:
+                #         if ci is None:
+                #             raise KeyError(
+                #                 "Link communities cannot be calculated for
+                #                 G in the absence of a community affiliation
+                #                 vector")
+                #         start_time = time.time()
+                #         metric_list_names, net_met_val_list_final =
+                #         get_link_communities(
+                #             in_mat, ci, metric_list_names,
+                #             net_met_val_list_final
+                #         )
+                #         print(f"{np.round(time.time() - start_time, 3)}s")
+                #     except BaseException:
+                #         print("Link communities cannot be calculated for G")
+                #         # np.save("%s%s%s" % ('/tmp/link_comms_failure',
+                #         random.randint(1, 400), '.npy'), in_mat)
+                #         pass
+
+                # Local Efficiency
+                if "local_efficiency" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_local_efficiency(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Local efficiency cannot be calculated for G")
+                        # np.save("%s%s%s" % ('/tmp/local_eff_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+
+                # Local Clustering
+                if "local_clustering" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_clustering(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Local clustering cannot be calculated for G")
+                        # np.save("%s%s%s" % ('/tmp/local_clust_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+
+                # Degree centrality
+                if "degree_centrality" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_degree_centrality(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Degree centrality cannot be calculated for G")
+                        # np.save("%s%s%s" % ('/tmp/degree_cent_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+
+                # Betweenness Centrality
+                if "betweenness_centrality" in metric_list_nodal and \
+                    G_len is not None:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_betweenness_centrality(
+                            G_len, metric_list_names, net_met_val_list_final)
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Betweenness centrality cannot be calculated for"
+                              " G")
+                        # np.save("%s%s%s" % ('/tmp/betw_cent_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G_len)))
+                        pass
+                else:
+                    if G_len is None and "betweenness_centrality" in \
+                        metric_list_nodal:
+                        print(UserWarning("Skipping betweenness centrality "
+                                          "because length matrix is empty for "
+                                          "G..."))
+
+                # Eigenvector Centrality
+                if "eigenvector_centrality" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_eigen_centrality(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Eigenvector centrality cannot be calculated for"
+                              " G")
+                        # np.save("%s%s%s" % ('/tmp/eig_cent_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+
+                # Communicability Centrality
+                if "communicability_centrality" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_comm_centrality(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Communicability centrality cannot be "
+                              "calculated for G")
+                        # np.save("%s%s%s" % ('/tmp/comm_cent_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+
+                # Rich club coefficient
+                if "rich_club_coefficient" in metric_list_nodal:
+                    try:
+                        start_time = time.time()
+                        metric_list_names, net_met_val_list_final = \
+                            get_rich_club_coeff(
+                            G, metric_list_names, net_met_val_list_final
+                        )
+                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
+                    except BaseException:
+                        print("Rich club coefficient cannot be calculated for "
+                              "G")
+                        # np.save("%s%s%s" % ('/tmp/rich_club_failure',
+                        # random.randint(1, 400), '.npy'),
+                        #         np.array(nx.to_numpy_matrix(G)))
+                        pass
+            if len(metric_list_nodal) > 0 or len(metric_list_global) > 0:
+                out_path_neat = save_netmets(
+                    dir_path, est_path, metric_list_names,
+                    net_met_val_list_final
+                )
+                # Cleanup
+                if tmp_graph_path:
+                    if os.path.isfile(tmp_graph_path):
+                        os.remove(tmp_graph_path)
+
+                del net_met_val_list_final, metric_list_names, \
+                    metric_list_global
+                gc.collect()
             else:
-                ci = None
-
-            # Participation Coefficient by louvain community
-            if "participation_coefficient" in metric_list_nodal and ci is not None:
-                try:
-                    if ci is None:
-                        raise KeyError(
-                            "Participation coefficient cannot be calculated for G in"
-                            " the absence of a community affiliation vector")
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_participation(
-                        in_mat, ci, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Participation coefficient cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/partic_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
-                    pass
-            else:
-                if ci is None and "participation_coefficient" in metric_list_nodal:
-                    print(UserWarning("Skipping participation coefficient because community affiliation is empty for G..."))
-
-            # Diversity Coefficient by louvain community
-            if "diversity_coefficient" in metric_list_nodal and ci is not None:
-                try:
-                    if ci is None:
-                        raise KeyError(
-                            "Diversity coefficient cannot be calculated for G in the"
-                            " absence of a community affiliation vector")
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_diversity(
-                        in_mat, ci, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Diversity coefficient cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/div_coeff_failure', random.randint(1, 400), '.npy'), in_mat)
-                    pass
-            else:
-                if ci is None and "diversity_coefficient" in metric_list_nodal:
-                    print(UserWarning("Skipping diversity coefficient because community affiliation is empty for G..."))
-
-            # # Link communities
-            # if "link_communities" in metric_list_nodal:
-            #     try:
-            #         if ci is None:
-            #             raise KeyError(
-            #                 "Link communities cannot be calculated for G in the"
-            #                 " absence of a community affiliation vector")
-            #         start_time = time.time()
-            #         metric_list_names, net_met_val_list_final = get_link_communities(
-            #             in_mat, ci, metric_list_names, net_met_val_list_final
-            #         )
-            #         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-            #     except BaseException:
-            #         print("Link communities cannot be calculated for G")
-            #         # np.save("%s%s%s" % ('/tmp/link_comms_failure', random.randint(1, 400), '.npy'), in_mat)
-            #         pass
-
-            # Local Efficiency
-            if "local_efficiency" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_local_efficiency(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Local efficiency cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/local_eff_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            # Local Clustering
-            if "local_clustering" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_clustering(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Local clustering cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/local_clust_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            # Degree centrality
-            if "degree_centrality" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_degree_centrality(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Degree centrality cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/degree_cent_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            # Betweenness Centrality
-            if "betweenness_centrality" in metric_list_nodal and G_len is not None:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_betweenness_centrality(
-                        G_len, metric_list_names, net_met_val_list_final)
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Betweenness centrality cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/betw_cent_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G_len)))
-                    pass
-            else:
-                if G_len is None and "betweenness_centrality" in metric_list_nodal:
-                    print(UserWarning("Skipping betweenness centrality because length matrix is empty for G..."))
-
-            # Eigenvector Centrality
-            if "eigenvector_centrality" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_eigen_centrality(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Eigenvector centrality cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/eig_cent_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            # Communicability Centrality
-            if "communicability_centrality" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_comm_centrality(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Communicability centrality cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/comm_cent_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            # Rich club coefficient
-            if "rich_club_coefficient" in metric_list_nodal:
-                try:
-                    start_time = time.time()
-                    metric_list_names, net_met_val_list_final = get_rich_club_coeff(
-                        G, metric_list_names, net_met_val_list_final
-                    )
-                    print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                except BaseException:
-                    print("Rich club coefficient cannot be calculated for G")
-                    # np.save("%s%s%s" % ('/tmp/rich_club_failure', random.randint(1, 400), '.npy'),
-                    #         np.array(nx.to_numpy_matrix(G)))
-                    pass
-
-            out_path_neat = save_netmets(
-                dir_path, est_path, metric_list_names, net_met_val_list_final
-            )
-
-            # Cleanup
-            if tmp_graph_path:
-                if os.path.isfile(tmp_graph_path):
-                    os.remove(tmp_graph_path)
-
-            del net_met_val_list_final, metric_list_names, metric_list_global
-            gc.collect()
+                out_path_neat = save_netmets(
+                    dir_path, est_path, [""], [np.nan],
+                )
     else:
-        print(UserWarning(f"Warning: Empty graph detected for {ID}: {est_path}..."))
+        print(UserWarning(f"Warning: Empty graph detected for {ID}: "
+                          f"{est_path}..."))
+        if not metric_list_names:
+            metric_list_names = [""]
         dir_path = op.dirname(op.realpath(est_path))
         out_path_neat = save_netmets(
-            dir_path, est_path, metric_list_global_names,
-            len(metric_list_global_names) * [np.nan],
+            dir_path, est_path, metric_list_names,
+            len(metric_list_names) * [np.nan],
         )
     return out_path_neat
 
