@@ -2076,7 +2076,6 @@ def extractnetstats(
             else:
                 print("No nodal topographic metrics selected!")
                 metric_list_nodal = []
-                metric_list_names = []
         except FileNotFoundError as e:
             import sys
             print(e, "Failed to parse local_graph_measures.yaml")
@@ -2155,6 +2154,8 @@ def extractnetstats(
                 else:
                     ci = None
             else:
+                metric_list_names = []
+                net_met_val_list_final = []
                 ci = None
 
             if len(metric_list_nodal) > 0:
