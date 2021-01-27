@@ -32,13 +32,13 @@ def main():
         sys.exit(1)
 
     #### Parse inputs
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/archives/triple_network'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
     disc = True
     int_consist = False
-    modality = 'dwi'
+    modality = 'func'
 
     embedding_types = ['betweenness']
     #rsns = ['language']
@@ -130,11 +130,11 @@ def main():
                 final_missingness_summary = pd.Series()
         ids = sub_dict_clean.keys()
 
-        print(f"MODALITY: {modality}")
+        # print(f"MODALITY: {modality}")
         metaparams = eval(f"metaparams_{modality}")
         metaparam_dict = {}
 
-        print(f"EMBEDDING TYPE: {embedding_type}")
+        # print(f"EMBEDDING TYPE: {embedding_type}")
         # if os.path.isfile(f"{base_dir}/grid_clean_{modality}_{alg}.csv"):
         #     continue
 

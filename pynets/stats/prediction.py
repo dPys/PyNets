@@ -1192,11 +1192,11 @@ class MakeXY(SimpleInterface):
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
-                                 "dep_1", "rum_1", "dep_2", "rum_2"]
+                                 "dep_2", "rum_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
-                                 "dep_1", "rum_1", "dep_2", "rum_2"]
+                                 "rum_1", "dep_2", "rum_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1216,7 +1216,7 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "dep_2", "dep_1"]
+                                 "dep_2"]
                 else:
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",

@@ -59,7 +59,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 2
+    - 1
 graph_file_format:
     - 'npy'
 low_pass:
@@ -80,10 +80,10 @@ embed:
     - 'ASE'
     - 'OMNI'
     - 'MASE'
-    - 'eigenvector_centrality'
-    - 'degree_centrality'
-    - 'betweenness_centrality'
-    - 'local_clustering'
+    - 'eigenvector'
+    - 'degree'
+    - 'betweenness'
+    - 'clustering'
 metaparams_func:
     - 'rsn'
     - 'res'
