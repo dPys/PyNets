@@ -248,11 +248,14 @@ jobs:
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
-            sudo update-alternatives --install /usr/bin/python3 python3 /opt/circleci/.pyenv/versions/3.6.5/bin/python3 10
+            sudo update-alternatives --install /usr/bin/python3 python3 /opt/circleci/.pyenv/shims/python3 10
+            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/shims/python3 5
+            which python
             which python3
             python --version
+            python3 --version
             sudo apt-get install --yes --no-install-recommends --allow-unauthenticated python3-graph-tool
-            python -c "import graph_tool as gt"
+            python -c "import graph_tool.all as gt"
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
