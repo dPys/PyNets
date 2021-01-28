@@ -253,11 +253,11 @@ jobs:
             sudo update-alternatives --install /usr/local/bin/python3 python /opt/circleci/.pyenv/shims/python3.6 10
             which python
             python --version
-            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
+            sudo apt-get install --allow-unauthenticated -y apt-file libatlas-base-dev python3-graph-tool
             sudo apt-get update
             source $BASH_ENV
-            apt-file search graph_tool
             python -c "import graph_tool.all as gt"
+            sudo apt-file search graph_tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
