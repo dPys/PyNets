@@ -185,7 +185,7 @@ jobs:
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
-            pyenv global 3.6.5
+            pyenv global system 3.6.5
             echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
@@ -195,6 +195,20 @@ jobs:
             which python
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
+      - run:
+          name: Install graph_tool
+          no_output_timeout: 30m
+          command: |
+            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
+            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
+            sudo apt-get update
+            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/shims/python3.6 5
+            sudo update-alternatives --install /usr/bin/python3 python /opt/circleci/.pyenv/shims/python3.6 10
+            which python
+            python --version
+            sudo apt-get install --allow-unauthenticated -y apt-file libatlas-base-dev python3-graph-tool
+            sudo apt-file search graph_tool
+            python -c "import graph_tool.all as gt"
       - run:
           name: Install pytest
           command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized coverage
@@ -241,23 +255,6 @@ jobs:
             sudo chmod 777 /usr/local
             sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
             sudo chmod 777 -R /usr/local/fsl/bin
-      - run:
-          name: Install graph_tool
-          no_output_timeout: 30m
-          command: |
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
-            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update
-            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/shims/python3.6 8
-            sudo update-alternatives --install /usr/local/bin/python python /opt/circleci/.pyenv/shims/python3.6 9
-            sudo update-alternatives --install /usr/local/bin/python3 python /opt/circleci/.pyenv/shims/python3.6 10
-            which python
-            python --version
-            sudo apt-get install --allow-unauthenticated -y apt-file libatlas-base-dev python3-graph-tool
-            sudo apt-get update
-            source $BASH_ENV
-            python -c "import graph_tool.all as gt"
-            sudo apt-file search graph_tool
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
