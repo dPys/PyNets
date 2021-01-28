@@ -159,7 +159,7 @@ def main():
 
         with Parallel(
             n_jobs=-1, require="sharedmem", backend='threading',
-            verbose=10, max_nbytes='20000M',
+            verbose=10, max_nbytes='200000M',
             temp_folder=cache_dir
         ) as parallel:
             outs = parallel(

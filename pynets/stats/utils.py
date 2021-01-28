@@ -272,6 +272,7 @@ def get_ixs_from_node_dict(node_dict):
 
 def node_files_search(node_files, emb_shape):
     import os
+    import gc
     import json
 
     if len(node_files) == 1:
@@ -310,6 +311,8 @@ def node_files_search(node_files, emb_shape):
                 continue
             ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
             j += 1
+    del f
+    gc.collect()
 
     return ixs_corr, node_dict_revised
 
@@ -620,14 +623,12 @@ def make_subject_dict(
                 modality_grids[modality] = grid
 
                 par_dict = subject_dict_all.copy()
-                cache_dir = tempfile.mkdtemp()
 
                 with Parallel(
                     n_jobs=-1,
                     backend='loky',
                     verbose=1,
-                    max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
-                    temp_folder=cache_dir,
+                    # max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M"
                 ) as parallel:
                     outs_tup = parallel(
                         delayed(populate_subject_dict)(
@@ -644,20 +645,15 @@ def make_subject_dict(
                         )
                         for id in ids
                     )
-                del par_dict
-                gc.collect()
                 outs = [i[0] for i in outs_tup]
                 miss_frames = [i[1] for i in outs_tup if not i[1].empty]
-                del outs_tup
                 if len(miss_frames) > 1:
                     miss_frames = pd.concat(miss_frames)
                 miss_frames_all.append(miss_frames)
                 for d in outs:
                     subject_dict_all = dict(mergedicts(subject_dict_all, d))
-                del outs, df_top, miss_frames
-                gc.collect()
-                shutil.rmtree(cache_dir, ignore_errors=True)
-                del ses_name, grid, hyperparam_dict
+                del par_dict, outs_tup, outs, df_top, miss_frames, ses_name, \
+                    grid, hyperparam_dict
                 gc.collect()
             del alg
         del metaparams
@@ -727,6 +723,7 @@ def populate_subject_dict(
                                                              missingness_frame,
                         ID, ses, modality, alg, mets,
                         thr_type, base_dir, template, df_top)
+            gc.collect()
     # Structural case
     elif modality == "dwi":
         # with Parallel(
@@ -747,6 +744,7 @@ def populate_subject_dict(
                                                             missingness_frame,
                         ID, ses, modality, alg, mets,
                         thr_type, base_dir, template, df_top)
+            gc.collect()
     del modality, ID, ses, df_top
     gc.collect()
     return subject_dict, missingness_frame
@@ -828,14 +826,19 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                    with np.load(embedding, allow_pickle=True) as a:
+                        emb_shape = a.shape[0]
+                    del a
                 elif embedding.endswith('.csv'):
-                    emb_shape = len(pd.read_csv(embedding).columns)
+                    with open(embedding, "r+") as a:
+                        emb_shape = len(pd.read_csv(a).columns)
+                    a.close()
                 else:
                     raise NotImplementedError(f"Format of {embedding} "
                                               f"not recognized! "
                                               f"Only .npy and .csv "
                                               f"currently supported.")
+                gc.collect()
             except:
                 print(
                     f"{Fore.RED}Failed to load functional embeddings found "
@@ -1053,14 +1056,19 @@ def func_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                    with np.load(embedding, allow_pickle=True) as a:
+                        emb_shape = a.shape[0]
+                    del a
                 elif embedding.endswith('.csv'):
-                    emb_shape = len(pd.read_csv(embedding).columns)
+                    with open(embedding, "r+") as a:
+                        emb_shape = len(pd.read_csv(a).columns)
+                    a.close()
                 else:
                     raise NotImplementedError(f"Format of {embedding} "
                                               f"not recognized! "
                                               f"Only .npy and .csv "
                                               f"currently supported.")
+                gc.collect()
             except:
                 print(
                     f"{Fore.RED}Failed to load functional embeddings found "
