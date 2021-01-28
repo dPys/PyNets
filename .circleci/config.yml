@@ -248,8 +248,8 @@ jobs:
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
-            sudo update-alternatives --install /opt/circleci/.pyenv/bin/python python /opt/circleci/.pyenv/shims/python3.6 9
-            sudo update-alternatives --install /opt/circleci/.pyenv/bin/python3 python3 /opt/circleci/.pyenv/shims/python3.6 10
+            sudo update-alternatives --install /usr/bin/python python /opt/circleci/.pyenv/bin/python3.6 9
+            sudo update-alternatives --install /usr/bin/python3 python3 /opt/circleci/.pyenv/bin/python3.6 10
             which python
             python --version
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
