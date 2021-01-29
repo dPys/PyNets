@@ -471,14 +471,15 @@ def track_ensemble(
     ix = 0
 
     try:
-        while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
+        while float(stream_counter) < float(target_samples) and \
+             float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
                           verbose=0, timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
-                        i, recon_path, n_seeds_per_iter, directget, maxcrossing,
-                        max_length, pft_back_tracking_dist,
+                        i, recon_path, n_seeds_per_iter, directget,
+                        maxcrossing, max_length, pft_back_tracking_dist,
                         pft_front_tracking_dist, particle_count,
                         roi_neighborhood_tol, waymask, min_length,
                         track_type, min_separation_angle, sphere, tiss_class,
@@ -578,7 +579,9 @@ def run_tracking(step_curv_combinations, recon_path,
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
     recon_path_tmp_path = fname_presuffix(
-        recon_path, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+        recon_path,
+        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+               f"{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -588,7 +591,9 @@ def run_tracking(step_curv_combinations, recon_path,
         use_hardlink=False)
 
     tissues4d_tmp_path = fname_presuffix(
-        tissues4d, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+        tissues4d,
+        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+               f"{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -599,7 +604,9 @@ def run_tracking(step_curv_combinations, recon_path,
 
     if waymask is not None:
         waymask_tmp_path = fname_presuffix(
-            waymask, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+            waymask,
+            suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+                   f"{run_uuid}",
             newpath=cache_dir
         )
         copyfile(
@@ -748,6 +755,7 @@ def run_tracking(step_curv_combinations, recon_path,
     # Filter resulting streamlines by roi-intersection
     # characteristics
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
+
     # Build mask vector from atlas for later roi filtering
     parcels = []
     i = 0

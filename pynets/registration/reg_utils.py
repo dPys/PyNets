@@ -45,7 +45,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     else:
         # Perform skull-stripping if mask not provided.
         img = nib.load(t1w_head)
-        t1w_data = img.get_fdata().astype('float32')
+        t1w_data = img.get_fdata(dtype=np.float32)
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
         except RuntimeError as e:
@@ -167,12 +167,18 @@ def atlas2t1w2dwi_align(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
+            regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                              aligned_atlas_skull, interp="nearestneighbour")
+            time.sleep(0.5)
             combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
             regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
     else:
+        regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+                          aligned_atlas_skull, interp="nearestneighbour")
+        time.sleep(0.5)
         combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
         time.sleep(0.5)
         regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
@@ -228,7 +234,7 @@ def atlas2t1w2dwi_align(
     wm_gm_img.uncache()
     wm_gm_mask_img.uncache()
 
-    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_t1mni
+    return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_skull
 
 
 def roi2dwi_align(
@@ -953,23 +959,23 @@ def rescale_affine_to_center(input_affine, voxel_dims=[1, 1, 1],
     return target_affine
 
 
-def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
+def wm_syn(t1w_brain, ap_path, working_dir, fa_path=None,
+           template_fa_path=None):
     """
     A function to perform SyN registration
 
     Parameters
     ----------
-        template_path  : str
-            File path to the template reference image.
-        fa_path : str
-            File path to the FA moving image.
-        template_anat_path  : str
-            File path to the anatomical template reference image.
+        t1w_brain  : str
+            File path to the skull-stripped T1w brain Nifti1Image.
         ap_path : str
             File path to the AP moving image.
         working_dir : str
             Path to the working directory to perform SyN and save outputs.
-
+        fa_path : str
+            File path to the FA moving image.
+        template_fa_path  : str
+            File path to the T1w-connformed template FA reference image.
     """
     import uuid
     from time import strftime
@@ -987,12 +993,12 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     from dipy.align.metrics import CCMetric
 
     # from dipy.viz import regtools
-    from nilearn.image import resample_to_img
+    # from nilearn.image import resample_to_img
 
     ap_img = nib.load(ap_path)
-    template_anat_img = nib.load(template_anat_path)
-    static = np.asarray(template_anat_img.dataobj, dtype=np.float32)
-    static_affine = template_anat_img.affine
+    t1w_brain_img = nib.load(t1w_brain)
+    static = np.asarray(t1w_brain_img.dataobj, dtype=np.float32)
+    static_affine = t1w_brain_img.affine
     moving = np.asarray(ap_img.dataobj, dtype=np.float32)
     moving_affine = ap_img.affine
 
@@ -1045,14 +1051,21 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     metric = CCMetric(3)
     level_iters = [10, 10, 5]
 
-    # Refine fit using FA template
-    fa_img = nib.load(fa_path)
-    template_img = nib.load(template_path)
-    template_img_res = resample_to_img(template_img, template_anat_img)
-    static = np.asarray(template_img_res.dataobj, dtype=np.float32)
-    static_affine = template_img_res.affine
-    moving = np.asarray(fa_img.dataobj, dtype=np.float32)
-    moving_affine = fa_img.affine
+    # Refine fit
+    if template_fa_path is not None:
+        from nilearn.image import resample_to_img
+        fa_img = nib.load(fa_path)
+        template_img = nib.load(template_fa_path)
+        template_img_res = resample_to_img(template_img, t1w_brain_img)
+        static = np.asarray(template_img_res.dataobj, dtype=np.float32)
+        static_affine = template_img_res.affine
+        moving = np.asarray(fa_img.dataobj, dtype=np.float32)
+        moving_affine = fa_img.affine
+    else:
+        static = np.asarray(t1w_brain_img.dataobj, dtype=np.float32)
+        static_affine = t1w_brain_img.affine
+        moving = np.asarray(ap_img.dataobj, dtype=np.float32)
+        moving_affine = ap_img.affine
 
     sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
@@ -1067,7 +1080,7 @@ def wm_syn(template_path, fa_path, template_anat_path, ap_path, working_dir):
     nib.save(
         nib.Nifti1Image(
             warped_moving,
-            affine=template_img_res.affine),
+            affine=static_affine),
         warped_fa)
 
     # # We show the registration result with:
@@ -1372,7 +1385,8 @@ def reorient_img(img, out_dir, overwrite=True):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
+def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
+                         remove_orig=True):
     """
     A function to resample an image to a given isotropic voxel resolution.
 
@@ -1395,7 +1409,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
     from dipy.align.reslice import reslice
 
     # Check dimensions
-    # orig_img = img_file
+    orig_img = img_file
     img = nib.load(img_file, mmap=False)
 
     hdr = img.header
@@ -1415,7 +1429,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             pass
         else:
             import gc
-            data = img.get_fdata().astype('float32')
+            data = img.get_fdata(dtype=np.float32)
             print(f"Reslicing image {img_file} to {vox_size}...")
             data2, affine2 = reslice(
                 data, img.affine, zooms, new_zooms
@@ -1440,7 +1454,7 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True):
             nib.save(img, img_file_nores)
             img_file = img_file_nores
 
-    # if os.path.isfile(orig_img):
-    #     os.remove(orig_img)
+    if os.path.isfile(orig_img) and remove_orig is True:
+        os.remove(orig_img)
 
     return img_file

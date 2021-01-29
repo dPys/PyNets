@@ -101,7 +101,8 @@ class FetchNodesLabels(SimpleInterface):
                     uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
                 if self.inputs.clustering is False:
                     [uatlas,
-                     labels] = nodemaker.enforce_hem_distinct_consecutive_labels(
+                     labels] = \
+                        nodemaker.enforce_hem_distinct_consecutive_labels(
                         uatlas, label_names=labels)
                 [coords, atlas, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(uatlas)
@@ -416,7 +417,7 @@ class CombineOutputsInputSpec(BaseInterfaceInputSpec):
     plot_switch = traits.Bool(False, usedefault=True)
     multi_nets = traits.Any(mandatory=False)
     multimodal = traits.Bool(False, usedefault=True)
-
+    embed = traits.Bool(False, usedefault=True)
 
 class CombineOutputsOutputSpec(TraitedSpec):
     """Output interface wrapper for CombineOutputs"""
@@ -440,6 +441,7 @@ class CombineOutputs(SimpleInterface):
             self.inputs.plot_switch,
             self.inputs.multi_nets,
             self.inputs.multimodal,
+            self.inputs.embed,
         )
         setattr(self, "_combination_complete", combination_complete)
         return runtime
@@ -529,9 +531,9 @@ class IndividualClustering(SimpleInterface):
         clust_mask_temp_path = check_orient_and_dims(
             self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size
         )
-
+        cm_suf = os.path.basename(self.inputs.clust_mask).split('.nii')[0]
         clust_mask_in_t1w_path = f"{runtime.cwd}/clust_mask-" \
-                                 f"{os.path.basename(self.inputs.clust_mask).split('.nii')[0]}_in_t1w.nii.gz"
+                                 f"{cm_suf}_in_t1w.nii.gz"
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -1406,7 +1408,7 @@ class _RegisterAtlasDWIOutputSpec(TraitedSpec):
 
     dwi_aligned_atlas_wmgm_int = File(exists=True, mandatory=True)
     dwi_aligned_atlas = File(exists=True, mandatory=True)
-    aligned_atlas_t1mni = File(exists=True, mandatory=True)
+    aligned_atlas_t1w = File(exists=True, mandatory=True)
     node_size = traits.Any(mandatory=True)
     atlas = traits.Any(mandatory=True)
     uatlas_parcels = traits.Any(mandatory=False)
@@ -1433,12 +1435,13 @@ class RegisterAtlasDWI(SimpleInterface):
         import gc
         import time
         import os
+        import os.path as op
         from pynets.registration import reg_utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
-        from scipy.ndimage import binary_opening
+        from pynets.core import utils
 
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{self.inputs.template_name}_brain_"
@@ -1595,8 +1598,9 @@ class RegisterAtlasDWI(SimpleInterface):
 
         if self.inputs.network or self.inputs.waymask:
             if self.inputs.waymask:
+                wm_suf = os.path.basename(self.inputs.waymask).split('.nii')[0]
                 atlas_name = f"{self.inputs.atlas}_" \
-                             f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}"
+                             f"{wm_suf}"
             else:
                 atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
         else:
@@ -1625,7 +1629,7 @@ class RegisterAtlasDWI(SimpleInterface):
         [
             dwi_aligned_atlas_wmgm_int,
             dwi_aligned_atlas,
-            aligned_atlas_t1mni,
+            aligned_atlas_t1w,
         ] = regutils.atlas2t1w2dwi_align(
             uatlas_tmp_path,
             uatlas_parcels_tmp_path,
@@ -1733,7 +1737,7 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["dwi_aligned_atlas_wmgm_int"] = \
             dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
-        self._results["aligned_atlas_t1mni"] = aligned_atlas_t1mni
+        self._results["aligned_atlas_t1w"] = aligned_atlas_t1w
         self._results["node_size"] = self.inputs.node_size
         self._results["atlas"] = self.inputs.atlas
         self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
@@ -1748,8 +1752,55 @@ class RegisterAtlasDWI(SimpleInterface):
         self._results["dwi_file"] = self.inputs.dwi_file
         self._results["waymask_in_dwi"] = waymask_in_dwi
 
+        dir_path = utils.do_dir_path(
+            self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
+        )
+
+        namer_dir = "{}/tractography".format(dir_path)
+        if not op.isdir(namer_dir):
+            os.mkdir(namer_dir)
+
+        if not os.path.isfile(f"{namer_dir}/"
+                              f"{op.basename(self.inputs.fa_path)}"):
+            copyfile(
+                self.inputs.fa_path,
+                f"{namer_dir}/{op.basename(self.inputs.fa_path)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/"
+                              f"{op.basename(self.inputs.ap_path)}"):
+            copyfile(
+                self.inputs.ap_path,
+                f"{namer_dir}/{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/"
+                              f"{op.basename(self.inputs.B0_mask)}"):
+            copyfile(
+                self.inputs.B0_mask,
+                f"{namer_dir}/{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/"
+                              f"{op.basename(self.inputs.gtab_file)}"):
+            copyfile(
+                self.inputs.gtab_file,
+                f"{namer_dir}/{op.basename(self.inputs.gtab_file)}",
+                copy=True,
+                use_hardlink=False,
+            )
+        if not os.path.isfile(f"{namer_dir}/{op.basename(aligned_atlas_t1w)}"):
+            copyfile(
+                aligned_atlas_t1w,
+                f"{namer_dir}/{op.basename(aligned_atlas_t1w)}",
+                copy=True,
+                use_hardlink=False,
+            )
+
         reg_tmp = [
-            fa_tmp_path,
             uatlas_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
@@ -1758,7 +1809,6 @@ class RegisterAtlasDWI(SimpleInterface):
             t1w2dwi_bbr_xfm_tmp_path,
             t1w2dwi_xfm_tmp_path,
             wm_gm_int_in_dwi_tmp_path,
-            aligned_atlas_skull,
             t1w_brain_tmp_path
         ]
         for j in reg_tmp:
@@ -1918,7 +1968,6 @@ class RegisterROIDWI(SimpleInterface):
                 t1w_brain_tmp_path2,
                 roi_in_t1w,
                 roi_in_dwi,
-                ap_tmp_path,
                 mni2t1w_warp_tmp_path2,
                 t1wtissue2dwi_xfm_tmp_path,
                 mni2t1_xfm_tmp_path,
@@ -1932,7 +1981,6 @@ class RegisterROIDWI(SimpleInterface):
         self._results["roi"] = roi_in_dwi
 
         reg_tmp = [
-            ap_tmp_path,
             t1w_brain_tmp_path,
             mni2t1w_warp_tmp_path,
             t1wtissue2dwi_xfm_tmp_path,
@@ -2015,7 +2063,8 @@ class RegisterFunc(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and op.isfile(anat_mask_existing[0]) \
+                 self.inputs.mask is None and \
+                op.isfile(anat_mask_existing[0]) \
                     and self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp",
@@ -2304,6 +2353,7 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     labels = traits.Any(mandatory=True)
     node_size = traits.Any()
     atlas = traits.Any()
+
 
 class RegisterAtlasFunc(SimpleInterface):
     """Interface wrapper for RegisterAtlasFunc."""
@@ -2676,7 +2726,7 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     coords = traits.Any(mandatory=True)
     norm = traits.Any(mandatory=True)
     binary = traits.Bool(False, usedefault=True)
-    atlas_mni = File(exists=True, mandatory=True)
+    atlas_t1w = File(exists=True, mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     waymask = traits.Any(mandatory=False)
     t1w2dwi = File(exists=True, mandatory=True)
@@ -2705,7 +2755,7 @@ class _TrackingOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     norm = traits.Any()
     binary = traits.Bool(False, usedefault=True)
-    atlas_mni = File(exists=True, mandatory=True)
+    atlas_t1w = File(exists=True, mandatory=True)
     curv_thr_list = traits.List(mandatory=True)
     step_list = traits.List(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
@@ -2744,7 +2794,8 @@ class Tracking(SimpleInterface):
 
         hardcoded_params = load_runconfig()
         use_life = hardcoded_params['tracking']["use_life"][0]
-        roi_neighborhood_tol = hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+        roi_neighborhood_tol = hardcoded_params['tracking'][
+            "roi_neighborhood_tol"][0]
         sphere = hardcoded_params['tracking']["sphere"][0]
 
         dir_path = utils.do_dir_path(
@@ -2766,7 +2817,7 @@ class Tracking(SimpleInterface):
             use_hardlink=False)
 
         dwi_img = nib.load(dwi_file_tmp_path, mmap=True)
-        dwi_data = dwi_img.get_fdata().astype('float32')
+        dwi_data = dwi_img.get_fdata(dtype=np.float32)
 
         # Load FA data
         fa_file_tmp_path = fname_presuffix(
@@ -2777,6 +2828,7 @@ class Tracking(SimpleInterface):
             fa_file_tmp_path,
             copy=True,
             use_hardlink=False)
+
         fa_img = nib.load(fa_file_tmp_path, mmap=True)
 
         labels_im_file_tmp_path = fname_presuffix(
@@ -3020,7 +3072,8 @@ class Tracking(SimpleInterface):
             else:
                 waymask_tmp_path = None
 
-            # Iteratively build a list of streamlines for each ROI while tracking
+            # Iteratively build a list of streamlines for each ROI while
+            # tracking
             print(
                 f"{Fore.GREEN}Target number of cumulative streamlines: "
                 f"{Fore.BLUE} "
@@ -3042,12 +3095,12 @@ class Tracking(SimpleInterface):
                 print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}"
                       f"Probabilistic")
             elif self.inputs.directget == "clos":
-                print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Closest "
-                      f"Peak")
+                print(f"{Fore.GREEN}Direction-getting type: "
+                      f"{Fore.BLUE}Closest Peak")
             elif self.inputs.directget == "det":
                 print(
-                    f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}Deterministic"
-                    f" Maximum"
+                    f"{Fore.GREEN}Direction-getting type: "
+                    f"{Fore.BLUE}Deterministic Maximum"
                 )
             else:
                 raise ValueError("Direction-getting type not recognized!")
@@ -3084,33 +3137,38 @@ class Tracking(SimpleInterface):
             if streamlines is not None:
                 # import multiprocessing
                 # from pynets.core.utils import kill_process_family
-                # return kill_process_family(int(multiprocessing.current_process().pid))
+                # return kill_process_family(int(
+                # multiprocessing.current_process().pid))
 
                 # Linear Fascicle Evaluation (LiFE)
                 if use_life is True:
                     print('Using LiFE to evaluate streamline plausibility...')
-                    from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+                    from pynets.dmri.dmri_utils import \
+                        evaluate_streamline_plausibility
                     dwi_img = nib.load(dwi_file_tmp_path)
-                    dwi_data = dwi_img.get_fdata().astype('float32')
+                    dwi_data = dwi_img.get_fdata(dtype=np.float32)
                     orig_count = len(streamlines)
 
                     if self.inputs.waymask:
-                        mask_data = nib.load(waymask_tmp_path
-                                             ).get_fdata().astype('bool').astype('int')
+                        mask_data = nib.load(
+                            waymask_tmp_path).get_fdata().astype(
+                            'bool').astype('int')
                     else:
-                        mask_data = nib.load(wm_in_dwi_tmp_path
-                                             ).get_fdata().astype('bool').astype('int')
+                        mask_data = nib.load(
+                            wm_in_dwi_tmp_path).get_fdata().astype(
+                            'bool').astype('int')
                     try:
                         streamlines = evaluate_streamline_plausibility(
                             dwi_data, gtab, mask_data, streamlines,
                             sphere=sphere)
                     except BaseException:
-                        print(f"Linear Fascicle Evaluation failed. Visually checking "
-                              f"streamlines output {namer_dir}/{op.basename(streams)}"
-                              f" is recommended.")
+                        print(f"Linear Fascicle Evaluation failed. "
+                              f"Visually checking streamlines output "
+                              f"{namer_dir}/{op.basename(streams)} is "
+                              f"recommended.")
                     if len(streamlines) < 0.5*orig_count:
-                        raise ValueError('LiFE revealed no plausible streamlines '
-                                         'in the tractogram!')
+                        raise ValueError('LiFE revealed no plausible '
+                                         'streamlines in the tractogram!')
                     del dwi_data, mask_data
 
                 # Save streamlines to trk
@@ -3193,8 +3251,7 @@ class Tracking(SimpleInterface):
         self._results["coords"] = self.inputs.coords
         self._results["norm"] = self.inputs.norm
         self._results["binary"] = self.inputs.binary
-        self._results["atlas_mni"] = labels_im_file_tmp_path # TODO: Change
-        # this to self.inputs.atlas_mni when DSN is True
+        self._results["atlas_t1w"] = self.inputs.atlas_t1w
         self._results["curv_thr_list"] = self.inputs.curv_thr_list
         self._results["step_list"] = self.inputs.step_list
         self._results["fa_path"] = fa_file_tmp_path

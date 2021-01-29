@@ -7,8 +7,136 @@ Copyright (C) 2016
 from pynets.stats.prediction import *
 
 
+def get_parser():
+    """Parse command-line inputs"""
+    import argparse
+    from pynets.__about__ import __version__
+
+    verstr = f"pynets v{__version__}"
+
+    # Parse args
+    parser = argparse.ArgumentParser(
+        description="PyNets: A Fully-Automated Workflow for Reproducible"
+                    " Functional and Structural Connectome Ensemble Learning")
+    parser.add_argument(
+        "-basedir",
+        metavar="Output directory",
+        help="Specify the path to the base output directory with group-level"
+             " pynets derivatives.\n",
+    )
+    parser.add_argument(
+        "-modality",
+        nargs=1,
+        default="func",
+        choices=["dwi", "func"],
+        help="Specify data modality from which to collect data. Options are"
+             " `dwi` and `func`. Currently, only one can be specified at a "
+             "time. Default is functional",
+    )
+    parser.add_argument(
+        "-session_label",
+        help="""The label(s) of the session that should be analyzed.
+        The label  corresponds to ses-<participant_label> from the BIDS spec
+        (so it does not include "ses-"). If this parameter is not provided
+        all sessions should be analyzed. Multiple sessions can be specified
+         with a space separated list.""",
+        nargs=1,
+        default=None,
+    )
+    parser.add_argument(
+        "-et",
+        metavar="Embedding type",
+        default="topology",
+        choices=["ASE", "OMNI", "topology"],
+        help="Specify the embedding method of interest.\n",
+    )
+    parser.add_argument(
+        "-tv",
+        metavar="Target Variable",
+        default="dep_1",
+        nargs="+",
+        choices=["rumination_persist_phenotype",
+                 "depression_persist_phenotype", "dep_2", 'rum_2', 'rum_1',
+                 'dep_1'],
+        help="Specify the target outcome variables of interest, "
+             "separated by space.\n",
+    )
+    parser.add_argument(
+        "-thrtype",
+        default="MST",
+        nargs=1,
+        choices=[
+            "MST",
+            "PROP",
+            "DISP"],
+        help="Specify the thresholding method used when sampling the "
+             "connectome ensemble. Default is MST.\n",
+    )
+    parser.add_argument(
+        "-temp",
+        metavar="MNI Template",
+        default="MNI152_T1",
+        nargs=1,
+        choices=[
+            "colin27",
+            "MNI152_T1",
+            "CN200",
+        ],
+        help="Include this flag to specify a template, other than MNI152_T1 "
+             "that was used to sample the connectome ensemble.\n",
+    )
+    parser.add_argument(
+        "-pm",
+        metavar="Cores,memory",
+        default="auto",
+        help="Number of cores to use, number of GB of memory to use for single"
+             " subject run, entered as two integers seperated by comma. "
+             "Otherwise, default is `auto`, which uses all resources detected"
+             " on the current compute node.\n",
+    )
+    parser.add_argument(
+        "-plug",
+        metavar="Scheduler type",
+        default="MultiProc",
+        nargs=1,
+        choices=[
+            "Linear",
+            "MultiProc",
+            "SGE",
+            "PBS",
+            "SLURM",
+            "SGEgraph",
+            "SLURMgraph",
+            "LegacyMultiProc",
+        ],
+        help="Include this flag to specify a workflow plugin other than the"
+             " default MultiProc.\n",
+    )
+    parser.add_argument(
+        "-v",
+        default=False,
+        action="store_true",
+        help="Verbose print for debugging.\n")
+    parser.add_argument(
+        "-work",
+        metavar="Working directory",
+        default="/tmp/work",
+        help="Specify the path to a working directory for pynets to run."
+             " Default is /tmp/work.\n",
+    )
+    parser.add_argument("--version", action="version", version=verstr)
+    return parser
+
+
 def main():
     import json
+    import pandas as pd
+    import os
+    import sys
+    import dill
+    from pynets.stats.utils import make_feature_space_dict, \
+        make_subject_dict, cleanNullTerms
+    from pynets.core.utils import mergedicts
     from colorama import Fore, Style
     try:
         import pynets
@@ -23,52 +151,67 @@ def main():
               " flag.\n")
         sys.exit(1)
 
-    #base_dir = "/working/tuning_set/outputs_shaeffer/func_ml"
-    #base_dir = "/working/tuning_set/outputs_shaeffer"
-    base_dir = "/working/tuning_set/outputs_clustering"
-    #base_dir = "/working/tuning_set/outputs_language"
-    #base_dir = "/working/tuning_set/outputs_clustering/func_ml"
-    df = pd.read_csv(
-        "/working/tuning_set/outputs_shaeffer/df_rum_persist_all.csv",
-        index_col=False
-    )
+    # pre_args = get_parser().parse_args()
+    #
+    # args["base_dir"] = pre_args.basedir
+    # base_dir = args["base_dir"]
+    base_dir = "/working/tuning_set/outputs_final"
 
-    # User-Specified #
-    embedding_type = 'ASE'
-    modality = "dwi"
+    # args["target_vars"] = pre_args.tv
+    # target_vars = args["target_vars"]
     target_vars = ["rumination_persist_phenotype",
                    "depression_persist_phenotype",
                    "dep_2", 'rum_2', 'rum_1', 'dep_1']
 
-    rsns = ["triple", "kmeans"]
-    #rsns = ["tripleRUM", "kmeansRUM"]
-    #rsns = ["language"]
+    # args["embedding_type"] = pre_args.et[0]
+    # embedding_type = args["embedding_type"]
+    embedding_type = 'ASE'
 
+    # args["modality"] = pre_args.modality[0]
+    # modality = args["modality"]
+    modality = "func"
+
+    # args["thr_type"] = pre_args.thrtype[0]
+    # thr_type = pre_args.thrtype
+    thr_type = "MST"
+
+    # args["template"] = pre_args.thrtype[0]
+    # template = pre_args.temp
+    template = "MNI152_T1"
+
+    data_file = "/working/tuning_set/outputs_final/df_rum_persist_all.csv"
+
+    rsns = ["triple", "kmeans", "language"]
+
+    # args["sessions"] = pre_args.thrtype[0]
+    # sessions = pre_args.session_label
     sessions = ["1"]
 
     # Hard-Coded #
-    thr_type = "MST"
-    template = "MNI152_T1"
     mets = [
         "global_efficiency",
         "average_shortest_path_length",
-        "degree_assortativity_coefficient",
+        "average_degree_centrality",
         "average_eigenvector_centrality",
         "average_betweenness_centrality",
         "modularity",
+        "degree_assortativity_coefficient"
         "smallworldness",
     ]
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
     subject_dict_file_path = (
-        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     subject_mod_grids_file_path = (
-        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.pkl"
+        f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.pkl"
     )
     missingness_summary = (
-        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_{embedding_type}_{template}_{thr_type}.csv"
+        f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_"
+        f"{embedding_type}_{template}_{thr_type}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
@@ -101,6 +244,12 @@ def main():
             modality_grids = dill.load(f)
         f.close()
 
+    # Load in data
+    df = pd.read_csv(
+        data_file,
+        index_col=False
+    )
+
     # Subset only those participants which have usable data
     for ID in df["participant_id"]:
         if len(ID) == 1:
@@ -111,13 +260,49 @@ def main():
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
     df['sex'] = df['sex'].map({1:0, 2:1})
     df = df[
-        ["participant_id", "age", "num_visits", "sex"] + target_vars
+        ["participant_id", "age", "sex", "num_visits", "DAY_LAG",
+         'dataset'] + target_vars
     ]
+
+    good_grids = []
+    for grid_param in modality_grids[modality]:
+        grid_finds = []
+        for ID in df["participant_id"]:
+            if ID not in sub_dict_clean.keys():
+                print(f"ID: {ID} not found...")
+                continue
+
+            if str(sessions[0]) not in sub_dict_clean[ID].keys():
+                print(f"Session: {sessions[0]} not found for ID {ID}...")
+                continue
+
+            if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
+                print(f"Modality: {modality} not found for ID {ID}, "
+                      f"ses-{sessions[0]}...")
+                continue
+
+            if embedding_type not in sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                print(
+                    f"Modality: {modality} not found for ID {ID}, ses-{sessions[0]}, "
+                    f"{embedding_type}..."
+                )
+                continue
+
+            if grid_param in list(sub_dict_clean[ID][str(sessions[0])][modality][embedding_type].keys()):
+                grid_finds.append(grid_param)
+        if len(grid_finds) < 0.75*len(df["participant_id"]):
+            print(f"Less than 75% of {grid_param} found. Removing from grid...")
+            continue
+        else:
+            good_grids.append(grid_param)
+
+    modality_grids[modality] = good_grids
 
     ml_dfs_dict = {}
     ml_dfs_dict[modality] = {}
-    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_{'_'.join(rsns)}_" \
-                     f"{embedding_type}_{template}_{thr_type}.pkl"
+    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
+                     f"{'_'.join(rsns)}_{embedding_type}_{template}_" \
+                     f"{thr_type}.pkl"
     if not os.path.isfile(dict_file_path) or not \
         os.path.isfile(dict_file_path):
         ml_dfs = {}
@@ -150,9 +335,7 @@ def main():
     for d in outs:
         ml_dfs = dict(mergedicts(ml_dfs, d))
 
-    # with open('pynets_ml_dict_func_topology.pkl', "rb") as f:
-    #     ml_dfs = dill.load(f)
-    # f.close()
+    ml_dfs = cleanNullTerms(ml_dfs)
 
     feature_spaces = {}
 
@@ -160,7 +343,11 @@ def main():
     out_dict = {}
     for recipe in ml_dfs[modality][embedding_type].keys():
         try:
-            out_dict[str(recipe)] = ml_dfs[modality][embedding_type][recipe].to_json()
+            df = ml_dfs[modality][embedding_type][recipe]
+            df.reset_index(inplace=True)
+            if 'index' in df.columns:
+                df = df.drop(columns=['index'])
+            out_dict[str(recipe)] = df.to_json()
         except:
             print(f"{recipe} recipe not found...")
             continue
@@ -181,7 +368,6 @@ def main():
     args["target_vars"] = target_vars
     args["embedding_type"] = embedding_type
     args["modality"] = modality
-
     return args
 
 
@@ -198,7 +384,8 @@ if __name__ == "__main__":
     except:
         pass
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
     args = main()
 
     with Manager() as mgr:

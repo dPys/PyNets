@@ -72,11 +72,11 @@ def indx_3dto1d(idx, sz):
 
 def ncut(W, nbEigenValues):
     """
-    This function performs the first step of normalized cut spectral clustering.
-    The normalized LaPlacian is calculated on the similarity matrix W, and top
-    nbEigenValues eigenvectors are calculated. The number of eigenvectors
-    corresponds to the maximum number of classes (K) that will be produced by
-    the clustering algorithm.
+    This function performs the first step of normalized cut spectral
+    clustering. The normalized LaPlacian is calculated on the similarity
+    matrix W, and top nbEigenValues eigenvectors are calculated. The number of
+    eigenvectors corresponds to the maximum number of classes (K) that will be
+    produced by the clustering algorithm.
 
     Parameters
     ----------

@@ -47,13 +47,13 @@ def direct_streamline_norm(
     coords,
     norm,
     binary,
-    atlas_mni,
+    atlas_t1w,
     basedir_path,
     curv_thr_list,
     step_list,
     directget,
     min_length,
-    t1_aligned_mni
+    t1w_brain
 ):
     """
     A Function to perform normalization of streamlines tracked in native
@@ -115,8 +115,8 @@ def direct_streamline_norm(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_t1w : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     basedir_path : str
         Path to directory to output direct-streamline normalized temp files
         and outputs.
@@ -129,8 +129,8 @@ def direct_streamline_norm(
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
-    t1_aligned_mni : str
-        File path to the T1w Nifti1Image in template MNI space.
+    t1w_brain : str
+        File path to the T1w Nifti1Image.
 
     Returns
     -------
@@ -182,8 +182,9 @@ def direct_streamline_norm(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in the same
+        morphological space as the streamlines.
     directget : str
         The statistical approach to tracking. Options are: det
         (deterministic), closest (clos), boot (bootstrapped),
@@ -237,31 +238,16 @@ def direct_streamline_norm(
         # Run SyN and normalize streamlines
         fa_img = nib.load(fa_path)
         vox_size = fa_img.header.get_zooms()[0]
-        template_path = pkg_resources.resource_filename(
-            "pynets", f"templates/FA_{int(vox_size)}mm.nii.gz"
-        )
 
-        if sys.platform.startswith('win') is False:
-            try:
-                template_img = nib.load(template_path)
-            except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load FA template. Do you have git-lfs "
-                      f"installed?")
-        else:
-            try:
-                template_img = nib.load(template_path)
-            except ImportError as e:
-                print(e, f"\nCannot load FA template. Do you have git-lfs "
-                      f"installed?")
+        atlas_for_streams = atlas_t1w
 
-        uatlas_mni_img = nib.load(atlas_mni)
-        t1_aligned_mni_img = nib.load(t1_aligned_mni)
-        brain_mask = np.asarray(t1_aligned_mni_img.dataobj).astype("bool")
+        atlas_t1w_img = nib.load(atlas_t1w)
+        t1w_brain_img = nib.load(t1w_brain)
+        brain_mask = np.asarray(t1w_brain_img.dataobj).astype("bool")
 
-        streams_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
-            "/streamlines_mni_",
+            "/streamlines_t1w_",
             "%s" % (network + "_" if network is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
@@ -287,9 +273,9 @@ def direct_streamline_norm(
             ".trk",
         )
 
-        density_mni = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
-            "/density_map_mni_",
+            "/density_map_t1w_",
             "%s" % (network + "_" if network is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
@@ -319,7 +305,7 @@ def direct_streamline_norm(
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
-            template_path, fa_path, t1_aligned_mni, ap_path, dsn_dir
+            t1w_brain, ap_path, dsn_dir
         )
 
         tractogram = load_tractogram(
@@ -336,45 +322,19 @@ def direct_streamline_norm(
         warped_fa_affine = warped_fa_img.affine
         warped_fa_shape = warped_fa_img.shape
 
+        adjusted_affine = affine_map.affine.copy()
+        adjusted_affine[1][3] = -adjusted_affine[1][3]
+        adjusted_affine[2][3] = -adjusted_affine[2][3]*0.95
+
         streams_in_curr_grid = transform_streamlines(
             streamlines, warped_fa_affine)
 
-        # Create isocenter mapping where we anchor the origin transformation
-        # affine to the corner of the FOV by scaling x, y, z offsets according
-        # to a multiplicative van der Corput sequence with a base value equal
-        # to the voxel resolution
-        [x_mul, y_mul, z_mul] = [vdc(i, vox_size) for i in range(1, 4)]
-
-        ref_grid_aff = vox_size * np.eye(4)
-        ref_grid_aff[3][3] = 1
-
-        streams_final_filt = []
-        i = 0
-        # Test for various types of voxel-grid configurations
-        combs = [(-x_mul, -y_mul, -z_mul), (-x_mul, -y_mul, z_mul),
-                 (-x_mul, y_mul, -z_mul), (x_mul, -y_mul, -z_mul),
-                 (x_mul, y_mul, z_mul)]
-        while len(streams_final_filt)/len(streams_in_curr_grid) < 0.90:
-            print(f"Warping streamlines to MNI space. Attempt {i}...")
-            print(len(streams_final_filt)/len(streams_in_curr_grid))
-            adjusted_affine = affine_map.affine.copy()
-            if i > len(combs) - 1:
-                raise ValueError('DSN failed. Header orientation '
-                                 'information may be corrupted. '
-                                 'Is your dataset oblique?')
-
-            adjusted_affine[0][3] = adjusted_affine[0][3] * combs[i][0]
-            adjusted_affine[1][3] = adjusted_affine[1][3] * combs[i][1]
-            adjusted_affine[2][3] = adjusted_affine[2][3] * combs[i][2]
-
-            streams_final_filt = regutils.warp_streamlines(adjusted_affine,
-                                                           ref_grid_aff,
-                                                           mapping,
-                                                           warped_fa_img,
-                                                           streams_in_curr_grid,
-                                                           brain_mask)
-
-            i += 1
+        streams_final_filt = regutils.warp_streamlines(adjusted_affine,
+                                                       fa_img.affine,
+                                                       mapping,
+                                                       warped_fa_img,
+                                                       streams_in_curr_grid,
+                                                       brain_mask)
 
         # Remove streamlines with negative voxel indices
         lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -388,19 +348,18 @@ def direct_streamline_norm(
         # Save streamlines
         stf = StatefulTractogram(
             streams_final_filt_final,
-            reference=uatlas_mni_img,
+            reference=atlas_t1w_img,
             space=Space.VOXMM,
             origin=Origin.NIFTI,
         )
         stf.remove_invalid_streamlines()
         streams_final_filt_final = stf.streamlines
-        save_tractogram(stf, streams_mni, bbox_valid_check=True)
+        save_tractogram(stf, streams_t1w, bbox_valid_check=True)
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_mni,
-        # streams_warp_png) plot_gen.show_template_bundles(streamlines,
-        # fa_path, streams_warp_png)
+        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_t1w,
+        # streams_warp_png)
 
         # Create and save MNI density map
         nib.save(
@@ -411,7 +370,7 @@ def direct_streamline_norm(
                     vol_dims=warped_fa_shape),
                 warped_fa_affine,
             ),
-            density_mni,
+            density_t1w,
         )
 
         # Map parcellation from native space back to MNI-space and create an
@@ -427,36 +386,37 @@ def direct_streamline_norm(
         warped_uatlas_img_res_data = np.asarray(
             resample_to_img(
                 nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine),
-                uatlas_mni_img,
+                atlas_t1w_img,
                 interpolation="nearest",
                 clip=False,
             ).dataobj
         )
-        uatlas_mni_data = np.asarray(uatlas_mni_img.dataobj)
-        uatlas_mni_img.uncache()
+        uatlas_t1w_data = np.asarray(atlas_t1w_img.dataobj)
+        atlas_t1w_img.uncache()
         overlap_mask = np.invert(
             warped_uatlas_img_res_data.astype("bool") *
-            uatlas_mni_data.astype("bool"))
+            uatlas_t1w_data.astype("bool"))
         os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
-        atlas_mni = f"{dir_path}/parcellations/" \
-                    f"{op.basename(uatlas).split('.nii')[0]}_liberal.nii.gz"
+        atlas_for_streams = f"{dir_path}/parcellations/" \
+                            f"{op.basename(uatlas).split('.nii')[0]}" \
+                            f"_t1w_liberal.nii.gz"
 
         nib.save(
             nib.Nifti1Image(
                 warped_uatlas_img_res_data * overlap_mask.astype("int")
-                + uatlas_mni_data * overlap_mask.astype("int")
+                + uatlas_t1w_data * overlap_mask.astype("int")
                 + np.invert(overlap_mask).astype("int")
                 * warped_uatlas_img_res_data.astype("int"),
-                affine=uatlas_mni_img.affine,
+                affine=atlas_t1w_img.affine,
             ),
-            atlas_mni,
+            atlas_for_streams,
         )
 
         del (
             tractogram,
             streamlines,
             warped_uatlas_img_res_data,
-            uatlas_mni_data,
+            uatlas_t1w_data,
             overlap_mask,
             stf,
             streams_final_filt_final,
@@ -473,12 +433,12 @@ def direct_streamline_norm(
         print(
             "Skipping Direct Streamline Normalization (DSN). Will proceed to "
             "define fiber connectivity in native diffusion space...")
-        streams_mni = streams
+        streams_t1w = streams
         warped_fa = fa_path
-        atlas_mni = labels_im_file
+        atlas_for_streams = labels_im_file
 
     return (
-        streams_mni,
+        streams_t1w,
         dir_path,
         track_type,
         target_samples,
@@ -498,7 +458,7 @@ def direct_streamline_norm(
         coords,
         norm,
         binary,
-        atlas_mni,
+        atlas_for_streams,
         directget,
         warped_fa,
         min_length
@@ -652,6 +612,10 @@ class DmriReg(object):
         )
         self.corpuscallosum_dwi = f"{self.reg_path_img}" \
                                   f"{'/CorpusCallosum_dwi.nii.gz'}"
+        self.fa_template_res = f"{self.reg_path_img}" \
+                                  f"{'/FA_template_res.nii.gz'}"
+        self.fa_template_t1w = f"{self.reg_path_img}" \
+                                  f"{'/FA_template_T1w.nii.gz'}"
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [
@@ -939,10 +903,37 @@ class DmriReg(object):
         import sys
         import time
         import os.path as op
+        import pkg_resources
         from pynets.core.utils import load_runconfig
+        from nilearn.image import resample_to_img
 
         hardcoded_params = load_runconfig()
         tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+
+        fa_template_path = pkg_resources.resource_filename(
+            "pynets", f"templates/FA_{self.vox_size}.nii.gz"
+        )
+
+        if sys.platform.startswith('win') is False:
+            try:
+                fa_template_img = nib.load(fa_template_path)
+            except indexed_gzip.ZranError as e:
+                print(e,
+                      f"\nCannot load FA template. Do you have git-lfs "
+                      f"installed?")
+        else:
+            try:
+                fa_template_img = nib.load(fa_template_path)
+            except ImportError as e:
+                print(e, f"\nCannot load FA template. Do you have git-lfs ")
+
+        mni_template_img = nib.load(self.input_mni_brain)
+        fa_template_img_res = resample_to_img(fa_template_img,
+                                              mni_template_img)
+
+        nib.save(
+            fa_template_img_res,
+            self.fa_template_res)
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
         if not op.isfile(self.mni_atlas):
@@ -1021,7 +1012,6 @@ class DmriReg(object):
                 interp="nn",
                 sup=True,
             )
-
         else:
             regutils.applyxfm(
                 self.vent_mask_mni,
@@ -1036,6 +1026,14 @@ class DmriReg(object):
                 self.corpuscallosum_mask_t1w,
             )
             time.sleep(0.5)
+
+        # Applyxfm to map FA template image to T1w space
+        regutils.applyxfm(
+            self.fa_template_res,
+            self.t1w_brain,
+            self.mni2t1_xfm,
+            self.fa_template_t1w)
+        time.sleep(0.5)
 
         # Applyxfm tissue maps to dwi space
         if self.t1w_brain_mask is not None:
@@ -1078,9 +1076,11 @@ class DmriReg(object):
         if tiss_class == 'wb' or tiss_class == 'cmc':
             csf_thr = 0.50
             wm_thr = 0.15
+            gm_thr = 0.10
         else:
-            csf_thr = 0.95
+            csf_thr = 0.99
             wm_thr = 0.10
+            gm_thr = 0.075
 
         # Threshold WM to binary in dwi space
         thr_img = nib.load(self.wm_in_dwi)
@@ -1089,7 +1089,7 @@ class DmriReg(object):
 
         # Threshold GM to binary in dwi space
         thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img("img > 0.10", img=thr_img)
+        thr_img = math_img(f"img > {gm_thr}", img=thr_img)
         nib.save(thr_img, self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space

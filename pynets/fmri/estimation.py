@@ -18,7 +18,7 @@ def get_optimal_cov_estimator(time_series):
     from sklearn.covariance import GraphicalLassoCV
 
     estimator = GraphicalLassoCV(cv=5, assume_centered=True)
-    print("\nSearching for best Lasso estimator...\n")
+    print("\nSearching for best Lasso...\n")
     try:
         estimator.fit(time_series)
         return estimator
@@ -235,7 +235,7 @@ def get_conn_matrix(
     conn_matrix = None
     estimator = get_optimal_cov_estimator(time_series)
 
-    def fallback_covariance(time_series):
+    def _fallback_covariance(time_series):
         from sklearn.ensemble import IsolationForest
         from sklearn import covariance
 
@@ -251,14 +251,14 @@ def get_conn_matrix(
               'ill conditions. Removing potential anomalies from the '
               'time-series using IsolationForest...')
         try:
-            print("Trying Ledoit-Wolf Estimator...")
+            print("Attempting with Ledoit-Wolf...")
             conn_measure = ConnectivityMeasure(
                 cov_estimator=covariance.LedoitWolf(store_precision=True,
                                                     assume_centered=True),
                 kind=kind)
             conn_matrix = conn_measure.fit_transform([time_series])[0]
         except (np.linalg.linalg.LinAlgError, FloatingPointError):
-            print("Trying Oracle Approximating Shrinkage Estimator...")
+            print("Attempting Oracle Approximating Shrinkage Estimator...")
             conn_measure = ConnectivityMeasure(
                 cov_estimator=covariance.OAS(assume_centered=True),
                 kind=kind)
@@ -271,16 +271,20 @@ def get_conn_matrix(
         return conn_matrix
 
     if conn_model in nilearn_kinds:
-        if conn_model == "corr" or conn_model == "cor" or conn_model == "correlation":
+        if conn_model == "corr" or conn_model == "cor" or \
+             conn_model == "correlation":
             print("\nComputing correlation matrix...\n")
             kind="correlation"
-        elif conn_model == "partcorr" or conn_model == "parcorr" or conn_model == "partialcorrelation":
+        elif conn_model == "partcorr" or conn_model == "parcorr" or \
+             conn_model == "partialcorrelation":
             print("\nComputing partial correlation matrix...\n")
             kind="partial correlation"
-        elif conn_model == "sps" or conn_model == "sparse" or conn_model == "precision":
+        elif conn_model == "sps" or conn_model == "sparse" or \
+             conn_model == "precision":
             print("\nComputing precision matrix...\n")
             kind="precision"
-        elif conn_model == "cov" or conn_model == "covariance" or conn_model == "covar":
+        elif conn_model == "cov" or conn_model == "covariance" or \
+             conn_model == "covar":
             print("\nComputing covariance matrix...\n")
             kind = "covariance"
         else:
@@ -295,9 +299,9 @@ def get_conn_matrix(
             try:
                 conn_matrix = conn_measure.fit_transform([time_series])[0]
             except (np.linalg.linalg.LinAlgError, FloatingPointError):
-                conn_matrix = fallback_covariance(time_series)
+                conn_matrix = _fallback_covariance(time_series)
         else:
-            conn_matrix = fallback_covariance(time_series)
+            conn_matrix = _fallback_covariance(time_series)
     else:
         if conn_model == "QuicGraphicalLasso":
             try:
@@ -310,7 +314,8 @@ def get_conn_matrix(
             model = QuicGraphicalLasso(
                 init_method="cov", lam=0.5, mode="default", verbose=1
             )
-            print("\nCalculating QuicGraphLasso precision matrix using skggm...\n")
+            print("\nCalculating QuicGraphLasso precision matrix using "
+                  "skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "QuicGraphicalLassoCV":
@@ -398,7 +403,7 @@ def get_conn_matrix(
         atlas_name = f"{atlas}_stage-rawgraph"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     coords = np.array(coords)
     labels = np.array(labels)

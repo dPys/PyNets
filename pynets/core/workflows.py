@@ -121,6 +121,7 @@ def workflow_selector(
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
     template_name = hardcoded_params["template"][0]
+    embedding_methods = hardcoded_params["embed"]
     try:
         func_models = hardcoded_params["available_models"][
             "func_models"]
@@ -1078,40 +1079,46 @@ def workflow_selector(
             ]
         )
         if embed is True:
-            omni_embedding_node_func = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths_dwi", "out_paths_func"],
-                    function=embeddings.build_omnetome,
-                ),
-                name="omni_embedding_node_func",
-                imports=import_list,
-            )
-            ase_embedding_node_func = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths"],
-                    function=embeddings.build_asetomes,
-                ),
-                name="ase_embedding_node_func",
-                imports=import_list,
-            )
-            meta_wf.connect(
-                [
-                    (
-                        pass_meta_ins_func_node,
-                        omni_embedding_node_func,
-                        [("est_path_iterlist", "est_path_iterlist")],
+            if 'OMNI' in embedding_methods:
+                omni_embedding_node_func = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths_dwi", "out_paths_func"],
+                        function=embeddings.build_omnetome,
                     ),
-                    (meta_inputnode, omni_embedding_node_func, [("ID", "ID")]),
-                    (
-                        pass_meta_ins_func_node,
-                        ase_embedding_node_func,
-                        [("est_path_iterlist", "est_path_iterlist")],
+                    name="omni_embedding_node_func",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_func_node,
+                            omni_embedding_node_func,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, omni_embedding_node_func, [("ID", "ID")])
+                    ]
+                )
+            if 'ASE' in embedding_methods:
+                ase_embedding_node_func = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths"],
+                        function=embeddings.build_asetomes,
                     ),
-                    (meta_inputnode, ase_embedding_node_func, [("ID", "ID")]),
-                ]
-            )
+                    name="ase_embedding_node_func",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_func_node,
+                            ase_embedding_node_func,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, ase_embedding_node_func, [("ID", "ID")]),
+                    ]
+                )
     if dwi_file and not func_file:
         meta_wf.connect(
             [
@@ -1133,42 +1140,48 @@ def workflow_selector(
             ]
         )
         if embed is True:
-            omni_embedding_node_struct = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths_dwi", "out_paths_func"],
-                    function=embeddings.build_omnetome,
-                ),
-                name="omni_embedding_node_struct",
-                imports=import_list,
-            )
-            ase_embedding_node_struct = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=["out_paths"],
-                    function=embeddings.build_asetomes,
-                ),
-                name="ase_embedding_node_struct",
-                imports=import_list,
-            )
-            meta_wf.connect(
-                [
-                    (
-                        pass_meta_ins_struct_node,
-                        omni_embedding_node_struct,
-                        [("est_path_iterlist", "est_path_iterlist")],
+            if 'OMNI' in embedding_methods:
+                omni_embedding_node_struct = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths_dwi", "out_paths_func"],
+                        function=embeddings.build_omnetome,
                     ),
-                    (meta_inputnode, omni_embedding_node_struct,
-                    [("ID", "ID")]),
-                    (
-                        pass_meta_ins_struct_node,
-                        ase_embedding_node_struct,
-                        [("est_path_iterlist", "est_path_iterlist")],
+                    name="omni_embedding_node_struct",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_struct_node,
+                            omni_embedding_node_struct,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, omni_embedding_node_struct,
+                        [("ID", "ID")])
+                    ]
+                )
+            if 'ASE' in embedding_methods:
+                ase_embedding_node_struct = pe.Node(
+                    niu.Function(
+                        input_names=["est_path_iterlist", "ID"],
+                        output_names=["out_paths"],
+                        function=embeddings.build_asetomes,
                     ),
-                    (meta_inputnode, ase_embedding_node_struct,
-                     [("ID", "ID")]),
-                ]
-            )
+                    name="ase_embedding_node_struct",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            pass_meta_ins_struct_node,
+                            ase_embedding_node_struct,
+                            [("est_path_iterlist", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, ase_embedding_node_struct,
+                         [("ID", "ID")]),
+                    ]
+                )
     if multimodal is True:
         mase_embedding_node = pe.Node(
             niu.Function(
@@ -1270,7 +1283,7 @@ def workflow_selector(
                     ]
                 )
 
-            if embed is True:
+            if embed is True and 'MASE' in embedding_methods:
                 meta_wf.connect(
                     [
                         (
@@ -1889,16 +1902,16 @@ def dmri_connectometry(
                 "coords",
                 "norm",
                 "binary",
-                "atlas_mni",
+                "atlas_t1w",
                 "basedir_path",
                 "curv_thr_list",
                 "step_list",
                 "directget",
                 "min_length",
-                "t1_aligned_mni"
+                "t1w_brain"
             ],
             output_names=[
-                "streams_mni",
+                "streams_t1w",
                 "dir_path",
                 "track_type",
                 "target_samples",
@@ -1918,7 +1931,7 @@ def dmri_connectometry(
                 "coords",
                 "norm",
                 "binary",
-                "atlas_mni",
+                "atlas_for_streams",
                 "directget",
                 "warped_fa",
                 "min_length",
@@ -1933,7 +1946,7 @@ def dmri_connectometry(
     streams2graph_node = pe.Node(
         niu.Function(
             input_names=[
-                "atlas_mni",
+                "atlas_for_streams",
                 "streams",
                 "dir_path",
                 "track_type",
@@ -1960,7 +1973,7 @@ def dmri_connectometry(
                 "error_margin",
             ],
             output_names=[
-                "atlas_mni",
+                "atlas_for_streams",
                 "streams",
                 "conn_matrix",
                 "track_type",
@@ -2156,7 +2169,7 @@ def dmri_connectometry(
                                        ])
     save_coords_and_labels_node = pe.Node(
         niu.Function(
-            input_names=["coords", "labels", "dir_path", "network"],
+            input_names=["coords", "labels", "dir_path", "network", "indices"],
             function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
@@ -2400,7 +2413,7 @@ def dmri_connectometry(
         "binary",
         "target_samples",
         "track_type",
-        "atlas_mni",
+        "atlas_for_streams",
         "streams",
         "directget",
         "min_length",
@@ -2429,7 +2442,7 @@ def dmri_connectometry(
         ("binary", "binary"),
         ("target_samples", "target_samples"),
         ("track_type", "track_type"),
-        ("atlas_mni", "atlas_mni"),
+        ("atlas_for_streams", "atlas_for_streams"),
         ("streams", "streams"),
         ("directget", "directget"),
         ("min_length", "min_length"),
@@ -2702,7 +2715,7 @@ def dmri_connectometry(
         "binary",
         "target_samples",
         "track_type",
-        "atlas_mni",
+        "atlas_for_streams",
         "streams",
         "directget",
         "min_length",
@@ -2727,7 +2740,7 @@ def dmri_connectometry(
         "binary",
         "target_samples",
         "track_type",
-        "atlas_mni",
+        "atlas_for_streams",
         "streams",
         "directget",
         "min_length",
@@ -2757,7 +2770,7 @@ def dmri_connectometry(
                     "binary",
                     "target_samples",
                     "track_type",
-                    "atlas_mni",
+                    "atlas_for_streams",
                     "streams",
                     "directget",
                     "min_length",
@@ -2791,7 +2804,7 @@ def dmri_connectometry(
                     "binary",
                     "target_samples",
                     "track_type",
-                    "atlas_mni",
+                    "atlas_for_streams",
                     "streams",
                     "directget",
                     "min_length",
@@ -2833,7 +2846,7 @@ def dmri_connectometry(
                     ("binary", "binary"),
                     ("target_samples", "target_samples"),
                     ("track_type", "track_type"),
-                    ("atlas_mni", "atlas_mni"),
+                    ("atlas_for_streams", "atlas_for_streams"),
                     ("streams", "streams"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
@@ -2874,7 +2887,7 @@ def dmri_connectometry(
                         ("binary", "binary"),
                         ("target_samples", "target_samples"),
                         ("track_type", "track_type"),
-                        ("atlas_mni", "atlas_mni"),
+                        ("atlas_for_streams", "atlas_for_streams"),
                         ("streams", "streams"),
                         ("directget", "directget"),
                         ("min_length", "min_length"),
@@ -2953,7 +2966,7 @@ def dmri_connectometry(
                         ("node_size", "node_size"),
                         ("edge_threshold", "edge_threshold"),
                         ("prune", "prune"),
-                        ("atlas_mni", "uatlas"),
+                        ("atlas_for_streams", "uatlas"),
                         ("target_samples", "target_samples"),
                         ("norm", "norm"),
                         ("binary", "binary"),
@@ -3136,7 +3149,7 @@ def dmri_connectometry(
                 [
                     ("dwi_aligned_atlas_wmgm_int", "labels_im_file_wm_gm_int"),
                     ("dwi_aligned_atlas", "labels_im_file"),
-                    ("aligned_atlas_t1mni", "atlas_mni"),
+                    ("aligned_atlas_t1w", "atlas_t1w"),
                     ("atlas", "atlas"),
                     ("uatlas", "uatlas"),
                     ("coords", "coords"),
@@ -3175,7 +3188,7 @@ def dmri_connectometry(
                 dsn_node,
                 [
                     ("basedir_path", "basedir_path"),
-                    ("t1_aligned_mni", "t1_aligned_mni"),
+                    ("t1w_brain", "t1w_brain"),
                 ],
             ),
             (
@@ -3203,7 +3216,7 @@ def dmri_connectometry(
                     ("coords", "coords"),
                     ("norm", "norm"),
                     ("binary", "binary"),
-                    ("atlas_mni", "atlas_mni"),
+                    ("atlas_t1w", "atlas_t1w"),
                     ("fa_path", "fa_path"),
                     ("directget", "directget"),
                     ("min_length", "min_length"),
@@ -3214,7 +3227,7 @@ def dmri_connectometry(
                 dsn_node,
                 streams2graph_node,
                 [
-                    ("streams_mni", "streams"),
+                    ("streams_t1w", "streams"),
                     ("dir_path", "dir_path"),
                     ("track_type", "track_type"),
                     ("target_samples", "target_samples"),
@@ -3233,7 +3246,7 @@ def dmri_connectometry(
                     ("coords", "coords"),
                     ("norm", "norm"),
                     ("binary", "binary"),
-                    ("atlas_mni", "atlas_mni"),
+                    ("atlas_for_streams", "atlas_for_streams"),
                     ("directget", "directget"),
                     ("warped_fa", "warped_fa"),
                     ("min_length", "min_length"),
@@ -3373,7 +3386,7 @@ def dmri_connectometry(
                     "track_type",
                     "norm",
                     "binary",
-                    "atlas_mni",
+                    "atlas_for_streams",
                     "streams",
                     "directget",
                     "min_length",
@@ -3395,7 +3408,7 @@ def dmri_connectometry(
                 "track_type",
                 "norm",
                 "binary",
-                "atlas_mni",
+                "atlas_for_streams",
                 "streams",
                 "directget",
                 "min_length",
@@ -3420,7 +3433,7 @@ def dmri_connectometry(
                         ("target_samples", "target_samples"),
                         ("norm", "norm"),
                         ("binary", "binary"),
-                        ("atlas_mni", "atlas_mni"),
+                        ("atlas_for_streams", "atlas_for_streams"),
                         ("streams", "streams"),
                         ("directget", "directget"),
                         ("min_length", "min_length"),
@@ -4653,7 +4666,7 @@ def fmri_connectometry(
 
     save_coords_and_labels_node = pe.Node(
         niu.Function(
-            input_names=["coords", "labels", "dir_path", "network"],
+            input_names=["coords", "labels", "dir_path", "network", "indices"],
             function=utils.save_coords_and_labels_to_json,
             imports=import_list,
         ),
@@ -5766,6 +5779,7 @@ def raw_graph_workflow(
     step_thr,
     wf,
     net_mets_node,
+    runtime_dict
 ):
     import numpy as np
     from pynets.core.utils import load_mat, load_mat_ext, save_mat_thresholded
@@ -5859,6 +5873,8 @@ def raw_graph_workflow(
             name="save_mat_thresholded_node",
             imports=import_list,
         )
+        save_mat_thresholded_node._n_procs = runtime_dict["save_mat_thresholded_node"][0]
+        save_mat_thresholded_node._mem_gb = runtime_dict["save_mat_thresholded_node"][1]
 
     if multi_graph:
         inputinfo = pe.Node(
@@ -5922,6 +5938,9 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_g._n_procs = runtime_dict["join_iters_node_g"][0]
+        join_iters_node_g._mem_gb = runtime_dict["join_iters_node_g"][1]
+
         if multi_thr is True or float(thr) != 1.0:
             load_mat_node = pe.Node(
                 niu.Function(
@@ -5957,6 +5976,8 @@ def raw_graph_workflow(
                 name="load_mat_ext_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_ext_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_ext_node"][1]
 
             wf.connect(
                 [
@@ -6042,6 +6063,8 @@ def raw_graph_workflow(
                 name="load_mat_node",
                 imports=import_list,
             )
+            load_mat_node._n_procs = runtime_dict["load_mat_node"][0]
+            load_mat_node._mem_gb = runtime_dict["load_mat_node"][1]
 
             wf.connect(
                 [
@@ -6113,6 +6136,8 @@ def raw_graph_workflow(
                 "binary",
             ],
         )
+        join_iters_node_thr._n_procs = runtime_dict["join_iters_node_thr"][0]
+        join_iters_node_thr._mem_gb = runtime_dict["join_iters_node_thr"][1]
 
         thr_info_node.iterables = ("thr", iter_thresh)
         thr_info_node.synchronize = True

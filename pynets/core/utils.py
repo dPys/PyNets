@@ -1210,7 +1210,7 @@ def proportional(k, voxels_list):
 
 
 def collect_pandas_df(
-    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal
+    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
 ):
     """
     API for summarizing independent lists of pickled pandas dataframes of
@@ -1282,7 +1282,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_dwi = collect_pandas_df_make(
-                    net_mets_csv_list_dwi, ID, network, plot_switch
+                    net_mets_csv_list_dwi, ID, network, plot_switch, embed
                 )
                 net_mets_csv_list_func = list(
                     set(
@@ -1295,7 +1295,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_func = collect_pandas_df_make(
-                    net_mets_csv_list_func, ID, network, plot_switch
+                    net_mets_csv_list_func, ID, network, plot_switch, embed
                 )
 
                 if (
@@ -1307,7 +1307,7 @@ def collect_pandas_df(
                     combination_complete = False
             else:
                 combination_complete = collect_pandas_df_make(
-                    net_mets_csv_list, ID, network, plot_switch
+                    net_mets_csv_list, ID, network, plot_switch, embed
                 )
     else:
         if multimodal is True:
@@ -1321,7 +1321,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_dwi = collect_pandas_df_make(
-                net_mets_csv_list_dwi, ID, network, plot_switch
+                net_mets_csv_list_dwi, ID, network, plot_switch, embed
             )
             net_mets_csv_list_func = list(
                 set(
@@ -1333,7 +1333,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_func = collect_pandas_df_make(
-                net_mets_csv_list_func, ID, network, plot_switch
+                net_mets_csv_list_func, ID, network, plot_switch, embed
             )
 
             if combination_complete_dwi is \
@@ -1343,7 +1343,7 @@ def collect_pandas_df(
                 combination_complete = False
         else:
             combination_complete = collect_pandas_df_make(
-                net_mets_csv_list, ID, network, plot_switch
+                net_mets_csv_list, ID, network, plot_switch, embed
             )
 
     return combination_complete
@@ -1394,16 +1394,16 @@ def load_runconfig():
     fd, temp_path = tempfile.mkstemp()
     shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
                  temp_path)
-    with open(temp_path, mode='r') as stream:
+    with open(temp_path, mode='r+') as stream:
         hardcoded_params = yaml.load(stream)
     stream.close()
     os.remove(temp_path)
-
+    del stream
     return hardcoded_params
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,
-                                   network='all_nodes'):
+                                   network='all_nodes', indices=None):
     """
     Save coordinates and labels to json.
 
@@ -1450,10 +1450,13 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
     node_list = []
     for node in labels:
         node_dict = {}
-        if consensus_labs is True:
+        if consensus_labs is True and isinstance(node, tuple):
             lab, ix = node
             node_dict['index'] = str(ix)
             node_dict['label'] = str(lab)
+        elif indices is not None:
+            node_dict['index'] = str(indices[i])
+            node_dict['label'] = str(node)
         else:
             node_dict['index'] = str(i)
             node_dict['label'] = str(node)
@@ -1461,7 +1464,8 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_list.append(node_dict)
         i += 1
 
-    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_count-{len(labels)}.json"
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_" \
+                 f"count-{len(labels)}.json"
 
     with open(nodes_path, 'w') as f:
         json.dump(node_list, f)
@@ -1894,8 +1898,8 @@ def check_template_loads(template, template_mask, template_name):
             nib.load(template_mask)
             return print('Local template detected...')
         except ImportError as e:
-            print(e, f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
+            print(e, f"\nCannot load template {template_name} image or "
+                     f"template mask. Do you have git-lfs installed?")
 
 
 def save_4d_to_3d(in_file):

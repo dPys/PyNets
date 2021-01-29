@@ -48,7 +48,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    data = nib.load(dwi_file, mmap=False).get_fdata()
+    data = nib.load(dwi_file, mmap=False).get_fdata(dtype=np.float32)
 
     print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask, mmap=False)
@@ -144,8 +144,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     else:
         print("Generating anisotropic power map to use for registrations...")
         nodif_B0_img = nib.load(B0_mask)
-
-        dwi_data = np.asarray(img.dataobj, dtype=np.float32)
+        dwi_data = img.get_fdata(dtype=np.float32)
         for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
             dwi_data = np.delete(dwi_data, b0, 3)
 
@@ -161,6 +160,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
         del anisomap
+        img.uncache()
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
@@ -363,7 +363,7 @@ def sfm_mod_est(gtab, data, B0_mask):
 
 
 def streams2graph(
-    atlas_mni,
+    atlas_for_streams,
     streams,
     dir_path,
     track_type,
@@ -394,8 +394,8 @@ def streams2graph(
 
     Parameters
     ----------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     dir_path : str
@@ -458,8 +458,8 @@ def streams2graph(
 
     Returns
     -------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     conn_matrix : array
@@ -568,7 +568,7 @@ def streams2graph(
     fa_img = nib.load(warped_fa)
 
     # Load parcellation
-    roi_img = nib.load(atlas_mni)
+    roi_img = nib.load(atlas_for_streams)
     atlas_data = np.around(np.asarray(roi_img.dataobj))
     roi_zooms = roi_img.header.get_zooms()
     roi_shape = roi_img.shape
@@ -673,8 +673,8 @@ def streams2graph(
                         bad_idxs.append(jx)
                         print(
                             f"Label {lab} missing from parcellation. Check "
-                            f"registration and ensure valid input parcellation "
-                            f"file.")
+                            f"registration and ensure valid input "
+                            f"parcellation file.")
 
             edges = combinations(endlabels, 2)
             for edge in edges:
@@ -790,7 +790,7 @@ def streams2graph(
         atlas_name = f"{atlas}_stage-rawgraph"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     coords = np.array(coords)
     labels = np.array(labels)
@@ -818,7 +818,7 @@ def streams2graph(
     )
 
     return (
-        atlas_mni,
+        atlas_for_streams,
         streams,
         conn_matrix,
         track_type,

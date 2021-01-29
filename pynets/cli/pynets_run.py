@@ -158,7 +158,7 @@ def get_parser():
         default=None,
         help="Specify the path to the atlas reference .txt file that maps "
              "labels to intensities corresponding to the atlas parcellation "
-             "file specified with the -ua flag.\n",
+             "file specified with the -a flag.\n",
     )
     parser.add_argument(
         "-way",
@@ -169,19 +169,6 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    parser.add_argument(
-        "-ua",
-        metavar="Path to custom parcellation file",
-        default=None,
-        nargs="+",
-        help="(metaparameter): Optionally specify a path to a "
-             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
-             "be spatially distinct across hemispheres and ordered with "
-             "consecutive integers with a value of 0 as the background label."
-             "If specifying a list of paths to multiple parcellations, "
-             "separate them by space.\n",
-    )
-
     # Modality-pervasive metaparameters
     parser.add_argument(
         "-mod",
@@ -215,44 +202,14 @@ def get_parser():
         metavar="Atlas",
         default=None,
         nargs="+",
-        choices=[
-            "atlas_aal",
-            "atlas_talairach_gyrus",
-            "atlas_talairach_ba",
-            "atlas_talairach_lobe",
-            "atlas_harvard_oxford",
-            "atlas_destrieux_2009",
-            "atlas_msdl",
-            "coords_dosenbach_2010",
-            "coords_power_2011",
-            "atlas_pauli_2017",
-            "destrieux2009_rois",
-            "BrainnetomeAtlasFan2016",
-            "VoxelwiseParcellationt0515kLeadDBS",
-            "Juelichgmthr252mmEickhoff2005",
-            "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014",
-            "whole_brain_cluster_labels_PCA100",
-            "AICHAreorderedJoliot2015",
-            "HarvardOxfordThr252mmWholeBrainMakris2006",
-            "VoxelwiseParcellationt058kLeadDBS",
-        "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
-            "Hammers_mithAtlasn30r83Hammers2003Gousias2008",
-            "AALTzourioMazoyer2002",
-            "DesikanKlein2012",
-            "AAL2zourioMazoyer2002",
-            "VoxelwiseParcellationt0435kLeadDBS",
-            "AICHAJoliot2015",
-            "whole_brain_cluster_labels_PCA200",
-            "RandomParcellationsc05meanalll43Craddock2011",
-            'sub-colin27_label-L2018_desc-scale1_atlas',
-            'sub-colin27_label-L2018_desc-scale2_atlas',
-            'sub-colin27_label-L2018_desc-scale3_atlas',
-            'sub-colin27_label-L2018_desc-scale4_atlas',
-            'sub-colin27_label-L2018_desc-scale5_atlas'
-        ],
-        help="(metaparameter): Specify an atlas parcellation from nilearn or "
-             "local libraries. If you wish to iterate your pynets run over "
-             "multiple atlases, separate them by space. Available nilearn "
+        help="(metaparameter): Specify an atlas name from nilearn or "
+             "local (pynets) library, and/or specify a path to a custom "
+             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
+             "be spatially distinct across hemispheres and ordered with "
+             "consecutive integers with a value of 0 as the background label."
+             "If specifying a list of paths to multiple parcellations, "
+             "separate them by space. If you wish to iterate your pynets run "
+             "over multiple atlases, separate them by space. Available nilearn "
              "atlases are:"
         "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba"
              "\natlas_talairach_lobe\n"
@@ -674,6 +631,26 @@ def build_workflow(args, retval):
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
 
+    # Hard-coded:
+    from pynets.core.utils import load_runconfig
+    hardcoded_params = load_runconfig()
+
+    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
+    local_corr = hardcoded_params["clustering_local_conn"][0]
+    track_type = hardcoded_params['tracking']["tracking_method"][0]
+    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
+    use_parcel_naming = hardcoded_params["parcel_naming"][0]
+    step_list = hardcoded_params['tracking']["step_list"]
+    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
+    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
+    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
+    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
+    local_atlases = hardcoded_params["local_atlases"]
+    template_name = hardcoded_params['template'][0]
+    roi_neighborhood_tol = \
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+
     # Set Arguments to global variables
     ID = args.id
     outdir = f"{args.output_dir}/pynets"
@@ -717,7 +694,8 @@ def build_workflow(args, retval):
                         multi_subject_multigraph = []
                         for id in ID:
                             # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g) and modality in str(g)])
+                            #     [str(g) for g in graph_iter if id in str(g)
+                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
@@ -981,35 +959,68 @@ def build_workflow(args, retval):
             multi_nets = None
     else:
         multi_nets = None
-    uatlas = args.ua
-    if uatlas:
-        if len(uatlas) > 1:
-            user_atlas_list = uatlas
-            uatlas = None
-        elif uatlas == ["None"]:
-            uatlas = None
-            user_atlas_list = None
+
+    atlas_ins = args.a
+    if atlas_ins is not None:
+        # Parse uatlas files from atlas names
+        uatlas = []
+        atlas = []
+
+        for atl in atlas_ins:
+            if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or \
+                atl in nilearn_prob_atlases or atl in local_atlases:
+                atlas.append(atl)
+            elif '/' in atl:
+                uatlas.append(atl)
+                if not os.path.isfile(atl):
+                    print(f"{atl} may not be an existing file path. "
+                          f"You can safely ignore this warning if you are "
+                          f"using container-mounted directory paths.")
+            else:
+                raise ValueError(f"{atl} is not in the pynets atlas library "
+                                 f"nor is it a file path to a parcellation "
+                                 f"file")
+
+        if len(atlas) == 0:
+           atlas = None
+
+        if len(uatlas) == 0:
+           uatlas = None
+
+        if uatlas:
+            if len(uatlas) > 1:
+                user_atlas_list = uatlas
+                uatlas = None
+            elif uatlas == ["None"]:
+                uatlas = None
+                user_atlas_list = None
+            else:
+                uatlas = uatlas[0]
+                user_atlas_list = None
         else:
-            uatlas = uatlas[0]
             user_atlas_list = None
-    else:
-        user_atlas_list = None
-    atlas = args.a
-    if atlas:
-        if (isinstance(atlas, list)) and (len(atlas) > 1):
-            multi_atlas = atlas
-            atlas = None
-        elif atlas == ["None"]:
-            multi_atlas = None
-            atlas = None
-        elif isinstance(atlas, list):
-            atlas = atlas[0]
-            multi_atlas = None
+
+        if atlas:
+            if (isinstance(atlas, list)) and (len(atlas) > 1):
+                multi_atlas = atlas
+                atlas = None
+            elif atlas == ["None"]:
+                multi_atlas = None
+                atlas = None
+            elif isinstance(atlas, list):
+                atlas = atlas[0]
+                multi_atlas = None
+            else:
+                atlas = None
+                multi_atlas = None
         else:
-            atlas = None
             multi_atlas = None
     else:
+        uatlas = None
+        atlas = None
         multi_atlas = None
+        user_atlas_list = None
+
     min_length = args.ml
     if min_length:
         if (isinstance(min_length, list)) and (len(min_length) > 1):
@@ -1066,26 +1077,6 @@ def build_workflow(args, retval):
         "\n\n\n---------------------------------------------------------------"
         "---------\n"
     )
-
-    # Hard-coded:
-    from pynets.core.utils import load_runconfig
-    hardcoded_params = load_runconfig()
-
-    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
-    local_corr = hardcoded_params["clustering_local_conn"][0]
-    track_type = hardcoded_params['tracking']["tracking_method"][0]
-    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
-    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
-    use_parcel_naming = hardcoded_params["parcel_naming"][0]
-    step_list = hardcoded_params['tracking']["step_list"]
-    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
-    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
-    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
-    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
-    local_atlases = hardcoded_params["local_atlases"]
-    template_name = hardcoded_params['template'][0]
-    roi_neighborhood_tol = \
-        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     if track_type == "particle":
         tiss_class = "cmc"
@@ -1715,7 +1706,7 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "ERROR: the -ua flag cannot be used alone with the clustering"
+                "ERROR: the -a flag cannot be used alone with the clustering"
                 " option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
@@ -1765,6 +1756,8 @@ def build_workflow(args, retval):
                 )
                 retval["return_code"] = 1
                 return retval
+            else:
+                print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
         else:
             if (
                 (uatlas is None)
@@ -1876,8 +1869,8 @@ def build_workflow(args, retval):
         else:
             for em in error_margin_list:
                 if float(roi_neighborhood_tol) <= float(em):
-                    print('\nERROR: roi_neighborhood_tol preset cannot be less '
-                          'than the value of the structural connectome '
+                    print('\nERROR: roi_neighborhood_tol preset cannot be '
+                          'less than the value of the structural connectome '
                           'error_margin parameter.')
                     retval["return_code"] = 1
                     return retval
@@ -1929,7 +1922,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                print(f"\nERROR: {dwi_file} does not exist. Ensure that you are"
+                print(f"\nERROR: {dwi_file} does not exist. "
+                      f"Ensure that you are"
                       f" only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -1948,7 +1942,8 @@ def build_workflow(args, retval):
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                print(f"\nERROR: {waymask} does not exist. Ensure that you are "
+                print(f"\nERROR: {waymask} does not exist. "
+                      f"Ensure that you are "
                       f"only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -2011,9 +2006,9 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    print(f"\nERROR: ERROR: {_func_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
+                    print(f"\nERROR: ERROR: {_func_file} does not exist. "
+                          f"Ensure that you are only specifying "
+                          f"absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -2413,6 +2408,7 @@ def build_workflow(args, retval):
                     "norm",
                     "binary",
                     "multimodal",
+                    "embed",
                 ]
             ),
             name="inputnode",
@@ -2454,6 +2450,7 @@ def build_workflow(args, retval):
         inputnode.inputs.norm = norm
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
+        inputnode.inputs.embed = embed
 
         if func_file or dwi_file:
             meta_wf = workflow_selector(
@@ -2591,9 +2588,9 @@ def build_workflow(args, retval):
             nested=True,
             imports=import_list,
         )
-        # net_mets_node.synchronize = True
-        net_mets_node._n_procs = 1
-        net_mets_node._mem_gb = 5
+        net_mets_node.synchronize = True
+        net_mets_node._n_procs = runtime_dict["NetworkAnalysis"][0]
+        net_mets_node._mem_gb = runtime_dict["NetworkAnalysis"][1]
 
         collect_pd_list_net_csv_node = pe.Node(
             niu.Function(
@@ -2604,16 +2601,18 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._n_procs = 1
-        collect_pd_list_net_csv_node._mem_gb = 3
+        collect_pd_list_net_csv_node._n_procs = \
+            runtime_dict["AggregateOutputs"][0]
+        collect_pd_list_net_csv_node._mem_gb = \
+            runtime_dict["AggregateOutputs"][1]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
             interface=CombineOutputs(),
             name="CombineOutputs",
             imports=import_list)
-        combine_pandas_dfs_node._n_procs = 1
-        combine_pandas_dfs_node._mem_gb = 2
+        combine_pandas_dfs_node._n_procs = runtime_dict["CombineOutputs"][0]
+        combine_pandas_dfs_node._mem_gb = runtime_dict["CombineOutputs"][1]
 
         final_outputnode = pe.Node(
             niu.IdentityInterface(fields=["combination_complete"]),
@@ -2654,7 +2653,8 @@ def build_workflow(args, retval):
                     elif 'dwi' in op.dirname(graph):
                         outdir = f"{outdir}/dwi"
                 else:
-                    graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
+                    graph_name = op.basename(graph
+                                             ).split(op.splitext(graph)[1])[0]
                     print("Using single custom graph input...")
                     print(graph_name)
                     atlas = f"{graph_name}_{ID}"
@@ -2679,6 +2679,7 @@ def build_workflow(args, retval):
                 step_thr,
                 wf,
                 net_mets_node,
+                runtime_dict
             )
         else:
             wf.connect(
@@ -2712,6 +2713,7 @@ def build_workflow(args, retval):
                         ("plot_switch", "plot_switch"),
                         ("multi_nets", "multi_nets"),
                         ("multimodal", "multimodal"),
+                        ("embed", "embed"),
                     ],
                 ),
                 (
@@ -3468,9 +3470,7 @@ def build_workflow(args, retval):
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/func/*") if os.path.isfile(i)] + \
                          [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3480,9 +3480,7 @@ def build_workflow(args, retval):
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
                          [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*/*") if os.path.isfile(i)]:
+                    f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:

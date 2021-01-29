@@ -638,15 +638,17 @@ def plot_all_func(
     edge_color_override=False,
 ):
     """
-    Plot adjacency matrix, connectogram, and glass brain for functional connectome.
+    Plot adjacency matrix, connectogram, and glass brain for functional
+    connectome.
 
     Parameters
     ----------
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -654,29 +656,31 @@ def plot_all_func(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+        List of (x, y, z) tuples corresponding to an a-priori defined set
+        (e.g. a coordinate atlas).
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     edge_threshold : float
-        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
-        successfully obtained.
+        The actual value, between 0 and 1, that the graph was thresholded
+        (can differ from thr if target was not successfully obtained.
     smooth : int
-        Smoothing width (mm fwhm) to apply to time-series when extracting signal from ROI's.
+        Smoothing width (mm fwhm) to apply to time-series when extracting
+        signal from ROI's.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
+        File path to atlas parcellation Nifti1Image.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -685,7 +689,8 @@ def plot_all_func(
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
     extract_strategy : str
-        The name of a valid function used to reduce the time-series region extraction.
+        The name of a valid function used to reduce the time-series region
+        extraction.
     edge_color_override : bool
         Switch that enables random sequential colormap selection for edges.
 
@@ -918,7 +923,8 @@ def plot_all_func(
                 edge_vmin=float(z_min),
                 node_size=node_sizes,
                 node_color=clust_pal_nodes,
-                edge_kwargs={"alpha": 0.45},
+                edge_kwargs={"alpha": 0.45, 'zorder': 1},
+                node_kwargs={'zorder': 1000}
             )
             for view in views:
                 mod_lines = []
@@ -929,6 +935,7 @@ def plot_all_func(
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
 
+            zorder = 10000
             for view in views:
                 coord_anns = []
                 for coord, label in list(zip(coords, labels)):
@@ -945,18 +952,34 @@ def plot_all_func(
                             dists.append(distance.euclidean(coord_ann, c))
                         if any([i < 20 for i in dists]):
                             continue
+                    if label == 'Unlabeled':
+                        continue
                     coord_anns.append(coord_ann)
                     connectome.axes[view].ax.annotate(label,
                                                       coord_ann,
                                                       xycoords='data',
                                                       textcoords='offset points',
-                                                      xytext=(0, 3),
+                                                      xytext=(-0.0001, -0.0001),
                                                       horizontalalignment='center',
                                                       verticalalignment='top',
-                                                      fontsize='2.75',
+                                                      fontsize='2.7',
+                                                      fontweight='extra bold',
+                                                      zorder=zorder,
+                                                      color='black')
+                    zorder += 10
+
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
+                                                      xytext=(0, 0),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.65',
                                                       fontweight='bold',
-                                                      zorder=1000,
-                                                      color='red')
+                                                      zorder=zorder,
+                                                      color='white')
+                    zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1001,8 +1024,9 @@ def plot_all_struct(
     conn_matrix : array
         NxN matrix.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for partial
+       correlation). sps type is used by default.
     atlas : str
         Name of atlas parcellation used.
     dir_path : str
@@ -1010,27 +1034,28 @@ def plot_all_struct(
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     coords : list
-        List of (x, y, z) tuples corresponding to an a-priori defined set (e.g. a coordinate atlas).
+        List of (x, y, z) tuples corresponding to an a-priori defined set
+        (e.g. a coordinate atlas).
     thr : float
-        A value, between 0 and 1, to threshold the graph using any variety of methods
-        triggered through other options.
+        A value, between 0 and 1, to threshold the graph using any variety of
+        methods triggered through other options.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     edge_threshold : float
-        The actual value, between 0 and 1, that the graph was thresholded (can differ from thr if target was not
-        successfully obtained.
+        The actual value, between 0 and 1, that the graph was thresholded
+        (can differ from thr if target was not successfully obtained.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     uatlas : str
-        File path to atlas parcellation Nifti1Image in MNI template space.
+        File path to atlas parcellation Nifti1Image.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     norm : int
@@ -1041,7 +1066,8 @@ def plot_all_struct(
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
@@ -1210,7 +1236,7 @@ def plot_all_struct(
                 np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
                 black_bg=True
             )
-            connectome.add_overlay(ch2better_loc, alpha=0.10, cmap=plt.cm.gray)
+            connectome.add_overlay(ch2better_loc, alpha=0.45, cmap=plt.cm.gray)
 
             [
                 conn_matrix,
@@ -1252,21 +1278,25 @@ def plot_all_struct(
                 edge_vmin=float(1),
                 node_size=node_sizes,
                 node_color=clust_pal_nodes,
-                edge_kwargs={"alpha": 0.50},
+                edge_kwargs={"alpha": 0.30, 'zorder': 1},
+                node_kwargs={'zorder': 1000}
             )
+
             for view in views:
                 mod_lines = []
                 for line, edge_size in list(
                     zip(connectome.axes[view].ax.lines, edge_sizes)
                 ):
-                    line.set_lw(edge_size * 0.5)
+                    line.set_lw(edge_size * 0.20)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
                 mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
-                                             n_glow_lines=20,
-                                             diff_linewidth=1.0,
-                                             alpha_line=0.05)
+                                             n_glow_lines=10,
+                                             diff_linewidth=0.80,
+                                             alpha_line=0.075)
+                connectome.axes[view].ax.set_axisbelow(True)
 
+            zorder = 10000
             for view in views:
                 coord_anns = []
                 for coord, label in list(zip(coords, labels)):
@@ -1283,18 +1313,35 @@ def plot_all_struct(
                             dists.append(distance.euclidean(coord_ann, c))
                         if any([i < 20 for i in dists]):
                             continue
+                    if label == 'Unlabeled':
+                        continue
                     coord_anns.append(coord_ann)
+                    connectome.axes[view].ax.set_axisbelow(False)
                     connectome.axes[view].ax.annotate(label,
                                                       coord_ann,
                                                       xycoords='data',
                                                       textcoords='offset points',
-                                                      xytext=(0, 3),
+                                                      xytext=(-0.0001, -0.0001),
                                                       horizontalalignment='center',
                                                       verticalalignment='top',
-                                                      fontsize='2.75',
+                                                      fontsize='2.7',
+                                                      fontweight='extra bold',
+                                                      zorder=zorder,
+                                                      color='black')
+                    zorder += 10
+
+                    connectome.axes[view].ax.annotate(label,
+                                                      coord_ann,
+                                                      xycoords='data',
+                                                      textcoords='offset points',
+                                                      xytext=(0, 0),
+                                                      horizontalalignment='center',
+                                                      verticalalignment='top',
+                                                      fontsize='2.65',
                                                       fontweight='bold',
-                                                      zorder=1000,
-                                                      color='red')
+                                                      zorder=zorder,
+                                                      color='orange')
+                    zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
         else:
@@ -1536,11 +1583,12 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             [tuple(x) for x in coords],
             edge_threshold="0%",
             edge_cmap=clust_pal_edges,
-            edge_kwargs={"alpha": 0.75},
+            edge_kwargs={"alpha": 0.75, 'zorder': 1},
             edge_vmax=float(z_max),
             edge_vmin=float(z_min),
             node_size=node_sizes,
             node_color=clust_pal_nodes,
+            node_kwargs={'zorder': 1000}
         )
 
         for view in views:
@@ -1554,7 +1602,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
             connectome.axes[view].ax.lines[len(edge_sizes_struct):] = mod_lines
+            connectome.axes[view].ax.set_axisbelow(True)
 
+        zorder = 10000
         for view in views:
             coord_anns = []
             for coord, label in list(zip(coords, labels)):
@@ -1571,16 +1621,35 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                         dists.append(distance.euclidean(coord_ann, c))
                     if any([i < 20 for i in dists]):
                         continue
+                if label == 'Unlabeled':
+                    continue
                 coord_anns.append(coord_ann)
+                connectome.axes[view].ax.set_axisbelow(False)
                 connectome.axes[view].ax.annotate(label,
-                                      coord_ann,
-                                      xycoords='data',
-                                      textcoords='offset points',
-                                      xytext=(0, 3),
-                                      horizontalalignment='center',
+                                                  coord_ann,
+                                                  xycoords='data',
+                                                  textcoords='offset points',
+                                                  xytext=(-0.0001, -0.0001),
+                                                  horizontalalignment='center',
                                                   verticalalignment='top',
-                                      fontsize='2.75', fontweight='bold',
-                                                  zorder=1000, color='red')
+                                                  fontsize='2.7',
+                                                  fontweight='extra bold',
+                                                  zorder=zorder,
+                                                  color='black')
+                zorder += 10
+
+                connectome.axes[view].ax.annotate(label,
+                                                  coord_ann,
+                                                  xycoords='data',
+                                                  textcoords='offset points',
+                                                  xytext=(0, 0),
+                                                  horizontalalignment='center',
+                                                  verticalalignment='top',
+                                                  fontsize='2.65',
+                                                  fontweight='bold',
+                                                  zorder=zorder,
+                                                  color='red')
+                zorder += 100
 
         connectome.savefig(
             f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution
@@ -1600,6 +1669,7 @@ def show_template_bundles(final_streamlines, template_path, fname):
     lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
                                    linewidth=0.3)
     renderer.add(lines_actor)
+    #window.show(renderer)
     window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
     return
 
@@ -1637,9 +1707,9 @@ def view_tractogram(streams, atlas):
         clean_template_img.get_fdata(), clean_template_img.affine,
         FA_template_img.get_fdata(), FA_template_img.affine)
     warped_aff = affine_map.affine_inv.copy()
-    warped_aff_scaled = rescale_affine_to_center(warped_aff,
-                                                 voxel_dims=[4, 4, 4],
-                                                 target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
+    warped_aff_scaled = rescale_affine_to_center(
+        warped_aff, voxel_dims=[4, 4, 4],
+        target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
     streamlines = transform_streamlines(
         tractogram.streamlines, warped_aff_scaled)
 
