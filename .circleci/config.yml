@@ -202,11 +202,10 @@ jobs:
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update
-            sudo update-alternatives --install /usr/bin/python3.6 python /opt/circleci/.pyenv/shims/python3.6 6
-            which python
-            python --version
-            sudo apt-get install --allow-unauthenticated -y mlocate libatlas-base-dev python3-graph-tool
-            locate graph_tool
+            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
+            PYTHONPATH=/usr/lib/python2.7/dist-packages
+            echo "export PYTHONPATH=/opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages:/usr/lib/python3/dist-packages" >> $BASH_ENV
+            source $BASH_ENV
             python -c "import graph_tool.all as gt"
       - run:
           name: Install pytest
