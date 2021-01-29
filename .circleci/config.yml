@@ -204,7 +204,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
             PYTHONPATH=/usr/lib/python2.7/dist-packages
-            echo "export PYTHONPATH=/opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages:/usr/lib/python3/dist-packages" >> $BASH_ENV
+            echo "export PYTHONPATH=/usr/lib/python3/dist-packages:/opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages" >> $BASH_ENV
             source $BASH_ENV
             python -c "import graph_tool.all as gt"
       - run:
