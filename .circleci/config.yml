@@ -207,6 +207,7 @@ jobs:
             which python
             python --version
             sudo apt-get install --allow-unauthenticated -y apt-file libatlas-base-dev python3-graph-tool
+            sudo apt-file update
             sudo apt-file search graph_tool
             python -c "import graph_tool.all as gt"
       - run:
