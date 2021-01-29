@@ -2642,42 +2642,45 @@ def collect_pandas_df_make(
                 del df_summary_auc
         else:
             for file_ in net_mets_csv_list:
-                dfs_non_auc.append(pd.read_csv(file_, memory_map=True,
+                df = pd.read_csv(file_, memory_map=True,
                                          chunksize=100000, encoding="utf-8",
                                          skip_blank_lines=False,
                                          warn_bad_lines=True,
                                          error_bad_lines=False
-                                         ).read())
+                                         ).read()
+                dfs_non_auc.append(df)
                 node_cols = [
                     s
-                    for s in list(dfs_non_auc.columns)
+                    for s in list(df.columns)
                     if isinstance(s, int) or any(c.isdigit() for c in
                                                  s)
                 ]
                 if embed is False:
                     dfs_non_auc = dfs_non_auc.drop(node_cols, axis=1)
                 elif len(node_cols) > 1:
-                    node_cols_embed = [i for i in node_cols if i in embedding_methods]
+                    node_cols_embed = [i for i in node_cols if any(map(i.__contains__, embedding_methods))]
                     if len(node_cols_embed) > 0:
                         from pathlib import Path
                         embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
-                        df_nodes = dfs_non_auc[node_cols_embed]
+                        if not os.path.isdir(embed_dir):
+                            os.makedirs(embed_dir, exist_ok=True)
+                        df_nodes = df[node_cols_embed]
                         node_embeddings_grouped = [{k: list(g)} for k, g in
                                                    groupby(df_nodes,
                                                            lambda s: s.split("_")[1])]
-                        atlas = os.path.basename(net_mets_csv_list[0]).split('rsn-')[1].split('_')[0]
+                        atlas = os.path.dirname(file_).split('rsn-')[1].split('_')[0]
                         for node_dict in node_embeddings_grouped:
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
                             embedding_frame = df_nodes[node_top_cols]
                             out_path = f"{embed_dir}/gradient-{node_top_type}_" \
                                        f"rsn-{atlas}_nodes_" \
-                                       f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
+                                       f"{os.path.basename(file_).split('metrics_')[1].split('_thr-')[0]}.csv"
                             embedding_frame.to_csv(out_path, index=False)
 
         if create_summary is True:
             try:
-                summary_dir = subject_path + "/summary"
+                summary_dir = f"{subject_path}/summary"
                 if not os.path.isdir(summary_dir):
                     os.makedirs(summary_dir, exist_ok=True)
 

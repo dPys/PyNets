@@ -272,6 +272,7 @@ def get_ixs_from_node_dict(node_dict):
 
 def node_files_search(node_files, emb_shape):
     import os
+    import gc
     import json
 
     if len(node_files) == 1:
@@ -310,6 +311,8 @@ def node_files_search(node_files, emb_shape):
                 continue
             ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
             j += 1
+    del f
+    gc.collect()
 
     return ixs_corr, node_dict_revised
 
@@ -558,6 +561,7 @@ def graph_theory_prep(df, thr_type, drop_thr=0.50):
 def make_subject_dict(
     modalities, base_dir, thr_type, mets, embedding_types, template, sessions,
     rsns):
+    from joblib.externals.loky import get_reusable_executor
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
     from pynets.core.utils import load_runconfig
@@ -639,25 +643,23 @@ def make_subject_dict(
                             base_dir,
                             template,
                             thr_type,
+                            embedding_methods,
                             mets,
-                            df_top,
+                            df_top
                         )
                         for id in ids
                     )
-                del par_dict
-                gc.collect()
                 outs = [i[0] for i in outs_tup]
                 miss_frames = [i[1] for i in outs_tup if not i[1].empty]
-                del outs_tup
                 if len(miss_frames) > 1:
                     miss_frames = pd.concat(miss_frames)
                 miss_frames_all.append(miss_frames)
                 for d in outs:
                     subject_dict_all = dict(mergedicts(subject_dict_all, d))
-                del outs, df_top, miss_frames
-                gc.collect()
                 shutil.rmtree(cache_dir, ignore_errors=True)
-                del ses_name, grid, hyperparam_dict
+                get_reusable_executor().shutdown(wait=True)
+                del par_dict, outs_tup, outs, df_top, miss_frames, ses_name, \
+                    grid, hyperparam_dict, parallel
                 gc.collect()
             del alg
         del metaparams
@@ -676,6 +678,7 @@ def populate_subject_dict(
     base_dir,
     template,
     thr_type,
+    embedding_methods,
     mets=None,
     df_top=None,
 ):
@@ -718,7 +721,7 @@ def populate_subject_dict(
         #                               ID, ses, modality, alg, mets, thr_type,
         #                               base_dir,
         #                               template,
-        #                               df_top)
+        #                               df_top, embedding_methods)
         #         for comb in grid
         #     )
         for comb in grid:
@@ -726,7 +729,9 @@ def populate_subject_dict(
                                                              subject_dict,
                                                              missingness_frame,
                         ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top)
+                        thr_type, base_dir, template, df_top,
+                                                             embedding_methods)
+            gc.collect()
     # Structural case
     elif modality == "dwi":
         # with Parallel(
@@ -739,14 +744,16 @@ def populate_subject_dict(
         #                               ID, ses, modality, alg, mets, thr_type,
         #                               base_dir,
         #                               template,
-        #                               df_top)
+        #                               df_top, embedding_methods)
         #         for comb in grid
         #     )
         for comb in grid:
             [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
                                                             missingness_frame,
                         ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top)
+                        thr_type, base_dir, template, df_top,
+                                                            embedding_methods)
+            gc.collect()
     del modality, ID, ses, df_top
     gc.collect()
     return subject_dict, missingness_frame
@@ -754,14 +761,10 @@ def populate_subject_dict(
 
 def dwi_grabber(comb, subject_dict, missingness_frame,
                  ID, ses, modality, alg, mets, thr_type, base_dir, template,
-                 df_top):
+                 df_top, embedding_methods):
     import gc
     from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
-    from pynets.core.utils import load_runconfig
-
-    hardcoded_params = load_runconfig()
-    embedding_methods = hardcoded_params["embed"]
 
     try:
         directget, minlength, model, res, atlas, tol = comb
@@ -828,14 +831,20 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                    with np.load(embedding, allow_pickle=True,
+                                 mmap_mode=None) as a:
+                        emb_shape = a.shape[0]
+                    del a
                 elif embedding.endswith('.csv'):
-                    emb_shape = len(pd.read_csv(embedding).columns)
+                    with open(embedding, "r+") as a:
+                        emb_shape = len(pd.read_csv(a).columns)
+                    a.close()
                 else:
                     raise NotImplementedError(f"Format of {embedding} "
                                               f"not recognized! "
                                               f"Only .npy and .csv "
                                               f"currently supported.")
+                gc.collect()
             except:
                 print(
                     f"{Fore.RED}Failed to load functional embeddings found "
@@ -966,14 +975,11 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
 
 def func_grabber(comb, subject_dict, missingness_frame,
                  ID, ses, modality, alg, mets, thr_type, base_dir, template,
-                 df_top):
+                 df_top, embedding_methods):
     import gc
     from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
-    from pynets.core.utils import load_runconfig
 
-    hardcoded_params = load_runconfig()
-    embedding_methods = hardcoded_params["embed"]
     try:
         extract, hpass, model, res, atlas, smooth = comb
     except:
@@ -1053,14 +1059,20 @@ def func_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    emb_shape = np.load(embedding, allow_pickle=True).shape[0]
+                    with np.load(embedding, allow_pickle=True,
+                                 mmap_mode=None) as a:
+                        emb_shape = a.shape[0]
+                    del a
                 elif embedding.endswith('.csv'):
-                    emb_shape = len(pd.read_csv(embedding).columns)
+                    with open(embedding, "r+") as a:
+                        emb_shape = len(pd.read_csv(a).columns)
+                    a.close()
                 else:
                     raise NotImplementedError(f"Format of {embedding} "
                                               f"not recognized! "
                                               f"Only .npy and .csv "
                                               f"currently supported.")
+                gc.collect()
             except:
                 print(
                     f"{Fore.RED}Failed to load functional embeddings found "

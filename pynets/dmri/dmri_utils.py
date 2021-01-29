@@ -54,10 +54,18 @@ def normalize_gradients(
 
     # Check for bval-bvec discrepancy.
     if not np.all(b0s == b0_vecs):
-        raise ValueError(
-            "Inconsistent bvals and bvecs (%d, %d low-b, respectively)."
-            % (b0s.sum(), b0_vecs.sum())
-        )
+        if bvals.shape[0] == bvecs.shape[0]:
+            print(UserWarning(
+                "Inconsistent B0 locations in bvals and bvecs "
+                "(%d, %d low-b, respectively)..."
+                % (b0s.sum(), b0_vecs.sum())
+            ))
+            # Ensure b0s have (0, 0, 0) vectors
+            bvecs[b0s, :3] = np.zeros(3)
+        else:
+            raise ValueError(
+                f"Inconsistent number of bvals ({bvals.shape[0]}) and bvecs "
+                f"({bvecs.shape[0]}).")
 
     # Rescale b-vals if requested
     if b_scale:
