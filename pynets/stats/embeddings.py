@@ -63,6 +63,12 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
 
+    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
+
+    namer_dir = f"{dir_path}/embeddings"
+    if not os.path.isdir(namer_dir):
+        os.makedirs(namer_dir, exist_ok=True)
+
     clean_mats = []
     i = 0
     for graph_path in graph_path_list:
@@ -74,49 +80,56 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         else:
             mat_clean = pop_array[i]
 
-        clean_mats.append(mat_clean)
+        mat_clean = np.nan_to_num(mat_clean)
+        mat_clean = mat_clean[
+            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+        if not np.isnan(np.sum(mat_clean)):
+            clean_mats.append(mat_clean)
         i += 1
 
-    # Omnibus embedding
-    print(
-        f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
-        f"{subgraph_name}{'...'}"
-    )
-    omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
-    mds = ClassicalMDS(n_components=n_components)
-    omni_fit = omni.fit_transform(pop_array)
+    clean_mats = [i for i in clean_mats if np.isfinite(i).all()]
 
-    # Transform omnibus tensor into dissimilarity feature
-    mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
-                                                 omni_fit.shape[2],
-                                                 omni_fit.shape[0]))
+    if len(clean_mats) > 0:
+        # Omnibus embedding
+        print(
+            f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
+            f"{subgraph_name}{'...'}"
+        )
+        omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
+        mds = ClassicalMDS(n_components=n_components)
+        omni_fit = omni.fit_transform(clean_mats)
 
-    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
+        # Transform omnibus tensor into dissimilarity feature
+        mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
+                                                     omni_fit.shape[2],
+                                                     omni_fit.shape[0]))
 
-    namer_dir = f"{dir_path}/embeddings"
-    if not os.path.isdir(namer_dir):
-        os.makedirs(namer_dir, exist_ok=True)
+        out_path = (
+            f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
+            f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
+        )
 
-    out_path = (
-        f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
-        f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
-    )
+        # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                     f"{subgraph_name}_" \
+        #                     f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+        #                     f"_MDS.joblib"
+        # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                    f"{subgraph_name}_" \
+        #                    f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
+        #                    f"_MDS.joblib"
 
-    # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-    #                     f"{subgraph_name}_" \
-    #                     f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-    #                     f"_MDS.joblib"
-    # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-    #                    f"{subgraph_name}_" \
-    #                    f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-    #                    f"_MDS.joblib"
+        # dump(omni, out_path_est_omni)
+        # dump(omni, out_path_est_mds)
 
-    # dump(omni, out_path_est_omni)
-    # dump(omni, out_path_est_mds)
-
-    print("Saving...")
-    np.save(out_path, mds_fit)
-    del mds, mds_fit, omni, omni_fit
+        print("Saving...")
+        np.save(out_path, mds_fit)
+        del mds, mds_fit, omni, omni_fit
+    else:
+        # Add a null tmp file to prevent pool from breaking
+        out_path = f"{namer_dir}/gradient-OMNI" \
+                   f"_{atlas}_{subgraph_name}_" \
+                   f"{os.path.basename(graph_path_list[0])}_NULL"
+        os.mknod(out_path)
     return out_path
 
 
@@ -176,7 +189,13 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
         f"{subgraph_name}{'...'}"
     )
     mase = MultipleASE(n_components=n_components)
-    mase_fit = mase.fit_transform(pop_array)
+
+    clean_mats = [i for i in pop_array if np.isfinite(i).all()]
+
+    if len(pop_array) != len(clean_mats):
+        return None
+
+    mase_fit = mase.fit_transform(clean_mats)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
@@ -274,6 +293,12 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     else:
         mat_clean = mat
 
+    mat_clean = np.nan_to_num(mat_clean)
+    mat_clean = mat_clean[(np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+
+    if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
+        return None
+
     ase_fit = ase.fit_transform(mat_clean)
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
@@ -335,6 +360,9 @@ def build_asetomes(est_path_iterlist, ID):
     out_paths = []
     for file_ in est_path_iterlist:
         mat = np.load(file_)
+        if not np.isfinite(mat).all():
+            continue
+
         atlas = prune_suffices(file_.split("/")[-3])
         res = prune_suffices("_".join(file_.split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
@@ -344,7 +372,18 @@ def build_asetomes(est_path_iterlist, ID):
             subgraph = "all_nodes"
         out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
                               n_components=n_components)
-        out_paths.append(out_path)
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(file_)).parent)
+            namer_dir = f"{dir_path}/embeddings"
+            if not os.path.isdir(namer_dir):
+                os.makedirs(namer_dir, exist_ok=True)
+            out_path = f"{namer_dir}/gradient-ASE" \
+                       f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
+            os.mknod(out_path)
+            out_paths.append(out_path)
 
     return out_paths
 
@@ -392,7 +431,11 @@ def build_masetome(est_path_iterlist, ID):
     for pairs in est_path_iterlist:
         pop_list = []
         for _file in pairs:
-            pop_list.append(np.load(_file))
+            mat = np.load(_file)
+            if np.isfinite(mat).all():
+                pop_list.append(mat)
+        if len(pop_list) != len(pairs):
+            continue
         atlas = prune_suffices(pairs[0].split("/")[-3])
         res = prune_suffices("_".join(pairs[0].split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
@@ -406,7 +449,22 @@ def build_masetome(est_path_iterlist, ID):
             pairs[0],
             ID,
             subgraph_name=subgraph, n_components=n_components)
-        out_paths.append(out_path)
+
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(pairs[0])))
+            namer_dir = f"{dir_path}/mplx_embeddings"
+            if not os.path.isdir(namer_dir):
+                os.makedirs(namer_dir, exist_ok=True)
+
+            out_path = (
+                f"{namer_dir}/gradient-MASE_{atlas}_{subgraph}"
+                f"_{os.path.basename(pairs[0])}_NULL"
+            )
+            os.mknod(out_path)
+            out_paths.append(out_path)
 
     return out_paths
 

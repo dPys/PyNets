@@ -63,6 +63,7 @@ coverage:
     - "pynets/stats/benchmarking.py"
     - "pynets/stats/embeddings.py"
     - "pynets/stats/prediction.py"
+    - "pynets/stats/utils.py"
     - "pynets/core/cloud_utils.py"
     - "pynets/registration/register.py"
     - "pynets/core/interfaces.py"

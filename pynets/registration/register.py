@@ -1029,8 +1029,8 @@ class DmriReg(object):
 
         # Applyxfm to map FA template image to T1w space
         regutils.applyxfm(
-            self.fa_template_res,
             self.t1w_brain,
+            self.fa_template_res,
             self.mni2t1_xfm,
             self.fa_template_t1w)
         time.sleep(0.5)

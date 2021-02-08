@@ -24,8 +24,6 @@ except FileNotFoundError as e:
     print(e, "Failed to parse runconfig.yaml")
 
 
-
-
 def get_prop_type(value, key=None):
     """
     Performs typing and value conversion for the graph_tool PropertyMap class.
@@ -2113,12 +2111,8 @@ def extractnetstats(
         # Deal with empty graphs
         if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
             G.number_of_edges() == 0 or len(G) < 3:
-            if len(metric_list_global_names) == 0:
-                metric_list_global_names = [""]
             out_path_neat = save_netmets(
-                dir_path, est_path, metric_list_global_names,
-                len(metric_list_global_names)*[np.nan],
-            )
+                dir_path, est_path, [""], [np.nan])
             print(UserWarning(f"Warning: Empty graph detected for {ID}: "
                               f"{est_path}..."))
         else:
@@ -2373,12 +2367,9 @@ def extractnetstats(
     else:
         print(UserWarning(f"Warning: Empty graph detected for {ID}: "
                           f"{est_path}..."))
-        if not metric_list_names:
-            metric_list_names = [""]
         dir_path = op.dirname(op.realpath(est_path))
         out_path_neat = save_netmets(
-            dir_path, est_path, metric_list_names,
-            len(metric_list_names) * [np.nan],
+            dir_path, est_path, [""], [np.nan],
         )
     return out_path_neat
 
@@ -2389,7 +2380,7 @@ def collect_pandas_df_make(
     network,
     plot_switch,
     embed=False,
-    create_summary=True,
+    create_summary=False,
     sql_out=False,
 ):
     """
@@ -2464,6 +2455,11 @@ def collect_pandas_df_make(
         print("No topology files found!")
         combination_complete = True
 
+    hyperparam_dict = {}
+    dfs_non_auc = []
+    hyperparam_dict["id"] = ID
+    gen_hyperparams = ["nodetype", "model", "template"]
+
     if len(net_mets_csv_list) > 1:
         print(f"\n\nAll graph analysis results:\n{str(net_mets_csv_list)}\n\n")
 
@@ -2474,173 +2470,171 @@ def collect_pandas_df_make(
                 f"{op.basename(file_)}"
             )
 
-        def sort_thr(model_name):
-            return model_name.split("thr-")[1].split("_")[0]
+        if any('thr-' in i for i in net_mets_csv_list_exist):
+            def sort_thr(model_name):
+                return model_name.split("thr-")[1].split("_")[0]
 
-        models.sort(key=sort_thr)
+            models.sort(key=sort_thr)
 
-        # Group by secondary attributes
-        models_grouped = [
-            list(x)
-            for x in zip(
-                *[
-                    list(g)
-                    for k, g in groupby(
-                        models, lambda s: s.split("thr-")[1].split("_")[0]
-                    )
-                ]
-            )
-        ]
-
-        hyperparam_dict = {}
-        dfs_non_auc = []
-        hyperparam_dict["id"] = ID
-        gen_hyperparams = ["nodetype", "model", "template"]
-        node_cols = None
-        if max([len(i) for i in models_grouped]) > 1:
-            print(
-                "Multiple thresholds detected. Computing AUC..."
-            )
-            meta = dict()
-            non_decimal = re.compile(r"[^\d.]+")
-            for thr_set in range(len(models_grouped)):
-                meta[thr_set] = dict()
-                meta[thr_set]["dataframes"] = dict()
-                for i in models_grouped[thr_set]:
-                    thr = non_decimal.sub("", i.split("thr-")[1].split("_")[0])
-                    _file = subject_path + "/" + i
-                    if os.path.isfile(_file):
-                        df = pd.read_csv(_file, memory_map=True,
-                                         chunksize=100000, encoding="utf-8",
-                                         skip_blank_lines=False,
-                                         warn_bad_lines=True,
-                                         error_bad_lines=False
-                                         ).read()
-                        node_cols = [
-                            s
-                            for s in list(df.columns)
-                            if isinstance(s, int) or any(c.isdigit() for c in
-                                                         s)
-                        ]
-                        if embed is False:
-                            df = df.drop(node_cols, axis=1)
-                        meta[thr_set]["dataframes"][thr] = df
-                    else:
-                        print(f"File {_file} not found...")
-                        continue
-            # For each unique threshold set, for each graph measure, extract
-            # AUC
-            if sql_out is True:
-                try:
-                    import sqlalchemy
-
-                    sql_db = utils.build_sql_db(
-                        op.dirname(op.dirname(op.dirname(subject_path))), ID
-                    )
-                except BaseException:
-                    sql_db = None
-            else:
-                sql_db = None
-            for thr_set in meta.keys():
-                if len(meta[thr_set]["dataframes"].values()) > 1:
-                    df_summary = pd.concat(
-                        meta[thr_set]["dataframes"].values())
-                else:
-                    print(f"No values to concatenate at {thr_set}...")
-                    continue
-                df_summary["thr"] = meta[thr_set]["dataframes"].keys()
-                meta[thr_set]["summary_dataframe"] = df_summary
-                df_summary_auc = df_summary.iloc[[0]]
-                df_summary_auc.columns = [
-                    col + "_auc" for col in df_summary.columns]
-
-                print(f"\nAUC for threshold group: {models_grouped[thr_set]}")
-                file_renamed = list(
-                    set(
-                        [
-                            re.sub(
-                                r"thr\-\d+\.*\d+\_", "",
-                                i.split("/topology/")[1]
-                            ).replace("neat", "auc")
-                            for i in models_grouped[thr_set]
-                        ]
-                    )
-                )[0]
-                atlas = models_grouped[thr_set][0].split("/")[0]
-                modality = file_renamed.split("modality-")[1].split("_")[0]
-
-                # Build hyperparameter dictionary
-                hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
-                                                             modality,
-                                                             hyperparam_dict,
-                                                             gen_hyperparams)
-
-                for measure in df_summary.columns[:-1]:
-                    # Get Area Under the Curve
-                    df_summary_nonan = df_summary[pd.notnull(
-                        df_summary[measure])]
-                    df_summary_auc[measure] = np.trapz(
-                        np.array(df_summary_nonan[measure]).astype("float32")
-                    )
-                    print(
-                        f"{measure}: "
-                        f"{df_summary_auc[measure].to_string(index=False)}"
-                    )
-                meta[thr_set]["auc_dataframe"] = df_summary_auc
-                auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
-                if not os.path.isdir(auc_dir):
-                    os.makedirs(auc_dir, exist_ok=True)
-                df_summary_auc = df_summary_auc.drop(columns=["thr_auc"])
-                df_summary_auc = df_summary_auc.loc[
-                    :, df_summary_auc.columns.str.endswith("auc")
-                ]
-                auc_outfile = auc_dir + file_renamed
-                if os.path.isfile(auc_outfile):
-                    try:
-                        os.remove(auc_outfile)
-                    except BaseException:
-                        continue
-                df_summary_auc.to_csv(
-                    auc_outfile,
-                    header=True,
-                    index=False,
-                    chunksize=100000,
-                    compression="gzip",
-                    encoding="utf-8",
+            # Group by secondary attributes
+            models_grouped = [
+                list(x)
+                for x in zip(
+                    *[
+                        list(g)
+                        for k, g in groupby(
+                            models, lambda s: s.split("thr-")[1].split("_")[0]
+                        )
+                    ]
                 )
-                node_cols_embed = [i for i in node_cols if i in embedding_methods]
-
-                if embed is True and len(node_cols_embed) > 0:
-                    from pathlib import Path
-                    embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
-                    if not os.path.isdir(embed_dir):
-                        os.makedirs(embed_dir, exist_ok=True)
-
-                    node_cols_auc = [f"{i}_auc" for i in node_cols_embed if
-                                     f"{i}_auc" in df_summary_auc.columns]
-                    df_summary_auc_nodes = df_summary_auc[node_cols_auc]
-                    node_embeddings_grouped = [{k: list(g)} for k, g in
-                                               groupby(df_summary_auc_nodes,
-                                                       lambda s: s.split("_")[1])]
-                    for node_dict in node_embeddings_grouped:
-                        node_top_type = list(node_dict.keys())[0]
-                        node_top_cols = list(node_dict.values())[0]
-                        embedding_frame = df_summary_auc_nodes[node_top_cols]
-                        out_path = f"{embed_dir}/gradient-{node_top_type}_" \
-                                   f"rsn-{atlas}_auc_nodes_" \
-                                   f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
-                        embedding_frame.to_csv(out_path, index=False)
-
+            ]
+            node_cols = None
+            if max([len(i) for i in models_grouped]) > 1:
+                print(
+                    "Multiple thresholds detected. Computing AUC..."
+                )
+                meta = dict()
+                non_decimal = re.compile(r"[^\d.]+")
+                for thr_set in range(len(models_grouped)):
+                    meta[thr_set] = dict()
+                    meta[thr_set]["dataframes"] = dict()
+                    for i in models_grouped[thr_set]:
+                        thr = non_decimal.sub("", i.split("thr-")[1].split("_")[0])
+                        _file = subject_path + "/" + i
+                        if os.path.isfile(_file):
+                            df = pd.read_csv(_file, memory_map=True,
+                                             chunksize=100000, encoding="utf-8",
+                                             skip_blank_lines=False,
+                                             warn_bad_lines=True,
+                                             error_bad_lines=False
+                                             ).read()
+                            node_cols = [
+                                s
+                                for s in list(df.columns)
+                                if isinstance(s, int) or any(c.isdigit() for c in
+                                                             s)
+                            ]
+                            if embed is False:
+                                df = df.drop(node_cols, axis=1)
+                            meta[thr_set]["dataframes"][thr] = df
+                        else:
+                            print(f"File {_file} not found...")
+                            continue
+                # For each unique threshold set, for each graph measure, extract
+                # AUC
                 if sql_out is True:
-                    sql_db.create_modality_table(modality)
-                    sql_db.add_hp_columns(
-                        list(set(hyperparams)) + list(df_summary_auc.columns)
+                    try:
+                        import sqlalchemy
+
+                        sql_db = utils.build_sql_db(
+                            op.dirname(op.dirname(op.dirname(subject_path))), ID
+                        )
+                    except BaseException:
+                        sql_db = None
+                else:
+                    sql_db = None
+                for thr_set in meta.keys():
+                    if len(meta[thr_set]["dataframes"].values()) > 1:
+                        df_summary = pd.concat(
+                            meta[thr_set]["dataframes"].values())
+                    else:
+                        print(f"No values to concatenate at {thr_set}...")
+                        continue
+                    df_summary["thr"] = meta[thr_set]["dataframes"].keys()
+                    meta[thr_set]["summary_dataframe"] = df_summary
+                    df_summary_auc = df_summary.iloc[[0]]
+                    df_summary_auc.columns = [
+                        col + "_auc" for col in df_summary.columns]
+
+                    print(f"\nAUC for threshold group: {models_grouped[thr_set]}")
+                    file_renamed = list(
+                        set(
+                            [
+                                re.sub(
+                                    r"thr\-\d+\.*\d+\_", "",
+                                    i.split("/topology/")[1]
+                                ).replace("neat", "auc")
+                                for i in models_grouped[thr_set]
+                            ]
+                        )
+                    )[0]
+                    atlas = models_grouped[thr_set][0].split("/")[0]
+                    modality = file_renamed.split("modality-")[1].split("_")[0]
+
+                    # Build hyperparameter dictionary
+                    hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
+                                                                 modality,
+                                                                 hyperparam_dict,
+                                                                 gen_hyperparams)
+
+                    for measure in df_summary.columns[:-1]:
+                        # Get Area Under the Curve
+                        df_summary_nonan = df_summary[pd.notnull(
+                            df_summary[measure])]
+                        df_summary_auc[measure] = np.trapz(
+                            np.array(df_summary_nonan[measure]).astype("float32")
+                        )
+                        print(
+                            f"{measure}: "
+                            f"{df_summary_auc[measure].to_string(index=False)}"
+                        )
+                    meta[thr_set]["auc_dataframe"] = df_summary_auc
+                    auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
+                    if not os.path.isdir(auc_dir):
+                        os.makedirs(auc_dir, exist_ok=True)
+                    df_summary_auc = df_summary_auc.drop(columns=["thr_auc"])
+                    df_summary_auc = df_summary_auc.loc[
+                        :, df_summary_auc.columns.str.endswith("auc")
+                    ]
+                    auc_outfile = auc_dir + file_renamed
+                    if os.path.isfile(auc_outfile):
+                        try:
+                            os.remove(auc_outfile)
+                        except BaseException:
+                            continue
+                    df_summary_auc.to_csv(
+                        auc_outfile,
+                        header=True,
+                        index=False,
+                        chunksize=100000,
+                        compression="gzip",
+                        encoding="utf-8",
                     )
-                    sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
-                    # sql_db.engine.execute("SELECT * FROM func").fetchall()
-                    del sql_db
-                del df_summary_auc
+                    node_cols_embed = [i for i in node_cols if i in embedding_methods]
+
+                    if embed is True and len(node_cols_embed) > 0:
+                        from pathlib import Path
+                        embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                        if not os.path.isdir(embed_dir):
+                            os.makedirs(embed_dir, exist_ok=True)
+
+                        node_cols_auc = [f"{i}_auc" for i in node_cols_embed if
+                                         f"{i}_auc" in df_summary_auc.columns]
+                        df_summary_auc_nodes = df_summary_auc[node_cols_auc]
+                        node_embeddings_grouped = [{k: list(g)} for k, g in
+                                                   groupby(df_summary_auc_nodes,
+                                                           lambda s: s.split("_")[1])]
+                        for node_dict in node_embeddings_grouped:
+                            node_top_type = list(node_dict.keys())[0]
+                            node_top_cols = list(node_dict.values())[0]
+                            embedding_frame = df_summary_auc_nodes[node_top_cols]
+                            out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                                       f"rsn-{atlas}_auc_nodes_" \
+                                       f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
+                            embedding_frame.to_csv(out_path, index=False)
+
+                    if sql_out is True:
+                        sql_db.create_modality_table(modality)
+                        sql_db.add_hp_columns(
+                            list(set(hyperparams)) + list(df_summary_auc.columns)
+                        )
+                        sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
+                        # sql_db.engine.execute("SELECT * FROM func").fetchall()
+                        del sql_db
+                    del df_summary_auc
         else:
+            models_grouped = None
+            meta = {}
             for file_ in net_mets_csv_list:
                 df = pd.read_csv(file_, memory_map=True,
                                          chunksize=100000, encoding="utf-8",
@@ -2648,7 +2642,6 @@ def collect_pandas_df_make(
                                          warn_bad_lines=True,
                                          error_bad_lines=False
                                          ).read()
-                dfs_non_auc.append(df)
                 node_cols = [
                     s
                     for s in list(df.columns)
@@ -2656,7 +2649,7 @@ def collect_pandas_df_make(
                                                  s)
                 ]
                 if embed is False:
-                    dfs_non_auc = dfs_non_auc.drop(node_cols, axis=1)
+                    df.drop(node_cols, axis=1, inplace=True)
                 elif len(node_cols) > 1:
                     node_cols_embed = [i for i in node_cols if any(map(i.__contains__, embedding_methods))]
                     if len(node_cols_embed) > 0:
@@ -2673,10 +2666,16 @@ def collect_pandas_df_make(
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
                             embedding_frame = df_nodes[node_top_cols]
-                            out_path = f"{embed_dir}/gradient-{node_top_type}_" \
-                                       f"rsn-{atlas}_nodes_" \
-                                       f"{os.path.basename(file_).split('metrics_')[1].split('_thr-')[0]}.csv"
+                            if 'thr-' in os.path.basename(file_):
+                                out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                                           f"rsn-{atlas}_nodes_" \
+                                           f"{os.path.basename(file_).split('metrics_')[1].split('_thr-')[0]}.csv"
+                            else:
+                                out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                                           f"rsn-{atlas}_nodes_" \
+                                           f"{os.path.basename(file_).split('metrics_')[1]}"
                             embedding_frame.to_csv(out_path, index=False)
+                dfs_non_auc.append(df)
 
         if create_summary is True:
             try:
