@@ -414,7 +414,7 @@ jobs:
           name: Build pynets
           command: |
             pyenv local 3.6.5
-            pip install twine  # For use in checking distributions
+            pip install twine setuptools_rust
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
