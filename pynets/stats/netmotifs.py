@@ -454,7 +454,7 @@ def motif_matching(
     from pynets.stats.netmotifs import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
     from pynets.stats.netstats import community_resolution_selection
-    from graspy.utils import remove_loops, symmetrize, get_lcc
+    from graspologic.utils import remove_loops, symmetrize
     from pynets.core.nodemaker import get_brainnetome_node_attributes
 
     [struct_graph_path, func_graph_path] = paths

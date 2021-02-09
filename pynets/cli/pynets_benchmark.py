@@ -86,9 +86,10 @@ def main():
                        f"{embedding_type}"
         os.makedirs(icc_tmps_dir, exist_ok=True)
         if not os.path.isfile(subject_dict_file_path):
-            subject_dict, modality_grids, missingness_frames = make_subject_dict(
-                [modality], base_dir, thr_type, mets, [embedding_type], template,
-                sessions, rsns
+            subject_dict, modality_grids, missingness_frames = \
+                make_subject_dict(
+                [modality], base_dir, thr_type, mets, [embedding_type],
+                template, sessions, rsns
             )
             sub_dict_clean = cleanNullTerms(subject_dict)
             missingness_frames = [i for i in missingness_frames if
@@ -96,14 +97,20 @@ def main():
             if len(missingness_frames) != 0:
                 if len(missingness_frames) > 0:
                     if len(missingness_frames) > 1:
-                        final_missingness_summary = pd.concat(missingness_frames)
+                        final_missingness_summary = pd.concat(
+                            missingness_frames)
                         final_missingness_summary.to_csv(missingness_summary,
                                                          index=False)
-                        final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
+                        final_missingness_summary.id = \
+                            final_missingness_summary.id.astype(
+                                'str').str.split('_', expand=True)[0]
                     elif len(missingness_frames) == 1:
                         final_missingness_summary = missingness_frames[0]
-                        final_missingness_summary.to_csv(missingness_summary, index=False)
-                        final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
+                        final_missingness_summary.to_csv(missingness_summary,
+                                                         index=False)
+                        final_missingness_summary.id = \
+                            final_missingness_summary.id.astype(
+                                'str').str.split('_', expand=True)[0]
                     else:
                         final_missingness_summary = pd.Series()
                 else:
@@ -125,7 +132,9 @@ def main():
             f.close()
             if os.path.isfile(missingness_summary):
                 final_missingness_summary = pd.read_csv(missingness_summary)
-                final_missingness_summary.id = final_missingness_summary.id.astype('str').str.split('_', expand=True)[0]
+                final_missingness_summary.id = \
+                    final_missingness_summary.id.astype('str').str.split(
+                        '_', expand=True)[0]
             else:
                 final_missingness_summary = pd.Series()
         ids = sub_dict_clean.keys()
@@ -148,7 +157,8 @@ def main():
             modality, metaparam_dict, sorted(list(set(metaparams))),
             ensembles)[1]
 
-        grid = [i for i in grid if '200' not in i and '400' not in i and '600' not in i and '800' not in i]
+        grid = [i for i in grid if '200' not in i and '400' not in i and '600'
+                not in i and '800' not in i]
 
         if modality == "func":
             modality_grids[modality] = grid
@@ -172,17 +182,20 @@ def main():
             )
         # outs = []
         # for comb in grid:
-        #     outs.append(benchmark_reproducibility(base_dir, comb, modality, embedding_type, sub_dict_clean,
+        #     outs.append(benchmark_reproducibility(base_dir, comb, modality,
+        #     embedding_type, sub_dict_clean,
         #             disc, final_missingness_summary, icc_tmps_dir, icc,
         #             mets, ids))
 
-        df_summary = pd.concat([i for i in outs if i is not None and not i.empty], axis=0)
+        df_summary = pd.concat([i for i in outs if i is not None and not
+        i.empty], axis=0)
         df_summary = df_summary.dropna(axis=0, how='all')
         print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_"
               f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
         df_summary.to_csv(f"{base_dir}"
                           f"/grid_clean_{modality}_{embedding_type}_"
-                          f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv", index=False)
+                          f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
+                          f".csv", index=False)
 
         # int_consist
         if int_consist is True and embedding_type == 'topology':
@@ -207,7 +220,8 @@ def main():
                         for comb in grid:
                             if modality == 'func':
                                 try:
-                                    extract, hpass, model, res, atlas, smooth = comb
+                                    extract, hpass, model, res, atlas, \
+                                    smooth = comb
                                 except BaseException:
                                     print(f"Missing {comb}...")
                                     extract, hpass, model, res, atlas = comb
@@ -216,13 +230,19 @@ def main():
                                 atlas, extract, hpass, model, res,
                                 smooth)
                             else:
-                                directget, minlength, model, res, atlas, tol = comb
+                                directget, minlength, model, res, atlas, \
+                                tol = comb
                                 comb_tuple = (
                                 atlas, directget, minlength, model,
                                 res, tol)
-                            if comb_tuple in sub_dict_clean[ID][str(ses)][modality][embedding_type].keys():
-                                if isinstance(sub_dict_clean[ID][str(ses)][modality][embedding_type][comb_tuple], np.ndarray):
-                                    id_dict[ID][comb] = sub_dict_clean[ID][str(ses)][modality][embedding_type][comb_tuple][mets.index(met)][0]
+                            if comb_tuple in sub_dict_clean[ID][str(ses)][
+                                modality][embedding_type].keys():
+                                if isinstance(sub_dict_clean[ID][str(ses)][
+                                                  modality][embedding_type
+                                              ][comb_tuple], np.ndarray):
+                                    id_dict[ID][comb] = sub_dict_clean[ID][
+                                        str(ses)][modality][embedding_type
+                                    ][comb_tuple][mets.index(met)][0]
                                 else:
                                     continue
                             else:
@@ -235,17 +255,24 @@ def main():
                         df_wide.replace(0, np.nan, inplace=True)
                         print(df_wide)
                     try:
-                        c_alpha = pg.cronbach_alpha(data=df_wide.dropna(axis=1, how='all'), nan_policy='listwise')
+                        c_alpha = pg.cronbach_alpha(data=df_wide.dropna(
+                            axis=1, how='all'), nan_policy='listwise')
                         cronbach_ses_list.append(c_alpha[0])
                     except BaseException:
                         print('FAILED...')
                         print(df_wide)
                         del df_wide
                     del df_wide
-                df_summary_cronbach.at[0, f"average_cronbach_{met}"] = np.nanmean(cronbach_ses_list)
-            print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_cronbach_"
+                df_summary_cronbach.at[0, f"average_cronbach_{met}"] = \
+                    np.nanmean(cronbach_ses_list)
+            print(f"Saving to {base_dir}/grid_clean_{modality}_"
+                  f"{embedding_type}_cronbach_"
                   f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
-            df_summary_cronbach.to_csv(f"{base_dir}/grid_clean_{modality}_{embedding_type}_cronbach{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv", index=False)
+            df_summary_cronbach.to_csv(
+                f"{base_dir}/grid_clean_{modality}_"
+                f"{embedding_type}_cronbach"
+                f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
+                f".csv", index=False)
 
     return
 

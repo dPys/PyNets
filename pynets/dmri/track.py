@@ -401,7 +401,7 @@ def track_ensemble(
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from pynets.dmri.dmri_utils import generate_sl
+    from pynets.dmri.utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     from pynets.core.utils import save_3d_to_4d
     from nilearn.masking import intersect_masks

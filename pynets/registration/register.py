@@ -12,7 +12,7 @@ import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 import numpy as np
-from pynets.registration import reg_utils as regutils
+from pynets.registration import utils as regutils
 from nilearn.image import math_img
 
 warnings.filterwarnings("ignore")
@@ -203,11 +203,11 @@ def direct_streamline_norm(
     import sys
     import gc
     from dipy.tracking.streamline import transform_streamlines
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     # from pynets.plotting import plot_gen
     import pkg_resources
     import os.path as op
-    from pynets.registration.reg_utils import vdc
+    from pynets.registration.utils import vdc
     from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
     from dipy.tracking import utils

@@ -498,10 +498,10 @@ class IndividualClustering(SimpleInterface):
         from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
         from joblib import Parallel, delayed
         from joblib.externals.loky.backend import resource_tracker
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.utils import decompress_nifti
         import pkg_resources
         import shutil
@@ -1156,7 +1156,7 @@ class RegisterDWI(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
 
         fa_tmp_path = fname_presuffix(
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
@@ -1436,7 +1436,7 @@ class RegisterAtlasDWI(SimpleInterface):
         import time
         import os
         import os.path as op
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -1862,7 +1862,7 @@ class RegisterROIDWI(SimpleInterface):
         import gc
         import os
         import time
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
 
@@ -2041,7 +2041,7 @@ class RegisterFunc(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
 
         anat_mask_existing = [
             i
@@ -2199,7 +2199,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         import pkg_resources
         import time
         from pynets.core.utils import prune_suffices
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         template = pkg_resources.resource_filename(
@@ -2366,7 +2366,7 @@ class RegisterAtlasFunc(SimpleInterface):
         import os
         import time
         import glob
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -2600,7 +2600,7 @@ class RegisterROIEPI(SimpleInterface):
         import gc
         import os
         import time
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
 
@@ -3143,7 +3143,7 @@ class Tracking(SimpleInterface):
                 # Linear Fascicle Evaluation (LiFE)
                 if use_life is True:
                     print('Using LiFE to evaluate streamline plausibility...')
-                    from pynets.dmri.dmri_utils import \
+                    from pynets.dmri.utils import \
                         evaluate_streamline_plausibility
                     dwi_img = nib.load(dwi_file_tmp_path)
                     dwi_data = dwi_img.get_fdata(dtype=np.float32)
@@ -3301,8 +3301,8 @@ class MakeGtabBmask(SimpleInterface):
         from dipy.core.gradients import gradient_table
         from nipype.utils.filemanip import copyfile, fname_presuffix
         # from dipy.segment.mask import median_otsu
-        from pynets.registration.reg_utils import median
-        from pynets.dmri.dmri_utils import normalize_gradients, extract_b0
+        from pynets.registration.utils import median
+        from pynets.dmri.utils import normalize_gradients, extract_b0
 
         B0_bet = f"{runtime.cwd}/mean_B0_bet.nii.gz"
         B0_mask = f"{runtime.cwd}/mean_B0_bet_mask.nii.gz"

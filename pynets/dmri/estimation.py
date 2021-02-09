@@ -540,7 +540,7 @@ def streams2graph(
     from itertools import combinations
     from collections import defaultdict
     from pynets.core import utils, nodemaker
-    from pynets.dmri.dmri_utils import generate_sl
+    from pynets.dmri.utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
     from pynets.core.utils import load_runconfig

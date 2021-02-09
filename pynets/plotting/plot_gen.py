@@ -1682,7 +1682,7 @@ def view_tractogram(streams, atlas):
     from fury import actor, window, colormap
     from dipy.tracking.utils import streamline_near_roi
     from nilearn.image import resample_to_img
-    from pynets.registration.reg_utils import rescale_affine_to_center
+    from pynets.registration.utils import rescale_affine_to_center
     from dipy.tracking.streamline import transform_streamlines
     from dipy.align.imaffine import (
         transform_origins,

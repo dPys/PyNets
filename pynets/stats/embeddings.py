@@ -59,7 +59,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
-    from graspy.embed import OmnibusEmbed, ClassicalMDS
+    from graspologic.embed.omni import OmnibusEmbed
+    from graspologic.embed.mds import ClassicalMDS
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
 
@@ -167,7 +168,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     Returns
     -------
     out_path : str
-        File path to .npy file containing MASE embedding tensor.
+        File path to .npy file containing MASE embedding.
 
     References
     ----------
@@ -180,7 +181,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
 
     """
     import numpy as np
-    from graspy.embed import MultipleASE
+    from graspologic.embed.mase import MultipleASE
     from joblib import dump
 
     # Multiple Adjacency Spectral embedding
@@ -268,10 +269,9 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
-    from graspy.embed import AdjacencySpectralEmbed
+    from graspologic.embed.ase import AdjacencySpectralEmbed
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
-    #from graspy.utils import get_lcc
 
     # Adjacency Spectral embedding
     print(

@@ -1405,7 +1405,7 @@ def dmri_connectometry(
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
     from pynets.registration import register
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from pynets.dmri import estimation
     from pynets.core.interfaces import (
         PlotStruct,
@@ -3575,7 +3575,7 @@ def fmri_connectometry(
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
     from pynets.fmri import estimation
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from pynets.core.interfaces import (
         ExtractTimeseries,
         PlotFunc,

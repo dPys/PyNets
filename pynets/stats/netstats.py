@@ -331,7 +331,7 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
       in weighted networks. Eur Phys J B 32, 249-263.
 
     """
-    from graspy.utils import get_lcc
+    from graspologic.utils import largest_connected_component
 
     new_graph = nx.Graph
 
@@ -348,7 +348,7 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
             for (n1, n2) in temp_G.edges():
                 temp_G[n1][n2][weight] = np.abs(G[n1][n2][weight])
 
-        temp_G = get_lcc(temp_G, return_inds=False)
+        temp_G = largest_connected_component(temp_G, return_inds=False)
 
         if nx.is_empty(temp_G) is True or len(temp_G) < 2 or nx.number_of_edges(temp_G) == 0:
             efficiencies[node] = 0
@@ -1068,11 +1068,11 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
 
     # if len(G_tmp.nodes()) - len(isolates) < min_nodes:
     #     if fallback_lcc is True:
-    #         from graspy.utils import get_lcc
+    #         from graspologic.utils import largest_connected_component
     #         print(UserWarning('Warning: Too many isolates to defragment, '
     #                           'grabbing the largest connected component...'))
     #
-    #         lcc, pruned_nodes = get_lcc(G_tmp, return_inds=True)
+    #         lcc, pruned_nodes = largest_connected_component(G_tmp, return_inds=True)
     #         return lcc, pruned_nodes.tolist()
     #     else:
     #         print(UserWarning('Warning: Too many isolates to defragment, '
@@ -1396,7 +1396,8 @@ class CleanGraphs(object):
     def prune_graph(self, remove_self_loops=True):
         import os
         from pynets.core import utils
-        from graspy.utils import remove_loops, symmetrize, get_lcc
+        from graspy.utils import remove_loops, symmetrize
+        from graspologic.utils import largest_connected_component
 
         # Prune irrelevant nodes (i.e. nodes who are fully disconnected
         # from the graph and/or those whose betweenness
@@ -1425,8 +1426,8 @@ class CleanGraphs(object):
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
                   "component subgraph...")
-            #self.G = self.G.subgraph(get_lcc(self.G))
-            self.G = get_lcc(self.G)
+            #self.G = self.G.subgraph(largest_connected_component(self.G))
+            self.G = largest_connected_component(self.G)
         else:
             print("No graph anti-fragmentation applied...")
 
