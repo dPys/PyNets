@@ -40,9 +40,11 @@ import_list = [
     "import re",
     "import glob",
     "import numpy as np",
-    "from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
+    "from sklearn.model_selection import KFold, StratifiedKFold, "
+    "GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
     "from sklearn.dummy import Dummyestimator",
-    "from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_regression, f_classif",
+    "from sklearn.feature_selection import VarianceThreshold, SelectKBest, "
+    "f_regression, f_classif",
     "from sklearn.pipeline import Pipeline",
     "from sklearn.impute import SimpleImputer",
     "from sklearn.preprocessing import StandardScaler, MinMaxScaler",
@@ -59,7 +61,8 @@ import_list = [
     "from pathlib import Path",
     "from collections import OrderedDict",
     "from operator import itemgetter",
-    "from statsmodels.stats.outliers_influence import variance_inflation_factor",
+    "from statsmodels.stats.outliers_influence import "
+    "variance_inflation_factor",
     "from sklearn.impute import KNNImputer",
     "from pynets.core.utils import flatten",
     "import pickle",
@@ -131,8 +134,6 @@ class RazorCV(object):
     some user-defined target parameter (e.g. number of components, number of
     estimators, polynomial degree, cost, scale, number hidden units, weight
     decay, number of nearest neighbors, L1/L2 penalty, etc.).
-    See :ref:`sphx_glr_auto_examples_applications_plot_model_complexity_influence.py`
-    See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
     """
 
     def __init__(
@@ -244,12 +245,14 @@ class RazorCV(object):
         if self.greater_is_better is True:
             best_score_idx = np.argmax(best_mean_score)
             outstandard_error = (
-                best_mean_score[best_score_idx] - best_std_score[best_score_idx]
+                best_mean_score[best_score_idx] -
+                best_std_score[best_score_idx]
             )
         else:
             best_score_idx = np.argmin(best_mean_score)
             outstandard_error = (
-                best_mean_score[best_score_idx] + best_std_score[best_score_idx]
+                best_mean_score[best_score_idx] +
+                best_std_score[best_score_idx]
             )
         return outstandard_error
 
@@ -271,7 +274,8 @@ class RazorCV(object):
                 ]
             ]
         )
-        tests = np.array(list(itertools.combinations(range(folds.shape[1]), 2)))
+        tests = np.array(list(itertools.combinations(range(folds.shape[1]),
+                                                     2)))
 
         p_dict = {}
         i = 0
@@ -286,7 +290,8 @@ class RazorCV(object):
             raise ValueError(
                 "Models are all significantly different from one" " another"
             )
-        best_mean_score = self.cv_results["mean_test_" + self.scoring][unq_cols]
+        best_mean_score = self.cv_results["mean_test_" +
+                                          self.scoring][unq_cols]
         if self.greater_is_better is True:
             best_score_idx = np.argmax(best_mean_score)
         else:
@@ -541,33 +546,59 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
         # Grab mean
         means_exp_var = pipe_grid_cv.cv_results_[f"mean_test_{refit_score}"]
-        means_MSE = pipe_grid_cv.cv_results_[f"mean_test_neg_mean_squared_error"]
+        means_MSE = pipe_grid_cv.cv_results_[
+            f"mean_test_neg_mean_squared_error"]
 
         # Apply PCA in the case that the # of features exceeds the number of
         # observations
         if predict_type == 'classifier':
-            hyperparam_space = f"C-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__C']}"
+            c_best = pipe_grid_cv.best_estimator_.get_params()[
+                estimator_name + '__C']
+            hyperparam_space = \
+                f"C-{c_best}"
         elif predict_type == 'regressor':
-            hyperparam_space = f"alpha-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__alpha']}"
+            alpha_best = pipe_grid_cv.best_estimator_.get_params()[
+                estimator_name + '__alpha']
+            hyperparam_space = f"alpha-{alpha_best}"
         else:
             raise ValueError('Prediction method not recognized')
 
+        best_l1 = pipe_grid_cv.best_estimator_.get_params()[
+            estimator_name + '__l1_ratio']
         if pca_reduce is True and X.shape[0] < X.shape[1]:
+            best_n_comps = pipe_grid_cv.best_estimator_.named_steps[
+                'feature_select'].n_components
             if 'en' in estimator_name:
-                best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].n_components}"
+                best_estimator_name = \
+                    f"{predict_type}-" \
+                    f"{estimator_name}_" \
+                    f"{hyperparam_space}_l1ratio-" \
+                    f"{best_l1}_nfeatures-{best_n_comps}"
             else:
-                best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].n_components}"
+
+                best_estimator_name = f"{predict_type}-{estimator_name}" \
+                                      f"_{hyperparam_space}_nfeatures-" \
+                                      f"{best_n_comps}"
         else:
             if X.shape[1] < 25:
                 if 'en' in estimator_name:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_l1ratio-{best_l1}"
                 else:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}"
             else:
+                best_k = pipe_grid_cv.best_estimator_.named_steps[
+                    'feature_select'].k
                 if 'en' in estimator_name:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].k}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_l1ratio-{best_l1}_nfeatures-{best_k}"
                 else:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].k}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_nfeatures-{best_k}"
 
         means_all_exp_var[best_estimator_name] = np.nanmean(means_exp_var)
         means_all_MSE[best_estimator_name] = np.nanmean(means_MSE)
@@ -588,20 +619,25 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         pca = decomposition.PCA(
-            n_components=int(best_estimator.split("nfeatures-")[1].split('_')[0]),
+            n_components=int(best_estimator.split("nfeatures-")[1].split(
+                '_')[0]),
             whiten=True
         )
         reg = Pipeline([("feature_select", pca),
-                        (best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)])
+                        (best_estimator.split(f"{predict_type}-")[1].split(
+                            '_')[0], est)])
     else:
         if X.shape[1] < 25:
-            reg = Pipeline([(best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)])
+            reg = Pipeline([(best_estimator.split(
+                f"{predict_type}-")[1].split('_')[0], est)])
         else:
             kbest = SelectKBest(feature_selector,
-                                k=int(best_estimator.split("nfeatures-")[1].split('_')[0]))
+                                k=int(best_estimator.split(
+                                    "nfeatures-")[1].split('_')[0]))
             reg = Pipeline(
                 [("feature_select", kbest),
-                 (best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)]
+                 (best_estimator.split(f"{predict_type}-")[1].split(
+                     '_')[0], est)]
             )
 
     return reg, best_estimator
@@ -931,15 +967,18 @@ def bootstrapped_nested_cv(
         # Save the mean CV scores for this bootstrapped iteration
         grand_mean_best_estimator[boot] = best_estimator
         if predict_type == 'regressor':
-            grand_mean_best_score[boot] = np.nanmean(prediction["test_r2"][prediction["test_r2"]>0])
-            grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"])
-            # grand_mean_best_score[boot] = np.nanmean(prediction["test_r2"][(np.abs(stats.zscore(prediction["test_r2"])) < float(std_dev)).all(axis=0)])
-            # grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"][(np.abs(stats.zscore(prediction["test_neg_mean_squared_error"])) < float(std_dev)).all(axis=0)])
-            # grand_mean_y_predicted[boot] = final_est.predict(
-            #     X.drop(columns=just_lps))
+            grand_mean_best_score[boot] = np.nanmean(prediction[
+                                                         "test_r2"][
+                                                         prediction[
+                                                             "test_r2"]>0])
+            grand_mean_best_error[boot] = -np.nanmean(prediction[
+                                                          "test_neg_mean_"
+                                                          "squared_error"])
         elif predict_type == 'classifier':
-            grand_mean_best_score[boot] = np.nanmean(prediction["test_f1"][prediction["test_f1"]>0])
-            grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"])
+            grand_mean_best_score[boot] = np.nanmean(
+                prediction["test_f1"][prediction["test_f1"]>0])
+            grand_mean_best_error[boot] = -np.nanmean(
+                prediction["test_neg_mean_squared_error"])
         else:
             raise ValueError('Prediction method not recognized')
         grand_mean_y_predicted[boot] = final_est.predict(X)
@@ -1328,11 +1367,12 @@ class BSNestedCV(SimpleInterface):
                                                predict_type=predict_type,
                                                var_thr=.20, zero_thr=0.75)
                 if final_est:
+                    grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
                                    f"{self.inputs.target_var}_" \
                                    f"{self.inputs.modality}_" \
                                    f"{self.inputs.embedding_type}_" \
-                                   f"{self.inputs.grid_param.replace(', ', '_')}.joblib"
+                                   f"{grid_param_name}.joblib"
 
                     dump(final_est, out_path_est)
                 else:
@@ -1341,7 +1381,8 @@ class BSNestedCV(SimpleInterface):
                 if len(mega_feat_imp_dict.keys()) > 1:
                     print(
                         f"\n\n{Fore.BLUE}Target Outcome: "
-                        f"{Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
+                        f"{Fore.GREEN}{self.inputs.target_var}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"{Fore.BLUE}Modality: "
@@ -1349,7 +1390,8 @@ class BSNestedCV(SimpleInterface):
                     )
                     print(
                         f"{Fore.BLUE}Embedding type: "
-                        f"{Fore.RED}{self.inputs.embedding_type}{Style.RESET_ALL}"
+                        f"{Fore.RED}{self.inputs.embedding_type}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"{Fore.BLUE}Grid Params: "
@@ -1357,7 +1399,8 @@ class BSNestedCV(SimpleInterface):
                     )
                     print(
                         f"{Fore.BLUE}Best Estimator: "
-                        f"{Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
+                        f"{Fore.RED}{grand_mean_best_estimator}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"\n{Fore.BLUE}Variance: "
@@ -1371,7 +1414,8 @@ class BSNestedCV(SimpleInterface):
                     #print(f"y_predicted: {grand_mean_y_predicted}")
                     print(
                         f"{Fore.BLUE}Feature Importance: "
-                        f"{Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} "
+                        f"{Fore.RED}{list(mega_feat_imp_dict.keys())}"
+                        f"{Style.RESET_ALL} "
                         f"with {Fore.RED}{len(mega_feat_imp_dict.keys())} "
                         f"features...{Style.RESET_ALL}\n\n"
                     )
@@ -1525,14 +1569,30 @@ class MakeDF(SimpleInterface):
             df_summary.at[0, "Error"] = np.mean(
                 list(self.inputs.grand_mean_best_error.values())
             )
-            df_summary.at[0, "Score_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[1]
-            df_summary.at[0, "Score_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[0]
-            df_summary.at[0, "Score_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[1]
-            df_summary.at[0, "Score_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[0]
-            df_summary.at[0, "Error_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[1]
-            df_summary.at[0, "Error_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[0]
-            df_summary.at[0, "Error_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[1]
-            df_summary.at[0, "Error_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[0]
+            df_summary.at[0, "Score_95CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.95)[1]
+            df_summary.at[0, "Score_95CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.95)[0]
+            df_summary.at[0, "Score_90CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.90)[1]
+            df_summary.at[0, "Score_90CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.90)[0]
+            df_summary.at[0, "Error_95CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.95)[1]
+            df_summary.at[0, "Error_95CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.95)[0]
+            df_summary.at[0, "Error_90CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.90)[1]
+            df_summary.at[0, "Error_90CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.90)[0]
             df_summary.at[0, "lp_importance"] = np.array(
                 list(self.inputs.mega_feat_imp_dict.keys())
             )
@@ -1614,7 +1674,8 @@ def create_wf(grid_params_mod, basedir):
     make_df_node.interface._mem_gb = 1
 
     df_join_node = pe.JoinNode(
-        niu.IdentityInterface(fields=["df_summary", "modality", "embedding_type",
+        niu.IdentityInterface(fields=["df_summary", "modality",
+                                      "embedding_type",
                                       "target_var", "grid_param"]),
         name="df_join_node",
         joinfield=["df_summary", "grid_param"],
@@ -1776,7 +1837,8 @@ def build_predict_workflow(args, retval, verbose=True):
                 directget, minlength, model, res, atlas, tol = comb
             except:
                 raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([directget, minlength, model, res, atlas, tol])
+            grid_params_mod.append([directget, minlength, model, res, atlas,
+                                    tol])
 
     meta_inputnode = pe.Node(
         niu.IdentityInterface(

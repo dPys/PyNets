@@ -1772,7 +1772,8 @@ class RegisterAtlasDWI(SimpleInterface):
                               f"{op.basename(self.inputs.ap_path)}"):
             copyfile(
                 self.inputs.ap_path,
-                f"{namer_dir}/{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
+                f"{namer_dir}/"
+                f"{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )
@@ -1780,7 +1781,8 @@ class RegisterAtlasDWI(SimpleInterface):
                               f"{op.basename(self.inputs.B0_mask)}"):
             copyfile(
                 self.inputs.B0_mask,
-                f"{namer_dir}/{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
+                f"{namer_dir}/"
+                f"{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )

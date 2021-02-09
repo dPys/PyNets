@@ -41,7 +41,8 @@ def get_ensembles_embedding(modality, alg, base_dir):
                 ensembles.append(i.split('_thrtype')[0])
             else:
                 ensembles.append(i)
-    elif alg == 'eigenvector' or alg == 'betweenness' or alg == 'degree' or alg == 'local_efficiency' or alg == 'local_clustering':
+    elif alg == 'eigenvector' or alg == 'betweenness' or alg == 'degree' or \
+        alg == 'local_efficiency' or alg == 'local_clustering':
         ensembles_pre = list(
             set(
                 [
@@ -241,8 +242,10 @@ def get_ixs_from_node_dict(node_dict):
             node_dict_revised = {}
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
-                node_dict_revised[i]['label'] = ast.literal_eval(node_dict[i]['label'])[0]
-                node_dict_revised[i]['index'] = ast.literal_eval(node_dict[i]['label'])[1]
+                node_dict_revised[i]['label'] = ast.literal_eval(
+                    node_dict[i]['label'])[0]
+                node_dict_revised[i]['index'] = ast.literal_eval(
+                    node_dict[i]['label'])[1]
             ixs_corr = [int(k['index']) for k in
                         node_dict_revised.values()]
         elif all(isinstance(v, tuple) for v in
@@ -381,7 +384,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
             if not isinstance(rsn_dict["data"], np.ndarray):
                 if rsn_dict["data"].endswith('.npy'):
-                    rsn_dict["data"] = np.load(rsn_dict["data"], allow_pickle=True)
+                    rsn_dict["data"] = np.load(rsn_dict["data"],
+                                               allow_pickle=True)
                 elif rsn_dict["data"].endswith('.csv'):
                     rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])
                                                 ).reshape(-1, 1)
@@ -421,7 +425,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                         df_lps = None
                     # else:
                     #     raise ValueError(
-                    #         f"Number of dimensions {rsn_dict['data'].shape[1]} "
+                    #         f"Number of dimensions {
+                    #         rsn_dict['data'].shape[1]} "
                     #         f"not supported. See flatten_latent_positions "
                     #         f"function..."
                     #     )
@@ -626,11 +631,13 @@ def make_subject_dict(
                 par_dict = subject_dict_all.copy()
                 cache_dir = tempfile.mkdtemp()
 
+                max_bytes = int(float(list(
+                    psutil.virtual_memory())[4]/len(ids)))
                 with Parallel(
                     n_jobs=-1,
                     backend='loky',
                     verbose=1,
-                    max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
+                    max_nbytes=f"{max_bytes}M",
                     temp_folder=cache_dir,
                 ) as parallel:
                     outs_tup = parallel(
@@ -873,8 +880,10 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if not isinstance(
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = \
+                ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
+            # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)
@@ -1100,8 +1109,10 @@ def func_grabber(comb, subject_dict, missingness_frame,
             if not isinstance(
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = \
+                ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
+            # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)

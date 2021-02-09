@@ -843,36 +843,39 @@ def plot_all_func(
         if glassbrain is True:
             views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                 "/glassbrain_",
-                                                                 ID,
-                                                                 "_modality-func_",
-                                                                 "%s" % ("%s%s%s" % ("rsn-",
-                                                                                     network,
-                                                                                     "_") if network is not None else ""),
-                                                                 "%s" % ("%s%s%s" % ("roi-",
-                                                                                     op.basename(roi).split(".")[0],
-                                                                                     "_") if roi is not None else ""),
-                                                                 "model-",
-                                                                 conn_model,
-                                                                 "_",
-                                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                                     node_size,
-                                                                                     "mm_") if (
-                                                                     (node_size != "parc") and (
-                                                                         node_size is not None)) else "nodetype-parc_"),
-                                                                 "%s" % ("%s%s%s" % ("smooth-",
-                                                                                     smooth,
-                                                                                     "fwhm_") if float(smooth) > 0 else ""),
-                                                                 "%s" % ("%s%s%s" % ("hpass-",
-                                                                                     hpass,
-                                                                                     "Hz_") if hpass is not None else ""),
-                                                                 "%s" % ("%s%s" % ("extract-",
-                                                                                   extract_strategy) if extract_strategy is not None else ""),
-                                                                 "_thr-",
-                                                                 thr,
-                                                                 ".png",
-                                                                 )
+            out_path_fig = \
+                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+                (namer_dir,
+                 "/glassbrain_",
+                 ID,
+                 "_modality-func_",
+                 "%s" % ("%s%s%s" % ("rsn-",
+                                     network,
+                                     "_") if network is not None else ""),
+                 "%s" % ("%s%s%s" % ("roi-",
+                                     op.basename(roi).split(".")[0],
+                                     "_") if roi is not None else ""),
+                 "model-",
+                 conn_model,
+                 "_",
+                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                     node_size,
+                                     "mm_") if (
+                     (node_size != "parc") and (
+                         node_size is not None)) else "nodetype-parc_"),
+                 "%s" % ("%s%s%s" % ("smooth-",
+                                     smooth,
+                                     "fwhm_") if float(smooth) > 0 else ""),
+                 "%s" % ("%s%s%s" % ("hpass-",
+                                     hpass,
+                                     "Hz_") if hpass is not None else ""),
+                 "%s" % ("%s%s" % ("extract-",
+                                   extract_strategy) if extract_strategy is
+                                                        not None else ""),
+                 "_thr-",
+                 thr,
+                 ".png",
+                 )
 
             connectome = niplot.plot_connectome(
                 np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
@@ -955,30 +958,32 @@ def plot_all_func(
                     if label == 'Unlabeled':
                         continue
                     coord_anns.append(coord_ann)
-                    connectome.axes[view].ax.annotate(label,
-                                                      coord_ann,
-                                                      xycoords='data',
-                                                      textcoords='offset points',
-                                                      xytext=(-0.0001, -0.0001),
-                                                      horizontalalignment='center',
-                                                      verticalalignment='top',
-                                                      fontsize='2.7',
-                                                      fontweight='extra bold',
-                                                      zorder=zorder,
-                                                      color='black')
+                    connectome.axes[view].ax.annotate(
+                        label,
+                        coord_ann,
+                        xycoords='data',
+                        textcoords='offset points',
+                        xytext=(-0.0001, -0.0001),
+                        horizontalalignment='center',
+                        verticalalignment='top',
+                        fontsize='2.7',
+                        fontweight='extra bold',
+                        zorder=zorder,
+                        color='black')
                     zorder += 10
 
-                    connectome.axes[view].ax.annotate(label,
-                                                      coord_ann,
-                                                      xycoords='data',
-                                                      textcoords='offset points',
-                                                      xytext=(0, 0),
-                                                      horizontalalignment='center',
-                                                      verticalalignment='top',
-                                                      fontsize='2.65',
-                                                      fontweight='bold',
-                                                      zorder=zorder,
-                                                      color='white')
+                    connectome.axes[view].ax.annotate(
+                        label,
+                        coord_ann,
+                        xycoords='data',
+                        textcoords='offset points',
+                        xytext=(0, 0),
+                        horizontalalignment='center',
+                        verticalalignment='top',
+                        fontsize='2.65',
+                        fontweight='bold',
+                        zorder=zorder,
+                        color='white')
                     zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
@@ -1198,39 +1203,42 @@ def plot_all_struct(
         if glassbrain is True:
             views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                         "/glassbrain_",
-                                                                         ID,
-                                                                         "_modality-dwi_",
-                                                                         "%s" % ("%s%s%s" % ("rsn-",
-                                                                                             network,
-                                                                                             "_") if network is not None else ""),
-                                                                         "%s" % ("%s%s%s" % ("roi-",
-                                                                                             op.basename(roi).split(".")[0],
-                                                                                             "_") if roi is not None else ""),
-                                                                         "model-",
-                                                                         conn_model,
-                                                                         "_",
-                                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                                             node_size,
-                                                                                             "mm_") if (
-                                                                             (node_size != "parc") and (
-                                                                                 node_size is not None)) else "nodetype-parc_"),
-                                                                         "%s" % ("%s%s%s" % ("samples-",
-                                                                                             int(target_samples),
-                                                                                             "streams_") if float(target_samples) > 0 else "_"),
-                                                                         "tracktype-",
-                                                                         track_type,
-                                                                         "_directget-",
-                                                                         directget,
-                                                                         "_minlength-",
-                                                                         min_length,
-                                                                         "_tol-",
-                                                                         error_margin,
-                                                                         "_thr-",
-                                                                         thr,
-                                                                         ".png",
-                                                                         )
+            out_path_fig = \
+                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+                (namer_dir,
+                 "/glassbrain_",
+                 ID,
+                 "_modality-dwi_",
+                 "%s" % ("%s%s%s" % ("rsn-",
+                                     network,
+                                     "_") if network is not None else ""),
+                 "%s" % ("%s%s%s" % ("roi-",
+                                     op.basename(roi).split(".")[0],
+                                     "_") if roi is not None else ""),
+                 "model-",
+                 conn_model,
+                 "_",
+                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                                     node_size,
+                                     "mm_") if (
+                     (node_size != "parc") and (
+                         node_size is not None)) else "nodetype-parc_"),
+                 "%s" % ("%s%s%s" % ("samples-",
+                                     int(target_samples),
+                                     "streams_") if float(target_samples) > 0
+                         else "_"),
+                 "tracktype-",
+                 track_type,
+                 "_directget-",
+                 directget,
+                 "_minlength-",
+                 min_length,
+                 "_tol-",
+                 error_margin,
+                 "_thr-",
+                 thr,
+                 ".png",
+                 )
 
             connectome = niplot.plot_connectome(
                 np.zeros(shape=(1, 1)), [(0, 0, 0)], node_size=0.0001,
@@ -1251,12 +1259,14 @@ def plot_all_struct(
             ] = create_gb_palette(conn_matrix, color_theme, coords, labels)
             if roi:
                 # Save coords to pickle
-                coord_paths = f"{namer_dir}{'/coords_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                coord_paths = f"{namer_dir}/coords_" \
+                              f"{op.basename(roi).split('.')[0]}_plotting.pkl"
                 with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
                 # Save labels to pickle
-                labels_path = f"{namer_dir}{'/labelnames_'}{op.basename(roi).split('.')[0]}{'_plotting.pkl'}"
+                labels_path = f"{namer_dir}/labelnames_" \
+                              f"{op.basename(roi).split('.')[0]}_plotting.pkl"
                 with open(labels_path, "wb") as f:
                     pickle.dump(labels, f, protocol=2)
             else:
@@ -1317,30 +1327,32 @@ def plot_all_struct(
                         continue
                     coord_anns.append(coord_ann)
                     connectome.axes[view].ax.set_axisbelow(False)
-                    connectome.axes[view].ax.annotate(label,
-                                                      coord_ann,
-                                                      xycoords='data',
-                                                      textcoords='offset points',
-                                                      xytext=(-0.0001, -0.0001),
-                                                      horizontalalignment='center',
-                                                      verticalalignment='top',
-                                                      fontsize='2.7',
-                                                      fontweight='extra bold',
-                                                      zorder=zorder,
-                                                      color='black')
+                    connectome.axes[view].ax.annotate(
+                        label,
+                        coord_ann,
+                        xycoords='data',
+                        textcoords='offset points',
+                        xytext=(-0.0001, -0.0001),
+                        horizontalalignment='center',
+                        verticalalignment='top',
+                        fontsize='2.7',
+                        fontweight='extra bold',
+                        zorder=zorder,
+                        color='black')
                     zorder += 10
 
-                    connectome.axes[view].ax.annotate(label,
-                                                      coord_ann,
-                                                      xycoords='data',
-                                                      textcoords='offset points',
-                                                      xytext=(0, 0),
-                                                      horizontalalignment='center',
-                                                      verticalalignment='top',
-                                                      fontsize='2.65',
-                                                      fontweight='bold',
-                                                      zorder=zorder,
-                                                      color='orange')
+                    connectome.axes[view].ax.annotate(
+                        label,
+                        coord_ann,
+                        xycoords='data',
+                        textcoords='offset points',
+                        xytext=(0, 0),
+                        horizontalalignment='center',
+                        verticalalignment='top',
+                        fontsize='2.65',
+                        fontweight='bold',
+                        zorder=zorder,
+                        color='orange')
                     zorder += 100
 
             connectome.savefig(out_path_fig, dpi=dpi_resolution)
@@ -1709,7 +1721,9 @@ def view_tractogram(streams, atlas):
     warped_aff = affine_map.affine_inv.copy()
     warped_aff_scaled = rescale_affine_to_center(
         warped_aff, voxel_dims=[4, 4, 4],
-        target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5, 0.5, 1]))
+        target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5,
+                                                                       0.5,
+                                                                       1]))
     streamlines = transform_streamlines(
         tractogram.streamlines, warped_aff_scaled)
 
@@ -1862,45 +1876,3 @@ def plot_graph_measure_hists(csv_all_metrics):
     plt.tight_layout()
     return plt
 
-# import seaborn as sns
-# from pynets.core.utils import flatten
-# frame = pd.read_csv('/private/tmp/pynets_ml/final_df.csv', index_col=False)
-#
-# df_summary = frame[np.abs(frame['Rsquared'])>0].sort_values(
-#     "Rsquared", ascending=True)
-#
-# df_summary['Rsquared'] = np.abs(df_summary['Rsqu'lp_importance'ared'].astype('float64'))
-# df_summary['MSE'] = df_summary['MSE'].astype('float64')
-# df_summary['alg'] = df_summary['alg'].astype('str')
-# df_summary['best_estimator'] = df_summary['best_estimator'].astype('str')
-#
-# all_nodes = list(set(list(flatten([eval(i) for i in df_summary['lp_importance']]))))
-#
-# sns.set(style="whitegrid")
-# ax = sns.violinplot(x='alg', y="Rsquared", data=df_summary, palette="Pastel1")
-# ax = sns.violinplot(x='alg', y="MSE", data=df_summary, palette="Pastel1")
-#
-# df_grid = df_summary.copy()
-# df_grid[['extract', 'hpass', 'model', 'res', 'smooth']] = \
-#     pd.DataFrame([eval(i) for i in df_summary['grid'].tolist()], index=df_summary.index)
-# df_grid = df_grid[['extract', 'hpass', 'model', 'res', 'smooth', 'Rsquared']]
-#
-# fig = px.parallel_categories(df_grid, color="Rsquared",
-#                              labels={"res": "Node Resolution",
-#                                      "model": "Estimator",
-#                                      "extract": "Extraction Method",
-#                                      "hpass": "High-Pass (Hz)",
-#                                      "smooth": "Smooth (FWHM)"},
-#                              dimensions=['res', 'model', 'extract', 'hpass',
-#                                          'smooth'],
-#                              color_continuous_scale=px.colors.sequential.Inferno)
-# fig.update_layout(
-#     autosize=False,
-#     height=1000,
-#     width=2000,
-#     margin=dict(r=200, l=200, b=75, t=75),
-# )
-# fig.update_traces(labelfont=dict(size=24, color='black'),
-#                   tickfont=dict(family="Arial, sans-serif",
-#                                 size=20, color='black'))
-# fig.write_image('func_rsquared_parallel_all.png')

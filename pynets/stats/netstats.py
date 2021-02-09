@@ -215,7 +215,7 @@ def subgraph_number_of_cliques_for_all(G):
       *Theoretical Computer Science*, Volume 363, Issue 1,
       Computing and Combinatorics,
       10th Annual International Conference on
-      Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28--42
+      Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28-42
       <https://doi.org/10.1016/j.tcs.2006.06.015>
     .. [3] F. Cazals, C. Karande,
       "A note on the problem of reporting maximal cliques",
@@ -285,7 +285,10 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
             print(e, "Graph Tool not installed!")
         g = nx2gt(G)
         vertices = list(g.get_vertices())
-        all_shortest_dist = [dict(zip(vertices, list(i))) for i in gt.shortest_distance(g, weights=g.edge_properties['weight'], directed=False)]
+        all_shortest_dist = [dict(zip(vertices,
+                                      list(i))) for
+                             i in gt.shortest_distance(
+                g, weights=g.edge_properties['weight'], directed=False)]
         lengths = tuple(dict(zip(vertices, all_shortest_dist)).items())
     else:
         raise ValueError(f"Engine {engine} not recognized.")
@@ -350,15 +353,19 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
 
         temp_G = largest_connected_component(temp_G, return_inds=False)
 
-        if nx.is_empty(temp_G) is True or len(temp_G) < 2 or nx.number_of_edges(temp_G) == 0:
+        if nx.is_empty(temp_G) is True or len(temp_G) < 2 or \
+            nx.number_of_edges(temp_G) == 0:
             efficiencies[node] = 0
         else:
             try:
-                if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                if engine.upper() == 'GT' or \
+                    engine.upper() == 'GRAPH_TOOL' or \
                     engine.upper() == 'GRAPHTOOL':
-                    efficiencies[node] = global_efficiency(temp_G, weight, engine='gt')
+                    efficiencies[node] = global_efficiency(temp_G, weight,
+                                                           engine='gt')
                 else:
-                    efficiencies[node] = global_efficiency(temp_G, weight, engine='nx')
+                    efficiencies[node] = global_efficiency(temp_G, weight,
+                                                           engine='nx')
             except BaseException:
                 efficiencies[node] = np.nan
     return efficiencies
@@ -521,7 +528,8 @@ def smallworldness(
         if approach == "clustering":
             if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
                 engine.upper() == 'GRAPHTOOL':
-                clust_coef_ = gt.global_clustering(Gl, weight=Gl.edge_properties['weight'])[0]
+                clust_coef_ = gt.global_clustering(
+                    Gl, weight=Gl.edge_properties['weight'])[0]
             else:
                 clust_coef_ = nx.average_clustering(Gl, weight='weight')
             randMetrics["C"].append(clust_coef_)
@@ -530,14 +538,18 @@ def smallworldness(
         else:
             raise ValueError(f"{approach}' approach not recognized!")
 
-        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
-            randMetrics["L"].append(average_shortest_path_length_fast(Gr, weight=None))
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+            engine.upper() == 'GRAPHTOOL':
+            randMetrics["L"].append(
+                average_shortest_path_length_fast(Gr, weight=None))
         else:
-            randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight=None))
+            randMetrics["L"].append(
+                nx.average_shortest_path_length(Gr, weight=None))
         del Gr, Gl
 
     if approach == "clustering":
-        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+            engine.upper() == 'GRAPHTOOL':
             g = nx2gt(G)
             C = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
         else:
@@ -547,7 +559,8 @@ def smallworldness(
     else:
         raise ValueError(f"{approach}' approach not recognized!")
 
-    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
         L = average_shortest_path_length_fast(G, weight=None)
     else:
         L = nx.average_shortest_path_length(G, weight=None)
@@ -1072,12 +1085,13 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
     #         print(UserWarning('Warning: Too many isolates to defragment, '
     #                           'grabbing the largest connected component...'))
     #
-    #         lcc, pruned_nodes = largest_connected_component(G_tmp, return_inds=True)
+    #         lcc, pruned_nodes = largest_connected_component(G_tmp,
+    #         return_inds=True)
     #         return lcc, pruned_nodes.tolist()
     #     else:
     #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'skipping defragmentation. Consider fallback to'
-    #                           ' lcc...'))
+    #                           'skipping defragmentation.
+    #                           Consider fallback to lcc...'))
     #         return G_tmp, []
 
     # Remove disconnected nodes
@@ -1197,8 +1211,8 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
              engine.upper() == 'GRAPHTOOL':
             try:
-                net_met_val = average_shortest_path_length_fast(G,
-                                                                weight='weight')
+                net_met_val = average_shortest_path_length_fast(
+                    G, weight='weight')
             except BaseException:
                 net_met_val = np.nan
         else:
@@ -1210,13 +1224,17 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                         average_shortest_path_length_for_all(G))
                 except BaseException as e:
                     print(e, f"WARNING: {net_name} failed for G.")
-                    # np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
+                    # np.save(f"/tmp/average_shortest_path_length_
+                    # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
                     net_met_val = np.nan
-    elif "average_clustering" in net_name and (engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL'):
+    elif "average_clustering" in net_name and \
+        (engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL'
+         or engine.upper() == 'GRAPHTOOL'):
         try:
             g = nx2gt(G)
-            net_met_val = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
+            net_met_val = gt.global_clustering(
+                g, weight=g.edge_properties['weight'])[0]
         except BaseException as e:
             print(e, f"WARNING: {net_name} failed for G.")
             net_met_val = np.nan
@@ -1229,7 +1247,8 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                     net_met_val = float(subgraph_number_of_cliques_for_all(G))
                 except BaseException as e:
                     print(e, f"WARNING: {net_name} failed for G.")
-                    # np.save(f"{'/tmp/graph_num_cliques'}{random.randint(1, 400)}{'.npy'}",
+                    # np.save(f"/tmp/graph_num_cliques_
+                    # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
                     net_met_val = np.nan
         else:
@@ -1240,7 +1259,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
             net_met_val = float(i(G))
         except BaseException as e:
             print(e, f"WARNING: {net_name} failed for G.")
-            # np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
+            # np.save(f"/tmp/smallworldness{random.randint(1, 400)}.npy",
             #         np.array(nx.to_numpy_matrix(H)))
             net_met_val = np.nan
     elif "degree_assortativity_coefficient" in net_name:
@@ -1266,7 +1285,8 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                         H, weight="weight"))
             except BaseException as e:
                 print(e, f"WARNING: {net_name} failed for G.")
-                # np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
+                # np.save(f"/tmp/degree_assortativity_coefficient_
+                # {random.randint(1, 400)}.npy",
                 #         np.array(nx.to_numpy_matrix(H)))
                 net_met_val = np.nan
     else:
@@ -1438,9 +1458,11 @@ class CleanGraphs(object):
 
         self.G = nx.from_numpy_array(self.in_mat)
 
-        if nx.is_empty(self.G) is True or (np.abs(self.in_mat) < 0.0000001).all() or \
+        if nx.is_empty(self.G) is True or \
+            (np.abs(self.in_mat) < 0.0000001).all() or \
             self.G.number_of_edges() == 0:
-            print(UserWarning(f"Warning: {self.est_path} empty after pruning!"))
+            print(UserWarning(f"Warning: {self.est_path} "
+                              f"empty after pruning!"))
             return self.in_mat, None
 
         # Saved pruned
@@ -1521,7 +1543,8 @@ def iterate_nx_global_measures(G, metric_list_glob):
                 net_met_val = raw_mets(G, i)
             except BaseException:
                 print(f"{'WARNING: '}{net_met}{' failed for G.'}")
-                # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
+                # np.save("%s%s%s%s" % ('/tmp/', net_met,
+                # random.randint(1, 400), '.npy'),
                 #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except BaseException:
@@ -1694,7 +1717,8 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
 
 
 @timeout(DEFAULT_TIMEOUT)
-def get_clustering(G, metric_list_names, net_met_val_list_final, engine=DEFAULT_ENGINE):
+def get_clustering(G, metric_list_names, net_met_val_list_final,
+                   engine=DEFAULT_ENGINE):
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         cl_vector = nx.clustering(G, weight="weight")
@@ -1777,7 +1801,8 @@ def get_betweenness_centrality(
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         bc_vector = betweenness_centrality(G_len, normalized=True)
-    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+        engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -2441,7 +2466,8 @@ def collect_pandas_df_make(
                 print(UserWarning('Warning: File not .csv format'))
                 continue
         else:
-            print(UserWarning(f"Warning: {net_mets_csv} not found. Skipping..."))
+            print(UserWarning(f"Warning: {net_mets_csv} not found. "
+                              f"Skipping..."))
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(
@@ -2500,11 +2526,13 @@ def collect_pandas_df_make(
                     meta[thr_set] = dict()
                     meta[thr_set]["dataframes"] = dict()
                     for i in models_grouped[thr_set]:
-                        thr = non_decimal.sub("", i.split("thr-")[1].split("_")[0])
+                        thr = non_decimal.sub("",
+                                              i.split("thr-")[1].split("_")[0])
                         _file = subject_path + "/" + i
                         if os.path.isfile(_file):
                             df = pd.read_csv(_file, memory_map=True,
-                                             chunksize=100000, encoding="utf-8",
+                                             chunksize=100000,
+                                             encoding="utf-8",
                                              skip_blank_lines=False,
                                              warn_bad_lines=True,
                                              error_bad_lines=False
@@ -2512,8 +2540,8 @@ def collect_pandas_df_make(
                             node_cols = [
                                 s
                                 for s in list(df.columns)
-                                if isinstance(s, int) or any(c.isdigit() for c in
-                                                             s)
+                                if isinstance(s, int) or any(c.isdigit() for
+                                                             c in s)
                             ]
                             if embed is False:
                                 df = df.drop(node_cols, axis=1)
@@ -2521,14 +2549,15 @@ def collect_pandas_df_make(
                         else:
                             print(f"File {_file} not found...")
                             continue
-                # For each unique threshold set, for each graph measure, extract
-                # AUC
+                # For each unique threshold set, for each graph measure,
+                # extract AUC
                 if sql_out is True:
                     try:
                         import sqlalchemy
 
                         sql_db = utils.build_sql_db(
-                            op.dirname(op.dirname(op.dirname(subject_path))), ID
+                            op.dirname(op.dirname(op.dirname(subject_path))),
+                            ID
                         )
                     except BaseException:
                         sql_db = None
@@ -2547,7 +2576,8 @@ def collect_pandas_df_make(
                     df_summary_auc.columns = [
                         col + "_auc" for col in df_summary.columns]
 
-                    print(f"\nAUC for threshold group: {models_grouped[thr_set]}")
+                    print(f"\nAUC for threshold group: "
+                          f"{models_grouped[thr_set]}")
                     file_renamed = list(
                         set(
                             [
@@ -2563,17 +2593,17 @@ def collect_pandas_df_make(
                     modality = file_renamed.split("modality-")[1].split("_")[0]
 
                     # Build hyperparameter dictionary
-                    hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
-                                                                 modality,
-                                                                 hyperparam_dict,
-                                                                 gen_hyperparams)
+                    hyperparam_dict, hyperparams = build_mp_dict(
+                        file_renamed, modality, hyperparam_dict,
+                        gen_hyperparams)
 
                     for measure in df_summary.columns[:-1]:
                         # Get Area Under the Curve
                         df_summary_nonan = df_summary[pd.notnull(
                             df_summary[measure])]
                         df_summary_auc[measure] = np.trapz(
-                            np.array(df_summary_nonan[measure]).astype("float32")
+                            np.array(df_summary_nonan[measure]
+                                     ).astype("float32")
                         )
                         print(
                             f"{measure}: "
@@ -2601,11 +2631,18 @@ def collect_pandas_df_make(
                         compression="gzip",
                         encoding="utf-8",
                     )
-                    node_cols_embed = [i for i in node_cols if i in embedding_methods]
+                    node_cols_embed = [i for i in node_cols if i in
+                                       embedding_methods]
+
+                    from pathlib import Path
+                    parent_dir = str(
+                        Path(os.path.dirname(net_mets_csv_list[0])).parent)
+                    base_name = \
+                    os.path.basename(net_mets_csv_list[0]).split('metrics_')[
+                        1].split('_thr-')[0]
 
                     if embed is True and len(node_cols_embed) > 0:
-                        from pathlib import Path
-                        embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                        embed_dir = f"{parent_dir}/embeddings"
                         if not os.path.isdir(embed_dir):
                             os.makedirs(embed_dir, exist_ok=True)
 
@@ -2613,24 +2650,30 @@ def collect_pandas_df_make(
                                          f"{i}_auc" in df_summary_auc.columns]
                         df_summary_auc_nodes = df_summary_auc[node_cols_auc]
                         node_embeddings_grouped = [{k: list(g)} for k, g in
-                                                   groupby(df_summary_auc_nodes,
-                                                           lambda s: s.split("_")[1])]
+                                                   groupby(
+                                                       df_summary_auc_nodes,
+                                                           lambda s:
+                                                           s.split("_")[1])]
                         for node_dict in node_embeddings_grouped:
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
-                            embedding_frame = df_summary_auc_nodes[node_top_cols]
-                            out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                            embedding_frame = \
+                                df_summary_auc_nodes[node_top_cols]
+                            out_path = f"{embed_dir}/gradient-" \
+                                       f"{node_top_type}_" \
                                        f"rsn-{atlas}_auc_nodes_" \
-                                       f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
+                                       f"{base_name}.csv"
                             embedding_frame.to_csv(out_path, index=False)
 
                     if sql_out is True:
                         sql_db.create_modality_table(modality)
                         sql_db.add_hp_columns(
-                            list(set(hyperparams)) + list(df_summary_auc.columns)
+                            list(set(hyperparams)) +
+                            list(df_summary_auc.columns)
                         )
                         sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
-                        # sql_db.engine.execute("SELECT * FROM func").fetchall()
+                        # select_call = "SELECT * FROM func"
+                        # sql_db.engine.execute(select_call).fetchall()
                         del sql_db
                     del df_summary_auc
         else:
@@ -2652,29 +2695,38 @@ def collect_pandas_df_make(
                 if embed is False:
                     df.drop(node_cols, axis=1, inplace=True)
                 elif len(node_cols) > 1:
-                    node_cols_embed = [i for i in node_cols if any(map(i.__contains__, embedding_methods))]
+                    from pathlib import Path
+                    parent_dir = str(
+                        Path(os.path.dirname(net_mets_csv_list[0])).parent)
+                    node_cols_embed = [i for i in node_cols if
+                                       any(map(i.__contains__,
+                                               embedding_methods))]
                     if len(node_cols_embed) > 0:
-                        from pathlib import Path
-                        embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                        embed_dir = f"{parent_dir}/embeddings"
                         if not os.path.isdir(embed_dir):
                             os.makedirs(embed_dir, exist_ok=True)
                         df_nodes = df[node_cols_embed]
                         node_embeddings_grouped = [{k: list(g)} for k, g in
                                                    groupby(df_nodes,
-                                                           lambda s: s.split("_")[1])]
-                        atlas = os.path.dirname(file_).split('rsn-')[1].split('_')[0]
+                                                           lambda s: s.split(
+                                                               "_")[1])]
+                        atlas = os.path.dirname(file_).split('rsn-')[1].split(
+                            '_')[0]
+                        if 'thr-' in os.path.basename(file_):
+                            base_name = os.path.basename(file_).split(
+                                'metrics_')[1].split(
+                                '_thr-')[0] + '.csv'
+                        else:
+                            base_name = os.path.basename(file_).split(
+                                'metrics_')[1]
                         for node_dict in node_embeddings_grouped:
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
                             embedding_frame = df_nodes[node_top_cols]
-                            if 'thr-' in os.path.basename(file_):
-                                out_path = f"{embed_dir}/gradient-{node_top_type}_" \
-                                           f"rsn-{atlas}_nodes_" \
-                                           f"{os.path.basename(file_).split('metrics_')[1].split('_thr-')[0]}.csv"
-                            else:
-                                out_path = f"{embed_dir}/gradient-{node_top_type}_" \
-                                           f"rsn-{atlas}_nodes_" \
-                                           f"{os.path.basename(file_).split('metrics_')[1]}"
+                            out_path = f"{embed_dir}/gradient-" \
+                                       f"{node_top_type}_" \
+                                       f"rsn-{atlas}_nodes_" \
+                                       f"{base_name}"
                             embedding_frame.to_csv(out_path, index=False)
                 dfs_non_auc.append(df)
 
@@ -2712,12 +2764,15 @@ def collect_pandas_df_make(
                 ).transpose()
 
                 # PCA across AUC node measures
-                # node_measures_grouped = [list(y) for x, y in groupby(node_cols, lambda s: s.split('_')[1])]
+                # node_measures_grouped = [list(y) for x, y in
+                # groupby(node_cols, lambda s: s.split('_')[1])]
                 # for node_measures in node_measures_grouped:
                 #     pca = PCA(n_components=2)
-                #     df_concatted_pca = pd.Series(pca.fit_transform(df_concat.loc[:,
+                #     df_concatted_pca = pd.Series(pca.fit_transform(
+                #     df_concat.loc[:,
                 #     node_measures])[1]).to_frame().transpose()
-                #     df_concatted_pca.columns = [str(col) + '_PCA' for col in df_concatted_pca.columns]
+                #     df_concatted_pca.columns = [str(col) + '_PCA' for col in
+                #     df_concatted_pca.columns]
                 df_concatted_mean.columns = [
                     str(col) + "_mean" for col in df_concatted_mean.columns
                 ]
@@ -2736,7 +2791,8 @@ def collect_pandas_df_make(
                 print(f"\nConcatenating dataframes for {str(ID)}...\n")
                 net_csv_summary_out_path = (
                     f"{summary_dir}/avg_topology_sub-{str(ID)}"
-                    f"{'%s' % ('_' + network if network is not None else '')}.csv")
+                    f"{'%s' % ('_' + network if network is not None else '')}"
+                    f".csv")
                 if os.path.isfile(net_csv_summary_out_path):
                     try:
                         os.remove(net_csv_summary_out_path)

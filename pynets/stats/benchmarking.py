@@ -315,6 +315,9 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                                   'data'], str):
                                     data_path = par_dict[ID][str(ses)][
                                         modality][alg][comb_tuple]['data']
+                                    parent_dir = Path(os.path.dirname(
+                                        par_dict[ID][str(ses)][modality][alg][
+                                            comb_tuple]['data'])).parent
                                     if os.path.isfile(data_path):
                                         try:
                                             if data_path.endswith('.npy'):
@@ -326,7 +329,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             else:
                                                 emb_data = np.nan
                                             node_files = glob.glob(
-                                                f"{Path(os.path.dirname(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])).parent}/nodes/*.json")
+                                                f"{parent_dir}/nodes/*.json")
                                         except:
                                             print(f"Failed to load data from "
                                                   f"{data_path}..")
