@@ -225,7 +225,7 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
         df.at[
             df.index[idx],
             "motif_dist"] = spatial.distance.cosine(df["struct"][idx],
-                                                      df["func"][idx])
+                                                    df["func"][idx])
 
     df = df[pd.notnull(df["motif_dist"])]
 
@@ -235,13 +235,13 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
             "graph_dist_cosine"] = spatial.distance.cosine(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            )
+        )
         df.at[
             df.index[idx],
             "graph_dist_correlation"] = spatial.distance.correlation(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            )
+        )
 
     df["struct_func_3333"] = np.zeros(len(df))
     df["struct_func_2233"] = np.zeros(len(df))
@@ -463,12 +463,12 @@ def motif_matching(
 
     [struct_coords, struct_labels, struct_label_intensities] = \
         get_brainnetome_node_attributes(glob.glob(
-        f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
         struct_mat.shape[0])
 
     [func_coords, func_labels, func_label_intensities] = \
         get_brainnetome_node_attributes(glob.glob(
-        f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
         func_mat.shape[0])
 
     # Find intersecting nodes across modalities (i.e. assuming the same

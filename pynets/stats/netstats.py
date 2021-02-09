@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2016
 @author: Derek Pisner
 """
+from pynets.core.utils import load_runconfig
 import pandas as pd
 import numpy as np
 import warnings
@@ -13,7 +14,6 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-from pynets.core.utils import load_runconfig
 
 hardcoded_params = load_runconfig()
 try:
@@ -82,7 +82,7 @@ def nx2gt(nxG):
             if key in nprops:
                 continue
 
-            tname, _, key  = get_prop_type(val, key)
+            tname, _, key = get_prop_type(val, key)
 
             prop = gtG.new_vertex_property(tname)
             gtG.vertex_properties[key.decode("utf-8")] = prop
@@ -132,8 +132,8 @@ def np2gt(adj):
     g.edge_properties['weight'] = edge_weights
     nnz = np.nonzero(np.triu(adj, 1))
     nedges = len(nnz[0])
-    g.add_edge_list(np.hstack([np.transpose(nnz),np.reshape(adj[nnz],
-                                                            (nedges, 1))]),
+    g.add_edge_list(np.hstack([np.transpose(nnz), np.reshape(adj[nnz],
+                                                             (nedges, 1))]),
                     eprops=[edge_weights])
     return g
 
@@ -154,7 +154,8 @@ def average_shortest_path_length_fast(G, weight="weight"):
                                     directed=False)
     else:
         dist = gt.shortest_distance(g, directed=False)
-    sum_of_all_dists = sum([sum(i.a[(i.a>1e-9)&(i.a<1e9)]) for i in dist])
+    sum_of_all_dists = sum(
+        [sum(i.a[(i.a > 1e-9) & (i.a < 1e9)]) for i in dist])
     return sum_of_all_dists / (n * (n - 1))
 
 
@@ -278,7 +279,7 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         lengths = list(nx.all_pairs_dijkstra_path_length(G, weight=weight))
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -288,7 +289,7 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
         all_shortest_dist = [dict(zip(vertices,
                                       list(i))) for
                              i in gt.shortest_distance(
-                g, weights=g.edge_properties['weight'], directed=False)]
+            g, weights=g.edge_properties['weight'], directed=False)]
         lengths = tuple(dict(zip(vertices, all_shortest_dist)).items())
     else:
         raise ValueError(f"Engine {engine} not recognized.")
@@ -354,13 +355,13 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
         temp_G = largest_connected_component(temp_G, return_inds=False)
 
         if nx.is_empty(temp_G) is True or len(temp_G) < 2 or \
-            nx.number_of_edges(temp_G) == 0:
+                nx.number_of_edges(temp_G) == 0:
             efficiencies[node] = 0
         else:
             try:
                 if engine.upper() == 'GT' or \
-                    engine.upper() == 'GRAPH_TOOL' or \
-                    engine.upper() == 'GRAPHTOOL':
+                        engine.upper() == 'GRAPH_TOOL' or \
+                        engine.upper() == 'GRAPHTOOL':
                     efficiencies[node] = global_efficiency(temp_G, weight,
                                                            engine='gt')
                 else:
@@ -404,7 +405,7 @@ def average_local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
         return np.nan
 
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         eff = local_efficiency(G, weight, engine='gt')
     else:
         eff = local_efficiency(G, weight, engine='nx')
@@ -475,7 +476,7 @@ def smallworldness(
         return np.nan
 
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -486,7 +487,7 @@ def smallworldness(
         nedges = nx.number_of_edges(G)
         shape = np.array([nnodes, nnodes])
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-            engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             if reference == "random":
                 def sample_k(max):
                     accept = False
@@ -496,9 +497,9 @@ def smallworldness(
                     return k
 
                 G_rand = gt.random_graph(nnodes, lambda: sample_k(nedges),
-                                model="configuration",
-                                directed=False,
-                                n_iter=niter)
+                                         model="configuration",
+                                         directed=False,
+                                         n_iter=niter)
             else:
                 raise NotImplementedError(f"{reference}' graph type not yet"
                                           f" available using graph_tool "
@@ -521,13 +522,13 @@ def smallworldness(
         if reference == "lattice":
             Gl = get_random(G, reference, "nx", niter, i)
             if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-                engine.upper() == 'GRAPHTOOL':
+                    engine.upper() == 'GRAPHTOOL':
                 Gl = nx2gt(Gl)
         else:
             Gl = Gr
         if approach == "clustering":
             if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-                engine.upper() == 'GRAPHTOOL':
+                    engine.upper() == 'GRAPHTOOL':
                 clust_coef_ = gt.global_clustering(
                     Gl, weight=Gl.edge_properties['weight'])[0]
             else:
@@ -539,7 +540,7 @@ def smallworldness(
             raise ValueError(f"{approach}' approach not recognized!")
 
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-            engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             randMetrics["L"].append(
                 average_shortest_path_length_fast(Gr, weight=None))
         else:
@@ -549,7 +550,7 @@ def smallworldness(
 
     if approach == "clustering":
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-            engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             g = nx2gt(G)
             C = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
         else:
@@ -560,7 +561,7 @@ def smallworldness(
         raise ValueError(f"{approach}' approach not recognized!")
 
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         L = average_shortest_path_length_fast(G, weight=None)
     else:
         L = nx.average_shortest_path_length(G, weight=None)
@@ -573,7 +574,7 @@ def smallworldness(
 
 def rich_club_coefficient(G, engine=DEFAULT_ENGINE):
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1197,7 +1198,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
     # import random
     from functools import partial
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1209,7 +1210,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
         net_name = str(i)
     if "average_shortest_path_length" in net_name:
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-             engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             try:
                 net_met_val = average_shortest_path_length_fast(
                     G, weight='weight')
@@ -1460,7 +1461,7 @@ class CleanGraphs(object):
 
         if nx.is_empty(self.G) is True or \
             (np.abs(self.in_mat) < 0.0000001).all() or \
-            self.G.number_of_edges() == 0:
+                self.G.number_of_edges() == 0:
             print(UserWarning(f"Warning: {self.est_path} "
                               f"empty after pruning!"))
             return self.in_mat, None
@@ -1723,7 +1724,7 @@ def get_clustering(G, metric_list_names, net_met_val_list_final,
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         cl_vector = nx.clustering(G, weight="weight")
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1802,7 +1803,7 @@ def get_betweenness_centrality(
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         bc_vector = betweenness_centrality(G_len, normalized=True)
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1851,7 +1852,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final,
         from networkx.algorithms import eigenvector_centrality
         ec_vector = eigenvector_centrality(G, max_iter=1000)
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -2031,7 +2032,6 @@ def extractnetstats(
     import pynets.stats.netstats
     from pathlib import Path
 
-
     # Load netstats config and parse graph algorithms as objects
     with open(
         pkg_resources.resource_filename("pynets",
@@ -2055,14 +2055,14 @@ def extractnetstats(
             metric_list_global = metric_dict_global["metric_list_global"]
             if metric_list_global is not None:
                 metric_list_global = [
-                                         getattr(networkx.algorithms, i)
-                                         for i in metric_list_global
-                                         if i in nx_algs
-                                     ] + [
-                                         getattr(pynets.stats.netstats, i)
-                                         for i in metric_list_global
-                                         if i in pynets_algs
-                                     ]
+                    getattr(networkx.algorithms, i)
+                    for i in metric_list_global
+                    if i in nx_algs
+                ] + [
+                    getattr(pynets.stats.netstats, i)
+                    for i in metric_list_global
+                    if i in pynets_algs
+                ]
                 metric_list_global_names = [
                     str(i).split("<function ")[1].split(" at")[0]
                     for i in metric_list_global
@@ -2136,7 +2136,7 @@ def extractnetstats(
 
         # Deal with empty graphs
         if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
-            G.number_of_edges() == 0 or len(G) < 3:
+                G.number_of_edges() == 0 or len(G) < 3:
             out_path_neat = save_netmets(
                 dir_path, est_path, [""], [np.nan])
             print(UserWarning(f"Warning: Empty graph detected for {ID}: "
@@ -2200,7 +2200,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "participation_coefficient" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping participation coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2216,8 +2216,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_diversity(in_mat, ci, metric_list_names,
-                                net_met_val_list_final
-                        )
+                                          net_met_val_list_final
+                                          )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Diversity coefficient cannot be calculated for "
@@ -2227,7 +2227,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "diversity_coefficient" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping diversity coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2274,8 +2274,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_clustering(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Local clustering cannot be calculated for G")
@@ -2290,8 +2290,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_degree_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Degree centrality cannot be calculated for G")
@@ -2302,12 +2302,13 @@ def extractnetstats(
 
                 # Betweenness Centrality
                 if "betweenness_centrality" in metric_list_nodal and \
-                     G_len is not None:
+                        G_len is not None:
                     try:
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_betweenness_centrality(
-                            G_len, metric_list_names, net_met_val_list_final)
+                                G_len, metric_list_names,
+                                net_met_val_list_final)
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Betweenness centrality cannot be calculated for"
@@ -2318,7 +2319,7 @@ def extractnetstats(
                         pass
                 else:
                     if G_len is None and "betweenness_centrality" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping betweenness centrality "
                                           "because length matrix is empty for "
                                           "G..."))
@@ -2329,8 +2330,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_eigen_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Eigenvector centrality cannot be calculated for"
@@ -2346,8 +2347,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_comm_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Communicability centrality cannot be "
@@ -2363,8 +2364,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_rich_club_coeff(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Rich club coefficient cannot be calculated for "
@@ -2638,8 +2639,9 @@ def collect_pandas_df_make(
                     parent_dir = str(
                         Path(os.path.dirname(net_mets_csv_list[0])).parent)
                     base_name = \
-                    os.path.basename(net_mets_csv_list[0]).split('metrics_')[
-                        1].split('_thr-')[0]
+                        os.path.basename(net_mets_csv_list[0]).split(
+                            'metrics_')[
+                            1].split('_thr-')[0]
 
                     if embed is True and len(node_cols_embed) > 0:
                         embed_dir = f"{parent_dir}/embeddings"
@@ -2652,8 +2654,8 @@ def collect_pandas_df_make(
                         node_embeddings_grouped = [{k: list(g)} for k, g in
                                                    groupby(
                                                        df_summary_auc_nodes,
-                                                           lambda s:
-                                                           s.split("_")[1])]
+                            lambda s:
+                            s.split("_")[1])]
                         for node_dict in node_embeddings_grouped:
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
@@ -2681,11 +2683,11 @@ def collect_pandas_df_make(
             meta = {}
             for file_ in net_mets_csv_list:
                 df = pd.read_csv(file_, memory_map=True,
-                                         chunksize=100000, encoding="utf-8",
-                                         skip_blank_lines=False,
-                                         warn_bad_lines=True,
-                                         error_bad_lines=False
-                                         ).read()
+                                 chunksize=100000, encoding="utf-8",
+                                 skip_blank_lines=False,
+                                 warn_bad_lines=True,
+                                 error_bad_lines=False
+                                 ).read()
                 node_cols = [
                     s
                     for s in list(df.columns)

@@ -189,7 +189,7 @@ def beta_lin_comb(beta, GVDAT, meta):
             for mod in range(N_mod):
                 for thr in range(N_thr):
                     gvlc += GVDAT[sesh][atl][mod][thr] * beta_atl[atl] * \
-                            beta_mod[mod] * beta_thr[thr]
+                        beta_mod[mod] * beta_thr[thr]
         gv_array[sesh] = gvlc
     return gv_array
 
@@ -252,7 +252,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 for ID in ids:
                     id_dict[ID] = {}
                     if comb_tuple in par_dict[ID][str(ses)][modality][alg
-                    ].keys():
+                                                                      ].keys():
                         id_dict[ID][str(ses)] = \
                             par_dict[ID][str(ses)][modality][alg][comb_tuple][
                                 mets.index(met)][0]
@@ -305,14 +305,14 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             for ID in ids:
                 if ses in par_dict[ID].keys():
                     if comb_tuple in par_dict[ID][str(ses)][modality][alg
-                    ].keys():
+                                                                      ].keys():
                         if 'data' in par_dict[ID][str(ses)][modality][alg][
-                            comb_tuple].keys():
+                                comb_tuple].keys():
                             if par_dict[ID][str(ses)][modality][alg][
-                                comb_tuple]['data'] is not None:
+                                    comb_tuple]['data'] is not None:
                                 if isinstance(par_dict[ID][str(ses)][
-                                                  modality][alg][comb_tuple][
-                                                  'data'], str):
+                                        modality][alg][comb_tuple][
+                                        'data'], str):
                                     data_path = par_dict[ID][str(ses)][
                                         modality][alg][comb_tuple]['data']
                                     parent_dir = Path(os.path.dirname(
@@ -358,10 +358,10 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         coords = [node_dict[i]['coord'] for i
                                                   in node_dict.keys()]
                                         labels = [node_dict[i][
-                                                      'label'][
-                                                      'BrainnetomeAtlas' \
-                                                      'Fan2016'] for i in
-                                                  node_dict.keys()]
+                                            'label'][
+                                            'BrainnetomeAtlas'
+                                            'Fan2016'] for i in
+                                            node_dict.keys()]
                                     else:
                                         print(f"Failed to parse coords/"
                                               f"labels from {node_files}. "
@@ -371,7 +371,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"rsn-{atlas}_res-" \
+                                        f"rsn-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     # labels = [
@@ -381,7 +381,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"rsn-{atlas}_res-" \
+                                        f"rsn-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
@@ -398,9 +398,10 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 if len(ixs) == emb_shape:
                                     df_pref = pd.DataFrame(emb_data.T,
                                                            columns=[
-                                        f"{alg}_{i}_rsn-{atlas}_res-"
-                                        f"{res}"
-                                        for i in ixs])
+                                                               f"{alg}_{i}_rsn"
+                                                               f"-{atlas}_res-"
+                                                               f"{res}"
+                                                               for i in ixs])
                                     df_pref['id'] = ID
                                     df_pref['ses'] = ses
                                     df_pref.replace(0, np.nan, inplace=True)
@@ -475,7 +476,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 del c_icc, c_icc3, icc_val
             except BaseException:
                 print(f"FAILED for {lp}...")
-                #print(df_long)
+                # print(df_long)
                 #df_summary.at[0, f"{lp}_icc"] = np.nan
                 coord_in = np.nan
                 label_in = np.nan
@@ -548,4 +549,3 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     gc.collect()
     return df_summary
-

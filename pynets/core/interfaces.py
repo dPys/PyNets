@@ -90,7 +90,7 @@ class FetchNodesLabels(SimpleInterface):
         ]
 
         if self.inputs.uatlas is None and self.inputs.atlas in \
-            nilearn_parc_atlases:
+                nilearn_parc_atlases:
             [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
                 self.inputs.atlas, self.inputs.parc
             )
@@ -202,9 +202,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
             except ValueError as e:
                 print(e,
-                    "Either you have specified the name of an atlas that does"
-                    " not exist in the nilearn or local repository or you have"
-                    " not supplied a 3d atlas parcellation image!")
+                      "Either you have specified the name of an atlas that "
+                      "does not exist in the nilearn or local repository or "
+                      "you have not supplied a 3d atlas parcellation image!")
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -246,9 +246,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{atlas} comes with {par_max} parcels\n")
             except ValueError as e:
                 print(e,
-                    "Either you have specified the name of an atlas that does"
-                    " not exist in the nilearn or local repository or you have"
-                    " not supplied a 3d atlas parcellation image!")
+                      "Either you have specified the name of an atlas that "
+                      "does not exist in the nilearn or local repository or "
+                      "you have not supplied a 3d atlas parcellation image!")
             labels = None
             networks_list = None
         else:
@@ -332,10 +332,9 @@ class FetchNodesLabels(SimpleInterface):
                         np.arange(len(coords) + 1) != 0
                     ].tolist()
 
-
         print(f"Coordinates:\n{coords}")
         print(f"Labels:\n"
-        f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
+              f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
 
         assert len(coords) == len(labels)
 
@@ -418,6 +417,7 @@ class CombineOutputsInputSpec(BaseInterfaceInputSpec):
     multi_nets = traits.Any(mandatory=False)
     multimodal = traits.Bool(False, usedefault=True)
     embed = traits.Bool(False, usedefault=True)
+
 
 class CombineOutputsOutputSpec(TraitedSpec):
     """Output interface wrapper for CombineOutputs"""
@@ -963,6 +963,7 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     min_length = traits.Any(mandatory=True)
     error_margin = traits.Any(mandatory=True)
 
+
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
     """Output interface wrapper for PlotStruct"""
 
@@ -1205,9 +1206,9 @@ class RegisterDWI(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and \
-                 op.isfile(anat_mask_existing[0]) and \
-                 self.inputs.force_create_mask is False:
+                    self.inputs.mask is None and \
+                    op.isfile(anat_mask_existing[0]) and \
+                    self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
@@ -1610,7 +1611,7 @@ class RegisterAtlasDWI(SimpleInterface):
         os.makedirs(base_dir_tmp, exist_ok=True)
 
         mni2dwi_xfm = f"{base_dir_tmp}{'/'}{atlas_name}" \
-                              f"{'_mni2dwi_xfm.mat'}"
+            f"{'_mni2dwi_xfm.mat'}"
 
         aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}" \
                               f"{'_t1w_mni.nii.gz'}"
@@ -2065,7 +2066,7 @@ class RegisterFunc(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and \
+                self.inputs.mask is None and \
                 op.isfile(anat_mask_existing[0]) \
                     and self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
@@ -2552,7 +2553,7 @@ class RegisterAtlasFunc(SimpleInterface):
         intensities = [i for i in list(np.unique(
             np.asarray(
                 parcellation_img.dataobj).astype("int"))
-                           ) if i != 0]
+        ) if i != 0]
         try:
             assert len(coords) == len(labels) == len(intensities)
         except ValueError as e:

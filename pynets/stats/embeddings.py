@@ -70,7 +70,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
 
     namer_dir = f"{dir_path}/embeddings"
-    if not os.path.isdir(namer_dir):
+    if os.path.isdir(namer_dir) is False:
         os.makedirs(namer_dir, exist_ok=True)
 
     clean_mats = []
@@ -86,8 +86,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
 
         mat_clean = np.nan_to_num(mat_clean)
         mat_clean = mat_clean[
-            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
-        if not np.isnan(np.sum(mat_clean)):
+            (np.isnan(mat_clean) is False) & (np.isinf(mat_clean) is False)]
+        if np.isnan(np.sum(mat_clean)) is False:
             clean_mats.append(mat_clean)
         i += 1
 
@@ -210,7 +210,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
-    if not os.path.isdir(namer_dir):
+    if os.path.isdir(namer_dir) is False:
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
@@ -306,8 +306,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         mat_clean = mat
 
     mat_clean = np.nan_to_num(mat_clean)
-    mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
-                          (np.isinf(mat_clean) == False)]
+    mat_clean = mat_clean[(np.isnan(mat_clean) is False) &
+                          (np.isinf(mat_clean) is False)]
 
     if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
         return None
@@ -317,7 +317,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 
     namer_dir = f"{dir_path}/embeddings"
-    if not os.path.isdir(namer_dir):
+    if os.path.isdir(namer_dir) is False:
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
@@ -373,7 +373,7 @@ def build_asetomes(est_path_iterlist, ID):
     out_paths = []
     for file_ in est_path_iterlist:
         mat = np.load(file_)
-        if not np.isfinite(mat).all():
+        if np.isfinite(mat).all() is False:
             continue
 
         atlas = prune_suffices(file_.split("/")[-3])
@@ -391,7 +391,7 @@ def build_asetomes(est_path_iterlist, ID):
             # Add a null tmp file to prevent pool from breaking
             dir_path = str(Path(os.path.dirname(file_)).parent)
             namer_dir = f"{dir_path}/embeddings"
-            if not os.path.isdir(namer_dir):
+            if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
                        f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
@@ -470,7 +470,7 @@ def build_masetome(est_path_iterlist, ID):
             # Add a null tmp file to prevent pool from breaking
             dir_path = str(Path(os.path.dirname(pairs[0])))
             namer_dir = f"{dir_path}/mplx_embeddings"
-            if not os.path.isdir(namer_dir):
+            if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
 
             out_path = (

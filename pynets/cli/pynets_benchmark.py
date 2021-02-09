@@ -31,7 +31,7 @@ def main():
               " flag.\n")
         sys.exit(1)
 
-    #### Parse inputs
+    # Parse inputs
     base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/archives/triple_network'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
@@ -54,9 +54,9 @@ def main():
             "modularity"]
 
     metaparams_func = ["rsn", "res", "model", 'hpass', 'extract',
-                        'smooth']
+                       'smooth']
     metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength',
-                       'tol']
+                      'tol']
 
     sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     ####
@@ -88,9 +88,9 @@ def main():
         if not os.path.isfile(subject_dict_file_path):
             subject_dict, modality_grids, missingness_frames = \
                 make_subject_dict(
-                [modality], base_dir, thr_type, mets, [embedding_type],
-                template, sessions, rsns
-            )
+                    [modality], base_dir, thr_type, mets, [embedding_type],
+                    template, sessions, rsns
+                )
             sub_dict_clean = cleanNullTerms(subject_dict)
             missingness_frames = [i for i in missingness_frames if
                                   isinstance(i, pd.DataFrame)]
@@ -188,7 +188,7 @@ def main():
         #             mets, ids))
 
         df_summary = pd.concat([i for i in outs if i is not None and not
-        i.empty], axis=0)
+                                i.empty], axis=0)
         df_summary = df_summary.dropna(axis=0, how='all')
         print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_"
               f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
@@ -221,28 +221,29 @@ def main():
                             if modality == 'func':
                                 try:
                                     extract, hpass, model, res, atlas, \
-                                    smooth = comb
+                                        smooth = comb
                                 except BaseException:
                                     print(f"Missing {comb}...")
                                     extract, hpass, model, res, atlas = comb
                                     smooth = '0'
                                 comb_tuple = (
-                                atlas, extract, hpass, model, res,
-                                smooth)
+                                    atlas, extract, hpass, model, res,
+                                    smooth)
                             else:
                                 directget, minlength, model, res, atlas, \
-                                tol = comb
+                                    tol = comb
                                 comb_tuple = (
-                                atlas, directget, minlength, model,
-                                res, tol)
+                                    atlas, directget, minlength, model,
+                                    res, tol)
                             if comb_tuple in sub_dict_clean[ID][str(ses)][
-                                modality][embedding_type].keys():
+                                    modality][embedding_type].keys():
                                 if isinstance(sub_dict_clean[ID][str(ses)][
-                                                  modality][embedding_type
+                                    modality][embedding_type
                                               ][comb_tuple], np.ndarray):
                                     id_dict[ID][comb] = sub_dict_clean[ID][
                                         str(ses)][modality][embedding_type
-                                    ][comb_tuple][mets.index(met)][0]
+                                                            ][comb_tuple][
+                                        mets.index(met)][0]
                                 else:
                                     continue
                             else:

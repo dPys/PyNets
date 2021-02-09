@@ -613,9 +613,9 @@ class DmriReg(object):
         self.corpuscallosum_dwi = f"{self.reg_path_img}" \
                                   f"{'/CorpusCallosum_dwi.nii.gz'}"
         self.fa_template_res = f"{self.reg_path_img}" \
-                                  f"{'/FA_template_res.nii.gz'}"
+            f"{'/FA_template_res.nii.gz'}"
         self.fa_template_t1w = f"{self.reg_path_img}" \
-                                  f"{'/FA_template_T1w.nii.gz'}"
+            f"{'/FA_template_T1w.nii.gz'}"
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [
@@ -677,9 +677,9 @@ class DmriReg(object):
                 csf_mask = maps["csf_prob"]
             except RuntimeError as e:
                 print(e,
-                    "Segmentation failed. Does the input anatomical image "
-                    "still contained skull?"
-                )
+                      "Segmentation failed. Does the input anatomical image "
+                      "still contained skull?"
+                      )
 
         # Threshold WM to binary in dwi space
         t_img = nib.load(wm_mask)
@@ -1264,9 +1264,9 @@ class FmriReg(object):
             except RuntimeError as e:
                 import sys
                 print(e,
-                    "Segmentation failed. Does the input anatomical image "
-                    "still contained skull?"
-                )
+                      "Segmentation failed. Does the input anatomical image "
+                      "still contained skull?"
+                      )
 
         # Threshold GM to binary in func space
         t_img = nib.load(gm_mask)
@@ -1330,7 +1330,7 @@ class FmriReg(object):
                 time.sleep(0.5)
                 # Get warp from T1w --> MNI
                 regutils.inverse_warp(
-                    self.t1w_brain,  self.mni2t1w_warp, self.warp_t1w2mni
+                    self.t1w_brain, self.mni2t1w_warp, self.warp_t1w2mni
                 )
                 time.sleep(0.5)
                 # Get mat from MNI -> T1w

@@ -283,7 +283,7 @@ def plot_connectogram(
         "interpolateCool": str(color_scheme),
     }
     with open(conn_js_path) as infile, open(connectogram_js_sub, "w") as \
-        outfile:
+            outfile:
         for line in infile:
             for src, target in replacements_js.items():
                 line = line.replace(src, target)
@@ -586,7 +586,7 @@ def create_gb_palette(
         try:
             ls_cmap = colors.LinearSegmentedColormap.from_list(
                 node_aff_mat, sns.color_palette(flatui,
-                                                     n_colors=num_comms)
+                                                n_colors=num_comms)
             )
             matplotlib.cm.register_cmap("community", ls_cmap)
             clust_pal = sns.color_palette("community", n_colors=mat.shape[0])
@@ -734,7 +734,8 @@ def plot_all_func(
     try:
         if edge_color_override is False:
             color_theme = hardcoded_params["plotting"]["functional"
-            ]["glassbrain"]["color_theme"][0]
+                                                       ]["glassbrain"][
+                "color_theme"][0]
         else:
             color_theme = random.choice(
                 [
@@ -765,9 +766,9 @@ def plot_all_func(
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
         print(e,
-            "Plotting configuration not successfully extracted "
-            "from runconfig.yaml"
-        )
+              "Plotting configuration not successfully extracted "
+              "from runconfig.yaml"
+              )
 
     if not isinstance(coords, list):
         coords = list(tuple(x) for x in coords)
@@ -871,7 +872,7 @@ def plot_all_func(
                                      "Hz_") if hpass is not None else ""),
                  "%s" % ("%s%s" % ("extract-",
                                    extract_strategy) if extract_strategy is
-                                                        not None else ""),
+                         not None else ""),
                  "_thr-",
                  thr,
                  ".png",
@@ -897,7 +898,7 @@ def plot_all_func(
             if roi:
                 # Save coords to pickle
                 coord_paths = f"{namer_dir}/coords_" \
-                             f"{op.basename(roi).split('.')[0]}_plotting.pkl"
+                    f"{op.basename(roi).split('.')[0]}_plotting.pkl"
                 with open(coord_paths, "wb") as f:
                     pickle.dump(coords, f, protocol=2)
 
@@ -1444,9 +1445,9 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
         print(e,
-            "Plotting configuration not successfully extracted from"
-            " runconfig.yaml"
-        )
+              "Plotting configuration not successfully extracted from"
+              " runconfig.yaml"
+              )
 
     if any(isinstance(sub, dict) for sub in labels):
         labels = [lab[labeling_atlas] for lab in labels]
@@ -1681,7 +1682,7 @@ def show_template_bundles(final_streamlines, template_path, fname):
     lines_actor = actor.streamtube(final_streamlines, window.colors.orange,
                                    linewidth=0.3)
     renderer.add(lines_actor)
-    #window.show(renderer)
+    # window.show(renderer)
     window.record(renderer, n_frames=1, out_path=fname, size=(900, 900))
     return
 
@@ -1721,9 +1722,9 @@ def view_tractogram(streams, atlas):
     warped_aff = affine_map.affine_inv.copy()
     warped_aff_scaled = rescale_affine_to_center(
         warped_aff, voxel_dims=[4, 4, 4],
-        target_center_coords=clean_template_img.affine[:3,3]*np.array([0.5,
-                                                                       0.5,
-                                                                       1]))
+        target_center_coords=clean_template_img.affine[:3, 3]*np.array([0.5,
+                                                                        0.5,
+                                                                        1]))
     streamlines = transform_streamlines(
         tractogram.streamlines, warped_aff_scaled)
 
@@ -1737,9 +1738,9 @@ def view_tractogram(streams, atlas):
 
     clean_template_data = clean_template_img.get_data()
     mean, std = clean_template_data[clean_template_data > 0].mean(), \
-                clean_template_data[clean_template_data > 0].std()
+        clean_template_data[clean_template_data > 0].std()
     value_range = (mean - 3 * std, mean + 3 * std)
-    clean_template_data[clean_template_data<0.01] = 0
+    clean_template_data[clean_template_data < 0.01] = 0
     template_actor = actor.slicer(clean_template_data, np.eye(4),
                                   value_range)
 
@@ -1757,7 +1758,7 @@ def view_tractogram(streams, atlas):
 
     i = 0
     for roi in np.unique(atlas_img_data)[1:]:
-        include_roi_coords = np.array(np.where(atlas_img_data==roi)).T
+        include_roi_coords = np.array(np.where(atlas_img_data == roi)).T
         x_include_roi_coords = apply_affine(np.eye(4), include_roi_coords)
         bool_list = []
         for sl in streamlines:
@@ -1765,7 +1766,8 @@ def view_tractogram(streams, atlas):
                                                  tol=1.0, mode='either_end'))
         if sum(bool_list) > 0:
             print('ROI: ' + str(i))
-            parcel_contours.append(actor.contour_from_roi(atlas_img_data==roi,
+            parcel_contours.append(actor.contour_from_roi(atlas_img_data ==
+                                                          roi,
                                                           color=roi_colors[i],
                                                           opacity=0.8))
         else:
@@ -1831,8 +1833,8 @@ def plot_graph_measure_hists(csv_all_metrics):
     for i, ax in enumerate(axes.flatten()):
         try:
             ensemble_metric_df = df_concat.loc[:,
-                                 df_concat.columns.str.contains(
-                                     global_measures[i])]
+                                               df_concat.columns.str.contains(
+                                                   global_measures[i])]
             x = np.asarray(
                 ensemble_metric_df[
                     np.isfinite(ensemble_metric_df)
@@ -1875,4 +1877,3 @@ def plot_graph_measure_hists(csv_all_metrics):
 
     plt.tight_layout()
     return plt
-

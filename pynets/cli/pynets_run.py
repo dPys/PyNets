@@ -503,7 +503,7 @@ def get_parser():
              " (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn,"
              " Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, "
              "DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
-            "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
+        "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
              "DefaultC, TempPar. If listing multiple RSNs, separate them by "
              "space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'.\n",
     )
@@ -607,10 +607,10 @@ def build_workflow(args, retval):
 
     if environ.get('FSLDIR') is None:
         print('EnvironmentError: FSLDIR not found! '
-                               'Be sure that this '
-                               'environment variable is set and/or that '
-                               'FSL has been properly installed before '
-                               'proceeding.')
+              'Be sure that this '
+              'environment variable is set and/or that '
+              'FSL has been properly installed before '
+              'proceeding.')
         retval["return_code"] = 1
         return retval
     else:
@@ -760,7 +760,7 @@ def build_workflow(args, retval):
                 retval["return_code"] = 1
                 return retval
         if len(ID) > 1 and not multi_subject_graph and not \
-            multi_subject_multigraph:
+                multi_subject_multigraph:
             print(
                 "\nLength of ID list does not correspond to length of"
                 " input graph file list."
@@ -968,7 +968,7 @@ def build_workflow(args, retval):
 
         for atl in atlas_ins:
             if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or \
-                atl in nilearn_prob_atlases or atl in local_atlases:
+                    atl in nilearn_prob_atlases or atl in local_atlases:
                 atlas.append(atl)
             elif '/' in atl:
                 uatlas.append(atl)
@@ -982,10 +982,10 @@ def build_workflow(args, retval):
                                  f"file")
 
         if len(atlas) == 0:
-           atlas = None
+            atlas = None
 
         if len(uatlas) == 0:
-           uatlas = None
+            uatlas = None
 
         if uatlas:
             if len(uatlas) > 1:
@@ -1099,7 +1099,7 @@ def build_workflow(args, retval):
             max_thr is not None) and (step_thr is not None):
         multi_thr = True
     elif (min_thr is not None) or (max_thr is not None) or \
-        (step_thr is not None):
+            (step_thr is not None):
         print("ERROR: Missing either min_thr, max_thr, or step_thr flags!")
         retval["return_code"] = 1
         return retval
@@ -1169,7 +1169,7 @@ def build_workflow(args, retval):
 
     if (ID is None) and (func_file_list is None):
         print("\nERROR: You must include a subject ID in your command line "
-                "call.")
+              "call.")
         retval["return_code"] = 1
         return retval
 
@@ -1532,7 +1532,7 @@ def build_workflow(args, retval):
                   f"{Fore.BLUE}{conn_model}...")
 
     elif graph or multi_graph or multi_subject_graph or \
-        multi_subject_multigraph:
+            multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
 
         network = "custom_graph"
@@ -1549,7 +1549,7 @@ def build_workflow(args, retval):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif (uatlas is not None) and (user_atlas_list is None) and \
-            (k_clustering == 0):
+                (k_clustering == 0):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
@@ -1968,8 +1968,8 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
                     print(f"\nERROR: {_func_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
+                          f"that you are only specifying "
+                          f"absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -1993,8 +1993,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
                 print(f"\nERROR: {conf} does not exist. Ensure "
-                 f"that you are only specifying "
-                 f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         multimodal = False
@@ -2015,8 +2015,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
                 print(f"\nERROR: {func_file} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if conf_list:
@@ -2025,16 +2025,16 @@ def build_workflow(args, retval):
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
                     print(f"\nERROR: {_conf} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
                 print(f"\nERROR: {conf} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if dwi_file_list:
@@ -2045,22 +2045,22 @@ def build_workflow(args, retval):
                       f"{Fore.BLUE}{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
                     print(f"\nERROR: {_dwi_file} does not exist."
-                                            f" Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f" Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if not os.path.isfile(_fbvec):
                     print(f"\nERROR: {_fbvec} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
                 if not os.path.isfile(_fbval):
                     print(f"\nERROR: {_fbval} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -2068,31 +2068,31 @@ def build_workflow(args, retval):
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
                 print(f"\nERROR: {dwi_file} does not exist. "
-                                        f"Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"Ensure "
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
                 print(f"\nERROR: {fbvec} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
             if not os.path.isfile(fbval):
                 print(f"\nERROR: {fbval} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
                 print(f"\nERROR: {waymask} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
     else:
@@ -2102,8 +2102,8 @@ def build_workflow(args, retval):
         print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
         if not os.path.isfile(roi):
             print(f"\nERROR: {roi} does not exist. Ensure "
-                                    f"that you are only specifying "
-                                    f"absolute paths.")
+                  f"that you are only specifying "
+                  f"absolute paths.")
             retval["return_code"] = 1
             return retval
     if anat_file or anat_file_list:
@@ -2122,8 +2122,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
             if not os.path.isfile(anat_file):
                 print(f"\nERROR: {anat_file} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
 
@@ -2142,8 +2142,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
             if not os.path.isfile(mask):
                 print(f"\nERROR: {mask} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
     print(Style.RESET_ALL)
@@ -3469,7 +3469,7 @@ def build_workflow(args, retval):
         if func_file:
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/func/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
+                [i for i in glob.glob(
                     f"{subj_dir}/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
@@ -3479,7 +3479,7 @@ def build_workflow(args, retval):
         if dwi_file:
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
+                [i for i in glob.glob(
                     f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):

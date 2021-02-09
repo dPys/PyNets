@@ -128,7 +128,7 @@ def load_pd_dfs(file_):
             if '.csv' in id:
                 id = id.replace('.csv', '')
 
-            #print(id)
+            # print(id)
 
             df["id"] = id
             df["id"] = df["id"].astype('str')
@@ -148,7 +148,7 @@ def load_pd_dfs(file_):
                     if np.isnan(df[col][0]) is False:
                         df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                             "_y")[0] for bad_col in bad_cols2])),
-                                  inplace=True)
+                            inplace=True)
                     else:
                         df.drop(columns=[col], inplace=True)
                 del col
@@ -216,7 +216,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
         for k in set(dict1.keys()).union(dict2.keys()):
             if k in dict1 and k in dict2:
                 if isinstance(dict1[k], dict) and \
-                    isinstance(dict2[k], dict):
+                        isinstance(dict2[k], dict):
                     yield (k, dict(mergedicts(dict1[k],
                                               dict2[k])))
                 else:
@@ -233,7 +233,10 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
     # print('Replacing with smooth-0fwhm...')
     # for df in dfs:
     #     empty_smooths = df.columns[df.columns.str.contains("nodetype-parc")]
-    #     df.rename(columns=dict(zip(empty_smooths, [smooth_col.replace("nodetype-parc", "nodetype-parc_smooth-0fwhm") for smooth_col in empty_smooths if 'smooth-' not in smooth_col])), inplace=True)
+    #     df.rename(columns=dict(zip(empty_smooths,
+    #     [smooth_col.replace("nodetype-parc", "nodetype-parc_smooth-0fwhm")
+    #     for smooth_col in empty_smooths if 'smooth-' not in smooth_col])),
+    #     inplace=True)
 
     # for df in dfs:
     #     print(len(df.columns))
@@ -302,7 +305,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
             if np.isnan(frame[col][0]) is False:
                 frame.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                     "_y")[0] for bad_col in bad_cols2])),
-                          inplace=True)
+                    inplace=True)
             else:
                 frame.drop(columns=[col], inplace=True)
         del col
@@ -336,7 +339,8 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
                   temp_folder=cache_dir) as parallel:
         outs = parallel(delayed(recover_missing)(bad_col, bad_cols_dict,
                                                  par_dict, modality,
-                        working_path, drop_cols, frame, regen) for
+                                                 working_path, drop_cols,
+                                                 frame, regen) for
                         bad_col in list(bad_cols_dict.keys()))
 
     if os.path.isfile(f"{working_path}/all_subs_neat_{modality}.csv"):
@@ -388,11 +392,11 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
         if atlas not in rerun_dict[sub][ses][modality].keys():
             rerun_dict[sub][ses][modality][atlas] = []
         search_str = bad_col.replace(f"{atlas}_", '').split('_thrtype')[0]
-        #print(search_str)
+        # print(search_str)
         if not os.path.isdir(f"{working_path}/{sub}/{ses}/"
                              f"{modality}/{atlas}/topology/auc"):
             if not os.path.isdir(
-                f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology"):
+                    f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology"):
                 print(f"Missing graph analysis for {sub}, {ses} for "
                       f"{atlas}...")
 
@@ -429,7 +433,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                             collect_pandas_df_make
                         collect_pandas_df_make(
                             glob.glob(f"{working_path}/{sub}/{ses}/"
-                                      f"{modality}/{atlas}/topology/*_neat.csv"),
+                                      f"{modality}/{atlas}/topology/"
+                                      f"*_neat.csv"),
                             f"{sub}_{ses}", None, False)
                     print(f"{bad_col} not found in {frame.columns}...")
                     continue
@@ -447,7 +452,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                     #         collect_pandas_df_make
                     #     collect_pandas_df_make(
                     #         glob.glob(f"{working_path}/{sub}/{ses}/"
-                    #                   f"{modality}/{atlas}/topology/*_neat.csv"),
+                    #                   f"{modality}/{atlas}/topology/
+                    #                   *_neat.csv"),
                     #         f"{sub}_{ses}", None, False)
                     continue
                 del df_tmp
@@ -455,7 +461,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                 print(f"{bad_col} of {df_tmp} is empty...")
                 if regen is True:
                     from pynets.stats.netstats import collect_pandas_df_make
-                    collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/{ses}/"
+                    collect_pandas_df_make(glob.glob(f"{working_path}/{sub}/"
+                                                     f"{ses}/"
                                                      f"{modality}/{atlas}/"
                                                      f"topology/*_neat.csv"),
                                            f"{sub}_{ses}", None, False)
@@ -499,7 +506,8 @@ def recover_missing(bad_col, bad_cols_dict, rerun_dict, modality,
                         #         collect_pandas_df_make
                         #     collect_pandas_df_make(
                         #         glob.glob(f"{working_path}/{sub}/{ses}/"
-                        #                   f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #                   f"{modality}/{atlas}/topology/
+                        #                   *_neat.csv"),
                         #         f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
@@ -522,7 +530,7 @@ def summarize_missingness(df):
     import numpy as np
     from colorama import Fore, Style
     missingness_dict = dict(df.apply(lambda x: x.isna().sum() /
-                                               (x.count() + x.isna().sum()),
+                                     (x.count() + x.isna().sum()),
                                      axis=0))
     missingness_mean = np.mean(list(missingness_dict.values()))
     if missingness_mean > 0.50:
@@ -629,19 +637,20 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         # Parse args
         parser = argparse.ArgumentParser(
             description="PyNets: A Fully-Automated Workflow for Reproducible"
-                        " Functional and Structural Connectome Ensemble Learning")
+                        " Functional and Structural Connectome Ensemble "
+                        "Learning")
         parser.add_argument(
             "-basedir",
             metavar="Output directory",
-            help="Specify the path to the base output directory with group-level"
-                 " pynets derivatives.\n",
+            help="Specify the path to the base output directory with "
+                 "group-level pynets derivatives.\n",
         )
         parser.add_argument(
             "-modality",
             nargs=1,
             choices=["dwi", "func"],
-            help="Specify data modality from which to collect data. Options are"
-                 " `dwi` and `func`.",
+            help="Specify data modality from which to collect data. "
+                 "Options are `dwi` and `func`.",
         )
         parser.add_argument(
             "-dc",
@@ -654,10 +663,10 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             "-pm",
             metavar="Cores,memory",
             default="auto",
-            help="Number of cores to use, number of GB of memory to use for single"
-                 " subject run, entered as two integers seperated by comma. "
-                 "Otherwise, default is `auto`, which uses all resources detected"
-                 " on the current compute node.\n",
+            help="Number of cores to use, number of GB of memory to use for "
+                 "single subject run, entered as two integers seperated by "
+                 "comma. Otherwise, default is `auto`, which uses all "
+                 "resources detected on the current compute node.\n",
         )
         parser.add_argument(
             "-plug",
@@ -674,8 +683,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 "SLURMgraph",
                 "LegacyMultiProc",
             ],
-            help="Include this flag to specify a workflow plugin other than the"
-                 " default MultiProc.\n",
+            help="Include this flag to specify a workflow plugin other than "
+                 "the default MultiProc.\n",
         )
         parser.add_argument(
             "-v",
@@ -709,7 +718,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                                      engine='python').read()
                 except:
                     print(
-                        f"Load failed for {file_}. Trying again with c engine.")
+                        f"Load failed for {file_}. "
+                        f"Trying again with c engine.")
                     try:
                         df = pd.read_csv(file_, chunksize=100000,
                                          encoding="utf-8",
@@ -762,7 +772,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                     del col
 
                 df = df.loc[:,
-                     ~df.columns.str.contains(r".?\d{1}$", regex=True)]
+                            ~df.columns.str.contains(r".?\d{1}$", regex=True)]
 
                 # Find empty duplicate columns
                 df_dups = df.loc[:, df.columns.duplicated()]
@@ -826,7 +836,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             for k in set(dict1.keys()).union(dict2.keys()):
                 if k in dict1 and k in dict2:
                     if isinstance(dict1[k], dict) and \
-                        isinstance(dict2[k], dict):
+                            isinstance(dict2[k], dict):
                         yield (k, dict(mergedicts(dict1[k],
                                                   dict2[k])))
                     else:
@@ -842,8 +852,12 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
 
         # print('Replacing with smooth-0fwhm...')
         # for df in dfs:
-        #     empty_smooths = df.columns[df.columns.str.contains("nodetype-parc")]
-        #     df.rename(columns=dict(zip(empty_smooths, [smooth_col.replace("nodetype-parc", "nodetype-parc_smooth-0fwhm") for smooth_col in empty_smooths if 'smooth-' not in smooth_col])), inplace=True)
+        #     empty_smooths = df.columns[df.columns.str.contains(
+        #     "nodetype-parc")]
+        #     df.rename(columns=dict(zip(empty_smooths,
+        #     [smooth_col.replace("nodetype-parc",
+        #     "nodetype-parc_smooth-0fwhm") for smooth_col in empty_smooths
+        #     if 'smooth-' not in smooth_col])), inplace=True)
 
         # for df in dfs:
         #     print(len(df.columns))
@@ -864,7 +878,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         frame = pd.concat(out_dfs, axis=0, join="outer", sort=False,
                           ignore_index=False)
         frame = frame.loc[:,
-                ~frame.columns.str.contains(r"thr_auc$", regex=True)]
+                          ~frame.columns.str.contains(r"thr_auc$", regex=True)]
         frame.dropna(axis='columns', how='all', inplace=True)
 
         # columns_with_most_nan = frame.columns[frame.isnull().any()]
@@ -880,7 +894,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         except:
             pass
 
-        # drop = [i for i in frame.columns if 'participation' in i or 'diversity' in i]
+        # drop = [i for i in frame.columns if 'participation' in i or
+        # 'diversity' in i]
         # frame = frame.drop(columns=drop)
 
         out_path = f"{working_path}/all_subs_neat_{modality}.csv"
@@ -916,7 +931,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 if np.isnan(frame[col][0]) is False:
                     frame.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                         "_y")[0] for bad_col in bad_cols2])),
-                                 inplace=True)
+                        inplace=True)
                 else:
                     frame.drop(columns=[col], inplace=True)
             del col
@@ -962,7 +977,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                      index=True)
 
         # frame = frame.drop(frame.filter(regex="thrtype-PROP"), axis=1)
-        # frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv", index=True)
+        # frame.to_csv(f"{working_path}/all_subs_neat_{modality}.csv",
+        # index=True)
 
         rerun_dicts = []
         reruns = []
@@ -1011,7 +1027,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
             if not os.path.isdir(f"{working_path}/{sub}/{ses}/"
                                  f"{modality}/{atlas}/topology/auc"):
                 if not os.path.isdir(
-                    f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology"):
+                        f"{working_path}/{sub}/{ses}/{modality}/{atlas}/"
+                        f"topology"):
                     print(f"Missing graph analysis for {sub}, {ses} for "
                           f"{atlas}...")
                 else:
@@ -1058,7 +1075,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                                 collect_pandas_df_make
                             collect_pandas_df_make(
                                 glob.glob(f"{working_path}/{sub}/{ses}/"
-                                          f"{modality}/{atlas}/topology/*_neat.csv"),
+                                          f"{modality}/{atlas}/topology/"
+                                          f"*_neat.csv"),
                                 f"{sub}_{ses}", None, False)
                         print(f"{bad_col} not found in {frame.columns}...")
                         continue
@@ -1076,7 +1094,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                         #         collect_pandas_df_make
                         #     collect_pandas_df_make(
                         #         glob.glob(f"{working_path}/{sub}/{ses}/"
-                        #                   f"{modality}/{atlas}/topology/*_neat.csv"),
+                        #                   f"{modality}/{atlas}/topology/
+                        #                   *_neat.csv"),
                         #         f"{sub}_{ses}", None, False)
                         continue
                     del df_tmp
@@ -1094,8 +1113,9 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                     continue
             elif len(outs) > 1:
                 print(
-                    f">1 AUC output found for {outs}. Iterating through all of "
-                    f"them to aggregate as much useable data as possible...")
+                    f">1 AUC output found for {outs}. Iterating through all "
+                    f"of them to aggregate as much useable data as "
+                    f"possible...")
                 for out in outs:
                     try:
                         df_tmp = pd.read_csv(
@@ -1131,7 +1151,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                             #         collect_pandas_df_make
                             #     collect_pandas_df_make(
                             #         glob.glob(f"{working_path}/{sub}/{ses}/"
-                            #                   f"{modality}/{atlas}/topology/*_neat.csv"),
+                            #                   f"{modality}/{atlas}/topology/
+                            #                   *_neat.csv"),
                             #         f"{sub}_{ses}", None, False)
                             continue
                         del df_tmp
@@ -1153,9 +1174,9 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         import numpy as np
         from colorama import Fore, Style
         missingness_dict = dict(df.apply(lambda x: x.isna().sum() /
-                                                   (
-                                                           x.count() + x.isna().sum()),
-                                         axis=0))
+                                         (
+            x.count() + x.isna().sum()),
+            axis=0))
         missingness_mean = np.mean(list(missingness_dict.values()))
         if missingness_mean > 0.50:
             print(f"{Fore.RED} {df} missing {100 * missingness_mean}% "
@@ -1214,7 +1235,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                                                       drop_cols)]
         if len(bad_cols) > 0:
             print(
-                f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} containing "
+                f"{Fore.YELLOW} Dropping {len(bad_cols)}: {bad_cols} "
+                f"containing "
                 f"exclusionary strings...{Style.RESET_ALL}")
             df_pref.drop(columns=bad_cols, inplace=True)
 
@@ -1277,16 +1299,17 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 subject_dict[sub][ses][atlas] = []
                 # atlas_name = "_".join(atlas.split("_")[1:])
                 auc_csvs = glob.glob(
-                    f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology/auc/*"
+                    f"{working_path}/{sub}/{ses}/{modality}/{atlas}/topology/"
+                    f"auc/*"
                 )
                 print(f"AUC csv's: {auc_csvs}")
 
                 for auc_file in auc_csvs:
                     prefix = (
                         os.path.basename(auc_file)
-                            .split(".csv")[0]
-                            .split("model-")[1]
-                            .split(modality)[0]
+                        .split(".csv")[0]
+                        .split("model-")[1]
+                        .split(modality)[0]
                     )
                     if os.path.isfile(auc_file) and is_non_zero_file(auc_file):
                         df_sub = load_pd_dfs_auc(atlas, f"model-{prefix}",
@@ -1325,9 +1348,10 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                         right_index=True,
                     )
                 if os.path.isdir(
-                    f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
+                        f"{working_path}{'/'}{sub}{'/'}{ses}{'/'}{modality}"):
                     out_path = (
-                        f"{working_path}/{sub}/{ses}/{modality}/all_combinations"
+                        f"{working_path}/{sub}/{ses}/{modality}/"
+                        f"all_combinations"
                         f"_auc.csv"
                     )
                     if os.path.isfile(out_path):
@@ -1426,7 +1450,8 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                  [("working_path", "working_path"), ('modality', 'modality'),
                   ('drop_cols', 'drop_cols')]),
                 (
-                build_subject_dict_node, df_join_node, [("files_", "files_")]),
+                    build_subject_dict_node, df_join_node, [("files_",
+                                                             "files_")]),
                 (df_join_node, load_pd_dfs_map, [("files_", "file_")]),
                 (load_pd_dfs_map, outputnode, [("df", "dfs")]),
             ]
@@ -1610,15 +1635,11 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         args_dict_all['pm'] = '48,67'
         # args_dict_all['pm'] = '128,500'
         # args_dict_all['pm'] = '224,2000'
-        # args_dict_all['basedir'] = '/working/tuning_set/outputs_clustering/pynets'
-        # args_dict_all['basedir'] = '/working/tuning_set/outputs_shaeffer/pynets'
-        # args_dict_all['basedir'] = '/working/tuning_set/outputs_language/pynets'
-        # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-        # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple_network/pynets'
-        # args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/visual/pynets'
         args_dict_all[
-            'basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language/pynets'
-        # args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/outputs_shaeffer/pynets'
+            'basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/' \
+                         'outputs_language/pynets'
+        # args_dict_all['basedir'] = '/scratch/04171/dpisner/tuning_set/
+        # outputs_shaeffer/pynets'
         args_dict_all['work'] = '/tmp/work/func'
         args_dict_all['modality'] = 'func'
         args_dict_all['dc'] = ['diversity_coefficient',
@@ -2100,30 +2121,32 @@ def main():
     args_dict_all['v'] = False
     #args_dict_all['pm'] = '48,67'
     args_dict_all['pm'] = '128,500'
-    #args_dict_all['pm'] = '224,2000
-    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/pynets'
-    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language/pynets'
+    # args_dict_all['pm'] = '224,2000
+    #args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/triple/
+    # pynets'
+    args_dict_all['basedir'] = '/scratch/04171/dpisner/HNU/HNU_outs/' \
+                               'outputs_language/pynets'
     args_dict_all['work'] = '/tmp/work/func'
     args_dict_all['modality'] = 'func'
     args_dict_all['dc'] = ['diversity_coefficient',
                            'participation_coefficient',
-                        #   'average_local_efficiency',
-                        #   'weighted_transitivity',
-                        #   'communicability_centrality',
-                        #   'average_clustering',
+                           #   'average_local_efficiency',
+                           #   'weighted_transitivity',
+                           #   'communicability_centrality',
+                           #   'average_clustering',
                            'average_local_clustering_nodewise',
                            'average_local_efficiency_nodewise',
-                        #   'degree_centrality',
+                           #   'degree_centrality',
                            'samples-2000streams',
                            'samples-7700streams',
                            'MNI152_T1',
-                        #   'rsn-kmeans_',
-                        #   'rsn-triple_'
-                        #   "_minlength-0",
-                        #   'degree_assortativity_coefficient',
-                        #   'smallworldness',
+                           #   'rsn-kmeans_',
+                           #   'rsn-triple_'
+                           #   "_minlength-0",
+                           #   'degree_assortativity_coefficient',
+                           #   'smallworldness',
                            'ward',
-                            "variance",
+                           "variance",
                            "res-1000", "smooth-2fwhm"]
     args = SimpleNamespace(**args_dict_all)
 
@@ -2211,4 +2234,3 @@ if __name__ == "__main__":
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen" \
                "_importlib.BuiltinImporter'>)"
     main()
-

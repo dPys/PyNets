@@ -123,16 +123,16 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
+    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask is False)]
 
     gtab_hemisphere = HemiSphere(
-        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)])
 
     try:
         assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
     except BaseException:
         gtab_hemisphere = Sphere(
-            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)])
 
     img = nib.load(dwi_file)
     aff = img.affine
@@ -636,7 +636,7 @@ def streams2graph(
         for node in range(1, mx + 1):
             g.add_node(node, roi_volume=np.sum(
                 atlas_data.astype("uint16") == node)
-                       )
+            )
 
         # Build graph
         pc = 0
@@ -727,10 +727,11 @@ def streams2graph(
                     edge_fiberlength_mean = np.nanmean(fiberlengths[(u, v)])
                     fiber_density = (float(((float(d['weight']) /
                                              float(total_fibers)) /
-                           float(edge_fiberlength_mean)) *
-                          ((2.0 * float(total_volume)) /
-                           (g.nodes[int(u)]['roi_volume'] +
-                            g.nodes[int(v)]['roi_volume'])))) * 1000
+                                            float(edge_fiberlength_mean)) *
+                                           ((2.0 * float(total_volume)) /
+                                            (g.nodes[int(u)]['roi_volume'] +
+                                               g.nodes[int(v)]['roi_volume']))
+                                           )) * 1000
                 else:
                     fiber_density = 0
                 g.edges[u, v].update({"fiber_density": fiber_density})
@@ -752,14 +753,14 @@ def streams2graph(
         if fa_wei is True and fiber_density is True:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight":
-                                          (d['fa_weight'])*d['fiber_density']})
+                                      (d['fa_weight'])*d['fiber_density']})
         elif fiber_density is True and fa_wei is False:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight": d['fiber_density']})
         elif fa_wei is True and fiber_density is False:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight":
-                                          d['fa_weight']*d['weight']})
+                                      d['fa_weight']*d['weight']})
         else:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight": d['weight']})

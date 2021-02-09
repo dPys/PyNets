@@ -212,7 +212,7 @@ def atlas2t1w2dwi_align(
     time.sleep(0.5)
 
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
-        dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
+        dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int)
 
     time.sleep(0.5)
     final_dat = atlas_img_corr.get_fdata()
@@ -1239,8 +1239,8 @@ def normalize_xform(img):
         return img
 
     new_img = img.__class__(
-            np.asarray(
-                img.dataobj),
+        np.asarray(
+            img.dataobj),
         xform,
         img.header)
 

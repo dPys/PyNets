@@ -868,10 +868,10 @@ def bootstrapped_nested_cv(
         elif predict_type == 'classifier':
             estimators = {
                 "en": linear_model.LogisticRegression(penalty='elasticnet',
-                                         solver='saga',
-                                         class_weight='balanced',
-                                         random_state=boot,
-                                         warm_start=True)
+                                                      solver='saga',
+                                                      class_weight='balanced',
+                                                      random_state=boot,
+                                                      warm_start=True)
             }
         else:
             raise ValueError('Prediction method not recognized')
@@ -968,15 +968,15 @@ def bootstrapped_nested_cv(
         grand_mean_best_estimator[boot] = best_estimator
         if predict_type == 'regressor':
             grand_mean_best_score[boot] = np.nanmean(prediction[
-                                                         "test_r2"][
-                                                         prediction[
-                                                             "test_r2"]>0])
+                "test_r2"][
+                prediction[
+                    "test_r2"] > 0])
             grand_mean_best_error[boot] = -np.nanmean(prediction[
-                                                          "test_neg_mean_"
-                                                          "squared_error"])
+                "test_neg_mean_"
+                "squared_error"])
         elif predict_type == 'classifier':
             grand_mean_best_score[boot] = np.nanmean(
-                prediction["test_f1"][prediction["test_f1"]>0])
+                prediction["test_f1"][prediction["test_f1"] > 0])
             grand_mean_best_error[boot] = -np.nanmean(
                 prediction["test_neg_mean_squared_error"])
         else:
@@ -1034,7 +1034,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
 
     if str(grid_param) in data_loaded.keys():
         df_all = pd.read_json(data_loaded[str(grid_param)])
-        if df_all[target_var].isin([np.nan,1]).all():
+        if df_all[target_var].isin([np.nan, 1]).all():
             df_all[target_var] = df_all[target_var].replace({np.nan: 0})
         if df_all is None:
             return None, None
@@ -1161,8 +1161,8 @@ class copy_json_dict(SimpleInterface):
 
         #time.sleep(random.randint(1, 30))
         if self.inputs.feature_spaces is not None and self.inputs.modality is \
-            not None and self.inputs.embedding_type is not None and \
-            self.inputs.target_var is not None:
+                not None and self.inputs.embedding_type is not None and \
+                self.inputs.target_var is not None:
             input_dict_tmp = self.inputs.feature_spaces[
                 f"{self.inputs.modality}_{self.inputs.embedding_type}"
             ]
@@ -1226,8 +1226,8 @@ class MakeXY(SimpleInterface):
 
         if self.inputs.json_dict is not None:
             if os.path.isfile(self.inputs.json_dict) and \
-                self.inputs.json_dict.endswith('.json') and \
-                os.stat(self.inputs.json_dict).st_size != 0:
+                    self.inputs.json_dict.endswith('.json') and \
+                    os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1538,7 +1538,7 @@ class MakeDF(SimpleInterface):
         df_summary.at[0, "grid"] = tuple(literal_eval(self.inputs.grid_param))
 
         if bool(self.inputs.grand_mean_best_score) is True and \
-            len(self.inputs.mega_feat_imp_dict.keys()) > 1:
+                len(self.inputs.mega_feat_imp_dict.keys()) > 1:
             y_pred_boots = [i for i in
                             list(self.inputs.grand_mean_y_predicted.values())
                             if not np.isnan(i).all()]
