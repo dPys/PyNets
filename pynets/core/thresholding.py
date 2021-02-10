@@ -791,8 +791,8 @@ def local_thresholding_prop(conn_matrix, thr):
         return conn_matrix_thr
 
     except ValueError as e:
-        print(e, f"MST thresholding failed. Check raw graph output manually for"
-              " debugging.")
+        print(e, f"MST thresholding failed. Check raw graph output manually "
+                 f"for debugging.")
 
 
 def perform_thresholding(
@@ -1016,7 +1016,7 @@ def thresh_func(
 
     if np.count_nonzero(conn_matrix) == 0:
         print(UserWarning("Raw connectivity matrix contains only"
-                         " zeros."))
+                          " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1253,7 +1253,7 @@ def thresh_struct(
 
     if np.count_nonzero(conn_matrix) == 0:
         print(UserWarning("Raw connectivity matrix contains only"
-                         " zeros."))
+                          " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(

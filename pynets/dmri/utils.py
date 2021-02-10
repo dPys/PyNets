@@ -179,12 +179,12 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
 
     streamlines_long = nib.streamlines. \
         array_sequence.ArraySequence(
-        [
-            s
-            for s in streamlines
-            if len(s) >= float(10)
-        ]
-    )
+            [
+                s
+                for s in streamlines
+                if len(s) >= float(10)
+            ]
+        )
     print('Removing streamlines with negative voxel indices...')
     # Remove any streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -209,7 +209,8 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
 
     # ! Remember this 4d masking function !
     data_in_mask = np.nan_to_num(np.broadcast_to(mask_data[..., None],
-                    dwi_data.shape).astype('bool') * dwi_data)
+                                                 dwi_data.shape
+                                                 ).astype('bool') * dwi_data)
     # ! Remember this 4d masking function !
 
     fiber_model = life.FiberModel(gtab)
@@ -221,7 +222,7 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     #                             affine=affine,
     #                             sphere=sphere)
     streamlines = list(np.array(streamlines_in_brain)[
-                           np.where(fiber_fit.beta > 0)[0]])
+        np.where(fiber_fit.beta > 0)[0]])
     pruned_count = len(streamlines)
     if pruned_count == 0:
         print(UserWarning('\nWarning LiFE skipped due to implausible values '

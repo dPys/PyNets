@@ -59,7 +59,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == "ten" or conn_model == "tensor" or \
-        conn_model == "TEN":
+            conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
@@ -73,13 +73,13 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
 
 def prep_tissues(
-    t1_mask,
-    gm_in_dwi,
-    vent_csf_in_dwi,
-    wm_in_dwi,
-    tiss_class,
-    B0_mask,
-    cmc_step_size=0.2):
+        t1_mask,
+        gm_in_dwi,
+        vent_csf_in_dwi,
+        wm_in_dwi,
+        tiss_class,
+        B0_mask,
+        cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
 
@@ -401,7 +401,7 @@ def track_ensemble(
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from pynets.dmri.dmri_utils import generate_sl
+    from pynets.dmri.utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     from pynets.core.utils import save_3d_to_4d
     from nilearn.masking import intersect_masks
@@ -472,7 +472,7 @@ def track_ensemble(
 
     try:
         while float(stream_counter) < float(target_samples) and \
-             float(ix) < 0.50*float(len(all_combs)):
+                float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
                           verbose=0, timeout=timeout) as parallel:
@@ -530,7 +530,7 @@ def track_ensemble(
         return None
 
     if ix >= 0.75*len(all_combs) and \
-        float(stream_counter) < float(target_samples):
+            float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
         os.system(f"rm -rf {tmp_files_dir} &")
@@ -788,11 +788,11 @@ def run_tracking(step_curv_combinations, recon_path,
     try:
         roi_proximal_streamlines = nib.streamlines. \
             array_sequence.ArraySequence(
-            [
-                s for s in roi_proximal_streamlines
-                if len(s) >= float(min_length)
-            ]
-        )
+                [
+                    s for s in roi_proximal_streamlines
+                    if len(s) >= float(min_length)
+                ]
+            )
         print(f"Minimum fiber length >{min_length}mm: "
               f"{len(roi_proximal_streamlines)}")
     except BaseException:

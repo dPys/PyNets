@@ -90,7 +90,7 @@ class FetchNodesLabels(SimpleInterface):
         ]
 
         if self.inputs.uatlas is None and self.inputs.atlas in \
-            nilearn_parc_atlases:
+                nilearn_parc_atlases:
             [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
                 self.inputs.atlas, self.inputs.parc
             )
@@ -202,9 +202,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
             except ValueError as e:
                 print(e,
-                    "Either you have specified the name of an atlas that does"
-                    " not exist in the nilearn or local repository or you have"
-                    " not supplied a 3d atlas parcellation image!")
+                      "Either you have specified the name of an atlas that "
+                      "does not exist in the nilearn or local repository or "
+                      "you have not supplied a 3d atlas parcellation image!")
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
@@ -246,9 +246,9 @@ class FetchNodesLabels(SimpleInterface):
                 print(f"\n{atlas} comes with {par_max} parcels\n")
             except ValueError as e:
                 print(e,
-                    "Either you have specified the name of an atlas that does"
-                    " not exist in the nilearn or local repository or you have"
-                    " not supplied a 3d atlas parcellation image!")
+                      "Either you have specified the name of an atlas that "
+                      "does not exist in the nilearn or local repository or "
+                      "you have not supplied a 3d atlas parcellation image!")
             labels = None
             networks_list = None
         else:
@@ -332,10 +332,9 @@ class FetchNodesLabels(SimpleInterface):
                         np.arange(len(coords) + 1) != 0
                     ].tolist()
 
-
         print(f"Coordinates:\n{coords}")
         print(f"Labels:\n"
-        f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
+              f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
 
         assert len(coords) == len(labels)
 
@@ -419,6 +418,7 @@ class CombineOutputsInputSpec(BaseInterfaceInputSpec):
     multimodal = traits.Bool(False, usedefault=True)
     embed = traits.Bool(False, usedefault=True)
 
+
 class CombineOutputsOutputSpec(TraitedSpec):
     """Output interface wrapper for CombineOutputs"""
 
@@ -498,10 +498,10 @@ class IndividualClustering(SimpleInterface):
         from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
         from joblib import Parallel, delayed
         from joblib.externals.loky.backend import resource_tracker
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.utils import decompress_nifti
         import pkg_resources
         import shutil
@@ -963,6 +963,7 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     min_length = traits.Any(mandatory=True)
     error_margin = traits.Any(mandatory=True)
 
+
 class _PlotStructOutputSpec(BaseInterfaceInputSpec):
     """Output interface wrapper for PlotStruct"""
 
@@ -1156,7 +1157,7 @@ class RegisterDWI(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
 
         fa_tmp_path = fname_presuffix(
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
@@ -1205,9 +1206,9 @@ class RegisterDWI(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and \
-                 op.isfile(anat_mask_existing[0]) and \
-                 self.inputs.force_create_mask is False:
+                    self.inputs.mask is None and \
+                    op.isfile(anat_mask_existing[0]) and \
+                    self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
@@ -1436,7 +1437,7 @@ class RegisterAtlasDWI(SimpleInterface):
         import time
         import os
         import os.path as op
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -1610,7 +1611,7 @@ class RegisterAtlasDWI(SimpleInterface):
         os.makedirs(base_dir_tmp, exist_ok=True)
 
         mni2dwi_xfm = f"{base_dir_tmp}{'/'}{atlas_name}" \
-                              f"{'_mni2dwi_xfm.mat'}"
+            f"{'_mni2dwi_xfm.mat'}"
 
         aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}" \
                               f"{'_t1w_mni.nii.gz'}"
@@ -1772,7 +1773,8 @@ class RegisterAtlasDWI(SimpleInterface):
                               f"{op.basename(self.inputs.ap_path)}"):
             copyfile(
                 self.inputs.ap_path,
-                f"{namer_dir}/{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
+                f"{namer_dir}/"
+                f"{op.basename(self.inputs.ap_path).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )
@@ -1780,7 +1782,8 @@ class RegisterAtlasDWI(SimpleInterface):
                               f"{op.basename(self.inputs.B0_mask)}"):
             copyfile(
                 self.inputs.B0_mask,
-                f"{namer_dir}/{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
+                f"{namer_dir}/"
+                f"{op.basename(self.inputs.B0_mask).replace('_tmp', '')}",
                 copy=True,
                 use_hardlink=False,
             )
@@ -1862,7 +1865,7 @@ class RegisterROIDWI(SimpleInterface):
         import gc
         import os
         import time
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
 
@@ -2041,7 +2044,7 @@ class RegisterFunc(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.reg_utils import check_orient_and_dims
+        from pynets.registration.utils import check_orient_and_dims
 
         anat_mask_existing = [
             i
@@ -2063,7 +2066,7 @@ class RegisterFunc(SimpleInterface):
                 use_hardlink=False)
         else:
             if len(anat_mask_existing) > 0 and \
-                 self.inputs.mask is None and \
+                self.inputs.mask is None and \
                 op.isfile(anat_mask_existing[0]) \
                     and self.inputs.force_create_mask is False:
                 mask_tmp_path = fname_presuffix(
@@ -2199,7 +2202,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         import pkg_resources
         import time
         from pynets.core.utils import prune_suffices
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         template = pkg_resources.resource_filename(
@@ -2366,7 +2369,7 @@ class RegisterAtlasFunc(SimpleInterface):
         import os
         import time
         import glob
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
@@ -2550,7 +2553,7 @@ class RegisterAtlasFunc(SimpleInterface):
         intensities = [i for i in list(np.unique(
             np.asarray(
                 parcellation_img.dataobj).astype("int"))
-                           ) if i != 0]
+        ) if i != 0]
         try:
             assert len(coords) == len(labels) == len(intensities)
         except ValueError as e:
@@ -2600,7 +2603,7 @@ class RegisterROIEPI(SimpleInterface):
         import gc
         import os
         import time
-        from pynets.registration import reg_utils as regutils
+        from pynets.registration import utils as regutils
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
 
@@ -3143,7 +3146,7 @@ class Tracking(SimpleInterface):
                 # Linear Fascicle Evaluation (LiFE)
                 if use_life is True:
                     print('Using LiFE to evaluate streamline plausibility...')
-                    from pynets.dmri.dmri_utils import \
+                    from pynets.dmri.utils import \
                         evaluate_streamline_plausibility
                     dwi_img = nib.load(dwi_file_tmp_path)
                     dwi_data = dwi_img.get_fdata(dtype=np.float32)
@@ -3301,8 +3304,8 @@ class MakeGtabBmask(SimpleInterface):
         from dipy.core.gradients import gradient_table
         from nipype.utils.filemanip import copyfile, fname_presuffix
         # from dipy.segment.mask import median_otsu
-        from pynets.registration.reg_utils import median
-        from pynets.dmri.dmri_utils import normalize_gradients, extract_b0
+        from pynets.registration.utils import median
+        from pynets.dmri.utils import normalize_gradients, extract_b0
 
         B0_bet = f"{runtime.cwd}/mean_B0_bet.nii.gz"
         B0_mask = f"{runtime.cwd}/mean_B0_bet_mask.nii.gz"

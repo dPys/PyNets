@@ -12,7 +12,7 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-from pynets.dmri import dmri_utils as dmriutils
+from pynets.dmri import utils as dmriutils
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def test_evaluate_streamline_plausibility():
     Test evaluate_streamline_plausibility functionality
     """
     import nibabel as nib
-    from pynets.dmri.dmri_utils import evaluate_streamline_plausibility
+    from pynets.dmri.utils import evaluate_streamline_plausibility
     from dipy.io.stateful_tractogram import Space, Origin
     from dipy.io.streamline import load_tractogram
     from dipy.io import load_pickle

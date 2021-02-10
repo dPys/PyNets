@@ -25,7 +25,7 @@ except KeyError as e:
 def gen_mask(t1w_head, t1w_brain, mask):
     import time
     import os.path as op
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import math_img
 
     t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
@@ -122,7 +122,7 @@ def atlas2t1w2dwi_align(
     import time
     from nilearn.image import resample_to_img
     from pynets.core.utils import checkConsecutive
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import math_img
     from nilearn.masking import intersect_masks
 
@@ -212,7 +212,7 @@ def atlas2t1w2dwi_align(
     time.sleep(0.5)
 
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
-        dwi_aligned_atlas_wmgm_int,  B0_mask, dwi_aligned_atlas_wmgm_int)
+        dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int)
 
     time.sleep(0.5)
     final_dat = atlas_img_corr.get_fdata()
@@ -254,7 +254,7 @@ def roi2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     roi_img = nib.load(roi)
@@ -298,7 +298,7 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     # Apply warp or transformer resulting from the inverse MNI->T1w created
@@ -350,7 +350,7 @@ def roi2t1w_align(
     A function to perform alignment of a roi from MNI space --> T1w.
     """
     import time
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     roi_img = nib.load(roi)
@@ -389,7 +389,7 @@ def RegisterParcellation2MNIFunc_align(
     A function to perform atlas alignment from T1w atlas --> MNI.
     """
     import time
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     atlas_img = nib.load(uatlas)
@@ -468,7 +468,7 @@ def atlas2t1w_align(
     A function to perform atlas alignment from atlas --> T1w.
     """
     import time
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
     # from pynets.core.utils import checkConsecutive
 
@@ -1152,7 +1152,7 @@ def check_orient_and_dims(
         File path to corresponding reoriented bvecs file if outfile is a dwi.
 
     """
-    from pynets.registration.reg_utils import (
+    from pynets.registration.utils import (
         reorient_dwi,
         reorient_img,
         match_target_vox_res,
@@ -1239,8 +1239,8 @@ def normalize_xform(img):
         return img
 
     new_img = img.__class__(
-            np.asarray(
-                img.dataobj),
+        np.asarray(
+            img.dataobj),
         xform,
         img.header)
 
@@ -1273,7 +1273,7 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
 
     """
     import os
-    from pynets.registration.reg_utils import normalize_xform
+    from pynets.registration.utils import normalize_xform
 
     fname = dwi_prep
     bvec_fname = bvecs
@@ -1355,7 +1355,7 @@ def reorient_img(img, out_dir, overwrite=True):
         File path to reoriented Nifti1Image.
 
     """
-    from pynets.registration.reg_utils import normalize_xform
+    from pynets.registration.utils import normalize_xform
 
     # Load image, orient as RAS
     orig_img = nib.load(img)

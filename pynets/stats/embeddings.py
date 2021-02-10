@@ -19,19 +19,22 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     Omnibus embedding of arbitrary number of input graphs with matched vertex
     sets.
 
-    Given :math:`A_1, A_2, ..., A_m` a collection of (possibly weighted) adjacency
-    matrices of a collection :math:`m` undirected graphs with matched vertices.
-    Then the :math:`(mn \times mn)` omnibus matrix, :math:`M`, has the subgraph where
-    :math:`M_{ij} = \frac{1}{2}(A_i + A_j)`. The omnibus matrix is then embedded
-    using adjacency spectral embedding.
+    Given :math:`A_1, A_2, ..., A_m` a collection of (possibly weighted)
+    adjacency matrices of a collection :math:`m` undirected graphs with
+    matched vertices.
+    Then the :math:`(mn \times mn)` omnibus matrix, :math:`M`, has the
+    subgraph where :math:`M_{ij} = \frac{1}{2}(A_i + A_j)`. The omnibus
+    matrix is then embedded using adjacency spectral embedding.
 
 
     Parameters
     ----------
     pop_array : list of nx.Graph or ndarray, or ndarray
         If list of nx.Graph, each Graph must contain same number of nodes.
-        If list of ndarray, each array must have shape (n_vertices, n_vertices).
-        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+        If list of ndarray, each array must have shape (n_vertices,
+        n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices,
+        n_vertices).
     atlas : str
         The name of an atlas (indicating the node definition).
     graph_pathlist : list
@@ -47,21 +50,28 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
 
     References
     ----------
-    .. [1] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
-      November). A central limit theorem for an omnibus embedding of multiple random
-      dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
-      Conference on (pp. 964-967). IEEE.
-    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
-      & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
-      Journal of Machine Learning Research.
+    .. [1] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E.
+      (2017, November). A central limit theorem for an omnibus embedding of
+      multiple random dot product graphs. In Data Mining Workshops (ICDMW),
+      2017 IEEE International Conference on (pp. 964-967). IEEE.
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K.,
+      Helm, H. S., & Vogelstein, J. T. (2019). Graspy: Graph statistics in
+      python. Journal of Machine Learning Research.
 
     """
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
-    from graspy.embed import OmnibusEmbed, ClassicalMDS
+    from graspologic.embed.omni import OmnibusEmbed
+    from graspologic.embed.mds import ClassicalMDS
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
+
+    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
+
+    namer_dir = f"{dir_path}/embeddings"
+    if os.path.isdir(namer_dir) is False:
+        os.makedirs(namer_dir, exist_ok=True)
 
     clean_mats = []
     i = 0
@@ -74,77 +84,91 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         else:
             mat_clean = pop_array[i]
 
-        clean_mats.append(mat_clean)
+        mat_clean = np.nan_to_num(mat_clean)
+        mat_clean = mat_clean[
+            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+        if np.isnan(np.sum(mat_clean)) == False:
+            clean_mats.append(mat_clean)
         i += 1
 
-    # Omnibus embedding
-    print(
-        f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
-        f"{subgraph_name}{'...'}"
-    )
-    omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
-    mds = ClassicalMDS(n_components=n_components)
-    omni_fit = omni.fit_transform(pop_array)
+    clean_mats = [i for i in clean_mats if np.isfinite(i).all()]
 
-    # Transform omnibus tensor into dissimilarity feature
-    mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
-                                                 omni_fit.shape[2],
-                                                 omni_fit.shape[0]))
+    if len(clean_mats) > 0:
+        # Omnibus embedding
+        print(
+            f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
+            f"{subgraph_name}{'...'}"
+        )
+        omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
+        mds = ClassicalMDS(n_components=n_components)
+        omni_fit = omni.fit_transform(clean_mats)
 
-    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
+        # Transform omnibus tensor into dissimilarity feature
+        mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
+                                                     omni_fit.shape[2],
+                                                     omni_fit.shape[0]))
 
-    namer_dir = f"{dir_path}/embeddings"
-    if not os.path.isdir(namer_dir):
-        os.makedirs(namer_dir, exist_ok=True)
+        out_path = (
+            f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
+            f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
+        )
 
-    out_path = (
-        f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
-        f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
-    )
+        # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                     f"{subgraph_name}_" \
+        #                     f"{os.path.basename(graph_path).split(
+        #                     '_thrtype')[0]}" \
+        #                     f"_MDS.joblib"
+        # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                    f"{subgraph_name}_" \
+        #                    f"{os.path.basename(graph_path).split(
+        #                    '_thrtype')[0]}" \
+        #                    f"_MDS.joblib"
 
-    # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-    #                     f"{subgraph_name}_" \
-    #                     f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-    #                     f"_MDS.joblib"
-    # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
-    #                    f"{subgraph_name}_" \
-    #                    f"{os.path.basename(graph_path).split('_thrtype')[0]}" \
-    #                    f"_MDS.joblib"
+        # dump(omni, out_path_est_omni)
+        # dump(omni, out_path_est_mds)
 
-    # dump(omni, out_path_est_omni)
-    # dump(omni, out_path_est_mds)
-
-    print("Saving...")
-    np.save(out_path, mds_fit)
-    del mds, mds_fit, omni, omni_fit
+        print("Saving...")
+        np.save(out_path, mds_fit)
+        del mds, mds_fit, omni, omni_fit
+    else:
+        # Add a null tmp file to prevent pool from breaking
+        out_path = f"{namer_dir}/gradient-OMNI" \
+                   f"_{atlas}_{subgraph_name}_" \
+                   f"{os.path.basename(graph_path_list[0])}_NULL"
+        os.mknod(out_path)
     return out_path
 
 
-def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_components=None):
+def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
+                n_components=None):
     """
-    Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of input
-    graphs with matched vertex sets.
+    Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
+    input graphs with matched vertex sets.
 
-    For a population of undirected graphs, MASE assumes that the population of graphs
-    is sampled from :math:`VR^{(i)}V^T` where :math:`V \in \mathbb{R}^{n\times d}` and
-    :math:`R^{(i)} \in \mathbb{R}^{d\times d}`. Score matrices, :math:`R^{(i)}`, are
-    allowed to vary for each graph, but are symmetric. All graphs share a common a
-    latent position matrix :math:`V`.
+    For a population of undirected graphs, MASE assumes that the population of
+    graphs is sampled from :math:`VR^{(i)}V^T` where :math:`V \in
+    \mathbb{R}^{n\times d}` and :math:`R^{(i)} \in \mathbb{R}^{d\times d}`.
+    Score matrices, :math:`R^{(i)}`, are allowed to vary for each graph, but
+    are symmetric. All graphs share a common a latent position matrix
+    :math:`V`.
 
-    For a population of directed graphs, MASE assumes that the population is sampled
-    from :math:`UR^{(i)}V^T` where :math:`U \in \mathbb{R}^{n\times d_1}`,
+    For a population of directed graphs, MASE assumes that the population is
+    sampled from :math:`UR^{(i)}V^T` where :math:`U \in
+    \mathbb{R}^{n\times d_1}`,
     :math:`V \in \mathbb{R}^{n\times d_2}`, and
-    :math:`R^{(i)} \in \mathbb{R}^{d_1\times d_2}`. In this case, score matrices
-    :math:`R^{(i)}` can be assymetric and non-square, but all graphs still share a
-    common latent position matrices :math:`U` and :math:`V`.
+    :math:`R^{(i)} \in \mathbb{R}^{d_1\times d_2}`. In this case, score
+    matrices
+    :math:`R^{(i)}` can be assymetric and non-square, but all graphs still
+    share a common latent position matrices :math:`U` and :math:`V`.
 
 
     Parameters
     ----------
     pop_array : list of nx.Graph or ndarray, or ndarray
         If list of nx.Graph, each Graph must contain same number of nodes.
-        If list of ndarray, each array must have shape (n_vertices, n_vertices).
-        If ndarray, then array must have shape (n_graphs, n_vertices, n_vertices).
+        If list of ndarray, each array must have shape (n_vertices,
+        n_vertices). If ndarray, then array must have shape (n_graphs,
+        n_vertices, n_vertices).
     atlas : str
     graph_path : str
     ID : str
@@ -154,20 +178,20 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     Returns
     -------
     out_path : str
-        File path to .npy file containing MASE embedding tensor.
+        File path to .npy file containing MASE embedding.
 
     References
     ----------
-    .. [1] Inference for multiple heterogeneous networks with a common invariant subspace
-      J Arroyo, A Athreya, J Cape, G Chen, CE Priebe, JT Vogelstein
-      arXiv preprint arXiv:1906.10026
-    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K., Helm, H. S.,
-      & Vogelstein, J. T. (2019). Graspy: Graph statistics in python.
-      Journal of Machine Learning Research.
+    .. [1] Inference for multiple heterogeneous networks with a common
+      invariant subspace J Arroyo, A Athreya, J Cape, G Chen, CE Priebe,
+      JT Vogelstein arXiv preprint arXiv:1906.10026
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K.,
+      Helm, H. S., & Vogelstein, J. T. (2019). Graspy: Graph statistics in
+      python. Journal of Machine Learning Research.
 
     """
     import numpy as np
-    from graspy.embed import MultipleASE
+    from graspologic.embed.mase import MultipleASE
     from joblib import dump
 
     # Multiple Adjacency Spectral embedding
@@ -176,11 +200,17 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
         f"{subgraph_name}{'...'}"
     )
     mase = MultipleASE(n_components=n_components)
-    mase_fit = mase.fit_transform(pop_array)
+
+    clean_mats = [i for i in pop_array if np.isfinite(i).all()]
+
+    if len(pop_array) != len(clean_mats):
+        return None
+
+    mase_fit = mase.fit_transform(clean_mats)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
-    if not os.path.isdir(namer_dir):
+    if os.path.isdir(namer_dir) is False:
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = (
@@ -233,26 +263,27 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     .. math:: A = U \Sigma V^T
 
     is used to find an orthonormal basis for a matrix, which in our case is the
-    adjacency matrix of the graph. These basis vectors (in the matrices U or V) are
-    ordered according to the amount of variance they explain in the original matrix.
-    By selecting a subset of these basis vectors (through our choice of dimensionality
-    reduction) we can find a lower dimensional space in which to represent the graph.
+    adjacency matrix of the graph. These basis vectors (in the matrices U or
+    V) are ordered according to the amount of variance they explain in the
+    original matrix. By selecting a subset of these basis vectors (through
+    our choice of dimensionality reduction) we can find a lower dimensional
+    space in which to represent the graph.
 
     References
     ----------
     .. [1] Sussman, D.L., Tang, M., Fishkind, D.E., Priebe, C.E.  "A
-      Consistent Adjacency Spectral Embedding for Stochastic Blockmodel Graphs,"
-      Journal of the American Statistical Association, Vol. 107(499), 2012
+      Consistent Adjacency Spectral Embedding for Stochastic Blockmodel
+      Graphs," Journal of the American Statistical Association,
+      Vol. 107(499), 2012
 
     """
     import os
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
-    from graspy.embed import AdjacencySpectralEmbed
+    from graspologic.embed.ase import AdjacencySpectralEmbed
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
-    #from graspy.utils import get_lcc
 
     # Adjacency Spectral embedding
     print(
@@ -274,12 +305,19 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     else:
         mat_clean = mat
 
+    mat_clean = np.nan_to_num(mat_clean)
+    mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
+                          (np.isinf(mat_clean) == False)]
+
+    if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
+        return None
+
     ase_fit = ase.fit_transform(mat_clean)
 
     dir_path = str(Path(os.path.dirname(graph_path)).parent)
 
     namer_dir = f"{dir_path}/embeddings"
-    if not os.path.isdir(namer_dir):
+    if os.path.isdir(namer_dir) is False:
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
@@ -335,6 +373,9 @@ def build_asetomes(est_path_iterlist, ID):
     out_paths = []
     for file_ in est_path_iterlist:
         mat = np.load(file_)
+        if np.isfinite(mat).all() == False:
+            continue
+
         atlas = prune_suffices(file_.split("/")[-3])
         res = prune_suffices("_".join(file_.split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
@@ -344,7 +385,18 @@ def build_asetomes(est_path_iterlist, ID):
             subgraph = "all_nodes"
         out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
                               n_components=n_components)
-        out_paths.append(out_path)
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(file_)).parent)
+            namer_dir = f"{dir_path}/embeddings"
+            if os.path.isdir(namer_dir) is False:
+                os.makedirs(namer_dir, exist_ok=True)
+            out_path = f"{namer_dir}/gradient-ASE" \
+                       f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
+            os.mknod(out_path)
+            out_paths.append(out_path)
 
     return out_paths
 
@@ -364,10 +416,11 @@ def build_masetome(est_path_iterlist, ID):
 
     References
     ----------
-    .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi, J.,
-      Sporns, O. (2018). Mapping higher-order relations between brain structure
-      and function with embedded vector representations of connectomes.
-      Nature Communications. https://doi.org/10.1038/s41467-018-04614-w
+    .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi,
+      J., Sporns, O. (2018). Mapping higher-order relations between brain
+      structure and function with embedded vector representations of
+      connectomes. Nature Communications.
+      https://doi.org/10.1038/s41467-018-04614-w
 
     """
     import numpy as np
@@ -392,7 +445,11 @@ def build_masetome(est_path_iterlist, ID):
     for pairs in est_path_iterlist:
         pop_list = []
         for _file in pairs:
-            pop_list.append(np.load(_file))
+            mat = np.load(_file)
+            if np.isfinite(mat).all():
+                pop_list.append(mat)
+        if len(pop_list) != len(pairs):
+            continue
         atlas = prune_suffices(pairs[0].split("/")[-3])
         res = prune_suffices("_".join(pairs[0].split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
@@ -406,7 +463,22 @@ def build_masetome(est_path_iterlist, ID):
             pairs[0],
             ID,
             subgraph_name=subgraph, n_components=n_components)
-        out_paths.append(out_path)
+
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(pairs[0])))
+            namer_dir = f"{dir_path}/mplx_embeddings"
+            if os.path.isdir(namer_dir) is False:
+                os.makedirs(namer_dir, exist_ok=True)
+
+            out_path = (
+                f"{namer_dir}/gradient-MASE_{atlas}_{subgraph}"
+                f"_{os.path.basename(pairs[0])}_NULL"
+            )
+            os.mknod(out_path)
+            out_paths.append(out_path)
 
     return out_paths
 
@@ -425,13 +497,13 @@ def build_omnetome(est_path_iterlist, ID):
 
     References
     ----------
-    .. [1] Liu, Y., He, L., Cao, B., Yu, P. S., Ragin, A. B., & Leow, A. D. (2018).
-      Multi-view multi-graph embedding for brain network clustering analysis.
-      32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
-    .. [2] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E. (2017,
-      November). A central limit theorem for an omnibus embedding of multiple random
-      dot product graphs. In Data Mining Workshops (ICDMW), 2017 IEEE International
-      Conference on (pp. 964-967). IEEE.
+    .. [1] Liu, Y., He, L., Cao, B., Yu, P. S., Ragin, A. B., & Leow, A. D.
+      (2018). Multi-view multi-graph embedding for brain network clustering
+      analysis. 32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
+    .. [2] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E.
+      (2017, November). A central limit theorem for an omnibus embedding of
+      multiple random dot product graphs. In Data Mining Workshops (ICDMW),
+      2017 IEEE International Conference on (pp. 964-967). IEEE.
 
     """
     import sys
@@ -640,7 +712,8 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas, graph_path_list,
+                        out_path = _omni_embed(pop_list, atlas,
+                                               graph_path_list,
                                                ID, n_components=n_components)
                         out_paths_dwi.append(out_path)
                     else:

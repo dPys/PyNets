@@ -41,7 +41,8 @@ def get_ensembles_embedding(modality, alg, base_dir):
                 ensembles.append(i.split('_thrtype')[0])
             else:
                 ensembles.append(i)
-    elif alg == 'eigenvector' or alg == 'betweenness' or alg == 'degree' or alg == 'local_efficiency' or alg == 'local_clustering':
+    elif alg == 'eigenvector' or alg == 'betweenness' or alg == 'degree' or \
+            alg == 'local_efficiency' or alg == 'local_clustering':
         ensembles_pre = list(
             set(
                 [
@@ -76,7 +77,7 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
         df_top = pd.read_csv(topology_file)
         if "Unnamed: 0" in df_top.columns:
             df_top.drop(df_top.filter(regex="Unnamed: 0"), axis=1,
-                         inplace=True)
+                        inplace=True)
         df_top = df_top.dropna(subset=["id"])
         # df_top = df_top.rename(
         #     columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
@@ -101,7 +102,7 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
         #                        )
         if not df_top.empty and len(df_top.columns) > 1:
             [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
-            #print(df_top)
+            # print(df_top)
             ensembles = [i for i in ensembles if i != "id"]
         else:
             ensembles = None
@@ -232,21 +233,23 @@ def get_ixs_from_node_dict(node_dict):
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
                 node_dict_revised[i]['label'], \
-                node_dict_revised[i]['index'] = ast.literal_eval(
+                    node_dict_revised[i]['index'] = ast.literal_eval(
                     node_dict[i]['index'].replace('\n', ','))
             ixs_corr = [int(k['index']) for k in
                         node_dict_revised.values()]
         elif all(isinstance(v, str) for v in
-               [i['label'] for i in node_dict]):
+                 [i['label'] for i in node_dict]):
             node_dict_revised = {}
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
-                node_dict_revised[i]['label'] = ast.literal_eval(node_dict[i]['label'])[0]
-                node_dict_revised[i]['index'] = ast.literal_eval(node_dict[i]['label'])[1]
+                node_dict_revised[i]['label'] = ast.literal_eval(
+                    node_dict[i]['label'])[0]
+                node_dict_revised[i]['index'] = ast.literal_eval(
+                    node_dict[i]['label'])[1]
             ixs_corr = [int(k['index']) for k in
                         node_dict_revised.values()]
         elif all(isinstance(v, tuple) for v in
-               [i['label'] for i in node_dict]):
+                 [i['label'] for i in node_dict]):
             node_dict_revised = {}
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
@@ -299,7 +302,7 @@ def node_files_search(node_files, emb_shape):
         ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
 
         while len(ixs_corr) != emb_shape and j < len(
-            node_files):
+                node_files):
             try:
                 with open(node_files[j],
                           'r+') as f:
@@ -381,7 +384,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
             if not isinstance(rsn_dict["data"], np.ndarray):
                 if rsn_dict["data"].endswith('.npy'):
-                    rsn_dict["data"] = np.load(rsn_dict["data"], allow_pickle=True)
+                    rsn_dict["data"] = np.load(rsn_dict["data"],
+                                               allow_pickle=True)
                 elif rsn_dict["data"].endswith('.csv'):
                     rsn_dict["data"] = np.array(pd.read_csv(rsn_dict["data"])
                                                 ).reshape(-1, 1)
@@ -398,7 +402,7 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                 if len(ixs) == emb_shape:
                     rsn_arr = rsn_dict["data"].T.reshape(
                         1, rsn_dict["data"].T.shape[0] *
-                           rsn_dict["data"].T.shape[1]
+                        rsn_dict["data"].T.shape[1]
                     )
                     if rsn_dict["data"].shape[1] == 1:
                         df_lps = pd.DataFrame(rsn_arr,
@@ -421,7 +425,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                         df_lps = None
                     # else:
                     #     raise ValueError(
-                    #         f"Number of dimensions {rsn_dict['data'].shape[1]} "
+                    #         f"Number of dimensions {
+                    #         rsn_dict['data'].shape[1]} "
                     #         f"not supported. See flatten_latent_positions "
                     #         f"function..."
                     #     )
@@ -522,7 +527,7 @@ def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
         df_all = pd.concat(dfs, axis=0)
         df_all = df_all.replace({0: np.nan})
         # df_all = df_all.apply(lambda x: np.where(x < 0.00001, np.nan, x))
-        #print(len(df_all))
+        # print(len(df_all))
         del df_tmps
         return df_all, grid_param
     else:
@@ -559,8 +564,8 @@ def graph_theory_prep(df, thr_type, drop_thr=0.50):
 
 
 def make_subject_dict(
-    modalities, base_dir, thr_type, mets, embedding_types, template, sessions,
-    rsns):
+        modalities, base_dir, thr_type, mets, embedding_types, template,
+        sessions, rsns):
     from joblib.externals.loky import get_reusable_executor
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
@@ -626,11 +631,13 @@ def make_subject_dict(
                 par_dict = subject_dict_all.copy()
                 cache_dir = tempfile.mkdtemp()
 
+                max_bytes = int(float(list(
+                    psutil.virtual_memory())[4]/len(ids)))
                 with Parallel(
                     n_jobs=-1,
                     backend='loky',
                     verbose=1,
-                    max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
+                    max_nbytes=f"{max_bytes}M",
                     temp_folder=cache_dir,
                 ) as parallel:
                     outs_tup = parallel(
@@ -728,8 +735,12 @@ def populate_subject_dict(
             [subject_dict, missingness_frame] = func_grabber(comb,
                                                              subject_dict,
                                                              missingness_frame,
-                        ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top,
+                                                             ID, ses,
+                                                             modality, alg,
+                                                             mets,
+                                                             thr_type,
+                                                             base_dir,
+                                                             template, df_top,
                                                              embedding_methods)
             gc.collect()
     # Structural case
@@ -750,8 +761,11 @@ def populate_subject_dict(
         for comb in grid:
             [subject_dict, missingness_frame] = dwi_grabber(comb, subject_dict,
                                                             missingness_frame,
-                        ID, ses, modality, alg, mets,
-                        thr_type, base_dir, template, df_top,
+                                                            ID, ses, modality,
+                                                            alg, mets,
+                                                            thr_type,
+                                                            base_dir,
+                                                            template, df_top,
                                                             embedding_methods)
             gc.collect()
     del modality, ID, ses, df_top
@@ -760,8 +774,8 @@ def populate_subject_dict(
 
 
 def dwi_grabber(comb, subject_dict, missingness_frame,
-                 ID, ses, modality, alg, mets, thr_type, base_dir, template,
-                 df_top, embedding_methods):
+                ID, ses, modality, alg, mets, thr_type, base_dir, template,
+                df_top, embedding_methods):
     import gc
     from pynets.core.utils import filter_cols_from_targets
     from colorama import Fore, Style
@@ -871,10 +885,13 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 return subject_dict, missingness_frame
 
             if not isinstance(
-                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+                    subject_dict[ID][str(ses)][modality][alg][comb_tuple],
+                dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = \
+                ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
+            # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)
@@ -1002,11 +1019,13 @@ def func_grabber(comb, subject_dict, missingness_frame,
         )
 
         embeddings = [i for i in embeddings if ((alg in i) and
-                      (f"res-{res}" in i) and
-                      (f"rsn-{atlas}" in i) and (template in i) and
-                      (f"model-{model}" in i)
-                      and (f"hpass-{hpass}Hz" in i) and
-                      (f"extract-{extract}" in i))]
+                                                (f"res-{res}" in i) and
+                                                (f"rsn-{atlas}" in i) and
+                                                (template in i) and
+                                                (f"model-{model}" in i)
+                                                and (f"hpass-{hpass}Hz" in i)
+                                                and (f"extract-{extract}" in
+                                                     i))]
 
         if smooth == "0":
             embeddings = [
@@ -1098,10 +1117,13 @@ def func_grabber(comb, subject_dict, missingness_frame,
                       f"{embedding} {Style.RESET_ALL}")
                 return subject_dict, missingness_frame
             if not isinstance(
-                subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict):
+                    subject_dict[ID][str(ses)][modality][alg][comb_tuple],
+                dict):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"] = labels
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = \
+                ixs
+            # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
+            # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
                 "data"] = embedding
             # print(data)
@@ -1221,7 +1243,7 @@ def cleanNullTerms(d):
             if len(nested.keys()) > 0:
                 clean[k] = nested
         elif v is not None and v is not np.nan and not \
-            isinstance(v, pd.Series):
+                isinstance(v, pd.Series):
             clean[k] = v
     return clean
 
@@ -1229,7 +1251,7 @@ def cleanNullTerms(d):
 def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
     vects = []
     for ses in sub_dict_clean[ID].keys():
-        #print(ses)
+        # print(ses)
         if comb_tuple in sub_dict_clean[ID][str(ses)][modality][alg].keys():
             if alg == 'topology':
                 vect = sub_dict_clean[ID][str(ses)][modality][alg][comb_tuple]
@@ -1246,7 +1268,7 @@ def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
         del vects
     else:
         out = None
-    #print(out)
+    # print(out)
     return out
 
 
@@ -1304,7 +1326,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
             else:
                 hyperparam_dict["hpass"].append(
                     str(file_renamed.split("hpass-"
-                                       )[1].split("_")[0].split("Hz")[0]))
+                                           )[1].split("_")[0].split("Hz")[0]))
             metaparams.append("hpass")
         if "extract-" in file_renamed:
             if "extract" not in hyperparam_dict.keys():
