@@ -42,7 +42,7 @@ def main():
 
     embedding_types = ['betweenness']
     #rsns = ['language']
-    rsns = ['triple', 'kmeans']
+    rsns = ['kmeans']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
@@ -158,12 +158,46 @@ def main():
             ensembles)[1]
 
         grid = [i for i in grid if '200' not in i and '400' not in i and '600'
-                not in i and '800' not in i]
+                not in i and '800' not in i and 'triple' not in i]
 
-        if modality == "func":
-            modality_grids[modality] = grid
-        else:
-            modality_grids[modality] = grid
+        good_grids = []
+        for grid_param in grid:
+            grid_finds = []
+            for ID in ids:
+                if ID not in sub_dict_clean.keys():
+                    print(f"ID: {ID} not found...")
+                    continue
+
+                if str(sessions[0]) not in sub_dict_clean[ID].keys():
+                    print(f"Session: {sessions[0]} not found for ID {ID}...")
+                    continue
+
+                if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
+                    print(f"Modality: {modality} not found for ID {ID}, "
+                          f"ses-{sessions[0]}...")
+                    continue
+
+                if embedding_type not in \
+                    sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                    print(
+                        f"Modality: {modality} not found for ID {ID}, "
+                        f"ses-{sessions[0]}, {embedding_type}..."
+                    )
+                    continue
+
+                if grid_param in \
+                    list(sub_dict_clean[ID][str(sessions[0])][modality][
+                             embedding_type].keys()):
+                    grid_finds.append(grid_param)
+            if len(grid_finds) < 0.75 * len(ids):
+                print(
+                    f"Less than 75% of {grid_param} found. Removing from "
+                    f"grid...")
+                continue
+            else:
+                good_grids.append(grid_param)
+
+        modality_grids[modality] = good_grids
 
         cache_dir = tempfile.mkdtemp()
 

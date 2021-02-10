@@ -136,7 +136,7 @@ def load_pd_dfs(file_):
             bad_cols1 = df.columns[df.columns.str.endswith("_x")]
             if len(bad_cols1) > 0:
                 for col in bad_cols1:
-                    if np.isnan(df[col][0]) is False:
+                    if np.isnan(df[col][0]) == False:
                         df.rename(columns=dict(zip(bad_cols1, [bad_col.split(
                             "_x")[0] for bad_col in bad_cols1])), inplace=True)
                     else:
@@ -145,7 +145,7 @@ def load_pd_dfs(file_):
             bad_cols2 = df.columns[df.columns.str.endswith("_y")]
             if len(bad_cols2) > 0:
                 for col in bad_cols2:
-                    if np.isnan(df[col][0]) is False:
+                    if np.isnan(df[col][0]) == False:
                         df.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                             "_y")[0] for bad_col in bad_cols2])),
                             inplace=True)
@@ -293,7 +293,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
     bad_cols1 = frame.columns[frame.columns.str.endswith("_x")]
     if len(bad_cols1) > 0:
         for col in bad_cols1:
-            if np.isnan(frame[col][0]) is False:
+            if np.isnan(frame[col][0]) == False:
                 frame.rename(columns=dict(zip(bad_cols1, [bad_col.split(
                     "_x")[0] for bad_col in bad_cols1])), inplace=True)
             else:
@@ -302,7 +302,7 @@ def df_concat(dfs, working_path, modality, drop_cols, args, regen=False):
     bad_cols2 = frame.columns[frame.columns.str.endswith("_y")]
     if len(bad_cols2) > 0:
         for col in bad_cols2:
-            if np.isnan(frame[col][0]) is False:
+            if np.isnan(frame[col][0]) == False:
                 frame.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                     "_y")[0] for bad_col in bad_cols2])),
                     inplace=True)
@@ -751,7 +751,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 bad_cols1 = df.columns[df.columns.str.endswith("_x")]
                 if len(bad_cols1) > 0:
                     for col in bad_cols1:
-                        if np.isnan(df[col][0]) is False:
+                        if np.isnan(df[col][0]) == False:
                             df.rename(
                                 columns=dict(zip(bad_cols1, [bad_col.split(
                                     "_x")[0] for bad_col in bad_cols1])),
@@ -762,7 +762,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
                 bad_cols2 = df.columns[df.columns.str.endswith("_y")]
                 if len(bad_cols2) > 0:
                     for col in bad_cols2:
-                        if np.isnan(df[col][0]) is False:
+                        if np.isnan(df[col][0]) == False:
                             df.rename(
                                 columns=dict(zip(bad_cols2, [bad_col.split(
                                     "_y")[0] for bad_col in bad_cols2])),
@@ -919,7 +919,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         bad_cols1 = frame.columns[frame.columns.str.endswith("_x")]
         if len(bad_cols1) > 0:
             for col in bad_cols1:
-                if np.isnan(frame[col][0]) is False:
+                if np.isnan(frame[col][0]) == False:
                     frame.rename(columns=dict(zip(bad_cols1, [bad_col.split(
                         "_x")[0] for bad_col in bad_cols1])), inplace=True)
                 else:
@@ -928,7 +928,7 @@ def load_pd_dfs_auc(atlas_name, prefix, auc_file, modality, drop_cols):
         bad_cols2 = frame.columns[frame.columns.str.endswith("_y")]
         if len(bad_cols2) > 0:
             for col in bad_cols2:
-                if np.isnan(frame[col][0]) is False:
+                if np.isnan(frame[col][0]) == False:
                     frame.rename(columns=dict(zip(bad_cols2, [bad_col.split(
                         "_y")[0] for bad_col in bad_cols2])),
                         inplace=True)

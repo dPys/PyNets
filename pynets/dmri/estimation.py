@@ -123,16 +123,16 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask is False)]
+    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
 
     gtab_hemisphere = HemiSphere(
-        xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)])
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
 
     try:
         assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
     except BaseException:
         gtab_hemisphere = Sphere(
-            xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)])
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
 
     img = nib.load(dwi_file)
     aff = img.affine

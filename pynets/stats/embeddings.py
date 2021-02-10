@@ -86,8 +86,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
 
         mat_clean = np.nan_to_num(mat_clean)
         mat_clean = mat_clean[
-            (np.isnan(mat_clean) is False) & (np.isinf(mat_clean) is False)]
-        if np.isnan(np.sum(mat_clean)) is False:
+            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+        if np.isnan(np.sum(mat_clean)) == False:
             clean_mats.append(mat_clean)
         i += 1
 
@@ -306,8 +306,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         mat_clean = mat
 
     mat_clean = np.nan_to_num(mat_clean)
-    mat_clean = mat_clean[(np.isnan(mat_clean) is False) &
-                          (np.isinf(mat_clean) is False)]
+    mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
+                          (np.isinf(mat_clean) == False)]
 
     if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
         return None
@@ -373,7 +373,7 @@ def build_asetomes(est_path_iterlist, ID):
     out_paths = []
     for file_ in est_path_iterlist:
         mat = np.load(file_)
-        if np.isfinite(mat).all() is False:
+        if np.isfinite(mat).all() == False:
             continue
 
         atlas = prune_suffices(file_.split("/")[-3])
