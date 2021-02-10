@@ -415,13 +415,13 @@ jobs:
           name: Build pynets
           command: |
             pyenv local 3.6.5
-            pip install twine setuptools_rust
+            pip install twine
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             virtualenv --python=python build
             source build/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
+            pip install --upgrade "pip>=19.1" numpy setuptools_rust
             echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
             python setup.py sdist
             pip wheel --no-deps -w dist/ .
