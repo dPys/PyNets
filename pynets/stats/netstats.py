@@ -1378,7 +1378,7 @@ class CleanGraphs(object):
 
         # Normalize connectivity matrix
         if self.norm == 3 or self.norm == 4 or self.norm == 5:
-            from graspy.utils import pass_to_ranks
+            from graspologic.utils.ptr import pass_to_ranks
 
         # By maximum edge weight
         if self.norm == 1:
@@ -1417,8 +1417,8 @@ class CleanGraphs(object):
     def prune_graph(self, remove_self_loops=True):
         import os
         from pynets.core import utils
-        from graspy.utils import remove_loops, symmetrize
-        from graspologic.utils import largest_connected_component
+        from graspologic.utils import largest_connected_component, \
+            remove_loops, symmetrize
 
         # Prune irrelevant nodes (i.e. nodes who are fully disconnected
         # from the graph and/or those whose betweenness
