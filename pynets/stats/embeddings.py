@@ -56,6 +56,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
+    from graspy.utils import is_symmetric
     from graspy.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
@@ -81,7 +82,11 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     )
     omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
     mds = ClassicalMDS(n_components=n_components)
-    omni_fit = omni.fit_transform(pop_array)
+    if all([is_symmetric(x) for x in clean_mats]):
+        omni_fit = omni.fit_transform(clean_mats)
+    else:
+        # TODO: This error can be removed and replaced with is_instance check if/when pynets supports directed graphs. MDS with directed graphs will return a tuple
+        raise NotImplementedError("Directed Graphs are not supported with Omnibus embeddings at this time.")
 
     # Transform omnibus tensor into dissimilarity feature
     mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
@@ -165,6 +170,9 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes", n_c
     import numpy as np
     from graspy.embed import MultipleASE
     from joblib import dump
+
+    if len(pop_array) < 1:
+        raise ValueError("Number of graphs provided to pop_array should be greater than 1.")
 
     # Multiple Adjacency Spectral embedding
     print(
