@@ -749,7 +749,7 @@ def local_thresholding_prop(conn_matrix, thr):
         and (len(len_edge_list[-fail_tol:]) -
              len(set(len_edge_list[-fail_tol:])))
         < (fail_tol - 1)
-    ):
+    ) and nx.is_connected(min_t) is True:
         # print(k)
         # print(len_edges)
         len_edge_list.append(len_edges)
@@ -791,8 +791,8 @@ def local_thresholding_prop(conn_matrix, thr):
         return conn_matrix_thr
 
     except ValueError as e:
-        print(e, f"MST thresholding failed. Check raw graph output manually for"
-              " debugging.")
+        print(e, f"MST thresholding failed. Check raw graph output manually "
+                 f"for debugging.")
 
 
 def perform_thresholding(
@@ -1016,7 +1016,7 @@ def thresh_func(
 
     if np.count_nonzero(conn_matrix) == 0:
         print(UserWarning("Raw connectivity matrix contains only"
-                         " zeros."))
+                          " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1053,7 +1053,7 @@ def thresh_func(
         atlas_name = f"{atlas}_stage-post_thr"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     return (
         edge_threshold,
@@ -1100,7 +1100,7 @@ def thresh_struct(
     binary,
     target_samples,
     track_type,
-    atlas_mni,
+    atlas_for_streams,
     streams,
     directget,
     min_length,
@@ -1165,8 +1165,9 @@ def thresh_struct(
         Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in the morphological
+        space of the streamlines.
     streams : str
         File path to save streamline array sequence in .trk format.
     directget : str
@@ -1224,8 +1225,9 @@ def thresh_struct(
         Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in the morphological
+        space of the streamlines.
     streams : str
         File path to save streamline array sequence in .trk format.
     directget : str
@@ -1251,7 +1253,7 @@ def thresh_struct(
 
     if np.count_nonzero(conn_matrix) == 0:
         print(UserWarning("Raw connectivity matrix contains only"
-                         " zeros."))
+                          " zeros."))
 
     [thr_type, edge_threshold, conn_matrix_thr] = \
         thresholding.perform_thresholding(
@@ -1290,7 +1292,7 @@ def thresh_struct(
         atlas_name = f"{atlas}_stage-post_thr"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     return (
         edge_threshold,
@@ -1311,7 +1313,7 @@ def thresh_struct(
         binary,
         target_samples,
         track_type,
-        atlas_mni,
+        atlas_for_streams,
         streams,
         directget,
         min_length,

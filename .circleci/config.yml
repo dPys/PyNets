@@ -142,7 +142,7 @@ jobs:
 
   get_data:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
       - run:
@@ -157,7 +157,7 @@ jobs:
 
   unit_and_integration_tests:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     environment:
       - FSLDIR: /usr/local/fsl
@@ -179,8 +179,9 @@ jobs:
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
-            sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get install -y make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get clean
+            sudo apt-get update
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
@@ -191,6 +192,7 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
+            which python
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
       - run:
@@ -201,12 +203,13 @@ jobs:
           no_output_timeout: 30m
           command: |
             sudo apt-get update
-            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 lib32ncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
+            sudo add-apt-repository universe
+            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 libncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
             sudo apt-get upgrade
-            sudo apt-get install openssh-client openssl openssh-server
+            sudo apt-get install -y openssh-client openssl openssh-server
             sudo apt-get install -y git-lfs
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
@@ -227,17 +230,28 @@ jobs:
             mkdir -p ~/.nipype
             echo "[monitoring]" > ~/.nipype/nipype.cfg
             echo "enabled = true" >> ~/.nipype/nipype.cfg
+            python -m pip install hyppo==0.1.3
       - run:
           name: Install FSL
           no_output_timeout: 40m
           command: |
-            sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/stretch.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
+            sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
             sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
             sudo apt-get update -qq
             sudo apt-get upgrade
             sudo chmod 777 /usr/local
             sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
             sudo chmod 777 -R /usr/local/fsl/bin
+      - run:
+          name: Install graph_tool
+          no_output_timeout: 30m
+          command: |
+            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
+            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
+            sudo apt-get update
+            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
+            python -c "import graph_tool.all as gt"
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
@@ -401,7 +415,8 @@ jobs:
           name: Build pynets
           command: |
             pyenv local 3.6.5
-            pip install twine  # For use in checking distributions
+            pip install --upgrade "pip>=19.1"
+            pip install setuptools_rust twine
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}

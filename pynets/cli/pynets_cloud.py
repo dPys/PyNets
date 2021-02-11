@@ -15,9 +15,9 @@ from copy import deepcopy
 from collections import OrderedDict
 from argparse import ArgumentParser
 from pathlib import Path
-from pynets.core.cloud_utils import get_credentials
-from pynets.core.cloud_utils import get_matching_s3_objects
-from pynets.core.cloud_utils import s3_client
+from pynets.core.cloud import get_credentials
+from pynets.core.cloud import get_matching_s3_objects
+from pynets.core.cloud import s3_client
 
 
 def batch_submit(

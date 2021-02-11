@@ -6,7 +6,7 @@ Created on Monday July 29 16:19:14 2019
 
 """
 import numpy as np
-from pynets.registration import reg_utils
+from pynets.registration import utils
 import os
 import nibabel as nib
 import indexed_gzip
@@ -37,8 +37,8 @@ def test_align():
     out = f"{anat_dir}/highres2standard.nii.gz"
     xfm_out = f"{anat_dir}/highres2standard.mat"
 
-    reg_utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo",
-                    sch=None, wmseg=None, init=None)
+    utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo",
+                sch=None, wmseg=None, init=None)
 
     highres2standard_linear = nib.load(out)
     assert highres2standard_linear is not None
@@ -58,7 +58,7 @@ def test_applyxfm():
     ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
-    reg_utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
+    utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
     # Check test_applyfxm = test_align outputs
     out_applyxfm = nib.load(aligned)
     out_applyxfm_data = out_applyxfm.get_data()
@@ -78,7 +78,7 @@ def test_applyxfm():
     # precuenus mask in antive space
     aligned = f"{anat_dir}/precuneous2highres.nii.gz"
 
-    reg_utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
+    utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
     test_out = nib.load(aligned)
     assert test_out is not None
 
@@ -99,7 +99,7 @@ def test_align_nonlinear():
     # affine mat created from test_align above.
     xfm = f"{anat_dir}/highres2standard.mat"
 
-    reg_utils.align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None)
+    utils.align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None)
 
     highres2standard_nonlin = nib.load(out)
     assert highres2standard_nonlin is not None
@@ -116,7 +116,7 @@ def test_combine_xfms():
     xfm2 = f"{anat_dir}/highres2standard.mat"
     xfmout = f"{anat_dir}/example_func2standard.mat"
 
-    reg_utils.combine_xfms(xfm1, xfm2, xfmout)
+    utils.combine_xfms(xfm1, xfm2, xfmout)
     test_out = np.genfromtxt(xfmout, delimiter='  ')
     assert test_out is not None
 
@@ -127,7 +127,7 @@ def test_invwarp():
     ref = f"{anat_dir}/sub-003_T1w.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp"
     out = f"{anat_dir}/highres2standard_warp_inv.nii.gz"
-    reg_utils.inverse_warp(ref, out, warp)
+    utils.inverse_warp(ref, out, warp)
     out_warp = nib.load(out)
     assert out_warp is not None
 
@@ -143,7 +143,7 @@ def test_apply_warp():
     warp = f"{anat_dir}/highres2standard_warp.nii.gz"
     xfm = f"{anat_dir}/highres2standard.mat"
 
-    reg_utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None, sup=False)
+    utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None, sup=False)
     # highres2standard_apply_warp = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
     # highres2standard_apply_warp = nib.load(highres2standard_apply_warp)
     # highres2standard_apply_warp = highres2standard_apply_warp.get_data()
@@ -164,7 +164,7 @@ def test_segment_t1w():
     anat_dir = f"{base_dir}/003/anat"
     t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
     basename = f"{anat_dir}/test_segment_t1w"
-    out = reg_utils.segment_t1w(t1w, basename, opts='')
+    out = utils.segment_t1w(t1w, basename, opts='')
     print(out)
     assert out is not None
 
@@ -180,7 +180,10 @@ def test_match_target_vox_res():
     anat_img_file = f"{test_out}/sub-003_T1w_pre_res_res-2mm.nii.gz"
     anat_vox_size = '2mm'
     anat_out_dir = test_out
-    anat_img_file = reg_utils.match_target_vox_res(anat_img_file, anat_vox_size, anat_out_dir)
+    anat_img_file = utils.match_target_vox_res(anat_img_file,
+                                               anat_vox_size,
+                                               anat_out_dir,
+                                               remove_orig=False)
     anat_new_img = nib.load(anat_img_file)
     anat_dims = anat_new_img.header.get_zooms()
     anat_success = True
@@ -192,7 +195,9 @@ def test_match_target_vox_res():
     dwi_img_file = f"{test_out}/sub-003_dwi_pre_res_res-1mm.nii.gz"
     dwi_vox_size = '1mm'
     dwi_out_dir = test_out
-    dwi_img_file = reg_utils.match_target_vox_res(dwi_img_file, dwi_vox_size, dwi_out_dir)
+    dwi_img_file = utils.match_target_vox_res(dwi_img_file, dwi_vox_size,
+                                              dwi_out_dir,
+                                              remove_orig=False)
     dwi_new_img = nib.load(dwi_img_file)
     dwi_dims = dwi_new_img.header.get_zooms()
     dwi_success = True
@@ -222,7 +227,7 @@ def test_reorient_dwi():
     bvecs_orig = f"{test_dir}/bvec.bvec"
     out_dir = f"{test_dir}/output"
 
-    dwi_prep_out, bvecs_out = reg_utils.reorient_dwi(dwi_prep_neu, bvecs_orig, out_dir)
+    dwi_prep_out, bvecs_out = utils.reorient_dwi(dwi_prep_neu, bvecs_orig, out_dir)
 
     orig_rad = nib.load(dwi_prep_rad)
     orig_rad_data = orig_rad.get_data()
@@ -253,8 +258,8 @@ def test_reorient_img():
     out_neuro_dir = f"{test_dir}/output_RAS"
 
     # Outputs should be in neurological orientation.
-    LAStoRAS_img_out = reg_utils.reorient_img(img_in_radio, out_radio_dir)
-    RAStoRAS_img_out = reg_utils.reorient_img(img_in_neuro, out_neuro_dir)
+    LAStoRAS_img_out = utils.reorient_img(img_in_radio, out_radio_dir)
+    RAStoRAS_img_out = utils.reorient_img(img_in_neuro, out_neuro_dir)
 
     # Original RAS data
     orig_RAS_img = nib.load(img_in_neuro)
@@ -293,10 +298,10 @@ def test_check_orient_and_dims():
     bvecs_LAS = f"{test_dir}/dmri_LAS/bvec.orig.bvec"
     bvecs_RAS = f"{test_dir}/dmri_RAS/bvec.trans.bvec"
 
-    anat_LAStoRAS = reg_utils.check_orient_and_dims(anat_LAS, test_dir, '2mm', bvecs=None)
-    anat_RAStoRAS = reg_utils.check_orient_and_dims(anat_RAS, test_dir, '2mm', bvecs=None)
-    dmri_LAStoRAS, bvecs_LAStoRAS = reg_utils.check_orient_and_dims(dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
-    dmri_RAStoRAS, bvecs_RAStoRAS = reg_utils.check_orient_and_dims(dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
+    anat_LAStoRAS = utils.check_orient_and_dims(anat_LAS, test_dir, '2mm', bvecs=None)
+    anat_RAStoRAS = utils.check_orient_and_dims(anat_RAS, test_dir, '2mm', bvecs=None)
+    dmri_LAStoRAS, bvecs_LAStoRAS = utils.check_orient_and_dims(dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
+    dmri_RAStoRAS, bvecs_RAStoRAS = utils.check_orient_and_dims(dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
 
     anat_LAStoRAS = nib.load(anat_LAStoRAS)
 
@@ -307,8 +312,10 @@ def test_check_orient_and_dims():
     dmri_RAStoRAS = nib.load(dmri_RAStoRAS)
 
     # Assert that output arrays are identical.
-    anat_check = np.allclose(anat_LAStoRAS.affine.astype('int'), anat_RAStoRAS.affine.astype('int'))
-    dmri_check = np.allclose(dmri_LAStoRAS.affine.astype('int'), dmri_RAStoRAS.affine.astype('int'))
+    anat_check = np.allclose(anat_LAStoRAS.affine.astype('int'),
+                             anat_RAStoRAS.affine.astype('int'))
+    dmri_check = np.allclose(dmri_LAStoRAS.affine.astype('int'),
+                             dmri_RAStoRAS.affine.astype('int'))
 
     # Assert that voxel dimensions in ouputs are correct.
     anat_LAStoRAS_dims = anat_LAStoRAS.header.get_zooms()
@@ -352,6 +359,6 @@ def test_make_median_b0():
 
     base_dir = str(Path(__file__).parent/"examples")
     dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
-    mean_file_out = reg_utils.median(dwi_file)
+    mean_file_out = utils.median(dwi_file)
 
     assert os.path.isfile(mean_file_out)

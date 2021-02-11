@@ -158,7 +158,7 @@ def get_parser():
         default=None,
         help="Specify the path to the atlas reference .txt file that maps "
              "labels to intensities corresponding to the atlas parcellation "
-             "file specified with the -ua flag.\n",
+             "file specified with the -a flag.\n",
     )
     parser.add_argument(
         "-way",
@@ -169,19 +169,6 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    parser.add_argument(
-        "-ua",
-        metavar="Path to custom parcellation file",
-        default=None,
-        nargs="+",
-        help="(metaparameter): Optionally specify a path to a "
-             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
-             "be spatially distinct across hemispheres and ordered with "
-             "consecutive integers with a value of 0 as the background label."
-             "If specifying a list of paths to multiple parcellations, "
-             "separate them by space.\n",
-    )
-
     # Modality-pervasive metaparameters
     parser.add_argument(
         "-mod",
@@ -215,45 +202,15 @@ def get_parser():
         metavar="Atlas",
         default=None,
         nargs="+",
-        choices=[
-            "atlas_aal",
-            "atlas_talairach_gyrus",
-            "atlas_talairach_ba",
-            "atlas_talairach_lobe",
-            "atlas_harvard_oxford",
-            "atlas_destrieux_2009",
-            "atlas_msdl",
-            "coords_dosenbach_2010",
-            "coords_power_2011",
-            "atlas_pauli_2017",
-            "destrieux2009_rois",
-            "BrainnetomeAtlasFan2016",
-            "VoxelwiseParcellationt0515kLeadDBS",
-            "Juelichgmthr252mmEickhoff2005",
-            "CorticalAreaParcellationfromRestingStateCorrelationsGordon2014",
-            "whole_brain_cluster_labels_PCA100",
-            "AICHAreorderedJoliot2015",
-            "HarvardOxfordThr252mmWholeBrainMakris2006",
-            "VoxelwiseParcellationt058kLeadDBS",
-        "MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics",
-            "Hammers_mithAtlasn30r83Hammers2003Gousias2008",
-            "AALTzourioMazoyer2002",
-            "DesikanKlein2012",
-            "AAL2zourioMazoyer2002",
-            "VoxelwiseParcellationt0435kLeadDBS",
-            "AICHAJoliot2015",
-            "whole_brain_cluster_labels_PCA200",
-            "RandomParcellationsc05meanalll43Craddock2011",
-            'sub-colin27_label-L2018_desc-scale1_atlas',
-            'sub-colin27_label-L2018_desc-scale2_atlas',
-            'sub-colin27_label-L2018_desc-scale3_atlas',
-            'sub-colin27_label-L2018_desc-scale4_atlas',
-            'sub-colin27_label-L2018_desc-scale5_atlas'
-        ],
-        help="(metaparameter): Specify an atlas parcellation from nilearn or "
-             "local libraries. If you wish to iterate your pynets run over "
-             "multiple atlases, separate them by space. Available nilearn "
-             "atlases are:"
+        help="(metaparameter): Specify an atlas name from nilearn or "
+             "local (pynets) library, and/or specify a path to a custom "
+             "parcellation/atlas Nifti1Image file in MNI space. Labels should"
+             "be spatially distinct across hemispheres and ordered with "
+             "consecutive integers with a value of 0 as the background label."
+             "If specifying a list of paths to multiple parcellations, "
+             "separate them by space. If you wish to iterate your pynets run "
+             "over multiple atlases, separate them by space. "
+             "Available nilearn atlases are:"
         "\n\natlas_aal\natlas_talairach_gyrus\natlas_talairach_ba"
              "\natlas_talairach_lobe\n"
         "atlas_harvard_oxford\natlas_destrieux_2009\natlas_msdl"
@@ -546,7 +503,7 @@ def get_parser():
              " (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn,"
              " Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, "
              "DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
-            "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
+        "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
              "DefaultC, TempPar. If listing multiple RSNs, separate them by "
              "space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'.\n",
     )
@@ -650,10 +607,10 @@ def build_workflow(args, retval):
 
     if environ.get('FSLDIR') is None:
         print('EnvironmentError: FSLDIR not found! '
-                               'Be sure that this '
-                               'environment variable is set and/or that '
-                               'FSL has been properly installed before '
-                               'proceeding.')
+              'Be sure that this '
+              'environment variable is set and/or that '
+              'FSL has been properly installed before '
+              'proceeding.')
         retval["return_code"] = 1
         return retval
     else:
@@ -673,6 +630,26 @@ def build_workflow(args, retval):
     print(f"{Fore.MAGENTA}{timestamp}")
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
+
+    # Hard-coded:
+    from pynets.core.utils import load_runconfig
+    hardcoded_params = load_runconfig()
+
+    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
+    local_corr = hardcoded_params["clustering_local_conn"][0]
+    track_type = hardcoded_params['tracking']["tracking_method"][0]
+    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
+    use_parcel_naming = hardcoded_params["parcel_naming"][0]
+    step_list = hardcoded_params['tracking']["step_list"]
+    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
+    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
+    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
+    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
+    local_atlases = hardcoded_params["local_atlases"]
+    template_name = hardcoded_params['template'][0]
+    roi_neighborhood_tol = \
+        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     # Set Arguments to global variables
     ID = args.id
@@ -717,7 +694,8 @@ def build_workflow(args, retval):
                         multi_subject_multigraph = []
                         for id in ID:
                             # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g) and modality in str(g)])
+                            #     [str(g) for g in graph_iter if id in str(g)
+                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
@@ -782,7 +760,7 @@ def build_workflow(args, retval):
                 retval["return_code"] = 1
                 return retval
         if len(ID) > 1 and not multi_subject_graph and not \
-            multi_subject_multigraph:
+                multi_subject_multigraph:
             print(
                 "\nLength of ID list does not correspond to length of"
                 " input graph file list."
@@ -981,35 +959,68 @@ def build_workflow(args, retval):
             multi_nets = None
     else:
         multi_nets = None
-    uatlas = args.ua
-    if uatlas:
-        if len(uatlas) > 1:
-            user_atlas_list = uatlas
+
+    atlas_ins = args.a
+    if atlas_ins is not None:
+        # Parse uatlas files from atlas names
+        uatlas = []
+        atlas = []
+
+        for atl in atlas_ins:
+            if atl in nilearn_parc_atlases or atl in nilearn_coord_atlases or \
+                    atl in nilearn_prob_atlases or atl in local_atlases:
+                atlas.append(atl)
+            elif '/' in atl:
+                uatlas.append(atl)
+                if not os.path.isfile(atl):
+                    print(f"{atl} may not be an existing file path. "
+                          f"You can safely ignore this warning if you are "
+                          f"using container-mounted directory paths.")
+            else:
+                raise ValueError(f"{atl} is not in the pynets atlas library "
+                                 f"nor is it a file path to a parcellation "
+                                 f"file")
+
+        if len(atlas) == 0:
+            atlas = None
+
+        if len(uatlas) == 0:
             uatlas = None
-        elif uatlas == ["None"]:
-            uatlas = None
-            user_atlas_list = None
+
+        if uatlas:
+            if len(uatlas) > 1:
+                user_atlas_list = uatlas
+                uatlas = None
+            elif uatlas == ["None"]:
+                uatlas = None
+                user_atlas_list = None
+            else:
+                uatlas = uatlas[0]
+                user_atlas_list = None
         else:
-            uatlas = uatlas[0]
             user_atlas_list = None
-    else:
-        user_atlas_list = None
-    atlas = args.a
-    if atlas:
-        if (isinstance(atlas, list)) and (len(atlas) > 1):
-            multi_atlas = atlas
-            atlas = None
-        elif atlas == ["None"]:
-            multi_atlas = None
-            atlas = None
-        elif isinstance(atlas, list):
-            atlas = atlas[0]
-            multi_atlas = None
+
+        if atlas:
+            if (isinstance(atlas, list)) and (len(atlas) > 1):
+                multi_atlas = atlas
+                atlas = None
+            elif atlas == ["None"]:
+                multi_atlas = None
+                atlas = None
+            elif isinstance(atlas, list):
+                atlas = atlas[0]
+                multi_atlas = None
+            else:
+                atlas = None
+                multi_atlas = None
         else:
-            atlas = None
             multi_atlas = None
     else:
+        uatlas = None
+        atlas = None
         multi_atlas = None
+        user_atlas_list = None
+
     min_length = args.ml
     if min_length:
         if (isinstance(min_length, list)) and (len(min_length) > 1):
@@ -1067,26 +1078,6 @@ def build_workflow(args, retval):
         "---------\n"
     )
 
-    # Hard-coded:
-    from pynets.core.utils import load_runconfig
-    hardcoded_params = load_runconfig()
-
-    maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
-    local_corr = hardcoded_params["clustering_local_conn"][0]
-    track_type = hardcoded_params['tracking']["tracking_method"][0]
-    tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
-    target_samples = hardcoded_params['tracking']["tracking_samples"][0]
-    use_parcel_naming = hardcoded_params["parcel_naming"][0]
-    step_list = hardcoded_params['tracking']["step_list"]
-    curv_thr_list = hardcoded_params['tracking']["curv_thr_list"]
-    nilearn_parc_atlases = hardcoded_params["nilearn_parc_atlases"]
-    nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
-    nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
-    local_atlases = hardcoded_params["local_atlases"]
-    template_name = hardcoded_params['template'][0]
-    roi_neighborhood_tol = \
-        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
-
     if track_type == "particle":
         tiss_class = "cmc"
 
@@ -1108,7 +1099,7 @@ def build_workflow(args, retval):
             max_thr is not None) and (step_thr is not None):
         multi_thr = True
     elif (min_thr is not None) or (max_thr is not None) or \
-        (step_thr is not None):
+            (step_thr is not None):
         print("ERROR: Missing either min_thr, max_thr, or step_thr flags!")
         retval["return_code"] = 1
         return retval
@@ -1178,7 +1169,7 @@ def build_workflow(args, retval):
 
     if (ID is None) and (func_file_list is None):
         print("\nERROR: You must include a subject ID in your command line "
-                "call.")
+              "call.")
         retval["return_code"] = 1
         return retval
 
@@ -1541,7 +1532,7 @@ def build_workflow(args, retval):
                   f"{Fore.BLUE}{conn_model}...")
 
     elif graph or multi_graph or multi_subject_graph or \
-        multi_subject_multigraph:
+            multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
 
         network = "custom_graph"
@@ -1558,7 +1549,7 @@ def build_workflow(args, retval):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif (uatlas is not None) and (user_atlas_list is None) and \
-            (k_clustering == 0):
+                (k_clustering == 0):
             atlas_par = uatlas.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
@@ -1715,7 +1706,7 @@ def build_workflow(args, retval):
             and (atlas is None)
         ):
             print(
-                "ERROR: the -ua flag cannot be used alone with the clustering"
+                "ERROR: the -a flag cannot be used alone with the clustering"
                 " option. Use the `-cm` flag instead."
             )
             retval["return_code"] = 1
@@ -1765,6 +1756,8 @@ def build_workflow(args, retval):
                 )
                 retval["return_code"] = 1
                 return retval
+            else:
+                print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
         else:
             if (
                 (uatlas is None)
@@ -1876,8 +1869,8 @@ def build_workflow(args, retval):
         else:
             for em in error_margin_list:
                 if float(roi_neighborhood_tol) <= float(em):
-                    print('\nERROR: roi_neighborhood_tol preset cannot be less '
-                          'than the value of the structural connectome '
+                    print('\nERROR: roi_neighborhood_tol preset cannot be '
+                          'less than the value of the structural connectome '
                           'error_margin parameter.')
                     retval["return_code"] = 1
                     return retval
@@ -1929,7 +1922,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Diffusion-Weighted Image:\n "
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
-                print(f"\nERROR: {dwi_file} does not exist. Ensure that you are"
+                print(f"\nERROR: {dwi_file} does not exist. "
+                      f"Ensure that you are"
                       f" only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -1948,7 +1942,8 @@ def build_workflow(args, retval):
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
-                print(f"\nERROR: {waymask} does not exist. Ensure that you are "
+                print(f"\nERROR: {waymask} does not exist. "
+                      f"Ensure that you are "
                       f"only specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
@@ -1973,8 +1968,8 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
                     print(f"\nERROR: {_func_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
+                          f"that you are only specifying "
+                          f"absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -1998,8 +1993,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
                 print(f"\nERROR: {conf} does not exist. Ensure "
-                 f"that you are only specifying "
-                 f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         multimodal = False
@@ -2011,17 +2006,17 @@ def build_workflow(args, retval):
             for _func_file in func_file_list:
                 print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{_func_file}")
                 if not os.path.isfile(_func_file):
-                    print(f"\nERROR: ERROR: {_func_file} does not exist. Ensure "
-                            f"that you are only specifying "
-                            f"absolute paths.")
+                    print(f"\nERROR: ERROR: {_func_file} does not exist. "
+                          f"Ensure that you are only specifying "
+                          f"absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
             print(f"{Fore.GREEN}BOLD Image:\n {Fore.BLUE}{func_file}")
             if not os.path.isfile(func_file):
                 print(f"\nERROR: {func_file} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if conf_list:
@@ -2030,16 +2025,16 @@ def build_workflow(args, retval):
                       f"{Fore.BLUE}{_conf}")
                 if not os.path.isfile(_conf):
                     print(f"\nERROR: {_conf} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
         elif conf:
             print(f"{Fore.GREEN}BOLD Confound Regressors:\n {Fore.BLUE}{conf}")
             if not os.path.isfile(conf):
                 print(f"\nERROR: {conf} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if dwi_file_list:
@@ -2050,22 +2045,22 @@ def build_workflow(args, retval):
                       f"{Fore.BLUE}{_dwi_file}")
                 if not os.path.isfile(_dwi_file):
                     print(f"\nERROR: {_dwi_file} does not exist."
-                                            f" Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f" Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
                 print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{_fbval}")
                 print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{_fbvec}")
                 if not os.path.isfile(_fbvec):
                     print(f"\nERROR: {_fbvec} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
                 if not os.path.isfile(_fbval):
                     print(f"\nERROR: {_fbval} does not exist. "
-                                            f"Ensure that you are only "
-                                            f"specifying absolute paths.")
+                          f"Ensure that you are only "
+                          f"specifying absolute paths.")
                     retval["return_code"] = 1
                     return retval
         else:
@@ -2073,31 +2068,31 @@ def build_workflow(args, retval):
                   f"{Fore.BLUE}{dwi_file}")
             if not os.path.isfile(dwi_file):
                 print(f"\nERROR: {dwi_file} does not exist. "
-                                        f"Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"Ensure "
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
             print(f"{Fore.GREEN}B-Values:\n {Fore.BLUE}{fbval}")
             print(f"{Fore.GREEN}B-Vectors:\n {Fore.BLUE}{fbvec}")
             if not os.path.isfile(fbvec):
                 print(f"\nERROR: {fbvec} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
             if not os.path.isfile(fbval):
                 print(f"\nERROR: {fbval} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
         if waymask is not None:
             print(f"{Fore.GREEN}Waymask:\n {Fore.BLUE}{waymask}")
             if not os.path.isfile(waymask):
                 print(f"\nERROR: {waymask} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
     else:
@@ -2107,8 +2102,8 @@ def build_workflow(args, retval):
         print(f"{Fore.GREEN}ROI:\n {Fore.BLUE}{roi}")
         if not os.path.isfile(roi):
             print(f"\nERROR: {roi} does not exist. Ensure "
-                                    f"that you are only specifying "
-                                    f"absolute paths.")
+                  f"that you are only specifying "
+                  f"absolute paths.")
             retval["return_code"] = 1
             return retval
     if anat_file or anat_file_list:
@@ -2127,8 +2122,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}T1-Weighted Image:\n {Fore.BLUE}{anat_file}")
             if not os.path.isfile(anat_file):
                 print(f"\nERROR: {anat_file} does not exist. "
-                                        f"Ensure that you are only "
-                                        f"specifying absolute paths.")
+                      f"Ensure that you are only "
+                      f"specifying absolute paths.")
                 retval["return_code"] = 1
                 return retval
 
@@ -2147,8 +2142,8 @@ def build_workflow(args, retval):
             print(f"{Fore.GREEN}Brain Mask Image:\n {Fore.BLUE}{mask}")
             if not os.path.isfile(mask):
                 print(f"\nERROR: {mask} does not exist. Ensure "
-                                        f"that you are only specifying "
-                                        f"absolute paths.")
+                      f"that you are only specifying "
+                      f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
     print(Style.RESET_ALL)
@@ -2413,6 +2408,7 @@ def build_workflow(args, retval):
                     "norm",
                     "binary",
                     "multimodal",
+                    "embed",
                 ]
             ),
             name="inputnode",
@@ -2454,6 +2450,7 @@ def build_workflow(args, retval):
         inputnode.inputs.norm = norm
         inputnode.inputs.binary = binary
         inputnode.inputs.multimodal = multimodal
+        inputnode.inputs.embed = embed
 
         if func_file or dwi_file:
             meta_wf = workflow_selector(
@@ -2604,8 +2601,10 @@ def build_workflow(args, retval):
             name="AggregateOutputs",
             imports=import_list,
         )
-        collect_pd_list_net_csv_node._n_procs = runtime_dict["AggregateOutputs"][0]
-        collect_pd_list_net_csv_node._mem_gb = runtime_dict["AggregateOutputs"][1]
+        collect_pd_list_net_csv_node._n_procs = \
+            runtime_dict["AggregateOutputs"][0]
+        collect_pd_list_net_csv_node._mem_gb = \
+            runtime_dict["AggregateOutputs"][1]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
@@ -2654,7 +2653,8 @@ def build_workflow(args, retval):
                     elif 'dwi' in op.dirname(graph):
                         outdir = f"{outdir}/dwi"
                 else:
-                    graph_name = op.basename(graph).split(op.splitext(graph)[1])[0]
+                    graph_name = op.basename(graph
+                                             ).split(op.splitext(graph)[1])[0]
                     print("Using single custom graph input...")
                     print(graph_name)
                     atlas = f"{graph_name}_{ID}"
@@ -2713,6 +2713,7 @@ def build_workflow(args, retval):
                         ("plot_switch", "plot_switch"),
                         ("multi_nets", "multi_nets"),
                         ("multimodal", "multimodal"),
+                        ("embed", "embed"),
                     ],
                 ),
                 (
@@ -3468,10 +3469,8 @@ def build_workflow(args, retval):
         if func_file:
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/func/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/func/*/*") if os.path.isfile(i)]:
+                [i for i in glob.glob(
+                    f"{subj_dir}/func/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_):
                     try:
                         os.remove(file_)
@@ -3480,10 +3479,8 @@ def build_workflow(args, retval):
         if dwi_file:
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*") if os.path.isfile(i)] + \
-                         [i for i in glob.glob(
-                    f"{subj_dir}/*/dwi/*/*") if os.path.isfile(i)]:
+                [i for i in glob.glob(
+                    f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
                     try:

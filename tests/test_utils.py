@@ -40,9 +40,11 @@ def test_save_coords_and_labels_to_json():
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
     network = 'Default'
+    indices = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
 
     nodes_path = utils.save_coords_and_labels_to_json(coords, labels,
-                                                      dir_path, network)
+                                                      dir_path, network,
+                                                      indices)
 
     assert os.path.isfile(nodes_path) is True
 
@@ -108,7 +110,9 @@ def test_check_est_path_existence():
     assert est_path_list_ex is not None
 
 
-def test_collect_pandas_df():
+@pytest.mark.parametrize("embed", [False, True])
+@pytest.mark.parametrize("plot_switch", [False, True])
+def test_collect_pandas_df(plot_switch, embed):
     """
     Test collect_pandas_df_make functionality
     """
@@ -118,11 +122,10 @@ def test_collect_pandas_df():
     multimodal = False
     network = None
     ID = '002'
-    plot_switch = False
     net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv")
                          if '_neat.csv' not in i]
     out = utils.collect_pandas_df(network, ID, net_mets_csv_list,
-                                  plot_switch, multi_nets, multimodal)
+                                  plot_switch, multi_nets, multimodal, embed)
     assert out is True
     assert isinstance(net_mets_csv_list, list)
     assert len(net_mets_csv_list) == 9
@@ -447,9 +450,9 @@ def test_timeout(s):
 
 
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
-def test_build_hp_dict(modality):
+def test_build_mp_dict(modality):
     import tempfile
-    from pynets.stats.benchmarking import build_hp_dict
+    from pynets.stats.utils import build_mp_dict
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")
@@ -458,24 +461,24 @@ def test_build_hp_dict(modality):
         file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_modality-func_rsn-Default_model-cov_template-MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
     elif modality == 'dwi':
         file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-dwi_model-csd_nodetype-parc_samples-10000streams_tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-1.0.npy"
-    gen_hyperparams = ['modality', 'model', 'nodetype', 'template']
+    gen_metaparams = ['modality', 'model', 'nodetype', 'template']
 
-    hyperparam_dict = {}
+    metaparam_dict = {}
     file_renamed = file_renamed.split('graphs/')[1]
-    hyperparam_dict, hyperparams = build_hp_dict(file_renamed,
+    metaparam_dict, metaparams = build_mp_dict(file_renamed,
                                                  modality,
-                                                 hyperparam_dict,
-                                                 gen_hyperparams)
+                                                 metaparam_dict,
+                                                 gen_metaparams)
 
     # test_build_sql_db
     if modality == 'func':
         import pandas as pd
         ID = '002'
-        hyperparams.append('atlas')
-        hyperparams.append('AUC')
+        metaparams.append('atlas')
+        metaparams.append('AUC')
         df_summary_auc = {'AUC': 0.8}
         db = utils.build_sql_db(dir_path, ID)
         db.create_modality_table('func')
-        db.add_hp_columns(hyperparams)
+        db.add_hp_columns(metaparams)
         db.add_row_from_df(pd.DataFrame([{'AUC': 0.8}], index=[0]),
-                           hyperparam_dict)
+                           metaparam_dict)
