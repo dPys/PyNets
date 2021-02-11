@@ -607,6 +607,34 @@ def get_node_membership(
     return coords_mm, RSN_parcels, net_labels, network
 
 
+def drop_badixs_from_parcellation(uatlas, bad_idxs):
+    import os
+    import nibabel as nib
+    import numpy as np
+    from nipype.utils.filemanip import fname_presuffix
+
+    parcellation_img = nib.load(uatlas)
+
+    bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
+
+    parlist_img_data = parcellation_img.get_fdata()
+    for val in bad_idxs:
+        print(f"Removing: {str(val)}...")
+        parlist_img_data[np.where(parlist_img_data == val)] = 0
+
+    parcellation = fname_presuffix(
+        uatlas, suffix="_pruned",
+        newpath=os.path.dirname(uatlas))
+    nib.save(
+        nib.Nifti1Image(parlist_img_data,
+                        affine=parcellation_img.affine),
+        parcellation)
+
+    print(f"{len(np.unique(parlist_img_data))} parcels remaining")
+    parcellation = enforce_hem_distinct_consecutive_labels(parcellation)[0]
+    return parcellation
+
+
 def parcel_masker(
         roi,
         coords,
@@ -670,8 +698,8 @@ def parcel_masker(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -758,9 +786,9 @@ def parcel_masker(
             del labels_adj[ix], coords_adj[ix], parcel_list_adj[ix]
     except RuntimeError as e:
         print(e,
-            "Restrictive masking. No parcels remain after masking with"
-            " brain mask/roi..."
-        )
+              "Restrictive masking. No parcels remain after masking with"
+              " brain mask/roi..."
+              )
 
     if not coords_adj:
         raise ValueError(
@@ -817,8 +845,8 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -891,9 +919,9 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             del labels[ix], coords[ix]
     except RuntimeError as e:
         print(e,
-            "Restrictive masking. No coords remain after masking with"
-            " brain mask/roi..."
-        )
+              "Restrictive masking. No coords remain after masking with"
+              " brain mask/roi..."
+              )
 
     if len(coords) <= 1:
         raise ValueError(
@@ -987,7 +1015,7 @@ def gen_img_list(uatlas):
     img_stack = []
     for idx in range(1, par_max + 1):
         roi_img = bna_data.astype("uint16") == \
-                  bna_data_for_coords_uniq[idx].astype("uint16")
+            bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
     img_stack = np.array(img_stack)
 
@@ -1117,7 +1145,7 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                 parlist_img_data[np.where(parlist_img_data == val)] = 0
 
             parcellation = fname_presuffix(
-            parcellation, suffix="_mod",
+                parcellation, suffix="_mod",
                 newpath=os.path.dirname(parcellation))
             nib.save(
                 nib.Nifti1Image(parlist_img_data,
@@ -1247,14 +1275,14 @@ def parcel_naming(coords, vox_size):
         labeling_atlases = hardcoded_params["labeling_atlases"]
     except KeyError as e:
         print(e,
-            "No labeling atlases listed in runconfig.yaml"
-        )
+              "No labeling atlases listed in runconfig.yaml"
+              )
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
@@ -1327,7 +1355,7 @@ def parcel_naming(coords, vox_size):
                     df_ref[
                         'region_index'] ==
                     int(label_dict[coord][label_atlas][
-                            'intensity'])]['label'].values[0]
+                        'intensity'])]['label'].values[0]
             except BaseException:
                 label_dict[coord][label_atlas]['label'] = "Unlabeled"
 
@@ -1350,24 +1378,22 @@ def parcel_naming(coords, vox_size):
 def get_brainnetome_node_attributes(node_files, emb_shape):
     import ast
     import re
-    from pynets.stats.prediction import parse_closest_ixs
+    from pynets.stats.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
     coords = [(i['coord']) for
-              i in node_dict]
+              i in node_dict.values()]
     if isinstance(node_dict[0]['label'], str):
         labels = [
             ast.literal_eval(
                 re.search('({.+})',
                           i['label']).group(0))[
                 'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
+            node_dict.values()]
     else:
-        labels = [
-            list(i['label'])[0][
-                'BrainnetomeAtlasFan2016'] for i in
-            node_dict]
+        labels = [i['label']['BrainnetomeAtlasFan2016'] for i in
+                  node_dict.values()]
 
     return coords, labels, ixs
 

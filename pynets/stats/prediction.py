@@ -6,14 +6,9 @@ Copyright (C) 2016
 """
 import pandas as pd
 import os
-import dill
-import re
-import glob
 import numpy as np
-import itertools
 import warnings
 from nipype.interfaces.base import (
-    BaseInterface,
     BaseInterfaceInputSpec,
     TraitedSpec,
     traits,
@@ -30,7 +25,7 @@ from sklearn import linear_model, decomposition
 from collections import OrderedDict
 from operator import itemgetter
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from pynets.core.utils import flatten, mergedicts
+from pynets.core.utils import flatten
 try:
     from sklearn.utils._testing import ignore_warnings
 except:
@@ -45,9 +40,11 @@ import_list = [
     "import re",
     "import glob",
     "import numpy as np",
-    "from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
+    "from sklearn.model_selection import KFold, StratifiedKFold, "
+    "GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
     "from sklearn.dummy import Dummyestimator",
-    "from sklearn.feature_selection import VarianceThreshold, SelectKBest, f_regression, f_classif",
+    "from sklearn.feature_selection import VarianceThreshold, SelectKBest, "
+    "f_regression, f_classif",
     "from sklearn.pipeline import Pipeline",
     "from sklearn.impute import SimpleImputer",
     "from sklearn.preprocessing import StandardScaler, MinMaxScaler",
@@ -64,51 +61,13 @@ import_list = [
     "from pathlib import Path",
     "from collections import OrderedDict",
     "from operator import itemgetter",
-    "from statsmodels.stats.outliers_influence import variance_inflation_factor",
+    "from statsmodels.stats.outliers_influence import "
+    "variance_inflation_factor",
     "from sklearn.impute import KNNImputer",
     "from pynets.core.utils import flatten",
     "import pickle",
     "import dill",
 ]
-
-
-def get_ensembles_embedding(modality, alg, base_dir):
-    if alg == "OMNI":
-        ensembles = list(
-            set(
-                [
-                    "rsn-"
-                    + os.path.basename(i).split(alg + "_")[1].split("_")[1]
-                    + "_res-"
-                    + os.path.basename(i).split(alg + "_")[1].split("_")[0]
-                    + "_"
-                    + os.path.basename(i).split(modality + "_")[1].replace(".npy", "")
-                    for i in glob.glob(
-                        f"{base_dir}/embeddings_all_{modality}/*/*/*/*{alg}*.npy"
-                    )
-                ]
-            )
-        )
-    elif alg == "ASE" or alg == "vectorize":
-        ensembles = list(
-            set(
-                [
-                    "rsn-"
-                    + os.path.basename(i).split(alg + "_")[1].split("_rawgraph")[0].split('_')[1]
-                    + "_res-"
-                    + os.path.basename(i).split(alg + "_")[1].split("_")[0]
-                    + "_"
-                    + os.path.basename(i)
-                        .split(modality + "_")[1]
-                        .replace(".npy", "")
-                    for i in glob.glob(
-                        f"{base_dir}/embeddings_all_{modality}/*/*/*/*{alg}*.npy")
-                ]
-            )
-        )
-    else:
-        ensembles = None
-    return ensembles
 
 
 # def stack_ensemble(X, y, estimator_files, meta_estimator):
@@ -124,112 +83,6 @@ def get_ensembles_embedding(modality, alg, base_dir):
 #     ensemble.add_meta(meta_estimator)
 #     ensemble.fit(X, y)
 #     return ensemble
-
-
-def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
-    topology_file = f"{base_dir}/all_subs_neat_{modality}.csv"
-    if os.path.isfile(topology_file):
-        df_top = pd.read_csv(topology_file)
-        if "Unnamed: 0" in df_top.columns:
-            df_top.drop(df_top.filter(regex="Unnamed: 0"), axis=1,
-                         inplace=True)
-        df_top = df_top.dropna(subset=["id"])
-        df_top = df_top.rename(
-            columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
-        )
-        df_top = df_top.rename(columns=lambda x: re.sub("_corr", "_model-corr", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_cov", "_model-cov", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_sfm", "_model-sfm", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csa", "_model-csa", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_tensor", "_model-tensor", x))
-        df_top = df_top.rename(columns=lambda x: re.sub("_csd", "_model-csd", x))
-        df_top = df_top.rename(
-            columns=lambda x: re.sub("thrtype-PROP", "thrtype-MST", x))
-        # df_top = df_top.dropna(how='all')
-        # df_top = df_top.dropna(axis='columns',
-        #                        thresh=drop_thr * len(df_top)
-        #                        )
-        if not df_top.empty and len(df_top.columns) > 1:
-            [df_top, ensembles] = graph_theory_prep(df_top, thr_type)
-            #print(df_top)
-            ensembles = [i for i in ensembles if i != "id"]
-        else:
-            ensembles = None
-            df_top = None
-    else:
-        ensembles = None
-        df_top = None
-    return ensembles, df_top
-
-
-def make_feature_space_dict(
-    base_dir,
-    ml_dfs,
-    df,
-    target_modality,
-    subject_dict,
-    ses,
-    modality_grids,
-    target_embedding_type,
-    mets=None,
-):
-    from joblib import Parallel, delayed
-    import tempfile
-    import gc
-
-    cache_dir = tempfile.mkdtemp()
-
-    if target_modality not in ml_dfs.keys():
-        ml_dfs[target_modality] = {}
-    if target_embedding_type not in ml_dfs[target_modality].keys():
-        ml_dfs[target_modality][target_embedding_type] = {}
-    grid_params = list(set(modality_grids[target_modality]))
-
-    grid_params_mod = []
-    if target_modality == "func":
-        for comb in grid_params:
-            try:
-                extract, hpass, model, res, atlas, smooth = comb
-            except:
-                try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
-                except:
-                    raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append((atlas, extract, hpass, model, res,
-                                    str(smooth)))
-    elif target_modality == "dwi":
-        for comb in grid_params:
-            try:
-                directget, minlength, model, res, atlas, tol = comb
-            except:
-                raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append((atlas, directget, minlength, model, res,
-                                    tol))
-
-    par_dict = subject_dict.copy()
-
-    with Parallel(
-        n_jobs=-1, backend='loky', verbose=10, temp_folder=cache_dir
-    ) as parallel:
-        outs = parallel(
-            delayed(create_feature_space)(
-                base_dir,
-                df,
-                grid_param,
-                par_dict,
-                ses,
-                target_modality,
-                target_embedding_type,
-                mets
-            )
-            for grid_param in grid_params_mod
-        )
-    for fs, grid_param in outs:
-        ml_dfs[target_modality][target_embedding_type][grid_param] = fs
-        del fs, grid_param
-    gc.collect()
-    return ml_dfs
 
 
 # We create a callable class, called `RazorCV`
@@ -281,8 +134,6 @@ class RazorCV(object):
     some user-defined target parameter (e.g. number of components, number of
     estimators, polynomial degree, cost, scale, number hidden units, weight
     decay, number of nearest neighbors, L1/L2 penalty, etc.).
-    See :ref:`sphx_glr_auto_examples_applications_plot_model_complexity_influence.py`
-    See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
     """
 
     def __init__(
@@ -394,12 +245,14 @@ class RazorCV(object):
         if self.greater_is_better is True:
             best_score_idx = np.argmax(best_mean_score)
             outstandard_error = (
-                best_mean_score[best_score_idx] - best_std_score[best_score_idx]
+                best_mean_score[best_score_idx] -
+                best_std_score[best_score_idx]
             )
         else:
             best_score_idx = np.argmin(best_mean_score)
             outstandard_error = (
-                best_mean_score[best_score_idx] + best_std_score[best_score_idx]
+                best_mean_score[best_score_idx] +
+                best_std_score[best_score_idx]
             )
         return outstandard_error
 
@@ -421,7 +274,8 @@ class RazorCV(object):
                 ]
             ]
         )
-        tests = np.array(list(itertools.combinations(range(folds.shape[1]), 2)))
+        tests = np.array(list(itertools.combinations(range(folds.shape[1]),
+                                                     2)))
 
         p_dict = {}
         i = 0
@@ -436,7 +290,8 @@ class RazorCV(object):
             raise ValueError(
                 "Models are all significantly different from one" " another"
             )
-        best_mean_score = self.cv_results["mean_test_" + self.scoring][unq_cols]
+        best_mean_score = self.cv_results["mean_test_" +
+                                          self.scoring][unq_cols]
         if self.greater_is_better is True:
             best_score_idx = np.argmax(best_mean_score)
         else:
@@ -691,33 +546,59 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
         # Grab mean
         means_exp_var = pipe_grid_cv.cv_results_[f"mean_test_{refit_score}"]
-        means_MSE = pipe_grid_cv.cv_results_[f"mean_test_neg_mean_squared_error"]
+        means_MSE = pipe_grid_cv.cv_results_[
+            f"mean_test_neg_mean_squared_error"]
 
         # Apply PCA in the case that the # of features exceeds the number of
         # observations
         if predict_type == 'classifier':
-            hyperparam_space = f"C-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__C']}"
+            c_best = pipe_grid_cv.best_estimator_.get_params()[
+                estimator_name + '__C']
+            hyperparam_space = \
+                f"C-{c_best}"
         elif predict_type == 'regressor':
-            hyperparam_space = f"alpha-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__alpha']}"
+            alpha_best = pipe_grid_cv.best_estimator_.get_params()[
+                estimator_name + '__alpha']
+            hyperparam_space = f"alpha-{alpha_best}"
         else:
             raise ValueError('Prediction method not recognized')
 
+        best_l1 = pipe_grid_cv.best_estimator_.get_params()[
+            estimator_name + '__l1_ratio']
         if pca_reduce is True and X.shape[0] < X.shape[1]:
+            best_n_comps = pipe_grid_cv.best_estimator_.named_steps[
+                'feature_select'].n_components
             if 'en' in estimator_name:
-                best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].n_components}"
+                best_estimator_name = \
+                    f"{predict_type}-" \
+                    f"{estimator_name}_" \
+                    f"{hyperparam_space}_l1ratio-" \
+                    f"{best_l1}_nfeatures-{best_n_comps}"
             else:
-                best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].n_components}"
+
+                best_estimator_name = f"{predict_type}-{estimator_name}" \
+                                      f"_{hyperparam_space}_nfeatures-" \
+                                      f"{best_n_comps}"
         else:
             if X.shape[1] < 25:
                 if 'en' in estimator_name:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_l1ratio-{best_l1}"
                 else:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}"
             else:
+                best_k = pipe_grid_cv.best_estimator_.named_steps[
+                    'feature_select'].k
                 if 'en' in estimator_name:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_l1ratio-{pipe_grid_cv.best_estimator_.get_params()[estimator_name + '__l1_ratio']}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].k}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_l1ratio-{best_l1}_nfeatures-{best_k}"
                 else:
-                    best_estimator_name = f"{predict_type}-{estimator_name}_{hyperparam_space}_nfeatures-{pipe_grid_cv.best_estimator_.named_steps['feature_select'].k}"
+                    best_estimator_name = \
+                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                        f"_nfeatures-{best_k}"
 
         means_all_exp_var[best_estimator_name] = np.nanmean(means_exp_var)
         means_all_MSE[best_estimator_name] = np.nanmean(means_MSE)
@@ -738,349 +619,28 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         pca = decomposition.PCA(
-            n_components=int(best_estimator.split("nfeatures-")[1].split('_')[0]),
+            n_components=int(best_estimator.split("nfeatures-")[1].split(
+                '_')[0]),
             whiten=True
         )
         reg = Pipeline([("feature_select", pca),
-                        (best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)])
+                        (best_estimator.split(f"{predict_type}-")[1].split(
+                            '_')[0], est)])
     else:
         if X.shape[1] < 25:
-            reg = Pipeline([(best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)])
+            reg = Pipeline([(best_estimator.split(
+                f"{predict_type}-")[1].split('_')[0], est)])
         else:
             kbest = SelectKBest(feature_selector,
-                                k=int(best_estimator.split("nfeatures-")[1].split('_')[0]))
+                                k=int(best_estimator.split(
+                                    "nfeatures-")[1].split('_')[0]))
             reg = Pipeline(
                 [("feature_select", kbest),
-                 (best_estimator.split(f"{predict_type}-")[1].split('_')[0], est)]
+                 (best_estimator.split(f"{predict_type}-")[1].split(
+                     '_')[0], est)]
             )
 
     return reg, best_estimator
-
-
-def build_grid(modality, hyperparam_dict, hyperparams, ensembles):
-    from pynets.stats.benchmarking import build_hp_dict
-
-    for ensemble in ensembles:
-        try:
-            build_hp_dict(ensemble, modality, hyperparam_dict, hyperparams)
-        except:
-            print(f"Failed to parse ensemble {ensemble}...")
-
-    if "rsn" in hyperparam_dict.keys():
-        hyperparam_dict["rsn"] = [i for i in hyperparam_dict["rsn"] if "res"
-                                  not in i]
-
-    hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(),
-                                         key=lambda x: x[0]))
-    grid = list(
-        itertools.product(*(hyperparam_dict[param] for param in
-                            hyperparam_dict.keys()))
-    )
-
-    return hyperparam_dict, grid
-
-
-def get_index_labels(base_dir, ID, ses, modality, grid_param, emb_shape):
-    import ast
-
-    node_files = glob.glob(
-        f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-"
-        f"{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
-
-    if len(node_files) > 0:
-        ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
-    else:
-        return [None]
-
-    # Correct labels/index if needed
-    if isinstance(node_dict, list):
-        if all(v is None for v in [i['label'] for i in node_dict]):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                node_dict_revised[i]['label'], node_dict_revised[i][
-                    'index'] = ast.literal_eval(
-                    node_dict[i]['index'].replace('\n', ','))
-            ixs = [i['index'] for i in node_dict_revised.values()]
-        else:
-            ixs = [i['index'] for i in node_dict]
-
-    else:
-        ixs = [i['index'] for i in node_dict.values()]
-
-    if emb_shape == len(ixs):
-        return ixs
-    else:
-        return [None]
-
-
-def node_files_search(node_files, emb_shape):
-    import ast
-    import json
-
-    if len(node_files) == 1:
-        with open(node_files[0],
-                  'r+') as f:
-            node_dict = json.load(f)
-        if isinstance(node_dict, list):
-            if all(v is None for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'], \
-                    node_dict_revised[i][
-                        'index'] = ast.literal_eval(
-                        node_dict[i]['index'].replace('\n', ','))
-                ixs_corr = [int(i['index']) for i in
-                            node_dict_revised.values()]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict]
-        else:
-            ixs_corr = [int(i['index'])
-                        for i
-                        in node_dict.values()]
-    else:
-        try:
-            with open(node_files[0],
-                      'r+') as f:
-                node_dict = json.load(
-                    f)
-            j = 0
-        except:
-            with open(node_files[1], 'r+') as f:
-                node_dict = json.load(f)
-            j = 1
-
-        if isinstance(node_dict, list):
-            if all(v is None for v in
-                   [i['label'] for i in node_dict]):
-                node_dict_revised = {}
-                for i in range(len(node_dict)):
-                    node_dict_revised[i] = {}
-                    node_dict_revised[i]['label'], \
-                    node_dict_revised[i][
-                        'index'] = ast.literal_eval(
-                        node_dict[i]['index'].replace('\n', ','))
-                ixs_corr = [int(k['index']) for k in
-                            node_dict_revised.values()]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict]
-        else:
-            ixs_corr = [int(i['index'])
-                        for i
-                        in node_dict.values()]
-
-        while len(ixs_corr) != emb_shape and j < len(
-            node_files):
-            try:
-                with open(node_files[j],
-                          'r+') as f:
-                    node_dict = json.load(
-                        f)
-            except:
-                j += 1
-                continue
-            if isinstance(node_dict, list):
-                if all(v is None for v in
-                       [i['label'] for i in node_dict]):
-                    node_dict_revised = {}
-                    for i in range(len(node_dict)):
-                        node_dict_revised[i] = {}
-                        node_dict_revised[i]['label'], \
-                        node_dict_revised[i][
-                            'index'] = ast.literal_eval(
-                            node_dict[i]['index'].replace('\n', ','))
-                    ixs_corr = [int(i['index']) for i in
-                                node_dict_revised.values()]
-                else:
-                    ixs_corr = [int(i['index'])
-                                for i
-                                in node_dict]
-            else:
-                ixs_corr = [int(i['index'])
-                            for i
-                            in node_dict.values()]
-            j += 1
-
-    return ixs_corr, node_dict
-
-
-def parse_closest_ixs(node_files, emb_shape):
-    if len(node_files) > 0:
-        node_files_named = [i for i in node_files if
-                      f"{emb_shape}" in i]
-        if len(node_files_named) > 0:
-            ixs_corr, node_dict = node_files_search(node_files_named, emb_shape)
-        else:
-            ixs_corr, node_dict = node_files_search(node_files, emb_shape)
-        return ixs_corr, node_dict
-    else:
-        print(UserWarning('Node files empty!'))
-        return [], {}
-
-
-def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
-                             grid_param, alg):
-
-    if grid_param in subject_dict[ID][str(ses)][modality][alg].keys():
-        rsn_dict = subject_dict[ID][str(ses)][modality][alg][grid_param]
-
-        if 'data' in rsn_dict.keys():
-            ixs = [i for i in rsn_dict['index'] if i is not None]
-
-            if not isinstance(rsn_dict["data"], np.ndarray):
-                data_path = rsn_dict["data"]
-                rsn_dict["data"] = np.load(data_path)
-
-            emb_shape = rsn_dict["data"].shape[0]
-
-            if len(ixs) != emb_shape:
-                node_files = glob.glob(
-                    f"{base_dir}/embeddings_all_{modality}/sub-{ID}/ses-{ses}/rsn-{grid_param[0]}_res-{grid_param[-2]}/nodes/*.json")
-                ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
-
-            if len(ixs) > 0:
-                if len(ixs) == emb_shape:
-                    rsn_arr = rsn_dict["data"].T.reshape(
-                        1, rsn_dict["data"].T.shape[0] * rsn_dict["data"].T.shape[1]
-                    )
-                    if rsn_dict["data"].shape[1] == 1:
-                        df_lps = pd.DataFrame(rsn_arr, columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1"
-                                                                for i in ixs])
-                    elif rsn_dict["data"].shape[1] == 3:
-                        df_lps = pd.DataFrame(
-                            rsn_arr,
-                            columns=[f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim1" for i in ixs]
-                            + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim2" for i in ixs]
-                            + [f"{i}_rsn-{grid_param[0]}_res-{grid_param[-2]}_dim3" for i in ixs],
-                        )
-                    else:
-                        raise ValueError(
-                            f"Number of dimensions {rsn_dict['data'].shape[1]} "
-                            f"not supported. See flatten_latent_positions "
-                            f"function..."
-                        )
-                    # print(df_lps)
-                else:
-                    print(
-                        f"Length of indices {len(ixs)} does not equal the "
-                        f"number of rows {rsn_dict['data'].shape[0]} in the "
-                        f"embedding-space for {ID} {ses} {modality} "
-                        f"{grid_param}. This means that at some point a"
-                        f" node index was dropped from the parcellation, but "
-                        f"not from the final graph..."
-                    )
-                    df_lps = None
-            else:
-                print(UserWarning(f"Missing indices for {grid_param} universe..."))
-                df_lps = None
-        else:
-            print(UserWarning(f"Missing {grid_param} universe..."))
-            df_lps = None
-    else:
-        print(UserWarning(f"Missing {grid_param} universe..."))
-        df_lps = None
-
-    return df_lps
-
-
-def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
-                         modality, alg, mets=None):
-    df_tmps = []
-
-    for ID in df["participant_id"]:
-        if ID not in subject_dict.keys():
-            print(f"ID: {ID} not found...")
-            continue
-
-        if str(ses) not in subject_dict[ID].keys():
-            print(f"Session: {ses} not found for ID {ID}...")
-            continue
-
-        if modality not in subject_dict[ID][str(ses)].keys():
-            print(f"Modality: {modality} not found for ID {ID}, "
-                  f"ses-{ses}...")
-            continue
-
-        if alg not in subject_dict[ID][str(ses)][modality].keys():
-            print(
-                f"Modality: {modality} not found for ID {ID}, ses-{ses}, "
-                f"{alg}..."
-            )
-            continue
-
-        if alg == "OMNI" or alg == "ASE":
-            df_lps = flatten_latent_positions(
-                base_dir, subject_dict, ID, ses, modality, grid_param, alg
-            )
-        else:
-            if grid_param in subject_dict[ID][str(ses)][modality][alg].keys():
-                df_lps = pd.DataFrame(
-                    subject_dict[ID][str(ses)][modality][alg][grid_param].T,
-                    columns=mets,
-                )
-            else:
-                df_lps = None
-
-        if df_lps is not None:
-            df_tmp = (
-                df[df["participant_id"] == ID]
-                .reset_index()
-                .drop(columns="index")
-                .join(df_lps, how="right")
-            )
-            df_tmps.append(df_tmp)
-            del df_tmp
-        else:
-            print(f"Feature-space null for ID {ID} & ses-{ses}, modality: "
-                  f"{modality}, embedding: {alg}...")
-            continue
-
-    if len(df_tmps) > 0:
-        dfs = [dff.set_index("participant_id"
-                             ) for dff in df_tmps if not dff.empty]
-        df_all = pd.concat(dfs, axis=0)
-        df_all = df_all.replace({0: np.nan})
-        # df_all = df_all.apply(lambda x: np.where(x < 0.00001, np.nan, x))
-        #print(len(df_all))
-        del df_tmps
-        return df_all, grid_param
-    else:
-        return pd.Series(np.nan), grid_param
-
-
-def graph_theory_prep(df, thr_type, drop_thr=0.50):
-    from sklearn.impute import KNNImputer
-    from sklearn.preprocessing import MinMaxScaler
-    cols = [
-        j
-        for j in set(
-            [i.split("_thrtype-" + thr_type + "_")[0] for i in
-             list(set(df.columns))]
-        )
-        if j != "id"
-    ]
-
-    id_col = df["id"]
-
-    df = df.dropna(thresh=len(df) * drop_thr, axis=1)
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    imp = KNNImputer(n_neighbors=7)
-    df = pd.DataFrame(
-        imp.fit_transform(scaler.fit_transform(df[[i for i in
-                                                   df.columns if i != "id"]])),
-        columns=[i for i in df.columns if i != "id"],
-    )
-
-    df = pd.concat([id_col, df], axis=1)
-
-    return df, cols
 
 
 def bootstrapped_nested_cv(
@@ -1089,13 +649,14 @@ def bootstrapped_nested_cv(
     predict_type='regressor',
     n_boots=10,
     var_thr=.50,
-    k_folds_outer=5,
-    k_folds_inner=5,
+    k_folds_outer=10,
+    k_folds_inner=10,
     pca_reduce=False,
     remove_multi=True,
-    std_dev=5,
+    std_dev=3,
     alpha=0.95,
-    missingness_thr=0.20,
+    missingness_thr=0.50,
+    zero_thr=0.50
 ):
 
     # y = df_all[target_var].values
@@ -1258,8 +819,9 @@ def bootstrapped_nested_cv(
         )
 
     # Drop sparse columns with >50% zeros
-    X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
-    X = X.loc[:, (X == 0).mean() < .50]
+    if zero_thr > 0:
+        X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
+        X = X.loc[:, (X == 0).mean() < zero_thr]
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
@@ -1306,10 +868,10 @@ def bootstrapped_nested_cv(
         elif predict_type == 'classifier':
             estimators = {
                 "en": linear_model.LogisticRegression(penalty='elasticnet',
-                                         solver='saga',
-                                         class_weight='balanced',
-                                         random_state=boot,
-                                         warm_start=True)
+                                                      solver='saga',
+                                                      class_weight='balanced',
+                                                      random_state=boot,
+                                                      warm_start=True)
             }
         else:
             raise ValueError('Prediction method not recognized')
@@ -1405,15 +967,18 @@ def bootstrapped_nested_cv(
         # Save the mean CV scores for this bootstrapped iteration
         grand_mean_best_estimator[boot] = best_estimator
         if predict_type == 'regressor':
-            grand_mean_best_score[boot] = np.nanmean(prediction["test_r2"][prediction["test_r2"]>0])
-            grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"])
-            # grand_mean_best_score[boot] = np.nanmean(prediction["test_r2"][(np.abs(stats.zscore(prediction["test_r2"])) < float(std_dev)).all(axis=0)])
-            # grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"][(np.abs(stats.zscore(prediction["test_neg_mean_squared_error"])) < float(std_dev)).all(axis=0)])
-            # grand_mean_y_predicted[boot] = final_est.predict(
-            #     X.drop(columns=just_lps))
+            grand_mean_best_score[boot] = np.nanmean(prediction[
+                "test_r2"][
+                prediction[
+                    "test_r2"] > 0])
+            grand_mean_best_error[boot] = -np.nanmean(prediction[
+                "test_neg_mean_"
+                "squared_error"])
         elif predict_type == 'classifier':
-            grand_mean_best_score[boot] = np.nanmean(prediction["test_f1"][prediction["test_f1"]>0])
-            grand_mean_best_error[boot] = -np.nanmean(prediction["test_neg_mean_squared_error"])
+            grand_mean_best_score[boot] = np.nanmean(
+                prediction["test_f1"][prediction["test_f1"] > 0])
+            grand_mean_best_error[boot] = -np.nanmean(
+                prediction["test_neg_mean_squared_error"])
         else:
             raise ValueError('Prediction method not recognized')
         grand_mean_y_predicted[boot] = final_est.predict(X)
@@ -1445,659 +1010,6 @@ def bootstrapped_nested_cv(
     )
 
 
-def make_subject_dict(
-    modalities, base_dir, thr_type, mets, embedding_types, template, sessions,
-    rsns):
-    from joblib import Parallel, delayed
-    from pynets.core.utils import mergedicts
-    import tempfile
-    import psutil
-    import shutil
-    import gc
-
-    hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
-    hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
-
-    miss_frames_all = []
-    subject_dict_all = {}
-    modality_grids = {}
-    for modality in modalities:
-        print(f"MODALITY: {modality}")
-        hyperparams = eval(f"hyperparams_{modality}")
-        for alg in embedding_types:
-            print(f"EMBEDDING TYPE: {alg}")
-            for ses_name in sessions:
-                if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-                    ids = [
-                        f"{os.path.basename(i)}_ses-{ses_name}"
-                        for i in
-                        glob.glob(f"{base_dir}/embeddings_all_{modality}/*")
-                        if os.path.basename(i).startswith("sub")
-                    ]
-                else:
-                    ids = [
-                        f"{os.path.basename(i)}_ses-{ses_name}"
-                        for i in glob.glob(f"{base_dir}/pynets/*")
-                        if os.path.basename(i).startswith("sub")
-                    ]
-
-                if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-                    df_top = None
-                    ensembles = get_ensembles_embedding(modality, alg,
-                                                        base_dir)
-                    if ensembles is None:
-                        print("No ensembles found.")
-                        continue
-                elif alg == "topology":
-                    ensembles, df_top = get_ensembles_top(
-                        modality, thr_type, f"{base_dir}/pynets"
-                    )
-                    if "missing" in df_top.columns:
-                        df_top.drop(columns="missing", inplace=True)
-
-                    if ensembles is None or df_top is None:
-                        print("Missing topology outputs.")
-                        continue
-                else:
-                    continue
-
-                ensembles = list(set([i for i in ensembles if i is not None]))
-
-                hyperparam_dict = {}
-
-                grid = build_grid(
-                    modality, hyperparam_dict, sorted(list(set(hyperparams))),
-                    ensembles)[1]
-
-                grid = list(set([i for i in grid if i != () and
-                                 len(list(i)) > 0]))
-
-                # In the case that we are using all of the 3 RSN connectomes
-                # (pDMN, coSN, and fECN) in the feature-space,
-                # rather than varying them as hyperparameters (i.e. we assume
-                # they each add distinct variance
-                # from one another) Create an abridged grid, where
-                if modality == "func":
-                    modality_grids[modality] = grid
-                else:
-                    modality_grids[modality] = grid
-
-                par_dict = subject_dict_all.copy()
-                cache_dir = tempfile.mkdtemp()
-
-                with Parallel(
-                    n_jobs=len(ids),
-                    backend='loky',
-                    verbose=1,
-                    max_nbytes=f"{int(float(list(psutil.virtual_memory())[4]/len(ids)))}M",
-                    temp_folder=cache_dir,
-                ) as parallel:
-                    outs_tup = parallel(
-                        delayed(populate_subject_dict)(
-                            id,
-                            modality,
-                            grid,
-                            par_dict,
-                            alg,
-                            base_dir,
-                            template,
-                            thr_type,
-                            mets,
-                            df_top,
-                        )
-                        for id in ids
-                    )
-                del par_dict
-                gc.collect()
-                outs = [i[0] for i in outs_tup]
-                miss_frames = [i[1] for i in outs_tup if not i[1].empty]
-                del outs_tup
-                if len(miss_frames) > 1:
-                    miss_frames = pd.concat(miss_frames)
-                miss_frames_all.append(miss_frames)
-                for d in outs:
-                    subject_dict_all = dict(mergedicts(subject_dict_all, d))
-                del outs, df_top, miss_frames
-                gc.collect()
-                shutil.rmtree(cache_dir, ignore_errors=True)
-            del ses_name, grid, hyperparam_dict
-            gc.collect()
-        del alg, hyperparams
-        gc.collect()
-    del modality
-    gc.collect()
-
-    return subject_dict_all, modality_grids, miss_frames_all
-
-
-def populate_subject_dict(
-    id,
-    modality,
-    grid,
-    subject_dict,
-    alg,
-    base_dir,
-    template,
-    thr_type,
-    mets=None,
-    df_top=None,
-):
-    from colorama import Fore, Style
-    from joblib import Parallel, delayed
-    import gc
-
-    # print(id)
-    ID = id.split("_")[0].split("sub-")[1]
-    ses = id.split("_")[1].split("ses-")[1]
-
-    completion_status = f"{Fore.GREEN}✓{Style.RESET_ALL}"
-
-    if ID not in subject_dict.keys():
-        subject_dict[ID] = {}
-
-    if ses not in subject_dict[ID].keys():
-        subject_dict[ID][ses] = {}
-
-    if modality not in subject_dict[ID][ses].keys():
-        subject_dict[ID][ses][modality] = {}
-
-    if alg not in subject_dict[ID][ses][modality].keys():
-        subject_dict[ID][ses][modality][alg] = {}
-
-    subject_dict[ID][ses][modality][alg] = dict.fromkeys(grid, np.nan)
-
-    missingness_frame = pd.DataFrame(columns=["id", "ses", "modality", "alg",
-                                              "grid"])
-
-    # Functional case
-    if modality == "func":
-        with Parallel(
-            n_jobs=4,
-            require='sharedmem',
-            verbose=1,
-        ) as parallel:
-            parallel(
-                delayed(func_grabber)(comb, subject_dict, missingness_frame,
-                                      completion_status,
-                                      ID, ses, modality, alg, mets, thr_type,
-                                      base_dir,
-                                      template,
-                                      df_top)
-                for comb in grid
-            )
-
-    # Structural case
-    elif modality == "dwi":
-        with Parallel(
-            n_jobs=4,
-            require='sharedmem',
-            verbose=1,
-        ) as parallel:
-            parallel(
-                delayed(dwi_grabber)(comb, subject_dict, missingness_frame,
-                                      completion_status,
-                                      ID, ses, modality, alg, mets, thr_type,
-                                      base_dir,
-                                      template,
-                                      df_top)
-                for comb in grid
-            )
-    print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-    del modality, ID, ses, df_top
-    gc.collect()
-    return subject_dict, missingness_frame
-
-
-def dwi_grabber(comb, subject_dict, missingness_frame, completion_status,
-                 ID, ses, modality, alg, mets, thr_type, base_dir, template,
-                 df_top):
-    from pynets.core.utils import filter_cols_from_targets
-    from colorama import Fore, Style
-    import gc
-
-    try:
-        directget, minlength, model, res, atlas, tol = comb
-    except BaseException:
-        print(UserWarning(f"Failed to parse recipe: {comb}"))
-        completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-        print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-        return subject_dict, missingness_frame, completion_status
-
-    comb_tuple = (atlas, directget, minlength, model, res, tol)
-    # print(comb_tuple)
-    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-    if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-        embeddings = glob.glob(
-            f"{base_dir}/embeddings_all"
-            f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas}_"
-            f"res-{res}/gradient*{alg}*{res}*{atlas}*{ID}"
-            f"*modality-{modality}*model-{model}"
-            f"*template-{template}*directget-"
-            f"{directget}"
-            f"*minlength-{minlength}*tol-{tol}*npy"
-        )
-        if len(embeddings) == 0 and 'RUM' in atlas:
-            embeddings = glob.glob(
-                f"{base_dir}/embeddings_all"
-                f"_{modality}/sub-{ID}/ses-{ses}/rsn-{atlas.replace('RUM', '')}_"
-                f"res-{res}/"
-                f"gradient*{alg}*{res}*{atlas.replace('RUM', '')}*{ID}"
-                f"*modality-{modality}*model-{model}"
-                f"*template-{template}*directget-"
-                f"{directget}"
-                f"*minlength-{minlength}*tol-{tol}*npy"
-            )
-        if len(embeddings) == 0:
-            print(
-                f"No structural embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}..."
-            )
-            missingness_frame = missingness_frame.append(
-                {
-                    "id": ID,
-                    "ses": ses,
-                    "modality": modality,
-                    "alg": alg,
-                    "grid": comb_tuple,
-                },
-                ignore_index=True,
-            )
-            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-            return subject_dict, missingness_frame, completion_status
-        elif len(embeddings) == 1:
-            embedding = embeddings[0]
-        else:
-            embeddings_raw = [i for i in embeddings if "thrtype" not
-                              in i]
-            if len(embeddings_raw) == 1:
-                embedding = embeddings[0]
-
-            elif len(embeddings_raw) > 1:
-                sorted_embeddings = sorted(embeddings_raw,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
-            else:
-                sorted_embeddings = sorted(embeddings,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
-
-        if os.path.isfile(embedding):
-            # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-            ixs = get_index_labels(base_dir, ID, ses, modality,
-                                   comb_tuple,
-                                   np.load(embedding).shape[0])
-            if (
-                alg
-                not in subject_dict[ID][ses][modality][alg][
-                comb_tuple].keys()
-            ):
-                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-            subject_dict[ID][ses][modality][alg][comb_tuple][
-                "data"] = embedding
-            # print(data)
-        else:
-            print(
-                f"Structural embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}..."
-            )
-            missingness_frame = missingness_frame.append(
-                {
-                    "id": ID,
-                    "ses": ses,
-                    "modality": modality,
-                    "alg": alg,
-                    "grid": comb_tuple,
-                },
-                ignore_index=True,
-            )
-            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-            return subject_dict, missingness_frame, completion_status
-    elif alg == "topology":
-        data = np.empty([len(mets), 1], dtype=np.float32)
-        data[:] = np.nan
-        targets = [
-            f"minlength-{minlength}",
-            f"directget-{directget}",
-            f"model-{model}",
-            f"res-{res}",
-            f"rsn-{atlas}",
-            f"tol-{tol}",
-            f"thrtype-{thr_type}",
-        ]
-
-        cols = filter_cols_from_targets(df_top, targets)
-        i = 0
-        for met in mets:
-            col_met = [j for j in cols if met in j]
-            if len(col_met) == 1:
-                col = col_met[0]
-            elif len(col_met) > 1:
-                print(f"Multiple columns detected: {col_met}")
-                col = col_met[0]
-            else:
-                print(
-                    f"Structural topology not found for {ID}, "
-                    f"{met}, and recipe {comb_tuple}..."
-                )
-                data[i] = np.nan
-                i += 1
-                missingness_frame = missingness_frame.append(
-                    {
-                        "id": ID,
-                        "ses": ses,
-                        "modality": modality,
-                        "alg": alg,
-                        "grid": comb_tuple,
-                    },
-                    ignore_index=True,
-                )
-                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                print(
-                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-                return subject_dict, missingness_frame, completion_status
-
-            out = df_top[df_top["id"] == "sub-" + ID + "_ses-" + ses][
-                col
-            ].values
-            if len(out) == 0:
-                print(
-                    f"Structural topology not found for {ID}, "
-                    f"{met}, and recipe {comb_tuple}..."
-                )
-                data[i] = np.nan
-            else:
-                data[i] = out
-
-            del col, out
-            i += 1
-        if (np.abs(data) < 0.0000001).all():
-            data[:] = np.nan
-        elif (np.abs(data) < 0.0000001).any():
-            data[data < 0.0000001] = np.nan
-        subject_dict[ID][ses][modality][alg][comb_tuple] = data
-        # print(data)
-    del comb, comb_tuple
-    gc.collect()
-
-    return subject_dict, missingness_frame, completion_status
-
-
-def func_grabber(comb, subject_dict, missingness_frame, completion_status,
-                 ID, ses, modality, alg, mets, thr_type, base_dir, template,
-                 df_top):
-    from pynets.core.utils import filter_cols_from_targets
-    from colorama import Fore, Style
-    import gc
-
-    try:
-        extract, hpass, model, res, atlas, smooth = comb
-    except:
-        try:
-            extract, hpass, model, res, atlas = comb
-            smooth = "0"
-        except BaseException:
-            print(UserWarning(f"Failed to parse recipe: {comb}"))
-            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-            return subject_dict, missingness_frame, completion_status
-
-    comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
-    # print(comb_tuple)
-    subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-    if alg == "ASE" or alg == "OMNI" or alg == "vectorize":
-        if smooth == "0":
-            embeddings = [
-                i
-                for i in glob.glob(
-                    f"{base_dir}/embeddings_all_"
-                    f"{modality}/sub-{ID}/ses-{ses}/rsn-"
-                    f"{atlas}_res-{res}/"
-                    f"gradient-{alg}_{res}_*{ID}"
-                    f"*modality-{modality}*model-"
-                    f"{model}*template-{template}*"
-                    f"hpass-{hpass}Hz*extract-"
-                    f"{extract}*npy"
-                )
-                if "smooth" not in i
-            ]
-        else:
-            embeddings = [
-                i
-                for i in glob.glob(
-                    f"{base_dir}/embeddings_all_"
-                    f"{modality}/sub-{ID}/ses-{ses}/"
-                    f"rsn-{atlas}"
-                    f"_res-{res}/"
-                    f"gradient*{alg}*{res}*"
-                    f"*{ID}*modality-{modality}*model-"
-                    f"{model}*template-{template}*"
-                    f"hpass-{hpass}Hz*extract-"
-                    f"{extract}*npy"
-                )
-                if f"smooth-{smooth}fwhm" in i
-            ]
-        if len(embeddings) == 0:
-            if smooth == "0":
-                embeddings = [
-                    i
-                    for i in glob.glob(
-                        f"{base_dir}/embeddings_all_"
-                        f"{modality}/sub-{ID}/ses-{ses}"
-                        f"/rsn-"
-                        f"{atlas}_res-{res}/"
-                        f"gradient*{alg}*{res}*"
-                        f"{atlas}*{ID}"
-                        f"*modality-{modality}*model-"
-                        f"{model}*template-{template}*"
-                        f"hpass-{hpass}Hz*extract-"
-                        f"{extract}*npy"
-                    )
-                    if "smooth" not in i
-                ]
-            else:
-                embeddings = [
-                    i
-                    for i in glob.glob(
-                        f"{base_dir}/embeddings_all_"
-                        f"{modality}/sub-{ID}/ses-{ses}"
-                        f"/rsn-{atlas}"
-                        f"_res-{res}/"
-                        f"gradient*{alg}*{res}*{atlas}"
-                        f"*{ID}*modality-{modality}*model-"
-                        f"{model}*template-{template}*"
-                        f"hpass-{hpass}Hz*extract-"
-                        f"{extract}*npy"
-                    )
-                    if f"smooth-{smooth}fwhm" in i
-                ]
-        if len(embeddings) == 0:
-            print(
-                f"No functional embeddings found for {ID} and"
-                f" recipe {comb_tuple} & {alg}..."
-            )
-            missingness_frame = missingness_frame.append(
-                {
-                    "id": ID,
-                    "ses": ses,
-                    "modality": modality,
-                    "alg": alg,
-                    "grid": comb_tuple,
-                },
-                ignore_index=True,
-            )
-            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-            return subject_dict, missingness_frame, completion_status
-
-        elif len(embeddings) == 1:
-            embedding = embeddings[0]
-        else:
-            embeddings_raw = [i for i in embeddings if "thrtype"
-                              not in i]
-            if len(embeddings_raw) == 1:
-                embedding = embeddings[0]
-
-            elif len(embeddings_raw) > 1:
-                sorted_embeddings = sorted(embeddings_raw,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
-            else:
-                sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" recipe {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
-
-        if os.path.isfile(embedding):
-            # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
-            try:
-                ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       comb_tuple, np.load(embedding).shape[0])
-            except BaseException:
-                print(f"Failed to load {embedding} for {ID}-{ses}")
-                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                print(
-                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-                return subject_dict, missingness_frame, completion_status
-            if (
-                alg
-                not in subject_dict[ID][ses][modality][alg][comb_tuple].keys()
-            ):
-                subject_dict[ID][ses][modality][alg][comb_tuple] = {}
-            subject_dict[ID][ses][modality][alg][comb_tuple]["index"] = ixs
-            # subject_dict[ID][ses][modality][alg][comb_tuple]["labels"] = labels
-            subject_dict[ID][ses][modality][alg][comb_tuple][
-                "data"] = embedding
-            # print(data)
-        else:
-            print(
-                f"Functional embedding not found for {ID} and"
-                f" recipe {comb_tuple} & {alg}..."
-            )
-            missingness_frame = missingness_frame.append(
-                {
-                    "id": ID,
-                    "ses": ses,
-                    "modality": modality,
-                    "alg": alg,
-                    "grid": comb_tuple,
-                },
-                ignore_index=True,
-            )
-            completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-            print(f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-            return subject_dict, missingness_frame, completion_status
-
-    elif alg == "topology":
-        data = np.empty([len(mets), 1], dtype=np.float32)
-        data[:] = np.nan
-        if smooth == '0':
-            targets = [
-                f"extract-{extract}",
-                f"hpass-{hpass}Hz",
-                f"model-{model}",
-                f"res-{res}",
-                f"rsn-{atlas}",
-                f"thrtype-{thr_type}",
-            ]
-        else:
-            targets = [
-                f"extract-{extract}",
-                f"hpass-{hpass}Hz",
-                f"model-{model}",
-                f"res-{res}",
-                f"rsn-{atlas}",
-                f"smooth-{smooth}fwhm",
-                f"thrtype-{thr_type}",
-            ]
-
-        cols = filter_cols_from_targets(df_top, targets)
-        i = 0
-        for met in mets:
-            col_met = [j for j in cols if met in j]
-            if len(col_met) == 1:
-                col = col_met[0]
-            elif len(col_met) > 1:
-                if comb_tuple[-1] == '0':
-                    col = [i for i in col_met if "fwhm" not in i][0]
-                else:
-                    print(f"Multiple columns detected: {col_met}")
-                    col = col_met[0]
-            else:
-                data[i] = np.nan
-                i += 1
-                missingness_frame = missingness_frame.append(
-                    {
-                        "id": ID,
-                        "ses": ses,
-                        "modality": modality,
-                        "alg": alg,
-                        "grid": comb_tuple,
-                    },
-                    ignore_index=True,
-                )
-                completion_status = f"{Fore.RED}X{Style.RESET_ALL}"
-                print(
-                    f"ID: {ID}, SESSION: {ses}, COMPLETENESS: {completion_status}")
-                return subject_dict, missingness_frame, completion_status
-
-            out = df_top[df_top["id"] == f"sub-{ID}_ses-{ses}"][col].values
-            if len(out) == 0:
-                print(
-                    f"Functional topology not found for {ID}, {met}, "
-                    f"and recipe {comb_tuple}..."
-                )
-                data[i] = np.nan
-            else:
-                data[i] = out
-
-            del col, out
-            i += 1
-        if (np.abs(data) < 0.0000001).all():
-            data[:] = np.nan
-        elif (np.abs(data) < 0.0000001).any():
-            data[data < 0.0000001] = np.nan
-        subject_dict[ID][ses][modality][alg][comb_tuple] = data
-        # print(data)
-    del comb, comb_tuple
-    gc.collect()
-
-    return subject_dict, missingness_frame, completion_status
-
-
-def cleanNullTerms(d):
-    clean = {}
-    for k, v in d.items():
-        if isinstance(v, dict):
-            nested = cleanNullTerms(v)
-            if len(nested.keys()) > 0:
-                clean[k] = nested
-        elif v is not None and v is not np.nan:
-            clean[k] = v
-    return clean
-
-
 def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
     import pandas as pd
     from time import sleep
@@ -2122,7 +1034,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
 
     if str(grid_param) in data_loaded.keys():
         df_all = pd.read_json(data_loaded[str(grid_param)])
-        if df_all[target_var].isin([np.nan,1]).all():
+        if df_all[target_var].isin([np.nan, 1]).all():
             df_all[target_var] = df_all[target_var].replace({np.nan: 0})
         if df_all is None:
             return None, None
@@ -2130,22 +1042,17 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
             df_all = df_all.loc[:, ~df_all.columns.duplicated()]
             df_all.reset_index(level=0, inplace=True)
             df_all.rename(columns={"index": "id"}, inplace=True)
-            # Remove incomplete cases
-            # df_all = df_all.loc[
-            #     (df_all["id"] != "s057")
-            #     & (df_all["id"] != "s054")
-            #     & (df_all["id"] != "25667")
-            #     & (df_all["id"] != "A00076381")
-            #     & (df_all["id"] != "25853")
-            #     ]
             if (
                 all(
                     df_all.drop(
                         columns=[
                             "id",
+                            "participant_id",
                             "age",
                             "num_visits",
-                            "sex"
+                            "sex",
+                            "dataset",
+                            "DAY_LAG"
                         ]
                     )
                     .isnull()
@@ -2158,9 +1065,12 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                             df_all.drop(
                                 columns=[
                                     "id",
+                                    "participant_id",
                                     "age",
                                     "num_visits",
-                                    "sex"
+                                    "sex",
+                                    "dataset",
+                                    "DAY_LAG"
                                 ]
                             )
                         )
@@ -2182,6 +1092,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
               "skipping...\n")
         return None, None
     elif len(df_all) > 50:
+        drop_cols = [i for i in drop_cols if i in df_all.columns]
         return df_all.drop(columns=drop_cols), df_all[target_var].values
     else:
         print("\nEmpty/Missing Feature-space...\n")
@@ -2250,18 +1161,22 @@ class copy_json_dict(SimpleInterface):
 
         #time.sleep(random.randint(1, 30))
         if self.inputs.feature_spaces is not None and self.inputs.modality is \
-            not None and self.inputs.embedding_type is not None and \
-            self.inputs.target_var is not None:
+                not None and self.inputs.embedding_type is not None and \
+                self.inputs.target_var is not None:
             input_dict_tmp = self.inputs.feature_spaces[
                 f"{self.inputs.modality}_{self.inputs.embedding_type}"
             ]
             json_dict = fname_presuffix(
-                input_dict_tmp, suffix=f"_{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json",
+                input_dict_tmp, suffix=f"_{run_uuid}_{self.inputs.modality}_"
+                                       f"{self.inputs.embedding_type}_"
+                                       f"{self.inputs.target_var}.json",
                 newpath=runtime.cwd
             )
             copyfile(input_dict_tmp, json_dict, use_hardlink=False)
         else:
-            json_dict = f"{runtime.cwd}/{run_uuid}_{self.inputs.modality}_{self.inputs.embedding_type}_{self.inputs.target_var}.json"
+            json_dict = f"{runtime.cwd}/{run_uuid}_{self.inputs.modality}_" \
+                        f"{self.inputs.embedding_type}_" \
+                        f"{self.inputs.target_var}.json"
             os.mknod(json_dict)
 
         # time.sleep(random.randint(1, 30))
@@ -2311,16 +1226,16 @@ class MakeXY(SimpleInterface):
 
         if self.inputs.json_dict is not None:
             if os.path.isfile(self.inputs.json_dict) and \
-                self.inputs.json_dict.endswith('.json') and \
-                os.stat(self.inputs.json_dict).st_size != 0:
+                    self.inputs.json_dict.endswith('.json') and \
+                    os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype", "dep_1",
-                                 "rum_1", "rum_2", "dep_2"]
+                                 "depression_persist_phenotype",
+                                 "dep_2", "rum_2"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
-                                 "dep_1", "rum_1", "dep_2", "rum_2"]
+                                 "rum_1", "dep_2", "rum_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -2340,12 +1255,14 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "dep_2", "dep_1"]
+                                 "dep_2"]
                 else:
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
                                  "depression_persist_phenotype",
                                  "dep_1", "rum_1"]
+
+                drop_cols = drop_cols + ["id", "participant_id"]
 
                 [X, Y] = make_x_y(
                     self.inputs.json_dict,
@@ -2448,14 +1365,14 @@ class BSNestedCV(SimpleInterface):
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
                                                predict_type=predict_type,
-                                               missingness_thr=0.20,
-                                               std_dev=3)
+                                               var_thr=.20, zero_thr=0.75)
                 if final_est:
+                    grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
                                    f"{self.inputs.target_var}_" \
                                    f"{self.inputs.modality}_" \
                                    f"{self.inputs.embedding_type}_" \
-                                   f"{self.inputs.grid_param.replace(', ', '_')}.joblib"
+                                   f"{grid_param_name}.joblib"
 
                     dump(final_est, out_path_est)
                 else:
@@ -2464,7 +1381,8 @@ class BSNestedCV(SimpleInterface):
                 if len(mega_feat_imp_dict.keys()) > 1:
                     print(
                         f"\n\n{Fore.BLUE}Target Outcome: "
-                        f"{Fore.GREEN}{self.inputs.target_var}{Style.RESET_ALL}"
+                        f"{Fore.GREEN}{self.inputs.target_var}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"{Fore.BLUE}Modality: "
@@ -2472,7 +1390,8 @@ class BSNestedCV(SimpleInterface):
                     )
                     print(
                         f"{Fore.BLUE}Embedding type: "
-                        f"{Fore.RED}{self.inputs.embedding_type}{Style.RESET_ALL}"
+                        f"{Fore.RED}{self.inputs.embedding_type}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"{Fore.BLUE}Grid Params: "
@@ -2480,7 +1399,8 @@ class BSNestedCV(SimpleInterface):
                     )
                     print(
                         f"{Fore.BLUE}Best Estimator: "
-                        f"{Fore.RED}{grand_mean_best_estimator}{Style.RESET_ALL}"
+                        f"{Fore.RED}{grand_mean_best_estimator}"
+                        f"{Style.RESET_ALL}"
                     )
                     print(
                         f"\n{Fore.BLUE}Variance: "
@@ -2494,7 +1414,8 @@ class BSNestedCV(SimpleInterface):
                     #print(f"y_predicted: {grand_mean_y_predicted}")
                     print(
                         f"{Fore.BLUE}Feature Importance: "
-                        f"{Fore.RED}{list(mega_feat_imp_dict.keys())}{Style.RESET_ALL} "
+                        f"{Fore.RED}{list(mega_feat_imp_dict.keys())}"
+                        f"{Style.RESET_ALL} "
                         f"with {Fore.RED}{len(mega_feat_imp_dict.keys())} "
                         f"features...{Style.RESET_ALL}\n\n"
                     )
@@ -2585,8 +1506,8 @@ class MakeDF(SimpleInterface):
             lower = max(0.0, np.nanpercentile(stats, p))
             p = (alpha + ((1.0 - alpha) / 2.0)) * 100
             upper = min(1.0, np.nanpercentile(stats, p))
-            print('%.1f confidence interval %.1f%% and %.1f%%' % (
-                alpha * 100, lower * 100, upper * 100))
+            # print('%.1f confidence interval %.1f%% and %.1f%%' % (
+            #     alpha * 100, lower * 100, upper * 100))
             return lower, upper
 
         df_summary = pd.DataFrame(
@@ -2617,7 +1538,7 @@ class MakeDF(SimpleInterface):
         df_summary.at[0, "grid"] = tuple(literal_eval(self.inputs.grid_param))
 
         if bool(self.inputs.grand_mean_best_score) is True and \
-            len(self.inputs.mega_feat_imp_dict.keys()) > 1:
+                len(self.inputs.mega_feat_imp_dict.keys()) > 1:
             y_pred_boots = [i for i in
                             list(self.inputs.grand_mean_y_predicted.values())
                             if not np.isnan(i).all()]
@@ -2648,14 +1569,30 @@ class MakeDF(SimpleInterface):
             df_summary.at[0, "Error"] = np.mean(
                 list(self.inputs.grand_mean_best_error.values())
             )
-            df_summary.at[0, "Score_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[1]
-            df_summary.at[0, "Score_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.95)[0]
-            df_summary.at[0, "Score_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[1]
-            df_summary.at[0, "Score_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_score.values()), alpha=0.90)[0]
-            df_summary.at[0, "Error_95CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[1]
-            df_summary.at[0, "Error_95CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.95)[0]
-            df_summary.at[0, "Error_90CI_upper"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[1]
-            df_summary.at[0, "Error_90CI_lower"] = get_CI(list(self.inputs.grand_mean_best_error.values()), alpha=0.90)[0]
+            df_summary.at[0, "Score_95CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.95)[1]
+            df_summary.at[0, "Score_95CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.95)[0]
+            df_summary.at[0, "Score_90CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.90)[1]
+            df_summary.at[0, "Score_90CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_score.values()),
+                alpha=0.90)[0]
+            df_summary.at[0, "Error_95CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.95)[1]
+            df_summary.at[0, "Error_95CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.95)[0]
+            df_summary.at[0, "Error_90CI_upper"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.90)[1]
+            df_summary.at[0, "Error_90CI_lower"] = get_CI(
+                list(self.inputs.grand_mean_best_error.values()),
+                alpha=0.90)[0]
             df_summary.at[0, "lp_importance"] = np.array(
                 list(self.inputs.mega_feat_imp_dict.keys())
             )
@@ -2702,8 +1639,8 @@ def create_wf(grid_params_mod, basedir):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_wf = pe.Workflow(name=f"ensemble_connectometry_{run_uuid}")
-    os.makedirs(f"/{basedir}/{run_uuid}", exist_ok=True)
-    ml_wf.base_dir = f"/{basedir}/{run_uuid}"
+    os.makedirs(f"{basedir}/{run_uuid}", exist_ok=True)
+    ml_wf.base_dir = f"{basedir}/{run_uuid}"
 
     inputnode = pe.Node(
         niu.IdentityInterface(
@@ -2737,7 +1674,8 @@ def create_wf(grid_params_mod, basedir):
     make_df_node.interface._mem_gb = 1
 
     df_join_node = pe.JoinNode(
-        niu.IdentityInterface(fields=["df_summary", "modality", "embedding_type",
+        niu.IdentityInterface(fields=["df_summary", "modality",
+                                      "embedding_type",
                                       "target_var", "grid_param"]),
         name="df_join_node",
         joinfield=["df_summary", "grid_param"],
@@ -2892,15 +1830,14 @@ def build_predict_workflow(args, retval, verbose=True):
                     smooth = "0"
                 except:
                     raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([atlas, extract, hpass, model, res,
-                                    str(smooth)])
+            grid_params_mod.append([extract, hpass, model, res, atlas, smooth])
     elif modality == "dwi":
         for comb in grid_param_combos:
             try:
                 directget, minlength, model, res, atlas, tol = comb
             except:
                 raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([atlas, directget, minlength, model, res,
+            grid_params_mod.append([directget, minlength, model, res, atlas,
                                     tol])
 
     meta_inputnode = pe.Node(

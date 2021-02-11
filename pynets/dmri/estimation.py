@@ -48,7 +48,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    data = nib.load(dwi_file, mmap=False).get_fdata()
+    data = nib.load(dwi_file, mmap=False).get_fdata(dtype=np.float32)
 
     print("Generating tensor FA image to use for registrations...")
     nodif_B0_img = nib.load(B0_mask, mmap=False)
@@ -144,8 +144,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     else:
         print("Generating anisotropic power map to use for registrations...")
         nodif_B0_img = nib.load(B0_mask)
-
-        dwi_data = np.asarray(img.dataobj, dtype=np.float32)
+        dwi_data = img.get_fdata(dtype=np.float32)
         for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
             dwi_data = np.delete(dwi_data, b0, 3)
 
@@ -161,6 +160,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
         del anisomap
+        img.uncache()
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
@@ -363,7 +363,7 @@ def sfm_mod_est(gtab, data, B0_mask):
 
 
 def streams2graph(
-    atlas_mni,
+    atlas_for_streams,
     streams,
     dir_path,
     track_type,
@@ -394,8 +394,8 @@ def streams2graph(
 
     Parameters
     ----------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     dir_path : str
@@ -458,8 +458,8 @@ def streams2graph(
 
     Returns
     -------
-    atlas_mni : str
-        File path to atlas parcellation Nifti1Image in T1w-warped MNI space.
+    atlas_for_streams : str
+        File path to atlas parcellation Nifti1Image in T1w-conformed space.
     streams : str
         File path to streamline array sequence in .trk format.
     conn_matrix : array
@@ -540,7 +540,7 @@ def streams2graph(
     from itertools import combinations
     from collections import defaultdict
     from pynets.core import utils, nodemaker
-    from pynets.dmri.dmri_utils import generate_sl
+    from pynets.dmri.utils import generate_sl
     from dipy.io.streamline import load_tractogram
     from dipy.io.stateful_tractogram import Space, Origin
     from pynets.core.utils import load_runconfig
@@ -568,7 +568,7 @@ def streams2graph(
     fa_img = nib.load(warped_fa)
 
     # Load parcellation
-    roi_img = nib.load(atlas_mni)
+    roi_img = nib.load(atlas_for_streams)
     atlas_data = np.around(np.asarray(roi_img.dataobj))
     roi_zooms = roi_img.header.get_zooms()
     roi_shape = roi_img.shape
@@ -636,7 +636,7 @@ def streams2graph(
         for node in range(1, mx + 1):
             g.add_node(node, roi_volume=np.sum(
                 atlas_data.astype("uint16") == node)
-                       )
+            )
 
         # Build graph
         pc = 0
@@ -673,8 +673,8 @@ def streams2graph(
                         bad_idxs.append(jx)
                         print(
                             f"Label {lab} missing from parcellation. Check "
-                            f"registration and ensure valid input parcellation "
-                            f"file.")
+                            f"registration and ensure valid input "
+                            f"parcellation file.")
 
             edges = combinations(endlabels, 2)
             for edge in edges:
@@ -727,10 +727,11 @@ def streams2graph(
                     edge_fiberlength_mean = np.nanmean(fiberlengths[(u, v)])
                     fiber_density = (float(((float(d['weight']) /
                                              float(total_fibers)) /
-                           float(edge_fiberlength_mean)) *
-                          ((2.0 * float(total_volume)) /
-                           (g.nodes[int(u)]['roi_volume'] +
-                            g.nodes[int(v)]['roi_volume'])))) * 1000
+                                            float(edge_fiberlength_mean)) *
+                                           ((2.0 * float(total_volume)) /
+                                            (g.nodes[int(u)]['roi_volume'] +
+                                               g.nodes[int(v)]['roi_volume']))
+                                           )) * 1000
                 else:
                     fiber_density = 0
                 g.edges[u, v].update({"fiber_density": fiber_density})
@@ -752,14 +753,14 @@ def streams2graph(
         if fa_wei is True and fiber_density is True:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight":
-                                          (d['fa_weight'])*d['fiber_density']})
+                                      (d['fa_weight'])*d['fiber_density']})
         elif fiber_density is True and fa_wei is False:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight": d['fiber_density']})
         elif fa_wei is True and fiber_density is False:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight":
-                                          d['fa_weight']*d['weight']})
+                                      d['fa_weight']*d['weight']})
         else:
             for u, v, d in g.edges(data=True):
                 g.edges[u, v].update({"final_weight": d['weight']})
@@ -790,7 +791,7 @@ def streams2graph(
         atlas_name = f"{atlas}_stage-rawgraph"
 
     utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name)
+                                         atlas_name, indices=None)
 
     coords = np.array(coords)
     labels = np.array(labels)
@@ -818,7 +819,7 @@ def streams2graph(
     )
 
     return (
-        atlas_mni,
+        atlas_for_streams,
         streams,
         conn_matrix,
         track_type,

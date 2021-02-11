@@ -79,7 +79,7 @@ RUN apt-get update -qq \
     && curl -sSL http://neuro.debian.net/lists/stretch.us-tn.full >> /etc/apt/sources.list.d/neurodebian.sources.list && \
     apt-key add /root/.neurodebian.gpg && \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
-    apt-get update -qq && apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
+    apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
     apt-get clean && cd /tmp \
     && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
@@ -128,6 +128,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         libgfortran \
         matplotlib \
         openblas \
+        graph-tool \
 #        dask \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
@@ -160,7 +161,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get purge -y --auto-remove \
 	git \
-#	gcc \
+	gcc \
 	wget \
 	curl \
 	build-essential \

@@ -37,7 +37,7 @@ tracking:
     sphere:
         - 'repulsion724'
     n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
-        - 750
+        - 500
     max_length:
         - 500
     tissue_classifier: # Indicates the tissue classification method to use for dMRI tractography. Options are: cmc (continuous), act (anatomically-constrained), wb (whole-brain mask), and wm (binary to white-matter only). If particle tracking is used, then this variable will be auto-set to 'cmc'.
@@ -59,7 +59,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 2
+    - 1
 graph_file_format:
     - 'npy'
 low_pass:
@@ -70,8 +70,34 @@ template: # `MNI152_T1` is the default and, along with `colin27` is provided by 
 #    - 'colin27'
     - 'MNI152_T1'
 #    - 'CN200'
-hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality, coreness (requires installation of cpalgoorithm)
+hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality.
     - 'betweenness'
+graph_analysis_timeout: # Number of seconds before timing out a graph analysis algorithm
+    - 240
+graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former requires an additional installation of graph_tool (See https://graph-tool.skewed.de/).
+    - 'nx'
+embed:
+    - 'ASE'
+    - 'OMNI'
+    - 'MASE'
+    - 'eigenvector'
+    - 'degree'
+    - 'betweenness'
+    - 'clustering'
+metaparams_func:
+    - 'rsn'
+    - 'res'
+    - 'model'
+    - 'hpass'
+    - 'extract'
+    - 'smooth'
+metaparams_dwi:
+    - 'rsn'
+    - 'res'
+    - 'model'
+    - 'directget'
+    - 'minlength'
+    - 'tol'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
@@ -138,7 +164,7 @@ available_models:
       - 'sfm'
 gradients:
     n_components:
-        - null
+        - 1
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
@@ -152,7 +178,7 @@ plotting:
     adjacency:
         - True
     dpi:
-        - 300
+        - 600
     labeling_atlas:
         - 'BrainnetomeAtlasFan2016'
     functional:
@@ -193,7 +219,7 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_dwi_node':
         - (2, 4)
       - 'get_anisopwr_node':
-        - (2, 1)
+        - (2, 2)
       - 'extract_ts_node':
         - (4, 8)
       - 'clustering_node':
@@ -207,7 +233,7 @@ resource_dict: # Nipype workflow resource settings
       - 'register_atlas_node':
         - (1, 1)
       - 'get_fa_node':
-        - (2, 1)
+        - (2, 2)
       - 'run_tracking_node':
         - (3, 10)
       - 'thresh_diff_node':

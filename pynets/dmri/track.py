@@ -59,7 +59,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == "ten" or conn_model == "tensor" or \
-        conn_model == "TEN":
+            conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
@@ -73,13 +73,13 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
 
 def prep_tissues(
-    t1_mask,
-    gm_in_dwi,
-    vent_csf_in_dwi,
-    wm_in_dwi,
-    tiss_class,
-    B0_mask,
-    cmc_step_size=0.2):
+        t1_mask,
+        gm_in_dwi,
+        vent_csf_in_dwi,
+        wm_in_dwi,
+        tiss_class,
+        B0_mask,
+        cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
 
@@ -401,7 +401,7 @@ def track_ensemble(
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from pynets.dmri.dmri_utils import generate_sl
+    from pynets.dmri.utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     from pynets.core.utils import save_3d_to_4d
     from nilearn.masking import intersect_masks
@@ -471,14 +471,15 @@ def track_ensemble(
     ix = 0
 
     try:
-        while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
+        while float(stream_counter) < float(target_samples) and \
+                float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
                           verbose=0, timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
-                        i, recon_path, n_seeds_per_iter, directget, maxcrossing,
-                        max_length, pft_back_tracking_dist,
+                        i, recon_path, n_seeds_per_iter, directget,
+                        maxcrossing, max_length, pft_back_tracking_dist,
                         pft_front_tracking_dist, particle_count,
                         roi_neighborhood_tol, waymask, min_length,
                         track_type, min_separation_angle, sphere, tiss_class,
@@ -529,7 +530,7 @@ def track_ensemble(
         return None
 
     if ix >= 0.75*len(all_combs) and \
-        float(stream_counter) < float(target_samples):
+            float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
         os.system(f"rm -rf {tmp_files_dir} &")
@@ -578,7 +579,9 @@ def run_tracking(step_curv_combinations, recon_path,
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
     recon_path_tmp_path = fname_presuffix(
-        recon_path, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+        recon_path,
+        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+               f"{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -588,7 +591,9 @@ def run_tracking(step_curv_combinations, recon_path,
         use_hardlink=False)
 
     tissues4d_tmp_path = fname_presuffix(
-        tissues4d, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+        tissues4d,
+        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+               f"{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -599,7 +604,9 @@ def run_tracking(step_curv_combinations, recon_path,
 
     if waymask is not None:
         waymask_tmp_path = fname_presuffix(
-            waymask, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
+            waymask,
+            suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
+                   f"{run_uuid}",
             newpath=cache_dir
         )
         copyfile(
@@ -748,6 +755,7 @@ def run_tracking(step_curv_combinations, recon_path,
     # Filter resulting streamlines by roi-intersection
     # characteristics
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
+
     # Build mask vector from atlas for later roi filtering
     parcels = []
     i = 0
@@ -780,11 +788,11 @@ def run_tracking(step_curv_combinations, recon_path,
     try:
         roi_proximal_streamlines = nib.streamlines. \
             array_sequence.ArraySequence(
-            [
-                s for s in roi_proximal_streamlines
-                if len(s) >= float(min_length)
-            ]
-        )
+                [
+                    s for s in roi_proximal_streamlines
+                    if len(s) >= float(min_length)
+                ]
+            )
         print(f"Minimum fiber length >{min_length}mm: "
               f"{len(roi_proximal_streamlines)}")
     except BaseException:
