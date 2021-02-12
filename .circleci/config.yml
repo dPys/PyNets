@@ -274,6 +274,7 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            sudo chmod 777 -R /usr/lib/python3/dist-packages/graph_tool
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
