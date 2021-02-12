@@ -282,6 +282,7 @@ jobs:
           key: unit&integrationtests
           paths:
             - ~/test_cache
+            - /usr/lib/python3/dist-packages/graph_tool
       - store_test_results:
           path: test-results
       - store_artifacts:
