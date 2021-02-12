@@ -252,7 +252,6 @@ jobs:
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
             sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
             python -c "import graph_tool.all as gt"
-            sudo chmod 777 -R /usr/lib/python3/dist-packages
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
@@ -275,15 +274,19 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            sudo chmod 777 -R /usr/lib/python3/dist-packages
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
             - .coverage*
+      - persist_to_workspace:
+          root: /usr/lib/python3/dist-packages
+          paths:
+            - ./graph_tool
       - save_cache:
-          key: unit&integrationtests
+          key: unit&integrationtests-{{ arch}}
           paths:
             - ~/test_cache
-            - /usr/lib/python3/dist-packages/graph_tool
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -300,7 +303,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: unit&integrationtests
+          key: unit&integrationtests-{{ arch}}
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
@@ -327,15 +330,6 @@ jobs:
           command: |
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
-      - run:
-          name: Re-install graph_tool because it doesn't cache
-          no_output_timeout: 30m
-          command: |
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
-            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update
-            sudo apt-get install --allow-unauthenticated -y python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
       - run:
           name: Update codecov
           command: |

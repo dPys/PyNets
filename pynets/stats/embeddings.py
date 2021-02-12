@@ -59,6 +59,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
@@ -190,6 +191,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import numpy as np
     from graspologic.embed.mase import MultipleASE
     from joblib import dump
@@ -345,6 +347,7 @@ def build_asetomes(est_path_iterlist, ID):
         A subject id or other unique identifier.
 
     """
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
@@ -421,6 +424,7 @@ def build_masetome(est_path_iterlist, ID):
       https://doi.org/10.1038/s41467-018-04614-w
 
     """
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
