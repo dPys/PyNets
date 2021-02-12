@@ -274,12 +274,17 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            sudo chmod 777 -R /usr/lib/python3/dist-packages
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
             - .coverage*
+      - persist_to_workspace:
+          root: /usr/lib/python3/dist-packages
+          paths:
+            - ./graph_tool
       - save_cache:
-          key: unit&integrationtests
+          key: unit&integrationtests-{{ arch}}
           paths:
             - ~/test_cache
       - store_test_results:
@@ -289,12 +294,16 @@ jobs:
 
   coverage:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
+    environment:
+      - FSLDIR: /usr/local/fsl
+      - FSLOUTPUTTYPE: 'NIFTI'
+      - PYTHONUNBUFFERED: 1
     steps:
       - checkout
       - restore_cache:
-          key: unit&integrationtests
+          key: unit&integrationtests-{{ arch}}
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
@@ -308,7 +317,7 @@ jobs:
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
             sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev
+            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"

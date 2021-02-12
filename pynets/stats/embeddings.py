@@ -59,6 +59,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
@@ -190,6 +191,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import numpy as np
     from graspologic.embed.mase import MultipleASE
     from joblib import dump
@@ -206,7 +208,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     if len(pop_array) != len(clean_mats):
         return None
 
-    mase_fit = mase.fit_transform(clean_mats)
+    mase.fit_transform(clean_mats)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
@@ -225,7 +227,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
 
     print("Saving...")
     np.save(out_path, mase.scores_)
-    del mase, mase_fit
+    del mase
 
     return out_path
 
@@ -302,8 +304,6 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     if float(prune) >= 1:
         graph_path_tmp = cg.prune_graph()[1]
         mat_clean = np.load(graph_path_tmp)
-    else:
-        mat_clean = mat
 
     mat_clean = np.nan_to_num(mat_clean)
     mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
@@ -347,6 +347,7 @@ def build_asetomes(est_path_iterlist, ID):
         A subject id or other unique identifier.
 
     """
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
@@ -423,6 +424,7 @@ def build_masetome(est_path_iterlist, ID):
       https://doi.org/10.1038/s41467-018-04614-w
 
     """
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
