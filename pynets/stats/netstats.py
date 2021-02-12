@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2016
 @author: Derek Pisner
 """
+from pynets.core.utils import load_runconfig
 import pandas as pd
 import numpy as np
 import warnings
@@ -13,7 +14,6 @@ from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
-from pynets.core.utils import load_runconfig
 
 hardcoded_params = load_runconfig()
 try:
@@ -22,8 +22,6 @@ try:
 except FileNotFoundError as e:
     import sys
     print(e, "Failed to parse runconfig.yaml")
-
-
 
 
 def get_prop_type(value, key=None):
@@ -84,7 +82,7 @@ def nx2gt(nxG):
             if key in nprops:
                 continue
 
-            tname, _, key  = get_prop_type(val, key)
+            tname, _, key = get_prop_type(val, key)
 
             prop = gtG.new_vertex_property(tname)
             gtG.vertex_properties[key.decode("utf-8")] = prop
@@ -134,8 +132,8 @@ def np2gt(adj):
     g.edge_properties['weight'] = edge_weights
     nnz = np.nonzero(np.triu(adj, 1))
     nedges = len(nnz[0])
-    g.add_edge_list(np.hstack([np.transpose(nnz),np.reshape(adj[nnz],
-                                                            (nedges, 1))]),
+    g.add_edge_list(np.hstack([np.transpose(nnz), np.reshape(adj[nnz],
+                                                             (nedges, 1))]),
                     eprops=[edge_weights])
     return g
 
@@ -156,7 +154,8 @@ def average_shortest_path_length_fast(G, weight="weight"):
                                     directed=False)
     else:
         dist = gt.shortest_distance(g, directed=False)
-    sum_of_all_dists = sum([sum(i.a[(i.a>1e-9)&(i.a<1e9)]) for i in dist])
+    sum_of_all_dists = sum(
+        [sum(i.a[(i.a > 1e-9) & (i.a < 1e9)]) for i in dist])
     return sum_of_all_dists / (n * (n - 1))
 
 
@@ -217,7 +216,7 @@ def subgraph_number_of_cliques_for_all(G):
       *Theoretical Computer Science*, Volume 363, Issue 1,
       Computing and Combinatorics,
       10th Annual International Conference on
-      Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28--42
+      Computing and Combinatorics (COCOON 2004), 25 October 2006, Pages 28-42
       <https://doi.org/10.1016/j.tcs.2006.06.015>
     .. [3] F. Cazals, C. Karande,
       "A note on the problem of reporting maximal cliques",
@@ -280,14 +279,17 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         lengths = list(nx.all_pairs_dijkstra_path_length(G, weight=weight))
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
             print(e, "Graph Tool not installed!")
         g = nx2gt(G)
         vertices = list(g.get_vertices())
-        all_shortest_dist = [dict(zip(vertices, list(i))) for i in gt.shortest_distance(g, weights=g.edge_properties['weight'], directed=False)]
+        all_shortest_dist = [dict(zip(vertices,
+                                      list(i))) for
+                             i in gt.shortest_distance(
+            g, weights=g.edge_properties['weight'], directed=False)]
         lengths = tuple(dict(zip(vertices, all_shortest_dist)).items())
     else:
         raise ValueError(f"Engine {engine} not recognized.")
@@ -333,7 +335,7 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
       in weighted networks. Eur Phys J B 32, 249-263.
 
     """
-    from graspy.utils import get_lcc
+    from graspologic.utils import largest_connected_component
 
     new_graph = nx.Graph
 
@@ -350,17 +352,21 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
             for (n1, n2) in temp_G.edges():
                 temp_G[n1][n2][weight] = np.abs(G[n1][n2][weight])
 
-        temp_G = get_lcc(temp_G, return_inds=False)
+        temp_G = largest_connected_component(temp_G, return_inds=False)
 
-        if nx.is_empty(temp_G) is True or len(temp_G) < 2 or nx.number_of_edges(temp_G) == 0:
+        if nx.is_empty(temp_G) is True or len(temp_G) < 2 or \
+                nx.number_of_edges(temp_G) == 0:
             efficiencies[node] = 0
         else:
             try:
-                if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-                    engine.upper() == 'GRAPHTOOL':
-                    efficiencies[node] = global_efficiency(temp_G, weight, engine='gt')
+                if engine.upper() == 'GT' or \
+                        engine.upper() == 'GRAPH_TOOL' or \
+                        engine.upper() == 'GRAPHTOOL':
+                    efficiencies[node] = global_efficiency(temp_G, weight,
+                                                           engine='gt')
                 else:
-                    efficiencies[node] = global_efficiency(temp_G, weight, engine='nx')
+                    efficiencies[node] = global_efficiency(temp_G, weight,
+                                                           engine='nx')
             except BaseException:
                 efficiencies[node] = np.nan
     return efficiencies
@@ -399,7 +405,7 @@ def average_local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
         return np.nan
 
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         eff = local_efficiency(G, weight, engine='gt')
     else:
         eff = local_efficiency(G, weight, engine='nx')
@@ -470,7 +476,7 @@ def smallworldness(
         return np.nan
 
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -481,7 +487,7 @@ def smallworldness(
         nedges = nx.number_of_edges(G)
         shape = np.array([nnodes, nnodes])
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-            engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             if reference == "random":
                 def sample_k(max):
                     accept = False
@@ -491,9 +497,9 @@ def smallworldness(
                     return k
 
                 G_rand = gt.random_graph(nnodes, lambda: sample_k(nedges),
-                                model="configuration",
-                                directed=False,
-                                n_iter=niter)
+                                         model="configuration",
+                                         directed=False,
+                                         n_iter=niter)
             else:
                 raise NotImplementedError(f"{reference}' graph type not yet"
                                           f" available using graph_tool "
@@ -516,14 +522,15 @@ def smallworldness(
         if reference == "lattice":
             Gl = get_random(G, reference, "nx", niter, i)
             if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-                engine.upper() == 'GRAPHTOOL':
+                    engine.upper() == 'GRAPHTOOL':
                 Gl = nx2gt(Gl)
         else:
             Gl = Gr
         if approach == "clustering":
             if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-                engine.upper() == 'GRAPHTOOL':
-                clust_coef_ = gt.global_clustering(Gl, weight=Gl.edge_properties['weight'])[0]
+                    engine.upper() == 'GRAPHTOOL':
+                clust_coef_ = gt.global_clustering(
+                    Gl, weight=Gl.edge_properties['weight'])[0]
             else:
                 clust_coef_ = nx.average_clustering(Gl, weight='weight')
             randMetrics["C"].append(clust_coef_)
@@ -532,14 +539,18 @@ def smallworldness(
         else:
             raise ValueError(f"{approach}' approach not recognized!")
 
-        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
-            randMetrics["L"].append(average_shortest_path_length_fast(Gr, weight=None))
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                engine.upper() == 'GRAPHTOOL':
+            randMetrics["L"].append(
+                average_shortest_path_length_fast(Gr, weight=None))
         else:
-            randMetrics["L"].append(nx.average_shortest_path_length(Gr, weight=None))
+            randMetrics["L"].append(
+                nx.average_shortest_path_length(Gr, weight=None))
         del Gr, Gl
 
     if approach == "clustering":
-        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+        if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+                engine.upper() == 'GRAPHTOOL':
             g = nx2gt(G)
             C = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
         else:
@@ -549,7 +560,8 @@ def smallworldness(
     else:
         raise ValueError(f"{approach}' approach not recognized!")
 
-    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+            engine.upper() == 'GRAPHTOOL':
         L = average_shortest_path_length_fast(G, weight=None)
     else:
         L = nx.average_shortest_path_length(G, weight=None)
@@ -562,7 +574,7 @@ def smallworldness(
 
 def rich_club_coefficient(G, engine=DEFAULT_ENGINE):
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1070,16 +1082,17 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
 
     # if len(G_tmp.nodes()) - len(isolates) < min_nodes:
     #     if fallback_lcc is True:
-    #         from graspy.utils import get_lcc
+    #         from graspologic.utils import largest_connected_component
     #         print(UserWarning('Warning: Too many isolates to defragment, '
     #                           'grabbing the largest connected component...'))
     #
-    #         lcc, pruned_nodes = get_lcc(G_tmp, return_inds=True)
+    #         lcc, pruned_nodes = largest_connected_component(G_tmp,
+    #         return_inds=True)
     #         return lcc, pruned_nodes.tolist()
     #     else:
     #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'skipping defragmentation. Consider fallback to'
-    #                           ' lcc...'))
+    #                           'skipping defragmentation.
+    #                           Consider fallback to lcc...'))
     #         return G_tmp, []
 
     # Remove disconnected nodes
@@ -1185,7 +1198,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
     # import random
     from functools import partial
     if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1197,10 +1210,10 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
         net_name = str(i)
     if "average_shortest_path_length" in net_name:
         if engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-             engine.upper() == 'GRAPHTOOL':
+                engine.upper() == 'GRAPHTOOL':
             try:
-                net_met_val = average_shortest_path_length_fast(G,
-                                                                weight='weight')
+                net_met_val = average_shortest_path_length_fast(
+                    G, weight='weight')
             except BaseException:
                 net_met_val = np.nan
         else:
@@ -1212,13 +1225,17 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                         average_shortest_path_length_for_all(G))
                 except BaseException as e:
                     print(e, f"WARNING: {net_name} failed for G.")
-                    # np.save(f"{'/tmp/average_shortest_path_length'}{random.randint(1, 400)}{'.npy'}",
+                    # np.save(f"/tmp/average_shortest_path_length_
+                    # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
                     net_met_val = np.nan
-    elif "average_clustering" in net_name and (engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL'):
+    elif "average_clustering" in net_name and \
+        (engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL'
+         or engine.upper() == 'GRAPHTOOL'):
         try:
             g = nx2gt(G)
-            net_met_val = gt.global_clustering(g, weight=g.edge_properties['weight'])[0]
+            net_met_val = gt.global_clustering(
+                g, weight=g.edge_properties['weight'])[0]
         except BaseException as e:
             print(e, f"WARNING: {net_name} failed for G.")
             net_met_val = np.nan
@@ -1231,7 +1248,8 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                     net_met_val = float(subgraph_number_of_cliques_for_all(G))
                 except BaseException as e:
                     print(e, f"WARNING: {net_name} failed for G.")
-                    # np.save(f"{'/tmp/graph_num_cliques'}{random.randint(1, 400)}{'.npy'}",
+                    # np.save(f"/tmp/graph_num_cliques_
+                    # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
                     net_met_val = np.nan
         else:
@@ -1242,7 +1260,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
             net_met_val = float(i(G))
         except BaseException as e:
             print(e, f"WARNING: {net_name} failed for G.")
-            # np.save(f"{'/tmp/smallworldness'}{random.randint(1, 400)}{'.npy'}",
+            # np.save(f"/tmp/smallworldness{random.randint(1, 400)}.npy",
             #         np.array(nx.to_numpy_matrix(H)))
             net_met_val = np.nan
     elif "degree_assortativity_coefficient" in net_name:
@@ -1268,7 +1286,8 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                         H, weight="weight"))
             except BaseException as e:
                 print(e, f"WARNING: {net_name} failed for G.")
-                # np.save(f"{'/tmp/degree_assortativity_coefficient'}{random.randint(1, 400)}{'.npy'}",
+                # np.save(f"/tmp/degree_assortativity_coefficient_
+                # {random.randint(1, 400)}.npy",
                 #         np.array(nx.to_numpy_matrix(H)))
                 net_met_val = np.nan
     else:
@@ -1359,7 +1378,7 @@ class CleanGraphs(object):
 
         # Normalize connectivity matrix
         if self.norm == 3 or self.norm == 4 or self.norm == 5:
-            from graspy.utils import pass_to_ranks
+            from graspologic.utils.ptr import pass_to_ranks
 
         # By maximum edge weight
         if self.norm == 1:
@@ -1398,7 +1417,8 @@ class CleanGraphs(object):
     def prune_graph(self, remove_self_loops=True):
         import os
         from pynets.core import utils
-        from graspy.utils import remove_loops, symmetrize, get_lcc
+        from graspologic.utils import largest_connected_component, \
+            remove_loops, symmetrize
 
         # Prune irrelevant nodes (i.e. nodes who are fully disconnected
         # from the graph and/or those whose betweenness
@@ -1427,8 +1447,8 @@ class CleanGraphs(object):
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
                   "component subgraph...")
-            #self.G = self.G.subgraph(get_lcc(self.G))
-            self.G = get_lcc(self.G)
+            #self.G = self.G.subgraph(largest_connected_component(self.G))
+            self.G = largest_connected_component(self.G)
         else:
             print("No graph anti-fragmentation applied...")
 
@@ -1439,9 +1459,11 @@ class CleanGraphs(object):
 
         self.G = nx.from_numpy_array(self.in_mat)
 
-        if nx.is_empty(self.G) is True or (np.abs(self.in_mat) < 0.0000001).all() or \
-            self.G.number_of_edges() == 0:
-            print(UserWarning(f"Warning: {self.est_path} empty after pruning!"))
+        if nx.is_empty(self.G) is True or \
+            (np.abs(self.in_mat) < 0.0000001).all() or \
+                self.G.number_of_edges() == 0:
+            print(UserWarning(f"Warning: {self.est_path} "
+                              f"empty after pruning!"))
             return self.in_mat, None
 
         # Saved pruned
@@ -1522,7 +1544,8 @@ def iterate_nx_global_measures(G, metric_list_glob):
                 net_met_val = raw_mets(G, i)
             except BaseException:
                 print(f"{'WARNING: '}{net_met}{' failed for G.'}")
-                # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1, 400), '.npy'),
+                # np.save("%s%s%s%s" % ('/tmp/', net_met,
+                # random.randint(1, 400), '.npy'),
                 #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except BaseException:
@@ -1695,12 +1718,13 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
 
 
 @timeout(DEFAULT_TIMEOUT)
-def get_clustering(G, metric_list_names, net_met_val_list_final, engine=DEFAULT_ENGINE):
+def get_clustering(G, metric_list_names, net_met_val_list_final,
+                   engine=DEFAULT_ENGINE):
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         cl_vector = nx.clustering(G, weight="weight")
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1778,7 +1802,8 @@ def get_betweenness_centrality(
 
     if engine.upper() == 'NX' or engine.upper() == 'NETWORKX':
         bc_vector = betweenness_centrality(G_len, normalized=True)
-    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or engine.upper() == 'GRAPHTOOL':
+    elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -1827,7 +1852,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final,
         from networkx.algorithms import eigenvector_centrality
         ec_vector = eigenvector_centrality(G, max_iter=1000)
     elif engine.upper() == 'GT' or engine.upper() == 'GRAPH_TOOL' or \
-        engine.upper() == 'GRAPHTOOL':
+            engine.upper() == 'GRAPHTOOL':
         try:
             import graph_tool.all as gt
         except ImportWarning as e:
@@ -2007,7 +2032,6 @@ def extractnetstats(
     import pynets.stats.netstats
     from pathlib import Path
 
-
     # Load netstats config and parse graph algorithms as objects
     with open(
         pkg_resources.resource_filename("pynets",
@@ -2031,14 +2055,14 @@ def extractnetstats(
             metric_list_global = metric_dict_global["metric_list_global"]
             if metric_list_global is not None:
                 metric_list_global = [
-                                         getattr(networkx.algorithms, i)
-                                         for i in metric_list_global
-                                         if i in nx_algs
-                                     ] + [
-                                         getattr(pynets.stats.netstats, i)
-                                         for i in metric_list_global
-                                         if i in pynets_algs
-                                     ]
+                    getattr(networkx.algorithms, i)
+                    for i in metric_list_global
+                    if i in nx_algs
+                ] + [
+                    getattr(pynets.stats.netstats, i)
+                    for i in metric_list_global
+                    if i in pynets_algs
+                ]
                 metric_list_global_names = [
                     str(i).split("<function ")[1].split(" at")[0]
                     for i in metric_list_global
@@ -2112,13 +2136,9 @@ def extractnetstats(
 
         # Deal with empty graphs
         if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
-            G.number_of_edges() == 0 or len(G) < 3:
-            if len(metric_list_global_names) == 0:
-                metric_list_global_names = [""]
+                G.number_of_edges() == 0 or len(G) < 3:
             out_path_neat = save_netmets(
-                dir_path, est_path, metric_list_global_names,
-                len(metric_list_global_names)*[np.nan],
-            )
+                dir_path, est_path, [""], [np.nan])
             print(UserWarning(f"Warning: Empty graph detected for {ID}: "
                               f"{est_path}..."))
         else:
@@ -2180,7 +2200,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "participation_coefficient" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping participation coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2196,8 +2216,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_diversity(in_mat, ci, metric_list_names,
-                                net_met_val_list_final
-                        )
+                                          net_met_val_list_final
+                                          )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Diversity coefficient cannot be calculated for "
@@ -2207,7 +2227,7 @@ def extractnetstats(
                         pass
                 else:
                     if not ci and "diversity_coefficient" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping diversity coefficient "
                                           "because community affiliation is "
                                           "empty for G..."))
@@ -2254,8 +2274,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_clustering(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Local clustering cannot be calculated for G")
@@ -2270,8 +2290,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_degree_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Degree centrality cannot be calculated for G")
@@ -2282,12 +2302,13 @@ def extractnetstats(
 
                 # Betweenness Centrality
                 if "betweenness_centrality" in metric_list_nodal and \
-                     G_len is not None:
+                        G_len is not None:
                     try:
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_betweenness_centrality(
-                            G_len, metric_list_names, net_met_val_list_final)
+                                G_len, metric_list_names,
+                                net_met_val_list_final)
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Betweenness centrality cannot be calculated for"
@@ -2298,7 +2319,7 @@ def extractnetstats(
                         pass
                 else:
                     if G_len is None and "betweenness_centrality" in \
-                         metric_list_nodal:
+                            metric_list_nodal:
                         print(UserWarning("Skipping betweenness centrality "
                                           "because length matrix is empty for "
                                           "G..."))
@@ -2309,8 +2330,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_eigen_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Eigenvector centrality cannot be calculated for"
@@ -2326,8 +2347,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_comm_centrality(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Communicability centrality cannot be "
@@ -2343,8 +2364,8 @@ def extractnetstats(
                         start_time = time.time()
                         metric_list_names, net_met_val_list_final = \
                             get_rich_club_coeff(
-                            G, metric_list_names, net_met_val_list_final
-                        )
+                                G, metric_list_names, net_met_val_list_final
+                            )
                         print(f"{np.round(time.time() - start_time, 3)}{'s'}")
                     except BaseException:
                         print("Rich club coefficient cannot be calculated for "
@@ -2373,12 +2394,9 @@ def extractnetstats(
     else:
         print(UserWarning(f"Warning: Empty graph detected for {ID}: "
                           f"{est_path}..."))
-        if not metric_list_names:
-            metric_list_names = [""]
         dir_path = op.dirname(op.realpath(est_path))
         out_path_neat = save_netmets(
-            dir_path, est_path, metric_list_names,
-            len(metric_list_names) * [np.nan],
+            dir_path, est_path, [""], [np.nan],
         )
     return out_path_neat
 
@@ -2389,7 +2407,7 @@ def collect_pandas_df_make(
     network,
     plot_switch,
     embed=False,
-    create_summary=True,
+    create_summary=False,
     sql_out=False,
 ):
     """
@@ -2449,7 +2467,8 @@ def collect_pandas_df_make(
                 print(UserWarning('Warning: File not .csv format'))
                 continue
         else:
-            print(UserWarning(f"Warning: {net_mets_csv} not found. Skipping..."))
+            print(UserWarning(f"Warning: {net_mets_csv} not found. "
+                              f"Skipping..."))
 
     if len(list(net_mets_csv_list)) > len(net_mets_csv_list_exist):
         raise UserWarning(
@@ -2464,6 +2483,11 @@ def collect_pandas_df_make(
         print("No topology files found!")
         combination_complete = True
 
+    hyperparam_dict = {}
+    dfs_non_auc = []
+    hyperparam_dict["id"] = ID
+    gen_hyperparams = ["nodetype", "model", "template"]
+
     if len(net_mets_csv_list) > 1:
         print(f"\n\nAll graph analysis results:\n{str(net_mets_csv_list)}\n\n")
 
@@ -2474,181 +2498,196 @@ def collect_pandas_df_make(
                 f"{op.basename(file_)}"
             )
 
-        def sort_thr(model_name):
-            return model_name.split("thr-")[1].split("_")[0]
+        if any('thr-' in i for i in net_mets_csv_list_exist):
+            def sort_thr(model_name):
+                return model_name.split("thr-")[1].split("_")[0]
 
-        models.sort(key=sort_thr)
+            models.sort(key=sort_thr)
 
-        # Group by secondary attributes
-        models_grouped = [
-            list(x)
-            for x in zip(
-                *[
-                    list(g)
-                    for k, g in groupby(
-                        models, lambda s: s.split("thr-")[1].split("_")[0]
-                    )
-                ]
-            )
-        ]
-
-        hyperparam_dict = {}
-        dfs_non_auc = []
-        hyperparam_dict["id"] = ID
-        gen_hyperparams = ["nodetype", "model", "template"]
-        node_cols = None
-        if max([len(i) for i in models_grouped]) > 1:
-            print(
-                "Multiple thresholds detected. Computing AUC..."
-            )
-            meta = dict()
-            non_decimal = re.compile(r"[^\d.]+")
-            for thr_set in range(len(models_grouped)):
-                meta[thr_set] = dict()
-                meta[thr_set]["dataframes"] = dict()
-                for i in models_grouped[thr_set]:
-                    thr = non_decimal.sub("", i.split("thr-")[1].split("_")[0])
-                    _file = subject_path + "/" + i
-                    if os.path.isfile(_file):
-                        df = pd.read_csv(_file, memory_map=True,
-                                         chunksize=100000, encoding="utf-8",
-                                         skip_blank_lines=False,
-                                         warn_bad_lines=True,
-                                         error_bad_lines=False
-                                         ).read()
-                        node_cols = [
-                            s
-                            for s in list(df.columns)
-                            if isinstance(s, int) or any(c.isdigit() for c in
-                                                         s)
-                        ]
-                        if embed is False:
-                            df = df.drop(node_cols, axis=1)
-                        meta[thr_set]["dataframes"][thr] = df
-                    else:
-                        print(f"File {_file} not found...")
-                        continue
-            # For each unique threshold set, for each graph measure, extract
-            # AUC
-            if sql_out is True:
-                try:
-                    import sqlalchemy
-
-                    sql_db = utils.build_sql_db(
-                        op.dirname(op.dirname(op.dirname(subject_path))), ID
-                    )
-                except BaseException:
-                    sql_db = None
-            else:
-                sql_db = None
-            for thr_set in meta.keys():
-                if len(meta[thr_set]["dataframes"].values()) > 1:
-                    df_summary = pd.concat(
-                        meta[thr_set]["dataframes"].values())
-                else:
-                    print(f"No values to concatenate at {thr_set}...")
-                    continue
-                df_summary["thr"] = meta[thr_set]["dataframes"].keys()
-                meta[thr_set]["summary_dataframe"] = df_summary
-                df_summary_auc = df_summary.iloc[[0]]
-                df_summary_auc.columns = [
-                    col + "_auc" for col in df_summary.columns]
-
-                print(f"\nAUC for threshold group: {models_grouped[thr_set]}")
-                file_renamed = list(
-                    set(
-                        [
-                            re.sub(
-                                r"thr\-\d+\.*\d+\_", "",
-                                i.split("/topology/")[1]
-                            ).replace("neat", "auc")
-                            for i in models_grouped[thr_set]
-                        ]
-                    )
-                )[0]
-                atlas = models_grouped[thr_set][0].split("/")[0]
-                modality = file_renamed.split("modality-")[1].split("_")[0]
-
-                # Build hyperparameter dictionary
-                hyperparam_dict, hyperparams = build_mp_dict(file_renamed,
-                                                             modality,
-                                                             hyperparam_dict,
-                                                             gen_hyperparams)
-
-                for measure in df_summary.columns[:-1]:
-                    # Get Area Under the Curve
-                    df_summary_nonan = df_summary[pd.notnull(
-                        df_summary[measure])]
-                    df_summary_auc[measure] = np.trapz(
-                        np.array(df_summary_nonan[measure]).astype("float32")
-                    )
-                    print(
-                        f"{measure}: "
-                        f"{df_summary_auc[measure].to_string(index=False)}"
-                    )
-                meta[thr_set]["auc_dataframe"] = df_summary_auc
-                auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
-                if not os.path.isdir(auc_dir):
-                    os.makedirs(auc_dir, exist_ok=True)
-                df_summary_auc = df_summary_auc.drop(columns=["thr_auc"])
-                df_summary_auc = df_summary_auc.loc[
-                    :, df_summary_auc.columns.str.endswith("auc")
-                ]
-                auc_outfile = auc_dir + file_renamed
-                if os.path.isfile(auc_outfile):
-                    try:
-                        os.remove(auc_outfile)
-                    except BaseException:
-                        continue
-                df_summary_auc.to_csv(
-                    auc_outfile,
-                    header=True,
-                    index=False,
-                    chunksize=100000,
-                    compression="gzip",
-                    encoding="utf-8",
+            # Group by secondary attributes
+            models_grouped = [
+                list(x)
+                for x in zip(
+                    *[
+                        list(g)
+                        for k, g in groupby(
+                            models, lambda s: s.split("thr-")[1].split("_")[0]
+                        )
+                    ]
                 )
-                node_cols_embed = [i for i in node_cols if i in embedding_methods]
-
-                if embed is True and len(node_cols_embed) > 0:
-                    from pathlib import Path
-                    embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
-                    if not os.path.isdir(embed_dir):
-                        os.makedirs(embed_dir, exist_ok=True)
-
-                    node_cols_auc = [f"{i}_auc" for i in node_cols_embed if
-                                     f"{i}_auc" in df_summary_auc.columns]
-                    df_summary_auc_nodes = df_summary_auc[node_cols_auc]
-                    node_embeddings_grouped = [{k: list(g)} for k, g in
-                                               groupby(df_summary_auc_nodes,
-                                                       lambda s: s.split("_")[1])]
-                    for node_dict in node_embeddings_grouped:
-                        node_top_type = list(node_dict.keys())[0]
-                        node_top_cols = list(node_dict.values())[0]
-                        embedding_frame = df_summary_auc_nodes[node_top_cols]
-                        out_path = f"{embed_dir}/gradient-{node_top_type}_" \
-                                   f"rsn-{atlas}_auc_nodes_" \
-                                   f"{os.path.basename(net_mets_csv_list[0]).split('metrics_')[1].split('_thr-')[0]}.csv"
-                        embedding_frame.to_csv(out_path, index=False)
-
+            ]
+            node_cols = None
+            if max([len(i) for i in models_grouped]) > 1:
+                print(
+                    "Multiple thresholds detected. Computing AUC..."
+                )
+                meta = dict()
+                non_decimal = re.compile(r"[^\d.]+")
+                for thr_set in range(len(models_grouped)):
+                    meta[thr_set] = dict()
+                    meta[thr_set]["dataframes"] = dict()
+                    for i in models_grouped[thr_set]:
+                        thr = non_decimal.sub("",
+                                              i.split("thr-")[1].split("_")[0])
+                        _file = subject_path + "/" + i
+                        if os.path.isfile(_file):
+                            df = pd.read_csv(_file, memory_map=True,
+                                             chunksize=100000,
+                                             encoding="utf-8",
+                                             skip_blank_lines=False,
+                                             warn_bad_lines=True,
+                                             error_bad_lines=False
+                                             ).read()
+                            node_cols = [
+                                s
+                                for s in list(df.columns)
+                                if isinstance(s, int) or any(c.isdigit() for
+                                                             c in s)
+                            ]
+                            if embed is False:
+                                df = df.drop(node_cols, axis=1)
+                            meta[thr_set]["dataframes"][thr] = df
+                        else:
+                            print(f"File {_file} not found...")
+                            continue
+                # For each unique threshold set, for each graph measure,
+                # extract AUC
                 if sql_out is True:
-                    sql_db.create_modality_table(modality)
-                    sql_db.add_hp_columns(
-                        list(set(hyperparams)) + list(df_summary_auc.columns)
+                    try:
+                        import sqlalchemy
+
+                        sql_db = utils.build_sql_db(
+                            op.dirname(op.dirname(op.dirname(subject_path))),
+                            ID
+                        )
+                    except BaseException:
+                        sql_db = None
+                else:
+                    sql_db = None
+                for thr_set in meta.keys():
+                    if len(meta[thr_set]["dataframes"].values()) > 1:
+                        df_summary = pd.concat(
+                            meta[thr_set]["dataframes"].values())
+                    else:
+                        print(f"No values to concatenate at {thr_set}...")
+                        continue
+                    df_summary["thr"] = meta[thr_set]["dataframes"].keys()
+                    meta[thr_set]["summary_dataframe"] = df_summary
+                    df_summary_auc = df_summary.iloc[[0]]
+                    df_summary_auc.columns = [
+                        col + "_auc" for col in df_summary.columns]
+
+                    print(f"\nAUC for threshold group: "
+                          f"{models_grouped[thr_set]}")
+                    file_renamed = list(
+                        set(
+                            [
+                                re.sub(
+                                    r"thr\-\d+\.*\d+\_", "",
+                                    i.split("/topology/")[1]
+                                ).replace("neat", "auc")
+                                for i in models_grouped[thr_set]
+                            ]
+                        )
+                    )[0]
+                    atlas = models_grouped[thr_set][0].split("/")[0]
+                    modality = file_renamed.split("modality-")[1].split("_")[0]
+
+                    # Build hyperparameter dictionary
+                    hyperparam_dict, hyperparams = build_mp_dict(
+                        file_renamed, modality, hyperparam_dict,
+                        gen_hyperparams)
+
+                    for measure in df_summary.columns[:-1]:
+                        # Get Area Under the Curve
+                        df_summary_nonan = df_summary[pd.notnull(
+                            df_summary[measure])]
+                        df_summary_auc[measure] = np.trapz(
+                            np.array(df_summary_nonan[measure]
+                                     ).astype("float32")
+                        )
+                        print(
+                            f"{measure}: "
+                            f"{df_summary_auc[measure].to_string(index=False)}"
+                        )
+                    meta[thr_set]["auc_dataframe"] = df_summary_auc
+                    auc_dir = f"{subject_path}{'/'}{atlas}{'/topology/auc/'}"
+                    if not os.path.isdir(auc_dir):
+                        os.makedirs(auc_dir, exist_ok=True)
+                    df_summary_auc = df_summary_auc.drop(columns=["thr_auc"])
+                    df_summary_auc = df_summary_auc.loc[
+                        :, df_summary_auc.columns.str.endswith("auc")
+                    ]
+                    auc_outfile = auc_dir + file_renamed
+                    if os.path.isfile(auc_outfile):
+                        try:
+                            os.remove(auc_outfile)
+                        except BaseException:
+                            continue
+                    df_summary_auc.to_csv(
+                        auc_outfile,
+                        header=True,
+                        index=False,
+                        chunksize=100000,
+                        compression="gzip",
+                        encoding="utf-8",
                     )
-                    sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
-                    # sql_db.engine.execute("SELECT * FROM func").fetchall()
-                    del sql_db
-                del df_summary_auc
+                    node_cols_embed = [i for i in node_cols if i in
+                                       embedding_methods]
+
+                    from pathlib import Path
+                    parent_dir = str(
+                        Path(os.path.dirname(net_mets_csv_list[0])).parent)
+                    base_name = \
+                        os.path.basename(net_mets_csv_list[0]).split(
+                            'metrics_')[
+                            1].split('_thr-')[0]
+
+                    if embed is True and len(node_cols_embed) > 0:
+                        embed_dir = f"{parent_dir}/embeddings"
+                        if not os.path.isdir(embed_dir):
+                            os.makedirs(embed_dir, exist_ok=True)
+
+                        node_cols_auc = [f"{i}_auc" for i in node_cols_embed if
+                                         f"{i}_auc" in df_summary_auc.columns]
+                        df_summary_auc_nodes = df_summary_auc[node_cols_auc]
+                        node_embeddings_grouped = [{k: list(g)} for k, g in
+                                                   groupby(
+                                                       df_summary_auc_nodes,
+                            lambda s:
+                            s.split("_")[1])]
+                        for node_dict in node_embeddings_grouped:
+                            node_top_type = list(node_dict.keys())[0]
+                            node_top_cols = list(node_dict.values())[0]
+                            embedding_frame = \
+                                df_summary_auc_nodes[node_top_cols]
+                            out_path = f"{embed_dir}/gradient-" \
+                                       f"{node_top_type}_" \
+                                       f"rsn-{atlas}_auc_nodes_" \
+                                       f"{base_name}.csv"
+                            embedding_frame.to_csv(out_path, index=False)
+
+                    if sql_out is True:
+                        sql_db.create_modality_table(modality)
+                        sql_db.add_hp_columns(
+                            list(set(hyperparams)) +
+                            list(df_summary_auc.columns)
+                        )
+                        sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
+                        # select_call = "SELECT * FROM func"
+                        # sql_db.engine.execute(select_call).fetchall()
+                        del sql_db
+                    del df_summary_auc
         else:
+            models_grouped = None
+            meta = {}
             for file_ in net_mets_csv_list:
                 df = pd.read_csv(file_, memory_map=True,
-                                         chunksize=100000, encoding="utf-8",
-                                         skip_blank_lines=False,
-                                         warn_bad_lines=True,
-                                         error_bad_lines=False
-                                         ).read()
-                dfs_non_auc.append(df)
+                                 chunksize=100000, encoding="utf-8",
+                                 skip_blank_lines=False,
+                                 warn_bad_lines=True,
+                                 error_bad_lines=False
+                                 ).read()
                 node_cols = [
                     s
                     for s in list(df.columns)
@@ -2656,27 +2695,42 @@ def collect_pandas_df_make(
                                                  s)
                 ]
                 if embed is False:
-                    dfs_non_auc = dfs_non_auc.drop(node_cols, axis=1)
+                    df.drop(node_cols, axis=1, inplace=True)
                 elif len(node_cols) > 1:
-                    node_cols_embed = [i for i in node_cols if any(map(i.__contains__, embedding_methods))]
+                    from pathlib import Path
+                    parent_dir = str(
+                        Path(os.path.dirname(net_mets_csv_list[0])).parent)
+                    node_cols_embed = [i for i in node_cols if
+                                       any(map(i.__contains__,
+                                               embedding_methods))]
                     if len(node_cols_embed) > 0:
-                        from pathlib import Path
-                        embed_dir = f"{str(Path(os.path.dirname(net_mets_csv_list[0])).parent)}/embeddings"
+                        embed_dir = f"{parent_dir}/embeddings"
                         if not os.path.isdir(embed_dir):
                             os.makedirs(embed_dir, exist_ok=True)
                         df_nodes = df[node_cols_embed]
                         node_embeddings_grouped = [{k: list(g)} for k, g in
                                                    groupby(df_nodes,
-                                                           lambda s: s.split("_")[1])]
-                        atlas = os.path.dirname(file_).split('rsn-')[1].split('_')[0]
+                                                           lambda s: s.split(
+                                                               "_")[1])]
+                        atlas = os.path.dirname(file_).split('rsn-')[1].split(
+                            '_')[0]
+                        if 'thr-' in os.path.basename(file_):
+                            base_name = os.path.basename(file_).split(
+                                'metrics_')[1].split(
+                                '_thr-')[0] + '.csv'
+                        else:
+                            base_name = os.path.basename(file_).split(
+                                'metrics_')[1]
                         for node_dict in node_embeddings_grouped:
                             node_top_type = list(node_dict.keys())[0]
                             node_top_cols = list(node_dict.values())[0]
                             embedding_frame = df_nodes[node_top_cols]
-                            out_path = f"{embed_dir}/gradient-{node_top_type}_" \
+                            out_path = f"{embed_dir}/gradient-" \
+                                       f"{node_top_type}_" \
                                        f"rsn-{atlas}_nodes_" \
-                                       f"{os.path.basename(file_).split('metrics_')[1].split('_thr-')[0]}.csv"
+                                       f"{base_name}"
                             embedding_frame.to_csv(out_path, index=False)
+                dfs_non_auc.append(df)
 
         if create_summary is True:
             try:
@@ -2712,12 +2766,15 @@ def collect_pandas_df_make(
                 ).transpose()
 
                 # PCA across AUC node measures
-                # node_measures_grouped = [list(y) for x, y in groupby(node_cols, lambda s: s.split('_')[1])]
+                # node_measures_grouped = [list(y) for x, y in
+                # groupby(node_cols, lambda s: s.split('_')[1])]
                 # for node_measures in node_measures_grouped:
                 #     pca = PCA(n_components=2)
-                #     df_concatted_pca = pd.Series(pca.fit_transform(df_concat.loc[:,
+                #     df_concatted_pca = pd.Series(pca.fit_transform(
+                #     df_concat.loc[:,
                 #     node_measures])[1]).to_frame().transpose()
-                #     df_concatted_pca.columns = [str(col) + '_PCA' for col in df_concatted_pca.columns]
+                #     df_concatted_pca.columns = [str(col) + '_PCA' for col in
+                #     df_concatted_pca.columns]
                 df_concatted_mean.columns = [
                     str(col) + "_mean" for col in df_concatted_mean.columns
                 ]
@@ -2736,7 +2793,8 @@ def collect_pandas_df_make(
                 print(f"\nConcatenating dataframes for {str(ID)}...\n")
                 net_csv_summary_out_path = (
                     f"{summary_dir}/avg_topology_sub-{str(ID)}"
-                    f"{'%s' % ('_' + network if network is not None else '')}.csv")
+                    f"{'%s' % ('_' + network if network is not None else '')}"
+                    f".csv")
                 if os.path.isfile(net_csv_summary_out_path):
                     try:
                         os.remove(net_csv_summary_out_path)

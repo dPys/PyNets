@@ -186,8 +186,8 @@ def create_est_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -202,41 +202,44 @@ def create_est_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                         "/graph_sub-",
-                                                         ID,
-                                                         "_modality-func_",
-                                                         "%s" % ("%s%s%s" % ("rsn-",
-                                                                             network,
-                                                                             "_") if network is not None else ""),
-                                                         "%s" % ("%s%s%s" % ("roi-",
-                                                                             op.basename(roi).split(".")[0],
-                                                                             "_") if roi is not None else ""),
-                                                         "model-",
-                                                         conn_model,
-                                                         "_template-",
-                                                         template_name,
-                                                         "_",
-                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                             node_size,
-                                                                             "mm_") if (
-                                                             (node_size != "parc") and (
-                                                                 node_size is not None)) else "nodetype-parc_"),
-                                                         "%s" % ("%s%s%s" % ("smooth-",
-                                                                             smooth,
-                                                                             "fwhm_") if float(smooth) > 0 else ""),
-                                                         "%s" % ("%s%s%s" % ("hpass-",
-                                                                             hpass,
-                                                                             "Hz_") if hpass is not None else ""),
-                                                         "%s" % ("%s%s%s" % ("extract-",
-                                                                             extract_strategy,
-                                                                             "_") if extract_strategy is not None else ""),
-                                                         "thrtype-",
-                                                         thr_type,
-                                                         "_thr-",
-                                                         thr,
-                                                         ".npy",
-                                                         )
+    est_path = \
+        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+        (namer_dir,
+        "/graph_sub-",
+        ID,
+        "_modality-func_",
+        "%s" % ("%s%s%s" % ("rsn-",
+                         network,
+                         "_") if network is not None else ""),
+        "%s" % ("%s%s%s" % ("roi-",
+                         op.basename(
+                             roi).split(".")[0],
+                         "_") if roi is not None else ""),
+        "model-",
+        conn_model,
+        "_template-",
+        template_name,
+        "_",
+        "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                         node_size,
+                         "mm_") if (
+         (node_size != "parc") and (
+             node_size is not None)) else "nodetype-parc_"),
+        "%s" % ("%s%s%s" % ("smooth-",
+                         smooth,
+                         "fwhm_") if float(smooth) > 0 else ""),
+        "%s" % ("%s%s%s" % ("hpass-",
+                         hpass,
+                         "Hz_") if hpass is not None else ""),
+        "%s" % ("%s%s%s" % ("extract-",
+                         extract_strategy,
+                         "_") if extract_strategy is not None else ""),
+        "thrtype-",
+        thr_type,
+        "_thr-",
+        thr,
+        ".npy",
+        )
 
     return est_path
 
@@ -312,8 +315,8 @@ def create_est_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -322,43 +325,47 @@ def create_est_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                                 "/graph_sub-",
-                                                                 ID,
-                                                                 "_modality-dwi_",
-                                                                 "%s" % ("%s%s%s" % ("rsn-",
-                                                                                     network,
-                                                                                     "_") if network is not None else ""),
-                                                                 "%s" % ("%s%s%s" % ("roi-",
-                                                                                     op.basename(roi).split(".")[0],
-                                                                                     "_") if roi is not None else ""),
-                                                                 "model-",
-                                                                 conn_model,
-                                                                 "_template-",
-                                                                 template_name,
-                                                                 "_",
-                                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                                     node_size,
-                                                                                     "mm_") if (
-                                                                     (node_size != "parc") and (
-                                                                         node_size is not None)) else "nodetype-parc_"),
-                                                                 "%s" % ("%s%s%s" % ("samples-",
-                                                                                     int(target_samples),
-                                                                                     "streams_") if float(target_samples) > 0 else "_"),
-                                                                 "tracktype-",
-                                                                 track_type,
-                                                                 "_directget-",
-                                                                 directget,
-                                                                 "_minlength-",
-                                                                 min_length,
-                                                                 "_tol-",
-                                                                 error_margin,
-                                                                 "_thrtype-",
-                                                                 thr_type,
-                                                                 "_thr-",
-                                                                 thr,
-                                                                 ".npy",
-                                                                 )
+    est_path = \
+        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+        (namer_dir,
+        "/graph_sub-",
+        ID,
+        "_modality-dwi_",
+        "%s" % ("%s%s%s" % ("rsn-",
+                         network,
+                         "_") if network is not None else ""),
+        "%s" % ("%s%s%s" % ("roi-",
+                         op.basename(
+                             roi).split(".")[0],
+                         "_") if roi is not None else ""),
+        "model-",
+        conn_model,
+        "_template-",
+        template_name,
+        "_",
+        "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                         node_size,
+                         "mm_") if (
+         (node_size != "parc") and (
+             node_size is not None)) else "nodetype-parc_"),
+        "%s" % ("%s%s%s" % ("samples-",
+                         int(
+                             target_samples),
+                         "streams_") if float(target_samples) > 0 else "_"),
+        "tracktype-",
+        track_type,
+        "_directget-",
+        directget,
+        "_minlength-",
+        min_length,
+        "_tol-",
+        error_margin,
+        "_thrtype-",
+        thr_type,
+        "_thr-",
+        thr,
+        ".npy",
+        )
     return est_path
 
 
@@ -423,8 +430,8 @@ def create_raw_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     if (node_size is None) and (parc is True):
         node_size = "parc"
@@ -439,36 +446,40 @@ def create_raw_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                 "/rawgraph_sub-",
-                                                 ID,
-                                                 "_modality-func_",
-                                                 "%s" % ("%s%s%s" % ("rsn-",
-                                                                     network,
-                                                                     "_") if network is not None else ""),
-                                                 "%s" % ("%s%s%s" % ("roi-",
-                                                                     op.basename(roi).split(".")[0],
-                                                                     "_") if roi is not None else ""),
-                                                 "model-",
-                                                 conn_model,
-                                                 "_template-",
-                                                 template_name,
-                                                 "_",
-                                                 "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                     node_size,
-                                                                     "mm_") if (
-                                                     (node_size != "parc") and (
-                                                         node_size is not None)) else "nodetype-parc_"),
-                                                 "%s" % ("%s%s%s" % ("smooth-",
-                                                                     smooth,
-                                                                     "fwhm_") if float(smooth) > 0 else ""),
-                                                 "%s" % ("%s%s%s" % ("hpass-",
-                                                                     hpass,
-                                                                     "Hz_") if hpass is not None else ""),
-                                                 "%s" % ("%s%s" % ("extract-",
-                                                                     extract_strategy) if extract_strategy is not None else ""),
-                                                 ".npy",
-                                                 )
+    est_path = \
+        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+        (namer_dir,
+        "/rawgraph_sub-",
+        ID,
+        "_modality-func_",
+        "%s" % ("%s%s%s" % ("rsn-",
+                         network,
+                         "_") if network is not None else ""),
+        "%s" % ("%s%s%s" % ("roi-",
+                         op.basename(
+                             roi).split(".")[0],
+                         "_") if roi is not None else ""),
+        "model-",
+        conn_model,
+        "_template-",
+        template_name,
+        "_",
+        "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                         node_size,
+                         "mm_") if (
+         (node_size != "parc") and (
+             node_size is not None)) else "nodetype-parc_"),
+        "%s" % ("%s%s%s" % ("smooth-",
+                         smooth,
+                         "fwhm_") if float(smooth) > 0 else ""),
+        "%s" % ("%s%s%s" % ("hpass-",
+                         hpass,
+                         "Hz_") if hpass is not None else ""),
+        "%s" % ("%s%s" % ("extract-",
+                       extract_strategy) if extract_strategy is not None
+                else ""),
+        ".npy",
+        )
 
     return est_path
 
@@ -488,25 +499,27 @@ def create_raw_path_diff(
     error_margin
 ):
     """
-    Name the raw structural connectivity matrix file based on relevant graph-generating parameters.
+    Name the raw structural connectivity matrix file based on relevant
+    graph-generating parameters.
 
     Parameters
     ----------
     ID : str
         A subject id or other unique identifier.
     network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default') used to filter nodes in the study of
-        brain subgraphs.
+        Resting-state network based on Yeo-7 and Yeo-17 naming
+        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
+       Connectivity estimation model (e.g. corr for correlation, cov for
+       covariance, sps for precision covariance, partcorr for
+       partial correlation). sps type is used by default.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     node_size : int
-        Spherical centroid node size in the case that coordinate-based centroids
-        are used as ROI's.
+        Spherical centroid node size in the case that coordinate-based
+        centroids are used as ROI's.
     target_samples : int
         Total number of streamline samples specified to generate streams.
     track_type : str
@@ -514,7 +527,8 @@ def create_raw_path_diff(
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     directget : str
-        The statistical approach to tracking. Options are: det (deterministic), closest (clos), boot (bootstrapped),
+        The statistical approach to tracking. Options are:
+        det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
@@ -534,8 +548,8 @@ def create_raw_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     if (node_size is None) and (parc is True):
         node_size = "_parc"
@@ -544,39 +558,43 @@ def create_raw_path_diff(
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                                         "/rawgraph_sub-",
-                                                         ID,
-                                                         "_modality-dwi_",
-                                                         "%s" % ("%s%s%s" % ("rsn-",
-                                                                             network,
-                                                                             "_") if network is not None else ""),
-                                                         "%s" % ("%s%s%s" % ("roi-",
-                                                                             op.basename(roi).split(".")[0],
-                                                                             "_") if roi is not None else ""),
-                                                         "model-",
-                                                         conn_model,
-                                                         "_template-",
-                                                         template_name,
-                                                         "_",
-                                                         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                                                             node_size,
-                                                                             "mm_") if (
-                                                             (node_size != "parc") and (
-                                                                 node_size is not None)) else "nodetype-parc_"),
-                                                         "%s" % ("%s%s%s" % ("samples-",
-                                                                             int(target_samples),
-                                                                             "streams_") if float(target_samples) > 0 else ""),
-                                                         "tracktype-",
-                                                         track_type,
-                                                         "_directget-",
-                                                         directget,
-                                                         "_minlength-",
-                                                         min_length,
-                                                         "_tol-",
-                                                         error_margin,
-                                                         ".npy",
-                                                         )
+    est_path = \
+        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+        (namer_dir,
+        "/rawgraph_sub-",
+        ID,
+        "_modality-dwi_",
+        "%s" % ("%s%s%s" % ("rsn-",
+                         network,
+                         "_") if network is not None else ""),
+        "%s" % ("%s%s%s" % ("roi-",
+                         op.basename(
+                             roi).split(".")[0],
+                         "_") if roi is not None else ""),
+        "model-",
+        conn_model,
+        "_template-",
+        template_name,
+        "_",
+        "%s" % ("%s%s%s" % ("nodetype-spheres-",
+                         node_size,
+                         "mm_") if (
+         (node_size != "parc") and (
+             node_size is not None)) else "nodetype-parc_"),
+        "%s" % ("%s%s%s" % ("samples-",
+                         int(
+                             target_samples),
+                         "streams_") if float(target_samples) > 0 else ""),
+        "tracktype-",
+        track_type,
+        "_directget-",
+        directget,
+        "_minlength-",
+        min_length,
+        "_tol-",
+        error_margin,
+        ".npy",
+        )
     return est_path
 
 
@@ -754,7 +772,7 @@ def mergedicts(dict1, dict2):
     for k in set(dict1.keys()).union(dict2.keys()):
         if k in dict1 and k in dict2:
             if isinstance(dict1[k], dict) and \
-                isinstance(dict2[k], dict):
+                    isinstance(dict2[k], dict):
                 yield (k, dict(mergedicts(dict1[k],
                                           dict2[k])))
             else:
@@ -1250,17 +1268,17 @@ def collect_pandas_df(
         func_models = hardcoded_params["available_models"]["func_models"]
     except KeyError as e:
         print(e,
-            "available functional models not sucessfully extracted"
-            " from runconfig.yaml"
-        )
+              "available functional models not sucessfully extracted"
+              " from runconfig.yaml"
+              )
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
     except KeyError as e:
         print(e,
-            "available structural models not sucessfully extracted"
-            " from runconfig.yaml"
-        )
+              "available structural models not sucessfully extracted"
+              " from runconfig.yaml"
+              )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1277,7 +1295,7 @@ def collect_pandas_df(
                             i
                             for i in net_mets_csv_list
                             if i.split("model-")[1].split("_")[0] in
-                               struct_models
+                            struct_models
                         ]
                     )
                 )
@@ -1290,7 +1308,7 @@ def collect_pandas_df(
                             i
                             for i in net_mets_csv_list
                             if i.split("model-")[1].split("_")[0] in
-                               func_models
+                            func_models
                         ]
                     )
                 )
@@ -1337,7 +1355,7 @@ def collect_pandas_df(
             )
 
             if combination_complete_dwi is \
-                True and combination_complete_func is True:
+                    True and combination_complete_func is True:
                 combination_complete = True
             else:
                 combination_complete = False
@@ -1555,8 +1573,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-            "No template specified in runconfig.yaml"
-        )
+              "No template specified in runconfig.yaml"
+              )
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
@@ -1657,31 +1675,35 @@ def save_ts_to_file(
         smooth = 0
 
     # Save time series as npy file
-    out_path_ts = "%s%s%s%s%s%s%s%s%s%s%s" % (namer_dir,
-                                              "/nodetimeseries_sub-",
-                                              ID,
-                                              "_",
-                                              "%s" % ("%s%s%s" % ("rsn-",
-                                                                  network,
-                                                                  "_") if network is not None else ""),
-                                              "%s" % ("%s%s%s" % ("roi-",
-                                                                  op.basename(roi).split(".")[0],
-                                                                  "_") if roi is not None else ""),
-                                              "%s" % ("%s%s%s" % ("spheres-",
-                                                                  node_size,
-                                                                  "mm_") if (
-                                                  (node_size != "parc") and (
-                                                      node_size is not None)) else "parc_"),
-                                              "%s" % ("%s%s%s" % ("smooth-",
-                                                                  smooth,
-                                                                  "fwhm_") if float(smooth) > 0 else ""),
-                                              "%s" % ("%s%s%s" % ("hpass-",
-                                                                  hpass,
-                                                                  "Hz_") if hpass is not None else ""),
-                                              "%s" % ("%s%s" % ("extract-",
-                                                                  extract_strategy) if extract_strategy is not None else ""),
-                                              ".npy",
-                                              )
+    out_path_ts = \
+        "%s%s%s%s%s%s%s%s%s%s%s" % \
+        (namer_dir,
+        "/nodetimeseries_sub-",
+        ID,
+        "_",
+        "%s" % ("%s%s%s" % ("rsn-",
+                          network,
+                          "_") if network is not None else ""),
+        "%s" % ("%s%s%s" % ("roi-",
+                          op.basename(
+                              roi).split(".")[0],
+                          "_") if roi is not None else ""),
+        "%s" % ("%s%s%s" % ("spheres-",
+                          node_size,
+                          "mm_") if (
+          (node_size != "parc") and (
+              node_size is not None)) else "parc_"),
+        "%s" % ("%s%s%s" % ("smooth-",
+                          smooth,
+                          "fwhm_") if float(smooth) > 0 else ""),
+        "%s" % ("%s%s%s" % ("hpass-",
+                          hpass,
+                          "Hz_") if hpass is not None else ""),
+        "%s" % ("%s%s" % ("extract-",
+                        extract_strategy) if extract_strategy is not None
+                else ""),
+        ".npy",
+        )
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1829,17 +1851,17 @@ def build_args_from_config(modality, arg_dict):
         func_models = hardcoded_params["available_models"]["func_models"]
     except KeyError as e:
         print(e,
-            "available functional models not successfully extracted"
-            " from runconfig.yaml"
-        )
+              "available functional models not successfully extracted"
+              " from runconfig.yaml"
+              )
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
     except KeyError as e:
         print(e,
-            "available structural models not successfully extracted"
-            " from runconfig.yaml"
-        )
+              "available structural models not successfully extracted"
+              " from runconfig.yaml"
+              )
 
     arg_list = []
     for mod_ in modalities:
@@ -1948,9 +1970,11 @@ def dumpstacks(signal, frame):
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
     for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
+        code.append("\n# Thread: %s(%d)" %
+                    (id2name.get(threadId, ""), threadId))
         for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            code.append('File: "%s", line %d, in %s' %
+                        (filename, lineno, name))
             if line:
                 code.append("  %s" % (line.strip()))
     print("\n".join(code))

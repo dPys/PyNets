@@ -27,7 +27,7 @@ def get_optimal_cov_estimator(time_series):
         print("\nModel did not converge on first attempt. "
               "Varying tolerance...\n")
         while not hasattr(estimator, 'covariance_') and \
-            not hasattr(estimator, 'precision_') and ix < 3:
+                not hasattr(estimator, 'precision_') and ix < 3:
             for tol in [0.1, 0.01, 0.001, 0.0001]:
                 print(f"Tolerance={tol}")
                 estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol,
@@ -272,19 +272,19 @@ def get_conn_matrix(
 
     if conn_model in nilearn_kinds:
         if conn_model == "corr" or conn_model == "cor" or \
-             conn_model == "correlation":
+                conn_model == "correlation":
             print("\nComputing correlation matrix...\n")
-            kind="correlation"
+            kind = "correlation"
         elif conn_model == "partcorr" or conn_model == "parcorr" or \
-             conn_model == "partialcorrelation":
+                conn_model == "partialcorrelation":
             print("\nComputing partial correlation matrix...\n")
-            kind="partial correlation"
+            kind = "partial correlation"
         elif conn_model == "sps" or conn_model == "sparse" or \
-             conn_model == "precision":
+                conn_model == "precision":
             print("\nComputing precision matrix...\n")
-            kind="precision"
+            kind = "precision"
         elif conn_model == "cov" or conn_model == "covariance" or \
-             conn_model == "covar":
+                conn_model == "covar":
             print("\nComputing covariance matrix...\n")
             kind = "covariance"
         else:
@@ -543,9 +543,9 @@ class TimeseriesExtraction(object):
             self.low_pass = hardcoded_params["low_pass"][0]
         except KeyError as e:
             print(e,
-                "ERROR: Plotting configuration not successfully extracted "
-                "from runconfig.yaml"
-            )
+                  "ERROR: Plotting configuration not successfully extracted "
+                  "from runconfig.yaml"
+                  )
 
     def prepare_inputs(self):
         """Helper function to creating temporary nii's and prepare inputs from

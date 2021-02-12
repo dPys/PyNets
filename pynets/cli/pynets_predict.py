@@ -258,7 +258,7 @@ def main():
             df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(ID)
 
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
-    df['sex'] = df['sex'].map({1:0, 2:1})
+    df['sex'] = df['sex'].map({1: 0, 2: 1})
     df = df[
         ["participant_id", "age", "sex", "num_visits", "DAY_LAG",
          'dataset'] + target_vars
@@ -281,17 +281,21 @@ def main():
                       f"ses-{sessions[0]}...")
                 continue
 
-            if embedding_type not in sub_dict_clean[ID][str(sessions[0])][modality].keys():
+            if embedding_type not in \
+                sub_dict_clean[ID][str(sessions[0])][modality].keys():
                 print(
-                    f"Modality: {modality} not found for ID {ID}, ses-{sessions[0]}, "
-                    f"{embedding_type}..."
+                    f"Modality: {modality} not found for ID {ID}, "
+                    f"ses-{sessions[0]}, {embedding_type}..."
                 )
                 continue
 
-            if grid_param in list(sub_dict_clean[ID][str(sessions[0])][modality][embedding_type].keys()):
+            if grid_param in \
+                list(sub_dict_clean[ID][str(sessions[0])][modality][
+                         embedding_type].keys()):
                 grid_finds.append(grid_param)
         if len(grid_finds) < 0.75*len(df["participant_id"]):
-            print(f"Less than 75% of {grid_param} found. Removing from grid...")
+            print(
+                f"Less than 75% of {grid_param} found. Removing from grid...")
             continue
         else:
             good_grids.append(grid_param)
@@ -304,7 +308,7 @@ def main():
                      f"{'_'.join(rsns)}_{embedding_type}_{template}_" \
                      f"{thr_type}.pkl"
     if not os.path.isfile(dict_file_path) or not \
-        os.path.isfile(dict_file_path):
+            os.path.isfile(dict_file_path):
         ml_dfs = {}
         ml_dfs = make_feature_space_dict(
             base_dir,

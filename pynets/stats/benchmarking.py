@@ -189,7 +189,7 @@ def beta_lin_comb(beta, GVDAT, meta):
             for mod in range(N_mod):
                 for thr in range(N_thr):
                     gvlc += GVDAT[sesh][atl][mod][thr] * beta_atl[atl] * \
-                            beta_mod[mod] * beta_thr[thr]
+                        beta_mod[mod] * beta_thr[thr]
         gv_array[sesh] = gvlc
     return gv_array
 
@@ -251,9 +251,11 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             for ses in [str(i) for i in range(1, 11)]:
                 for ID in ids:
                     id_dict[ID] = {}
-                    if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
+                    if comb_tuple in par_dict[ID][str(ses)][modality][alg
+                                                                      ].keys():
                         id_dict[ID][str(ses)] = \
-                            par_dict[ID][str(ses)][modality][alg][comb_tuple][mets.index(met)][0]
+                            par_dict[ID][str(ses)][modality][alg][comb_tuple][
+                                mets.index(met)][0]
                     df = pd.DataFrame(id_dict).T
                     if df.empty:
                         del df
@@ -274,10 +276,13 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                            raters='ses', ratings=f"{met}",
                                            nan_policy='omit').round(3)
                 c_icc = c_icc.set_index("Type")
-                c_icc3 = c_icc.drop(index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k', 'ICC3'])
+                c_icc3 = c_icc.drop(index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k',
+                                           'ICC3'])
                 df_summary.at[0, f"icc_{met}"] = c_icc3['ICC'].values[0]
-                df_summary.at[0, f"icc_{met}_CI95%_L"] = c_icc3['CI95%'].values[0][0]
-                df_summary.at[0, f"icc_{met}_CI95%_U"] = c_icc3['CI95%'].values[0][1]
+                df_summary.at[0, f"icc_{met}_CI95%_L"] = \
+                    c_icc3['CI95%'].values[0][0]
+                df_summary.at[0, f"icc_{met}_CI95%_U"] = \
+                    c_icc3['CI95%'].values[0][1]
             except BaseException:
                 print('FAILED...')
                 print(df_long)
@@ -299,51 +304,74 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         for ses in [str(i) for i in range(1, 11)]:
             for ID in ids:
                 if ses in par_dict[ID].keys():
-                    if comb_tuple in par_dict[ID][str(ses)][modality][alg].keys():
-                        if 'data' in par_dict[ID][str(ses)][modality][alg][comb_tuple].keys():
-                            if par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'] is not None:
-                                if isinstance(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'], str):
-                                    data_path = par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']
+                    if comb_tuple in par_dict[ID][str(ses)][modality][alg
+                                                                      ].keys():
+                        if 'data' in par_dict[ID][str(ses)][modality][alg][
+                                comb_tuple].keys():
+                            if par_dict[ID][str(ses)][modality][alg][
+                                    comb_tuple]['data'] is not None:
+                                if isinstance(par_dict[ID][str(ses)][
+                                        modality][alg][comb_tuple][
+                                        'data'], str):
+                                    data_path = par_dict[ID][str(ses)][
+                                        modality][alg][comb_tuple]['data']
+                                    parent_dir = Path(os.path.dirname(
+                                        par_dict[ID][str(ses)][modality][alg][
+                                            comb_tuple]['data'])).parent
                                     if os.path.isfile(data_path):
                                         try:
                                             if data_path.endswith('.npy'):
                                                 emb_data = np.load(data_path)
                                             elif data_path.endswith('.csv'):
-                                                emb_data = np.array(pd.read_csv(data_path)).reshape(-1, 1)
+                                                emb_data = np.array(
+                                                    pd.read_csv(data_path)
+                                                ).reshape(-1, 1)
                                             else:
                                                 emb_data = np.nan
-                                            node_files = glob.glob(f"{Path(os.path.dirname(par_dict[ID][str(ses)][modality][alg][comb_tuple]['data'])).parent}/nodes/*.json")
+                                            node_files = glob.glob(
+                                                f"{parent_dir}/nodes/*.json")
                                         except:
-                                            print(f"Failed to load data from {data_path}..")
+                                            print(f"Failed to load data from "
+                                                  f"{data_path}..")
                                             continue
                                     else:
                                         continue
                                 else:
                                     node_files = glob.glob(
-                                        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+                                        f"{base_dir}/pynets/sub-{ID}/ses-"
+                                        f"{ses}/{modality}/rsn-"
                                         f"{atlas}_res-{res}/nodes/*.json")
-                                    emb_data = par_dict[ID][str(ses)][modality][alg][comb_tuple]['data']
+                                    emb_data = par_dict[ID][str(ses)][
+                                        modality][alg][comb_tuple]['data']
 
                                 emb_shape = emb_data.shape[0]
 
                                 if len(node_files) > 0:
-                                    ixs, node_dict = parse_closest_ixs(node_files,
-                                                                       emb_shape, template=template)
+                                    ixs, node_dict = parse_closest_ixs(
+                                        node_files, emb_shape,
+                                        template=template)
                                     if len(ixs) != emb_shape:
                                         ixs, node_dict = parse_closest_ixs(
                                             node_files,
                                             emb_shape)
                                     if isinstance(node_dict, dict):
-                                        coords = [node_dict[i]['coord'] for i in node_dict.keys()]
-                                        labels = [node_dict[i]['label']['BrainnetomeAtlasFan2016'] for i in node_dict.keys()]
+                                        coords = [node_dict[i]['coord'] for i
+                                                  in node_dict.keys()]
+                                        labels = [node_dict[i][
+                                            'label'][
+                                            'BrainnetomeAtlas'
+                                            'Fan2016'] for i in
+                                            node_dict.keys()]
                                     else:
-                                        print(f"Failed to parse coords/labels from {node_files}. Skipping...")
+                                        print(f"Failed to parse coords/"
+                                              f"labels from {node_files}. "
+                                              f"Skipping...")
                                         continue
                                     df_coords = pd.DataFrame(
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"rsn-{atlas}_res-" \
+                                        f"rsn-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     # labels = [
@@ -353,7 +381,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"rsn-{atlas}_res-" \
+                                        f"rsn-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
@@ -361,7 +389,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 else:
                                     print(f"No node files detected for "
                                           f"{comb_tuple} and {ID}-{ses}...")
-                                    ixs = [i for i in par_dict[ID][str(ses)][modality][alg][
+                                    ixs = [i for i in par_dict[ID][str(ses)][
+                                        modality][alg][
                                         comb_tuple]['index'] if i is not None]
                                     coords_frames.append(pd.Series())
                                     labels_frames.append(pd.Series())
@@ -369,9 +398,10 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 if len(ixs) == emb_shape:
                                     df_pref = pd.DataFrame(emb_data.T,
                                                            columns=[
-                                        f"{alg}_{i}_rsn-{atlas}_res-"
-                                        f"{res}"
-                                        for i in ixs])
+                                                               f"{alg}_{i}_rsn"
+                                                               f"-{atlas}_res-"
+                                                               f"{res}"
+                                                               for i in ixs])
                                     df_pref['id'] = ID
                                     df_pref['ses'] = ses
                                     df_pref.replace(0, np.nan, inplace=True)
@@ -409,16 +439,21 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         dict_sum = df_summary.drop(columns=['grid', 'modality', 'embedding',
                                             'discriminability']).to_dict()
 
-        for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not in i]:
+        for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not
+                                                 in i]:
             ix = int(lp.split(f"{alg}_")[1].split('_')[0])
             rsn = lp.split(f"{alg}_{ix}_")[1]
             df_long_clean = df_long[['id', 'ses', lp]]
-            # df_long_clean = df_long[['id', 'ses', lp]].loc[(df_long[['id', 'ses', lp]]['id'].duplicated() == True) & (df_long[['id', 'ses', lp]]['ses'].duplicated() == True) & (df_long[['id', 'ses', lp]][lp].isnull()==False)]
+            # df_long_clean = df_long[['id', 'ses', lp]].loc[(df_long[['id',
+            # 'ses', lp]]['id'].duplicated() == True) & (df_long[['id', 'ses',
+            # lp]]['ses'].duplicated() == True) & (df_long[['id', 'ses',
+            # lp]][lp].isnull()==False)]
             # df_long_clean[lp] = np.abs(df_long_clean[lp].round(6))
             # df_long_clean['ses'] = df_long_clean['ses'].astype('int')
             # g = df_long_clean.groupby(['ses'])
             # df_long_clean = pd.DataFrame(g.apply(
-            #     lambda x: x.sample(g.size().min()).reset_index(drop=True))).reset_index(drop=True)
+            #     lambda x: x.sample(g.size().min()).reset_index(drop=True))
+            #     ).reset_index(drop=True)
             try:
                 c_icc = pg.intraclass_corr(data=df_long_clean, targets='id',
                                            raters='ses', ratings=lp,
@@ -441,7 +476,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 del c_icc, c_icc3, icc_val
             except BaseException:
                 print(f"FAILED for {lp}...")
-                #print(df_long)
+                # print(df_long)
                 #df_summary.at[0, f"{lp}_icc"] = np.nan
                 coord_in = np.nan
                 label_in = np.nan
@@ -514,4 +549,3 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     gc.collect()
     return df_summary
-

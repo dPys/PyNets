@@ -196,7 +196,7 @@ def sweep_directory(
 
                 conf = layout.get(
                     **merge_dicts(mod_query, {"extension":
-                                                  [".tsv", ".tsv.gz"]})
+                                              [".tsv", ".tsv.gz"]})
                 )
                 conf = [i for i in conf if "confounds_regressors" in
                         i.filename]

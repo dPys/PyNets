@@ -127,17 +127,17 @@ def workflow_selector(
             "func_models"]
     except KeyError as e:
         print(e,
-            "available functional models not successfully extracted"
-            " from runconfig.yaml"
-        )
+              "available functional models not successfully extracted"
+              " from runconfig.yaml"
+              )
     try:
         struct_models = hardcoded_params["available_models"][
             "struct_models"]
     except KeyError as e:
         print(e,
-            "available structural models not successfully extracted"
-            " from runconfig.yaml"
-        )
+              "available structural models not successfully extracted"
+              " from runconfig.yaml"
+              )
 
     # Handle modality logic
     if (func_file is not None) and (dwi_file is not None):
@@ -1096,7 +1096,8 @@ def workflow_selector(
                             omni_embedding_node_func,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, omni_embedding_node_func, [("ID", "ID")])
+                        (meta_inputnode,
+                         omni_embedding_node_func, [("ID", "ID")])
                     ]
                 )
             if 'ASE' in embedding_methods:
@@ -1116,7 +1117,8 @@ def workflow_selector(
                             ase_embedding_node_func,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, ase_embedding_node_func, [("ID", "ID")]),
+                        (meta_inputnode, ase_embedding_node_func,
+                         [("ID", "ID")]),
                     ]
                 )
     if dwi_file and not func_file:
@@ -1158,7 +1160,7 @@ def workflow_selector(
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
                         (meta_inputnode, omni_embedding_node_struct,
-                        [("ID", "ID")])
+                         [("ID", "ID")])
                     ]
                 )
             if 'ASE' in embedding_methods:
@@ -1405,7 +1407,7 @@ def dmri_connectometry(
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, thresholding, utils
     from pynets.registration import register
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from pynets.dmri import estimation
     from pynets.core.interfaces import (
         PlotStruct,
@@ -1431,7 +1433,7 @@ def dmri_connectometry(
     dmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
     if template_name == "MNI152_T1" or template_name == "colin27" or \
-        template_name == "CN200":
+            template_name == "CN200":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -2082,7 +2084,7 @@ def dmri_connectometry(
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif multi_atlas is not None and uatlas is\
-            not None and user_atlas_list is None:
+                not None and user_atlas_list is None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: single user atlas + multiple nilearn
             # atlases')
@@ -2093,7 +2095,7 @@ def dmri_connectometry(
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif atlas is not None and user_atlas_list is not None and multi_atlas\
-         is None:
+                is None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: single nilearn atlas + multiple user
          # atlases')
@@ -2165,7 +2167,7 @@ def dmri_connectometry(
                                         ),
                                        (check_orient_and_dims_roi_node,
                                         register_roi_node),
-                                        [("outfile",  "roi")]
+                                       [("outfile", "roi")]
                                        ])
     save_coords_and_labels_node = pe.Node(
         niu.Function(
@@ -3495,12 +3497,12 @@ def dmri_connectometry(
         "scheduler": "mem_thread",
     }
     execution_dict["logging"] = {
-            "workflow_level": "INFO",
-            "utils_level": "INFO",
-            "log_to_file": False,
-            "interface_level": "DEBUG",
-            "filemanip_level": "DEBUG",
-        }
+        "workflow_level": "INFO",
+        "utils_level": "INFO",
+        "log_to_file": False,
+        "interface_level": "DEBUG",
+        "filemanip_level": "DEBUG",
+    }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
@@ -3575,7 +3577,7 @@ def fmri_connectometry(
     from nipype.interfaces import utility as niu
     from pynets.core import nodemaker, utils, thresholding
     from pynets.fmri import estimation
-    from pynets.registration import reg_utils as regutils
+    from pynets.registration import utils as regutils
     from pynets.core.interfaces import (
         ExtractTimeseries,
         PlotFunc,
@@ -3599,7 +3601,7 @@ def fmri_connectometry(
     fmri_connectometry_wf = pe.Workflow(name=base_dirname)
 
     if template_name == "MNI152_T1" or template_name == "colin27" or \
-        template_name == "CN200":
+            template_name == "CN200":
         template = pkg_resources.resource_filename(
             "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
         )
@@ -4190,7 +4192,7 @@ def fmri_connectometry(
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif multi_atlas is not None and uatlas is not None and \
-            user_atlas_list is None:
+                user_atlas_list is None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: single user atlas + multiple nilearn '
             #       'atlases')
@@ -4201,7 +4203,7 @@ def fmri_connectometry(
             ]
             flexi_atlas_source.iterables = flexi_atlas_source_iterables
         elif atlas is not None and user_atlas_list is not None and \
-            multi_atlas is None:
+                multi_atlas is None:
             # print('\n\n\n\n')
             # print('Flexi-atlas: single nilearn atlas + multiple user '
             #       'atlases')
@@ -4697,9 +4699,9 @@ def fmri_connectometry(
             ),
             name="get_node_membership_node",
         )
-        get_node_membership_node._n_procs = runtime_dict["get_node_" \
+        get_node_membership_node._n_procs = runtime_dict["get_node_"
                                                          "membership_node"][0]
-        get_node_membership_node._mem_gb = runtime_dict["get_node_" \
+        get_node_membership_node._mem_gb = runtime_dict["get_node_"
                                                         "membership_node"][1]
 
         if multi_nets:
@@ -5744,12 +5746,12 @@ def fmri_connectometry(
         "scheduler": "mem_thread",
     }
     execution_dict["logging"] = {
-            "workflow_level": "INFO",
-            "utils_level": "INFO",
-            "log_to_file": False,
-            "interface_level": "DEBUG",
-            "filemanip_level": "DEBUG",
-        }
+        "workflow_level": "INFO",
+        "utils_level": "INFO",
+        "log_to_file": False,
+        "interface_level": "DEBUG",
+        "filemanip_level": "DEBUG",
+    }
     execution_dict["plugin"] = str(plugin_type)
     cfg = dict(execution=execution_dict)
     for key in cfg.keys():
