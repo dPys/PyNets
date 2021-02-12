@@ -274,7 +274,6 @@ jobs:
             mkdir test-results
             export PYTHONUNBUFFERED=1
             python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
-            sudo chmod 777 -R /usr/lib/python3/dist-packages/graph_tool
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
@@ -283,7 +282,6 @@ jobs:
           key: unit&integrationtests
           paths:
             - ~/test_cache
-            - /usr/lib/python3/dist-packages/graph_tool
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -291,8 +289,12 @@ jobs:
 
   coverage:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
+    environment:
+      - FSLDIR: /usr/local/fsl
+      - FSLOUTPUTTYPE: 'NIFTI'
+      - PYTHONUNBUFFERED: 1
     steps:
       - checkout
       - restore_cache:
@@ -310,7 +312,7 @@ jobs:
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
             sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev
+            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
@@ -323,6 +325,15 @@ jobs:
           command: |
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools
+      - run:
+          name: Re-install graph_tool because it doesn't cache
+          no_output_timeout: 30m
+          command: |
+            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
+            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
+            sudo apt-get update
+            sudo apt-get install --allow-unauthenticated -y python3-graph-tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
       - run:
           name: Update codecov
           command: |
