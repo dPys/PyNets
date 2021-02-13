@@ -312,8 +312,7 @@ jobs:
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update
-            sudo apt-get install -y make build-essential
-            sudo apt-get install -y software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
+            sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
             sudo apt-get upgrade
             pyenv install -f 3.6.5 || true
             eval "$(pyenv init -)"
@@ -325,7 +324,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat
       - run:
           name: Install graph_tool
           no_output_timeout: 30m
