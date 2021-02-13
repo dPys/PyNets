@@ -324,7 +324,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib heapq
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib
       - run:
           name: Install graph_tool
           no_output_timeout: 30m
