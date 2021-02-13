@@ -85,9 +85,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         else:
             mat_clean = pop_array[i]
 
-        mat_clean = np.nan_to_num(mat_clean)
-        mat_clean = mat_clean[
-            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+        mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
         if np.isnan(np.sum(mat_clean)) == False:
             clean_mats.append(mat_clean)
         i += 1
@@ -305,9 +303,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         graph_path_tmp = cg.prune_graph()[1]
         mat_clean = np.load(graph_path_tmp)
 
-    mat_clean = np.nan_to_num(mat_clean)
-    mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
-                          (np.isinf(mat_clean) == False)]
+    mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
 
     if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
         return None
