@@ -26,8 +26,8 @@ installation of [Python3.6+](https://www.python.org/download/releases/3.0/) with
 or
 ```
 # Install git-lfs
-brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux)
-git lfs install --skip-repo
+1. brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux) or skip to step 2 (Windows)
+2. git lfs install --skip-repo
 
 # Clone the repository and install
 git clone https://github.com/dpys/pynets
@@ -37,7 +37,9 @@ cd PyNets
 
 Hardware Requirements
 ---------------------
-4 vCPUs, 8+ GB free RAM, and at least 8-16 GB of free disk space.
+4+ vCPU's, 8+ GB RSS memory, and at least 10 GB of free disk space though
+storage needs can vary considerably depending on the size of the input data
+at the type of analysis that you wish to run.
 
 Operating Systems
 -----------------
@@ -93,7 +95,7 @@ where the `-config` flag specifies that path to a .json configuration spec that 
     "gen": { # These are general options that apply to all modalities
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']", # Anatomical atlases to define nodes.
             "bin":  "False", # Binarize the resulting connectome graph before analyzing it. Note that undirected weighted graphs are analyzed by default.
-            "embed":  "False", # Activate omnibus and single-graph adjacency spectral embedding of connectome estimates sampled.
+            "embed":  "False", # Activate any of several available graph embedding methods
             "mplx":  0, # If both functional and structural data are provided, this parameter [0-3] indicates the type of multiplex connectome modeling to perform. See `pynets -h` for more details on multiplex modes.
             "n":  "['Cont', 'Default']", # Which, if any, Yeo-7/17 resting-state sub-networks to select from the given parcellation. If multiple are specified, all other options will iterate across each.
             "norm": "['6']", # Level of normalization to apply to graph (e.g. standardize betwee 0-1, Pass-to-Ranks (PTR), log10).
