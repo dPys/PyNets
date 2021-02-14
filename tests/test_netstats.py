@@ -296,9 +296,7 @@ def test_raw_mets():
     Test raw_mets extraction functionality
     """
     from pynets.stats.netstats import global_efficiency, average_local_efficiency
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, \
-        average_shortest_path_length, degree_pearson_correlation_coefficient, 
-        graph_number_of_cliques, transitivity, sigma
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, sigma
     base_dir = str(Path(__file__).parent/"examples")
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     in_mat = np.load(est_path)
