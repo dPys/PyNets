@@ -52,8 +52,10 @@ tracking:
         - 20
     min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
         - 25
+    seeding_mask_thr:
+        - 0.0075
     track_timeout:
-        - 10800 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
+        - 3600 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering

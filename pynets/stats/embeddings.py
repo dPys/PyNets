@@ -134,7 +134,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         out_path = f"{namer_dir}/gradient-OMNI" \
                    f"_{atlas}_{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
-        os.mknod(out_path)
+        if not os.path.exists(out_path):
+            os.mknod(out_path)
     return out_path
 
 
@@ -343,6 +344,7 @@ def build_asetomes(est_path_iterlist, ID):
         A subject id or other unique identifier.
 
     """
+    from pathlib import Path
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
@@ -392,7 +394,8 @@ def build_asetomes(est_path_iterlist, ID):
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
                        f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
-            os.mknod(out_path)
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
             out_paths.append(out_path)
 
     return out_paths
@@ -420,6 +423,7 @@ def build_masetome(est_path_iterlist, ID):
       https://doi.org/10.1038/s41467-018-04614-w
 
     """
+    from pathlib import Path
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices
@@ -475,7 +479,8 @@ def build_masetome(est_path_iterlist, ID):
                 f"{namer_dir}/gradient-MASE_{atlas}_{subgraph}"
                 f"_{os.path.basename(pairs[0])}_NULL"
             )
-            os.mknod(out_path)
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
             out_paths.append(out_path)
 
     return out_paths
@@ -504,6 +509,7 @@ def build_omnetome(est_path_iterlist, ID):
       2017 IEEE International Conference on (pp. 964-967). IEEE.
 
     """
+    from pathlib import Path
     import sys
     import numpy as np
     from pynets.core.utils import flatten
