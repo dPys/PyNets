@@ -33,11 +33,14 @@ def test_align():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    ref = pkg_resources.resource_filename("pynets",
+                                          f"templates/MNI152_T1_brain_"
+                                          f"2mm.nii.gz")
     out = f"{anat_dir}/highres2standard.nii.gz"
     xfm_out = f"{anat_dir}/highres2standard.mat"
 
-    utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True, bins=256, interp=None, cost="mutualinfo",
+    utils.align(inp, ref, xfm=xfm_out, out=out, dof=12, searchrad=True,
+                bins=256, interp=None, cost="mutualinfo",
                 sch=None, wmseg=None, init=None)
 
     highres2standard_linear = nib.load(out)
@@ -93,13 +96,16 @@ def test_align_nonlinear():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    ref = pkg_resources.resource_filename("pynets",
+                                          f"templates/"
+                                          f"MNI152_T1_brain_2mm.nii.gz")
     out = f"{anat_dir}/highres2standard_nonlinear.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp"
     # affine mat created from test_align above.
     xfm = f"{anat_dir}/highres2standard.mat"
 
-    utils.align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None)
+    utils.align_nonlinear(inp, ref, xfm, out, warp, ref_mask=None,
+                          in_mask=None, config=None)
 
     highres2standard_nonlin = nib.load(out)
     assert highres2standard_nonlin is not None
@@ -134,16 +140,20 @@ def test_invwarp():
 
 def test_apply_warp():
     import pkg_resources
-    # Warp original anat to standard space using warp img (had to invwarp first) and linear mats
+    # Warp original anat to standard space using warp img (had to
+    # invwarp first) and linear mats
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    ref = pkg_resources.resource_filename("pynets",
+                                          f"templates/MNI152_T1_brain_"
+                                          f"2mm.nii.gz")
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
     out = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp.nii.gz"
     xfm = f"{anat_dir}/highres2standard.mat"
 
-    utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None, sup=False)
+    utils.apply_warp(ref, inp, out, warp, xfm=xfm, mask=None, interp=None,
+                     sup=False)
     # highres2standard_apply_warp = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"
     # highres2standard_apply_warp = nib.load(highres2standard_apply_warp)
     # highres2standard_apply_warp = highres2standard_apply_warp.get_data()
@@ -356,9 +366,59 @@ def test_check_orient_and_dims():
 
 
 def test_make_median_b0():
-
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
+               f"dwi.nii.gz"
     mean_file_out = utils.median(dwi_file)
 
     assert os.path.isfile(mean_file_out)
+
+
+def test_gen_mask():
+    base_dir = str(Path(__file__).parent/"examples")
+    t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
+    t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
+    mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
+    utils.gen_mask(t1w_head, t1w_brain, mask)
+
+
+def test_deep_skull_strip():
+    base_dir = str(Path(__file__).parent/"examples")
+    t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
+    img = nib.load(t1w_head)
+    t1w_brain_mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
+    t1w_data = img.get_fdata()
+    t1w_brain_mask = utils.deep_skull_strip(t1w_data, t1w_brain_mask, img)
+
+    assert os.path.isfile(t1w_brain_mask)
+
+
+def test_rescale_affine_to_center():
+    base_dir = str(Path(__file__).parent/"examples")
+
+    input_affine = nib.load(f"{base_dir}/003/anat/sub-003_T1w.nii.gz").affine
+
+    out_aff = utils.rescale_affine_to_center(input_affine)
+    assert np.allclose(out_aff, input_affine)
+
+    out_aff = utils.rescale_affine_to_center(input_affine,
+                                             voxel_dims=[2, 2, 2])
+    assert np.allclose(out_aff, input_affine* np.array([2, 2, 2, 1]))
+
+
+def test_wm_syn():
+    from dipy.align import imwarp, imaffine
+
+    base_dir = str(Path(__file__).parent/"examples")
+    t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
+    fa_path = f"{base_dir}/003/anat/tensor_fa.nii.gz"
+    ap_path = f"{base_dir}/003/anat/aniso_power_tmp.nii.gz"
+
+    [mapping, affine_map, warped_fa] = utils.wm_syn(t1w_brain, ap_path,
+                                                    f"{base_dir}/003/dmri",
+                                                    fa_path,
+                                                    template_fa_path=None)
+    assert os.path.isfile(warped_fa) is True
+    assert isinstance(mapping, imwarp.DiffeomorphicMap)
+    assert isinstance(affine_map, imaffine.AffineMap) and \
+           affine_map.affine.shape == (4, 4)

@@ -581,16 +581,14 @@ def build_workflow(args, retval):
     import glob
     import ast
     import os.path as op
-    import sys
     import timeit
     from datetime import timedelta
     from colorama import Fore, Style
     from pathlib import Path
-    import pkg_resources
-    import yaml
     import datetime
     from os import environ
     from subprocess import check_output
+    from pynets.core.utils import load_runconfig
 
     try:
         import pynets
@@ -634,7 +632,6 @@ def build_workflow(args, retval):
     print(Style.RESET_ALL)
 
     # Hard-coded:
-    from pynets.core.utils import load_runconfig
     hardcoded_params = load_runconfig()
 
     maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
@@ -649,7 +646,6 @@ def build_workflow(args, retval):
     nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
     nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
     local_atlases = hardcoded_params["local_atlases"]
-    template_name = hardcoded_params['template'][0]
     roi_neighborhood_tol = \
         hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
