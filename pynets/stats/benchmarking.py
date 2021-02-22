@@ -351,8 +351,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         template=template)
                                     if len(ixs) != emb_shape:
                                         ixs, node_dict = parse_closest_ixs(
-                                            node_files,
-                                            emb_shape)
+                                            node_files, emb_shape)
                                     if isinstance(node_dict, dict):
                                         coords = [node_dict[i]['coord'] for i
                                                   in node_dict.keys()]
@@ -361,6 +360,14 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             'BrainnetomeAtlas'
                                             'Fan2016'] for i in
                                             node_dict.keys()]
+                                    elif isinstance(node_dict, list):
+                                        coords = [node_dict[i]['coord'] for i
+                                                  in range(len(node_dict))]
+                                        labels = [node_dict[i][
+                                            'label'][
+                                            'BrainnetomeAtlas'
+                                            'Fan2016'] for i in
+                                            range(len(node_dict))]
                                     else:
                                         print(f"Failed to parse coords/"
                                               f"labels from {node_files}. "

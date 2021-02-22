@@ -10,9 +10,7 @@ import pytest
 import numpy as np
 import time
 import nibabel as nib
-import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
+import os
 from pathlib import Path
 from pynets.core import nodemaker
 try:
@@ -25,15 +23,18 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-# @pytest.mark.parametrize("atlas", ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
-#                                    'atlas_harvard_oxford', 'atlas_destrieux_2009'])
-# def test_nilearn_atlas_helper(atlas):
-#     parc = False
-#     [labels, networks_list, parlistfile] = nodemaker.nilearn_atlas_helper(atlas, parc)
-#     print(labels)
-#     print(networks_list)
-#     print(parlistfile)
-#     assert labels is not None
+@pytest.mark.parametrize("atlas", ['atlas_aal', 'atlas_talairach_gyrus', 'atlas_talairach_ba', 'atlas_talairach_lobe',
+                                   'atlas_harvard_oxford', 'atlas_destrieux_2009'])
+def test_nilearn_atlas_helper(atlas):
+    parc = False
+    [labels, networks_list, parlistfile] = nodemaker.nilearn_atlas_helper(atlas, parc)
+    print(labels)
+    print(networks_list)
+    print(parlistfile)
+    assert labels is not None
+    if (parlistfile is not None) and isinstance(labels[0], str) and isinstance(parlistfile, str) and (atlas != 'atlas_aal') and os.path.isfile(parlistfile):
+        parcel_data = nib.load(parlistfile).get_fdata()
+        assert len(labels) == len(np.unique(parcel_data)) - 1 or len(labels)-1 == len(np.unique(parcel_data)) or float(2*len(labels)) == float(len(np.unique(parcel_data)) - 1) or float(2*(len(labels))-1) == len(np.unique(parcel_data))
 
 
 def test_nodemaker_tools_parlistfile_RSN():
@@ -272,7 +273,6 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
 
-    parcels_map_nifti_image = nib.load(parlistfile)
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
 
     start_time = time.time()
@@ -342,123 +342,6 @@ def test_nodemaker_tools_masking_coords_WB(atlas):
     assert WB_coords_masked is not None
     assert WB_labels is not None
     assert WB_labels_masked is not None
-
-
-# def test_WB_fetch_nodes_and_labels1():
-#     """
-#     Test WB_fetch_nodes_and_labels1 functionality
-#     """
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-#     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-#     atlas = 'whole_brain_cluster_labels_PCA200'
-#     use_AAL_naming = True
-#     ref_txt = None
-#     parc = True
-#     vox_size = '2mm'
-#
-#     start_time = time.time()
-#     [_, coords, atlas_name, _, parcel_list, par_max, parlistfile,
-#      dir_path] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming,
-#                                                   dir_path, vox_size)
-#     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
-#     str(np.round(time.time() - start_time, 1)), 's'))
-#
-#     assert parlistfile is not None
-#     assert par_max is not None
-#     assert parcel_list is not None
-#     assert atlas_name is not None
-#     assert coords is not None
-#     assert dir_path is not None
-#
-#
-# def test_WB_fetch_nodes_and_labels2():
-#     """
-#     Test WB_fetch_nodes_and_labels2 functionality
-#     """
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-#     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-#     atlas = 'whole_brain_cluster_labels_PCA200'
-#     ref_txt = None
-#     parc = False
-#     use_AAL_naming = True
-#     vox_size = '2mm'
-#
-#     start_time = time.time()
-#     [_, coords, atlas_name, _, _, par_max, parlistfile,
-#      _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file, use_AAL_naming, dir_path,
-#                                            vox_size)
-#     print("%s%s%s" % ('WB_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
-#     str(np.round(time.time() - start_time, 1)), 's'))
-#
-#     assert parlistfile is not None
-#     assert par_max is not None
-#     assert atlas_name is not None
-#     assert coords is not None
-#
-#
-# def test_RSN_fetch_nodes_and_labels1():
-#     """
-#     Test RSN_fetch_nodes_and_labels1 functionality
-#     """
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-#     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-#     atlas = 'whole_brain_cluster_labels_PCA200'
-#     ref_txt = None
-#     parc = True
-#     use_AAL_naming = True
-#     vox_size = '2mm'
-#
-#     start_time = time.time()
-#     [RSN_labels, RSN_coords, atlas_name, _, parcel_list, par_max,
-#      parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc,
-#                                                         func_file, use_AAL_naming, dir_path, vox_size)
-#     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Parcel Nodes) --> finished: ',
-#                       str(np.round(time.time() - start_time, 1)), 's'))
-#
-#     assert parlistfile is not None
-#     assert par_max is not None
-#     assert parcel_list is not None
-#     assert atlas_name is not None
-#     assert RSN_coords is not None
-#     assert RSN_labels is not None
-#
-#
-# def test_RSN_fetch_nodes_and_labels2():
-#     """
-#     Test RSN_fetch_nodes_and_labels2 functionality
-#     """
-#     # Set example inputs
-#     base_dir = str(Path(__file__).parent/"examples")
-#     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-#     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-#     parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-#     atlas = 'whole_brain_cluster_labels_PCA200'
-#     ref_txt = None
-#     parc = False
-#     use_AAL_naming = True
-#     vox_size = '2mm'
-#
-#     start_time = time.time()
-#     [RSN_labels, RSN_coords, atlas_name, _, _,
-#      par_max, parlistfile, _] = nodemaker.fetch_nodes_and_labels(atlas, parlistfile, ref_txt, parc, func_file,
-#                                                                  use_AAL_naming, dir_path, vox_size)
-#     print("%s%s%s" % ('RSN_fetch_nodes_and_labels (Spherical Nodes) --> finished: ',
-#                       str(np.round(time.time() - start_time, 1)), 's'))
-#
-#     assert parlistfile is not None
-#     assert par_max is not None
-#     assert atlas_name is not None
-#     assert RSN_coords is not None
-#     assert RSN_labels is not None
 
 
 def test_create_spherical_roi_volumes():
