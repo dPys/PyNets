@@ -615,6 +615,7 @@ class TimeseriesExtraction(object):
         m x n array is ultimately saved to file in .npy format.
         """
         import nibabel as nib
+        import pandas as pd
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
@@ -638,23 +639,51 @@ class TimeseriesExtraction(object):
         )
 
         if self.conf is not None:
-            import pandas as pd
             import os
 
             confounds = pd.read_csv(self.conf, sep="\t")
-            if confounds.isnull().values.any():
-                conf_corr = fill_confound_nans(confounds, self.dir_path)
-                self.ts_within_nodes = self._parcel_masker.fit_transform(
-                    self._func_img, confounds=conf_corr
-                )
-                os.remove(conf_corr)
+
+            cols = [i for i in confounds.columns if 'motion_outlier' in i
+                    or i == 'framewise_displacement'
+                    or i == 'white_matter' or i == 'csf'
+                    or i == 'std_dvars' or i == 'rot_z'
+                    or i == 'rot_y' or i == 'rot_x' or i == 'trans_z'
+                    or i == 'trans_y' or i == 'trans_x'
+                    or 'non_steady_state_outlier' in i]
+
+            if len(confounds.index) == self._func_img.shape[-1]:
+                if confounds.isnull().values.any():
+                    conf_corr = fill_confound_nans(confounds, self.dir_path)
+                    self.ts_within_nodes = self._parcel_masker.fit_transform(
+                        self._func_img.slicer[:,:,:,5:],
+                        confounds=pd.read_csv(conf_corr,
+                                              sep="\t").loc[5:][cols].values
+                    )
+                    os.remove(conf_corr)
+                else:
+                    self.ts_within_nodes = self._parcel_masker.fit_transform(
+                        self._func_img.slicer[:,:,:,5:],
+                        confounds=pd.read_csv(self.conf,
+                                              sep="\t").loc[5:][cols].values
+                    )
             else:
+                from nilearn.image import high_variance_confounds
+                print(f"Shape of confounds ({len(confounds.index)}) does not"
+                      f" equal the number of volumes "
+                      f"({self._func_img.shape[-1]}) in the time-series")
                 self.ts_within_nodes = self._parcel_masker.fit_transform(
-                    self._func_img, confounds=self.conf
-                )
+                    self._func_img.slicer[:,:,:,5:],
+                    confounds=pd.DataFrame(
+                        high_variance_confounds(
+                            self._func_img,
+                            percentile=1)).loc[5:].values)
         else:
+            from nilearn.image import high_variance_confounds
             self.ts_within_nodes = self._parcel_masker.fit_transform(
-                self._func_img)
+                self._func_img.slicer[:,:,:,5:],
+                confounds=pd.DataFrame(
+                    high_variance_confounds(self._func_img,
+                                            percentile=1)).loc[5:].values)
 
         self._func_img.uncache()
 

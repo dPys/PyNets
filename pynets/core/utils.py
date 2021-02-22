@@ -7,7 +7,6 @@ Copyright (C) 2016
 """
 import warnings
 import os
-import re
 import sys
 import os.path as op
 if sys.platform.startswith('win') is False:

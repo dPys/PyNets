@@ -167,44 +167,6 @@ def test_plot_all_nonet_with_mask(plotting_data):
     temp_dir.cleanup()
 
 
-@pytest.mark.parametrize("comm, network",
-    [
-        pytest.param('nodes', 'Default'),
-        pytest.param('links', None),
-        pytest.param(None, None)
-    ]
-)
-def test_plot_connectogram(comm, network, plotting_data):
-    """
-    Test plot_connectogram functionality
-    """
-
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
-
-    ID = '002'
-    conn_model = 'sps'
-    atlas = 'whole_brain_cluster_labels_PCA200'
-    prune = 2
-
-    conn_matrix = plotting_data['conn_matrix']
-    labels = np.arange(conn_matrix.shape[0] + 1)[np.arange(conn_matrix.shape[0] + 1) != 0].tolist()
-
-    # Force an isolate in the matrix
-    conn_matrix[:, 0] = 0
-    conn_matrix[0, :] = 0
-
-    start_time = time.time()
-    plot_gen.plot_connectogram(conn_matrix, conn_model, atlas, dir_path, ID, network, labels,
-                               comm=comm, prune=prune)
-    print("%s%s%s" % ('plot_connectogram --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    if comm:
-        assert os.path.isfile(f"{dir_path}/index.html")
-
-    temp_dir.cleanup()
-
-
 @pytest.mark.parametrize("network", ["Default", None])
 def test_plot_timeseries(plotting_data, network):
     """

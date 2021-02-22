@@ -30,7 +30,17 @@ from pynets.fmri.estimation import (get_conn_matrix, timeseries_bootstrap,
 from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
                                     tens_mod_est, csa_mod_est, csd_mod_est,
                                     streams2graph, sfm_mod_est)
+from nilearn._utils import as_ndarray
+from nilearn.tests.test_signal import generate_signals
+from nilearn._utils.extmath import is_spd
+from numpy.testing import assert_array_almost_equal
 
+
+def generate_random_img(shape, length=1, affine=np.eye(4),
+                        rand_gen=np.random.RandomState(0)):
+    data = rand_gen.standard_normal(size=(shape + (length,)))
+    return nib.Nifti1Image(data, affine), nib.Nifti1Image(
+        as_ndarray(data[..., 0] > 0.2, dtype=np.int8), affine)
 
 # fMRI
 @pytest.mark.parametrize("conn_model_in",
@@ -46,13 +56,13 @@ from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
         pytest.param(None, marks=pytest.mark.xfail(raises=ValueError))
     ]
 )
-@pytest.mark.parametrize("time_series",
+@pytest.mark.parametrize("n_features",
     [
-        np.random.rand(5, 5),
-        pytest.param(np.ones((10, 10)), marks=pytest.mark.xfail)
+        50,
+        pytest.param(2, marks=pytest.mark.xfail)
     ]
 )
-def test_get_conn_matrix(conn_model_in, time_series):
+def test_get_conn_matrix(conn_model_in, n_features):
     """ Test computing a functional connectivity matrix."""
 
     network = 'Default'
@@ -65,6 +75,11 @@ def test_get_conn_matrix(conn_model_in, time_series):
     atlas = None
     uatlas = None
     labels = [1, 2, 3]
+
+    time_series = generate_signals(n_features=n_features,
+                                            n_confounds=5,
+                                            length=n_features,
+                                            same_variance=False)[0]
 
     outs = get_conn_matrix(
         time_series,
@@ -95,6 +110,17 @@ def test_get_conn_matrix(conn_model_in, time_series):
     assert isinstance(conn_matrix_out, np.ndarray)
     assert np.shape(conn_matrix_out) == np.shape(time_series)
     assert conn_model_in == conn_model_out
+
+    if "corr" in conn_model_in:
+        assert (is_spd(conn_matrix_out, decimal=7))
+        d = np.sqrt(np.diag(np.diag(conn_matrix_out)))
+        assert_array_almost_equal(np.diag(conn_matrix_out),
+                                  np.ones((n_features)))
+    elif "partcorr" in conn_model_in:
+        prec = np.linalg.inv(conn_matrix_out)
+        d = np.sqrt(np.diag(np.diag(prec)))
+        assert_array_almost_equal(d.dot(conn_matrix_out).dot(d), -prec +
+                                  2 * np.diag(np.diag(prec)))
 
 
 def test_timeseries_bootstrap():
@@ -214,10 +240,15 @@ def test_timseries_extraction_extract(conf):
     dir_path_tmp = tempfile.TemporaryDirectory()
     dir_path = dir_path_tmp.name
 
+    shape1 = (13, 11, 12)
+    affine1 = np.eye(4)
+    length = 30
+
+    func_img, mask_img = generate_random_img(shape1, affine=affine1,
+                                             length=length)
+
     func_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
-    img_data = np.random.rand(50, 50, 50, 20)
-    img = nib.Nifti1Image(img_data, np.eye(4))
-    img.to_filename(func_file.name)
+    func_img.to_filename(func_file.name)
 
     # Create a temp parcel file
     parcels_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
@@ -228,13 +259,12 @@ def test_timseries_extraction_extract(conf):
 
     # Create empty mask file
     mask_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
-    mask = np.zeros((50, 50, 50))
-    nib.Nifti1Image(parcels, np.eye(4)).to_filename(mask_tmp.name)
+    mask_img.to_filename(mask_tmp.name)
     mask = mask_tmp.name
 
     if conf:
         conf_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
-        conf_mat = np.random.rand(20)
+        conf_mat = np.random.rand(length)
         conf_df = pd.DataFrame({'Conf1': conf_mat, "Conf2": [np.nan]*len(conf_mat)})
         conf_df.to_csv(conf_file.name, sep='\t', index=False)
         conf = conf_file.name
@@ -261,7 +291,7 @@ def test_timseries_extraction_extract(conf):
 
     # Test parc extraction
     te.extract_ts_parc()
-    assert np.shape(te.ts_within_nodes) == (np.shape(img_data)[-1], len(np.unique(parcels)) - 1)
+    assert np.shape(te.ts_within_nodes) == (np.shape(func_img)[-1] - 5, len(np.unique(parcels)) - 1)
 
     # Test save and clean up
     te._mask_path = te._mask_img

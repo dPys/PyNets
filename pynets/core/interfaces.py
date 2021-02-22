@@ -2904,13 +2904,12 @@ class Tracking(SimpleInterface):
                 bbox_valid_check=False,
             )
 
-            fa_img.uncache()
             streamlines = tractogram.streamlines
 
             # Create streamline density map
             try:
                 [dir_path, dm_path] = create_density_map(
-                    dwi_img,
+                    fa_img,
                     dir_path,
                     streamlines,
                     self.inputs.conn_model,
@@ -2929,6 +2928,7 @@ class Tracking(SimpleInterface):
                 dm_path = None
 
             del streamlines, tractogram
+            fa_img.uncache()
             dwi_img.uncache()
             gc.collect()
             self._results["dm_path"] = dm_path

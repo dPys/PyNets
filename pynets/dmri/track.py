@@ -191,7 +191,7 @@ def prep_tissues(
 
 
 def create_density_map(
-    dwi_img,
+    fa_img,
     dir_path,
     streamlines,
     conn_model,
@@ -210,7 +210,7 @@ def create_density_map(
 
     Parameters
     ----------
-    dwi_img : Nifti1Image
+    fa_img : Nifti1Image
         Dwi data stored as a Nifti1image object.
     dir_path : str
         Path to directory containing subject derivative data for a given
@@ -252,15 +252,25 @@ def create_density_map(
     """
     import os.path as op
     from dipy.tracking import utils
+    from dipy.tracking._utils import _mapping_to_voxel
+
+    # Remove streamlines with negative voxel indices
+    lin_T, offset = _mapping_to_voxel(np.eye(4))
+    streams_filt = []
+    for sl in streamlines:
+        inds = np.dot(sl, lin_T)
+        inds += offset
+        if not inds.min().round(decimals=6) < 0:
+            streams_filt.append(sl)
 
     # Create density map
     dm = utils.density_map(
-        streamlines,
+        streams_filt,
         affine=np.eye(4),
-        vol_dims=dwi_img.shape)
+        vol_dims=fa_img.shape)
 
     # Save density map
-    dm_img = nib.Nifti1Image(dm.astype("float32"), dwi_img.affine)
+    dm_img = nib.Nifti1Image(dm.astype("float32"), fa_img.affine)
 
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
@@ -290,7 +300,7 @@ def create_density_map(
     )
     dm_img.to_filename(dm_path)
 
-    del streamlines
+    del streamlines, streams_filt
     dm_img.uncache()
 
     return dir_path, dm_path
@@ -430,6 +440,7 @@ def track_ensemble(
         hardcoded_params['tracking']["min_separation_angle"][0]
     min_streams = \
         hardcoded_params['tracking']["min_streams"][0]
+    seeding_mask_thr = hardcoded_params['tracking']["seeding_mask_thr"][0]
     timeout = hardcoded_params['tracking']["track_timeout"][0]
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
@@ -437,7 +448,8 @@ def track_ensemble(
     # Construct seeding mask
     seeding_mask = f"{tmp_files_dir}/seeding_mask.nii.gz"
     if waymask is not None and os.path.isfile(waymask):
-        waymask_img = math_img("img > 0.0075", img=nib.load(waymask))
+        waymask_img = math_img(f"img > {seeding_mask_thr}",
+                               img=nib.load(waymask))
         waymask_img.to_filename(waymask)
         atlas_data_wm_gm_int_img = intersect_masks(
             [

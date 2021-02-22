@@ -845,10 +845,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    with np.load(embedding, allow_pickle=True,
-                                 mmap_mode=None) as a:
-                        emb_shape = a.shape[0]
-                    del a
+                    emb_shape = np.load(embedding, allow_pickle=True,
+                                        mmap_mode=None).shape[0]
                 elif embedding.endswith('.csv'):
                     with open(embedding, "r+") as a:
                         emb_shape = len(pd.read_csv(a).columns)
@@ -861,7 +859,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 gc.collect()
             except:
                 print(
-                    f"{Fore.RED}Failed to load functional embeddings found "
+                    f"{Fore.RED}Failed to load structural embeddings found "
                     f"for ID: {ID}, SESSION: {ses}, EMBEDDING: {alg}, and "
                     f"UNIVERSE: {comb_tuple}...{Style.RESET_ALL}"
                 )
@@ -1078,10 +1076,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
                 if embedding.endswith('.npy'):
-                    with np.load(embedding, allow_pickle=True,
-                                 mmap_mode=None) as a:
-                        emb_shape = a.shape[0]
-                    del a
+                    emb_shape = np.load(embedding, allow_pickle=True,
+                                        mmap_mode=None).shape[0]
                 elif embedding.endswith('.csv'):
                     with open(embedding, "r+") as a:
                         emb_shape = len(pd.read_csv(a).columns)

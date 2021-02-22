@@ -11,7 +11,6 @@ import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 import nibabel as nib
-import yaml
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
@@ -1324,7 +1323,7 @@ def parcel_naming(coords, vox_size):
         label_img = nib.load(label_img_path)
 
         label_img_res = resample_to_img(
-            label_img, template_img, interpolation="nearest"
+            label_img, template_img, interpolation="nearest", copy=False
         )
         label_img_dict[label_atlas]['affine'] = label_img_res.affine
         label_img_dict[label_atlas]['data'] = np.asarray(
