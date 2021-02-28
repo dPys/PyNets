@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/dpisner453/pynets/issues.
+Report bugs at https://github.com/dPys/pynets/issues.
 
 If you are reporting a bug, please include:
 
@@ -54,6 +54,18 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
+Submit Pull-Requests using informative commit prefixes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    [ENH]: enhancements or new features.
+    [FIX]: bug fixes.
+    [TST]: new or updated tests.
+    [DOC]: new or updated documentation.
+    [STY]: style changes.
+    [REF]: refactoring existing code.
+    [CI]: updates to continuous integration infrastructure.
+    [MAINT]: general maintenance.
+    [WIP]: works-in-progress.
+
 Get Started!
 ------------
 
@@ -64,33 +76,40 @@ Ready to contribute? Here's how to set up `pynets` for local development.
 
     $ git clone git@github.com:your_name_here/pynets.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Configure your git remotes::
 
-    $ mkvirtualenv pynets
+    $ git remote add origin https://github.com/your_name_here/pynets.git
+    $ git remote add upstream https://github.com/dPys/pynets.git
+    $ git remote -v
+
+4. Install your local copy::
+
     $ cd pynets/
     $ python setup.py develop
 
-4. Create a branch for local development::
+5. Create a feature branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
+6. When you're done making changes, ensure you are still in-sync with any
+   upstream changes that may have happened in the meantime::
 
-    $ flake8 pynets tests
-    $ python setup.py test or py.test
-    $ tox
+    $ git fetch upstream
+    $ git merge upstream/development
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+7. It's also a good idea to check that your changes pass tests::
 
-6. Commit your changes and push your branch to GitHub::
+    $ pytest -vvv
+
+7. Commit your changes and push your branch to GitHub::
 
     $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
+    $ git commit -m "[PREFIX] Your detailed description of your changes."
+    $ git push -u origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -102,13 +121,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 3.6+, and for PyPy. Check
-   https://travis-ci.org/dPys/pynets/pull_requests
+   https://app.circleci.com/pipelines/github/dPys/PyNets
    and make sure that the tests pass for all supported Python versions.
 
-Tips
-----
-
-To run a subset of tests::
-
-$ pytest PyNets
 

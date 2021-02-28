@@ -350,24 +350,24 @@ def get_parser():
     parser.add_argument(
         "-ml",
         metavar="Minimum fiber length for tracking",
-        default=20,
+        default=10,
         nargs="+",
         help="(metaparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
-             "is 20. If you wish to iterate the pipeline across multiple "
+             "is 10. If you wish to iterate the pipeline across multiple "
              "minimums, separate the list by space (e.g. 10 30 50).\n",
     )
     parser.add_argument(
         "-tol",
         metavar="Error margin",
-        default=8,
+        default=5,
         nargs="+",
         help="(metaparameter): Distance (in the units of the streamlines, "
              "usually mm). If any coordinate in the streamline is within this "
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
              "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel. Default is 8.\n",
+             "the corner of the voxel. Default is 5.\n",
     )
     parser.add_argument(
         "-dg",
@@ -394,7 +394,7 @@ def get_parser():
              "for all non-zero edges; (4) using pass-to-ranks for all non-zero"
              " edges relative to the number of nodes; (5) using pass-to-ranks"
              " with zero-edge boost; and (6) which standardizes the matrix to "
-             "values [0, 1]. Default is (1) which is maximum edge weight.\n",
+             "values [0, 1]. Default is (6).\n",
     )
     parser.add_argument(
         "-bin",
@@ -423,15 +423,15 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=1,
+        default=0,
         nargs=1,
         choices=["0", "1", "2", "3"],
         help="Include this flag to (1) prune the graph of any "
              "isolated + fully disconnected nodes (i.e. anti-fragmentation),"
              " (2) prune the graph of all but hubs as defined by any of a "
              "variety of definitions (see ruconfig.yaml), or (3) retain only "
-             "the largest connected component subgraph. Default is 1. Include"
-             " `-p 0` to disable fragmentation-protection.\n",
+             "the largest connected component subgraph. Default is no pruning."
+             " Include `-p 1` to enable fragmentation-protection.\n",
     )
     parser.add_argument(
         "-df",
@@ -503,7 +503,7 @@ def get_parser():
              " (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn,"
              " Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, "
              "DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
-        "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
+             "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
              "DefaultC, TempPar. If listing multiple RSNs, separate them by "
              "space. (e.g. -n 'Default' 'Cont' 'SalVentAttn')'.\n",
     )
@@ -511,9 +511,7 @@ def get_parser():
         "-vox",
         default="2mm",
         nargs=1,
-        choices=[
-            "1mm",
-            "2mm"],
+        choices=["1mm", "2mm"],
         help="Optionally use this flag if you wish to change the resolution of"
              " the images in the workflow. Default is 2mm.\n",
     )
@@ -583,16 +581,14 @@ def build_workflow(args, retval):
     import glob
     import ast
     import os.path as op
-    import sys
     import timeit
     from datetime import timedelta
     from colorama import Fore, Style
     from pathlib import Path
-    import pkg_resources
-    import yaml
     import datetime
     from os import environ
     from subprocess import check_output
+    from pynets.core.utils import load_runconfig
 
     try:
         import pynets
@@ -616,11 +612,15 @@ def build_workflow(args, retval):
     else:
         fsl_version = check_output('flirt -version | cut -f3 -d\" \"',
                                    shell=True).strip()
-        if fsl_version:
+        fsldir = os.environ['FSLDIR']
+
+        if fsl_version and os.path.isdir(fsldir):
             print(f"{Fore.MAGENTA}FSL {fsl_version.decode()} detected: "
-                  f"FSLDIR={os.environ['FSLDIR']}")
+                  f"FSLDIR={fsldir}")
         else:
-            print('Is your FSL installation corrupted? Check permissions.')
+            print('Is your FSL installation corrupted? Check permissions and'
+                  ' ensure that you have correctly configured your local '
+                  'profile (e.g. ~/.bashrc).')
             retval["return_code"] = 1
             return retval
 
@@ -632,7 +632,6 @@ def build_workflow(args, retval):
     print(Style.RESET_ALL)
 
     # Hard-coded:
-    from pynets.core.utils import load_runconfig
     hardcoded_params = load_runconfig()
 
     maxcrossing = hardcoded_params['tracking']["maxcrossing"][0]
@@ -647,7 +646,6 @@ def build_workflow(args, retval):
     nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
     nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
     local_atlases = hardcoded_params["local_atlases"]
-    template_name = hardcoded_params['template'][0]
     roi_neighborhood_tol = \
         hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 

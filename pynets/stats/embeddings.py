@@ -59,6 +59,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
@@ -84,9 +85,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         else:
             mat_clean = pop_array[i]
 
-        mat_clean = np.nan_to_num(mat_clean)
-        mat_clean = mat_clean[
-            (np.isnan(mat_clean) == False) & (np.isinf(mat_clean) == False)]
+        mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
         if np.isnan(np.sum(mat_clean)) == False:
             clean_mats.append(mat_clean)
         i += 1
@@ -146,7 +145,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
         out_path = f"{namer_dir}/gradient-OMNI" \
                    f"_{atlas}_{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
-        os.mknod(out_path)
+        if not os.path.exists(out_path):
+            os.mknod(out_path)
     return out_path
 
 
@@ -201,6 +201,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
       python. Journal of Machine Learning Research.
 
     """
+    import os
     import numpy as np
     from graspologic.embed.mase import MultipleASE
     from joblib import dump
@@ -220,7 +221,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     if len(pop_array) != len(clean_mats):
         return None
 
-    mase_fit = mase.fit_transform(clean_mats)
+    mase.fit_transform(clean_mats)
 
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
@@ -239,7 +240,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
 
     print("Saving...")
     np.save(out_path, mase.scores_)
-    del mase, mase_fit
+    del mase
 
     return out_path
 
@@ -316,12 +317,8 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
     if float(prune) >= 1:
         graph_path_tmp = cg.prune_graph()[1]
         mat_clean = np.load(graph_path_tmp)
-    else:
-        mat_clean = mat
 
-    mat_clean = np.nan_to_num(mat_clean)
-    mat_clean = mat_clean[(np.isnan(mat_clean) == False) &
-                          (np.isinf(mat_clean) == False)]
+    mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
 
     if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
         return None
@@ -361,6 +358,8 @@ def build_asetomes(est_path_iterlist, ID):
         A subject id or other unique identifier.
 
     """
+    from pathlib import Path
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
     from pynets.stats.embeddings import _ase_embed
@@ -409,7 +408,8 @@ def build_asetomes(est_path_iterlist, ID):
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
                        f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
-            os.mknod(out_path)
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
             out_paths.append(out_path)
 
     return out_paths
@@ -437,6 +437,8 @@ def build_masetome(est_path_iterlist, ID):
       https://doi.org/10.1038/s41467-018-04614-w
 
     """
+    from pathlib import Path
+    import os
     import numpy as np
     from pynets.core.utils import prune_suffices
     from pynets.stats.embeddings import _mase_embed
@@ -491,7 +493,8 @@ def build_masetome(est_path_iterlist, ID):
                 f"{namer_dir}/gradient-MASE_{atlas}_{subgraph}"
                 f"_{os.path.basename(pairs[0])}_NULL"
             )
-            os.mknod(out_path)
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
             out_paths.append(out_path)
 
     return out_paths
@@ -520,6 +523,7 @@ def build_omnetome(est_path_iterlist, ID):
       2017 IEEE International Conference on (pp. 964-967). IEEE.
 
     """
+    from pathlib import Path
     import sys
     import numpy as np
     from pynets.core.utils import flatten

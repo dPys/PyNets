@@ -32,17 +32,17 @@ def main():
         sys.exit(1)
 
     # Parse inputs
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/archives/triple_network'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
-    disc = True
+    disc = False
     int_consist = False
-    modality = 'func'
+    modality = 'dwi'
 
-    embedding_types = ['betweenness']
+    embedding_types = ['OMNI']
     #rsns = ['language']
-    rsns = ['kmeans']
+    rsns = ['kmeans', 'triple']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
