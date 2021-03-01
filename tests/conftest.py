@@ -6,6 +6,8 @@ import numpy as np
 import nibabel as nib
 from dipy.core.gradients import gradient_table
 import pickle
+import os
+from random import randint
 
 
 @pytest.fixture(scope='module')
@@ -55,4 +57,17 @@ def plotting_data():
     coords = pickle.load(coord_file)
 
     yield {'conn_matrix': conn_matrix, 'labels': labels, 'coords': coords}
+
+@pytest.fixture(scope='function', params=["embeddings_data"])
+def embeddings_data(): #Not implemented yet
+    test_data_dir = str(Path(__file__).parent/"randomized_examples/")
+    if os.path.isdir(test_data_dir) is False:
+        os.makedirs(test_data_dir, exist_ok=True)
+    test_data = [np.asarray([[np.float64(randint(0, 64)) for _ in range(94)] for _ in range(94)]) for _ in range(12)]
+    test_data = [np.nan_to_num(np.maximum(array, array.T)) for array in test_data]
+    for array in range(1, len(test_data) + 1): 
+        np.save(test_data_dir + "Randomized_data_" + str(array), test_data[array - 1])
+    input_paths = [test_data_dir + "Randomized_data_" +  str(array) + ".npy" for array in range(1, len(test_data) + 1)]
+
+    return input_paths
 

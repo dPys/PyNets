@@ -63,8 +63,8 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
-    from graspy.utils import is_symmetric
-    from graspy.embed import OmnibusEmbed, ClassicalMDS
+    from graspologic.utils import is_symmetric
+    from graspologic.embed import OmnibusEmbed, ClassicalMDS
     from joblib import dump
     from pynets.stats.netstats import CleanGraphs
 
@@ -90,18 +90,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
             clean_mats.append(mat_clean)
         i += 1
 
-    # Omnibus embedding
-    print(
-        f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
-        f"{subgraph_name}{'...'}"
-    )
-    omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
-    mds = ClassicalMDS(n_components=n_components)
-    if all([is_symmetric(x) for x in clean_mats]):
-        omni_fit = omni.fit_transform(clean_mats)
-    else:
-        # TODO: This error can be removed and replaced with is_instance check if/when pynets supports directed graphs. MDS with directed graphs will return a tuple
-        raise NotImplementedError("Directed Graphs are not supported with Omnibus embeddings at this time.")
+    clean_mats = [i for i in clean_mats if np.isfinite(i).all()]
 
     if len(clean_mats) > 0:
         # Omnibus embedding
@@ -206,9 +195,6 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     from graspologic.embed.mase import MultipleASE
     from joblib import dump
 
-    if len(pop_array) < 1:
-        raise ValueError("Number of graphs provided to pop_array should be greater than 1.")
-
     # Multiple Adjacency Spectral embedding
     print(
         f"{'Embedding multimodal masetome for atlas: '}{atlas} and "
@@ -305,6 +291,10 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         f"{'Embedding unimodal asetome for atlas: '}{atlas} and "
         f"{subgraph_name}{'...'}"
     )
+    
+    if type(mat) != np.ndarray and type(mat) != nx.classes.graph.Graph:
+        raise TypeError("mat must be of type ndarray or nx.Graph")
+
     ase = AdjacencySpectralEmbed(n_components=n_components)
     cg = CleanGraphs(None, None, graph_path, prune, norm)
 
@@ -388,13 +378,21 @@ def build_asetomes(est_path_iterlist, ID):
         mat = np.load(file_)
         if np.isfinite(mat).all() == False:
             continue
-
-        atlas = prune_suffices(file_.split("/")[-3])
-        res = prune_suffices("_".join(file_.split(
-            "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
-        if "rsn" in res:
-            subgraph = res.split("rsn-")[1].split('_')[0]
-        else:
+        
+        try: #For standard file formatting
+            atlas = prune_suffices(file_.split("/")[-3])
+            res = prune_suffices("_".join(file_.split(
+                "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
+            if "rsn" in res:
+                subgraph = res.split("rsn-")[1].split('_')[0]
+            else:
+                subgraph = "all_nodes"
+        except: #For nonstandard file formatting
+            print(
+                "WARNING: Non-standard file naming detected. "
+                "Using default values for embedding."
+                )
+            atlas = "Default"
             subgraph = "all_nodes"
         out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
                               n_components=n_components)
@@ -466,12 +464,20 @@ def build_masetome(est_path_iterlist, ID):
                 pop_list.append(mat)
         if len(pop_list) != len(pairs):
             continue
-        atlas = prune_suffices(pairs[0].split("/")[-3])
-        res = prune_suffices("_".join(pairs[0].split(
-            "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
-        if "rsn" in res:
-            subgraph = res.split("rsn-")[1].split('_')[0]
-        else:
+        try: #For standard file formatting
+            atlas = prune_suffices(pairs[0].split("/")[-3])
+            res = prune_suffices("_".join(pairs[0].split(
+                "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
+            if "rsn" in res:
+                subgraph = res.split("rsn-")[1].split('_')[0]
+            else:
+                subgraph = "all_nodes"
+        except: #For nonstandard file formatting
+            print(
+                "WARNING: Non-standard file naming detected. "
+                "Using default values for embedding."
+                )
+            atlas = "Default"
             subgraph = "all_nodes"
         out_path = _mase_embed(
             pop_list,
@@ -533,6 +539,9 @@ def build_omnetome(est_path_iterlist, ID):
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
 
+    #For handling Non-standard file names
+    nonstandard_bool = False
+
     try:
         func_models = hardcoded_params["available_models"]["func_models"]
     except KeyError:
@@ -566,43 +575,62 @@ def build_omnetome(est_path_iterlist, ID):
         est_path_iterlist = [est_path_iterlist]
 
     if len(est_path_iterlist) > 1:
-        atlases = list(set([x.split("/")[-3].split("/")[0]
-                            for x in est_path_iterlist]))
-        parcel_dict_func = dict.fromkeys(atlases)
-        parcel_dict_dwi = dict.fromkeys(atlases)
+        try: #For standard file formatting
+            atlases = list(set([x.split("/")[-3].split("/")[0]
+                                for x in est_path_iterlist]))
+            parcel_dict_func = dict.fromkeys(atlases)
+            parcel_dict_dwi = dict.fromkeys(atlases)
 
-        est_path_iterlist_dwi = list(
-            set(
-                [
-                    i
-                    for i in est_path_iterlist
-                    if i.split("model-")[1].split("_")[0] in struct_models
-                ]
+            est_path_iterlist_dwi = list(
+                set(
+                    [
+                        i
+                        for i in est_path_iterlist
+                        if i.split("model-")[1].split("_")[0] in struct_models
+                    ]
+                )
             )
-        )
-        est_path_iterlist_func = list(
-            set(
-                [
-                    i
-                    for i in est_path_iterlist
-                    if i.split("model-")[1].split("_")[0] in func_models
-                ]
+            est_path_iterlist_func = list(
+                set(
+                    [
+                        i
+                        for i in est_path_iterlist
+                        if i.split("model-")[1].split("_")[0] in func_models
+                    ]
+                )
             )
-        )
 
-        if "_rsn" in ";".join(est_path_iterlist_func):
-            func_subnets = list(
-                set([i.split("_rsn-")[1].split("_")[0] for i in
-                     est_path_iterlist_func])
-            )
-        else:
+            if "_rsn" in ";".join(est_path_iterlist_func):
+                func_subnets = list(
+                    set([i.split("_rsn-")[1].split("_")[0] for i in
+                        est_path_iterlist_func])
+                )
+            else:
+                func_subnets = []
+            if "_rsn" in ";".join(est_path_iterlist_dwi):
+                dwi_subnets = list(
+                    set([i.split("_rsn-")[1].split("_")[0] for i in
+                        est_path_iterlist_dwi])
+                )
+            else:
+                dwi_subnets = []
+        except: #For nonstandard file formatting
+            print(
+                "WARNING: Non-standard file naming detected. "
+                "Using default values for embedding."
+                )
+
+            nonstandard_bool = True
+
+            atlases = ["Default"]
+
+            parcel_dict_func = dict.fromkeys(atlases)
+            parcel_dict_dwi = dict.fromkeys(atlases)
+
+            est_path_iterlist_dwi = list(set(est_path_iterlist))
+            est_path_iterlist_func = list(set(est_path_iterlist))
+
             func_subnets = []
-        if "_rsn" in ";".join(est_path_iterlist_dwi):
-            dwi_subnets = list(
-                set([i.split("_rsn-")[1].split("_")[0] for i in
-                     est_path_iterlist_dwi])
-            )
-        else:
             dwi_subnets = []
 
         out_paths_func = []
@@ -622,25 +650,34 @@ def build_omnetome(est_path_iterlist, ID):
             else:
                 parcel_dict_dwi[atlas] = []
 
-            for graph_path in est_path_iterlist_dwi:
-                if atlas in graph_path:
-                    if len(dwi_subnets) >= 1:
-                        for sub_net in dwi_subnets:
-                            if sub_net in graph_path:
-                                parcel_dict_dwi[atlas][sub_net].append(
-                                    graph_path)
-                    else:
-                        parcel_dict_dwi[atlas].append(graph_path)
+            if nonstandard_bool:
+                for graph_path in est_path_iterlist_dwi:
+                    parcel_dict_dwi["Default"].append(graph_path)
 
-            for graph_path in est_path_iterlist_func:
-                if atlas in graph_path:
-                    if len(func_subnets) >= 1:
-                        for sub_net in func_subnets:
-                            if sub_net in graph_path:
-                                parcel_dict_func[atlas][sub_net].append(
-                                    graph_path)
-                    else:
-                        parcel_dict_func[atlas].append(graph_path)
+                for graph_path in est_path_iterlist_func:
+                    parcel_dict_func["Default"].append(graph_path)
+
+            else:
+                for graph_path in est_path_iterlist_dwi:
+                    if atlas in graph_path:
+                        if len(dwi_subnets) >= 1:
+                            for sub_net in dwi_subnets:
+                                if sub_net in graph_path:
+                                    parcel_dict_dwi[atlas][sub_net].append(
+                                        graph_path)
+                        else:
+                            parcel_dict_dwi[atlas].append(graph_path)
+
+                for graph_path in est_path_iterlist_func:
+                    if atlas in graph_path:
+                        if len(func_subnets) >= 1:
+                            for sub_net in func_subnets:
+                                if sub_net in graph_path:
+                                    parcel_dict_func[atlas][sub_net].append(
+                                        graph_path)
+                        else:
+                            parcel_dict_func[atlas].append(graph_path)
+                            
             if len(parcel_dict_func[atlas]) > 0:
                 if isinstance(parcel_dict_func[atlas], dict):
                     # RSN case
