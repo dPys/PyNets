@@ -437,30 +437,30 @@ def get_node_membership(
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/BIGREF1mm.nii.gz"
+                "pynets", "templates/rsnrefs/BIGREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/BIGREF2mm.nii.gz"
+                "pynets", "templates/rsnrefs/BIGREF2mm.nii.gz"
             )
 
         # Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "rsnrefs/Schaefer2018_1000_17nets_ref.txt"
+            "pynets", "templates/rsnrefs/Schaefer2018_1000_17nets_ref.txt"
         )
     elif network in seven_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/SMALLREF1mm.nii.gz"
+                "pynets", "templates/rsnrefs/SMALLREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/SMALLREF2mm.nii.gz"
+                "pynets", "templates/rsnrefs/SMALLREF2mm.nii.gz"
             )
 
         # Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "rsnrefs/Schaefer2018_1000_7nets_ref.txt"
+            "pynets", "templates/rsnrefs/Schaefer2018_1000_7nets_ref.txt"
         )
     else:
         nets_ref_txt = None
@@ -1314,10 +1314,10 @@ def parcel_naming(coords, vox_size):
     for label_atlas in labeling_atlases:
         label_img_dict[label_atlas] = {}
         label_path = pkg_resources.resource_filename("pynets",
-                                                     f"/core/labelcharts/"
+                                                     f"/templates/labelcharts/"
                                                      f"{label_atlas}.txt")
         label_img_path = pkg_resources.resource_filename("pynets",
-                                                         f"/core/atlases/"
+                                                         f"/templates/atlases/"
                                                          f"{label_atlas}"
                                                          f".nii.gz")
 

@@ -290,8 +290,7 @@ def get_parser():
         help="(metaparameter): Optionally specify high-pass filter values "
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
-             "multiple high-pass filter thresholds, values, "
-             "separate the list by space (e.g. 0.008 0.01). "
+             "multiple values, separate the list by space (e.g. 0 0.02 0.1). "
              "Safe range: [0-0.15] for resting-state data.\n",
     )
     parser.add_argument(
@@ -321,7 +320,7 @@ def get_parser():
         nargs="+",
         help="(metaparameter): Specify a number of clusters to produce. "
              "If you wish to iterate the pipeline across multiple values of k,"
-             " separate the list by space (e.g. 100 150 200).\n",
+             " separate the list by space (e.g. 200, 400, 600, 800).\n",
     )
     parser.add_argument(
         "-ct",
@@ -3452,8 +3451,13 @@ def build_workflow(args, retval):
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
         retval["workflow"] = wf
-        wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        retval["return_code"] = 0
+        try:
+            wf.run(plugin=plugin_type, plugin_args=plugin_args)
+            retval["return_code"] = 0
+        except RuntimeError as e:
+            print(e)
+            retval["return_code"] = 1
+            return retval
 
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart
