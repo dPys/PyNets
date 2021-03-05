@@ -155,13 +155,15 @@ def main():
     #
     # args["base_dir"] = pre_args.basedir
     # base_dir = args["base_dir"]
-    base_dir = "/working/tuning_set/outputs_final"
+    # base_dir = "/working/tuning_set/outputs_final"
+    base_dir = "/working/validation_set/outputs"
 
     # args["target_vars"] = pre_args.tv
     # target_vars = args["target_vars"]
-    target_vars = ["rumination_persist_phenotype",
-                   "depression_persist_phenotype",
-                   "dep_2", 'rum_2', 'rum_1', 'dep_1']
+    # target_vars = ["rumination_persist_phenotype",
+    #                "depression_persist_phenotype",
+    #                "dep_2", 'rum_2', 'rum_1', 'dep_1']
+    target_vars = ['depressed_persistent', 'depressed_recurrent']
 
     # args["embedding_type"] = pre_args.et[0]
     # embedding_type = args["embedding_type"]
@@ -177,27 +179,48 @@ def main():
 
     # args["template"] = pre_args.thrtype[0]
     # template = pre_args.temp
-    template = "MNI152_T1"
+    template = "any"
 
-    data_file = "/working/tuning_set/outputs_final/df_rum_persist_all.csv"
+    data_file = "/working/validation_set/outputs/" \
+                "df_depressed_validation_final.pkl"
 
-    rsns = ["triple", "kmeans", "language"]
+    drop_cols = ['dep_2',
+     'dep_3',
+     'rum_1',
+     'rum_2',
+     'emotion_utilization',
+     'social_ability_sum',
+     'disability',
+     'emotional_appraisal',
+     'emotional_control',
+     'Trait_anxiety',
+     'State_anxiety',
+     'perceptual_IQ']
+
+    # rsns = ["triple", "kmeans", "language"]
+    rsns = ["inter", "union", "language"]
 
     # args["sessions"] = pre_args.thrtype[0]
     # sessions = pre_args.session_label
     sessions = ["1"]
 
+    # Percent if subjects with usable data for a particular universe
+    # grid_thr = 0.75
+    grid_thr = 0.75
+
     # Hard-Coded #
-    mets = [
-        "global_efficiency",
-        "average_shortest_path_length",
-        "average_degree_centrality",
-        "average_eigenvector_centrality",
-        "average_betweenness_centrality",
-        "modularity",
-        "degree_assortativity_coefficient"
-        "smallworldness",
-    ]
+    # mets = [
+    #     "global_efficiency",
+    #     "average_shortest_path_length",
+    #     "average_degree_centrality",
+    #     "average_eigenvector_centrality",
+    #     "average_betweenness_centrality",
+    #     "modularity",
+    #     "degree_assortativity_coefficient"
+    #     "smallworldness",
+    # ]
+    mets = []
+
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
 
@@ -245,24 +268,22 @@ def main():
         f.close()
 
     # Load in data
-    df = pd.read_csv(
-        data_file,
-        index_col=False
-    )
+    # df = pd.read_csv(
+    #     data_file,
+    #     index_col=False
+    # )
+    df = pd.read_pickle(data_file)
 
     # Subset only those participants which have usable data
-    for ID in df["participant_id"]:
-        if len(ID) == 1:
-            df.loc[df.participant_id == ID, "participant_id"] = "s00" + str(ID)
-        if len(ID) == 2:
-            df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(ID)
+    # for ID in df["participant_id"]:
+    #     if len(ID) == 1:
+    #         df.loc[df.participant_id == ID, "participant_id"] = "s00" + str(ID)
+    #     if len(ID) == 2:
+    #         df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(ID)
 
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
-    df['sex'] = df['sex'].map({1: 0, 2: 1})
-    df = df[
-        ["participant_id", "age", "sex", "num_visits", "DAY_LAG",
-         'dataset'] + target_vars
-    ]
+
+    df = df.drop(columns=drop_cols)
 
     good_grids = []
     for grid_param in modality_grids[modality]:
@@ -293,9 +314,10 @@ def main():
                 list(sub_dict_clean[ID][str(sessions[0])][modality][
                          embedding_type].keys()):
                 grid_finds.append(grid_param)
-        if len(grid_finds) < 0.75*len(df["participant_id"]):
+        if len(grid_finds) < grid_thr*len(df["participant_id"]):
             print(
-                f"Less than 75% of {grid_param} found. Removing from grid...")
+                f"Less than {100*grid_thr}% of {grid_param} found. "
+                f"Removing from grid...")
             continue
         else:
             good_grids.append(grid_param)

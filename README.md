@@ -5,6 +5,8 @@ PyNets®
 [![PyPI - Version](https://img.shields.io/pypi/v/omniduct.svg)](https://pypi.org/project/pynets/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pynets.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/5228)
+[![brainlife.io/app](https://img.shields.io/badge/brainlife.io-app-green.svg)](https://brainlife.io/app/6041f75166d5ce1daf6efb55)
 
 About
 -----
@@ -39,7 +41,7 @@ Hardware Requirements
 ---------------------
 4+ vCPU's, 8+ GB RSS memory, and at least 10 GB of free disk space though
 storage needs can vary considerably depending on the size of the input data
-at the type of analysis that you wish to run.
+and the type of analysis that you wish to run.
 
 Operating Systems
 -----------------
@@ -54,7 +56,7 @@ Explore official installation instructions, user-guide, API, and examples: <http
 
 Citing
 ------
-A manuscript is in preparation, but for now, please cite ALL uses with the following entry:
+A manuscript is in preparation, but for now, please cite all uses with the following entry:
 ```
 @CONFERENCE{
     title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},

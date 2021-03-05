@@ -407,6 +407,7 @@ def track_ensemble(
     import gc
     import time
     import warnings
+    import time
     from joblib import Parallel, delayed
     import itertools
     from pynets.dmri.track import run_tracking
@@ -479,6 +480,8 @@ def track_ensemble(
     start = time.time()
     stream_counter = 0
 
+    timer = time.time() + timeout
+
     all_streams = []
     ix = 0
 
@@ -536,7 +539,12 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
-        os.system(f"rm -rf {joblib_dir}/*")
+
+                if time.time() > timer:
+                    os.system(f"rm -rf {joblib_dir}/* &")
+                    os.system(f"rm -rf {tmp_files_dir} &")
+                    return None
+        os.system(f"rm -rf {joblib_dir}/* &")
     except BaseException:
         os.system(f"rm -rf {tmp_files_dir} &")
         return None

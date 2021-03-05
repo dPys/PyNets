@@ -157,8 +157,7 @@ def main():
             modality, metaparam_dict, sorted(list(set(metaparams))),
             ensembles)[1]
 
-        grid = [i for i in grid if '200' not in i and '400' not in i and '600'
-                not in i and '800' not in i and 'triple' not in i]
+        grid = [i for i in grid if 'triple' not in i]
 
         good_grids = []
         for grid_param in grid:

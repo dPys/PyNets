@@ -50,7 +50,7 @@ tracking:
         - 15
     min_separation_angle: # For particle tracking
         - 20
-    min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
+    min_streams: # To prevent infinite loops searching for streamlines that are spatially excluded.
         - 25
     seeding_mask_thr:
         - 0.0075

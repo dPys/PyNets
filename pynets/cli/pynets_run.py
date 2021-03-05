@@ -280,7 +280,7 @@ def get_parser():
         help="(metaparameter): Optionally specify smoothing width(s). "
              "Default is 0 / no smoothing. If you wish to iterate the pipeline"
              " across multiple smoothing separate the list "
-             "by space (e.g. 2 4 6).\n",
+             "by space (e.g. 2 4 6). Safe range: [0-8]\n",
     )
     parser.add_argument(
         "-hp",
@@ -291,7 +291,8 @@ def get_parser():
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
              "multiple high-pass filter thresholds, values, "
-             "separate the list by space (e.g. 0.008 0.01).\n",
+             "separate the list by space (e.g. 0.008 0.01). "
+             "Safe range: [0-0.15] for resting-state data.\n",
     )
     parser.add_argument(
         "-es",
@@ -355,7 +356,10 @@ def get_parser():
         help="(metaparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
              "is 10. If you wish to iterate the pipeline across multiple "
-             "minimums, separate the list by space (e.g. 10 30 50).\n",
+             "minimums, separate the list by space (e.g. 10 30 50). "
+             "Safe range: [0-150]. Depending on the tissue classifier used"
+             " and the restrictiveness of the parcellation or any way-masking,"
+             " values >60mm may fail.\n",
     )
     parser.add_argument(
         "-tol",
@@ -367,7 +371,7 @@ def get_parser():
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
              "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel. Default is 5.\n",
+             "the corner of the voxel. Default is 5. Safe range: [0-15].\n",
     )
     parser.add_argument(
         "-dg",

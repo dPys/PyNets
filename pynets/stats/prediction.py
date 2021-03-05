@@ -20,12 +20,16 @@ from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, \
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, \
     f_regression, f_classif
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.impute import SimpleImputer
 from sklearn import linear_model, decomposition
 from collections import OrderedDict
 from operator import itemgetter
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pynets.core.utils import flatten
+from sklearn.svm import LinearSVC
+from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.linear_model import LinearRegression
+
 try:
     from sklearn.utils._testing import ignore_warnings
 except:
@@ -63,7 +67,7 @@ import_list = [
     "from operator import itemgetter",
     "from statsmodels.stats.outliers_influence import "
     "variance_inflation_factor",
-    "from sklearn.impute import KNNImputer",
+    "from sklearn.impute import SimpleImputer",
     "from pynets.core.utils import flatten",
     "import pickle",
     "import dill",
@@ -231,7 +235,7 @@ class RazorCV(object):
             )
 
         best_idx = candidate_idx[
-            self.cv_results["param_" + self.param][candidate_idx].argmin()
+            np.nanargmin(self.cv_results["param_" + self.param][candidate_idx])
         ]
         return best_idx
 
@@ -243,13 +247,13 @@ class RazorCV(object):
         best_mean_score = self.cv_results["mean_test_" + self.scoring]
         best_std_score = self.cv_results["std_test_" + self.scoring]
         if self.greater_is_better is True:
-            best_score_idx = np.argmax(best_mean_score)
+            best_score_idx = np.nanargmax(best_mean_score)
             outstandard_error = (
                 best_mean_score[best_score_idx] -
                 best_std_score[best_score_idx]
             )
         else:
-            best_score_idx = np.argmin(best_mean_score)
+            best_score_idx = np.nanargmin(best_mean_score)
             outstandard_error = (
                 best_mean_score[best_score_idx] +
                 best_std_score[best_score_idx]
@@ -293,9 +297,9 @@ class RazorCV(object):
         best_mean_score = self.cv_results["mean_test_" +
                                           self.scoring][unq_cols]
         if self.greater_is_better is True:
-            best_score_idx = np.argmax(best_mean_score)
+            best_score_idx = np.nanargmax(best_mean_score)
         else:
-            best_score_idx = np.argmin(best_mean_score)
+            best_score_idx = np.nanargmin(best_mean_score)
 
         outstandard_error = best_mean_score[best_score_idx]
         return outstandard_error
@@ -307,9 +311,9 @@ class RazorCV(object):
         """
         best_mean_score = self.cv_results["mean_test_" + self.scoring]
         if self.greater_is_better is True:
-            best_score_idx = np.argmax(best_mean_score)
+            best_score_idx = np.nanargmax(best_mean_score)
         else:
-            best_score_idx = np.argmin(best_mean_score)
+            best_score_idx = np.nanargmin(best_mean_score)
 
         outstandard_error = (np.abs(best_mean_score[best_score_idx]) -
                              tol) / tol
@@ -422,6 +426,38 @@ class RazorCV(object):
         )
 
 
+class DeConfounder(BaseEstimator, TransformerMixin):
+    """ A transformer removing the effect of y on X using
+    sklearn.linear_model.LinearRegression.
+
+    References
+    ----------
+    D. Chyzhyk, G. Varoquaux, B. Thirion and M. Milham,
+        "Controlling a confound in predictive models with a test set minimizing
+        its effect," 2018 International Workshop on Pattern Recognition in
+        Neuroimaging (PRNI), Singapore, 2018,
+        pp. 1-4. doi: 10.1109/PRNI.2018.8423961
+    """
+
+    def __init__(self, confound_model=LinearRegression()):
+        self.confound_model = confound_model
+
+    def fit(self, X, z):
+        if z.ndim == 1:
+            z = z[:, np.newaxis]
+        confound_model = clone(self.confound_model)
+        confound_model.fit(z, X)
+        self.confound_model_ = confound_model
+
+        return self
+
+    def transform(self, X, z):
+        if z.ndim == 1:
+            z = z[:, np.newaxis]
+        X_confounds = self.confound_model_.predict(z)
+        return X - X_confounds
+
+
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                predict_type, search_method='grid'):
@@ -441,14 +477,21 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if predict_type == 'regressor':
         feature_selector = f_regression
-        alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5,
-                  0.75, 1, 5]
     elif predict_type == 'classifier':
         feature_selector = f_classif
-        Cs = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
-    # Instantiate grid of model/feature-selection params
-    n_comps = [10]
-    l1_ratios = [0, 0.25, 0.5, 0.75, 1]
+
+    # N Features
+    n_comps = [10, 15, 25, 50]
+
+    # Hyperparameter grids
+    ## SVM and logistic regression models
+    Cs = [1e-50, 1e-30, 1e-20, 1e-15, 1e-10, 1e-8, 1e-6]
+
+    ## Elastic net
+    l1_ratios = [0, 0.000000001, 0.00000001, 0.0000001, 0.000001, 0.00001,
+                 0.0001, 0.001, 0.01, 0.1]
+    alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5,
+              0.75, 1, 5]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -458,6 +501,10 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     # estimators
     for estimator_name, estimator in sorted(estimators.items()):
         if pca_reduce is True and X.shape[0] < X.shape[1]:
+            param_grid = {
+                "feature_select__n_components": n_comps,
+            }
+
             # Pipeline feature selection (PCA) with model fitting
             pipe = Pipeline(
                 [
@@ -468,53 +515,44 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                     (estimator_name, estimator),
                 ]
             )
-            if 'en' in estimator_name:
-                param_grid = {
-                    estimator_name + "__l1_ratio": l1_ratios,
-                    "feature_select__n_components": n_comps,
-                }
-            else:
-                param_grid = {
-                    "feature_select__n_components": n_comps,
-                }
 
-            refit = RazorCV.standard_error("n_components", True, refit_score)
-            #refit = refit_score
+            # refit = RazorCV.standard_error("n_components", True, refit_score)
+            refit = refit_score
         else:
             # <25 Features, don't perform feature selection, but produce a
             # userwarning
             if X.shape[1] < 25:
+                param_grid = {}
                 pipe = Pipeline([(estimator_name, estimator)])
-                if 'en' in estimator_name:
-                    param_grid = {estimator_name + "__l1_ratio": l1_ratios}
 
                 refit = refit_score
             else:
+                param_grid = {
+                    "feature_select__k": n_comps,
+                }
                 pipe = Pipeline(
                     [
                         ("feature_select", SelectKBest(feature_selector)),
                         (estimator_name, estimator),
                     ]
                 )
-                if 'en' in estimator_name:
-                    param_grid = {
-                        estimator_name + "__l1_ratio": l1_ratios,
-                        "feature_select__k": n_comps,
-                    }
-                else:
-                    param_grid = {
-                        "feature_select__k": n_comps,
-                    }
 
-                #refit = refit_score
-                refit = RazorCV.standard_error("k", True, refit_score)
+                refit = refit_score
+                # refit = RazorCV.standard_error("k", True, refit_score)
 
-            if predict_type == 'classifier':
+        ## Model-specific naming chunk 1
+        if predict_type == 'classifier':
+            if 'svm' in estimator_name or 'en' in estimator_name or 'l1' in \
+                estimator_name or 'l2' in estimator_name:
                 param_grid[estimator_name + "__C"] = Cs
-            elif predict_type == 'regressor':
+        elif predict_type == 'regressor':
                 param_grid[estimator_name + "__alpha"] = alphas
-            else:
-                raise ValueError('Prediction method not recognized')
+        else:
+            raise ValueError('Prediction method not recognized')
+
+        if 'en' in estimator_name:
+            param_grid[estimator_name + "__l1_ratio"] = l1_ratios
+        ## Model-specific naming chunk 1
 
         # Establish grid-search feature/model tuning windows,
         # refit the best model using a 1 SE rule of MSE values.
@@ -549,57 +587,45 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
         means_MSE = pipe_grid_cv.cv_results_[
             f"mean_test_neg_mean_squared_error"]
 
-        # Apply PCA in the case that the # of features exceeds the number of
-        # observations
+        hyperparam_space = ''
+        ## Model-specific naming chunk 2
         if predict_type == 'classifier':
-            c_best = pipe_grid_cv.best_estimator_.get_params()[
-                estimator_name + '__C']
-            hyperparam_space = \
-                f"C-{c_best}"
+            if 'svm' in estimator_name or 'en' in estimator_name or 'l1' in \
+                estimator_name or 'l2' in estimator_name:
+                c_best = pipe_grid_cv.best_estimator_.get_params()[
+                    estimator_name + '__C']
+                hyperparam_space = \
+                    f"C-{c_best}"
         elif predict_type == 'regressor':
             alpha_best = pipe_grid_cv.best_estimator_.get_params()[
                 estimator_name + '__alpha']
-            hyperparam_space = f"alpha-{alpha_best}"
+            hyperparam_space = f"_alpha-{alpha_best}"
         else:
             raise ValueError('Prediction method not recognized')
 
-        best_l1 = pipe_grid_cv.best_estimator_.get_params()[
-            estimator_name + '__l1_ratio']
+        if 'en' in estimator_name:
+            best_l1 = pipe_grid_cv.best_estimator_.get_params()[
+                estimator_name + '__l1_ratio']
+            hyperparam_space = hyperparam_space + f"_l1ratio-{best_l1}"
+        ## Model-specific naming chunk 2
+
         if pca_reduce is True and X.shape[0] < X.shape[1]:
             best_n_comps = pipe_grid_cv.best_estimator_.named_steps[
                 'feature_select'].n_components
-            if 'en' in estimator_name:
-                best_estimator_name = \
-                    f"{predict_type}-" \
-                    f"{estimator_name}_" \
-                    f"{hyperparam_space}_l1ratio-" \
-                    f"{best_l1}_nfeatures-{best_n_comps}"
-            else:
-
-                best_estimator_name = f"{predict_type}-{estimator_name}" \
-                                      f"_{hyperparam_space}_nfeatures-" \
-                                      f"{best_n_comps}"
+            best_estimator_name = f"{predict_type}-{estimator_name}" \
+                                  f"_{hyperparam_space}_nfeatures-" \
+                                  f"{best_n_comps}"
         else:
             if X.shape[1] < 25:
-                if 'en' in estimator_name:
-                    best_estimator_name = \
-                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
-                        f"_l1ratio-{best_l1}"
-                else:
-                    best_estimator_name = \
-                        f"{predict_type}-{estimator_name}_{hyperparam_space}"
+                best_estimator_name = \
+                    f"{predict_type}-{estimator_name}_{hyperparam_space}"
             else:
                 best_k = pipe_grid_cv.best_estimator_.named_steps[
                     'feature_select'].k
-                if 'en' in estimator_name:
-                    best_estimator_name = \
-                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
-                        f"_l1ratio-{best_l1}_nfeatures-{best_k}"
-                else:
-                    best_estimator_name = \
-                        f"{predict_type}-{estimator_name}_{hyperparam_space}" \
-                        f"_nfeatures-{best_k}"
-
+                best_estimator_name = \
+                    f"{predict_type}-{estimator_name}_{hyperparam_space}" \
+                    f"_nfeatures-{best_k}"
+        # print(best_estimator_name)
         means_all_exp_var[best_estimator_name] = np.nanmean(means_exp_var)
         means_all_MSE[best_estimator_name] = np.nanmean(means_MSE)
 
@@ -607,15 +633,19 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     best_estimator = max(means_all_exp_var, key=means_all_exp_var.get)
     est = estimators[best_estimator.split(f"{predict_type}-")[1].split('_')[0]]
 
-    if 'en' in estimator_name:
+    ## Model-specific naming chunk 3
+    if 'en' in best_estimator:
         est.l1_ratio = float(best_estimator.split("l1ratio-")[1].split('_')[0])
 
     if predict_type == 'classifier':
-        est.C = float(best_estimator.split("C-")[1].split('_')[0])
+        if 'svm' in best_estimator or 'en' in best_estimator or 'l1' in \
+            best_estimator or 'l2' in best_estimator:
+            est.C = float(best_estimator.split("C-")[1].split('_')[0])
     elif predict_type == 'regressor':
         est.alpha = float(best_estimator.split("alpha-")[1].split('_')[0])
     else:
         raise ValueError('Prediction method not recognized')
+    ## Model-specific naming chunk 3
 
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         pca = decomposition.PCA(
@@ -643,36 +673,9 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def bootstrapped_nested_cv(
-    X,
-    y,
-    predict_type='regressor',
-    n_boots=10,
-    var_thr=.50,
-    k_folds_outer=10,
-    k_folds_inner=10,
-    pca_reduce=False,
-    remove_multi=True,
-    std_dev=3,
-    alpha=0.95,
-    missingness_thr=0.50,
-    zero_thr=0.50
-):
-
-    # y = df_all[target_var].values
-    # X = df_all.drop(columns=drop_cols)
-    if predict_type == 'regressor':
-        scoring_metrics = ("r2", "neg_mean_squared_error")
-    elif predict_type == 'classifier':
-        scoring_metrics = ("f1", "neg_mean_squared_error")
-    else:
-        raise ValueError('Prediction method not recognized')
-
-    # Instantiate a working dictionary of performance across bootstraps
-    grand_mean_best_estimator = {}
-    grand_mean_best_score = {}
-    grand_mean_best_error = {}
-    grand_mean_y_predicted = {}
+def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=True,
+                   deconfound=True, standardize=True, std_dev=3,
+                   multi_alpha=0.95, missingness_thr=0.50, zero_thr=0.50):
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
@@ -680,59 +683,48 @@ def bootstrapped_nested_cv(
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (missingness): "
               f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+        return X, y
 
     # Apply a simple imputer (note that this assumes extreme cases of
     # missingness have already been addressed). The SimpleImputer is better
     # for smaller datasets, whereas the IterativeImputer performs best on
     # larger sets.
+
+    # cols = list(X.columns)
     # from sklearn.experimental import enable_iterative_imputer
     # from sklearn.impute import IterativeImputer
-    # imp = IterativeImputer(random_state=0, sample_posterior=True)
+    # imp = IterativeImputer(random_state=0, sample_posterior=True,
+    #                        min_value=X[cols].astype('float32').min().values,
+    #                        max_value=X[cols].astype('float32').max().values)
     # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
     imp1 = SimpleImputer()
-    X = pd.DataFrame(imp1.fit_transform(X), columns=X.columns)
+    X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
+                     columns=X.columns)
 
     if X.empty:
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (imputation): "
               f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+        return X, y
+
+    # Deconfound X by any non-connectome columns present, and then remove them
+    if deconfound is True:
+        deconfounder = DeConfounder()
+        net_cols = [i for i in X.columns if 'rsn-' in i]
+        z_cols = [i for i in X.columns if 'rsn-' not in i]
+        if len(z_cols) > 0:
+            deconfounder.fit(X[net_cols].values, X[z_cols].values)
+
+            X[net_cols] = pd.DataFrame(deconfounder.transform(
+                X[net_cols].values, X[z_cols].values),
+                             columns=X[net_cols].columns)
+
+            X.drop(columns=z_cols, inplace=True)
 
     # Standardize X
-    scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
-
-    # Drop columns with identical (or mostly identical) values in each row
-    nunique = X.apply(pd.Series.nunique)
-    cols_to_drop = nunique[nunique < 10].index
-    X.drop(cols_to_drop, axis=1, inplace=True)
-    if X.empty:
-        from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (duplication): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+    if standardize is True:
+        scaler = StandardScaler()
+        X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     # Remove low-variance columns
     sel = VarianceThreshold(threshold=(var_thr * (1 - var_thr)))
@@ -742,33 +734,22 @@ def bootstrapped_nested_cv(
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
               f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+        return X, y
 
     # Remove outliers
-    outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
-    X = X[outlier_mask]
-    y = y[outlier_mask]
-    if X.empty and len(y) < 50:
-        from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+    if remove_outliers is True:
+        outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
+        X = X[outlier_mask]
+        y = y[outlier_mask]
+        if X.empty and len(y) < 50:
+            from colorama import Fore, Style
+            print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
 
     # Remove missing y
+    # imp2 = SimpleImputer()
+    # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
     y_missing_mask = np.invert(np.isnan(y))
     X = X[y_missing_mask]
     y = y[y_missing_mask]
@@ -776,16 +757,7 @@ def bootstrapped_nested_cv(
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
               f"{X}, {y}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
-    # imp2 = SimpleImputer()
-    # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
+        return X, y
 
     # Remove multicollinear columns
     if remove_multi is True:
@@ -799,7 +771,7 @@ def bootstrapped_nested_cv(
 
         # Find index of feature columns with correlation greater than alpha
         to_drop = [column for column in upper.columns if
-                   any(upper[column] > alpha)]
+                   any(upper[column] > multi_alpha)]
         try:
             X = X.drop(X[to_drop], axis=1)
         except:
@@ -809,24 +781,185 @@ def bootstrapped_nested_cv(
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
               f"{X}{Style.RESET_ALL}\n\n")
-        return (
-            {0: 'None'},
-            {0: np.nan},
-            {0: np.nan},
-            {0: np.nan},
-            {0: 'None'},
-            None
-        )
+        return X, y
 
-    # Drop sparse columns with >50% zeros
+    # Drop excessively sparse columns with >50% zeros
     if zero_thr > 0:
-        X = X.apply(lambda x: np.where(x < 0.000001, 0, x))
+        X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
         X = X.loc[:, (X == 0).mean() < zero_thr]
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
               f"{X}{Style.RESET_ALL}\n\n")
+        return X, y
+
+    print(f"\nX: {X}\ny: {y}\n")
+    print(f"Features: {list(X.columns)}\n")
+    return X, y
+
+
+def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
+                          feature_imp_dicts, best_positions_list,
+                          grand_mean_best_estimator, grand_mean_best_score,
+                          grand_mean_best_error, grand_mean_y_predicted,
+                          k_folds_inner=10, k_folds_outer=10,
+                          pca_reduce=True):
+
+    # Instantiate a dictionary of estimators
+    if predict_type == 'regressor':
+        estimators = {
+            # "l1": linear_model.Lasso(
+            #     random_state=boot, warm_start=True
+            # ),
+            # "l2": linear_model.Ridge(random_state=boot),
+            "en": linear_model.ElasticNet(random_state=boot,
+                                          warm_start=True)
+        }
+    elif predict_type == 'classifier':
+        estimators = {
+            "en": linear_model.LogisticRegression(penalty='elasticnet',
+                                                  solver='saga',
+                                                  class_weight='balanced',
+                                                  random_state=boot,
+                                                  warm_start=True),
+            "svm": LinearSVC(random_state=boot, class_weight='balanced')
+        }
+    else:
+        raise ValueError('Prediction method not recognized')
+
+    final_est, best_estimator = nested_fit(
+        X, y, estimators, boot, pca_reduce, k_folds_inner, predict_type
+    )
+
+    # Instantiate an outer-fold
+    if predict_type == 'regressor':
+        outer_cv = KFold(n_splits=k_folds_outer,
+                         shuffle=True, random_state=boot + 1)
+    elif predict_type == 'classifier':
+        outer_cv = StratifiedKFold(n_splits=k_folds_outer, shuffle=True,
+                                   random_state=boot + 1)
+    else:
+        raise ValueError('Prediction method not recognized')
+
+    # Grab CV prediction values
+    prediction = cross_validate(
+        final_est,
+        X,
+        y,
+        cv=outer_cv,
+        scoring=scoring_metrics,
+        return_estimator=True,
+    )
+
+    for fitted in prediction["estimator"]:
+        if pca_reduce is True and X.shape[0] < X.shape[1]:
+            pca = fitted.named_steps["feature_select"]
+            pca.fit_transform(X)
+            comps_all = pd.DataFrame(pca.components_, columns=X.columns)
+            coefs = np.abs(fitted.named_steps[best_estimator.split(
+                f"{predict_type}-")[1].split('_')[0]].coef_)
+            feat_imp_dict = OrderedDict(
+                sorted(
+                    dict(zip(comps_all, coefs)).items(),
+                    key=itemgetter(1),
+                    reverse=True,
+                )
+            )
+
+            n_pcs = pca.components_.shape[0]
+
+            best_positions = [
+                np.nanargmax(np.abs(pca.components_[i])) for i in
+                range(n_pcs)
+            ]
+
+            feat_imp_dict = OrderedDict(
+                sorted(
+                    dict(zip(best_positions,
+                             feat_imp_dict.values())).items(),
+                    key=itemgetter(1),
+                    reverse=True,
+                )
+            )
+        else:
+            if X.shape[1] < 25:
+                best_positions = list(X.columns)
+            else:
+                best_positions = [
+                    column[0]
+                    for column in zip(
+                        X.columns,
+                        fitted.named_steps["feature_select"].get_support(
+                            indices=True
+                        ),
+                    )
+                    if column[1]
+                ]
+
+            coefs = np.abs(fitted.named_steps[best_estimator.split(
+                f"{predict_type}-")[1].split('_')[0]].coef_)
+
+            feat_imp_dict = OrderedDict(
+                sorted(
+                    dict(zip(best_positions, coefs)).items(),
+                    key=itemgetter(1),
+                    reverse=True,
+                )
+            )
+        feature_imp_dicts.append(feat_imp_dict)
+        best_positions_list.append(best_positions)
+
+    # just_lps = [
+    #     i
+    #     for i in X.columns
+    #     if i == "rum_1" or i == "dep_1" or i == "age" or i == "sex"
+    # ]
+    # final_est.fit(X.drop(columns=just_lps), y)
+    final_est.fit(X, y)
+    # Save the mean CV scores for this bootstrapped iteration
+    grand_mean_best_estimator[boot] = best_estimator
+    if predict_type == 'regressor':
+        grand_mean_best_score[boot] = np.nanmean(prediction[
+                                                     "test_r2"][
+                                                     prediction[
+                                                         "test_r2"] > 0])
+        grand_mean_best_error[boot] = -np.nanmean(
+            prediction["test_neg_mean_squared_error"])
+    elif predict_type == 'classifier':
+        grand_mean_best_score[boot] = np.nanmean(
+            prediction["test_f1"][prediction["test_f1"] > 0])
+        grand_mean_best_error[boot] = -np.nanmean(
+            prediction["test_neg_mean_squared_error"])
+    else:
+        raise ValueError('Prediction method not recognized')
+    grand_mean_y_predicted[boot] = final_est.predict(X)
+
+    return feature_imp_dicts, best_positions_list, grand_mean_best_estimator, \
+           grand_mean_best_score, grand_mean_best_error, \
+           grand_mean_y_predicted, final_est
+
+
+def bootstrapped_nested_cv(
+    X,
+    y,
+    predict_type='classifier',
+    n_boots=10
+):
+
+    # y = df_all[target_var].values
+    # X = df_all.drop(columns=drop_cols)
+    if predict_type == 'regressor':
+        scoring_metrics = ("r2", "neg_mean_squared_error")
+    elif predict_type == 'classifier':
+        scoring_metrics = ("f1", "neg_mean_squared_error")
+    else:
+        raise ValueError('Prediction method not recognized')
+
+    # Preprocess data
+    [X, y] = preprocess_x_y(X, y)
+
+    if X.empty or len(X.columns) < 5:
         return (
             {0: 'None'},
             {0: np.nan},
@@ -846,145 +979,31 @@ def bootstrapped_nested_cv(
     else:
         raise ValueError('Prediction method not recognized')
 
-    print(f"\nX: {X}\ny: {y}\n")
+    # Instantiate a working dictionary of performance across bootstraps
+    grand_mean_best_estimator = {}
+    grand_mean_best_score = {}
+    grand_mean_best_error = {}
+    grand_mean_y_predicted = {}
 
     final_est = None
 
-    # Bootstrap nested CV's "simulates" the variability of incoming data,
-    # particularly when training on smaller datasets
+    # Bootstrap nested CV's "simulate" the variability of incoming data,
+    # particularly when training on smaller datasets.
+    # They are intended for model evaluation, rather then final deployment
+    # and therefore do not include train-test splits.
     feature_imp_dicts = []
     best_positions_list = []
     for boot in range(0, n_boots):
-        # Instantiate a dictionary of estimators
-        if predict_type == 'regressor':
-            estimators = {
-                # "l1": linear_model.Lasso(
-                #     random_state=boot, warm_start=True
-                # ),
-                # "l2": linear_model.Ridge(random_state=boot, warm_start=True),
-                "en": linear_model.ElasticNet(random_state=boot,
-                                              warm_start=True)
-            }
-        elif predict_type == 'classifier':
-            estimators = {
-                "en": linear_model.LogisticRegression(penalty='elasticnet',
-                                                      solver='saga',
-                                                      class_weight='balanced',
-                                                      random_state=boot,
-                                                      warm_start=True)
-            }
-        else:
-            raise ValueError('Prediction method not recognized')
-
-        # Instantiate an outer-fold
-        if predict_type == 'regressor':
-            outer_cv = KFold(n_splits=k_folds_outer,
-                             shuffle=True, random_state=boot + 1)
-        elif predict_type == 'classifier':
-            outer_cv = StratifiedKFold(n_splits=k_folds_outer, shuffle=True,
-                                       random_state=boot + 1)
-        else:
-            raise ValueError('Prediction method not recognized')
-
-        final_est, best_estimator = nested_fit(
-            X, y, estimators, boot, pca_reduce, k_folds_inner, predict_type
-        )
-
-        # Grab CV prediction values
-        prediction = cross_validate(
-            final_est,
-            X,
-            y,
-            cv=outer_cv,
-            scoring=scoring_metrics,
-            return_estimator=True,
-        )
-
-        for fitted in prediction["estimator"]:
-            if pca_reduce is True and X.shape[0] < X.shape[1]:
-                pca = fitted.named_steps["feature_select"]
-                pca.fit_transform(X)
-                comps_all = pd.DataFrame(pca.components_, columns=X.columns)
-                coefs = np.abs(fitted.named_steps[best_estimator.split(
-                    f"{predict_type}-")[1].split('_')[0]].coef_)
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(comps_all, coefs)).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
-
-                n_pcs = pca.components_.shape[0]
-
-                best_positions = [
-                    np.abs(pca.components_[i]).argmax() for i in range(n_pcs)
-                ]
-
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(best_positions,
-                                 feat_imp_dict.values())).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
-            else:
-                if X.shape[1] < 25:
-                    best_positions = list(X.columns)
-                else:
-                    best_positions = [
-                        column[0]
-                        for column in zip(
-                            X.columns,
-                            fitted.named_steps["feature_select"].get_support(
-                                indices=True
-                            ),
-                        )
-                        if column[1]
-                    ]
-
-                coefs = np.abs(fitted.named_steps[best_estimator.split(
-                    f"{predict_type}-")[1].split('_')[0]].coef_)
-
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(best_positions, coefs)).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
-            feature_imp_dicts.append(feat_imp_dict)
-            best_positions_list.append(best_positions)
-
-        # just_lps = [
-        #     i
-        #     for i in X.columns
-        #     if i == "rum_1" or i == "dep_1" or i == "age" or i == "sex"
-        # ]
-        #final_est.fit(X.drop(columns=just_lps), y)
-        final_est.fit(X, y)
-        # Save the mean CV scores for this bootstrapped iteration
-        grand_mean_best_estimator[boot] = best_estimator
-        if predict_type == 'regressor':
-            grand_mean_best_score[boot] = np.nanmean(prediction[
-                "test_r2"][
-                prediction[
-                    "test_r2"] > 0])
-            grand_mean_best_error[boot] = -np.nanmean(prediction[
-                "test_neg_mean_"
-                "squared_error"])
-        elif predict_type == 'classifier':
-            grand_mean_best_score[boot] = np.nanmean(
-                prediction["test_f1"][prediction["test_f1"] > 0])
-            grand_mean_best_error[boot] = -np.nanmean(
-                prediction["test_neg_mean_squared_error"])
-        else:
-            raise ValueError('Prediction method not recognized')
-        grand_mean_y_predicted[boot] = final_est.predict(X)
+        [feature_imp_dicts, best_positions_list, grand_mean_best_estimator,
+         grand_mean_best_score, grand_mean_best_error,
+         grand_mean_y_predicted, final_est] = boot_nested_iteration(
+            X, y, predict_type, boot, scoring_metrics,
+                              feature_imp_dicts,
+                              best_positions_list, grand_mean_best_estimator,
+                              grand_mean_best_score, grand_mean_best_error,
+                              grand_mean_y_predicted)
 
     unq_best_positions = list(flatten(list(np.unique(best_positions_list))))
-
     mega_feat_imp_dict = dict.fromkeys(unq_best_positions)
 
     for feat in unq_best_positions:
@@ -998,7 +1017,7 @@ def bootstrapped_nested_cv(
         sorted(mega_feat_imp_dict.items(), key=itemgetter(1), reverse=True)
     )
 
-    del X, y, scaler
+    del X, y
 
     return (
         grand_mean_best_estimator,
@@ -1034,8 +1053,8 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
 
     if str(grid_param) in data_loaded.keys():
         df_all = pd.read_json(data_loaded[str(grid_param)])
-        if df_all[target_var].isin([np.nan, 1]).all():
-            df_all[target_var] = df_all[target_var].replace({np.nan: 0})
+        # if df_all[target_var].isin([np.nan, 1]).all():
+        #     df_all[target_var] = df_all[target_var].replace({np.nan: 0})
         if df_all is None:
             return None, None
         else:
@@ -1048,11 +1067,6 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                         columns=[
                             "id",
                             "participant_id",
-                            "age",
-                            "num_visits",
-                            "sex",
-                            "dataset",
-                            "DAY_LAG"
                         ]
                     )
                     .isnull()
@@ -1066,11 +1080,6 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
                                 columns=[
                                     "id",
                                     "participant_id",
-                                    "age",
-                                    "num_visits",
-                                    "sex",
-                                    "dataset",
-                                    "DAY_LAG"
                                 ]
                             )
                         )
@@ -1080,7 +1089,7 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
             ):
                 return None, None
             else:
-                df_all.drop(columns=["id"], inplace=True)
+                df_all.drop(columns=["id","participant_id"], inplace=True)
                 if len(df_all.columns) < 5:
                     print(f"Too few columns detected for {grid_param}...")
                     return None, None
@@ -1236,6 +1245,15 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
                                  "rum_1", "dep_2", "rum_2"]
+                elif self.inputs.target_var == 'depressed_persistent':
+                    drop_cols = [self.inputs.target_var,
+                                 'depressed_recurrent', 'dep_resid']
+                elif self.inputs.target_var == 'depressed_recurrent':
+                    drop_cols = [self.inputs.target_var,
+                                 'depressed_persistent', 'dep_resid']
+                elif self.inputs.target_var == 'depressed_recurrent':
+                    drop_cols = [self.inputs.target_var,
+                                 'depressed_persistent', 'depressed_recurrent']
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1335,7 +1353,9 @@ class BSNestedCV(SimpleInterface):
         self._results["embedding_type"] = self.inputs.embedding_type
         self._results["grid_param"] = self.inputs.grid_param
 
-        if 'phenotype' in self.inputs.target_var:
+        if 'phenotype' in self.inputs.target_var or \
+            'depressed_persistent' in self.inputs.target_var or \
+            'depressed_recurrent' in self.inputs.target_var:
             predict_type = 'classifier'
         else:
             predict_type = 'regressor'
@@ -1660,7 +1680,7 @@ def create_wf(grid_params_mod, basedir):
                                      [str(i) for i in grid_params_mod[1:]])]
     make_x_y_func_node.inputs.grid_param = str(grid_params_mod[0])
     make_x_y_func_node.interface.n_procs = 1
-    make_x_y_func_node.interface._mem_gb = 2
+    make_x_y_func_node.interface._mem_gb = 6
 
     bootstrapped_nested_cv_node = pe.Node(
         BSNestedCV(), name="bootstrapped_nested_cv_node")

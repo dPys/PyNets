@@ -92,6 +92,7 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
             np.zeros(
                 parcel_list[0].shape,
                 dtype=bool))] + parcel_list
+
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
     if label_intensities is not None:
         parcel_list_exp = np.array([0] + label_intensities).astype("float32")
