@@ -471,25 +471,24 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     else:
         raise ValueError('Prediction method not recognized')
 
-    # Scoring metrics
-    scoring = ["explained_variance", "neg_mean_squared_error"]
-    refit_score = "explained_variance"
-
     if predict_type == 'regressor':
+        scoring = ["explained_variance", "neg_mean_squared_error"]
+        refit_score = "explained_variance"
         feature_selector = f_regression
     elif predict_type == 'classifier':
+        scoring = ["recall", "neg_mean_squared_error"]
+        refit_score = "neg_mean_squared_error"
         feature_selector = f_classif
 
     # N Features
-    n_comps = [10, 15, 25, 50]
+    n_comps = [10, 25, 50]
 
     # Hyperparameter grids
     ## SVM and logistic regression models
-    Cs = [1e-50, 1e-30, 1e-20, 1e-15, 1e-10, 1e-8, 1e-6]
+    Cs = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
 
     ## Elastic net
-    l1_ratios = [0, 0.000000001, 0.00000001, 0.0000001, 0.000001, 0.00001,
-                 0.0001, 0.001, 0.01, 0.1]
+    l1_ratios = [0, 0.25, 0.50, 0.75, 1]
     alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5,
               0.75, 1, 5]
 
@@ -673,9 +672,9 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=True,
+def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=False,
                    deconfound=True, standardize=True, std_dev=3,
-                   multi_alpha=0.95, missingness_thr=0.50, zero_thr=0.50):
+                   multi_alpha=0.99, missingness_thr=0.50, zero_thr=0.50):
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
@@ -690,16 +689,13 @@ def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=True,
     # for smaller datasets, whereas the IterativeImputer performs best on
     # larger sets.
 
-    # cols = list(X.columns)
-    # from sklearn.experimental import enable_iterative_imputer
-    # from sklearn.impute import IterativeImputer
-    # imp = IterativeImputer(random_state=0, sample_posterior=True,
-    #                        min_value=X[cols].astype('float32').min().values,
-    #                        max_value=X[cols].astype('float32').max().values)
-    # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
-    imp1 = SimpleImputer()
-    X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
-                     columns=X.columns)
+    from sklearn.experimental import enable_iterative_imputer
+    from sklearn.impute import IterativeImputer
+    imp = IterativeImputer(random_state=0, sample_posterior=True)
+    X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
+    # imp1 = SimpleImputer()
+    # X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
+    #                  columns=X.columns)
 
     if X.empty:
         from colorama import Fore, Style
@@ -783,7 +779,7 @@ def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=True,
               f"{X}{Style.RESET_ALL}\n\n")
         return X, y
 
-    # Drop excessively sparse columns with >50% zeros
+    # Drop excessively sparse columns with >zero_thr% zeros
     if zero_thr > 0:
         X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
         X = X.loc[:, (X == 0).mean() < zero_thr]
@@ -804,26 +800,39 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
                           grand_mean_best_estimator, grand_mean_best_score,
                           grand_mean_best_error, grand_mean_y_predicted,
                           k_folds_inner=10, k_folds_outer=10,
-                          pca_reduce=True):
+                          pca_reduce=False):
 
     # Instantiate a dictionary of estimators
     if predict_type == 'regressor':
         estimators = {
-            # "l1": linear_model.Lasso(
-            #     random_state=boot, warm_start=True
-            # ),
-            # "l2": linear_model.Ridge(random_state=boot),
-            "en": linear_model.ElasticNet(random_state=boot,
-                                          warm_start=True)
+            # "l1": linear_model.LogisticRegression(penalty='l1',
+            #                                       random_state=boot,
+            #                                       warm_start=True),
+            # "l2": linear_model.LogisticRegression(penalty='l2',
+            #                                       random_state=boot,
+            #                                       warm_start=True),
+            "en": linear_model.LogisticRegression(penalty='elasticnet',
+                                                  random_state=boot,
+                                                  warm_start=True),
         }
     elif predict_type == 'classifier':
         estimators = {
+            # "l1": linear_model.LogisticRegression(penalty='l1',
+            #                                       solver='saga',
+            #                                       class_weight='balanced',
+            #                                       random_state=boot,
+            #                                       warm_start=True),
+            # "l2": linear_model.LogisticRegression(penalty='l2',
+            #                                       solver='saga',
+            #                                       class_weight='balanced',
+            #                                       random_state=boot,
+            #                                       warm_start=True),
             "en": linear_model.LogisticRegression(penalty='elasticnet',
                                                   solver='saga',
                                                   class_weight='balanced',
                                                   random_state=boot,
                                                   warm_start=True),
-            "svm": LinearSVC(random_state=boot, class_weight='balanced')
+            # "svm": LinearSVC(random_state=boot, class_weight='balanced')
         }
     else:
         raise ValueError('Prediction method not recognized')
@@ -837,7 +846,8 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
         outer_cv = KFold(n_splits=k_folds_outer,
                          shuffle=True, random_state=boot + 1)
     elif predict_type == 'classifier':
-        outer_cv = StratifiedKFold(n_splits=k_folds_outer, shuffle=True,
+        outer_cv = StratifiedKFold(n_splits=k_folds_outer,
+                                   shuffle=True,
                                    random_state=boot + 1)
     else:
         raise ValueError('Prediction method not recognized')
