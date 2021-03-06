@@ -458,6 +458,36 @@ class DeConfounder(BaseEstimator, TransformerMixin):
         return X - X_confounds
 
 
+def de_outlier(X, y, sd, predict_type):
+    """
+    Remove any gross outlier row in X whose linear residual
+    when regressing y against X is > sd standard deviations
+    away from the mean residual. For classifiers, use a NaiveBayes estimator
+    since it does not require tuning, and for regressors, use simple
+    linear regression.
+
+    """
+    from scipy import stats
+    from sklearn.linear_model import LinearRegression
+    from sklearn.naive_bayes import GaussianNB
+
+    if predict_type == 'classifier':
+        reg = GaussianNB()
+    elif predict_type == 'regressor':
+        reg = LinearRegression(normalize=True)
+    else:
+        raise ValueError('predict_type not recognized!')
+    reg.fit(X, y)
+    predicted_y = reg.predict(X)
+
+    resids = (y - predicted_y)**2
+
+    outlier_mask = (np.abs(stats.zscore(resids.reshape(-1, 1))) <
+                    float(sd)).all(axis=1)
+
+    return X[outlier_mask], y[outlier_mask]
+
+
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                predict_type, search_method='grid'):
@@ -672,9 +702,10 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=False,
-                   deconfound=True, standardize=True, std_dev=3,
-                   multi_alpha=0.99, missingness_thr=0.50, zero_thr=0.50):
+def preprocess_x_y(X, y, predict_type, var_thr=.50, remove_multi=True,
+                   remove_outliers=True, deconfound=True, standardize=True,
+                   std_dev=2, multi_alpha=0.99, missingness_thr=0.50,
+                   zero_thr=0.50):
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
@@ -689,13 +720,13 @@ def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=False,
     # for smaller datasets, whereas the IterativeImputer performs best on
     # larger sets.
 
-    from sklearn.experimental import enable_iterative_imputer
-    from sklearn.impute import IterativeImputer
-    imp = IterativeImputer(random_state=0, sample_posterior=True)
-    X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
-    # imp1 = SimpleImputer()
-    # X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
-    #                  columns=X.columns)
+    # from sklearn.experimental import enable_iterative_imputer
+    # from sklearn.impute import IterativeImputer
+    # imp = IterativeImputer(random_state=0, sample_posterior=True)
+    # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
+    imp1 = SimpleImputer()
+    X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
+                     columns=X.columns)
 
     if X.empty:
         from colorama import Fore, Style
@@ -734,9 +765,7 @@ def preprocess_x_y(X, y, var_thr=.50, remove_multi=True, remove_outliers=False,
 
     # Remove outliers
     if remove_outliers is True:
-        outlier_mask = (np.abs(stats.zscore(X)) < float(std_dev)).all(axis=1)
-        X = X[outlier_mask]
-        y = y[outlier_mask]
+        X, y = de_outlier(X, y, std_dev, predict_type)
         if X.empty and len(y) < 50:
             from colorama import Fore, Style
             print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
@@ -967,7 +996,7 @@ def bootstrapped_nested_cv(
         raise ValueError('Prediction method not recognized')
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y)
+    [X, y] = preprocess_x_y(X, y, predict_type)
 
     if X.empty or len(X.columns) < 5:
         return (
