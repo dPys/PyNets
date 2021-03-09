@@ -595,7 +595,8 @@ class DmriReg(object):
             "pynets", f"templates/{self.template_name}_"
             f"brain_mask_{vox_size}.nii.gz")
         self.mni_atlas = pkg_resources.resource_filename(
-            "pynets", f"core/atlases/HarvardOxford-sub-prob-{vox_size}.nii.gz"
+            "pynets", f"templates/atlases/HarvardOxford-sub-prob-"
+                      f"{vox_size}.nii.gz"
         )
         self.wm_gm_int_in_dwi = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}"

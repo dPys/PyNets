@@ -290,7 +290,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':

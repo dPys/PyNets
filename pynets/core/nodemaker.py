@@ -80,29 +80,55 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
         to ROI masks, prepended with a background image of zeros.
     """
     import gc
+    import os
     import types
     from nilearn.image import new_img_like, concat_imgs
+    from joblib import Memory
+    import uuid
+    from time import strftime
+    from pynets.core.utils import decompress_nifti
+
+
+    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
 
+    template_image = parcel_list[0]
+
     parcel_list_exp = [
         new_img_like(
-            parcel_list[0],
+            template_image,
             np.zeros(
-                parcel_list[0].shape,
+                template_image.shape,
                 dtype=bool))] + parcel_list
 
-    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
+    cache_dir = Memory(location=os.getcwd(), mmap_mode='rw+')
+
+    fourd_parcellation = f"{os.getcwd()}/{run_uuid}_parcellation.nii.gz"
+
+    del parcel_list
+    gc.collect()
+
+    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16,
+                                    memory=cache_dir,
+                                    memory_level=3)
+
+    concatted_parcels.to_filename(fourd_parcellation)
+    del concatted_parcels
+    gc.collect()
+
+    fourd_parcellation = decompress_nifti(fourd_parcellation)
+
     if label_intensities is not None:
-        parcel_list_exp = np.array([0] + label_intensities).astype("float32")
+        parcel_list_exp = np.array([0] + label_intensities).astype("float16")
     else:
         parcel_list_exp = np.array(range(len(parcel_list_exp))
-                                   ).astype("float32")
+                                   ).astype("float16")
+
     parcel_sum = np.sum(
         parcel_list_exp *
-        np.asarray(
-            concatted_parcels.dataobj),
+        nib.load(fourd_parcellation).get_fdata(dtype=np.float16),
         axis=3,
         dtype=np.uint16)
     par_max = np.max(parcel_list_exp)
@@ -112,10 +138,11 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     for out in outs:
         parcel_sum[parcel_sum == out] = 0
     net_parcels_map_nifti = nib.Nifti1Image(
-        parcel_sum, affine=parcel_list[0].affine)
+        parcel_sum, affine=template_image.affine)
 
-    del concatted_parcels, parcel_sum, parcel_list
+    del parcel_sum
     gc.collect()
+    os.remove(fourd_parcellation)
 
     return net_parcels_map_nifti, parcel_list_exp
 
