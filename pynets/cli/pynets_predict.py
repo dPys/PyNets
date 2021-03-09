@@ -25,6 +25,12 @@ def get_parser():
              " pynets derivatives.\n",
     )
     parser.add_argument(
+        "-pheno",
+        metavar="Phenotype Data",
+        help="Path to a .csv or .pkl dataframe to define nuisance covariates and "
+             "target variables\n",
+    )
+    parser.add_argument(
         "-modality",
         nargs=1,
         default="func",
@@ -47,19 +53,35 @@ def get_parser():
         "-et",
         metavar="Embedding type",
         default="topology",
-        choices=["ASE", "OMNI", "topology"],
+        choices=["ASE", "OMNI", "MASE", "eigenvector", "betweenness",
+                 "clustering", "degree"],
         help="Specify the embedding method of interest.\n",
     )
     parser.add_argument(
         "-tv",
         metavar="Target Variable",
-        default="dep_1",
+        default="age",
         nargs="+",
-        choices=["rumination_persist_phenotype",
-                 "depression_persist_phenotype", "dep_2", 'rum_2', 'rum_1',
-                 'dep_1'],
         help="Specify the target outcome variables of interest, "
              "separated by space.\n",
+    )
+    parser.add_argument(
+        "-dc",
+        metavar="Miscellaneous Columns to Drop",
+        nargs="+",
+        help="Specify columne header names, separated by space.\n",
+    )
+    parser.add_argument(
+        "-nets",
+        metavar="Networks of Interest",
+        nargs="+",
+        help="Specify the names of the networks of interest.\n",
+    )
+    parser.add_argument(
+        "-n_boots",
+        metavar="Number of Bootstrapped Predictions for Monte Carlo Simulation",
+        default=50,
+        help="An integer >1. Default is 50.\n",
     )
     parser.add_argument(
         "-thrtype",
@@ -75,15 +97,16 @@ def get_parser():
     parser.add_argument(
         "-temp",
         metavar="MNI Template",
-        default="MNI152_T1",
+        default="any",
         nargs=1,
         choices=[
             "colin27",
             "MNI152_T1",
             "CN200",
+            "any"
         ],
-        help="Include this flag to specify a template, other than MNI152_T1 "
-             "that was used to sample the connectome ensemble.\n",
+        help="Include this flag to specify a specific template"
+             "if multiple were used to sample the connectome ensemble.\n",
     )
     parser.add_argument(
         "-pm",
@@ -151,64 +174,30 @@ def main():
               " flag.\n")
         sys.exit(1)
 
-    # pre_args = get_parser().parse_args()
-    #
-    # args["base_dir"] = pre_args.basedir
-    # base_dir = args["base_dir"]
-    # base_dir = "/working/tuning_set/outputs_final"
-    base_dir = "/working/validation_set/outputs"
+    args = {}
+    pre_args = get_parser().parse_args()
+    args["base_dir"] = pre_args.basedir
+    base_dir = args["base_dir"]
+    n_boots = pre_args.n_boots
+    args["target_vars"] = pre_args.tv
+    target_vars = args["target_vars"]
+    args["embedding_type"] = pre_args.et
+    embedding_type = args["embedding_type"]
+    args["modality"] = pre_args.modality[0]
+    modality = args["modality"]
+    thr_type = pre_args.thrtype
+    template = pre_args.temp[0]
+    data_file = pre_args.pheno
+    drop_cols = pre_args.dc
+    if not drop_cols:
+        drop_cols = []
 
-    # args["target_vars"] = pre_args.tv
-    # target_vars = args["target_vars"]
-    # target_vars = ["rumination_persist_phenotype",
-    #                "depression_persist_phenotype",
-    #                "dep_2", 'rum_2', 'rum_1', 'dep_1']
-    target_vars = ['depressed_persistent', 'depressed_recurrent']
-
-    # args["embedding_type"] = pre_args.et[0]
-    # embedding_type = args["embedding_type"]
-    embedding_type = 'ASE'
-
-    # args["modality"] = pre_args.modality[0]
-    # modality = args["modality"]
-    modality = "func"
-
-    # args["thr_type"] = pre_args.thrtype[0]
-    # thr_type = pre_args.thrtype
-    thr_type = "MST"
-
-    # args["template"] = pre_args.thrtype[0]
-    # template = pre_args.temp
-    template = "any"
-
-    data_file = "/working/validation_set/outputs/" \
-                "df_depressed_validation_final.pkl"
-
-    drop_cols = ['dep_2',
-     'dep_3',
-     'rum_1',
-     'rum_2',
-     'emotion_utilization',
-     'social_ability_sum',
-     'disability',
-     'emotional_appraisal',
-     'emotional_control',
-     'Trait_anxiety',
-     'State_anxiety',
-     'perceptual_IQ']
-
-    # rsns = ["triple", "kmeans", "language"]
-    rsns = ["inter", "union", "language"]
-
-    # args["sessions"] = pre_args.thrtype[0]
-    # sessions = pre_args.session_label
-    sessions = ["1"]
+    rsns = pre_args.nets
+    sessions = pre_args.session_label
 
     # Percent if subjects with usable data for a particular universe
-    # grid_thr = 0.75
     grid_thr = 0.75
 
-    # Hard-Coded #
     # mets = [
     #     "global_efficiency",
     #     "average_shortest_path_length",
@@ -220,6 +209,20 @@ def main():
     #     "smallworldness",
     # ]
     mets = []
+
+    # import sys
+    # print(f"RSN's: {rsns}")
+    # print(f"Sessions: {sessions}")
+    # print(f"base_dir: {base_dir}")
+    # print(f"n_boots: {n_boots}")
+    # print(f"target_vars: {target_vars}")
+    # print(f"embedding_type: {embedding_type}")
+    # print(f"modality: {modality}")
+    # print(f"thr_type: {thr_type}")
+    # print(f"template: {template}")
+    # print(f"data_file: {data_file}")
+    # print(f"drop_cols: {drop_cols}")
+    # sys.exit(0)
 
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
@@ -268,22 +271,30 @@ def main():
         f.close()
 
     # Load in data
-    # df = pd.read_csv(
-    #     data_file,
-    #     index_col=False
-    # )
-    df = pd.read_pickle(data_file)
+    if data_file.endswith(".csv"):
+        df = pd.read_csv(
+            data_file,
+            index_col=False
+        )
+    elif data_file.endswith(".pkl"):
+        df = pd.read_pickle(data_file)
+    else:
+        raise ValueError("File format not recognized for phenotype data.")
+
+    if 'tuning_set' in data_file:
+        for ID in df["participant_id"]:
+            if len(ID) == 1:
+                df.loc[df.participant_id == ID, "participant_id"] = "s00" +\
+                                                                    str(ID)
+            if len(ID) == 2:
+                df.loc[df.participant_id == ID, "participant_id"] = "s0" + \
+                                                                    str(ID)
 
     # Subset only those participants which have usable data
-    # for ID in df["participant_id"]:
-    #     if len(ID) == 1:
-    #         df.loc[df.participant_id == ID, "participant_id"] = "s00" + str(ID)
-    #     if len(ID) == 2:
-    #         df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(ID)
-
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
 
-    df = df.drop(columns=drop_cols)
+    if len(drop_cols) > 0:
+        df = df.drop(columns=drop_cols)
 
     good_grids = []
     for grid_param in modality_grids[modality]:
@@ -387,13 +398,14 @@ def main():
 
     del ml_dfs
 
-    args = {}
     args["base_dir"] = base_dir
     args["feature_spaces"] = feature_spaces
     args["modality_grids"] = modality_grids
     args["target_vars"] = target_vars
     args["embedding_type"] = embedding_type
     args["modality"] = modality
+    args["n_boots"] = n_boots
+
     return args
 
 

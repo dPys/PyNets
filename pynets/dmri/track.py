@@ -447,7 +447,7 @@ def track_ensemble(
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
     # Construct seeding mask
-    seeding_mask = f"{tmp_files_dir}/seeding_mask.nii.gz"
+    seeding_mask = f"{cache_dir}/seeding_mask.nii.gz"
     if waymask is not None and os.path.isfile(waymask):
         waymask_img = math_img(f"img > {seeding_mask_thr}",
                                img=nib.load(waymask))

@@ -44,7 +44,7 @@ import_list = [
     "import re",
     "import glob",
     "import numpy as np",
-    "from sklearn.model_selection import KFold, StratifiedKFold, "
+    "from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold, "
     "GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
     "from sklearn.dummy import Dummyestimator",
     "from sklearn.feature_selection import VarianceThreshold, SelectKBest, "
@@ -71,6 +71,8 @@ import_list = [
     "from pynets.core.utils import flatten",
     "import pickle",
     "import dill",
+    "from sklearn.model_selection._split import _BaseKFold",
+    "from sklearn.utils import check_random_state"
 ]
 
 
@@ -89,10 +91,9 @@ import_list = [
 #     return ensemble
 
 
-# We create a callable class, called `RazorCV`
 class RazorCV(object):
     """
-    PR to SKlearn by dPys 2019
+    PR to SKlearn by @dPys 2019
 
     RazorCV is a callable refit option for CV whose aim is to balance model
     complexity and cross-validated score in the spirit of the
@@ -503,7 +504,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if predict_type == 'regressor':
         scoring = ["explained_variance", "neg_mean_squared_error"]
-        refit_score = "explained_variance"
+        refit_score = "neg_mean_squared_error"
         feature_selector = f_regression
     elif predict_type == 'classifier':
         scoring = ["recall", "neg_mean_squared_error"]
@@ -545,8 +546,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 ]
             )
 
-            # refit = RazorCV.standard_error("n_components", True, refit_score)
-            refit = refit_score
+            refit = RazorCV.standard_error("n_components", True, refit_score)
+            # refit = refit_score
         else:
             # <25 Features, don't perform feature selection, but produce a
             # userwarning
@@ -566,8 +567,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                     ]
                 )
 
-                refit = refit_score
-                # refit = RazorCV.standard_error("k", True, refit_score)
+                # refit = refit_score
+                refit = RazorCV.standard_error("k", True, refit_score)
 
         ## Model-specific naming chunk 1
         if predict_type == 'classifier':
@@ -704,7 +705,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
 def preprocess_x_y(X, y, predict_type, var_thr=.50, remove_multi=True,
                    remove_outliers=True, deconfound=True, standardize=True,
-                   std_dev=2, multi_alpha=0.99, missingness_thr=0.50,
+                   std_dev=3, multi_alpha=0.99, missingness_thr=0.50,
                    zero_thr=0.50):
 
     # Remove columns with excessive missing values
@@ -808,7 +809,7 @@ def preprocess_x_y(X, y, predict_type, var_thr=.50, remove_multi=True,
               f"{X}{Style.RESET_ALL}\n\n")
         return X, y
 
-    # Drop excessively sparse columns with >zero_thr% zeros
+    # Drop excessively sparse columns with >zero_thr zeros
     if zero_thr > 0:
         X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
         X = X.loc[:, (X == 0).mean() < zero_thr]
@@ -829,20 +830,14 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
                           grand_mean_best_estimator, grand_mean_best_score,
                           grand_mean_best_error, grand_mean_y_predicted,
                           k_folds_inner=10, k_folds_outer=10,
-                          pca_reduce=False):
+                          pca_reduce=True):
 
     # Instantiate a dictionary of estimators
     if predict_type == 'regressor':
         estimators = {
-            # "l1": linear_model.LogisticRegression(penalty='l1',
-            #                                       random_state=boot,
-            #                                       warm_start=True),
-            # "l2": linear_model.LogisticRegression(penalty='l2',
-            #                                       random_state=boot,
-            #                                       warm_start=True),
-            "en": linear_model.LogisticRegression(penalty='elasticnet',
-                                                  random_state=boot,
-                                                  warm_start=True),
+            # "l1": linear_model.Lasso(random_state=boot, warm_start=True),
+            # "l2": linear_model.Ridge(random_state=boot),
+            "en": linear_model.ElasticNet(random_state=boot, warm_start=True),
         }
     elif predict_type == 'classifier':
         estimators = {
@@ -949,12 +944,6 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
         feature_imp_dicts.append(feat_imp_dict)
         best_positions_list.append(best_positions)
 
-    # just_lps = [
-    #     i
-    #     for i in X.columns
-    #     if i == "rum_1" or i == "dep_1" or i == "age" or i == "sex"
-    # ]
-    # final_est.fit(X.drop(columns=just_lps), y)
     final_est.fit(X, y)
     # Save the mean CV scores for this bootstrapped iteration
     grand_mean_best_estimator[boot] = best_estimator
@@ -985,9 +974,6 @@ def bootstrapped_nested_cv(
     predict_type='classifier',
     n_boots=10
 ):
-
-    # y = df_all[target_var].values
-    # X = df_all.drop(columns=drop_cols)
     if predict_type == 'regressor':
         scoring_metrics = ("r2", "neg_mean_squared_error")
     elif predict_type == 'classifier':
@@ -1279,7 +1265,7 @@ class MakeXY(SimpleInterface):
                 if self.inputs.target_var == "rumination_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
-                                 "dep_2", "rum_2"]
+                                 "dep_2", "rum_2", "dep_1"]
                 elif self.inputs.target_var == "depression_persist_phenotype":
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
@@ -1290,19 +1276,18 @@ class MakeXY(SimpleInterface):
                 elif self.inputs.target_var == 'depressed_recurrent':
                     drop_cols = [self.inputs.target_var,
                                  'depressed_persistent', 'dep_resid']
-                elif self.inputs.target_var == 'depressed_recurrent':
-                    drop_cols = [self.inputs.target_var,
-                                 'depressed_persistent', 'depressed_recurrent']
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "rum_2", "dep_2", "dep_1"]
+                                 "rum_2", "dep_2", "dep_1", "num_visits",
+                                 "DAY_LAG"]
                 elif self.inputs.target_var == "dep_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "rum_2", "dep_2", "rum_1"]
+                                 "rum_2", "dep_2", "rum_1", "num_visits",
+                                 "DAY_LAG"]
                 elif self.inputs.target_var == "dep_2":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1312,7 +1297,7 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "dep_2"]
+                                 "dep_2", "dep_1"]
                 else:
                     drop_cols = [self.inputs.target_var,
                                  "rumination_persist_phenotype",
@@ -1353,6 +1338,7 @@ class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
     modality = traits.Str(mandatory=True)
     embedding_type = traits.Str(mandatory=True)
     grid_param = traits.Str(mandatory=True)
+    n_boots = traits.Int()
 
 
 class _BSNestedCVOutputSpec(TraitedSpec):
@@ -1413,7 +1399,8 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_y_predicted,
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                               predict_type=predict_type)
+                                               predict_type=predict_type,
+                                               n_boots=self.inputs.n_boots)
                 else:
                     [
                         grand_mean_best_estimator,
@@ -1424,7 +1411,7 @@ class BSNestedCV(SimpleInterface):
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
                                                predict_type=predict_type,
-                                               var_thr=.20, zero_thr=0.75)
+                                               n_boots=self.inputs.n_boots)
                 if final_est:
                     grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
@@ -1687,7 +1674,7 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(grid_params_mod, basedir):
+def create_wf(grid_params_mod, basedir, n_boots):
     from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
         concatenate_frames
     from nipype.pipeline import engine as pe
@@ -1722,7 +1709,7 @@ def create_wf(grid_params_mod, basedir):
     make_x_y_func_node.interface._mem_gb = 6
 
     bootstrapped_nested_cv_node = pe.Node(
-        BSNestedCV(), name="bootstrapped_nested_cv_node")
+        BSNestedCV(n_boots=int(n_boots)), name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
     bootstrapped_nested_cv_node.interface._mem_gb = 4
@@ -1869,6 +1856,7 @@ def build_predict_workflow(args, retval, verbose=True):
     target_vars = args["target_vars"]
     embedding_type = args["embedding_type"]
     modality = args["modality"]
+    n_boots = args["n_boots"]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_meta_wf = pe.Workflow(name="pynets_multipredict")
@@ -1936,7 +1924,7 @@ def build_predict_workflow(args, retval, verbose=True):
 
     target_var_iter_info_node.iterables = [("target_var", target_vars)]
 
-    create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir)
+    create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir, n_boots)
 
     final_join_node = pe.JoinNode(
         niu.IdentityInterface(fields=["df_summary", "embedding_type",
