@@ -128,7 +128,7 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
 
     parcel_sum = np.sum(
         parcel_list_exp *
-        nib.load(fourd_parcellation).get_fdata(dtype=np.float16),
+        nib.load(fourd_parcellation, mmap=True).get_fdata(dtype=np.float16),
         axis=3,
         dtype=np.uint16)
     par_max = np.max(parcel_list_exp)
@@ -1230,7 +1230,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     img_list = nodemaker.gen_img_list(uatlas)
     print(

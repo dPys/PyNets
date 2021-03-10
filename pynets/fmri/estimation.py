@@ -476,7 +476,7 @@ def timeseries_bootstrap(tseries, block_size):
     return tseries[block_mask.astype("uint8"), :], block_mask.astype("uint8")
 
 
-def fill_confound_nans(confounds, dir_path):
+def fill_confound_nans(confounds, dir_path, drop_thr=0.50):
     """Fill the NaN values of a confounds dataframe with mean values"""
     import uuid
     from time import strftime
@@ -484,11 +484,13 @@ def fill_confound_nans(confounds, dir_path):
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     confounds_nonan = confounds.apply(lambda x: x.fillna(x.mean()), axis=0)
+    confounds_nonan = confounds_nonan.dropna(thresh=len(
+        confounds_nonan)*float(drop_thr), axis=1)
     os.makedirs(f"{dir_path}{'/confounds_tmp'}", exist_ok=True)
     conf_corr = (
         f"{dir_path}/confounds_tmp/confounds_mean_corrected_{run_uuid}.tsv"
     )
-    confounds_nonan.to_csv(conf_corr, sep="\t")
+    confounds_nonan.to_csv(conf_corr, sep="\t", index=False)
     return conf_corr
 
 
@@ -547,12 +549,14 @@ class TimeseriesExtraction(object):
                   "from runconfig.yaml"
                   )
 
-    def prepare_inputs(self):
+    def prepare_inputs(self, num_std_dev=1.5):
         """Helper function to creating temporary nii's and prepare inputs from
          time-series extraction"""
         import os.path as op
         import nibabel as nib
-        from nilearn.image import math_img
+        from nilearn.image import math_img, index_img, resample_to_img
+        from nilearn.masking import intersect_masks
+        from nilearn.image import new_img_like
 
         if not op.isfile(self.func_file):
             raise FileNotFoundError(
@@ -569,7 +573,20 @@ class TimeseriesExtraction(object):
 
         self._func_img = nib.load(self.func_file)
         self._func_img.set_data_dtype(np.float32)
+
+        func_vol_img = index_img(self._func_img, 1)
+        func_vol_img.set_data_dtype(np.uint16)
+        func_data = np.asarray(func_vol_img.dataobj, dtype=np.float32)
+        func_int_thr = np.round(
+            np.mean(func_data[func_data > 0])
+            - np.std(func_data[func_data > 0]) * num_std_dev,
+            3,
+        )
         hdr = self._func_img.header
+
+        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path,
+                                               mmap=True)
+        self._net_parcels_map_nifti.set_data_dtype(np.int16)
 
         if self.hpass:
             if len(hdr.get_zooms()) == 4:
@@ -591,10 +608,22 @@ class TimeseriesExtraction(object):
             self._detrending = True
 
         if self.mask is not None:
-            # Ensure mask is binary
-            self._mask_img = math_img("img > 0", img=nib.load(self.mask))
+            # Ensure mask is binary and contains only voxels that also
+            # overlap with the parcellation and first functional volume
+            self._mask_img = intersect_masks(
+                [
+                    math_img(f"img > {func_int_thr}", img=func_vol_img),
+                    math_img("img > 0.0001",
+                             img=resample_to_img(nib.load(self.mask),
+                                                 func_vol_img))
+                ],
+                threshold=1,
+                connected=False,
+            )
             self._mask_img.set_data_dtype(np.uint16)
         else:
+            print("Warning: Proceeding to extract time-series without a "
+                  "brain mask...")
             self._mask_img = None
 
         if self.smooth:
@@ -614,14 +643,10 @@ class TimeseriesExtraction(object):
         optionally be resampled using circular-block bootrapping. The final 2D
         m x n array is ultimately saved to file in .npy format.
         """
-        import nibabel as nib
         import pandas as pd
         from nilearn import input_data
         from pynets.fmri.estimation import fill_confound_nans
 
-        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path,
-                                               mmap=True)
-        self._net_parcels_map_nifti.set_data_dtype(np.int16)
         self._parcel_masker = input_data.NiftiLabelsMasker(
             labels_img=self._net_parcels_map_nifti,
             background_label=0,
@@ -654,10 +679,11 @@ class TimeseriesExtraction(object):
             if len(confounds.index) == self._func_img.shape[-1]:
                 if confounds.isnull().values.any():
                     conf_corr = fill_confound_nans(confounds, self.dir_path)
+                    conf_corr_df = pd.read_csv(conf_corr, sep="\t")
+                    cols = [i for i in cols if i in conf_corr_df.columns]
                     self.ts_within_nodes = self._parcel_masker.fit_transform(
                         self._func_img.slicer[:,:,:,5:],
-                        confounds=pd.read_csv(conf_corr,
-                                              sep="\t").loc[5:][cols].values
+                        confounds=conf_corr_df.loc[5:][cols].values
                     )
                     os.remove(conf_corr)
                 else:

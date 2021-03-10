@@ -854,7 +854,7 @@ class NiParcellate(object):
             mask_res_img.set_data_dtype(np.uint16)
             self._clust_mask_corr_img = intersect_masks(
                 [
-                    math_img("img > " + str(func_int_thr), img=func_vol_img),
+                    math_img(f"img > {func_int_thr}", img=func_vol_img),
                     math_img("img > 0.01", img=clust_mask_res_img),
                     math_img("img > 0.01", img=mask_res_img),
                 ],

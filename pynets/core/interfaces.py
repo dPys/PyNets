@@ -2373,6 +2373,7 @@ class RegisterAtlasFunc(SimpleInterface):
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        from nilearn.image import new_img_like
 
         if self.inputs.network:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
@@ -2550,6 +2551,7 @@ class RegisterAtlasFunc(SimpleInterface):
 
         # Use for debugging check
         parcellation_img = nib.load(aligned_atlas_gm)
+
         intensities = [i for i in list(np.unique(
             np.asarray(
                 parcellation_img.dataobj).astype("int"))
