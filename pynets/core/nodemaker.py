@@ -82,12 +82,11 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     import gc
     import os
     import types
-    from nilearn.image import new_img_like, concat_imgs
+    from nilearn.image import new_img_like, concat_imgs, index_img, iter_img
     from joblib import Memory
     import uuid
     from time import strftime
     from pynets.core.utils import decompress_nifti
-
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
@@ -96,12 +95,12 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
 
     template_image = parcel_list[0]
 
-    parcel_list_exp = [
+    parcel_list_exp = iter_img([
         new_img_like(
             template_image,
             np.zeros(
                 template_image.shape,
-                dtype=bool))] + parcel_list
+                dtype=bool))] + parcel_list)
 
     cache_dir = Memory(location=os.getcwd(), mmap_mode='rw+')
 
@@ -113,28 +112,31 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16,
                                     memory=cache_dir,
                                     memory_level=3)
+    del parcel_list_exp
+    gc.collect()
 
     concatted_parcels.to_filename(fourd_parcellation)
+    fourd_parcellation = decompress_nifti(fourd_parcellation)
+    concatted_parcels = nib.load(fourd_parcellation, mmap=True)
+
+    if label_intensities is not None:
+        parcel_values = np.array([0] + label_intensities).astype("float16")
+    else:
+        parcel_values = np.array(range(concatted_parcels.shape[-1])
+                                 ).astype("float16")
+
+    parcel_sum = np.sum(
+        parcel_values *
+        np.asarray(concatted_parcels.dataobj, dtype=np.float16),
+        axis=3,
+        dtype=np.uint16)
+
     del concatted_parcels
     gc.collect()
 
-    fourd_parcellation = decompress_nifti(fourd_parcellation)
-
-    if label_intensities is not None:
-        parcel_list_exp = np.array([0] + label_intensities).astype("float16")
-    else:
-        parcel_list_exp = np.array(range(len(parcel_list_exp))
-                                   ).astype("float16")
-
-    parcel_sum = np.sum(
-        parcel_list_exp *
-        nib.load(fourd_parcellation, mmap=True).get_fdata(dtype=np.float16),
-        axis=3,
-        dtype=np.uint16)
-    par_max = np.max(parcel_list_exp)
-    outs = np.unique(parcel_sum[parcel_sum > par_max])
-
     # Set overlapping cases to zero.
+    outs = np.unique(parcel_sum[parcel_sum > np.max(parcel_values)])
+
     for out in outs:
         parcel_sum[parcel_sum == out] = 0
     net_parcels_map_nifti = nib.Nifti1Image(
@@ -143,8 +145,9 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     del parcel_sum
     gc.collect()
     os.remove(fourd_parcellation)
+    cache_dir.clear(warn=False)
 
-    return net_parcels_map_nifti, parcel_list_exp
+    return net_parcels_map_nifti, parcel_values
 
 
 def fetch_nilearn_atlas_coords(atlas):
@@ -989,7 +992,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     atlas = uatlas.split("/")[-1].split(".")[0]
 
@@ -1029,7 +1032,7 @@ def gen_img_list(uatlas):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that the"
-            " file(s) specified with the -ua flag exist(s)")
+            " file(s) specified with the -a flag exist(s)")
 
     bna_img = nib.load(uatlas)
     bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
