@@ -209,7 +209,6 @@ jobs:
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
             sudo apt-get update
             sudo apt-get upgrade
-            sudo apt-get install -y openssh-client openssl openssh-server
             sudo apt-get install -y git-lfs
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
