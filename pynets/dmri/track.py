@@ -59,13 +59,17 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == "ten" or conn_model == "tensor" or \
-            conn_model == "TEN":
+        conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
-        raise ValueError(
-            "Error: No valid reconstruction model specified. See the "
-            "`-mod` flag."
-        )
+        try:
+            raise ValueError(
+                "Error: No valid reconstruction model specified. See the "
+                "`-mod` flag."
+            )
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del dwi_data
 
@@ -73,13 +77,13 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
 
 
 def prep_tissues(
-        t1_mask,
-        gm_in_dwi,
-        vent_csf_in_dwi,
-        wm_in_dwi,
-        tiss_class,
-        B0_mask,
-        cmc_step_size=0.2):
+    t1_mask,
+    gm_in_dwi,
+    vent_csf_in_dwi,
+    wm_in_dwi,
+    tiss_class,
+    B0_mask,
+    cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
 
@@ -183,7 +187,11 @@ def prep_tissues(
             )
         )
     else:
-        raise ValueError("Tissue classifier cannot be none.")
+        try:
+            raise ValueError("Tissue classifier cannot be none.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     del gm_data, wm_data, vent_csf_in_dwi_data
 
@@ -191,7 +199,7 @@ def prep_tissues(
 
 
 def create_density_map(
-    fa_img,
+    dwi_img,
     dir_path,
     streamlines,
     conn_model,
@@ -210,7 +218,7 @@ def create_density_map(
 
     Parameters
     ----------
-    fa_img : Nifti1Image
+    dwi_img : Nifti1Image
         Dwi data stored as a Nifti1image object.
     dir_path : str
         Path to directory containing subject derivative data for a given
@@ -252,25 +260,15 @@ def create_density_map(
     """
     import os.path as op
     from dipy.tracking import utils
-    from dipy.tracking._utils import _mapping_to_voxel
-
-    # Remove streamlines with negative voxel indices
-    lin_T, offset = _mapping_to_voxel(np.eye(4))
-    streams_filt = []
-    for sl in streamlines:
-        inds = np.dot(sl, lin_T)
-        inds += offset
-        if not inds.min().round(decimals=6) < 0:
-            streams_filt.append(sl)
 
     # Create density map
     dm = utils.density_map(
-        streams_filt,
+        streamlines,
         affine=np.eye(4),
-        vol_dims=fa_img.shape)
+        vol_dims=dwi_img.shape)
 
     # Save density map
-    dm_img = nib.Nifti1Image(dm.astype("float32"), fa_img.affine)
+    dm_img = nib.Nifti1Image(dm.astype("float32"), dwi_img.affine)
 
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
@@ -300,7 +298,7 @@ def create_density_map(
     )
     dm_img.to_filename(dm_path)
 
-    del streamlines, streams_filt
+    del streamlines
     dm_img.uncache()
 
     return dir_path, dm_path
@@ -406,23 +404,20 @@ def track_ensemble(
     import os
     import gc
     import time
-    import warnings
+    import shutil
     from joblib import Parallel, delayed
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
-    from pynets.dmri.utils import generate_sl
+    from pynets.dmri.dmri_utils import generate_sl
     from nibabel.streamlines.array_sequence import concatenate, ArraySequence
     from pynets.core.utils import save_3d_to_4d
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
     from pynets.core.utils import load_runconfig
-    warnings.filterwarnings("ignore")
 
-    tmp_files_dir = f"{cache_dir}/tmp_files"
-    joblib_dir = f"{cache_dir}/joblib_tracking"
-    os.makedirs(tmp_files_dir, exist_ok=True)
-    os.makedirs(joblib_dir, exist_ok=True)
+    cache_dir = f"{cache_dir}/joblib_tracking"
+    os.makedirs(cache_dir, exist_ok=True)
 
     hardcoded_params = load_runconfig()
     nthreads = hardcoded_params["nthreads"][0]
@@ -440,16 +435,14 @@ def track_ensemble(
         hardcoded_params['tracking']["min_separation_angle"][0]
     min_streams = \
         hardcoded_params['tracking']["min_streams"][0]
-    seeding_mask_thr = hardcoded_params['tracking']["seeding_mask_thr"][0]
     timeout = hardcoded_params['tracking']["track_timeout"][0]
 
     all_combs = list(itertools.product(step_list, curv_thr_list))
 
     # Construct seeding mask
-    seeding_mask = f"{tmp_files_dir}/seeding_mask.nii.gz"
+    seeding_mask = f"{cache_dir}/seeding_mask.nii.gz"
     if waymask is not None and os.path.isfile(waymask):
-        waymask_img = math_img(f"img > {seeding_mask_thr}",
-                               img=nib.load(waymask))
+        waymask_img = math_img("img > 0.0075", img=nib.load(waymask))
         waymask_img.to_filename(waymask)
         atlas_data_wm_gm_int_img = intersect_masks(
             [
@@ -483,19 +476,19 @@ def track_ensemble(
     ix = 0
 
     try:
-        while float(stream_counter) < float(target_samples) and \
-                float(ix) < 0.50*float(len(all_combs)):
+        while float(stream_counter) < float(target_samples) and float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
-                          mmap_mode='r+', temp_folder=joblib_dir,
-                          verbose=0, timeout=timeout) as parallel:
+                          mmap_mode='r+', temp_folder=cache_dir,
+                          verbose=2, max_nbytes='50000M',
+                          timeout=timeout) as parallel:
                 out_streams = parallel(
                     delayed(run_tracking)(
-                        i, recon_path, n_seeds_per_iter, directget,
-                        maxcrossing, max_length, pft_back_tracking_dist,
+                        i, recon_path, n_seeds_per_iter, directget, maxcrossing,
+                        max_length, pft_back_tracking_dist,
                         pft_front_tracking_dist, particle_count,
                         roi_neighborhood_tol, waymask, min_length,
                         track_type, min_separation_angle, sphere, tiss_class,
-                        tissues4d, tmp_files_dir) for i in
+                        tissues4d, cache_dir) for i in
                     all_combs)
 
                 out_streams = [i for i in out_streams if i is not None and i is
@@ -506,15 +499,14 @@ def track_ensemble(
 
                 if len(out_streams) < min_streams:
                     ix += 2
-                    print(f"Fewer than {min_streams} streamlines tracked "
-                          f"on last iteration with cache directory: "
-                          f"{cache_dir}. Loosening tolerance and "
-                          f"anatomical constraints. Check {tissues4d} or "
-                          f"{recon_path} for errors...")
-                    # if track_type != 'particle':
-                    #     tiss_class = 'wb'
-                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.25
-                    # min_length = float(min_length) * 0.9875
+                    print(f"Fewer than {min_streams} streamlines tracked on last"
+                          f" iteration. Loosening tolerance and anatomical"
+                          f" constraints. Check {tissues4d} or {recon_path}"
+                          f" for errors...")
+                    if track_type != 'particle':
+                        tiss_class = 'wb'
+                    roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.05
+                    min_length = float(min_length) * 0.95
                     continue
                 else:
                     ix -= 1
@@ -536,23 +528,19 @@ def track_ensemble(
                 )
                 gc.collect()
                 print(Style.RESET_ALL)
-        os.system(f"rm -rf {joblib_dir}/*")
     except BaseException:
-        os.system(f"rm -rf {tmp_files_dir} &")
         return None
 
     if ix >= 0.75*len(all_combs) and \
-            float(stream_counter) < float(target_samples):
+        float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
-        os.system(f"rm -rf {tmp_files_dir} &")
         return None
     else:
-        os.system(f"rm -rf {tmp_files_dir} &")
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
-    gc.collect()
+    shutil.rmtree(cache_dir, ignore_errors=True)
 
     if stream_counter != 0:
         print('Generating final ArraySequence...')
@@ -568,6 +556,70 @@ def run_tracking(step_curv_combinations, recon_path,
                  particle_count, roi_neighborhood_tol, waymask, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
                  tissues4d, cache_dir, min_seeds=100):
+    """
+    Create a density map of the list of streamlines.
+
+    Parameters
+    ----------
+    step_curv_combinations
+    recon_path : str
+        File path to diffusion reconstruction model.
+    n_seeds_per_iter : int
+        Number of seeds from which to initiate tracking for each unique
+        ensemble combination. By default this is set to 250.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
+    maxcrossing : int
+        Maximum number if diffusion directions that can be assumed per voxel
+        while tracking.
+    max_length : int
+        Maximum number of steps to restrict tracking.
+    pft_back_tracking_dist : float
+        Distance in mm to back track before starting the particle filtering
+        tractography. The total particle filtering tractography distance is
+        equal to back_tracking_dist + front_tracking_dist. By default this is
+        set to 2 mm.
+    pft_front_tracking_dist : float
+        Distance in mm to run the particle filtering tractography after the
+        the back track distance. The total particle filtering tractography
+        distance is equal to back_tracking_dist + front_tracking_dist. By
+        default this is set to 1 mm.
+    particle_count : int
+        Number of particles to use in the particle filter.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
+    waymask_data : ndarray
+        Tractography constraint mask array in native diffusion space.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    min_separation_angle : float
+        The minimum angle between directions [0, 90].
+    sphere : obj
+        DiPy object for modeling diffusion directions on a sphere.
+    tiss_class : str
+        Tissue classification method.
+    tissues4d
+    cache_dir
+    min_seeds=100
+
+    Returns ####still needs editing
+    -------
+    streams : str
+        File path to saved streamline array sequence in DTK-compatible
+        trackvis (.trk) format.
+    dir_path : str
+        Path to directory containing subject derivative data for a given
+        pynets run.
+    dm_path : str
+        File path to fiber density map Nifti1Image.
+    """
 
     import gc
     import os
@@ -591,9 +643,7 @@ def run_tracking(step_curv_combinations, recon_path,
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
 
     recon_path_tmp_path = fname_presuffix(
-        recon_path,
-        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-               f"{run_uuid}",
+        recon_path, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -603,9 +653,7 @@ def run_tracking(step_curv_combinations, recon_path,
         use_hardlink=False)
 
     tissues4d_tmp_path = fname_presuffix(
-        tissues4d,
-        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-               f"{run_uuid}",
+        tissues4d, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
         newpath=cache_dir
     )
     copyfile(
@@ -616,9 +664,7 @@ def run_tracking(step_curv_combinations, recon_path,
 
     if waymask is not None:
         waymask_tmp_path = fname_presuffix(
-            waymask,
-            suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-                   f"{run_uuid}",
+            waymask, suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_{run_uuid}",
             newpath=cache_dir
         )
         copyfile(
@@ -736,8 +782,12 @@ def run_tracking(step_curv_combinations, recon_path,
             random_seed=42
         )
     else:
-        raise ValueError(
-            "ERROR: No valid tracking method(s) specified.")
+        try:
+            raise ValueError(
+                "ERROR: No valid tracking method(s) specified.")
+        except ValueError:
+            import sys
+            sys.exit(0)
 
     # Filter resulting streamlines by those that stay entirely
     # inside the brain
@@ -767,7 +817,6 @@ def run_tracking(step_curv_combinations, recon_path,
     # Filter resulting streamlines by roi-intersection
     # characteristics
     atlas_data = np.array(atlas_img.dataobj).astype("uint16")
-
     # Build mask vector from atlas for later roi filtering
     parcels = []
     i = 0
@@ -800,11 +849,11 @@ def run_tracking(step_curv_combinations, recon_path,
     try:
         roi_proximal_streamlines = nib.streamlines. \
             array_sequence.ArraySequence(
-                [
-                    s for s in roi_proximal_streamlines
-                    if len(s) >= float(min_length)
-                ]
-            )
+            [
+                s for s in roi_proximal_streamlines
+                if len(s) >= float(min_length)
+            ]
+        )
         print(f"Minimum fiber length >{min_length}mm: "
               f"{len(roi_proximal_streamlines)}")
     except BaseException:
@@ -830,15 +879,11 @@ def run_tracking(step_curv_combinations, recon_path,
         except BaseException:
             print('No streamlines remaining in waymask\'s vacinity.')
             return None
+        os.system(f"rm -f {waymask_tmp_path} &")
 
     hf.close()
+    os.system(f"rm -f {tissues4d_tmp_path} &")
     del parcels, atlas_data
-
-    tmp_files = [tissues4d_tmp_path, waymask_tmp_path, recon_path_tmp_path]
-    for j in tmp_files:
-        if j is not None:
-            if os.path.isfile(j):
-                os.system(f"rm -f {j} &")
 
     if len(roi_proximal_streamlines) > 0:
         return ArraySequence([s.astype("float32") for s in
