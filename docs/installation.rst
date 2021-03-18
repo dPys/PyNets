@@ -19,25 +19,22 @@ Hardware Requirements
 PyNets is designed for maximal scalability-- it can be run on a supercomputer,
 but it can also be run on your laptop. Nevertheless, exploring a larger
 grid-space of the connectome "multiverse" can be accomplished faster and more
-easily on a supercomputer, even if optimization reveals a clear connectome
-recipe that ultimately only requires samples in practice (e.g. a few select
-combinations for purposes of predictive algorithm deployment).
+easily on a supercomputer, even if optimization reveals that only one or a
+few connectome samples are needed.
 
-With that in mind, the minimal hardware specs required to run PyNets is 4 vCPUs, at least 8 GB of
-free RAM, and at least 15-20 GB of free disk space. The recommended hardware for single-subject ensemble sampling
-is 8+ vCPU's, 16+ GB of RAM, and 20+ GB of disk space (e.g. high-end
-desktops and laptops). On AWS and supercomputer clusters, however, PyNets hypothetically has infinite scalability--
+With these considerations in mind, the minimal hardware required to run PyNets is 4 vCPUs, at least 8 GB of
+free RAM, and at least 15-20 GB of free disk space. However, the recommended hardware for ensemble sampling
+is 8+ vCPU's, 16+ GB of RAM, and 20+ GB of disk space (i.e. high-end
+desktops and laptops). On AWS and supercomputer clusters, PyNets hypothetically has infinite scalability--
 because it relies on a forkserver for multiprocessing,
-it will auto-optimize its concurrency based on however many cores and memory
-are made available to it in an embaressingly parallelizable manner.
+it will auto-optimize its concurrency based on the cores/ memory
+made available to it.
 
     .. note::
         Another important ceiling to consider is I/O. Be sure that when you
-        specify the working directory for a PyNets run using the `-work` flag,
-        that it be to a location on disk that allows for more intensive I/O
-        operations. Locally, this would likely be a directory like '/tmp/work'
-        (the default). And on a supercomputer cluster, this would likely be
-        $SCRATCH, $DATA, or any location designated for flash-storage.
+        specify a safe working directory for the heavy metadata disk operations of PyNets.
+        This can be set using the `-work` flag, and unless you have a really good reason,
+        it should almost always be set to some variation of '/tmp'.
 
 Docker Container
 ================

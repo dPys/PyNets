@@ -80,15 +80,8 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
         to ROI masks, prepended with a background image of zeros.
     """
     import gc
-    import os
     import types
-    from nilearn.image import new_img_like, concat_imgs, index_img, iter_img
-    from joblib import Memory
-    import uuid
-    from time import strftime
-    from pynets.core.utils import decompress_nifti
-
-    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
+    from nilearn.image import new_img_like, concat_imgs, iter_img
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
@@ -102,22 +95,12 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
                 template_image.shape,
                 dtype=bool))] + parcel_list)
 
-    cache_dir = Memory(location=os.getcwd(), mmap_mode='rw+')
-
-    fourd_parcellation = f"{os.getcwd()}/{run_uuid}_parcellation.nii.gz"
-
     del parcel_list
     gc.collect()
 
-    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16,
-                                    memory=cache_dir,
-                                    memory_level=3)
+    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16)
     del parcel_list_exp
     gc.collect()
-
-    concatted_parcels.to_filename(fourd_parcellation)
-    fourd_parcellation = decompress_nifti(fourd_parcellation)
-    concatted_parcels = nib.load(fourd_parcellation, mmap=True)
 
     if label_intensities is not None:
         parcel_values = np.array([0] + label_intensities).astype("float16")
@@ -144,8 +127,6 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
 
     del parcel_sum
     gc.collect()
-    os.remove(fourd_parcellation)
-    cache_dir.clear(warn=False)
 
     return net_parcels_map_nifti, parcel_values
 
@@ -750,7 +731,7 @@ def parcel_masker(
                   f"installed?")
 
     mask_img_res = resample_to_img(
-        mask_img, template_img,
+        mask_img, template_img, interpolation='nearest'
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
@@ -897,7 +878,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
                   f"installed?")
 
     mask_img_res = resample_to_img(
-        mask_img, template_img,
+        mask_img, template_img, interpolation='nearest'
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
@@ -1339,6 +1320,11 @@ def parcel_naming(coords, vox_size):
         tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x))
         for x in coords_vox
     )
+    coords_vox_dups = list(set([ele for ele in coords_vox if
+                           coords_vox.count(ele) > 1]))
+    if len(coords_vox_dups) > 1:
+        raise ValueError('There should be no duplicate nodes in a '
+                         'parcellation!')
 
     label_img_dict = defaultdict()
     for label_atlas in labeling_atlases:
@@ -1389,7 +1375,7 @@ def parcel_naming(coords, vox_size):
             except BaseException:
                 label_dict[coord][label_atlas]['label'] = "Unlabeled"
 
-    labels = []
+    new_labels = []
     for coord in label_dict.keys():
         coord_dict = {}
         for atlas, i in list(zip(label_dict[coord].keys(),
@@ -1398,11 +1384,11 @@ def parcel_naming(coords, vox_size):
                 coord_dict[atlas] = i['label']
             except BaseException:
                 continue
-        labels.append(coord_dict)
+        new_labels.append(coord_dict)
 
-    assert len(labels) == len(coords)
+    assert len(new_labels) == len(coords)
 
-    return labels
+    return new_labels
 
 
 def get_brainnetome_node_attributes(node_files, emb_shape):
