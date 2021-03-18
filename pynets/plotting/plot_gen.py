@@ -862,7 +862,7 @@ def plot_all_struct(
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [lab[labeling_atlas] for lab in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -1180,7 +1180,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [lab[labeling_atlas] for lab in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
