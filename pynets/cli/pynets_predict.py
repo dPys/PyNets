@@ -294,7 +294,7 @@ def main():
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]
 
     if len(drop_cols) > 0:
-        df = df.drop(columns=drop_cols)
+        df = df.drop(columns=[i for i in drop_cols if i in df.columns])
 
     good_grids = []
     for grid_param in modality_grids[modality]:
