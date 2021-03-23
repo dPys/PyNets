@@ -69,7 +69,13 @@ def get_parser():
         "-dc",
         metavar="Miscellaneous Columns to Drop",
         nargs="+",
-        help="Specify columne header names, separated by space.\n",
+        help="Specify column header names, separated by space.\n",
+    )
+    parser.add_argument(
+        "-conf",
+        metavar="Nuisance random effects",
+        nargs="+",
+        help="Specify column header names, separated by space.\n",
     )
     parser.add_argument(
         "-nets",
@@ -189,8 +195,13 @@ def main():
     template = pre_args.temp[0]
     data_file = pre_args.pheno
     drop_cols = pre_args.dc
+    nuisance_cols = pre_args.conf
+
     if not drop_cols:
         drop_cols = []
+
+    if not nuisance_cols:
+        nuisance_cols = []
 
     rsns = pre_args.nets
     sessions = pre_args.session_label
@@ -222,6 +233,7 @@ def main():
     # print(f"template: {template}")
     # print(f"data_file: {data_file}")
     # print(f"drop_cols: {drop_cols}")
+    # print(f"nuisance_cols: {nuisance_cols}")
     # sys.exit(0)
 
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
@@ -298,6 +310,9 @@ def main():
 
     good_grids = []
     for grid_param in modality_grids[modality]:
+        if not any(n in grid_param for n in rsns):
+            print(f"{rsns} not found in recipe. Skipping...")
+            continue
         grid_finds = []
         for ID in df["participant_id"]:
             if ID not in sub_dict_clean.keys():
@@ -405,6 +420,7 @@ def main():
     args["embedding_type"] = embedding_type
     args["modality"] = modality
     args["n_boots"] = n_boots
+    args["nuisance_cols"] = nuisance_cols
 
     return args
 

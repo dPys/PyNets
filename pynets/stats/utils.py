@@ -853,12 +853,15 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if len(embeddings_raw) == 1:
                 embedding = embeddings[0]
             else:
-                sorted_embeddings = sorted(embeddings,
+                sorted_embeddings = sorted(embeddings, key=lambda x: int(
+                    x.partition('samples-')[2].partition('streams')[0]),
+                       reverse=True)
+                sorted_embeddings = sorted(sorted_embeddings,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple structural embeddings found for {ID} and"
                     f" {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
+                    f" recent with the largest number of samples..."
                 )
                 embedding = sorted_embeddings[0]
 

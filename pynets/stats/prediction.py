@@ -512,16 +512,15 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
         feature_selector = f_classif
 
     # N Features
-    n_comps = [10, 25, 50]
+    n_comps = [10, 20]
 
     # Hyperparameter grids
     ## SVM and logistic regression models
-    Cs = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
+    Cs = [1e-12, 1e-4, 1e-2, 1e-1]
 
     ## Elastic net
     l1_ratios = [0, 0.25, 0.50, 0.75, 1]
-    alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5,
-              0.75, 1, 5]
+    alphas = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -703,8 +702,9 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, predict_type, var_thr=.50, remove_multi=True,
-                   remove_outliers=True, deconfound=True, standardize=True,
+def preprocess_x_y(X, y, predict_type, nuisance_cols,
+                   var_thr=.50, remove_multi=True,
+                   remove_outliers=True, standardize=True,
                    std_dev=3, multi_alpha=0.99, missingness_thr=0.50,
                    zero_thr=0.50):
 
@@ -736,10 +736,10 @@ def preprocess_x_y(X, y, predict_type, var_thr=.50, remove_multi=True,
         return X, y
 
     # Deconfound X by any non-connectome columns present, and then remove them
-    if deconfound is True:
+    if len(nuisance_cols) > 0:
         deconfounder = DeConfounder()
-        net_cols = [i for i in X.columns if 'rsn-' in i]
-        z_cols = [i for i in X.columns if 'rsn-' not in i]
+        net_cols = [i for i in X.columns if i not in nuisance_cols]
+        z_cols = [i for i in X.columns if i in nuisance_cols]
         if len(z_cols) > 0:
             deconfounder.fit(X[net_cols].values, X[z_cols].values)
 
@@ -971,8 +971,9 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
 def bootstrapped_nested_cv(
     X,
     y,
+    nuisance_cols=None,
     predict_type='classifier',
-    n_boots=10
+    n_boots=10,
 ):
     if predict_type == 'regressor':
         scoring_metrics = ("r2", "neg_mean_squared_error")
@@ -982,7 +983,7 @@ def bootstrapped_nested_cv(
         raise ValueError('Prediction method not recognized')
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y, predict_type)
+    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols)
 
     if X.empty or len(X.columns) < 5:
         return (
@@ -1339,6 +1340,7 @@ class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
     embedding_type = traits.Str(mandatory=True)
     grid_param = traits.Str(mandatory=True)
     n_boots = traits.Int()
+    nuisance_cols = traits.Any()
 
 
 class _BSNestedCVOutputSpec(TraitedSpec):
@@ -1399,6 +1401,7 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_y_predicted,
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
+                                               nuisance_cols=self.inputs.nuisance_cols,
                                                predict_type=predict_type,
                                                n_boots=self.inputs.n_boots)
                 else:
@@ -1410,6 +1413,7 @@ class BSNestedCV(SimpleInterface):
                         grand_mean_y_predicted,
                         final_est
                     ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
+                                               nuisance_cols=self.inputs.nuisance_cols,
                                                predict_type=predict_type,
                                                n_boots=self.inputs.n_boots)
                 if final_est:
@@ -1674,7 +1678,7 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(grid_params_mod, basedir, n_boots):
+def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols):
     from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
         concatenate_frames
     from nipype.pipeline import engine as pe
@@ -1694,7 +1698,7 @@ def create_wf(grid_params_mod, basedir, n_boots):
                 "modality",
                 "target_var",
                 "embedding_type",
-                "json_dict",
+                "json_dict"
             ]
         ),
         name="inputnode",
@@ -1709,7 +1713,8 @@ def create_wf(grid_params_mod, basedir, n_boots):
     make_x_y_func_node.interface._mem_gb = 6
 
     bootstrapped_nested_cv_node = pe.Node(
-        BSNestedCV(n_boots=int(n_boots)), name="bootstrapped_nested_cv_node")
+        BSNestedCV(n_boots=int(n_boots), nuisance_cols=nuisance_cols),
+        name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
     bootstrapped_nested_cv_node.interface._mem_gb = 4
@@ -1738,7 +1743,6 @@ def create_wf(grid_params_mod, basedir, n_boots):
         ),
         name="concatenate_frames_node",
     )
-    concatenate_frames_node.inputs.out_dir = ml_wf.base_dir
 
     outputnode = pe.Node(
         niu.IdentityInterface(fields=["target_var", "df_summary",
@@ -1857,6 +1861,7 @@ def build_predict_workflow(args, retval, verbose=True):
     embedding_type = args["embedding_type"]
     modality = args["modality"]
     n_boots = args["n_boots"]
+    nuisance_cols = args["nuisance_cols"]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_meta_wf = pe.Workflow(name="pynets_multipredict")
@@ -1924,7 +1929,8 @@ def build_predict_workflow(args, retval, verbose=True):
 
     target_var_iter_info_node.iterables = [("target_var", target_vars)]
 
-    create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir, n_boots)
+    create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir,
+                               n_boots, nuisance_cols)
 
     final_join_node = pe.JoinNode(
         niu.IdentityInterface(fields=["df_summary", "embedding_type",
@@ -1968,6 +1974,14 @@ def build_predict_workflow(args, retval, verbose=True):
                     ("modality", "inputnode.modality")
                 ],
             ),
+            (
+                meta_inputnode,
+                create_wf_node,
+                [
+                    ("base_dir", "concatenate_frames_node.out_dir"),
+                ],
+            ),
+
             (
                 create_wf_node,
                 final_join_node,
