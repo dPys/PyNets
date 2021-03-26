@@ -29,7 +29,7 @@ def countmotifs(A, N=4):
 
     Returns
     -------
-    umotifs : int
+    umotifs : Counter
         Total count of size N motifs for graph A.
 
     References
@@ -57,7 +57,7 @@ def countmotifs(A, N=4):
         if len(X2) > 0:
             X2 = np.vstack(X2)
         else:
-            umotifs = 0
+            umotifs = Counter([])
             return umotifs
 
     X2 = np.sort(X2, 1)
