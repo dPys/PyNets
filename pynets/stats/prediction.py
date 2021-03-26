@@ -55,6 +55,8 @@ import_list = [
     "from sklearn import linear_model, decomposition",
     "from pynets.stats.benchmarking import build_hp_dict",
     "import seaborn as sns",
+    "import matplotlib",
+    "matplotlib.use('Agg')",
     "import matplotlib.pyplot as plt",
     "from sklearn.base import BaseEstimator, TransformerMixin",
     "from pynets.stats.embeddings import build_asetomes, _omni_embed",
@@ -1263,32 +1265,32 @@ class MakeXY(SimpleInterface):
             if os.path.isfile(self.inputs.json_dict) and \
                     self.inputs.json_dict.endswith('.json') and \
                     os.stat(self.inputs.json_dict).st_size != 0:
-                if self.inputs.target_var == "rumination_persist_phenotype":
+                if self.inputs.target_var == 'MDE_conversion':
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
-                                 "dep_2", "rum_2", "dep_1"]
-                elif self.inputs.target_var == "depression_persist_phenotype":
+                                 'MDE_chronic', 'depressed_conversion',
+                                 'depressed_chronic']
+                elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
-                                 "rumination_persist_phenotype",
-                                 "rum_1", "dep_2", "rum_2"]
-                elif self.inputs.target_var == 'depressed_persistent':
+                                 'MDE_conversion',
+                                 'depressed_conversion', 'depressed_chronic']
+                elif self.inputs.target_var == 'depressed_conversion':
                     drop_cols = [self.inputs.target_var,
-                                 'depressed_recurrent', 'dep_resid']
-                elif self.inputs.target_var == 'depressed_recurrent':
+                                 'MDE_conversion', 'MDE_chronic',
+                                 'depressed_chronic']
+                elif self.inputs.target_var == 'depressed_chronic':
                     drop_cols = [self.inputs.target_var,
-                                 'depressed_persistent', 'dep_resid']
+                                 'MDE_conversion', 'MDE_chronic',
+                                 'depressed_conversion']
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "rum_2", "dep_2", "dep_1", "num_visits",
-                                 "DAY_LAG"]
+                                 "rum_2", "dep_2", "dep_1"]
                 elif self.inputs.target_var == "dep_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
                                  "rumination_persist_phenotype",
-                                 "rum_2", "dep_2", "rum_1", "num_visits",
-                                 "DAY_LAG"]
+                                 "rum_2", "dep_2", "rum_1"]
                 elif self.inputs.target_var == "dep_2":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",

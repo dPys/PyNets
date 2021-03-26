@@ -426,7 +426,7 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=0,
+        default=3,
         nargs=1,
         choices=["0", "1", "2", "3"],
         help="Include this flag to (1) prune the graph of any "
@@ -782,8 +782,9 @@ def build_workflow(args, retval):
     if resources == "auto":
         import psutil
         nthreads = psutil.cpu_count()
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
+                   [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1

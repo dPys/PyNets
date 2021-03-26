@@ -637,6 +637,8 @@ def make_subject_dict(
                 grid = list(set([i for i in grid if i != () and
                                  len(list(i)) > 0]))
 
+                grid = [i for i in grid if any(n in i for n in rsns)]
+
                 modality_grids[modality] = grid
 
                 par_dict = subject_dict_all.copy()
@@ -1005,6 +1007,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
+        # save_embed_data_to_sql(data, ixs, ID, str(ses), modality, alg, comb_tuple)
         # print(data)
     del comb, comb_tuple
     gc.collect()

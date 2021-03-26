@@ -140,6 +140,8 @@ class FetchNodesLabels(SimpleInterface):
             and self.inputs.parc is False
             and self.inputs.atlas in nilearn_prob_atlases
         ):
+            import matplotlib
+            matplotlib.use("agg")
             from nilearn.plotting import find_probabilistic_atlas_cut_coords
 
             print(

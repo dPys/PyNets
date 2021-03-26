@@ -72,17 +72,17 @@ def main():
     for embedding_type in embedding_types:
         subject_dict_file_path = (
             f"{base_dir}/pynets_subject_dict_{modality}_"
-            f"{embedding_type}_{template}.pkl"
+            f"{embedding_type}_{template}_{rsns}.pkl"
         )
         subject_mod_grids_file_path = (
             f"{base_dir}/pynets_modality_grids_{modality}_"
-            f"{embedding_type}_{template}.pkl"
+            f"{embedding_type}_{template}_{rsns}.pkl"
         )
         missingness_summary = (
             f"{base_dir}/pynets_missingness_summary_{modality}_"
-            f"{embedding_type}_{template}.csv"
+            f"{embedding_type}_{template}_{rsns}.csv"
         )
-        icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_" \
+        icc_tmps_dir = f"{base_dir}/icc_tmps/{rsns}_{modality}_" \
                        f"{embedding_type}"
         os.makedirs(icc_tmps_dir, exist_ok=True)
         if not os.path.isfile(subject_dict_file_path):
