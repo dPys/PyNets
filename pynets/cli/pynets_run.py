@@ -426,7 +426,7 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=0,
+        default=3,
         nargs=1,
         choices=["0", "1", "2", "3"],
         help="Include this flag to (1) prune the graph of any "
@@ -664,6 +664,7 @@ def build_workflow(args, retval):
     graph = args.g
 
     if graph is not None:
+        include_str_matches = ['ventral']
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []
@@ -687,32 +688,22 @@ def build_workflow(args, retval):
         else:
             graph = graph[0]
             if os.path.isdir(graph):
-                # modality = 'func'
                 graph_iter = Path(graph).rglob('rawgraph*.npy')
                 if isinstance(ID, list):
                     if len(ID) > 1:
                         multi_graph = None
                         multi_subject_multigraph = []
                         for id in ID:
-                            # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g)
-                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
                         multi_subject_multigraph = None
                         ID = ID[0]
-                        # multi_graph = [str(g) for g in
-                        #                graph_iter if
-                        #                ID in str(g) and modality in str(g)]
                         multi_graph = [str(g) for g in
                                        graph_iter if
                                        ID in str(g)]
                 else:
                     multi_subject_multigraph = None
-                    # multi_graph = [str(g) for g in
-                    #                graph_iter if
-                    #                ID in str(g) and modality in str(g)]
                     multi_graph = [str(g) for g in
                                    graph_iter if
                                    ID in str(g)]
@@ -725,6 +716,24 @@ def build_workflow(args, retval):
                     multi_graph = None
                 multi_subject_graph = None
                 multi_subject_multigraph = None
+
+        if len(include_str_matches) > 0:
+            if multi_graph is not None:
+                multi_graph = [i for
+                               i in multi_graph
+                               if any(i for j in include_str_matches if
+                                      str(j) in i)]
+            if multi_subject_graph is not None:
+                multi_subject_graph = [i for
+                                       i in multi_subject_graph if
+                                       any(i for j in include_str_matches if
+                                           str(j) in i)]
+            if multi_subject_multigraph is not None:
+                multi_subject_multigraph = [i for i in
+                                            multi_subject_multigraph if
+                                            any(i for j in
+                                                include_str_matches if
+                                                str(j) in i)]
     else:
         multi_graph = None
         multi_subject_graph = None
@@ -773,8 +782,9 @@ def build_workflow(args, retval):
     if resources == "auto":
         import psutil
         nthreads = psutil.cpu_count()
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
+                   [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1

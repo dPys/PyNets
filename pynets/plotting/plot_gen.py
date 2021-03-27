@@ -208,6 +208,8 @@ def create_gb_palette(
         colormap used for representing the community assignment of the nodes.
 
     """
+    import matplotlib
+    matplotlib.use('Agg')
     import warnings
     warnings.filterwarnings("ignore")
     import random
@@ -1524,6 +1526,7 @@ def plot_graph_measure_hists(csv_all_metrics):
     """
     import numpy as np
     import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.preprocessing import scale

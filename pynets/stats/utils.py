@@ -637,6 +637,8 @@ def make_subject_dict(
                 grid = list(set([i for i in grid if i != () and
                                  len(list(i)) > 0]))
 
+                grid = [i for i in grid if any(n in i for n in rsns)]
+
                 modality_grids[modality] = grid
 
                 par_dict = subject_dict_all.copy()
@@ -853,12 +855,15 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if len(embeddings_raw) == 1:
                 embedding = embeddings[0]
             else:
-                sorted_embeddings = sorted(embeddings,
+                sorted_embeddings = sorted(embeddings, key=lambda x: int(
+                    x.partition('samples-')[2].partition('streams')[0]),
+                       reverse=True)
+                sorted_embeddings = sorted(sorted_embeddings,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple structural embeddings found for {ID} and"
                     f" {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
+                    f" recent with the largest number of samples..."
                 )
                 embedding = sorted_embeddings[0]
 
@@ -1002,6 +1007,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
+        # save_embed_data_to_sql(data, ixs, ID, str(ses), modality, alg, comb_tuple)
         # print(data)
     del comb, comb_tuple
     gc.collect()

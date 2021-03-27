@@ -967,7 +967,8 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     label_intensities : list
         A list of integer label intensity values from the parcellation.
     """
-    import sys
+    import matplotlib
+    matplotlib.use("agg")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas):
