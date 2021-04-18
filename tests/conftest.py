@@ -8,6 +8,7 @@ from dipy.core.gradients import gradient_table
 import pickle
 import os
 from random import randint
+from glob import glob
 
 
 @pytest.fixture(scope='module')
@@ -58,8 +59,8 @@ def plotting_data():
 
     yield {'conn_matrix': conn_matrix, 'labels': labels, 'coords': coords}
 
-@pytest.fixture(scope='function', params=["embeddings_data"])
-def embeddings_data(): #Not implemented yet
+# data-related functions
+def _generate_data():
     test_data_dir = str(Path(__file__).parent/"randomized_examples/")
     if os.path.isdir(test_data_dir) is False:
         os.makedirs(test_data_dir, exist_ok=True)
@@ -70,4 +71,13 @@ def embeddings_data(): #Not implemented yet
     input_paths = [test_data_dir + "Randomized_data_" +  str(array) + ".npy" for array in range(1, len(test_data) + 1)]
 
     return input_paths
+
+
+@pytest.fixture(scope='function') #Returns list for mutability
+def random_data():
+    return _generate_data()
+
+def pytest_configure(): #Sets constants as tuples for immutability as safeguard against unintended changes
+    pytest.constant_random_data = tuple(_generate_data())
+    pytest.sub0021001_files = tuple(glob(str(Path(__file__).parent/"examples/miscellaneous/sub-0021001*thrtype-PROP*.npy"))) #All (94, 94) in shape
 
