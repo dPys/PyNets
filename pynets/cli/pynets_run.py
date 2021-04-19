@@ -280,7 +280,7 @@ def get_parser():
         help="(metaparameter): Optionally specify smoothing width(s). "
              "Default is 0 / no smoothing. If you wish to iterate the pipeline"
              " across multiple smoothing separate the list "
-             "by space (e.g. 2 4 6).\n",
+             "by space (e.g. 2 4 6). Safe range: [0-8]\n",
     )
     parser.add_argument(
         "-hp",
@@ -290,8 +290,8 @@ def get_parser():
         help="(metaparameter): Optionally specify high-pass filter values "
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
-             "multiple high-pass filter thresholds, values, "
-             "separate the list by space (e.g. 0.008 0.01).\n",
+             "multiple values, separate the list by space (e.g. 0 0.02 0.1). "
+             "Safe range: [0-0.15] for resting-state data.\n",
     )
     parser.add_argument(
         "-es",
@@ -320,7 +320,7 @@ def get_parser():
         nargs="+",
         help="(metaparameter): Specify a number of clusters to produce. "
              "If you wish to iterate the pipeline across multiple values of k,"
-             " separate the list by space (e.g. 100 150 200).\n",
+             " separate the list by space (e.g. 200, 400, 600, 800).\n",
     )
     parser.add_argument(
         "-ct",
@@ -355,7 +355,10 @@ def get_parser():
         help="(metaparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
              "is 10. If you wish to iterate the pipeline across multiple "
-             "minimums, separate the list by space (e.g. 10 30 50).\n",
+             "minimums, separate the list by space (e.g. 10 30 50). "
+             "Safe range: [0-150]. Depending on the tissue classifier used"
+             " and the restrictiveness of the parcellation or any way-masking,"
+             " values >60mm may fail.\n",
     )
     parser.add_argument(
         "-tol",
@@ -367,7 +370,7 @@ def get_parser():
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
              "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel. Default is 5.\n",
+             "the corner of the voxel. Default is 5. Safe range: [0-15].\n",
     )
     parser.add_argument(
         "-dg",
@@ -423,7 +426,7 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=0,
+        default=3,
         nargs=1,
         choices=["0", "1", "2", "3"],
         help="Include this flag to (1) prune the graph of any "
@@ -661,6 +664,7 @@ def build_workflow(args, retval):
     graph = args.g
 
     if graph is not None:
+        include_str_matches = ['ventral']
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []
@@ -684,32 +688,22 @@ def build_workflow(args, retval):
         else:
             graph = graph[0]
             if os.path.isdir(graph):
-                # modality = 'func'
                 graph_iter = Path(graph).rglob('rawgraph*.npy')
                 if isinstance(ID, list):
                     if len(ID) > 1:
                         multi_graph = None
                         multi_subject_multigraph = []
                         for id in ID:
-                            # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g)
-                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
                         multi_subject_multigraph = None
                         ID = ID[0]
-                        # multi_graph = [str(g) for g in
-                        #                graph_iter if
-                        #                ID in str(g) and modality in str(g)]
                         multi_graph = [str(g) for g in
                                        graph_iter if
                                        ID in str(g)]
                 else:
                     multi_subject_multigraph = None
-                    # multi_graph = [str(g) for g in
-                    #                graph_iter if
-                    #                ID in str(g) and modality in str(g)]
                     multi_graph = [str(g) for g in
                                    graph_iter if
                                    ID in str(g)]
@@ -722,6 +716,24 @@ def build_workflow(args, retval):
                     multi_graph = None
                 multi_subject_graph = None
                 multi_subject_multigraph = None
+
+        if len(include_str_matches) > 0:
+            if multi_graph is not None:
+                multi_graph = [i for
+                               i in multi_graph
+                               if any(i for j in include_str_matches if
+                                      str(j) in i)]
+            if multi_subject_graph is not None:
+                multi_subject_graph = [i for
+                                       i in multi_subject_graph if
+                                       any(i for j in include_str_matches if
+                                           str(j) in i)]
+            if multi_subject_multigraph is not None:
+                multi_subject_multigraph = [i for i in
+                                            multi_subject_multigraph if
+                                            any(i for j in
+                                                include_str_matches if
+                                                str(j) in i)]
     else:
         multi_graph = None
         multi_subject_graph = None
@@ -770,8 +782,9 @@ def build_workflow(args, retval):
     if resources == "auto":
         import psutil
         nthreads = psutil.cpu_count()
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
         procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
+                   [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1
@@ -3448,8 +3461,13 @@ def build_workflow(args, retval):
         retval["execution_dict"] = execution_dict
         retval["plugin_settings"] = plugin_args
         retval["workflow"] = wf
-        wf.run(plugin=plugin_type, plugin_args=plugin_args)
-        retval["return_code"] = 0
+        try:
+            wf.run(plugin=plugin_type, plugin_args=plugin_args)
+            retval["return_code"] = 0
+        except RuntimeError as e:
+            print(e)
+            retval["return_code"] = 1
+            return retval
 
         if verbose is True:
             from nipype.utils.draw_gantt_chart import generate_gantt_chart

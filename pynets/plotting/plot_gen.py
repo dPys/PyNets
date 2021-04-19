@@ -208,6 +208,8 @@ def create_gb_palette(
         colormap used for representing the community assignment of the nodes.
 
     """
+    import matplotlib
+    matplotlib.use('Agg')
     import warnings
     warnings.filterwarnings("ignore")
     import random
@@ -503,8 +505,8 @@ def plot_all_func(
         if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
-        if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+        if isinstance(labels[0], dict):
+            labels = [lab[labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -862,7 +864,7 @@ def plot_all_struct(
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -1180,7 +1182,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -1524,6 +1526,7 @@ def plot_graph_measure_hists(csv_all_metrics):
     """
     import numpy as np
     import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.preprocessing import scale

@@ -324,8 +324,19 @@ def retrieve_indices_from_parcellation(node_files, emb_shape, template,
                                        vox_size='2mm'):
     from pathlib import Path
     dir_path = str(Path(node_files[0]).parent.parent)
-    template_parc = f"{dir_path}/parcellations/parcellation_space-" \
-                    f"{template}.nii.gz"
+    if template == 'any':
+        import glob
+        template_parcs = glob.glob(f"{dir_path}/parcellations/parcellation_"
+                                  f"space-*.nii.gz")
+        if len(template_parcs) > 1:
+            sorted_template_parcs = sorted(template_parcs,
+                                       key=os.path.getmtime)
+            template_parc = sorted_template_parcs[0]
+        else:
+            template_parc = [0]
+    else:
+        template_parc = f"{dir_path}/parcellations/parcellation_space-" \
+                        f"{template}.nii.gz"
     node_file = make_node_dict_from_parcellation(template_parc, dir_path,
                                                  vox_size)
     if os.path.isfile(template_parc):
@@ -349,7 +360,7 @@ def make_node_dict_from_parcellation(parcellation, dir_path, vox_size='2mm'):
 
 
 def parse_closest_ixs(node_files, emb_shape, vox_size='2mm',
-                      template='MNI152_T1'):
+                      template='any'):
     if len(node_files) > 0:
         node_files_named = [i for i in node_files if f"{emb_shape}" in i]
         if len(node_files_named) > 0:
@@ -525,7 +536,7 @@ def create_feature_space(base_dir, df, grid_param, subject_dict, ses,
         dfs = [dff.set_index("participant_id"
                              ) for dff in df_tmps if not dff.empty]
         df_all = pd.concat(dfs, axis=0)
-        df_all = df_all.replace({0: np.nan})
+        # df_all = df_all.replace({0: np.nan})
         # df_all = df_all.apply(lambda x: np.where(x < 0.00001, np.nan, x))
         # print(len(df_all))
         del df_tmps
@@ -625,6 +636,8 @@ def make_subject_dict(
 
                 grid = list(set([i for i in grid if i != () and
                                  len(list(i)) > 0]))
+
+                grid = [i for i in grid if any(n in i for n in rsns)]
 
                 modality_grids[modality] = grid
 
@@ -794,18 +807,28 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-*/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
+            f"rsn-{atlas}_res-{res}/"
             f"embeddings/gradient-{alg}*"
         )
 
-        embeddings = [i for i in embeddings if (alg in i) and
-                      (f"res-{res}" in i) and
-                      (f"rsn-{atlas}" in i) and
-                      (f"template-{template}" in i) and
-                      (f"model-{model}" in i) and
-                      (f"directget-{directget}" in i) and
-                      (f"minlength-{minlength}" in i) and
-                      (f"tol-{tol}" in i)]
+        if template == 'any':
+            embeddings = [i for i in embeddings if (alg in i) and
+                          (f"res-{res}" in i) and
+                          (f"rsn-{atlas}" in i) and
+                          (f"model-{model}" in i) and
+                          (f"directget-{directget}" in i) and
+                          (f"minlength-{minlength}" in i) and
+                          (f"tol-{tol}" in i)]
+        else:
+            embeddings = [i for i in embeddings if (alg in i) and
+                          (f"res-{res}" in i) and
+                          (f"rsn-{atlas}" in i) and
+                          (f"template-{template}" in i) and
+                          (f"model-{model}" in i) and
+                          (f"directget-{directget}" in i) and
+                          (f"minlength-{minlength}" in i) and
+                          (f"tol-{tol}" in i)]
 
         if len(embeddings) == 0:
             print(
@@ -832,12 +855,15 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             if len(embeddings_raw) == 1:
                 embedding = embeddings[0]
             else:
-                sorted_embeddings = sorted(embeddings,
+                sorted_embeddings = sorted(embeddings, key=lambda x: int(
+                    x.partition('samples-')[2].partition('streams')[0]),
+                       reverse=True)
+                sorted_embeddings = sorted(sorted_embeddings,
                                            key=os.path.getmtime)
                 print(
                     f"Multiple structural embeddings found for {ID} and"
                     f" {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
+                    f" recent with the largest number of samples..."
                 )
                 embedding = sorted_embeddings[0]
 
@@ -981,6 +1007,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
+        # save_embed_data_to_sql(data, ixs, ID, str(ses), modality, alg, comb_tuple)
         # print(data)
     del comb, comb_tuple
     gc.collect()
@@ -1012,18 +1039,28 @@ def func_grabber(comb, subject_dict, missingness_frame,
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-*/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
+            f"rsn-{atlas}_res-{res}/"
             f"embeddings/gradient-{alg}*"
         )
 
-        embeddings = [i for i in embeddings if ((alg in i) and
-                                                (f"res-{res}" in i) and
-                                                (f"rsn-{atlas}" in i) and
-                                                (template in i) and
-                                                (f"model-{model}" in i)
-                                                and (f"hpass-{hpass}Hz" in i)
-                                                and (f"extract-{extract}" in
-                                                     i))]
+        if template == 'any':
+            embeddings = [i for i in embeddings if ((alg in i) and
+                                                    (f"res-{res}" in i) and
+                                                    (f"rsn-{atlas}" in i) and
+                                                    (f"model-{model}" in i)
+                                                    and (f"hpass-{hpass}Hz" in i)
+                                                    and (f"extract-{extract}" in
+                                                         i))]
+        else:
+            embeddings = [i for i in embeddings if ((alg in i) and
+                                                    (f"res-{res}" in i) and
+                                                    (f"rsn-{atlas}" in i) and
+                                                    (f"template-{template}" in i) and
+                                                    (f"model-{model}" in i)
+                                                    and (f"hpass-{hpass}Hz" in i)
+                                                    and (f"extract-{extract}" in
+                                                         i))]
 
         if smooth == "0":
             embeddings = [
