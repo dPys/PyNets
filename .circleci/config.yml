@@ -163,6 +163,7 @@ jobs:
       - FSLDIR: /usr/local/fsl
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
+      - DEBIAN_FRONTEND: noninteractive
     resource_class: medium
     parallelism: 4
     steps:
@@ -170,22 +171,22 @@ jobs:
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
-          name: "Switch to Python v3.6"
+          name: "Switch to Python v3.7"
           no_output_timeout: 30m
           command: |
             pyenv local --unset
-            pyenv uninstall -f 3.6.5 || true
+            pyenv uninstall -f 3.7.0 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update
+            sudo apt-get update -qq
             sudo apt-get install -y make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
             sudo apt-get clean
-            sudo apt-get update
-            sudo apt-get upgrade
-            pyenv install -f 3.6.5 || true
+            sudo apt-get update -qq
+            sudo apt-get upgrade -y
+            pyenv install -f 3.7.0 || true
             eval "$(pyenv init -)"
-            pyenv global 3.6.5
+            pyenv global 3.7.0
             echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
@@ -202,15 +203,13 @@ jobs:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
           command: |
-            sudo apt-get update
+            sudo apt-get update -qq
             sudo add-apt-repository universe
             sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 libncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
             curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-            sudo apt-get update
-            sudo apt-get upgrade
-            sudo apt-get install -y openssh-client openssl openssh-server
-            sudo apt-get install -y git-lfs
+            sudo apt-get update -qq
+            sudo apt-get install -y openssh-client openssl openssh-server git-lfs
             mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
             ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
@@ -238,7 +237,6 @@ jobs:
             sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
             sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
             sudo apt-get update -qq
-            sudo apt-get upgrade
             sudo chmod 777 /usr/local
             sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
             sudo chmod 777 -R /usr/local/fsl/bin
@@ -248,9 +246,9 @@ jobs:
           command: |
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update
+            sudo apt-get update -qq
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.7.0/lib/python3.7/site-packages/graph_tool
             python -c "import graph_tool.all as gt"
       - run:
           name: Update PATH and Define Environment Variable at Runtime
@@ -296,6 +294,7 @@ jobs:
       - FSLDIR: /usr/local/fsl
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
+      - DEBIAN_FRONTEND: noninteractive
     steps:
       - checkout
       - restore_cache:
@@ -307,16 +306,16 @@ jobs:
           no_output_timeout: 30m
           command: |
             pyenv local --unset
-            pyenv uninstall -f 3.6.5 || true
+            pyenv uninstall -f 3.7.0 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update
+            sudo apt-get update -qq
+            sudo apt-get upgrade -y
             sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
-            sudo apt-get upgrade
-            pyenv install -f 3.6.5 || true
+            pyenv install -f 3.7.0 || true
             eval "$(pyenv init -)"
-            pyenv global 3.6.5
+            pyenv global 3.7.0
             echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
@@ -331,9 +330,9 @@ jobs:
           command: |
             echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update
+            sudo apt-get update -qq
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.6.5/lib/python3.6/site-packages/graph_tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.7.0/lib/python3.7/site-packages/graph_tool
             python -c "import graph_tool.all as gt"
       - run:
           name: Update codecov
@@ -428,7 +427,7 @@ jobs:
       - run:
           name: Build pynets
           command: |
-            pyenv local 3.6.5
+            pyenv local 3.7.0
             pip install --upgrade "pip>=19.1"
             pip install setuptools_rust twine
             THISVERSION=$( python get_version.py )
@@ -445,7 +444,7 @@ jobs:
       - run:
           name: Check sdist distribution
           command: |
-            pyenv local 3.6.5
+            pyenv local 3.7.0
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -465,7 +464,7 @@ jobs:
       - run:
           name: Check wheel distribution
           command: |
-            pyenv local 3.6.5
+            pyenv local 3.7.0
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -496,7 +495,7 @@ jobs:
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
             sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
-            pyenv local 3.6.5
+            pyenv local 3.7.0
             THISVERSION=$( python get_version.py )
             echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
             docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.6.9 -c "pip install numpy && python setup.py sdist"
@@ -505,7 +504,7 @@ jobs:
       - run:
           name: Upload packages to PyPI
           command: |
-            pyenv local 3.6.5
+            pyenv local 3.7.0
             pip install twine
             INSTALLED_VERSION=$(pynets --version)
             THISVERSION=$( python get_version.py )

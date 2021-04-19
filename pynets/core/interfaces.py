@@ -59,6 +59,7 @@ class FetchNodesLabels(SimpleInterface):
 
     def _run_interface(self, runtime):
         import sys
+        import pkg_resources
         from pynets.core import utils, nodemaker
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from nilearn.image import concat_imgs
@@ -84,8 +85,8 @@ class FetchNodesLabels(SimpleInterface):
         nilearn_prob_atlases = ["atlas_msdl", "atlas_pauli_2017"]
         local_atlases = [
             op.basename(i).split(".nii")[0]
-            for i in glob.glob(f"{str(Path(base_path).parent)}"
-                               f"/atlases/*.nii.gz")
+            for i in glob.glob(f"{str(Path(base_path).parent.parent)}"
+                               f"/templates/atlases/*.nii.gz")
             if "_4d" not in i
         ]
 
@@ -139,6 +140,8 @@ class FetchNodesLabels(SimpleInterface):
             and self.inputs.parc is False
             and self.inputs.atlas in nilearn_prob_atlases
         ):
+            import matplotlib
+            matplotlib.use("agg")
             from nilearn.plotting import find_probabilistic_atlas_cut_coords
 
             print(
@@ -173,7 +176,7 @@ class FetchNodesLabels(SimpleInterface):
             label_intensities = None
         elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
             uatlas_pre = (
-                f"{str(Path(base_path).parent)}/atlases/"
+                f"{str(Path(base_path).parent.parent)}/templates/atlases/"
                 f"{self.inputs.atlas}.nii.gz"
             )
             uatlas = fname_presuffix(
@@ -267,7 +270,8 @@ class FetchNodesLabels(SimpleInterface):
             else:
                 if atlas in local_atlases:
                     ref_txt = (
-                        f"{str(Path(base_path).parent)}/labelcharts/"
+                        f"{str(Path(base_path).parent.parent)}/templates/"
+                        f"labelcharts/"
                         f"{atlas}.txt"
                     )
                 else:
@@ -2373,6 +2377,7 @@ class RegisterAtlasFunc(SimpleInterface):
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
+        from nilearn.image import new_img_like
 
         if self.inputs.network:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
@@ -2550,6 +2555,7 @@ class RegisterAtlasFunc(SimpleInterface):
 
         # Use for debugging check
         parcellation_img = nib.load(aligned_atlas_gm)
+
         intensities = [i for i in list(np.unique(
             np.asarray(
                 parcellation_img.dataobj).astype("int"))
@@ -2994,9 +3000,9 @@ class Tracking(SimpleInterface):
                     copy=True,
                     use_hardlink=False,
                 )
-                time.sleep(1)
+                time.sleep(2)
                 del model
-            else:
+            elif os.path.getsize(f"{namer_dir}/{op.basename(recon_path)}") > 0:
                 print(
                     f"Found existing reconstruction with "
                     f"{self.inputs.conn_model}. Loading...")
@@ -3006,8 +3012,28 @@ class Tracking(SimpleInterface):
                     copy=True,
                     use_hardlink=False,
                 )
-                time.sleep(1)
+                time.sleep(5)
+            else:
+                import h5py
+                model, _ = reconstruction(
+                    self.inputs.conn_model,
+                    gtab,
+                    dwi_data,
+                    B0_mask_tmp_path,
+                )
+                with h5py.File(recon_path, 'w') as hf:
+                    hf.create_dataset("reconstruction",
+                                      data=model.astype('float32'), dtype='f4')
+                hf.close()
 
+                copyfile(
+                    recon_path,
+                    f"{namer_dir}/{op.basename(recon_path)}",
+                    copy=True,
+                    use_hardlink=False,
+                )
+                time.sleep(5)
+                del model
             dwi_img.uncache()
             del dwi_data
 
@@ -3262,12 +3288,17 @@ class Tracking(SimpleInterface):
         self._results["labels_im_file"] = labels_im_file_tmp_path
         self._results["min_length"] = self.inputs.min_length
 
-        tmp_files = [B0_mask_tmp_path, dwi_file_tmp_path, recon_path]
+        tmp_files = [B0_mask_tmp_path, dwi_file_tmp_path]
 
         for j in tmp_files:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
+
+        # Exercise caution when deleting copied recon_path
+        if recon_path is not None:
+            if os.path.isfile(recon_path):
+                os.remove(recon_path)
 
         return runtime
 

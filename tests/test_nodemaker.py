@@ -18,6 +18,7 @@ try:
 except ImportError:
     import _pickle as pickle
 import logging
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -51,12 +52,12 @@ def test_nodemaker_tools_parlistfile_RSN():
     """
     Test nodemaker_tools_parlistfile_RSN functionality
     """
-    import pkg_resources
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz")
     network = 'Default'
     parc = True
 
@@ -99,7 +100,6 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     Test nodemaker_tools_nilearn_coords_RSN functionality
     """
     # Set example inputs
-    import pkg_resources
     template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     network = 'Default'
     parc = False
@@ -125,12 +125,12 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     Test nodemaker_tools_masking_parlistfile_RSN functionality
     """
     # Set example inputs
-    import pkg_resources
     base_dir = str(Path(__file__).parent/"examples")
     template = pkg_resources.resource_filename("pynets",
                                                f"templates/MNI152_T1_brain_2mm.nii.gz")
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz")
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     network = 'Default'
     ID = '002'
@@ -184,7 +184,6 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     Test nodemaker_tools_masking_coords_RSN functionality
     """
-    import pkg_resources
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     template = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
@@ -223,20 +222,26 @@ def test_nodemaker_tools_parlistfile_WB():
     """
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_"
+                                           "cluster_labels_PCA200.nii.gz")
     start_time = time.time()
-    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-    print("%s%s%s" % ('get_names_and_coords_of_parcels (User-atlas whole-brain version) --> finished: ',
+    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(
+        parlistfile)
+    print("%s%s%s" % ('get_names_and_coords_of_parcels (User-atlas '
+                      'whole-brain version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
-    WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1) != 0].tolist()
+    WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1)
+                                              != 0].tolist()
 
     start_time = time.time()
 
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list)
-    print("%s%s%s" % ('create_parcel_atlas (User-atlas whole-brain version) --> finished: ',
+    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
+        WB_parcel_list)
+    print("%s%s%s" % ('create_parcel_atlas (User-atlas whole-brain version) '
+                      '--> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     assert WB_coords is not None
@@ -246,14 +251,16 @@ def test_nodemaker_tools_parlistfile_WB():
     assert parcel_list_exp is not None
 
 
-@pytest.mark.parametrize("atlas", ['coords_dosenbach_2010', 'coords_power_2011'])
+@pytest.mark.parametrize("atlas", ['coords_dosenbach_2010',
+                                   'coords_power_2011'])
 def test_nodemaker_tools_nilearn_coords_WB(atlas):
     """
     Test nodemaker_tools_nilearn_coords_WB functionality
     """
     start_time = time.time()
     [WB_coords, _, _, WB_labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
-    print("%s%s%s" % ('fetch_nilearn_atlas_coords (Whole-brain version) --> finished: ',
+    print("%s%s%s" % ('fetch_nilearn_atlas_coords (Whole-brain version) --> '
+                      'finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     assert WB_coords is not None
@@ -267,7 +274,9 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     # Set example inputs
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_"
+                                           "cluster_labels_PCA200.nii.gz")
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     ID = '002'
@@ -275,11 +284,14 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     perc_overlap = 0.10
 
     start_time = time.time()
-    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
-    print("%s%s%s" % ('get_names_and_coords_of_parcels (Masking whole-brain version) --> finished: ',
+    [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(
+        parlistfile)
+    print("%s%s%s" % ('get_names_and_coords_of_parcels (Masking whole-brain '
+                      'version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
-    WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1) != 0].tolist()
+    WB_labels = np.arange(len(WB_coords) + 1)[np.arange(len(WB_coords) + 1)
+                                              != 0].tolist()
 
     start_time = time.time()
 
@@ -287,15 +299,18 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     [WB_net_parcels_map_nifti_unmasked, WB_coords_unmasked, _,
-     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
+     _, _, dir_path] = nodemaker.node_gen(WB_coords, WB_parcel_list,
+                                          WB_labels, dir_path, ID, parc, atlas,
                                           parlistfile)
     print("%s%s%s" % ('node_gen (Masking whole-brain version) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
     WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(WB_parcel_list)
-    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> finished: ',
+    [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
+        WB_parcel_list)
+    print("%s%s%s" % ('create_parcel_atlas (Masking whole-brain version) --> '
+                      'finished: ',
     np.round(time.time() - start_time, 1), 's'))
 
     start_time = time.time()
@@ -366,7 +381,6 @@ def test_create_spherical_roi_volumes():
     """
     Test create_spherical_roi_volumes functionality
     """
-    import pkg_resources
     node_size = 2
     template_mask = pkg_resources.resource_filename("pynets",
                                                     "templates/MNI152_T1_"
@@ -408,8 +422,9 @@ def test_parcel_naming():
 
 def test_enforce_hem_distinct_consecutive_labels():
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_" \
-                  f"PCA200.nii.gz"
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_"
+                                           "cluster_labels_PCA200.nii.gz")
     uatlas = nodemaker.enforce_hem_distinct_consecutive_labels(parlistfile)[0]
     uatlas_img = nib.load(uatlas)
     parcels_uatlas = len(np.unique(uatlas_img.get_fdata())) - 1
@@ -421,8 +436,9 @@ def test_drop_coords_labels_from_restricted_parcellation():
     from nipype.utils.filemanip import copyfile
 
     base_dir = str(Path(__file__).parent/"examples")
-    parlistfile = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_" \
-                  f"PCA200.nii.gz"
+    parlistfile = pkg_resources.resource_filename("pynets",
+                                           "templates/atlases/whole_brain_"
+                                           "cluster_labels_PCA200.nii.gz")
 
     [coords, _, _, label_intensities] = \
         nodemaker.get_names_and_coords_of_parcels(parlistfile)
@@ -486,7 +502,6 @@ def test_mask_roi():
     """
     Test mask_roi functionality
     """
-    import pkg_resources
     mask = pkg_resources.resource_filename("pynets",
                                            "templates/MNI152_T1_brain_mask_"
                                            "2mm.nii.gz")

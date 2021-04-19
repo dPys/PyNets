@@ -652,7 +652,7 @@ def build_omnetome(est_path_iterlist, ID):
                         else:
                             print(
                                 "WARNING: Only one graph sampled, omnibus"
-                                " embedding not appropriate."
+                                " embedding not applicable."
                             )
                             pass
                 else:
@@ -673,7 +673,7 @@ def build_omnetome(est_path_iterlist, ID):
                     else:
                         print(
                             "WARNING: Only one graph sampled, omnibus "
-                            "embedding not appropriate."
+                            "embedding not applicable."
                         )
                         pass
 
@@ -702,7 +702,7 @@ def build_omnetome(est_path_iterlist, ID):
                         else:
                             print(
                                 "WARNING: Only one graph sampled, omnibus"
-                                " embedding not appropriate."
+                                " embedding not applicable."
                             )
                             pass
                 else:
@@ -723,7 +723,7 @@ def build_omnetome(est_path_iterlist, ID):
                     else:
                         print(
                             "WARNING: Only one graph sampled, omnibus "
-                            "embedding not appropriate."
+                            "embedding not applicable."
                         )
                         pass
     else:
