@@ -243,9 +243,9 @@ def get_ixs_from_node_dict(node_dict):
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
                 node_dict_revised[i]['label'] = ast.literal_eval(
-                    node_dict[i]['label'])[0]
+                    node_dict[i]['label'].replace('\n', ','))[0]
                 node_dict_revised[i]['index'] = ast.literal_eval(
-                    node_dict[i]['label'])[1]
+                    node_dict[i]['label'].replace('\n', ','))[1]
             ixs_corr = [int(k['index']) for k in
                         node_dict_revised.values()]
         elif all(isinstance(v, tuple) for v in
@@ -807,8 +807,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
-            f"rsn-{atlas}_res-{res}/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-{atlas}_res-{res}/"
             f"embeddings/gradient-{alg}*"
         )
 
@@ -819,7 +818,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
                           (f"minlength-{minlength}" in i) and
-                          (f"tol-{tol}" in i)]
+                          (f"tol-{tol}" in i) and ('_NULL' not in i)]
         else:
             embeddings = [i for i in embeddings if (alg in i) and
                           (f"res-{res}" in i) and
@@ -828,7 +827,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
                           (f"minlength-{minlength}" in i) and
-                          (f"tol-{tol}" in i)]
+                          (f"tol-{tol}" in i) and ('_NULL' not in i)]
 
         if len(embeddings) == 0:
             print(
@@ -851,22 +850,31 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             embedding = embeddings[0]
         else:
             embeddings_raw = [i for i in embeddings if "thrtype" not
-                              in i]
+                              in i or 'thr-1.0' in i]
             if len(embeddings_raw) == 1:
-                embedding = embeddings[0]
+                embedding = embeddings_raw[0]
             else:
-                sorted_embeddings = sorted(embeddings, key=lambda x: int(
-                    x.partition('samples-')[2].partition('streams')[0]),
-                       reverse=True)
-                sorted_embeddings = sorted(sorted_embeddings,
-                                           key=os.path.getmtime)
-                print(
-                    f"Multiple structural embeddings found for {ID} and"
-                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent with the largest number of samples..."
-                )
-                embedding = sorted_embeddings[0]
+                embeddings_raw = [i for i in embeddings_raw if
+                                  (f"/rsn-{atlas}_res-{res}/"
+                                            in i) and
+                                  (atlas in os.path.basename(i)) and (res in os.path.basename(i))]
+                if len(embeddings_raw) > 0:
+                    sorted_embeddings = sorted(embeddings_raw,
+                                               key=lambda x: int(
+                        x.partition('samples-')[2].partition('streams')[0]),
+                           reverse=False)
+                    # TODO: Change "reverse" above to True to grab the MOST number of samples (ideal).
 
+                    sorted_embeddings = sorted(sorted_embeddings,
+                                               key=os.path.getmtime)
+                    embedding = sorted_embeddings[0]
+                    print(
+                        f"Multiple structural embeddings found for {ID} and"
+                        f" {comb_tuple}:\n{sorted_embeddings}\nTaking the most"
+                        f" recent with the largest number of samples {embedding}..."
+                    )
+                else:
+                    return subject_dict, missingness_frame
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:
@@ -1051,7 +1059,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                                     (f"model-{model}" in i)
                                                     and (f"hpass-{hpass}Hz" in i)
                                                     and (f"extract-{extract}" in
-                                                         i))]
+                                                         i)) and ('_NULL' not in i)]
         else:
             embeddings = [i for i in embeddings if ((alg in i) and
                                                     (f"res-{res}" in i) and
@@ -1060,7 +1068,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                                     (f"model-{model}" in i)
                                                     and (f"hpass-{hpass}Hz" in i)
                                                     and (f"extract-{extract}" in
-                                                         i))]
+                                                         i)) and ('_NULL' not in i)]
 
         if smooth == "0":
             embeddings = [
@@ -1097,18 +1105,25 @@ def func_grabber(comb, subject_dict, missingness_frame,
             embedding = embeddings[0]
         else:
             embeddings_raw = [i for i in embeddings if "thrtype"
-                              not in i]
+                              not in i or 'thr-1.0' in i]
             if len(embeddings_raw) == 1:
-                embedding = embeddings[0]
+                embedding = embeddings_raw[0]
             else:
-                sorted_embeddings = sorted(embeddings, key=os.path.getmtime)
-                print(
-                    f"Multiple functional embeddings found for {ID} and"
-                    f" {comb_tuple}:\n{embeddings}\nTaking the most"
-                    f" recent..."
-                )
-                embedding = sorted_embeddings[0]
-
+                embeddings_raw = [i for i in embeddings_raw if
+                                            f"/rsn-{atlas}_res-{res}/"
+                                            in i and
+                                            (atlas in os.path.basename(i)) and (res in os.path.basename(i))]
+                if len(embeddings_raw) > 0:
+                    sorted_embeddings = sorted(embeddings_raw,
+                                               key=os.path.getmtime)
+                    embedding = sorted_embeddings[0]
+                    print(
+                        f"Multiple structural embeddings found for {ID} and"
+                        f" {comb_tuple}:\n{sorted_embeddings}\nTaking the most"
+                        f" recent with the largest number of samples {embedding}..."
+                    )
+                else:
+                    return subject_dict, missingness_frame
         if os.path.isfile(embedding):
             # print(f"Found {ID}, {ses}, {modality}, {comb_tuple}...")
             try:

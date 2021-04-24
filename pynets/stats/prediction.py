@@ -15,6 +15,7 @@ from nipype.interfaces.base import (
     SimpleInterface,
 )
 from scipy import stats
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, \
     cross_validate, StratifiedKFold
 from sklearn.feature_selection import VarianceThreshold, SelectKBest, \
@@ -91,6 +92,43 @@ import_list = [
 #     ensemble.add_meta(meta_estimator)
 #     ensemble.fit(X, y)
 #     return ensemble
+
+
+class ReduceVIF(BaseEstimator, TransformerMixin):
+    def __init__(self, thresh=10.0):
+        self.thresh = thresh
+
+    def fit(self, X, y=None):
+        # print('Dropping columns by excessive VIF...')
+        return self
+
+    def transform(self, X, y=None):
+        columns = X.columns.tolist()
+        return ReduceVIF.calculate_vif(X, self.thresh)
+
+    @staticmethod
+    def calculate_vif(X, thresh=10.0):
+        dropped = True
+        while dropped:
+            # Loop repeatedly until we find that all columns within our dataset
+            # have a VIF value less than the threshold
+            variables = X.columns
+            dropped = False
+            vif = []
+            new_vif = 0
+            for var in X.columns:
+                new_vif = variance_inflation_factor(X[variables].values,
+                                                    X.columns.get_loc(var))
+                vif.append(new_vif)
+                if np.isinf(new_vif):
+                    break
+            max_vif = max(vif)
+            if max_vif > thresh:
+                maxloc = vif.index(max_vif)
+                print(f'Dropping {X.columns[maxloc]} with vif={max_vif}')
+                X = X.drop([X.columns.tolist()[maxloc]], axis=1)
+                dropped = True
+        return X
 
 
 class RazorCV(object):
@@ -485,7 +523,7 @@ def de_outlier(X, y, sd, predict_type):
 
     resids = (y - predicted_y)**2
 
-    outlier_mask = (np.abs(stats.zscore(resids.reshape(-1, 1))) <
+    outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
                     float(sd)).all(axis=1)
 
     return X[outlier_mask], y[outlier_mask]
@@ -493,7 +531,7 @@ def de_outlier(X, y, sd, predict_type):
 
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
-               predict_type, search_method='grid'):
+               predict_type, search_method='grid', n_jobs=1):
 
     # Instantiate an inner-fold
     if predict_type == 'regressor':
@@ -506,19 +544,19 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     if predict_type == 'regressor':
         scoring = ["explained_variance", "neg_mean_squared_error"]
-        refit_score = "neg_mean_squared_error"
+        refit_score = "explained_variance"
         feature_selector = f_regression
     elif predict_type == 'classifier':
-        scoring = ["recall", "neg_mean_squared_error"]
-        refit_score = "neg_mean_squared_error"
+        scoring = ["f1", "neg_mean_squared_error"]
+        refit_score = "f1"
         feature_selector = f_classif
 
     # N Features
-    n_comps = [10, 20]
+    n_comps = [10]
 
     # Hyperparameter grids
     ## SVM and logistic regression models
-    Cs = [1e-12, 1e-4, 1e-2, 1e-1]
+    Cs = [1e-16, 1e-12, 1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
 
     ## Elastic net
     l1_ratios = [0, 0.25, 0.50, 0.75, 1]
@@ -594,7 +632,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 param_grid=param_grid,
                 scoring=scoring,
                 refit=refit,
-                n_jobs=1,
+                n_jobs=n_jobs,
                 cv=inner_cv,
             )
         elif search_method == 'random':
@@ -603,7 +641,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 param_distributions=param_grid,
                 scoring=scoring,
                 refit=refit,
-                n_jobs=1,
+                n_jobs=n_jobs,
                 cv=inner_cv,
             )
         else:
@@ -704,11 +742,11 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, predict_type, nuisance_cols,
-                   var_thr=.50, remove_multi=True,
+def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
+                   var_thr=.80, remove_multi=True,
                    remove_outliers=True, standardize=True,
-                   std_dev=3, multi_alpha=0.99, missingness_thr=0.50,
-                   zero_thr=0.50):
+                   std_dev=3, vif_thr=10, missingness_thr=0.50,
+                   zero_thr=0.75, oversample=True, class_ratio=0.10):
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
@@ -731,12 +769,6 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
     X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
                      columns=X.columns)
 
-    if X.empty:
-        from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (imputation): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return X, y
-
     # Deconfound X by any non-connectome columns present, and then remove them
     if len(nuisance_cols) > 0:
         deconfounder = DeConfounder()
@@ -744,11 +776,10 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
         z_cols = [i for i in X.columns if i in nuisance_cols]
         if len(z_cols) > 0:
             deconfounder.fit(X[net_cols].values, X[z_cols].values)
-
             X[net_cols] = pd.DataFrame(deconfounder.transform(
                 X[net_cols].values, X[z_cols].values),
                              columns=X[net_cols].columns)
-
+            print(f"Deconfounding with {z_cols}...")
             X.drop(columns=z_cols, inplace=True)
 
     # Standardize X
@@ -759,7 +790,20 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
     # Remove low-variance columns
     sel = VarianceThreshold(threshold=(var_thr * (1 - var_thr)))
     sel.fit(X)
-    X = X[X.columns[sel.get_support(indices=True)]]
+    if len(nodrop_columns) > 0:
+        good_var_cols = X.columns[np.concatenate([sel.get_support(indices=True),
+                                                 np.array([X.columns.get_loc(c)
+                                                           for c in
+                                                           nodrop_columns if
+                                                           c in X])])]
+    else:
+        good_var_cols = X.columns[sel.get_support(indices=True)]
+
+    low_var_cols = [i for i in X.columns if i not in list(good_var_cols)]
+    if len(low_var_cols) > 0:
+        print(f"Dropping {low_var_cols} for low variance...")
+    X = X[good_var_cols]
+
     if X.empty:
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
@@ -778,9 +822,10 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
     # Remove missing y
     # imp2 = SimpleImputer()
     # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
-    y_missing_mask = np.invert(np.isnan(y))
-    X = X[y_missing_mask]
-    y = y[y_missing_mask]
+
+    # y_missing_mask = np.invert(np.isnan(y))
+    # X = X[y_missing_mask]
+    # y = y[y_missing_mask]
     if X.empty or len(y) < 50:
         from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
@@ -789,21 +834,8 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
 
     # Remove multicollinear columns
     if remove_multi is True:
-        # Create correlation matrix
-        corr_matrix = X.corr().abs()
-
-        # Select upper triangle of correlation matrix
-        upper = corr_matrix.where(
-            np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool)
-        )
-
-        # Find index of feature columns with correlation greater than alpha
-        to_drop = [column for column in upper.columns if
-                   any(upper[column] > multi_alpha)]
-        try:
-            X = X.drop(X[to_drop], axis=1)
-        except:
-            pass
+        rvif = ReduceVIF(thresh=vif_thr)
+        X = rvif.fit_transform(X)
 
     if X.empty or len(X.columns) < 5:
         from colorama import Fore, Style
@@ -814,20 +846,35 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols,
     # Drop excessively sparse columns with >zero_thr zeros
     if zero_thr > 0:
         X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
-        X = X.loc[:, (X == 0).mean() < zero_thr]
+        X_tmp = X.loc[:, (X == 0).mean() < zero_thr]
+        if len(nodrop_columns) > 0:
+            X = pd.concat([X_tmp, X[[i for i in X.columns if i in
+                                     nodrop_columns and i not in
+                                     X_tmp.columns]]], axis=1)
+        else:
+            X = X_tmp
+        del X_tmp
 
-    if X.empty or len(X.columns) < 5:
-        from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return X, y
+        if X.empty or len(X.columns) < 5:
+            from colorama import Fore, Style
+            print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
+
+    if oversample is True:
+        try:
+            from imblearn.over_sampling import SMOTE
+            sm = SMOTE(random_state=42)
+            X, y = sm.fit_resample(X, y)
+        except:
+            pass
 
     print(f"\nX: {X}\ny: {y}\n")
     print(f"Features: {list(X.columns)}\n")
     return X, y
 
 
-def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
+def boot_nested_iteration(X, y, predict_type, boot,
                           feature_imp_dicts, best_positions_list,
                           grand_mean_best_estimator, grand_mean_best_score,
                           grand_mean_best_error, grand_mean_y_predicted,
@@ -858,7 +905,8 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
                                                   class_weight='balanced',
                                                   random_state=boot,
                                                   warm_start=True),
-            # "svm": LinearSVC(random_state=boot, class_weight='balanced')
+            # "svm": LinearSVC(random_state=boot, class_weight='balanced',
+            #                  loss='hinge')
         }
     else:
         raise ValueError('Prediction method not recognized')
@@ -879,12 +927,17 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
         raise ValueError('Prediction method not recognized')
 
     # Grab CV prediction values
+    if predict_type == 'classifier':
+        final_scorer = 'accuracy'
+    else:
+        final_scorer = 'r2'
+
     prediction = cross_validate(
         final_est,
         X,
         y,
         cv=outer_cv,
-        scoring=scoring_metrics,
+        scoring=(final_scorer, 'neg_mean_squared_error'),
         return_estimator=True,
     )
 
@@ -958,7 +1011,7 @@ def boot_nested_iteration(X, y, predict_type, boot, scoring_metrics,
             prediction["test_neg_mean_squared_error"])
     elif predict_type == 'classifier':
         grand_mean_best_score[boot] = np.nanmean(
-            prediction["test_f1"][prediction["test_f1"] > 0])
+            prediction["test_accuracy"][prediction["test_accuracy"] > 0])
         grand_mean_best_error[boot] = -np.nanmean(
             prediction["test_neg_mean_squared_error"])
     else:
@@ -976,16 +1029,11 @@ def bootstrapped_nested_cv(
     nuisance_cols=None,
     predict_type='classifier',
     n_boots=10,
+    nodrop_columns=[]
 ):
-    if predict_type == 'regressor':
-        scoring_metrics = ("r2", "neg_mean_squared_error")
-    elif predict_type == 'classifier':
-        scoring_metrics = ("f1", "neg_mean_squared_error")
-    else:
-        raise ValueError('Prediction method not recognized')
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols)
+    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns)
 
     if X.empty or len(X.columns) < 5:
         return (
@@ -1025,7 +1073,7 @@ def bootstrapped_nested_cv(
         [feature_imp_dicts, best_positions_list, grand_mean_best_estimator,
          grand_mean_best_score, grand_mean_best_error,
          grand_mean_y_predicted, final_est] = boot_nested_iteration(
-            X, y, predict_type, boot, scoring_metrics,
+            X, y, predict_type, boot,
                               feature_imp_dicts,
                               best_positions_list, grand_mean_best_estimator,
                               grand_mean_best_score, grand_mean_best_error,
@@ -1267,20 +1315,10 @@ class MakeXY(SimpleInterface):
                     os.stat(self.inputs.json_dict).st_size != 0:
                 if self.inputs.target_var == 'MDE_conversion':
                     drop_cols = [self.inputs.target_var,
-                                 'MDE_chronic', 'depressed_conversion',
-                                 'depressed_chronic']
+                                 'MDE_chronic']
                 elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
-                                 'MDE_conversion',
-                                 'depressed_conversion', 'depressed_chronic']
-                elif self.inputs.target_var == 'depressed_conversion':
-                    drop_cols = [self.inputs.target_var,
-                                 'MDE_conversion', 'MDE_chronic',
-                                 'depressed_chronic']
-                elif self.inputs.target_var == 'depressed_chronic':
-                    drop_cols = [self.inputs.target_var,
-                                 'MDE_conversion', 'MDE_chronic',
-                                 'depressed_conversion']
+                                 'MDE_conversion']
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1383,8 +1421,8 @@ class BSNestedCV(SimpleInterface):
         self._results["grid_param"] = self.inputs.grid_param
 
         if 'phenotype' in self.inputs.target_var or \
-            'depressed_persistent' in self.inputs.target_var or \
-            'depressed_recurrent' in self.inputs.target_var:
+            'MDE_chronic' in self.inputs.target_var or \
+            'MDE_conversion' in self.inputs.target_var:
             predict_type = 'classifier'
         else:
             predict_type = 'regressor'
@@ -1614,13 +1652,9 @@ class MakeDF(SimpleInterface):
                 set(list(self.inputs.grand_mean_best_estimator.values())),
                 key=list(self.inputs.grand_mean_best_estimator.values()).count,
             )
-            df_summary.at[0, "Score"] = np.nanmean(
-                list(self.inputs.grand_mean_best_score.values())
-            )
+            df_summary.at[0, "Score"] = list(self.inputs.grand_mean_best_score.values())
             df_summary.at[0, "Predicted_y"] = y_pred_vals
-            df_summary.at[0, "Error"] = np.mean(
-                list(self.inputs.grand_mean_best_error.values())
-            )
+            df_summary.at[0, "Error"] = list(self.inputs.grand_mean_best_error.values())
             df_summary.at[0, "Score_95CI_upper"] = get_CI(
                 list(self.inputs.grand_mean_best_score.values()),
                 alpha=0.95)[1]
@@ -1719,7 +1753,7 @@ def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols):
         name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
-    bootstrapped_nested_cv_node.interface._mem_gb = 4
+    bootstrapped_nested_cv_node.interface._mem_gb = 6
 
     make_df_node = pe.Node(MakeDF(), name="make_df_node")
 
@@ -1948,6 +1982,11 @@ def build_predict_workflow(args, retval, verbose=True):
         name="meta_outputnode"
     )
 
+    create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 1
+    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 6
+    create_wf_node.get_node('make_x_y_func_node').interface.n_procs = 1
+    create_wf_node.get_node('make_x_y_func_node').interface._mem_gb = 6
+
     ml_meta_wf.connect(
         [
             (
@@ -2014,9 +2053,10 @@ def build_predict_workflow(args, retval, verbose=True):
     execution_dict["remove_unnecessary_outputs"] = False
     execution_dict["remove_node_directories"] = False
     execution_dict["raise_insufficient"] = False
-    nthreads = psutil.cpu_count() * 2
+    nthreads = psutil.cpu_count()
+    vmem = int(list(psutil.virtual_memory())[4] / 1000000000) - 1
     procmem = [int(nthreads),
-               int(list(psutil.virtual_memory())[4] / 1000000000) - 2]
+               [vmem if vmem > 8 else int(8)][0]]
     plugin_args = {
         "n_procs": int(procmem[0]),
         "memory_gb": int(procmem[1]),
