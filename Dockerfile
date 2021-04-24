@@ -117,7 +117,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest \
-    && git clone https://github.com/nkoub/multinetx.git /home/neuro/multinetx \
+    && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
     && cd /home/neuro/multinetx && \
     pip install -r requirements.txt && \
     python setup.py install \
