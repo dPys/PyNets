@@ -1155,8 +1155,10 @@ def boot_nested_iteration(X, y, predict_type, boot,
             params = f"{params}_alpha={np.nanmean(out_final.coef_):.5f}"
 
         if hasattr(out_final, 'l1_ratio'):
-            params = f"{params}_lambda1={np.round(out_final.l1_ratio * 1. / out_final.C, 5)}"
-            params = f"{params}_lambda2={np.round((1 - out_final.l1_ratio) * 1. / out_final.C, 5)}"
+            l1_val = np.round(out_final.l1_ratio * 1. / out_final.C, 5)
+            l2_val = np.round((1 - out_final.l1_ratio) * 1. / out_final.C, 5)
+            params = f"{params}_lambda1={l1_val}"
+            params = f"{params}_lambda2={l2_val}"
 
         grand_mean_best_estimator[boot] = params
     else:

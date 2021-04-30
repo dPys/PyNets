@@ -126,10 +126,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
-    && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
-    && cd /home/neuro/multinetx && \
-    pip install -r requirements.txt && \
-    python setup.py install \
     # Install skggm
     && conda install -yq \
         cython \
