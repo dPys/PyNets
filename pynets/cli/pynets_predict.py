@@ -90,6 +90,37 @@ def get_parser():
         help="An integer >1. Default is 50.\n",
     )
     parser.add_argument(
+        "-dr",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to make random predictions"
+             " with a dummy regressor.\n",
+    )
+    parser.add_argument(
+        "-stack",
+        default=False,
+        action="store_true",
+        help="Optionally use this flag if you wish to stack multiple "
+             "estimators.\n",
+    )
+    parser.add_argument(
+        "-sp",
+        metavar="Miscellaneous Columns to Drop",
+        nargs="+",
+        help="Specify feature column header prefixes of shared feature spaces,"
+             " separated by space. Only applicable if `-stack` flag is"
+             " also used\n",
+    )
+    parser.add_argument(
+        "-search",
+        default="grid",
+        nargs=1,
+        choices=[
+            "grid",
+            "random"],
+        help="Specify the GridSearchCV method to use. Default is `grid`.\n",
+    )
+    parser.add_argument(
         "-thrtype",
         default="MST",
         nargs=1,
@@ -196,6 +227,10 @@ def main():
     data_file = pre_args.pheno
     drop_cols = pre_args.dc
     nuisance_cols = pre_args.conf
+    dummy_run = pre_args.dr
+    search_method = pre_args.search[0]
+    stack = pre_args.stack
+    stack_prefix_list = pre_args.sp
 
     if not drop_cols:
         drop_cols = []
@@ -421,6 +456,10 @@ def main():
     args["modality"] = modality
     args["n_boots"] = n_boots
     args["nuisance_cols"] = nuisance_cols
+    args["dummy_run"] = dummy_run
+    args["search_method"] = search_method
+    args["stack"] = stack
+    args["stack_prefix_list"] = stack_prefix_list
 
     return args
 
