@@ -116,10 +116,14 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip install --upgrade pip \
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest \
+    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest mlens>=0.2.3 pingouin>=0.3.7 \
     # Install pynets
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
+    pip install -r requirements.txt && \
+    python setup.py install \
+    && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
+    && cd /home/neuro/multinetx && \
     pip install -r requirements.txt && \
     python setup.py install \
     # Install skggm

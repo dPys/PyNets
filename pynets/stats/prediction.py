@@ -28,8 +28,10 @@ from operator import itemgetter
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pynets.core.utils import flatten
 from sklearn.svm import LinearSVC
-from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.base import BaseEstimator, TransformerMixin, clone, \
+    ClassifierMixin
 from sklearn.linear_model import LinearRegression
+from sklearn.dummy import DummyClassifier, DummyRegressor
 
 try:
     from sklearn.utils._testing import ignore_warnings
@@ -47,7 +49,7 @@ import_list = [
     "import numpy as np",
     "from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold, "
     "GridSearchCV, RandomizedSearchCV, train_test_split, cross_validate",
-    "from sklearn.dummy import Dummyestimator",
+    "from sklearn.dummy import DummyClassifier, DummyRegressor",
     "from sklearn.feature_selection import VarianceThreshold, SelectKBest, "
     "f_regression, f_classif",
     "from sklearn.pipeline import Pipeline",
@@ -77,21 +79,6 @@ import_list = [
     "from sklearn.model_selection._split import _BaseKFold",
     "from sklearn.utils import check_random_state"
 ]
-
-
-# def stack_ensemble(X, y, estimator_files, meta_estimator):
-#     import joblib
-#     from mlens.ensemble import SuperLearner
-#
-#     ensemble = SuperLearner()
-#     ests = []
-#     for est_file in estimator_files:
-#         ests.append(joblib.load(est_file))
-#
-#     ensemble.add(ests)
-#     ensemble.add_meta(meta_estimator)
-#     ensemble.fit(X, y)
-#     return ensemble
 
 
 class ReduceVIF(BaseEstimator, TransformerMixin):
@@ -529,6 +516,14 @@ def de_outlier(X, y, sd, predict_type):
     return X[outlier_mask], y[outlier_mask]
 
 
+def make_param_grids():
+    param_space = {}
+    param_space['Cs'] = [1e-16, 1e-12, 1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
+    param_space['l1_ratios'] = [0, 0.25, 0.50, 0.75, 1]
+    param_space['alphas'] = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
+    return param_space
+
+
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                predict_type, search_method='grid', n_jobs=1):
@@ -553,14 +548,6 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
     # N Features
     n_comps = [10]
-
-    # Hyperparameter grids
-    ## SVM and logistic regression models
-    Cs = [1e-16, 1e-12, 1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
-
-    ## Elastic net
-    l1_ratios = [0, 0.25, 0.50, 0.75, 1]
-    alphas = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -610,17 +597,21 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 refit = RazorCV.standard_error("k", True, refit_score)
 
         ## Model-specific naming chunk 1
+        # Make hyperparameter search-spaces
+        param_space = make_param_grids()
+
         if predict_type == 'classifier':
             if 'svm' in estimator_name or 'en' in estimator_name or 'l1' in \
                 estimator_name or 'l2' in estimator_name:
-                param_grid[estimator_name + "__C"] = Cs
+                param_grid[estimator_name + "__C"] = param_space['Cs']
         elif predict_type == 'regressor':
-                param_grid[estimator_name + "__alpha"] = alphas
+                param_grid[estimator_name + "__alpha"] = param_space['alphas']
         else:
             raise ValueError('Prediction method not recognized')
 
         if 'en' in estimator_name:
-            param_grid[estimator_name + "__l1_ratio"] = l1_ratios
+            param_grid[estimator_name + "__l1_ratio"] = \
+                param_space['l1_ratios']
         ## Model-specific naming chunk 1
 
         # Establish grid-search feature/model tuning windows,
@@ -874,32 +865,175 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     return X, y
 
 
+def get_scorer_ens(scorer_name):
+    import importlib
+    import sklearn.metrics
+    found = False
+
+    try:
+        scoring = sklearn.metrics.get_scorer(scorer_name)
+        found = True
+    except ValueError:
+        pass
+
+    if not found:
+        i = scorer_name.rfind('.')
+        if i < 0:
+            raise ValueError(
+                'Invalid scorer import path: {}'.format(scorer_name))
+        module_name, scorer_name_ = scorer_name[:i], scorer_name[i + 1:]
+        mod = importlib.import_module(module_name)
+        scoring = getattr(mod, scorer_name_)
+        found = True
+
+    return scoring
+
+
+class EnsembleClassifier(BaseEstimator, ClassifierMixin):
+
+    def __init__(self, ensemble):
+        self.ensemble = ensemble
+
+    def fit(self, X, y=None):
+        from sklearn.utils.validation import check_X_y
+        from sklearn.utils.multiclass import unique_labels
+        import pandas as pd
+
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        if isinstance(y, pd.DataFrame):
+            y = y.values
+
+        X_out, y = check_X_y(X, y)
+
+        X = X if hasattr(X, 'columns') else X_out
+
+        if hasattr(X, 'columns'):
+            self.expected_ = list(X.columns)
+            self.expected_n_ = X.shape[1]
+        else:
+            self.expected_ = None
+            self.expected_n_ = X.shape[1]
+            warnings.warn('Input does not have a columns attribute, '
+                          'only number of columns will be validated')
+
+        self.classes_ = unique_labels(y)
+
+        self.ensemble_fitted = self.ensemble.fit(X, y)
+
+        return self
+
+    def predict(self, X):
+        from sklearn.utils.validation import check_array, check_is_fitted
+
+        check_is_fitted(self)
+
+        if not isinstance(X, pd.DataFrame):
+            X = X.values
+
+        X = check_array(X)
+
+        return self.ensemble_fitted.predict(X)
+
+
+def build_stacked_ensemble(X, y, base_estimators, boot, k_folds_inner,
+                           predict_type='classifier', search_method='grid',
+                           prefixes=[]):
+    from mlens.ensemble import SuperLearner
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import f1_score
+    from sklearn.pipeline import Pipeline
+    from mlens.preprocessing.preprocess import Subset
+
+    meta_estimators = {
+        "svm": LinearSVC(random_state=boot, class_weight='balanced'),
+        "rfc": RandomForestClassifier(random_state=boot,
+                                      class_weight='balanced')
+    }
+
+    ens_estimators = {}
+
+    feature_subspaces = split_df_to_dfs_by_prefix(X, prefixes=prefixes)
+
+    for meta_est_name, meta_est in meta_estimators.items():
+        ensemble = SuperLearner(scorer=f1_score,
+                                random_state=boot, verbose=2,
+                                folds=k_folds_inner,
+                                shuffle=True)
+
+        preprocessing = {}
+        base_models = {}
+        for ix, X_subspace in enumerate(feature_subspaces):
+            for est_name, est in list(base_estimators.items()):
+                final_est, best_estimator = nested_fit(
+                    X_subspace, y, {est_name: est}, boot, False, k_folds_inner,
+                    predict_type, search_method=search_method
+                )
+            cols = split_df_to_dfs_by_prefix(X, prefixes=prefixes[ix])[0]
+            subset = [X.columns.get_loc(col) for col in cols]
+            subset_trans = Subset(subset=subset)
+            base_models[f"{prefixes[ix]}_{best_estimator}"] = [final_est]
+            preprocessing[f"{prefixes[ix]}_{best_estimator}"] = [subset_trans]
+
+        # Build layers
+        ensemble.add(base_models, preprocessing=preprocessing)
+
+        # Attach the final meta estimator
+        ensemble.add_meta(meta_est)
+
+        ens_estimators[meta_est_name] = {}
+
+        ec = EnsembleClassifier(ensemble)
+        ensemble_fitted = ec.fit(X, y)
+        ens_estimators[meta_est_name]['model'] = ensemble_fitted
+        ens_estimators[meta_est_name]['score'] = f1_score(
+            ensemble_fitted.predict(X), y, average='micro')
+
+    # Get best SuperLearner
+    best_estimator = max(ens_estimators,
+                         key=lambda v: ens_estimators[v]['score'])
+    final_est = Pipeline([(best_estimator,
+                           ens_estimators[best_estimator]['model'])])
+    return final_est, best_estimator
+
+
+def split_df_to_dfs_by_prefix(df, prefixes=[]):
+    from pynets.core.utils import flatten
+
+    df_splits = []
+    for p in prefixes:
+        df_splits.append(df[list(set(list(flatten([c for c in df.columns if
+                                                   c.startswith(p)]))))])
+    return df_splits
+
+
 def boot_nested_iteration(X, y, predict_type, boot,
                           feature_imp_dicts, best_positions_list,
                           grand_mean_best_estimator, grand_mean_best_score,
                           grand_mean_best_error, grand_mean_y_predicted,
                           k_folds_inner=10, k_folds_outer=10,
-                          pca_reduce=True):
+                          pca_reduce=True, dummy_run=False,
+                          search_method='grid', stack=False,
+                          stack_prefix_list=[]):
+
+    # Grab CV prediction values
+    if predict_type == 'classifier':
+        final_scorer = 'accuracy'
+    else:
+        final_scorer = 'r2'
 
     # Instantiate a dictionary of estimators
     if predict_type == 'regressor':
         estimators = {
-            # "l1": linear_model.Lasso(random_state=boot, warm_start=True),
-            # "l2": linear_model.Ridge(random_state=boot),
             "en": linear_model.ElasticNet(random_state=boot, warm_start=True),
+            # "svm": LinearSVR(random_state=boot)
         }
+        if dummy_run is True:
+            estimators = {
+                "dummy": DummyRegressor(strategy="prior"),
+            }
     elif predict_type == 'classifier':
         estimators = {
-            # "l1": linear_model.LogisticRegression(penalty='l1',
-            #                                       solver='saga',
-            #                                       class_weight='balanced',
-            #                                       random_state=boot,
-            #                                       warm_start=True),
-            # "l2": linear_model.LogisticRegression(penalty='l2',
-            #                                       solver='saga',
-            #                                       class_weight='balanced',
-            #                                       random_state=boot,
-            #                                       warm_start=True),
             "en": linear_model.LogisticRegression(penalty='elasticnet',
                                                   solver='saga',
                                                   class_weight='balanced',
@@ -908,12 +1042,13 @@ def boot_nested_iteration(X, y, predict_type, boot,
             # "svm": LinearSVC(random_state=boot, class_weight='balanced',
             #                  loss='hinge')
         }
+        if dummy_run is True:
+            estimators = {
+                "dummy": DummyClassifier(strategy="stratified",
+                                         random_state=boot),
+            }
     else:
         raise ValueError('Prediction method not recognized')
-
-    final_est, best_estimator = nested_fit(
-        X, y, estimators, boot, pca_reduce, k_folds_inner, predict_type
-    )
 
     # Instantiate an outer-fold
     if predict_type == 'regressor':
@@ -926,11 +1061,15 @@ def boot_nested_iteration(X, y, predict_type, boot,
     else:
         raise ValueError('Prediction method not recognized')
 
-    # Grab CV prediction values
-    if predict_type == 'classifier':
-        final_scorer = 'accuracy'
+    if stack is True:
+        final_est, best_estimator = build_stacked_ensemble(
+            X, y, estimators, boot, k_folds_inner, predict_type=predict_type,
+            search_method=search_method, prefixes=stack_prefix_list)
     else:
-        final_scorer = 'r2'
+        final_est, best_estimator = nested_fit(
+            X, y, estimators, boot, pca_reduce, k_folds_inner, predict_type,
+            search_method=search_method
+        )
 
     prediction = cross_validate(
         final_est,
@@ -986,8 +1125,12 @@ def boot_nested_iteration(X, y, predict_type, boot,
                     if column[1]
                 ]
 
-            coefs = np.abs(fitted.named_steps[best_estimator.split(
-                f"{predict_type}-")[1].split('_')[0]].coef_)
+            if dummy_run is False and stack is False:
+                coefs = np.abs(fitted.named_steps[best_estimator.split(
+                    f"{predict_type}-")[1].split('_')[0]].coef_)
+
+            else:
+                coefs = np.abs(np.ones(len(best_positions)))
 
             feat_imp_dict = OrderedDict(
                 sorted(
@@ -1001,7 +1144,24 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     final_est.fit(X, y)
     # Save the mean CV scores for this bootstrapped iteration
-    grand_mean_best_estimator[boot] = best_estimator
+    if dummy_run is False and stack is False:
+        params = f"{best_estimator}"
+        out_final = final_est.named_steps[
+            best_estimator.split(f"{predict_type}-")[1].split('_')[0]]
+        if hasattr(out_final, 'intercept_'):
+            params = f"{params}_beta={out_final.intercept_[0]:.5f}"
+
+        if hasattr(out_final, 'coef_'):
+            params = f"{params}_alpha={np.nanmean(out_final.coef_):.5f}"
+
+        if hasattr(out_final, 'l1_ratio'):
+            params = f"{params}_lambda1={np.round(out_final.l1_ratio * 1. / out_final.C, 5)}"
+            params = f"{params}_lambda2={np.round((1 - out_final.l1_ratio) * 1. / out_final.C, 5)}"
+
+        grand_mean_best_estimator[boot] = params
+    else:
+        grand_mean_best_estimator[boot] = best_estimator
+
     if predict_type == 'regressor':
         grand_mean_best_score[boot] = np.nanmean(prediction[
                                                      "test_r2"][
@@ -1026,10 +1186,14 @@ def boot_nested_iteration(X, y, predict_type, boot,
 def bootstrapped_nested_cv(
     X,
     y,
-    nuisance_cols=None,
+    nuisance_cols=[],
     predict_type='classifier',
     n_boots=10,
-    nodrop_columns=[]
+    nodrop_columns=[],
+    dummy_run=False,
+    search_method='grid',
+    stack=False,
+    stack_prefix_list=[]
 ):
 
     # Preprocess data
@@ -1077,7 +1241,9 @@ def bootstrapped_nested_cv(
                               feature_imp_dicts,
                               best_positions_list, grand_mean_best_estimator,
                               grand_mean_best_score, grand_mean_best_error,
-                              grand_mean_y_predicted)
+                              grand_mean_y_predicted, dummy_run=dummy_run,
+                              search_method=search_method, stack=stack,
+            stack_prefix_list=stack_prefix_list)
 
     unq_best_positions = list(flatten(list(np.unique(best_positions_list))))
     mega_feat_imp_dict = dict.fromkeys(unq_best_positions)
@@ -1380,6 +1546,10 @@ class _BSNestedCVInputSpec(BaseInterfaceInputSpec):
     embedding_type = traits.Str(mandatory=True)
     grid_param = traits.Str(mandatory=True)
     n_boots = traits.Int()
+    dummy_run = traits.Bool()
+    search_method = traits.Str(mandatory=True)
+    stack = traits.Bool()
+    stack_prefix_list = traits.List([], mandatory=False, usedefault=True)
     nuisance_cols = traits.Any()
 
 
@@ -1432,30 +1602,21 @@ class BSNestedCV(SimpleInterface):
 
         if not self.inputs.X.empty and not np.isnan(self.inputs.y).all():
             if isinstance(self.inputs.X, pd.DataFrame):
-                if self.inputs.modality == 'func':
-                    [
-                        grand_mean_best_estimator,
-                        grand_mean_best_score,
-                        grand_mean_best_error,
-                        mega_feat_imp_dict,
-                        grand_mean_y_predicted,
-                        final_est
-                    ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                               nuisance_cols=self.inputs.nuisance_cols,
-                                               predict_type=predict_type,
-                                               n_boots=self.inputs.n_boots)
-                else:
-                    [
-                        grand_mean_best_estimator,
-                        grand_mean_best_score,
-                        grand_mean_best_error,
-                        mega_feat_imp_dict,
-                        grand_mean_y_predicted,
-                        final_est
-                    ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                               nuisance_cols=self.inputs.nuisance_cols,
-                                               predict_type=predict_type,
-                                               n_boots=self.inputs.n_boots)
+                [
+                    grand_mean_best_estimator,
+                    grand_mean_best_score,
+                    grand_mean_best_error,
+                    mega_feat_imp_dict,
+                    grand_mean_y_predicted,
+                    final_est
+                ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
+                                           nuisance_cols=self.inputs.nuisance_cols,
+                                           predict_type=predict_type,
+                                           n_boots=self.inputs.n_boots,
+                                           dummy_run=self.inputs.dummy_run,
+                                           search_method=self.inputs.search_method,
+                                           stack=self.inputs.stack,
+                                           stack_prefix_list=self.inputs.stack_prefix_list)
                 if final_est:
                     grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
@@ -1714,7 +1875,8 @@ class MakeDF(SimpleInterface):
         return runtime
 
 
-def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols):
+def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols, dummy_run,
+              search_method, stack, stack_prefix_list):
     from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
         concatenate_frames
     from nipype.pipeline import engine as pe
@@ -1749,7 +1911,9 @@ def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols):
     make_x_y_func_node.interface._mem_gb = 6
 
     bootstrapped_nested_cv_node = pe.Node(
-        BSNestedCV(n_boots=int(n_boots), nuisance_cols=nuisance_cols),
+        BSNestedCV(n_boots=int(n_boots), nuisance_cols=nuisance_cols,
+                   dummy_run=dummy_run, search_method=search_method,
+                   stack=stack, stack_prefix_list=stack_prefix_list),
         name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 1
@@ -1898,6 +2062,10 @@ def build_predict_workflow(args, retval, verbose=True):
     modality = args["modality"]
     n_boots = args["n_boots"]
     nuisance_cols = args["nuisance_cols"]
+    dummy_run = args["dummy_run"]
+    search_method = args["search_method"]
+    stack = args["stack"]
+    stack_prefix_list = args["stack_prefix_list"]
 
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     ml_meta_wf = pe.Workflow(name="pynets_multipredict")
@@ -1966,7 +2134,8 @@ def build_predict_workflow(args, retval, verbose=True):
     target_var_iter_info_node.iterables = [("target_var", target_vars)]
 
     create_wf_node = create_wf(grid_params_mod, ml_meta_wf.base_dir,
-                               n_boots, nuisance_cols)
+                               n_boots, nuisance_cols, dummy_run,
+              search_method, stack, stack_prefix_list)
 
     final_join_node = pe.JoinNode(
         niu.IdentityInterface(fields=["df_summary", "embedding_type",
