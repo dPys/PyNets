@@ -228,7 +228,7 @@ def main():
     drop_cols = pre_args.dc
     nuisance_cols = pre_args.conf
     dummy_run = pre_args.dr
-    search_method = pre_args.search[0]
+    search_method = pre_args.search
     stack = pre_args.stack
     stack_prefix_list = pre_args.sp
 
