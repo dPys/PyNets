@@ -189,7 +189,7 @@ def beta_lin_comb(beta, GVDAT, meta):
             for mod in range(N_mod):
                 for thr in range(N_thr):
                     gvlc += GVDAT[sesh][atl][mod][thr] * beta_atl[atl] * \
-                        beta_mod[mod] * beta_thr[thr]
+                            beta_mod[mod] * beta_thr[thr]
         gv_array[sesh] = gvlc
     return gv_array
 
@@ -360,14 +360,13 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             'BrainnetomeAtlas'
                                             'Fan2016'] for i in
                                             node_dict.keys()]
-                                    elif isinstance(node_dict, list):
+                                    elif isinstance(node_dict[0], list):
                                         coords = [node_dict[i]['coord'] for i
                                                   in range(len(node_dict))]
-                                        labels = [node_dict[i][
-                                            'label'][
-                                            'BrainnetomeAtlas'
-                                            'Fan2016'] for i in
-                                            range(len(node_dict))]
+                                        labels = [node_dict[i]['label'][
+                                                      'BrainnetomeAtlas' \
+                                                      'Fan2016'] for i
+                                                  in range(len(node_dict))]
                                     else:
                                         print(f"Failed to parse coords/"
                                               f"labels from {node_files}. "

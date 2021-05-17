@@ -2117,7 +2117,10 @@ def extractnetstats(
             except ValueError as e:
                 print(e, f"Graph normalization failed for {est_path}.")
 
-        if 'modality-func' in est_path and 'model-sps' not in est_path:
+        if 'modality-func' in est_path and 'model-sps' not in est_path and \
+            'rawgraph' not in est_path and \
+            float(os.path.splitext(est_path)[0].split(
+                'thr-')[1].split('_')[0]):
             binary = True
 
         if binary is True:

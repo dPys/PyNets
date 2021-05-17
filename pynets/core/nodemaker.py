@@ -81,42 +81,54 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     """
     import gc
     import types
-    from nilearn.image import new_img_like, concat_imgs
+    from nilearn.image import new_img_like, concat_imgs, iter_img
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
 
-    parcel_list_exp = [
+    template_image = parcel_list[0]
+
+    parcel_list_exp = iter_img([
         new_img_like(
-            parcel_list[0],
+            template_image,
             np.zeros(
-                parcel_list[0].shape,
-                dtype=bool))] + parcel_list
-    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float32)
+                template_image.shape,
+                dtype=bool))] + parcel_list)
+
+    del parcel_list
+    gc.collect()
+
+    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16)
+    del parcel_list_exp
+    gc.collect()
+
     if label_intensities is not None:
-        parcel_list_exp = np.array([0] + label_intensities).astype("float32")
+        parcel_values = np.array([0] + label_intensities).astype("float16")
     else:
-        parcel_list_exp = np.array(range(len(parcel_list_exp))
-                                   ).astype("float32")
+        parcel_values = np.array(range(concatted_parcels.shape[-1])
+                                 ).astype("float16")
+
     parcel_sum = np.sum(
-        parcel_list_exp *
-        np.asarray(
-            concatted_parcels.dataobj),
+        parcel_values *
+        np.asarray(concatted_parcels.dataobj, dtype=np.float16),
         axis=3,
         dtype=np.uint16)
-    par_max = np.max(parcel_list_exp)
-    outs = np.unique(parcel_sum[parcel_sum > par_max])
+
+    del concatted_parcels
+    gc.collect()
 
     # Set overlapping cases to zero.
+    outs = np.unique(parcel_sum[parcel_sum > np.max(parcel_values)])
+
     for out in outs:
         parcel_sum[parcel_sum == out] = 0
     net_parcels_map_nifti = nib.Nifti1Image(
-        parcel_sum, affine=parcel_list[0].affine)
+        parcel_sum, affine=template_image.affine)
 
-    del concatted_parcels, parcel_sum, parcel_list
+    del parcel_sum
     gc.collect()
 
-    return net_parcels_map_nifti, parcel_list_exp
+    return net_parcels_map_nifti, parcel_values
 
 
 def fetch_nilearn_atlas_coords(atlas):
@@ -436,30 +448,30 @@ def get_node_membership(
     if network in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/BIGREF1mm.nii.gz"
+                "pynets", "templates/rsnrefs/BIGREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/BIGREF2mm.nii.gz"
+                "pynets", "templates/rsnrefs/BIGREF2mm.nii.gz"
             )
 
         # Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "rsnrefs/Schaefer2018_1000_17nets_ref.txt"
+            "pynets", "templates/rsnrefs/Schaefer2018_1000_17nets_ref.txt"
         )
     elif network in seven_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/SMALLREF1mm.nii.gz"
+                "pynets", "templates/rsnrefs/SMALLREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "rsnrefs/SMALLREF2mm.nii.gz"
+                "pynets", "templates/rsnrefs/SMALLREF2mm.nii.gz"
             )
 
         # Grab RSN reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "rsnrefs/Schaefer2018_1000_7nets_ref.txt"
+            "pynets", "templates/rsnrefs/Schaefer2018_1000_7nets_ref.txt"
         )
     else:
         nets_ref_txt = None
@@ -619,7 +631,7 @@ def drop_badixs_from_parcellation(uatlas, bad_idxs):
     parlist_img_data = parcellation_img.get_fdata()
     for val in bad_idxs:
         print(f"Removing: {str(val)}...")
-        parlist_img_data[np.where(parlist_img_data == val)] = 0
+        parlist_img_data[np.where(parlist_img_data == int(val))] = 0
 
     parcellation = fname_presuffix(
         uatlas, suffix="_pruned",
@@ -719,7 +731,7 @@ def parcel_masker(
                   f"installed?")
 
     mask_img_res = resample_to_img(
-        mask_img, template_img,
+        mask_img, template_img, interpolation='nearest'
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
@@ -866,7 +878,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
                   f"installed?")
 
     mask_img_res = resample_to_img(
-        mask_img, template_img,
+        mask_img, template_img, interpolation='nearest'
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
@@ -955,13 +967,14 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     label_intensities : list
         A list of integer label intensity values from the parcellation.
     """
-    import sys
+    import matplotlib
+    matplotlib.use("agg")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     atlas = uatlas.split("/")[-1].split(".")[0]
 
@@ -1001,7 +1014,7 @@ def gen_img_list(uatlas):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that the"
-            " file(s) specified with the -ua flag exist(s)")
+            " file(s) specified with the -a flag exist(s)")
 
     bna_img = nib.load(uatlas)
     bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
@@ -1202,7 +1215,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     if not op.isfile(uatlas):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -ua flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)")
 
     img_list = nodemaker.gen_img_list(uatlas)
     print(
@@ -1308,15 +1321,20 @@ def parcel_naming(coords, vox_size):
         tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x))
         for x in coords_vox
     )
+    coords_vox_dups = list(set([ele for ele in coords_vox if
+                           coords_vox.count(ele) > 1]))
+    if len(coords_vox_dups) > 1:
+        raise ValueError('There should be no duplicate nodes in a '
+                         'parcellation!')
 
     label_img_dict = defaultdict()
     for label_atlas in labeling_atlases:
         label_img_dict[label_atlas] = {}
         label_path = pkg_resources.resource_filename("pynets",
-                                                     f"/core/labelcharts/"
+                                                     f"/templates/labelcharts/"
                                                      f"{label_atlas}.txt")
         label_img_path = pkg_resources.resource_filename("pynets",
-                                                         f"/core/atlases/"
+                                                         f"/templates/atlases/"
                                                          f"{label_atlas}"
                                                          f".nii.gz")
 
@@ -1358,7 +1376,7 @@ def parcel_naming(coords, vox_size):
             except BaseException:
                 label_dict[coord][label_atlas]['label'] = "Unlabeled"
 
-    labels = []
+    new_labels = []
     for coord in label_dict.keys():
         coord_dict = {}
         for atlas, i in list(zip(label_dict[coord].keys(),
@@ -1367,11 +1385,11 @@ def parcel_naming(coords, vox_size):
                 coord_dict[atlas] = i['label']
             except BaseException:
                 continue
-        labels.append(coord_dict)
+        new_labels.append(coord_dict)
 
-    assert len(labels) == len(coords)
+    assert len(new_labels) == len(coords)
 
-    return labels
+    return new_labels
 
 
 def get_brainnetome_node_attributes(node_files, emb_shape):

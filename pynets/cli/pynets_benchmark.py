@@ -32,17 +32,17 @@ def main():
         sys.exit(1)
 
     # Parse inputs
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     thr_type = "MST"
     icc = True
-    disc = False
+    disc = True
     int_consist = False
     modality = 'dwi'
 
-    embedding_types = ['OMNI']
+    embedding_types = ['eigenvector', 'betweenness']
     #rsns = ['language']
-    rsns = ['kmeans', 'triple']
+    rsns = ['ventral']
     template = 'CN200'
     # template = 'MNI152_T1'
     mets = ["global_efficiency",
@@ -72,17 +72,17 @@ def main():
     for embedding_type in embedding_types:
         subject_dict_file_path = (
             f"{base_dir}/pynets_subject_dict_{modality}_"
-            f"{embedding_type}_{template}.pkl"
+            f"{embedding_type}_{template}_{rsns}.pkl"
         )
         subject_mod_grids_file_path = (
             f"{base_dir}/pynets_modality_grids_{modality}_"
-            f"{embedding_type}_{template}.pkl"
+            f"{embedding_type}_{template}_{rsns}.pkl"
         )
         missingness_summary = (
             f"{base_dir}/pynets_missingness_summary_{modality}_"
-            f"{embedding_type}_{template}.csv"
+            f"{embedding_type}_{template}_{rsns}.csv"
         )
-        icc_tmps_dir = f"{base_dir}/icc_tmps/{modality}_" \
+        icc_tmps_dir = f"{base_dir}/icc_tmps/{rsns}_{modality}_" \
                        f"{embedding_type}"
         os.makedirs(icc_tmps_dir, exist_ok=True)
         if not os.path.isfile(subject_dict_file_path):
@@ -157,8 +157,7 @@ def main():
             modality, metaparam_dict, sorted(list(set(metaparams))),
             ensembles)[1]
 
-        grid = [i for i in grid if '200' not in i and '400' not in i and '600'
-                not in i and '800' not in i and 'triple' not in i]
+        grid = [i for i in grid if any(n in i for n in rsns)]
 
         good_grids = []
         for grid_param in grid:

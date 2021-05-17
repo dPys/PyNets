@@ -388,7 +388,6 @@ def direct_streamline_norm(
                 nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine),
                 atlas_t1w_img,
                 interpolation="nearest",
-                clip=False,
             ).dataobj
         )
         uatlas_t1w_data = np.asarray(atlas_t1w_img.dataobj)
@@ -556,9 +555,6 @@ class DmriReg(object):
         self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
                        f"{'_gm.nii.gz'}"
         self.xfm_roi2mni_init = f"{self.reg_path_mat}{'/roi_2_mni.mat'}"
-        self.mni_vent_loc = pkg_resources.resource_filename(
-            "pynets", f"templates/LateralVentricles_{vox_size}.nii.gz"
-        )
         self.csf_mask_dwi = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf_mask_dwi.nii.gz'}"
         )
@@ -583,6 +579,8 @@ class DmriReg(object):
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
             f"{'_vent_csf_in_dwi.nii.gz'}"
         )
+        self.mni_vent_loc = f"{self.reg_path_img}/LateralVentricles_" \
+                            f"{vox_size}.nii.gz"
         self.vent_mask_mni = f"{self.reg_path_img}{'/vent_mask_mni.nii.gz'}"
         self.vent_mask_t1w = f"{self.reg_path_img}{'/vent_mask_t1w.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename(
@@ -595,7 +593,12 @@ class DmriReg(object):
             "pynets", f"templates/{self.template_name}_"
             f"brain_mask_{vox_size}.nii.gz")
         self.mni_atlas = pkg_resources.resource_filename(
-            "pynets", f"core/atlases/HarvardOxford-sub-prob-{vox_size}.nii.gz"
+            "pynets", f"templates/atlases/HarvardOxford-sub-prob-"
+                      f"{vox_size}.nii.gz"
+        )
+        self.mni_roi_ref = (
+            f"{self.reg_path_img}/HarvardOxford_rois_in-"
+            f"{self.template_name}_{vox_size}.nii.gz"
         )
         self.wm_gm_int_in_dwi = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
@@ -846,7 +849,7 @@ class DmriReg(object):
                     xfm=self.t1wtissue2dwi_xfm,
                     bins=None,
                     interp="spline",
-                    dof=7,
+                    dof=6,
                     cost="mutualinfo",
                     out=self.t1w2dwi,
                     searchrad=True,
@@ -862,7 +865,7 @@ class DmriReg(object):
                     xfm=self.t1wtissue2dwi_xfm,
                     bins=None,
                     interp="spline",
-                    dof=7,
+                    dof=6,
                     cost="mutualinfo",
                     out=self.t1w2dwi,
                     searchrad=True,
@@ -906,6 +909,9 @@ class DmriReg(object):
         import pkg_resources
         from pynets.core.utils import load_runconfig
         from nilearn.image import resample_to_img
+        from nipype.utils.filemanip import fname_presuffix, copyfile
+        from pynets.core.nodemaker import gen_img_list
+        from nilearn.image import math_img
 
         hardcoded_params = load_runconfig()
         tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
@@ -928,22 +934,47 @@ class DmriReg(object):
                 print(e, f"\nCannot load FA template. Do you have git-lfs ")
 
         mni_template_img = nib.load(self.input_mni_brain)
-        fa_template_img_res = resample_to_img(fa_template_img,
-                                              mni_template_img)
 
-        nib.save(
-            fa_template_img_res,
-            self.fa_template_res)
+        if not np.allclose(fa_template_img.affine, mni_template_img.affine) \
+            or not \
+            np.allclose(fa_template_img.shape, mni_template_img.shape):
+            fa_template_img_res = resample_to_img(fa_template_img,
+                                                  mni_template_img)
+            nib.save(
+                fa_template_img_res,
+                self.fa_template_res)
+        else:
+            self.fa_template_res = fname_presuffix(
+                fa_template_path, suffix="_tmp",
+                newpath=op.dirname(self.reg_path_img)
+            )
+            copyfile(
+                fa_template_path,
+                self.fa_template_res,
+                copy=True,
+                use_hardlink=False)
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
-        if not op.isfile(self.mni_atlas):
-            raise FileNotFoundError("FSL atlas for ventricle reference not"
-                                    " found!")
+        harvardoxford_temp_img = resample_to_img(nib.load(self.mni_atlas),
+                                                 nib.load(
+                                                     self.input_mni_brain),
+                                                 interpolation='nearest')
 
-        # Create transform to MNI atlas to T1w using flirt. This will be use to
-        # transform the ventricles to dwi space.
+        harvardoxford_temp_img.to_filename(self.mni_roi_ref)
+
+        out = gen_img_list(self.mni_roi_ref)
+        roi_parcels = [i for j, i in enumerate(out)]
+
+        ventricle_roi = math_img("img1 + img2", img1=roi_parcels[2],
+                                 img2=roi_parcels[13])
+
+        ventricle_roi.to_filename(self.mni_vent_loc)
+        del roi_parcels, harvardoxford_temp_img, out, ventricle_roi
+
+        # Create transform from the HarvardOxford atlas in MNI to T1w.
+        # This will be used to transform the ventricles to dwi space.
         regutils.align(
-            self.mni_atlas,
+            self.mni_roi_ref,
             self.input_mni_brain,
             xfm=self.xfm_roi2mni_init,
             init=None,
@@ -954,21 +985,6 @@ class DmriReg(object):
             interp="spline",
             out=None,
         )
-        time.sleep(0.5)
-
-        if sys.platform.startswith('win') is False:
-            try:
-                nib.load(self.mni_vent_loc)
-            except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load ventricle ROI. Do you have git-lfs "
-                      f"installed?")
-        else:
-            try:
-                nib.load(self.mni_vent_loc)
-            except ImportError as e:
-                print(e, f"\nCannot load ventricle ROI. Do you have git-lfs "
-                      f"installed?")
 
         # Create transform to align roi to mni and T1w using flirt
         regutils.applyxfm(

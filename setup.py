@@ -37,9 +37,9 @@ setup(
         ]
     },
     include_package_data=True,
-    install_requires=['nilearn==0.6.2', 'deepbrain==0.1.0'] + requirements,
+    install_requires=requirements,
     dependency_links=['git+https://github.com/dPys/nilearn.git@enh/parc_conn#egg=nilearn',
-                      'git+https://github.com/dPys/deepbrain.git@master#egg=deepbrain-0.1.0'],
+                      'git+https://github.com/dPys/deepbrain.git@master#egg=deepbrain'],
     license="GNU General Public License v3",
     zip_safe=False,
     keywords='pynets',

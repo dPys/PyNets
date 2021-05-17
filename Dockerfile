@@ -116,7 +116,11 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip install --upgrade pip \
     && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest \
+    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 \
+    && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
+    && cd /home/neuro/multinetx && \
+    pip install -r requirements.txt && \
+    python setup.py install \
     # Install pynets
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
@@ -151,9 +155,9 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 /opt/conda/bin/pynets \
     && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
-    && chmod 777 /opt/conda/bin/pynets_bids \
+#    && chmod 777 /opt/conda/bin/pynets_bids \
 #    && chmod 777 /opt/conda/bin/pynets_collect \
-    && chmod 777 /opt/conda/bin/pynets_cloud \
+#    && chmod 777 /opt/conda/bin/pynets_cloud \
 #    && chmod 777 /opt/conda/bin/pynets_benchmark \
 #    && chmod 777 /opt/conda/bin/pynets_predict \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
@@ -186,8 +190,6 @@ ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
 
 EXPOSE 22
 
-RUN . /home/neuro/.bashrc & bash
-
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
@@ -202,5 +204,9 @@ ENV OPENBLAS_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
 ENV QT_QPA_PLATFORM=offscreen
 
+#SHELL ["/bin/bash", "-c"]
+
+RUN . /home/neuro/.bashrc
+
 # and add it as an entrypoint
-#ENTRYPOINT ["pynets"]
+#ENTRYPOINT ["/bin/bash"]
