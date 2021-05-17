@@ -31,9 +31,9 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    matplotlib.use('Agg')
     import mplcyberpunk
     from matplotlib import pyplot as plt
-    matplotlib.use("agg")
     plt.style.use("cyberpunk")
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
@@ -102,13 +102,13 @@ def plot_community_conn_mat(
     """
     import warnings
     warnings.filterwarnings("ignore")
+    import matplotlib
     from matplotlib import pyplot as plt
     matplotlib.use("agg")
     import mplcyberpunk
     plt.style.use("cyberpunk")
     import matplotlib.patches as patches
     import matplotlib.ticker as mticker
-    matplotlib.use("agg")
     from nilearn.plotting import plot_matrix
     from pynets.core import thresholding
 
@@ -245,6 +245,8 @@ def plot_conn_mat_func(
         The name of a valid function used to reduce the time-series region
         extraction.
     """
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
     import sys
@@ -415,6 +417,8 @@ def plot_conn_mat_struct(
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
     """
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
     import sys

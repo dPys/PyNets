@@ -8,8 +8,6 @@ Copyright (C) 2016
 import os
 import numpy as np
 import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
 import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
@@ -1157,6 +1155,7 @@ def check_orient_and_dims(
         reorient_img,
         match_target_vox_res,
     )
+    import time
 
     img = nib.load(infile)
     vols = img.shape[-1]
@@ -1168,11 +1167,13 @@ def check_orient_and_dims(
         if ("reor-RAS" not in infile) or (overwrite is True):
             [infile, bvecs] = reorient_dwi(
                 infile, bvecs, outdir, overwrite=overwrite)
+            time.sleep(0.5)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
+            time.sleep(0.5)
             print(outfile)
         else:
             outfile = infile
@@ -1181,11 +1182,13 @@ def check_orient_and_dims(
         # Check orientation
         if ("reor-RAS" not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir, overwrite=overwrite)
+            time.sleep(0.5)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
+            time.sleep(0.5)
             print(outfile)
         else:
             outfile = infile
@@ -1194,11 +1197,13 @@ def check_orient_and_dims(
         # Check orientation
         if ("reor-RAS" not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir, overwrite=overwrite)
+            time.sleep(0.5)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
+            time.sleep(0.5)
             print(outfile)
         else:
             outfile = infile

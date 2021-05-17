@@ -50,7 +50,7 @@ tracking:
         - 15
     min_separation_angle: # For particle tracking
         - 20
-    min_streams: # To prevent infinite loops searching for streamlines that cannot be tracked.
+    min_streams: # To prevent infinite loops searching for streamlines that are spatially excluded.
         - 25
     seeding_mask_thr:
         - 0.0075
@@ -167,6 +167,11 @@ available_models:
 gradients:
     n_components:
         - 1
+#sql_credentials:
+#    db_type:
+#    db_path:
+#    username:
+#    password:
 #sentiment_labeling:
 #    liwc_file:
 #        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
@@ -290,7 +295,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -312,7 +317,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.5
+        - 0.1
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

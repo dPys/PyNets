@@ -143,9 +143,6 @@ def test_fill_confound_nans():
         conf_corr = fill_confound_nans(confounds, dir_path)
         conf_corr = np.genfromtxt(conf_corr, delimiter='\t', skip_header=True)
 
-    # Removed pd index column
-    conf_corr = conf_corr[:, 1]
-
     assert not np.isnan(conf_corr).any()
     assert conf_corr[0] == np.mean(conf_corr[1:])
 
@@ -154,41 +151,40 @@ def test_fill_confound_nans():
 @pytest.mark.parametrize("hpass", [None, 0.028, 0.080])
 @pytest.mark.parametrize("mask", [True, None])
 @pytest.mark.parametrize("func_file", [True, pytest.param(None, marks=pytest.mark.xfail)])
-@pytest.mark.parametrize("dim", [3, 4])
-def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
+def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file):
     """ Test preparing inputs method of the TimeseriesExtraction class."""
 
     base_dir = str(Path(__file__).parent/"examples")
-    net_parcels_map_nifti_file = f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/func"
 
-    if func_file:
-        func_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
-        if dim == 4:
-            img_data = np.random.rand(50, 50, 50, 20)
-        else:
-            img_data = np.random.rand(50, 50, 50)
-        img = nib.Nifti1Image(img_data, np.eye(4))
-        img.to_filename(func_tmp.name)
-        func_file = func_tmp.name
-    else:
-        func_file = "missing/file"
+    shape1 = (13, 11, 12)
+    affine1 = np.eye(4)
+    length = 30
 
-    if mask:
-        mask_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
-        mask_data = np.zeros(np.shape(img_data))
-        mask_img = nib.Nifti1Image(mask_data, np.eye(4))
-        mask_img.to_filename(mask_tmp.name)
-        mask = mask_tmp.name
+    func_img, mask_img = generate_random_img(shape1, affine=affine1,
+                                             length=length)
+
+    func_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    func_img.to_filename(func_file.name)
+
+    # Create a temp parcel file
+    parcels_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    parcels = np.zeros((50, 50, 50))
+    parcels[10:20, 0, 0], parcels[0, 10:20, 0], parcels[0, 0, 10:20] = 1, 2, 3
+    nib.Nifti1Image(parcels, np.eye(4)).to_filename(parcels_tmp.name)
+    net_parcels_map_nifti_file = parcels_tmp.name
+
+    # Create empty mask file
+    mask_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz')
+    mask_img.to_filename(mask_tmp.name)
+    mask = mask_tmp.name
 
     if conf:
-        conf_mat = np.random.rand(20)
-        conf_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
-        conf_df = pd.DataFrame({'Column1': conf_mat})
-        conf_df.to_csv(conf_tmp.name)
-        conf = conf_tmp.name
-    else:
-        conf = "missing/file"
+        conf_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
+        conf_mat = np.random.rand(length)
+        conf_df = pd.DataFrame({'Conf1': conf_mat, "Conf2": [np.nan]*len(conf_mat)})
+        conf_df.to_csv(conf_file.name, sep='\t', index=False)
+        conf = conf_file.name
 
     smooth = 1
     network = 'Default'
@@ -196,20 +192,20 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
     smooth = 2
     coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
     node_size = 8
-    extract_strategy = 'zscore'
+    extract_strategy = 'median'
     roi = None
     atlas = None
     uatlas = None
     labels = [1, 2, 3]
 
     te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
-                              conf=conf, func_file=func_file, roi=roi,
+                              conf=conf, func_file=func_file.name, roi=roi,
                               dir_path=dir_path, ID=ID, network=network, smooth=smooth,
                               hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
-    assert np.shape(te._func_img) == np.shape(img_data)
+    assert np.shape(te._func_img) == np.shape(func_img)
 
     if hpass and hpass > 0:
         assert te.hpass == hpass
@@ -218,18 +214,13 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file, dim):
         assert te.hpass is None
         assert te._detrending is True
 
-    if hpass and dim == 4:
-        assert te._t_r == img.header.get_zooms()[-1]
-    else:
-        assert te._t_r == None
-
     if mask:
-        assert np.shape(te._mask_img) == np.shape(img_data)
+        assert np.shape(te._mask_img) == np.shape(func_img)[:-1]
 
     if func_file:
-        func_tmp.close()
+        func_file.close()
     if conf:
-        conf_tmp.close()
+        func_file.close()
     if mask:
         mask_tmp.close()
 

@@ -140,7 +140,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
 
 
 def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
-                n_components=None):
+                n_components=2):
     """
     Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
     input graphs with matched vertex sets.
@@ -207,8 +207,6 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     if len(pop_array) != len(clean_mats):
         return None
 
-    mase.fit_transform(clean_mats)
-
     dir_path = str(Path(os.path.dirname(graph_path)))
     namer_dir = f"{dir_path}/mplx_embeddings"
     if os.path.isdir(namer_dir) is False:
@@ -225,7 +223,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     dump(mase, out_path_est)
 
     print("Saving...")
-    np.save(out_path, mase.scores_)
+    np.save(out_path, mase.fit_transform(clean_mats))
     del mase
 
     return out_path
@@ -703,7 +701,7 @@ def build_omnetome(est_path_iterlist, ID):
                         else:
                             print(
                                 "WARNING: Only one graph sampled, omnibus"
-                                " embedding not appropriate."
+                                " embedding not applicable."
                             )
                             pass
                 else:
@@ -724,7 +722,7 @@ def build_omnetome(est_path_iterlist, ID):
                     else:
                         print(
                             "WARNING: Only one graph sampled, omnibus "
-                            "embedding not appropriate."
+                            "embedding not applicable."
                         )
                         pass
 
@@ -753,7 +751,7 @@ def build_omnetome(est_path_iterlist, ID):
                         else:
                             print(
                                 "WARNING: Only one graph sampled, omnibus"
-                                " embedding not appropriate."
+                                " embedding not applicable."
                             )
                             pass
                 else:
@@ -774,7 +772,7 @@ def build_omnetome(est_path_iterlist, ID):
                     else:
                         print(
                             "WARNING: Only one graph sampled, omnibus "
-                            "embedding not appropriate."
+                            "embedding not applicable."
                         )
                         pass
     else:

@@ -208,6 +208,8 @@ def create_gb_palette(
         colormap used for representing the community assignment of the nodes.
 
     """
+    import matplotlib
+    matplotlib.use('Agg')
     import warnings
     warnings.filterwarnings("ignore")
     import random
@@ -503,8 +505,8 @@ def plot_all_func(
         if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
-        if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+        if isinstance(labels[0], dict):
+            labels = [lab[labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -862,7 +864,7 @@ def plot_all_struct(
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -1180,7 +1182,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             labels = [lab[labeling_atlas] for lab in labels]
     elif isinstance(labels, list):
         if isinstance(labels[0], list):
-            labels = [i[0][labeling_atlas] for i in labels]
+            labels = [lab[0][labeling_atlas] for lab in labels]
     else:
         if not isinstance(labels, list):
             labels = list(labels)
@@ -1283,7 +1285,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             edge_threshold="10%",
             edge_cmap=plt.cm.binary,
             node_size=1,
-            edge_kwargs={"alpha": 0.20, "lineStyle": "dashed"},
+            #edge_kwargs={"alpha": 0.10, "lineStyle": "dashed"},
+            edge_kwargs={"alpha": 0.10},
             node_kwargs={"alpha": 0.95},
             edge_vmax=float(1),
             edge_vmin=float(1),
@@ -1298,8 +1301,8 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                 mod_lines.append(line)
             connectome.axes[view].ax.lines = mod_lines
             mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
-                                         n_glow_lines=10, diff_linewidth=0.80,
-                                         alpha_line=0.15)
+                                         n_glow_lines=10, diff_linewidth=0.20,
+                                         alpha_line=0.10)
         [func_mat,
          clust_pal_edges,
          clust_pal_nodes,
@@ -1319,7 +1322,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             [tuple(x) for x in coords],
             edge_threshold="0%",
             edge_cmap=clust_pal_edges,
-            edge_kwargs={"alpha": 0.75, 'zorder': 1},
+            edge_kwargs={"alpha": 0.50, 'zorder': 500},
             edge_vmax=float(z_max),
             edge_vmin=float(z_min),
             node_size=node_sizes,
@@ -1355,7 +1358,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                     dists = []
                     for c in coord_anns:
                         dists.append(distance.euclidean(coord_ann, c))
-                    if any([i < 20 for i in dists]):
+                    if any([i < 15 for i in dists]):
                         continue
                 if label == 'Unlabeled':
                     continue
@@ -1368,7 +1371,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                                                   xytext=(-0.0001, -0.0001),
                                                   horizontalalignment='center',
                                                   verticalalignment='top',
-                                                  fontsize='2.7',
+                                                  fontsize='2.75',
                                                   fontweight='extra bold',
                                                   zorder=zorder,
                                                   color='black')
@@ -1381,10 +1384,10 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
                                                   xytext=(0, 0),
                                                   horizontalalignment='center',
                                                   verticalalignment='top',
-                                                  fontsize='2.65',
+                                                  fontsize='2.7',
                                                   fontweight='bold',
                                                   zorder=zorder,
-                                                  color='red')
+                                                  color='orange')
                 zorder += 100
 
         connectome.savefig(
@@ -1524,6 +1527,7 @@ def plot_graph_measure_hists(csv_all_metrics):
     """
     import numpy as np
     import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import pandas as pd
     from sklearn.preprocessing import scale
