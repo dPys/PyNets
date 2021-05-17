@@ -53,6 +53,7 @@ def get_parser():
         "-et",
         metavar="Embedding type",
         default="topology",
+        nargs="+",
         choices=["ASE", "OMNI", "MASE", "eigenvector", "betweenness",
                  "clustering", "degree"],
         help="Specify the embedding method of interest.\n",
@@ -219,7 +220,7 @@ def main():
     args["target_vars"] = pre_args.tv
     target_vars = args["target_vars"]
     args["embedding_type"] = pre_args.et
-    embedding_type = args["embedding_type"]
+    embedding_types = args["embedding_type"]
     args["modality"] = pre_args.modality[0]
     modality = args["modality"]
     thr_type = pre_args.thrtype
@@ -257,18 +258,18 @@ def main():
     mets = []
 
     # import sys
-    # print(f"RSN's: {rsns}")
-    # print(f"Sessions: {sessions}")
-    # print(f"base_dir: {base_dir}")
-    # print(f"n_boots: {n_boots}")
-    # print(f"target_vars: {target_vars}")
-    # print(f"embedding_type: {embedding_type}")
-    # print(f"modality: {modality}")
-    # print(f"thr_type: {thr_type}")
-    # print(f"template: {template}")
-    # print(f"data_file: {data_file}")
-    # print(f"drop_cols: {drop_cols}")
-    # print(f"nuisance_cols: {nuisance_cols}")
+    # print(f"rsns = {rsns}")
+    # print(f"sessions = {sessions}")
+    # print(f"base_dir = {base_dir}")
+    # print(f"n_boots = {n_boots}")
+    # print(f"target_vars = {target_vars}")
+    # print(f"embedding_types = {embedding_types}")
+    # print(f"modality = {modality}")
+    # print(f"thr_type = {thr_type}")
+    # print(f"template = {template}")
+    # print(f"data_file = {data_file}")
+    # print(f"drop_cols = {drop_cols}")
+    # print(f"nuisance_cols = {nuisance_cols}")
     # sys.exit(0)
 
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
@@ -276,22 +277,22 @@ def main():
 
     subject_dict_file_path = (
         f"{base_dir}/pynets_subject_dict_{modality}_{'_'.join(rsns)}_"
-        f"{embedding_type}_{template}_{thr_type}.pkl"
+        f"{embedding_types}_{template}_{thr_type}.pkl"
     )
     subject_mod_grids_file_path = (
         f"{base_dir}/pynets_modality_grids_{modality}_{'_'.join(rsns)}_"
-        f"{embedding_type}_{template}_{thr_type}.pkl"
+        f"{embedding_types}_{template}_{thr_type}.pkl"
     )
     missingness_summary = (
         f"{base_dir}/pynets_missingness_summary_{modality}_{'_'.join(rsns)}_"
-        f"{embedding_type}_{template}_{thr_type}.csv"
+        f"{embedding_types}_{template}_{thr_type}.csv"
     )
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path
     ):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
-            [modality], base_dir, thr_type, mets, [embedding_type], template,
+            [modality], base_dir, thr_type, mets, embedding_types, template,
             sessions, rsns
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
@@ -328,7 +329,7 @@ def main():
     else:
         raise ValueError("File format not recognized for phenotype data.")
 
-    if 'tuning_set' in data_file:
+    if 'tuning_set' in data_file or 'dysphoric' in data_file:
         for ID in df["participant_id"]:
             if len(ID) == 1:
                 df.loc[df.participant_id == ID, "participant_id"] = "s00" +\
@@ -344,44 +345,45 @@ def main():
         df = df.drop(columns=[i for i in drop_cols if i in df.columns])
 
     good_grids = []
-    for grid_param in modality_grids[modality]:
-        if not any(n in grid_param for n in rsns):
-            print(f"{rsns} not found in recipe. Skipping...")
-            continue
-        grid_finds = []
-        for ID in df["participant_id"]:
-            if ID not in sub_dict_clean.keys():
-                print(f"ID: {ID} not found...")
+    for embedding_type in embedding_types:
+        for grid_param in modality_grids[modality]:
+            if not any(n in grid_param for n in rsns):
+                print(f"{rsns} not found in recipe. Skipping...")
                 continue
+            grid_finds = []
+            for ID in df["participant_id"]:
+                if ID not in sub_dict_clean.keys():
+                    print(f"ID: {ID} not found...")
+                    continue
 
-            if str(sessions[0]) not in sub_dict_clean[ID].keys():
-                print(f"Session: {sessions[0]} not found for ID {ID}...")
-                continue
+                if str(sessions[0]) not in sub_dict_clean[ID].keys():
+                    print(f"Session: {sessions[0]} not found for ID {ID}...")
+                    continue
 
-            if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
-                print(f"Modality: {modality} not found for ID {ID}, "
-                      f"ses-{sessions[0]}...")
-                continue
+                if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
+                    print(f"Modality: {modality} not found for ID {ID}, "
+                          f"ses-{sessions[0]}...")
+                    continue
 
-            if embedding_type not in \
-                sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                if embedding_type not in \
+                    sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                    print(
+                        f"Modality: {modality} not found for ID {ID}, "
+                        f"ses-{sessions[0]}, {embedding_type}..."
+                    )
+                    continue
+
+                if grid_param in \
+                    list(sub_dict_clean[ID][str(sessions[0])][modality][
+                             embedding_type].keys()):
+                    grid_finds.append(grid_param)
+            if len(grid_finds) < grid_thr*len(df["participant_id"]):
                 print(
-                    f"Modality: {modality} not found for ID {ID}, "
-                    f"ses-{sessions[0]}, {embedding_type}..."
-                )
+                    f"Less than {100*grid_thr}% of {grid_param} found. "
+                    f"Removing from grid...")
                 continue
-
-            if grid_param in \
-                list(sub_dict_clean[ID][str(sessions[0])][modality][
-                         embedding_type].keys()):
-                grid_finds.append(grid_param)
-        if len(grid_finds) < grid_thr*len(df["participant_id"]):
-            print(
-                f"Less than {100*grid_thr}% of {grid_param} found. "
-                f"Removing from grid...")
-            continue
-        else:
-            good_grids.append(grid_param)
+            else:
+                good_grids.append(grid_param)
 
     modality_grids[modality] = good_grids
 

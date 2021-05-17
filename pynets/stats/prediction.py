@@ -876,11 +876,11 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
                    remove_outliers=True, standardize=True,
                    std_dev=3, vif_thr=10, missingness_thr=0.50,
                    zero_thr=0.75, oversample=True):
+    from colorama import Fore, Style
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
     if X.empty:
-        from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (missingness): "
               f"{X}{Style.RESET_ALL}\n\n")
         return X, y
@@ -934,7 +934,6 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     X = X[good_var_cols]
 
     if X.empty:
-        from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
               f"{X}{Style.RESET_ALL}\n\n")
         return X, y
@@ -943,7 +942,6 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     if remove_outliers is True:
         X, y = de_outlier(X, y, std_dev, predict_type)
         if X.empty and len(y) < 50:
-            from colorama import Fore, Style
             print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
                   f"{X}{Style.RESET_ALL}\n\n")
             return X, y
@@ -956,26 +954,30 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     # X = X[y_missing_mask]
     # y = y[y_missing_mask]
     if X.empty or len(y) < 50:
-        from colorama import Fore, Style
         print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
               f"{X}, {y}{Style.RESET_ALL}\n\n")
         return X, y
 
     # Remove multicollinear columns
     if remove_multi is True:
-        rvif = ReduceVIF(thresh=vif_thr)
-        X = rvif.fit_transform(X)
+        try:
+            rvif = ReduceVIF(thresh=vif_thr)
+            X = rvif.fit_transform(X)
 
-    if X.empty or len(X.columns) < 5:
-        from colorama import Fore, Style
-        print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return X, y
+            if X.empty or len(X.columns) < 5:
+                print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+                      f"{X}{Style.RESET_ALL}\n\n")
+                return X, y
+        except:
+            print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
 
     # Drop excessively sparse columns with >zero_thr zeros
     if zero_thr > 0:
         X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
-        X_tmp = X.loc[:, (X == 0).mean() < zero_thr]
+        X_tmp = X.T.loc[(X == 0).sum() < (float(zero_thr)) * X.shape[0]].T
+
         if len(nodrop_columns) > 0:
             X = pd.concat([X_tmp, X[[i for i in X.columns if i in
                                      nodrop_columns and i not in
@@ -985,7 +987,6 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
         del X_tmp
 
         if X.empty or len(X.columns) < 5:
-            from colorama import Fore, Style
             print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
                   f"{X}{Style.RESET_ALL}\n\n")
             return X, y
@@ -993,7 +994,7 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     if oversample is True:
         try:
             from imblearn.over_sampling import SMOTE
-            sm = SMOTE(random_state=42)
+            sm = SMOTE(random_state=42, sampling_strategy='auto')
             X, y = sm.fit_resample(X, y)
         except:
             pass
@@ -1084,8 +1085,8 @@ def build_stacked_ensemble(X, y, base_estimators, boot, k_folds_inner,
     from sklearn.compose import ColumnTransformer
 
     meta_estimators= {
-        "lr": LogisticRegression(random_state=boot),
-        "svm": LinearSVC(random_state=boot),
+        # "lr": LogisticRegression(random_state=boot),
+        # "svm": LinearSVC(random_state=boot),
         "rfc": RandomForestClassifier(random_state=boot)
     }
 
@@ -1117,7 +1118,8 @@ def build_stacked_ensemble(X, y, base_estimators, boot, k_folds_inner,
                                 final_estimator=meta_est, passthrough=False,
                                 cv=10)
 
-        ensemble_fitted = ec.fit(X_train, y_train)
+
+        ensemble_fitted= ec.fit(X_train, y_train)
         ens_estimators[meta_est_name] = {}
         ens_estimators[meta_est_name]['model'] = ensemble_fitted
         ens_estimators[meta_est_name]['score'] = brier_score_loss(
@@ -1145,6 +1147,73 @@ def split_df_to_dfs_by_prefix(df, prefixes=[]):
     return df_splits
 
 
+def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
+                    dummy_run, stack):
+    if pca_reduce is True and X.shape[0] < X.shape[1]:
+        pca = fitted.named_steps["feature_select"]
+        comps_all = pd.DataFrame(pca.components_, columns=X.columns)
+        coefs = list(flatten(np.abs(fitted.named_steps[
+                                        best_estimator.split(
+                                            f"{predict_type}-")[1].split('_')[
+                                            0]].coef_).tolist()))
+        feat_imp_dict = OrderedDict(
+            sorted(
+                dict(zip(comps_all, coefs)).items(),
+                key=itemgetter(1),
+                reverse=True,
+            )
+        )
+
+        n_pcs = pca.components_.shape[0]
+
+        best_positions = list(flatten([
+            np.nanargmax(np.abs(pca.components_[i])) for i in
+            range(n_pcs)
+        ]))
+
+        feat_imp_dict = OrderedDict(
+            sorted(
+                dict(zip(best_positions,
+                         feat_imp_dict.values())).items(),
+                key=itemgetter(1),
+                reverse=True,
+            )
+        )
+    else:
+        if X.shape[1] < 25:
+            best_positions = list(X.columns)
+        else:
+            best_positions = [
+                column[0]
+                for column in zip(
+                    X.columns,
+                    fitted.named_steps["feature_select"].get_support(
+                        indices=True
+                    ),
+                )
+                if column[1]
+            ]
+
+        if dummy_run is False and stack is False:
+            coefs = list(flatten(np.abs(fitted.named_steps[
+                                            best_estimator.split(
+                                                f"{predict_type}-")[1].split(
+                                                '_')[0]].coef_).tolist()))
+
+        else:
+            coefs = list(flatten(np.abs(
+                np.ones(len(best_positions))).tolist()))
+
+        feat_imp_dict = OrderedDict(
+            sorted(
+                dict(zip(best_positions, coefs)).items(),
+                key=itemgetter(1),
+                reverse=True,
+            )
+        )
+    return best_positions, feat_imp_dict
+
+
 def boot_nested_iteration(X, y, predict_type, boot,
                           feature_imp_dicts, best_positions_list,
                           grand_mean_best_estimator, grand_mean_best_score,
@@ -1156,7 +1225,7 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     # Grab CV prediction values
     if predict_type == 'classifier':
-        final_scorer = 'accuracy'
+        final_scorer = 'f1'
     else:
         final_scorer = 'r2'
 
@@ -1173,6 +1242,7 @@ def boot_nested_iteration(X, y, predict_type, boot,
     elif predict_type == 'classifier':
         estimators = {
             "en": linear_model.LogisticRegression(penalty='elasticnet',
+                                                  fit_intercept=True,
                                                   solver='saga',
                                                   class_weight='balanced',
                                                   random_state=boot,
@@ -1218,74 +1288,19 @@ def boot_nested_iteration(X, y, predict_type, boot,
         return_estimator=True,
     )
 
+    final_est.fit(X, y)
+
     if stack is False:
         for fitted in prediction["estimator"]:
-            if pca_reduce is True and X.shape[0] < X.shape[1]:
-                pca = fitted.named_steps["feature_select"]
-                pca.fit_transform(X)
-                comps_all = pd.DataFrame(pca.components_, columns=X.columns)
-                coefs = np.abs(fitted.named_steps[best_estimator.split(
-                    f"{predict_type}-")[1].split('_')[0]].coef_)
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(comps_all, coefs)).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
-
-                n_pcs = pca.components_.shape[0]
-
-                best_positions = [
-                    np.nanargmax(np.abs(pca.components_[i])) for i in
-                    range(n_pcs)
-                ]
-
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(best_positions,
-                                 feat_imp_dict.values())).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
-            else:
-                if X.shape[1] < 25:
-                    best_positions = list(X.columns)
-                else:
-                    best_positions = [
-                        column[0]
-                        for column in zip(
-                            X.columns,
-                            fitted.named_steps["feature_select"].get_support(
-                                indices=True
-                            ),
-                        )
-                        if column[1]
-                    ]
-
-                if dummy_run is False and stack is False:
-                    coefs = np.abs(fitted.named_steps[best_estimator.split(
-                        f"{predict_type}-")[1].split('_')[0]].coef_)
-
-                else:
-                    coefs = np.abs(np.ones(len(best_positions)))
-
-                feat_imp_dict = OrderedDict(
-                    sorted(
-                        dict(zip(best_positions, coefs)).items(),
-                        key=itemgetter(1),
-                        reverse=True,
-                    )
-                )
+            best_positions, feat_imp_dict = get_feature_imp(
+                X, pca_reduce, final_est, best_estimator, predict_type,
+                dummy_run, stack)
             feature_imp_dicts.append(feat_imp_dict)
             best_positions_list.append(best_positions)
 
-    final_est.fit(X, y)
-
     # Evaluate Bias-Variance
     X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        test_size=0.20,
+                                                        test_size=0.50,
                                                         random_state=42,
                                                         shuffle=True,
                                                         stratify=y)
@@ -1301,14 +1316,16 @@ def boot_nested_iteration(X, y, predict_type, boot,
         out_final = final_est.named_steps[
             best_estimator.split(f"{predict_type}-")[1].split('_')[0]]
         if hasattr(out_final, 'intercept_'):
-            params = f"{params}_beta={out_final.intercept_[0]:.5f}"
+            params = f"{params}_intercept={out_final.intercept_[0]:.5f}"
 
         if hasattr(out_final, 'coef_'):
-            params = f"{params}_alpha={np.nanmean(out_final.coef_):.5f}"
+            params = f"{params}_betas={np.array(out_final.coef_).tolist()[0]}"
 
         if hasattr(out_final, 'l1_ratio'):
-            l1_val = np.round(out_final.l1_ratio * 1. / out_final.C, 5)
-            l2_val = np.round((1 - out_final.l1_ratio) * 1. / out_final.C, 5)
+            l1_ratio = out_final.l1_ratio
+            C = out_final.C
+            l1_val = np.round(l1_ratio * (1/C), 5)
+            l2_val = np.round((1 - l1_ratio) * (1/C), 5)
             params = f"{params}_lambda1={l1_val}"
             params = f"{params}_lambda2={l2_val}"
 
@@ -1329,9 +1346,9 @@ def boot_nested_iteration(X, y, predict_type, boot,
             prediction["test_neg_mean_squared_error"])
     elif predict_type == 'classifier':
         grand_mean_best_score[boot] = np.nanmean(
-            prediction["test_accuracy"][prediction["test_accuracy"] > 0])
+            prediction[f"test_{final_scorer}"][prediction[f"test_{final_scorer}"] > 0])
         grand_mean_best_error[boot] = -np.nanmean(
-            prediction["test_neg_mean_squared_error"])
+            prediction[f"test_neg_mean_squared_error"])
     else:
         raise ValueError('Prediction method not recognized')
     grand_mean_y_predicted[boot] = final_est.predict(X)
@@ -1351,11 +1368,16 @@ def bootstrapped_nested_cv(
     dummy_run=False,
     search_method='grid',
     stack=False,
-    stack_prefix_list=[]
+    stack_prefix_list=[],
+    remove_multi=True,
+    n_jobs=4
 ):
+    from joblib import Parallel, delayed
+    from pynets.core.utils import mergedicts
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns)
+    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns,
+                            remove_multi=remove_multi)
 
     if X.empty or len(X.columns) < 5:
         return (
@@ -1378,33 +1400,60 @@ def bootstrapped_nested_cv(
         raise ValueError('Prediction method not recognized')
 
     # Instantiate a working dictionary of performance across bootstraps
-    grand_mean_best_estimator = {}
-    grand_mean_best_score = {}
-    grand_mean_best_error = {}
-    grand_mean_y_predicted = {}
-
     final_est = None
 
     # Bootstrap nested CV's "simulate" the variability of incoming data,
     # particularly when training on smaller datasets.
     # They are intended for model evaluation, rather then final deployment
     # and therefore do not include train-test splits.
+    outs = Parallel(n_jobs=n_jobs)(
+        delayed(boot_nested_iteration)(X, y, predict_type, boot,
+                              [], [], {}, {}, {}, {}, dummy_run=dummy_run,
+                              search_method=search_method, stack=stack,
+            stack_prefix_list=stack_prefix_list) for boot in range(0, n_boots))
+
     feature_imp_dicts = []
     best_positions_list = []
+    final_est_list = []
+    grand_mean_best_estimator_list = []
+    grand_mean_best_score_list = []
+    grand_mean_best_error_list = []
+    grand_mean_y_predicted_list = []
     for boot in range(0, n_boots):
-        [feature_imp_dicts, best_positions_list, grand_mean_best_estimator,
-         grand_mean_best_score, grand_mean_best_error,
-         grand_mean_y_predicted, final_est] = boot_nested_iteration(
-            X, y, predict_type, boot,
-                              feature_imp_dicts,
-                              best_positions_list, grand_mean_best_estimator,
-                              grand_mean_best_score, grand_mean_best_error,
-                              grand_mean_y_predicted, dummy_run=dummy_run,
-                              search_method=search_method, stack=stack,
-            stack_prefix_list=stack_prefix_list)
+        [feature_imp_dicts_boot, best_positions_list_boot,
+         grand_mean_best_estimator_boot,
+         grand_mean_best_score_boot, grand_mean_best_error_boot,
+         grand_mean_y_predicted_boot, final_est_boot] = outs[boot]
+        feature_imp_dicts.append(feature_imp_dicts_boot)
+        best_positions_list.append(best_positions_list_boot)
+        grand_mean_best_estimator_list.append(grand_mean_best_estimator_boot)
+        grand_mean_best_score_list.append(grand_mean_best_score_boot)
+        grand_mean_best_error_list.append(grand_mean_best_error_boot)
+        grand_mean_y_predicted_list.append(grand_mean_y_predicted_boot)
+        final_est_list.append(final_est_boot)
+
+    grand_mean_best_estimator = {}
+    for d in grand_mean_best_estimator_list:
+        grand_mean_best_estimator = dict(mergedicts(grand_mean_best_estimator,
+                                                    d))
+
+    grand_mean_best_score = {}
+    for d in grand_mean_best_score_list:
+        grand_mean_best_score = dict(mergedicts(grand_mean_best_score, d))
+
+    grand_mean_best_error = {}
+    for d in grand_mean_best_error_list:
+        grand_mean_best_error = dict(mergedicts(grand_mean_best_error, d))
+
+    grand_mean_y_predicted = {}
+    for d in grand_mean_y_predicted_list:
+        grand_mean_y_predicted = dict(mergedicts(grand_mean_y_predicted, d))
 
     unq_best_positions = list(flatten(list(np.unique(best_positions_list))))
     mega_feat_imp_dict = dict.fromkeys(unq_best_positions)
+
+    feature_imp_dicts = [item for sublist in feature_imp_dicts for item in
+                         sublist]
 
     for feat in unq_best_positions:
         running_mean = []
@@ -1661,6 +1710,14 @@ class MakeXY(SimpleInterface):
                 elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
                                  'MDE_conversion']
+                elif self.inputs.target_var == "depression_persist_phenotype":
+                    drop_cols = [self.inputs.target_var,
+                                 "rumination_persist_phenotype",
+                                 "rum_2", "dep_2"]
+                elif self.inputs.target_var == "rumination_persist_phenotype":
+                    drop_cols = [self.inputs.target_var,
+                                 "depression_persist_phenotype",
+                                 "rum_2", "dep_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
                                  "depression_persist_phenotype",
@@ -1993,10 +2050,7 @@ class MakeDF(SimpleInterface):
             y_pred_vals = np.nan
 
         if bool(self.inputs.grand_mean_best_estimator) is True:
-            df_summary.at[0, "best_estimator"] = max(
-                set(list(self.inputs.grand_mean_best_estimator.values())),
-                key=list(self.inputs.grand_mean_best_estimator.values()).count,
-            )
+            df_summary.at[0, "best_estimator"] = list(self.inputs.grand_mean_best_estimator.values())
             df_summary.at[0, "Score"] = list(self.inputs.grand_mean_best_score.values())
             df_summary.at[0, "Predicted_y"] = y_pred_vals
             df_summary.at[0, "Error"] = list(self.inputs.grand_mean_best_error.values())
@@ -2100,8 +2154,8 @@ def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols, dummy_run,
                    stack=stack, stack_prefix_list=stack_prefix_list),
         name="bootstrapped_nested_cv_node")
 
-    bootstrapped_nested_cv_node.interface.n_procs = 1
-    bootstrapped_nested_cv_node.interface._mem_gb = 6
+    bootstrapped_nested_cv_node.interface.n_procs = 8
+    bootstrapped_nested_cv_node.interface._mem_gb = 16
 
     make_df_node = pe.Node(MakeDF(), name="make_df_node")
 
@@ -2342,8 +2396,8 @@ def build_predict_workflow(args, retval, verbose=True):
         name="meta_outputnode"
     )
 
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 1
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 6
+    create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 8
+    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 16
     create_wf_node.get_node('make_x_y_func_node').interface.n_procs = 1
     create_wf_node.get_node('make_x_y_func_node').interface._mem_gb = 6
 

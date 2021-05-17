@@ -631,7 +631,7 @@ def drop_badixs_from_parcellation(uatlas, bad_idxs):
     parlist_img_data = parcellation_img.get_fdata()
     for val in bad_idxs:
         print(f"Removing: {str(val)}...")
-        parlist_img_data[np.where(parlist_img_data == val)] = 0
+        parlist_img_data[np.where(parlist_img_data == int(val))] = 0
 
     parcellation = fname_presuffix(
         uatlas, suffix="_pruned",

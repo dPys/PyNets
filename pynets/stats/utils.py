@@ -850,7 +850,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             embedding = embeddings[0]
         else:
             embeddings_raw = [i for i in embeddings if "thrtype" not
-                              in i or 'thr-1.0' in i]
+                              in i or 'thr-1.0' in i or 'thr-' not in i]
             if len(embeddings_raw) == 1:
                 embedding = embeddings_raw[0]
             else:
@@ -1105,7 +1105,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
             embedding = embeddings[0]
         else:
             embeddings_raw = [i for i in embeddings if "thrtype"
-                              not in i or 'thr-1.0' in i]
+                              not in i or 'thr-1.0' in i or 'thr-' not in i]
             if len(embeddings_raw) == 1:
                 embedding = embeddings_raw[0]
             else:
