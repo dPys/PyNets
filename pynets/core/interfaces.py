@@ -25,7 +25,8 @@ from sqlalchemy.ext.declarative import declarative_base
 
 warnings.filterwarnings("ignore")
 
-class ConnectomeEnsemble(declarative_base()):
+base = declarative_base()
+class ConnectomeEnsemble(base):
     __tablename__ = 'connectomes'
 
     id = Column(Integer, Sequence('connectome_id', start=1, increment=1), primary_key=True)

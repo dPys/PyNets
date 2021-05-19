@@ -2,13 +2,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.sql import select
 import numpy as np
+import pynets.core.interfaces
 from pynets.core.interfaces import ConnectomeEnsemble as ce
 import dill
 
 def connection():
     DATABASE_URI = 'sqlite:////Users/Keval/Documents/College Senior Classes/Research/pynets_db_work/pynets.db'
     engine = create_engine(DATABASE_URI)
-    ce.base.metadata.create_all(engine)
+    pynets.core.interfaces.base.metadata.create_all(engine)
     session = sessionmaker(bind=engine)
     session = session()
     return session
@@ -95,7 +96,7 @@ def iter_dict(d, elements, nodes):
         nodes[k] = v
       elif k == 'data':
         data_array = np.load(v)
-        new_entry = ce
+        new_entry = ce()
         new_entry.subject_id = elements[0]
         new_entry.session = elements[1]
         new_entry.modality = elements[2]
@@ -121,7 +122,7 @@ def iter_dict(d, elements, nodes):
       else:
         elements.append(k)
         elements.append(v)
-        new_entry = ce
+        new_entry = ce()
         new_entry.subject_id = elements[0]
         new_entry.session = elements[1]
         new_entry.modality = elements[2]
