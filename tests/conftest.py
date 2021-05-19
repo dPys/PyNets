@@ -59,25 +59,32 @@ def plotting_data():
 
     yield {'conn_matrix': conn_matrix, 'labels': labels, 'coords': coords}
 
-# data-related functions
-def _generate_data():
-    test_data_dir = str(Path(__file__).parent/"randomized_examples/")
-    if os.path.isdir(test_data_dir) is False:
-        os.makedirs(test_data_dir, exist_ok=True)
-    test_data = [np.asarray([[np.float64(randint(0, 64)) for _ in range(94)] for _ in range(94)]) for _ in range(12)]
-    test_data = [np.nan_to_num(np.maximum(array, array.T)) for array in test_data]
-    for array in range(1, len(test_data) + 1): 
-        np.save(test_data_dir + "Randomized_data_" + str(array), test_data[array - 1])
-    input_paths = [test_data_dir + "Randomized_data_" +  str(array) + ".npy" for array in range(1, len(test_data) + 1)]
-
-    return input_paths
 
 
-@pytest.fixture(scope='function') #Returns list for mutability
-def random_data():
-    return _generate_data()
-
-def pytest_configure(): #Sets constants as tuples for immutability as safeguard against unintended changes
-    pytest.constant_random_data = tuple(_generate_data())
-    pytest.sub0021001_files = tuple(glob(str(Path(__file__).parent/"examples/miscellaneous/sub-0021001*thrtype-PROP*.npy"))) #All (94, 94) in shape
+@pytest.fixture(scope='module')
+def gen_mat_data(n, m, p=None, binary = False, mat_type='sb', asfile=False, n_graphs=1):
+    import tempfile
+    from graspologic.simulations.simulations import er_nm, sbm, rdpg
+    from graspologic.utils import symmetrize    
+    if binary is True:
+        wt = 1
+    else:
+        wt = np.random.uniform    
+        mat_list = []
+    for nm in range(n_graphs):
+        if mat_type == 'er':
+            mat = symmetrize(er_nm(n, m, wt=np.random.uniform, wtargs=dict(low=0, high=1)))
+        elif mat_type == 'sb':
+            if p is None:
+                raise ValueError(f"for mat_type {mat_type}, p cannot be None")
+            mat = symmetrize(sbm(np.array([n]), np.array([[p]]), wt=wt, wtargs=dict(low=0, high=1)))
+        else:
+            raise ValueError(f"mat_type {mat_type} not recognized!")        
+        if asfile is True:
+            mat_path = tempfile.NamedTemporaryFile(mode='w+', suffix='.npy').name
+            np.save(mat_path, mat)
+            mat_list.append(mat_path)
+        else:
+            mat_list.append(mat)    
+        yield mat_list
 

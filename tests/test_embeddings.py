@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pytest
 from pathlib import Path
@@ -18,8 +18,6 @@ to_nxgraphs = lambda data: [nx.from_numpy_matrix(nparray) for nparray in to_npar
 to_large_nparray = lambda data: np.stack(to_nparrays(data))
 
 
-#pytest.constant_random_data and pytest.sub0021001_files initialized in conftest.py at runtime
-#pylint: disable=no-member
 @pytest.mark.parametrize("graph_path_list", [
     pytest.constant_random_data,
     pytest.sub0021001_files, 
@@ -27,7 +25,7 @@ to_large_nparray = lambda data: np.stack(to_nparrays(data))
     pytest.param([], marks=pytest.mark.xfail),
 ])
 @pytest.mark.parametrize("data_type", [to_nparrays, to_nxgraphs, to_large_nparray])
-def test_omni(graph_path_list, data_type, ID="0021001", atlas="Default"):
+def test_omni(gen_mat_data, graph_path_list, data_type, ID="0021001", atlas="Default"):
     pop_array = data_type(graph_path_list)
     output_file = embeddings._omni_embed(pop_array, atlas, graph_path_list, ID)
     assert Path(output_file).is_file() and output_file.endswith(".npy")
