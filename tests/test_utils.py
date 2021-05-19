@@ -3,7 +3,6 @@
 Created on Wed Dec 27 16:19:14 2017
 
 @authors: Derek Pisner & Ryan Hammonds
-
 """
 import numpy as np
 import os
@@ -19,6 +18,7 @@ if sys.platform.startswith('win') is False:
     import indexed_gzip
 import pytest
 import logging
+import tempfile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -28,7 +28,6 @@ def test_save_coords_and_labels_to_json():
     """
     Test save_RSN_coords_and_labels_to_json functionality
     """
-    import tempfile
 
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = str(tempfile.TemporaryDirectory().name)
@@ -55,7 +54,6 @@ def test_save_nifti_parcels_map():
     """
     Test save_nifti_parcels_map functionality
     """
-    import tempfile
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
@@ -77,7 +75,6 @@ def test_save_ts_to_file():
     """
     Test save_ts_to_file functionality
     """
-    import tempfile
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)

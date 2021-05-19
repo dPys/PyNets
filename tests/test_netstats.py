@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 27 16:19:14 2017
-@authors: Derek Pisner & Ryan Hammonds
+@authors: Derek Pisner, Alex Ayala, & Ryan Hammonds
 """
 import pytest
 import numpy as np
@@ -127,7 +127,7 @@ def test_create_communities():
                       np.round(time.time() - start_time, 1), 's'))
     assert len(com_assign) > 0
 
-    
+
 @pytest.mark.parametrize("degree", ['undirected', 'in', 'out'])
 def test_participation_coef(degree):
     """
@@ -201,7 +201,7 @@ def test_link_communities(clustering):
     assert type(M) is np.ndarray
     assert np.sum(M) == 24
 
-    
+
 @pytest.mark.parametrize("connected_case", [True, False])
 @pytest.mark.parametrize("fallback_lcc", [True, False])
 def test_prune_disconnected(connected_case, fallback_lcc):
@@ -228,7 +228,7 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-        
+
 @pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness", "eigenvector"])
 def test_most_important(method):
     """
@@ -302,9 +302,9 @@ def test_raw_mets():
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
     [G, _] = netstats.prune_disconnected(G)
-    metric_list_glob = [global_efficiency, average_local_efficiency, 
+    metric_list_glob = [global_efficiency, average_local_efficiency,
                         degree_assortativity_coefficient,
-                        average_clustering, average_shortest_path_length, 
+                        average_clustering, average_shortest_path_length,
                         degree_pearson_correlation_coefficient,
                         graph_number_of_cliques, transitivity]
     for i in metric_list_glob:
@@ -352,8 +352,8 @@ def test_smallworldness(approach, reference):
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
 
-    sigma = netstats.smallworldness(G, niter=5, nrand=5, 
-                                    approach=approach, 
+    sigma = netstats.smallworldness(G, niter=5, nrand=5,
+                                    approach=approach,
                                     reference=reference, engine='nx')
 
     # A network is smallworld if sigma > 1
@@ -399,10 +399,10 @@ def test_weighted_transitivity(binarize):
 
 
 @pytest.mark.parametrize("fmt", ['npy', 'txt'])
-@pytest.mark.parametrize("conn_model", 
+@pytest.mark.parametrize("conn_model",
                          ['corr', 'partcorr', 'cov', 'sps'])
-@pytest.mark.parametrize("prune", 
-                         [pytest.param(0, 
+@pytest.mark.parametrize("prune",
+                         [pytest.param(0,
                                        marks=pytest.mark.xfail(raises=UnboundLocalError)), 1, 2, 3])
 @pytest.mark.parametrize("norm", [i for i in range(1, 7)])
 def test_clean_graphs(fmt, conn_model, prune, norm):
@@ -481,7 +481,7 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert num_comms == sim_num_comms
     assert resolution is not None
 
-    
+
 @pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
                                     'comm_centrality', 'rich_club_coeff'])
 def test_get_metrics(metric):

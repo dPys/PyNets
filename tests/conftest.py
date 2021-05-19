@@ -56,3 +56,39 @@ def plotting_data():
 
     yield {'conn_matrix': conn_matrix, 'labels': labels, 'coords': coords}
 
+
+@pytest.fixture(scope='module')
+def gen_mat_data(n, m, p=None, mat_type='er', binary=False, asfile=False,
+                 n_graphs=1):
+    import tempfile
+    from graspologic.simulations.simulations import er_nm, sbm, rdpg
+    from graspologic.utils import symmetrize
+
+    if binary is True:
+        wt = 1
+    else:
+        wt = np.random.uniform
+
+    mat_list = []
+    for nm in range(n_graphs):
+        if mat_type == 'er':
+            mat = symmetrize(
+                er_nm(n, m, wt=np.random.uniform, wtargs=dict(low=0, high=1)))
+        elif mat_type == 'sb':
+            if p is None:
+                raise ValueError(f"for mat_type {mat_type}, p cannot be None")
+            mat = symmetrize(sbm(np.array([n]), np.array([[p]]), wt=wt,
+                                 wtargs=dict(low=0, high=1)))
+        else:
+            raise ValueError(f"mat_type {mat_type} not recognized!")
+
+        if asfile is True:
+            mat_path = tempfile.NamedTemporaryFile(mode='w+',
+                                                   suffix='.npy').name
+            np.save(mat_path, mat)
+            mat_list.append(mat_path)
+        else:
+            mat_list.append(mat)
+
+    yield mat_list
+
