@@ -6,8 +6,10 @@ import pynets.core.interfaces
 from pynets.core.interfaces import ConnectomeEnsemble as ce
 import dill
 
-def connection():
-    DATABASE_URI = 'sqlite:////Users/Keval/Documents/College Senior Classes/Research/pynets_db_work/pynets.db'
+path = 'sqlite:////Users/Keval/Documents/College Senior Classes/Research/Pynets/pynets.db'
+
+def connection(path):
+    DATABASE_URI = path
     engine = create_engine(DATABASE_URI)
     pynets.core.interfaces.base.metadata.create_all(engine)
     session = sessionmaker(bind=engine)
@@ -26,7 +28,7 @@ def insert_dwi_func(pkl_file_path):
 def fetch_dwi_func(mod, net, embedding, temp, thrType):
     subject_id_session_modality_embedding_set = set()
     subject_id_session_modality_embedding_dict = {}
-    session = connection()
+    session = connection(path)
     temp = 'MNI152_T1'
     thrType = 'MST'
     result = session.query(ce).filter_by(modality = mod, net_meta = net, embed_meta = embedding, template = temp, thr_type = thrType)
@@ -85,7 +87,7 @@ def fetch_dwi_func(mod, net, embedding, temp, thrType):
     return final_dict
 
 def iter_dict(d, elements, nodes):
- session = connection()
+ session = connection(path)
  for k, v in d.items():
     if isinstance(v, dict):
       elements.append(k)
