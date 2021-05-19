@@ -20,8 +20,33 @@ from nipype.interfaces.base import (
     SimpleInterface,
     Directory,
 )
+from sqlalchemy import Column, Float, Integer, String, Sequence, JSON, BLOB
+from sqlalchemy.ext.declarative import declarative_base
 
 warnings.filterwarnings("ignore")
+
+class ConnectomeEnsemble(declarative_base()):
+    __tablename__ = 'connectomes'
+
+    id = Column(Integer, Sequence('connectome_id', start=1, increment=1), primary_key=True)
+    subject_id = Column(String)
+    session = Column(String)
+    modality = Column(String)
+    embed_meta = Column(String)
+    net_meta = Column(String)
+    extract_meta = Column(String)
+    hpass_meta = Column(String, nullable = True)
+    minlength_meta = Column(String, nullable = True)
+    model_meta = Column(String)
+    granularity_meta = Column(String)
+    tolerance_meta = Column(String)
+    node_ref = Column(JSON, nullable = True)
+    data = Column(String, nullable = True)
+    data_file_path = Column(String)
+    template = Column(String)
+    thr_type = Column(String)
+    thr = Column(String)
+    node_type = Column(String)
 
 
 class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
