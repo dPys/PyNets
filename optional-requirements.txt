@@ -1,5 +1,6 @@
 pybind11>=2.5.0
 pingouin>=0.3.7
 imbalanced-learn>=0.8.0
-#skggm>=0.2.8
+awscli>=1.16.0
+skggm>=0.2.8
 git+https://github.com/dPys/multinetx.git@master

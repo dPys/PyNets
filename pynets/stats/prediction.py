@@ -463,9 +463,8 @@ def _draw_bootstrap_sample(rng, X, y):
     return X.iloc[bootstrap_indices.tolist(), :], y.iloc[bootstrap_indices.tolist(), :]
 
 
-def bias_variance_decomp(estimator, X_train, y_train, X_test, y_test,
-                         loss='0-1_loss', num_rounds=200, random_seed=None,
-                         **fit_params):
+def bias_variance_decomp(estimator, X, y, loss='0-1_loss', num_rounds=200,
+                         random_seed=None, **fit_params):
     """
     # Nonparametric Permutation Test
     # Author: Sebastian Raschka <sebastianraschka.com> from mlxtend
@@ -518,6 +517,12 @@ def bias_variance_decomp(estimator, X_train, y_train, X_test, y_test,
     if loss not in supported:
         raise NotImplementedError('loss must be one of the following: %s' %
                                   supported)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        test_size=0.10,
+                                                        random_state=42,
+                                                        shuffle=True,
+                                                        stratify=y)
 
     rng = np.random.RandomState(random_seed)
 
@@ -1075,11 +1080,11 @@ class EnsembleClassifier(BaseEstimator, ClassifierMixin):
         return self.ensemble_fitted.predict(X)
 
 
-def build_stacked_ensemble(X, y, base_estimators, boot, k_folds_inner,
-                           predict_type='classifier', search_method='grid',
-                           prefixes=[]):
+def build_stacked_ensemble(X, y, base_estimators, boot,
+                           k_folds_inner, predict_type='classifier',
+                           search_method='grid', prefixes=[],
+                           stacked_folds=10):
     from sklearn.ensemble import RandomForestClassifier, StackingClassifier
-    from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import brier_score_loss
     from sklearn.pipeline import Pipeline
     from sklearn.compose import ColumnTransformer
@@ -1116,16 +1121,15 @@ def build_stacked_ensemble(X, y, base_estimators, boot, k_folds_inner,
 
         ec = StackingClassifier(estimators=layer_ests,
                                 final_estimator=meta_est, passthrough=False,
-                                cv=10)
+                                cv=stacked_folds)
 
-
-        ensemble_fitted= ec.fit(X_train, y_train)
+        ensemble_fitted = ec.fit(X_train, y_train)
         ens_estimators[meta_est_name] = {}
         ens_estimators[meta_est_name]['model'] = ensemble_fitted
         ens_estimators[meta_est_name]['score'] = brier_score_loss(
             ensemble_fitted.predict(X_test), y_test)
 
-    # Get best SuperLearner
+    # Select best SuperLearner
     best_estimator = min(ens_estimators,
                          key=lambda v: ens_estimators[v]['score'])
     final_est = Pipeline([(best_estimator,
@@ -1201,8 +1205,7 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
                                                 '_')[0]].coef_).tolist()))
 
         else:
-            coefs = list(flatten(np.abs(
-                np.ones(len(best_positions))).tolist()))
+            coefs = list(flatten(np.abs(fitted.coef_)))
 
         feat_imp_dict = OrderedDict(
             sorted(
@@ -1225,7 +1228,7 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     # Grab CV prediction values
     if predict_type == 'classifier':
-        final_scorer = 'f1'
+        final_scorer = 'roc_auc'
     else:
         final_scorer = 'r2'
 
@@ -1244,7 +1247,7 @@ def boot_nested_iteration(X, y, predict_type, boot,
             "en": linear_model.LogisticRegression(penalty='elasticnet',
                                                   fit_intercept=True,
                                                   solver='saga',
-                                                  class_weight='balanced',
+                                                  class_weight='auto',
                                                   random_state=boot,
                                                   warm_start=True),
             # "svm": LinearSVC(random_state=boot, class_weight='balanced',
@@ -1269,9 +1272,10 @@ def boot_nested_iteration(X, y, predict_type, boot,
     else:
         raise ValueError('Prediction method not recognized')
 
-    if stack is True:
+    if stack is True and predict_type == 'classifier':
         final_est, best_estimator = build_stacked_ensemble(
-            X, y, estimators, boot, k_folds_inner, predict_type=predict_type,
+            X, y, estimators, boot,
+            k_folds_inner, predict_type=predict_type,
             search_method=search_method, prefixes=stack_prefix_list)
     else:
         final_est, best_estimator = nested_fit(
@@ -1290,25 +1294,27 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     final_est.fit(X, y)
 
-    if stack is False:
+    if stack is True:
+        for super_fitted in prediction["estimator"]:
+            for sub_fitted in super_fitted.named_steps[best_estimator].estimators_:
+                X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X))
+                best_sub_estimator = [i for i in sub_fitted.named_steps.keys() if i in list(estimators.keys())[0] and i is not 'selector'][0]
+                best_positions, feat_imp_dict = get_feature_imp(
+                    X_subspace, pca_reduce, sub_fitted.named_steps[best_sub_estimator], best_sub_estimator, predict_type,
+                    dummy_run, stack)
+                feature_imp_dicts.append(feat_imp_dict)
+                best_positions_list.append(best_positions)
+    else:
         for fitted in prediction["estimator"]:
             best_positions, feat_imp_dict = get_feature_imp(
-                X, pca_reduce, final_est, best_estimator, predict_type,
+                X, pca_reduce, fitted, best_estimator, predict_type,
                 dummy_run, stack)
             feature_imp_dicts.append(feat_imp_dict)
             best_positions_list.append(best_positions)
 
     # Evaluate Bias-Variance
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        test_size=0.50,
-                                                        random_state=42,
-                                                        shuffle=True,
-                                                        stratify=y)
-
     [avg_expected_loss, avg_bias, avg_var] = bias_variance_decomp(
-        final_est, X_train, y_train, X_test,
-        y_test, loss='0-1_loss',
-        num_rounds=200, random_seed=42)
+        final_est, X, y, loss='mse', num_rounds=200, random_seed=42)
 
     # Save the mean CV scores for this bootstrapped iteration
     if dummy_run is False and stack is False:
@@ -1338,15 +1344,15 @@ def boot_nested_iteration(X, y, predict_type, boot,
     grand_mean_best_estimator[boot] = params
 
     if predict_type == 'regressor':
-        grand_mean_best_score[boot] = np.nanmean(prediction[
-                                                     "test_r2"][
-                                                     prediction[
-                                                         "test_r2"] > 0])
+        grand_mean_best_score[boot] = np.nanmean(
+            prediction[f"test_{final_scorer}"][
+                prediction[f"test_{final_scorer}"] > 0])
         grand_mean_best_error[boot] = -np.nanmean(
             prediction["test_neg_mean_squared_error"])
     elif predict_type == 'classifier':
         grand_mean_best_score[boot] = np.nanmean(
-            prediction[f"test_{final_scorer}"][prediction[f"test_{final_scorer}"] > 0])
+            prediction[f"test_{final_scorer}"][
+                prediction[f"test_{final_scorer}"] > 0])
         grand_mean_best_error[boot] = -np.nanmean(
             prediction[f"test_neg_mean_squared_error"])
     else:
@@ -1370,7 +1376,7 @@ def bootstrapped_nested_cv(
     stack=False,
     stack_prefix_list=[],
     remove_multi=True,
-    n_jobs=4
+    n_jobs=2
 ):
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
@@ -1410,7 +1416,8 @@ def bootstrapped_nested_cv(
         delayed(boot_nested_iteration)(X, y, predict_type, boot,
                               [], [], {}, {}, {}, {}, dummy_run=dummy_run,
                               search_method=search_method, stack=stack,
-            stack_prefix_list=stack_prefix_list) for boot in range(0, n_boots))
+                              stack_prefix_list=stack_prefix_list)
+        for boot in range(0, n_boots))
 
     feature_imp_dicts = []
     best_positions_list = []
@@ -1550,7 +1557,10 @@ def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
               "skipping...\n")
         return None, None
     elif len(df_all) > 50:
-        drop_cols = [i for i in drop_cols if i in df_all.columns]
+        drop_cols = [i for i in drop_cols if (i in df_all.columns) or
+                     (i.replace('Behavioral_', '') in df_all.columns) or
+                     (f"Behavioral_{i}" in df_all.columns)]
+
         return df_all.drop(columns=drop_cols), df_all[target_var].values
     else:
         print("\nEmpty/Missing Feature-space...\n")
@@ -1743,6 +1753,8 @@ class MakeXY(SimpleInterface):
                                  "rumination_persist_phenotype",
                                  "depression_persist_phenotype",
                                  "dep_1", "rum_1"]
+
+                drop_cols = drop_cols + ['Behavioral_brooding_severity', 'Behavioral_emotion_utilization', 'Behavioral_social_ability_sum', 'Behavioral_disability', 'Behavioral_emotional_appraisal', 'Behavioral_emotional_control', 'Behavioral_Trait_anxiety', 'Behavioral_State_anxiety', 'Behavioral_perceptual_IQ']
 
                 drop_cols = drop_cols + ["id", "participant_id"]
 
@@ -2155,7 +2167,7 @@ def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols, dummy_run,
         name="bootstrapped_nested_cv_node")
 
     bootstrapped_nested_cv_node.interface.n_procs = 8
-    bootstrapped_nested_cv_node.interface._mem_gb = 16
+    bootstrapped_nested_cv_node.interface._mem_gb = 24
 
     make_df_node = pe.Node(MakeDF(), name="make_df_node")
 
@@ -2397,7 +2409,7 @@ def build_predict_workflow(args, retval, verbose=True):
     )
 
     create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 8
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 16
+    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 24
     create_wf_node.get_node('make_x_y_func_node').interface.n_procs = 1
     create_wf_node.get_node('make_x_y_func_node').interface._mem_gb = 6
 

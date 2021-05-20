@@ -266,7 +266,7 @@ jobs:
              source $BASH_ENV
       - run:
           name: Run unit and integration tests
-          no_output_timeout: 5h
+          no_output_timeout: 6h
           command: |
             set -e
             mkdir test-results
