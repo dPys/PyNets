@@ -15,6 +15,8 @@ from sklearn.metrics.pairwise import (
 )
 import numpy as np
 from sklearn.datasets import make_classification
+from statsmodels.stats.weightstats import ttost_paired
+from nested_lookup import nested_lookup
 from pathlib import Path
 from pynets.stats import benchmarking
 import networkx as nx
@@ -24,127 +26,114 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
+def NestedDictValues(d):
+  for v in d.values():
+    if isinstance(v, dict):
+      yield from NestedDictValues(v)
+    else:
+      yield v
+      
+
 # @pytest.mark.parametrize("dissimilarity", ["euclidean", "precomputed"])
 # @pytest.mark.parametrize("remove_isolates", [True, False])
 # @pytest.mark.parametrize("n_informative", [5, 25, 49])
 # @pytest.mark.parametrize("n_redundant", [0, 5, 25, 49])
 # @pytest.mark.parametrize("n_features", [100, 1000])
 # @pytest.mark.parametrize("n_samples", [100, 1000])
-def test_discr_stat(
-        remove_isolates,
-        n_informative,
-        n_redundant,
-        n_features,
-        n_samples):
+def test_discr_stat():
     from pynets.stats import benchmarking
-    
-"""     dissimilarity = "euclidean"
-    X, Y = make_classification(n_samples, n_features, n_informative, 
-                                   n_redundant, n_repeated=0, n_classes=2,
-                                   n_clusters_per_class=2, weights=None, 
-                                   flip_y=0.01, class_sep=1.0, hypercube=True, 
-                                   shift=0.0, scale=1.0, shuffle=True, random_state=42)
-    dissimilarities = euclidean_distances(X)
-    uniques, counts = np.unique(Y, return_counts=True)
-    idx = np.isin(Y, uniques[counts != 1])
-    labels = Y[idx]
-    rdfs = benchmarking._discr_rdf(dissimilarities, labels)
-    
-    assert labels.shape[0] == rdfs.shape[0] == dissimilarities.shape[0] == n_samples
-    
-    disc = benchmarking.discr_stat(X, Y)[0]
-    
-    if n_features > n_samples:
-        print(f"n_features > n_samples: {disc}")
-        assert disc is not None
-       
-    elif n_features < n_samples:
-        print(f"n_features < n_samples: {disc}")
-        assert disc is not None
-    
-    elif (n_features == n_samples) and (n_informative >= n_redundant):
-        print(f"n_features == n_samples & n_informative >= n_redundant: {disc}")
-        assert disc is not None
-    
-    elif (n_features == n_samples) and (n_informative < n_redundant):
-        print(f"n_features == n_samples & n_informative < n_redundant: {disc}")
-        assert disc is not None """
         
-      
-for remove_isolates in [True, False]:
-    for n_informative in [5, 25, 49]:
-        for n_redundant in [5, 25, 49]:
-            for n_features in [100, 1000]:
-                for n_samples in [100, 1000]:
-                    dissimilarity = "euclidean"
-                    X, Y = make_classification(n_samples, n_features, n_informative, 
-                                                   n_redundant, n_repeated=0, n_classes=2,
-                                                   n_clusters_per_class=2, weights=None, 
-                                                   flip_y=0.01, class_sep=1.0, hypercube=True, 
-                                                   shift=0.0, scale=1.0, shuffle=True, random_state=42)
-                    dissimilarities = euclidean_distances(X)
-                    uniques, counts = np.unique(Y, return_counts=True)
-                    idx = np.isin(Y, uniques[counts != 1])
-                    labels = Y[idx]
-                    rdfs = benchmarking._discr_rdf(dissimilarities, labels)
-                    
-                    assert labels.shape[0] == rdfs.shape[0] == dissimilarities.shape[0] == n_samples
-                    
-                    disc = benchmarking.discr_stat(X, Y)[0]
-                    
-                    if n_features > n_samples:
-                        print(f"n_features > n_samples: {disc}")
-                       
-                    elif n_features < n_samples:
-                        print(f"n_features < n_samples: {disc}")
-                    
-                    elif (n_features == n_samples) and (n_informative >= n_redundant):
-                        print(f"n_features == n_samples & n_informative >= n_redundant: {disc}")
-                    
-                    elif (n_features == n_samples) and (n_informative < n_redundant):
-                        print(f"n_features == n_samples & n_informative < n_redundant: {disc}")
-                        
+    mega_dict = {}
+
+    for remove_isolates in [True, False]:
+        mega_dict[remove_isolates] = {}
+        for n_informative in [5, 25, 49]:
+            mega_dict[remove_isolates][f"n_informative_{n_informative}"] = {}
+            for n_redundant in [5, 25, 49]:
+                mega_dict[remove_isolates][f"n_informative_{n_informative}"][f"n_redundant_{n_redundant}"] = {}
+                for n_features in [100, 1000]:
+                    mega_dict[remove_isolates][f"n_informative_{n_informative}"][f"n_redundant_{n_redundant}"][f"n_features_{n_features}"] = {}
+                    for n_samples in [100, 1000]:
+                        dissimilarity = "euclidean"
+                        X, Y = make_classification(n_samples, n_features, n_informative,
+                                                    n_redundant, n_repeated=0, n_classes=2,
+                                                    n_clusters_per_class=2, weights=None,
+                                                    flip_y=0.01, class_sep=1.0, hypercube=True,
+                                                    shift=0.0, scale=1.0, shuffle=True, random_state=42)
+                        disc = benchmarking.discr_stat(X, Y)[0]
+                        mega_dict[remove_isolates][f"n_informative_{n_informative}"][f"n_redundant_{n_redundant}"][f"n_features_{n_features}"][f"n_samples_{n_samples}"] = disc
+
+    # Test for mean difference based on n samples
+    d1 = np.array(list(nested_lookup('n_samples_100', mega_dict)))
+    d2 = np.array(list(nested_lookup('n_samples_1000', mega_dict)))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9961632262904134
+
+    # Test for mean difference based on n informative
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_informative_49', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_informative_25', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9988616434959907
+
+    # Test for mean difference based on n informative
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_informative_25', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_informative_5', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9999219809378421
+
+    # Test for mean difference based on n informative
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_informative_49', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_informative_5', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9999600191080593
+
+    # Test for mean difference based on n redundant
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_redundant_49', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_redundant_25', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.13073863298448854
+
+    # Test for mean difference based on n redundant
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_redundant_25', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_redundant_5', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.017425800816993416
+
+    # Test for mean difference based on n redundant
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_redundant_49', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_redundant_5', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.012477146713475993
+
+    # Test for mean difference based on n features
+    d1 = np.array(list(NestedDictValues(nested_lookup('n_features_100', mega_dict)[0])))
+    d2 = np.array(list(NestedDictValues(nested_lookup('n_features_1000', mega_dict)[0])))
+    assert ttost_paired(d1, d2, 0, 1)
+    assert ttost_paired(d1, d2, 0, 1)[0] == 0.18587215728638398
+
 
 @pytest.mark.parametrize("n_informative", [5, 25, 49])
 @pytest.mark.parametrize("n_redundant", [0, 5, 25, 49])
 @pytest.mark.parametrize("n_features", [100, 1000])
 @pytest.mark.parametrize("n_samples", [100, 1000])
 def test_discr_rdf(
-        dissimilarities,
-        labels,
         n_informative,
         n_redundant,
         n_features,
         n_samples):
     from pynets.stats import benchmarking
-    
-    X, Y = make_classification(n_samples, n_features, n_informative, 
+    X, Y = make_classification(n_samples, n_features, n_informative,
                                    n_redundant, n_repeated=0, n_classes=2,
-                                   n_clusters_per_class=2, weights=None, 
-                                   flip_y=0.01, class_sep=1.0, hypercube=True, 
+                                   n_clusters_per_class=2, weights=None,
+                                   flip_y=0.01, class_sep=1.0, hypercube=True,
                                    shift=0.0, scale=1.0, shuffle=True, random_state=42)
-    
-    
     uniques, counts = np.unique(Y, return_counts=True)
     idx = np.isin(Y, uniques[counts != 1])
-
     # assert X.shape[0] == Y.shape
-
     labels = Y[idx]
     X = X[idx]
     dissimilarities = euclidean_distances(X)
-    for i, label in enumerate(labels):
-        di = dissimilarities[i]
-        idx = labels == label
-        Dij = di[~idx]
-        idx[i] = False
-        Dii = di[idx]
-        rdf = [1 - ((Dij < d).sum() + 0.5 * (Dij == d).sum()) /
-               Dij.size for d in Dii]
-               
-        assert isinstance(rdf, list)
-    # [euclidean_distances(X), cosine_distances(X), haversine_distances(X), manhattan_distances(X)]
-    out = benchmarking._discr_rdf(dissimilarities, labels)
-
-    assert isinstance(out, np.ndarray)
-
+    rdfs = benchmarking._discr_rdf(dissimilarities, labels)
+    assert isinstance(rdfs, np.ndarray)
+    assert labels.shape[0] == rdfs.shape[0] == dissimilarities.shape[0]
+    assert np.sum(rdfs >= 0) <= rdfs.shape[0]*rdfs.shape[1] and np.sum(rdfs <= 1) <= rdfs.shape[0]*rdfs.shape[1]
