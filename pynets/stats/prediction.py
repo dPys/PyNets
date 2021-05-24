@@ -87,16 +87,17 @@ class ReduceVIF(BaseEstimator, TransformerMixin):
         self.thresh = thresh
 
     def fit(self, X, y=None):
-        # print('Dropping columns by excessive VIF...')
+        self.X = X
+        self.y = y
         return self
 
-    def transform(self, X, y=None):
-        columns = X.columns.tolist()
+    def transform(self, X):
         return ReduceVIF.calculate_vif(X, self.thresh)
 
     @staticmethod
     def calculate_vif(X, thresh=10.0):
         dropped = True
+        vif_cols = []
         while dropped:
             # Loop repeatedly until we find that all columns within our dataset
             # have a VIF value less than the threshold
@@ -114,9 +115,10 @@ class ReduceVIF(BaseEstimator, TransformerMixin):
             if max_vif > thresh:
                 maxloc = vif.index(max_vif)
                 print(f'Dropping {X.columns[maxloc]} with vif={max_vif}')
+                vif_cols.append(X.columns.tolist()[maxloc])
                 X = X.drop([X.columns.tolist()[maxloc]], axis=1)
                 dropped = True
-        return X
+        return X, vif_cols
 
 
 class RazorCV(object):
@@ -877,11 +879,30 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 
 
 def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
-                   var_thr=.80, remove_multi=True,
+                   var_thr=.85, remove_multi=True,
                    remove_outliers=True, standardize=True,
-                   std_dev=3, vif_thr=10, missingness_thr=0.50,
-                   zero_thr=0.75, oversample=True):
+                   std_dev=3, vif_thr=20, missingness_thr=0.50,
+                   zero_thr=0.50, oversample=True):
     from colorama import Fore, Style
+
+    # Replace all near-zero with zeros
+    # Drop excessively sparse columns with >zero_thr zeros
+    if zero_thr > 0:
+        X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
+        X_tmp = X.T.loc[(X == 0).sum() < (float(zero_thr)) * X.shape[0]].T
+
+        if len(nodrop_columns) > 0:
+            X = pd.concat([X_tmp, X[[i for i in X.columns if i in
+                                     nodrop_columns and i not in
+                                     X_tmp.columns]]], axis=1)
+        else:
+            X = X_tmp
+        del X_tmp
+
+        if X.empty or len(X.columns) < 5:
+            print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
 
     # Remove columns with excessive missing values
     X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
@@ -922,7 +943,7 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
         X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     # Remove low-variance columns
-    sel = VarianceThreshold(threshold=(var_thr * (1 - var_thr)))
+    sel = VarianceThreshold(threshold=var_thr)
     sel.fit(X)
     if len(nodrop_columns) > 0:
         good_var_cols = X.columns[np.concatenate([sel.get_support(indices=True),
@@ -967,32 +988,13 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
     if remove_multi is True:
         try:
             rvif = ReduceVIF(thresh=vif_thr)
-            X = rvif.fit_transform(X)
-
+            X = rvif.fit_transform(X)[0]
             if X.empty or len(X.columns) < 5:
                 print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
                       f"{X}{Style.RESET_ALL}\n\n")
                 return X, y
         except:
             print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
-                  f"{X}{Style.RESET_ALL}\n\n")
-            return X, y
-
-    # Drop excessively sparse columns with >zero_thr zeros
-    if zero_thr > 0:
-        X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
-        X_tmp = X.T.loc[(X == 0).sum() < (float(zero_thr)) * X.shape[0]].T
-
-        if len(nodrop_columns) > 0:
-            X = pd.concat([X_tmp, X[[i for i in X.columns if i in
-                                     nodrop_columns and i not in
-                                     X_tmp.columns]]], axis=1)
-        else:
-            X = X_tmp
-        del X_tmp
-
-        if X.empty or len(X.columns) < 5:
-            print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
                   f"{X}{Style.RESET_ALL}\n\n")
             return X, y
 
@@ -1120,7 +1122,7 @@ def build_stacked_ensemble(X, y, base_estimators, boot,
                                          X_subspace.columns]))[0], final_est))
 
         ec = StackingClassifier(estimators=layer_ests,
-                                final_estimator=meta_est, passthrough=False,
+                                final_estimator=meta_est, passthrough=True,
                                 cv=stacked_folds)
 
         ensemble_fitted = ec.fit(X_train, y_train)
@@ -1156,17 +1158,6 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         pca = fitted.named_steps["feature_select"]
         comps_all = pd.DataFrame(pca.components_, columns=X.columns)
-        coefs = list(flatten(np.abs(fitted.named_steps[
-                                        best_estimator.split(
-                                            f"{predict_type}-")[1].split('_')[
-                                            0]].coef_).tolist()))
-        feat_imp_dict = OrderedDict(
-            sorted(
-                dict(zip(comps_all, coefs)).items(),
-                key=itemgetter(1),
-                reverse=True,
-            )
-        )
 
         n_pcs = pca.components_.shape[0]
 
@@ -1174,6 +1165,23 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
             np.nanargmax(np.abs(pca.components_[i])) for i in
             range(n_pcs)
         ]))
+
+        if dummy_run is True:
+            coefs = list(flatten(np.abs(
+                np.ones(len(best_positions))).tolist()))
+        else:
+            coefs = list(flatten(np.abs(fitted.named_steps[
+                                            best_estimator.split(
+                                                f"{predict_type}-")[1
+                                            ].split('_')[
+                                                0]].coef_).tolist()))
+        feat_imp_dict = OrderedDict(
+            sorted(
+                dict(zip(comps_all, coefs)).items(),
+                key=itemgetter(1),
+                reverse=True,
+            )
+        )
 
         feat_imp_dict = OrderedDict(
             sorted(
@@ -1198,14 +1206,16 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
                 if column[1]
             ]
 
-        if dummy_run is False and stack is False:
+        if dummy_run is True:
+            coefs = list(flatten(np.abs(
+                np.ones(len(best_positions))).tolist()))
+        elif stack is True:
+            coefs = list(flatten(np.abs(fitted.named_steps[best_estimator].coef_)))
+        else:
             coefs = list(flatten(np.abs(fitted.named_steps[
                                             best_estimator.split(
                                                 f"{predict_type}-")[1].split(
                                                 '_')[0]].coef_).tolist()))
-
-        else:
-            coefs = list(flatten(np.abs(fitted.coef_)))
 
         feat_imp_dict = OrderedDict(
             sorted(
@@ -1300,7 +1310,7 @@ def boot_nested_iteration(X, y, predict_type, boot,
                 X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X))
                 best_sub_estimator = [i for i in sub_fitted.named_steps.keys() if i in list(estimators.keys())[0] and i is not 'selector'][0]
                 best_positions, feat_imp_dict = get_feature_imp(
-                    X_subspace, pca_reduce, sub_fitted.named_steps[best_sub_estimator], best_sub_estimator, predict_type,
+                    X_subspace, pca_reduce, sub_fitted, best_sub_estimator, predict_type,
                     dummy_run, stack)
                 feature_imp_dicts.append(feat_imp_dict)
                 best_positions_list.append(best_positions)
@@ -1575,6 +1585,7 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
 
     if len(files_) > 1:
         dfs = []
+        rsns = []
         for file_ in files_:
             df = pd.read_csv(file_, chunksize=100000).read()
             try:
@@ -1582,12 +1593,15 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
             except BaseException:
                 pass
             dfs.append(df)
+            rsns.append(file_.split('_grid_param_')[1].split('/')[0].split('.')[-2])
         try:
             frame = pd.concat(dfs, axis=0, join="outer", sort=True,
                               ignore_index=False)
 
-            out_path = f"{out_dir}/final_df_{modality}_{embedding_type}" \
-                       f"_{target_var}_{n_boots}_{search_method}"
+            out_path = f"{out_dir}/final_predictions_modality-{modality}_" \
+                       f"rsn-{str(list(set(rsns)))}_" \
+                       f"gradient-{embedding_type}_outcome-{target_var}_" \
+                       f"boots-{n_boots}_search-{search_method}"
 
             if dummy_run is True:
                 out_path = out_path + '_dummy'
@@ -1595,7 +1609,7 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
             if stack is True:
                 out_path = out_path + '_stacked-' + str(stack_prefix_list)
 
-            out_path = out_path + ".csv"
+            out_path = out_path.replace('[\'', '').replace('\']', '') + ".csv"
 
             print(f"Saving to {out_path}...")
             if os.path.isfile(out_path):

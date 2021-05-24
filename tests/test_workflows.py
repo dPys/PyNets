@@ -330,22 +330,18 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
 @pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
 @pytest.mark.parametrize("thr,max_thr,min_thr,step_thr,multi_thr,thr_type",
     [
-        pytest.param(1.0, None, None, None, False, 'prop'),
+        pytest.param(1.0, None, None, None, False, 'MST'),
         pytest.param(None, 0.80, 0.20, 0.10, True, 'prop'),
     ]
 )
-@pytest.mark.parametrize("directget", ['prob', ['det', 'boot']])
+@pytest.mark.parametrize("directget", ['prob', ['det', 'prob']])
 @pytest.mark.parametrize("min_length", [0, 5, [0, 5]])
 @pytest.mark.parametrize("plot_switch", [True, False])
 @pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"])
 @pytest.mark.parametrize("track_type,tiss_class,conn_model,conn_model_list",
     [
         pytest.param('local', 'wb', 'csd', None),
-        pytest.param('local', 'act', 'csd', None),
-        pytest.param('particle', 'cmc', 'csd', None),
-        pytest.param('local', 'wb', None, ['csa', 'csd']),
-        pytest.param('local', 'act', None, ['csa', 'csd']),
-        pytest.param('particle', 'cmc', None, ['csa', 'csd']),
+        pytest.param('local', 'wb', None, ['csa', 'sfm']),
     ]
 )
 @pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
