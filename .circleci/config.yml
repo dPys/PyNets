@@ -340,8 +340,8 @@ jobs:
             python -m pip install codecov coverage
             python -m coverage combine
             python -m coverage report
-            python -m coverage html
-            python -m coverage xml
+            python -m coverage html -i
+            python -m coverage xml -i
             bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:
