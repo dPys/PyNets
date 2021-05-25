@@ -277,6 +277,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
 
     """
     import os
+    import pickle
     import networkx as nx
     import numpy as np
     from pynets.core.utils import flatten
@@ -300,7 +301,10 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
 
     if float(prune) >= 1:
         graph_path_tmp = cg.prune_graph()[1]
-        mat_clean = np.load(graph_path_tmp)
+        with open(f"{graph_path_tmp}.pkl", "rb") as input_file:
+            G_pruned = pickle.load(input_file)
+        input_file.close()
+        mat_clean = nx.to_numpy_matrix(G_pruned)
 
     mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
 
