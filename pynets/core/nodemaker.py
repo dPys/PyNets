@@ -618,7 +618,7 @@ def get_node_membership(
     return coords_mm, RSN_parcels, net_labels, network
 
 
-def drop_badixs_from_parcellation(uatlas, bad_idxs):
+def drop_badixs_from_parcellation(uatlas, bad_idxs, enf_hemi=True):
     import os
     import nibabel as nib
     import numpy as np
@@ -642,7 +642,8 @@ def drop_badixs_from_parcellation(uatlas, bad_idxs):
         parcellation)
 
     print(f"{len(np.unique(parlist_img_data))} parcels remaining")
-    parcellation = enforce_hem_distinct_consecutive_labels(parcellation)[0]
+    if enf_hemi is True:
+        parcellation = enforce_hem_distinct_consecutive_labels(parcellation)[0]
     return parcellation
 
 
