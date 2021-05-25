@@ -663,7 +663,7 @@ def de_outlier(X, y, sd, predict_type):
 
 def make_param_grids():
     param_space = {}
-    param_space['Cs'] = [1e-16, 1e-12, 1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
+    param_space['Cs'] = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
     param_space['l1_ratios'] = [0, 0.25, 0.50, 0.75, 1]
     param_space['alphas'] = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
     return param_space
@@ -881,8 +881,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
 def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
                    var_thr=.85, remove_multi=True,
                    remove_outliers=True, standardize=True,
-                   std_dev=3, vif_thr=20, missingness_thr=0.50,
-                   zero_thr=0.50, oversample=True):
+                   std_dev=3, vif_thr=10, missingness_thr=0.50,
+                   zero_thr=0.50, oversample=False):
     from colorama import Fore, Style
 
     # Replace all near-zero with zeros
@@ -1323,8 +1323,9 @@ def boot_nested_iteration(X, y, predict_type, boot,
             best_positions_list.append(best_positions)
 
     # Evaluate Bias-Variance
-    [avg_expected_loss, avg_bias, avg_var] = bias_variance_decomp(
-        final_est, X, y, loss='mse', num_rounds=200, random_seed=42)
+    if predict_type == 'classifier':
+        [avg_expected_loss, avg_bias, avg_var] = bias_variance_decomp(
+            final_est, X, y, loss='mse', num_rounds=200, random_seed=42)
 
     # Save the mean CV scores for this bootstrapped iteration
     if dummy_run is False and stack is False:
@@ -1337,19 +1338,30 @@ def boot_nested_iteration(X, y, predict_type, boot,
         if hasattr(out_final, 'coef_'):
             params = f"{params}_betas={np.array(out_final.coef_).tolist()[0]}"
 
-        if hasattr(out_final, 'l1_ratio'):
+        if hasattr(out_final, 'l1_ratio') and (hasattr(out_final, 'C') or
+                                               hasattr(out_final, 'alpha')):
             l1_ratio = out_final.l1_ratio
-            C = out_final.C
-            l1_val = np.round(l1_ratio * (1/C), 5)
-            l2_val = np.round((1 - l1_ratio) * (1/C), 5)
+
+            if hasattr(out_final, 'C'):
+                C = out_final.C
+                l1_val = np.round(l1_ratio * (1/C), 5)
+                l2_val = np.round((1 - l1_ratio) * (1/C), 5)
+            else:
+                alpha = out_final.alpha
+                l1_val = np.round(l1_ratio * alpha, 5)
+                l2_val = np.round((1 - l1_ratio) * 0.5 * alpha, 5)
             params = f"{params}_lambda1={l1_val}"
             params = f"{params}_lambda2={l2_val}"
 
-        params = f"{params}_AvgExpLoss={avg_expected_loss:.5f}_" \
-                 f"AvgBias={avg_bias:.5f}_AvgVar={avg_var:.5f}"
+        if predict_type == 'classifier':
+            params = f"{params}_AvgExpLoss={avg_expected_loss:.5f}_" \
+                     f"AvgBias={avg_bias:.5f}_AvgVar={avg_var:.5f}"
     else:
-        params = f"{best_estimator}_AvgExpLoss={avg_expected_loss:.5f}_" \
-                 f"AvgBias={avg_bias:.5f}_AvgVar={avg_var:.5f}"
+        if predict_type == 'classifier':
+            params = f"{best_estimator}_AvgExpLoss={avg_expected_loss:.5f}_" \
+                     f"AvgBias={avg_bias:.5f}_AvgVar={avg_var:.5f}"
+        else:
+            params = f"{best_estimator}"
 
     grand_mean_best_estimator[boot] = params
 
@@ -1734,39 +1746,29 @@ class MakeXY(SimpleInterface):
                 elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
                                  'MDE_conversion']
-                elif self.inputs.target_var == "depression_persist_phenotype":
+                elif self.inputs.target_var == "dep_inertia":
                     drop_cols = [self.inputs.target_var,
-                                 "rumination_persist_phenotype",
-                                 "rum_2", "dep_2"]
-                elif self.inputs.target_var == "rumination_persist_phenotype":
+                                 "rum_inertia",
+                                 "rum_2", "dep_2", "rum_1"]
+                elif self.inputs.target_var == "rum_inertia":
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
+                                 "dep_inertia",
                                  "rum_2", "dep_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
-                                 "rumination_persist_phenotype",
+                                 "dep_inertia",
+                                 "rum_inertia",
                                  "rum_2", "dep_2", "dep_1"]
                 elif self.inputs.target_var == "dep_1":
                     drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
-                                 "rumination_persist_phenotype",
+                                 "dep_inertia",
+                                 "rum_inertia",
                                  "rum_2", "dep_2", "rum_1"]
-                elif self.inputs.target_var == "dep_2":
-                    drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
-                                 "rumination_persist_phenotype",
-                                 "rum_2", "rum_1"]
-                elif self.inputs.target_var == "rum_2":
-                    drop_cols = [self.inputs.target_var,
-                                 "depression_persist_phenotype",
-                                 "rumination_persist_phenotype",
-                                 "dep_2", "dep_1"]
                 else:
                     drop_cols = [self.inputs.target_var,
-                                 "rumination_persist_phenotype",
-                                 "depression_persist_phenotype",
-                                 "dep_1", "rum_1"]
+                                 "rum_inertia",
+                                 "dep_inertia",
+                                 "dep_1", "rum_1", "dep_2", "rum_2"]
 
                 drop_cols = drop_cols + ['Behavioral_brooding_severity', 'Behavioral_emotion_utilization', 'Behavioral_social_ability_sum', 'Behavioral_disability', 'Behavioral_emotional_appraisal', 'Behavioral_emotional_control', 'Behavioral_Trait_anxiety', 'Behavioral_State_anxiety', 'Behavioral_perceptual_IQ']
 
