@@ -242,7 +242,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 2)
       - 'run_tracking_node':
-        - (3, 10)
+        - (2, 8)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':

@@ -338,10 +338,10 @@ jobs:
           name: Update codecov
           command: |
             python -m pip install codecov coverage
-            python -m coverage combine
-            python -m coverage report
-            python -m coverage html -i
-            python -m coverage xml -i
+            python -m coverage combine --rcfile=.coveragerc
+            python -m coverage report -i --rcfile=.coveragerc --omit=_*,*.local*
+            python -m coverage html -i --rcfile=.coveragerc --omit=_*,*.local*
+            python -m coverage xml -i --rcfile=.coveragerc --omit=_*,*.local*
             bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:
