@@ -1768,9 +1768,18 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "rum_inertia",
                                  "dep_inertia",
-                                 "dep_1", "rum_1", "dep_2", "rum_2"]
+                                 "dep_1", "rum_1", "dep_2", "rum_2",
+                                 'MDE_conversion', 'MDE_chronic']
 
-                drop_cols = drop_cols + ['Behavioral_brooding_severity', 'Behavioral_emotion_utilization', 'Behavioral_social_ability_sum', 'Behavioral_disability', 'Behavioral_emotional_appraisal', 'Behavioral_emotional_control', 'Behavioral_Trait_anxiety', 'Behavioral_State_anxiety', 'Behavioral_perceptual_IQ']
+                drop_cols = drop_cols + ['Behavioral_brooding_severity',
+                                         'Behavioral_emotion_utilization',
+                                         'Behavioral_social_ability_sum',
+                                         'Behavioral_disability',
+                                         'Behavioral_emotional_appraisal',
+                                         'Behavioral_emotional_control',
+                                         'Behavioral_Trait_anxiety',
+                                         'Behavioral_State_anxiety',
+                                         'Behavioral_perceptual_IQ']
 
                 drop_cols = drop_cols + ["id", "participant_id"]
 
