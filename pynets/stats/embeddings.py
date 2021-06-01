@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def _omni_embed(pop_array, atlas, graph_path_list, ID,
+def _omni_embed(pop_array, atlas, graph_path_list,
                 subgraph_name="all_nodes", n_components=None, norm=1):
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
@@ -108,7 +108,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
                                                      omni_fit.shape[0]))
 
         out_path = (
-            f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
+            f"{namer_dir}/gradient-OMNI_rsn-{atlas}_res-{subgraph_name}_"
             f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
         )
 
@@ -139,7 +139,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     return out_path
 
 
-def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
+def _mase_embed(pop_array, atlas, graph_path, subgraph_name="all_nodes",
                 n_components=2):
     """
     Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
@@ -229,7 +229,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     return out_path
 
 
-def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
+def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
                n_components=None, prune=0, norm=1):
     """
 
@@ -320,7 +320,7 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
-               f"_{atlas}_{subgraph_name}_{os.path.basename(graph_path)}"
+               f"_rsn-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
     # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
     #                f"_{subgraph_name}" \
     #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
