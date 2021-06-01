@@ -33,32 +33,27 @@ def main():
 
     # Parse inputs
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
-    base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
-    thr_type = "MST"
-    icc = True
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    base_dir = '/scratch/04171/dpisner/multiverse_reliability/outputs'
+    thr_type = "PROP"
+    icc = False
     disc = True
     int_consist = False
-    modality = 'dwi'
+    modality = 'func'
 
-    embedding_types = ['eigenvector', 'betweenness']
-    #rsns = ['language']
-    rsns = ['ventral']
-    template = 'CN200'
-    # template = 'MNI152_T1'
-    mets = ["global_efficiency",
-            "average_shortest_path_length",
-            "degree_assortativity_coefficient",
-            "average_betweenness_centrality",
-            "average_eigenvector_centrality",
-            "smallworldness",
-            "modularity"]
+    embedding_types = ['eigenvector', 'betweenness', 'ASE', 'OMNI']
+    rsns = ['ventral', 'language', 'kmeans', 'triple']
+    # template = 'CN200'
+    template = 'MNI152_T1'
+    mets = []
 
     metaparams_func = ["rsn", "res", "model", 'hpass', 'extract',
                        'smooth']
     metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength',
                       'tol']
 
-    sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    sessions = ['1', '2', '3']
     ####
 
     print(f"{Fore.LIGHTBLUE_EX}\nBenchmarking API\n")
@@ -246,7 +241,7 @@ def main():
 
             for met in mets:
                 cronbach_ses_list = []
-                for ses in range(1, 10):
+                for ses in range(1, len(sessions)):
                     id_dict = {}
                     for ID in ids:
                         id_dict[ID] = {}
