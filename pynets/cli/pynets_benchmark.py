@@ -41,16 +41,14 @@ def main():
     int_consist = False
     modality = 'func'
 
-    embedding_types = ['eigenvector', 'betweenness', 'ASE', 'OMNI']
-    rsns = ['ventral', 'language', 'kmeans', 'triple']
+    embedding_types = ['eigenvector']
+    rsns = ['kmeans']
     # template = 'CN200'
     template = 'MNI152_T1'
     mets = []
 
-    metaparams_func = ["rsn", "res", "model", 'hpass', 'extract',
-                       'smooth']
-    metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength',
-                      'tol']
+    metaparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+    metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
     #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     sessions = ['1', '2', '3']
@@ -221,7 +219,7 @@ def main():
         print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_"
               f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
         df_summary.to_csv(f"{base_dir}"
-                          f"/grid_clean_{modality}_{embedding_type}_"
+                          f"/grid_clean_{modality}_{embedding_type}_{rsns}_"
                           f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
                           f".csv", index=False)
 

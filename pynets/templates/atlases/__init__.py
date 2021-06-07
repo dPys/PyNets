@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""Top-level package for PyNets."""
-
-__author__ = """Derek Pisner"""
-__email__ = "dpisner@utexas.edu"
-
-import warnings
-
-warnings.filterwarnings("ignore")
+version https://git-lfs.github.com/spec/v1
+oid sha256:1d344a807844765ff6b5514359cb60f7722a8fb95c86ad9368da703d9840563c
+size 179
