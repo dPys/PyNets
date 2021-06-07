@@ -1064,6 +1064,7 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
     label_names : list
         List of string label names corresponding to ROI nodes.
     """
+    import gc
     from nilearn.image.resampling import coord_transform
     from nilearn.image import new_img_like, reorder_img
 
@@ -1080,8 +1081,6 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
     ix = 0
     for lab in unique_labels:
         cur_dat = labels_data == lab
-        left_lab = cur_dat.copy()
-        right_lab = cur_dat.copy()
 
         # Grab hemispheres separately
         left_hemi = labels_data.copy() == lab
@@ -1091,6 +1090,8 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
 
         # Two connected components in both hemispheres
         if not np.all(left_hemi == False) or np.all(right_hemi == False):
+            left_lab = np.copy(cur_dat)
+            right_lab = np.copy(cur_dat)
             left_lab[int(x):] = 0
             right_lab[:int(x)] = 0
             new_labs.append(left_lab)
@@ -1102,17 +1103,24 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
             new_labs.append(cur_dat)
             if label_names is not None:
                 new_lab_names.append(label_names[ix])
-        del left_lab, right_lab, left_hemi, right_hemi
+        del left_lab, right_lab, left_hemi, right_hemi, cur_dat
+        gc.collect()
 
     del labels_data
 
     img_list = [new_img_like(labels_img, i) for i in new_labs]
 
+    labels_img.uncache()
+    del new_labs, labels_img
+
     # Enforce consecutive labelings
     atlas_img_corr = create_parcel_atlas(img_list)[0]
     nib.save(atlas_img_corr, uatlas)
 
-    del img_list, atlas_img_corr, new_labs, labels_img
+    atlas_img_corr.uncache()
+    del img_list, atlas_img_corr
+    gc.collect()
+
     return uatlas, label_names
 
 
