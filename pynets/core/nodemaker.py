@@ -1099,11 +1099,12 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
             if label_names is not None:
                 new_lab_names.append(f"{label_names[ix]}_Left")
                 new_lab_names.append(f"{label_names[ix]}_Right")
+            del left_lab, right_lab
         else:
             new_labs.append(cur_dat)
             if label_names is not None:
                 new_lab_names.append(label_names[ix])
-        del left_lab, right_lab, left_hemi, right_hemi, cur_dat
+        del left_hemi, right_hemi, cur_dat
         gc.collect()
 
     del labels_data
