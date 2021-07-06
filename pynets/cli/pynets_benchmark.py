@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2016
+Copyright (C) 2017
 @authors: Derek Pisner
 """
 from pynets.stats.benchmarking import *
@@ -34,24 +34,25 @@ def main():
     # Parse inputs
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
-    base_dir = '/scratch/04171/dpisner/multiverse_reliability/outputs'
+    #base_dir = '/scratch/04171/dpisner/multiverse_reliability/outputs'
+    base_dir = '/working/HNU/outputs_func'
     thr_type = "PROP"
     icc = False
     disc = True
     int_consist = False
     modality = 'func'
 
-    embedding_types = ['eigenvector']
-    rsns = ['kmeans']
-    # template = 'CN200'
-    template = 'MNI152_T1'
+    embedding_types = ['OMNI']
+    rsns = ['kmeans', 'language', 'ventral', 'triple']
+    template = 'CN200'
+    # template = 'MNI152_T1'
     mets = []
 
     metaparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
-    #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-    sessions = ['1', '2', '3']
+    sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    #sessions = ['1', '2', '3']
     ####
 
     print(f"{Fore.LIGHTBLUE_EX}\nBenchmarking API\n")
@@ -194,7 +195,7 @@ def main():
         cache_dir = tempfile.mkdtemp()
 
         with Parallel(
-            n_jobs=-1, require="sharedmem", backend='threading',
+            n_jobs=-1, backend='loky',
             verbose=10, max_nbytes='200000M',
             temp_folder=cache_dir
         ) as parallel:

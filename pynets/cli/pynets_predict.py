@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2016
+Copyright (C) 2017
 @authors: Derek Pisner
 """
 from pynets.stats.prediction import *
