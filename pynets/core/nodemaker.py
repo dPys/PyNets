@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @author: Derek Pisner
 """
 import warnings
@@ -1164,7 +1164,7 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
                 print(f"Removing: {str(val)}...")
-                parlist_img_data[np.where(parlist_img_data == val)] = 0
+                parlist_img_data[np.where(parlist_img_data == float(val))] = 0
 
             parcellation = fname_presuffix(
                 parcellation, suffix="_mod",
