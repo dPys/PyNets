@@ -34,15 +34,15 @@ def main():
     # Parse inputs
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
-    #base_dir = '/scratch/04171/dpisner/multiverse_reliability/outputs'
-    base_dir = '/working/HNU/outputs_func'
+    base_dir = '/working/multiverse_reliability/outputs'
+    #base_dir = '/working/HNU/outputs_func'
     thr_type = "PROP"
     icc = False
     disc = True
     int_consist = False
-    modality = 'func'
+    modality = 'dwi'
 
-    embedding_types = ['OMNI']
+    embedding_types = ['ASE']
     rsns = ['kmeans', 'language', 'ventral', 'triple']
     template = 'CN200'
     # template = 'MNI152_T1'

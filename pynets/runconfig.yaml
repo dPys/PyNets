@@ -188,11 +188,6 @@ gradients:
 #    db_path:
 #    username:
 #    password:
-#sentiment_labeling:
-#    liwc_file:
-#        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
-#    neurosynth_db:
-#        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz' # https://nimare.readthedocs.io/
 plotting:
     connectogram:
         - False
