@@ -215,9 +215,9 @@ plotting:
               - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
-        - (4, 8)
+        - (6, 8)
       - 'save_nifti_parcels_node':
-        - (4, 1)
+        - (4, 2)
       - 'gtab_node':
         - (1, 0.5)
       - 'save_coords_and_labels_node':
@@ -243,7 +243,7 @@ resource_dict: # Nipype workflow resource settings
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
-        - (2, 2)
+        - (2, 4)
       - 'thresh_func_node':
         - (1, 2)
       - 'register_node':
@@ -253,7 +253,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 2)
       - 'run_tracking_node':
-        - (2, 8)
+        - (4, 8)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':
