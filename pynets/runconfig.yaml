@@ -215,7 +215,7 @@ plotting:
               - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'fetch_nodes_and_labels_node':
-        - (6, 8)
+        - (6, 12)
       - 'save_nifti_parcels_node':
         - (4, 2)
       - 'gtab_node':
@@ -231,7 +231,7 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_anat_node':
         - (2, 0.5)
       - 'node_gen_node':
-        - (4, 8)
+        - (6, 12)
       - 'get_node_membership_node':
         - (2, 6)
       - 'check_orient_and_dims_dwi_node':
@@ -239,21 +239,21 @@ resource_dict: # Nipype workflow resource settings
       - 'get_anisopwr_node':
         - (2, 2)
       - 'extract_ts_node':
-        - (4, 8)
+        - (6, 12)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
-        - (2, 4)
+        - (2, 8)
       - 'thresh_func_node':
         - (1, 2)
       - 'register_node':
-        - (4, 3)
+        - (8, 16)
       - 'register_atlas_node':
-        - (1, 1)
+        - (2, 4)
       - 'get_fa_node':
         - (2, 2)
       - 'run_tracking_node':
-        - (4, 8)
+        - (8, 16)
       - 'thresh_diff_node':
         - (1, 1.5)
       - 'dsn_node':
@@ -261,7 +261,7 @@ resource_dict: # Nipype workflow resource settings
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (3, 6)
+        - (4, 8)
       - 'build_multigraphs_node':
         - (2, 8)
       - 'plot_all_struct_func_node':
@@ -306,7 +306,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
 execution_dict: # Nipype workflow global settings
     - 'stop_on_first_crash':
-        - False
+        - True
     - 'crashfile_format':
         - 'txt'
     - 'parameterize_dirs':
@@ -328,7 +328,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.1
+        - 0.2
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':
