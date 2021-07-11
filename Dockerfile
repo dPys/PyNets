@@ -88,7 +88,9 @@ RUN apt-get update -qq \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
-    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
+    && mount -o remount /tmp \
+    && head -c 10G </dev/urandom > /tmp/10G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -183,7 +185,9 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir /outputs && \
     chmod -R 777 /outputs \
     && mkdir /working && \
-    chmod -R 777 /working
+    chmod -R 777 /working \
+    && rm -f /tmp/10G_heap.txt \
+    && mount -o remount /tmp
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
