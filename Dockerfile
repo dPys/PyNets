@@ -206,9 +206,4 @@ ENV OPENBLAS_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
 ENV QT_QPA_PLATFORM=offscreen
 
-#SHELL ["/bin/bash", "-c"]
-
 RUN . /home/neuro/.bashrc
-
-# and add it as an entrypoint
-ENTRYPOINT ["mount -o remount /tmp"]
