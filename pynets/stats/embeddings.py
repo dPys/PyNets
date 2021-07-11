@@ -384,8 +384,10 @@ def build_asetomes(est_path_iterlist, ID):
             subgraph = res.split("rsn-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
-        out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
-                              n_components=n_components)
+
+            out_path = _ase_embed(mat, atlas, file_, subgraph_name=subgraph,
+                                  n_components=n_components, prune=0, norm=1)
+
         if out_path is not None:
             out_paths.append(out_path)
         else:
@@ -465,7 +467,6 @@ def build_masetome(est_path_iterlist, ID):
             pop_list,
             atlas,
             pairs[0],
-            ID,
             subgraph_name=subgraph, n_components=n_components)
 
         if out_path is not None:
@@ -647,8 +648,9 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding...")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path_list, ID, rsn,
-                                n_components
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
                             )
                             out_paths_func.append(out_path)
                         else:
@@ -668,9 +670,11 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in "
                                 "graph population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas,
-                                               graph_path_list, ID,
-                                               n_components=n_components)
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
                         out_paths_func.append(out_path)
                     else:
                         print(
@@ -697,8 +701,9 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path_list, ID,
-                                rsn, n_components
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
                             )
                             out_paths_dwi.append(out_path)
                         else:
@@ -718,9 +723,11 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas,
-                                               graph_path_list,
-                                               ID, n_components=n_components)
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
                         out_paths_dwi.append(out_path)
                     else:
                         print(
