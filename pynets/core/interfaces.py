@@ -352,6 +352,7 @@ class FetchNodesLabels(SimpleInterface):
         # TODO: Optimize this with 4d array concatenation and .npyz
 
         parcel_list_4d = concat_imgs([i for i in parcel_list])
+        del parcel_list
         out_path = f"{runtime.cwd}/parcel_list.nii.gz"
         nib.save(parcel_list_4d, out_path)
         self._results["parcel_list"] = out_path

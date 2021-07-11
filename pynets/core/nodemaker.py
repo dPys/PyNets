@@ -369,11 +369,12 @@ def get_node_membership(
       cortex from intrinsic functional connectivity MRI, Cerebral Cortex,
       29:3095-3114, 2018.
     """
+    import gc
     import pkg_resources
     import pandas as pd
     import sys
     import tempfile
-    from nilearn.image import resample_to_img, index_img
+    from nilearn.image import resample_to_img, index_img, iter_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm, \
         create_parcel_atlas, gen_img_list
 
@@ -400,9 +401,11 @@ def get_node_membership(
     if parc is True:
         if isinstance(parcel_list, str):
             parcel_list_img = nib.load(parcel_list)
-            parcel_list = list([index_img(parcel_list_img, i) for i in
+            parcel_list = iter_img([index_img(parcel_list_img, i) for i in
                                 range(parcel_list_img.shape[-1])])
             parcel_atlas = create_parcel_atlas(parcel_list)[0]
+            del parcel_list
+            gc.collect()
         else:
             parcel_atlas = create_parcel_atlas(parcel_list)[0]
         parcel_atlas_img_res = resample_to_img(
@@ -695,9 +698,7 @@ def parcel_masker(
         corresponding to ROI masks with a spatial affinity to the specified
         ROI mask.
     """
-    from nilearn.image import resample_to_img
-    from nilearn.image import math_img
-    from nilearn.image import index_img
+    from nilearn.image import resample_to_img, math_img, index_img, iter_img
     import types
     from pynets.core.utils import load_runconfig
     import pkg_resources
@@ -738,16 +739,20 @@ def parcel_masker(
     mask_data = mask_img_res.get_fdata().astype('bool')
 
     if isinstance(parcel_list, types.GeneratorType):
-        parcel_list = [i for i in parcel_list]
+        parcel_list = iter_img([resample_to_img(i, template_img,
+                                       interpolation='nearest')
+                       for i in parcel_list])
     elif isinstance(parcel_list, str):
-        parcel_list_img = nib.load(parcel_list)
-        parcel_list = [index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])]
+        parcel_list_img = resample_to_img(nib.load(parcel_list),
+                                          template_img,
+                                          interpolation='nearest')
+        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])])
 
     i = 0
     indices = []
+    parcel_list_adj = []
     for parcel in parcel_list:
-        parcel = resample_to_img(parcel, template_img, interpolation='nearest')
         # Count number of unique voxels where overlap of parcel and mask occurs
         overlap_count = len(
             np.unique(
@@ -788,10 +793,11 @@ def parcel_masker(
         else:
             indices.append(i)
         i += 1
+        parcel_list_adj.append(parcel)
 
     labels_adj = list(labels)
     coords_adj = list(tuple(x) for x in coords)
-    parcel_list_adj = parcel_list
+
     try:
         for ix in sorted(indices, reverse=True):
             print(f"{'Removing: '}{labels_adj[ix]}{' at '}{coords_adj[ix]}")
@@ -802,6 +808,8 @@ def parcel_masker(
               " brain mask/roi..."
               )
 
+    del parcel_list
+
     if not coords_adj:
         raise ValueError(
             "\nROI mask was likely too restrictive and yielded < 2"
@@ -810,7 +818,7 @@ def parcel_masker(
 
     assert len(coords_adj) == len(labels_adj) == len(parcel_list_adj)
 
-    return coords_adj, labels_adj, parcel_list_adj
+    return coords_adj, labels_adj, iter_img(parcel_list_adj)
 
 
 def coords_masker(roi, coords, labels, error, vox_size='2mm'):
@@ -1031,6 +1039,7 @@ def gen_img_list(uatlas):
             bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
     img_stack = np.array(img_stack)
+    del bna_data
 
     img_list = []
     for idy in range(par_max):
@@ -1066,7 +1075,7 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
     """
     import gc
     from nilearn.image.resampling import coord_transform
-    from nilearn.image import new_img_like, reorder_img
+    from nilearn.image import new_img_like, reorder_img, iter_img
 
     labels_img = reorder_img(nib.load(uatlas))
     labels_data = labels_img.get_fdata()
@@ -1109,7 +1118,7 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
 
     del labels_data
 
-    img_list = [new_img_like(labels_img, i) for i in new_labs]
+    img_list = iter_img([new_img_like(labels_img, i) for i in new_labs])
 
     labels_img.uncache()
     del new_labs, labels_img
@@ -1497,18 +1506,21 @@ def node_gen_masking(
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    from nilearn.image import index_img
+    import gc
+    from nilearn.image import index_img, iter_img
     from pynets.core import nodemaker
 
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
-        parcel_list = [index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])]
+        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])])
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
         roi, coords, parcel_list, labels, dir_path, ID, perc_overlap, vox_size,
     )
+    del parcel_list
+    gc.collect()
 
     if any(isinstance(sub, tuple) for sub in labels):
         label_intensities = [i[1] for i in labels]
@@ -1519,6 +1531,9 @@ def node_gen_masking(
 
     [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(
         parcel_list_masked, label_intensities)
+
+    del parcel_list_masked
+    gc.collect()
 
     assert (
         len(coords)
@@ -1579,13 +1594,14 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
     dir_path : str
         Path to directory containing subject derivative data for given run.
     """
-    from nilearn.image import index_img
+    import gc
+    from nilearn.image import index_img, iter_img
     from pynets.core import nodemaker
 
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
-        parcel_list = [index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])]
+        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
+                       range(parcel_list_img.shape[-1])])
 
     if any(isinstance(sub, tuple) for sub in labels):
         label_intensities = [i[1] for i in labels]
@@ -1596,6 +1612,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
 
     [net_parcels_map_nifti, _] = \
         nodemaker.create_parcel_atlas(parcel_list, label_intensities)
+    del parcel_list
+    gc.collect()
 
     coords = list(tuple(x) for x in coords)
 
@@ -1698,6 +1716,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         Indicates whether to use the raw parcels as ROI nodes instead of
         coordinates at their center-of-mass.
     """
+    import gc
     from pynets.core.nodemaker import get_sphere, mmToVox
     from nilearn.masking import intersect_masks
     from nilearn.image import iter_img
@@ -1749,6 +1768,8 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
             nib.Nifti1Image(
                 non_ovlp.astype("bool").astype("uint16"),
                 affine=mask_aff))
+    del parcel_list_all
+    gc.collect()
 
     par_max = len(coords)
     if par_max > 0:
