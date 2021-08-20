@@ -302,20 +302,36 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         ixs, node_dict = parse_closest_ixs(
                                             node_files, emb_shape)
                                     if isinstance(node_dict, dict):
-                                        coords = [node_dict[i]['coord'] for i
-                                                  in node_dict.keys()]
-                                        labels = [node_dict[i][
-                                            'label'][
-                                            'BrainnetomeAtlas'
-                                            'Fan2016'] for i in
-                                            node_dict.keys()]
+                                        try:
+                                            coords = [node_dict[i]['coord'] for i
+                                                      in node_dict.keys()]
+                                            try:
+                                                labels = [node_dict[i][
+                                                    'label'][
+                                                    'BrainnetomeAtlas'
+                                                    'Fan2016'] for i in
+                                                    node_dict.keys()]
+                                            except:
+                                                labels = [node_dict[i][
+                                                    'label'] for i in
+                                                    node_dict.keys()]
+                                        except ValueError:
+                                            print(comb)
                                     elif isinstance(node_dict[0], list):
-                                        coords = [node_dict[i]['coord'] for i
-                                                  in range(len(node_dict))]
-                                        labels = [node_dict[i]['label'][
-                                                      'BrainnetomeAtlas' \
-                                                      'Fan2016'] for i
-                                                  in range(len(node_dict))]
+                                        try:
+                                            coords = [node_dict[i]['coord'] for i
+                                                      in range(len(node_dict))]
+                                            try:
+                                                labels = [node_dict[i]['label'][
+                                                              'BrainnetomeAtlas' \
+                                                              'Fan2016'] for i
+                                                          in range(len(node_dict))]
+                                            except:
+                                                labels = [node_dict[i][
+                                                    'label'] for i in
+                                                    node_dict.keys()]
+                                        except ValueError:
+                                            print(comb)
                                     else:
                                         print(f"Failed to parse coords/"
                                               f"labels from {node_files}. "

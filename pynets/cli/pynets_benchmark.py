@@ -34,25 +34,25 @@ def main():
     # Parse inputs
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
-    base_dir = '/working/multiverse_reliability/outputs'
-    #base_dir = '/working/HNU/outputs_func'
-    thr_type = "PROP"
-    icc = False
-    disc = True
+    #base_dir = '/working/hcp_test_retest'
+    base_dir = '/working/HNU/outputs_dwi'
+    thr_type = "MST"
+    icc = True
+    disc = False
     int_consist = False
     modality = 'dwi'
 
     embedding_types = ['ASE']
-    rsns = ['kmeans', 'language', 'ventral', 'triple']
-    template = 'CN200'
-    # template = 'MNI152_T1'
+    rsns = ['intersection', 'language', 'ventral', 'union']
+    # template = 'CN200'
+    template = 'MNI152_T1'
     mets = []
 
     metaparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
     metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
-    sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-    #sessions = ['1', '2', '3']
+    #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    sessions = ['1', '2', '3']
     ####
 
     print(f"{Fore.LIGHTBLUE_EX}\nBenchmarking API\n")
@@ -209,10 +209,11 @@ def main():
             )
         # outs = []
         # for comb in grid:
-        #     outs.append(benchmark_reproducibility(base_dir, comb, modality,
-        #     embedding_type, sub_dict_clean,
+        #     outs.append(benchmark_reproducibility(
+        #             base_dir, comb, modality, embedding_type, sub_dict_clean,
         #             disc, final_missingness_summary, icc_tmps_dir, icc,
-        #             mets, ids))
+        #             mets, ids, template
+        #         ))
 
         df_summary = pd.concat([i for i in outs if i is not None and not
                                 i.empty], axis=0)

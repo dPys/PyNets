@@ -132,8 +132,11 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     else:
         # Add a null tmp file to prevent pool from breaking
         out_path = f"{namer_dir}/gradient-OMNI" \
-                   f"_{atlas}_{subgraph_name}_" \
+                   f"_rsn-{atlas}_res-{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
+        # TODO: Replace this band-aid solution with the real fix
+        out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                'res-')
         if not os.path.exists(out_path):
             os.mknod(out_path)
     return out_path
@@ -325,6 +328,8 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     #                f"_{subgraph_name}" \
     #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
+    # TODO: Replace this band-aid solution with the real fix
+    out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-', 'res-')
     #dump(ase, out_path_est)
 
     print("Saving...")
@@ -397,7 +402,11 @@ def build_asetomes(est_path_iterlist, ID):
             if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
-                       f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
+                       f"_rsn-{atlas}_res-{subgraph}_" \
+                       f"{os.path.basename(file_)}_NULL"
+            # TODO: Replace this band-aid solution with the real fix
+            out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                    'res-')
             if not os.path.exists(out_path):
                 os.mknod(out_path)
             out_paths.append(out_path)

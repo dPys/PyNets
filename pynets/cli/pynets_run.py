@@ -3493,12 +3493,23 @@ def build_workflow(args, retval):
                     except BaseException:
                         continue
         if dwi_file:
+            
+            remove_recons = True
+
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
                 [i for i in glob.glob(
                     f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
+                    try:
+                        os.remove(file_)
+                    except BaseException:
+                        continue
+            if remove_recons is True:
+                for file_ in [i for i in glob.glob(f"{subj_dir}/dwi/*/*/"
+                                                   f"tractography/*.hdf5") if
+                              os.path.isfile(i)]:
                     try:
                         os.remove(file_)
                     except BaseException:
