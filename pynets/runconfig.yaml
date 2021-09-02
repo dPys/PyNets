@@ -231,7 +231,7 @@ resource_dict: # Nipype workflow resource settings
       - 'pass_meta_outs_struct_node':
         - (1, 2)
       - 'fetch_nodes_and_labels_node':
-        - (6, 12)
+        - (4, 8)
       - 'save_nifti_parcels_node':
         - (4, 4)
       - 'gtab_node':
@@ -247,7 +247,7 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_anat_node':
         - (2, 2)
       - 'node_gen_node':
-        - (6, 12)
+        - (4, 8)
       - 'prep_spherical_nodes_node':
         - (6, 12)
       - 'get_node_membership_node':
@@ -257,9 +257,9 @@ resource_dict: # Nipype workflow resource settings
       - 'get_anisopwr_node':
         - (2, 2)
       - 'extract_ts_node':
-        - (8, 16)
+        - (4, 8)
       - 'extract_ts_info_node':
-        - (8, 16)
+        - (2, 4)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
@@ -271,7 +271,7 @@ resource_dict: # Nipype workflow resource settings
       - 'thresh_info_node':
         - (1, 2)
       - 'register_node':
-        - (8, 16)
+        - (4, 8)
       - 'register_atlas_node':
         - (2, 4)
       - 'RegisterParcellation2MNIFunc_node':
@@ -279,7 +279,7 @@ resource_dict: # Nipype workflow resource settings
       - 'get_fa_node':
         - (2, 2)
       - 'run_tracking_node':
-        - (8, 16)
+        - (4, 8)
       - 'dsn_node':
         - (1, 2)
       - 'plot_all_node':
