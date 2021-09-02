@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Copyright (C) 2016
+Copyright (C) 2017
 @authors: Derek Pisner
 """
 import pandas as pd
@@ -671,7 +671,7 @@ def make_param_grids():
 
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
-               predict_type, search_method='grid', n_jobs=1):
+               predict_type, search_method='grid', razor=False, n_jobs=1):
 
     # Instantiate an inner-fold
     if predict_type == 'regressor':
@@ -691,8 +691,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
         refit_score = "f1"
         feature_selector = f_classif
 
-    # N Features
-    n_comps = [10]
+    # k Features
+    k = [10]
 
     # Instantiate a working dictionary of performance within a bootstrap
     means_all_exp_var = {}
@@ -703,7 +703,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     for estimator_name, estimator in sorted(estimators.items()):
         if pca_reduce is True and X.shape[0] < X.shape[1]:
             param_grid = {
-                "feature_select__n_components": n_comps,
+                "feature_select__n_components": k,
             }
 
             # Pipeline feature selection (PCA) with model fitting
@@ -716,20 +716,22 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                     (estimator_name, estimator),
                 ]
             )
-
-            refit = RazorCV.standard_error("n_components", True, refit_score)
-            # refit = refit_score
+            if razor is True:
+                refit = RazorCV.standard_error("n_components", True,
+                                               refit_score)
+            else:
+                refit = refit_score
         else:
-            # <25 Features, don't perform feature selection, but produce a
+            # <k Features, don't perform feature selection, but produce a
             # userwarning
-            if X.shape[1] < 25:
+            if X.shape[1] <= min(k):
                 param_grid = {}
                 pipe = Pipeline([(estimator_name, estimator)])
 
                 refit = refit_score
             else:
                 param_grid = {
-                    "feature_select__k": n_comps,
+                    "feature_select__k": k,
                 }
                 pipe = Pipeline(
                     [
@@ -737,9 +739,10 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                         (estimator_name, estimator),
                     ]
                 )
-
-                # refit = refit_score
-                refit = RazorCV.standard_error("k", True, refit_score)
+                if razor is True:
+                    refit = RazorCV.standard_error("k", True, refit_score)
+                else:
+                    refit = refit_score
 
         ## Model-specific naming chunk 1
         # Make hyperparameter search-spaces
@@ -815,13 +818,13 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
         ## Model-specific naming chunk 2
 
         if pca_reduce is True and X.shape[0] < X.shape[1]:
-            best_n_comps = pipe_grid_cv.best_estimator_.named_steps[
+            best_k = pipe_grid_cv.best_estimator_.named_steps[
                 'feature_select'].n_components
             best_estimator_name = f"{predict_type}-{estimator_name}" \
                                   f"_{hyperparam_space}_nfeatures-" \
-                                  f"{best_n_comps}"
+                                  f"{best_k}"
         else:
-            if X.shape[1] < 25:
+            if X.shape[1] <= min(k):
                 best_estimator_name = \
                     f"{predict_type}-{estimator_name}_{hyperparam_space}"
             else:
@@ -850,8 +853,8 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
         est.alpha = float(best_estimator.split("alpha-")[1].split('_')[0])
     else:
         raise ValueError('Prediction method not recognized')
-    ## Model-specific naming chunk 3
 
+    ## Model-specific naming chunk 3
     if pca_reduce is True and X.shape[0] < X.shape[1]:
         pca = decomposition.PCA(
             n_components=int(best_estimator.split("nfeatures-")[1].split(
@@ -862,7 +865,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                         (best_estimator.split(f"{predict_type}-")[1].split(
                             '_')[0], est)])
     else:
-        if X.shape[1] < 25:
+        if X.shape[1] <= min(k):
             reg = Pipeline([(best_estimator.split(
                 f"{predict_type}-")[1].split('_')[0], est)])
         else:
@@ -1082,37 +1085,40 @@ class EnsembleClassifier(BaseEstimator, ClassifierMixin):
         return self.ensemble_fitted.predict(X)
 
 
-def build_stacked_ensemble(X, y, base_estimators, boot,
+def build_stacked_ensemble(X, y, base_estimators, boot, pca_reduce,
                            k_folds_inner, predict_type='classifier',
                            search_method='grid', prefixes=[],
-                           stacked_folds=10):
-    from sklearn.ensemble import RandomForestClassifier, StackingClassifier
-    from sklearn.metrics import brier_score_loss
+                           stacked_folds=10, voting=True):
+    from sklearn import ensemble
+    from sklearn import metrics
     from sklearn.pipeline import Pipeline
     from sklearn.compose import ColumnTransformer
 
-    meta_estimators= {
-        # "lr": LogisticRegression(random_state=boot),
-        # "svm": LinearSVC(random_state=boot),
-        "rfc": RandomForestClassifier(random_state=boot)
-    }
+    if predict_type == 'regressor':
+        scoring = ["explained_variance", "neg_mean_squared_error"]
+        refit_score = "explained_variance"
+    elif predict_type == 'classifier':
+        scoring = ["f1", "neg_mean_squared_error"]
+        refit_score = "f1"
 
     ens_estimators = {}
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         test_size=0.20,
-                                                        random_state=0,
+                                                        random_state=42,
                                                         shuffle=True,
                                                         stratify=y)
 
     feature_subspaces = split_df_to_dfs_by_prefix(X_train, prefixes=prefixes)
 
-    for meta_est_name, meta_est in meta_estimators.items():
+    if voting is True:
         layer_ests = []
+        layer_weights = []
         for X_subspace in feature_subspaces:
             final_est, best_estimator = nested_fit(
-                X_subspace, y_train, base_estimators, boot, False,
-                k_folds_inner, predict_type, search_method=search_method
+                X_subspace, y_train, base_estimators, boot, pca_reduce,
+                k_folds_inner, predict_type,
+                search_method=search_method
             )
 
             final_est.steps.insert(0, ('selector', ColumnTransformer([
@@ -1120,20 +1126,112 @@ def build_stacked_ensemble(X, y, base_estimators, boot,
                 ], remainder="drop")))
             layer_ests.append((list(set([i.split('_')[0] for i in
                                          X_subspace.columns]))[0], final_est))
+            prediction = cross_validate(
+                final_est,
+                X_train,
+                y_train,
+                cv=k_folds_inner,
+                scoring='f1',
+                return_estimator=False,
+            )
+            layer_weights.append(np.nanmean(prediction['test_score']))
 
-        ec = StackingClassifier(estimators=layer_ests,
-                                final_estimator=meta_est, passthrough=True,
-                                cv=stacked_folds)
+        norm_weights = [float(i) / sum(layer_weights) for i in layer_weights]
+        ec = ensemble.VotingClassifier(estimators=layer_ests,
+                                       voting='soft',
+                                       weights=np.array(norm_weights))
 
         ensemble_fitted = ec.fit(X_train, y_train)
+        meta_est_name = 'voting'
         ens_estimators[meta_est_name] = {}
         ens_estimators[meta_est_name]['model'] = ensemble_fitted
-        ens_estimators[meta_est_name]['score'] = brier_score_loss(
+        ens_estimators[meta_est_name]['error'] = metrics.brier_score_loss(
             ensemble_fitted.predict(X_test), y_test)
+        ens_estimators[meta_est_name]['score'] = \
+            metrics.balanced_accuracy_score(
+            ensemble_fitted.predict(X_test), y_test)
+    else:
+        # param_grid_rfc = {
+        #     'n_estimators': [200, 500],
+        #     'max_features': ['auto', 'sqrt', 'log2'],
+        #     'max_depth': [4, 5, 6, 7, 8],
+        #     'criterion': ['gini', 'entropy']
+        # }
+        #
+        # rfc = ensemble.RandomForestClassifier(random_state=boot)
+        # CV_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid_rfc,
+        #                       cv=StratifiedKFold(n_splits=k_folds_inner,
+        #                                          shuffle=True,
+        #                            random_state=boot),
+        #                       refit=refit_score,
+        #                       scoring=scoring)
+
+        # param_grid_gbc = {
+        #     "loss": ["deviance"],
+        #     "learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
+        #     "min_samples_split": np.linspace(0.1, 0.5, 12),
+        #     "min_samples_leaf": np.linspace(0.1, 0.5, 12),
+        #     "max_depth": [3, 5, 8],
+        #     "max_features": ["log2", "sqrt"],
+        #     "criterion": ["friedman_mse", "mae"],
+        #     "subsample": [0.5, 0.618, 0.8, 0.85, 0.9, 0.95, 1.0],
+        #     "n_estimators": [10]
+        # }
+        #
+        # gbc = ensemble.GradientBoostingClassifier(random_state=boot)
+        # CV_gbc = GridSearchCV(estimator=gbc, param_grid=param_grid_gbc,
+        #                       cv=KFold(n_splits=k_folds_inner),
+        #                       refit=refit_score,
+        #                       scoring=["f1", "neg_mean_squared_error"])
+
+        from sklearn.linear_model import LinearRegression
+        from sklearn.naive_bayes import GaussianNB
+
+        if predict_type == 'classifier':
+            reg = GaussianNB()
+            meta_name = 'nb'
+        elif predict_type == 'regressor':
+            reg = LinearRegression(normalize=True)
+            meta_name = 'lr'
+        else:
+            raise ValueError('predict_type not recognized!')
+
+        meta_estimators = {
+            meta_name: reg,
+        }
+
+        for meta_est_name, meta_est in meta_estimators.items():
+            layer_ests = []
+            for X_subspace in feature_subspaces:
+                final_est, best_estimator = nested_fit(
+                    X_subspace, y_train, base_estimators, boot, pca_reduce,
+                    k_folds_inner, predict_type, search_method=search_method
+                )
+
+                final_est.steps.insert(0, ('selector', ColumnTransformer([
+                        ("selector", "passthrough", list(X_subspace.columns))
+                    ], remainder="drop")))
+                layer_ests.append((list(set([i.split('_')[0] for i in
+                                             X_subspace.columns]))[0],
+                                   final_est))
+
+            ec = ensemble.StackingClassifier(estimators=layer_ests,
+                                             final_estimator=meta_est,
+                                             passthrough=False,
+                                             cv=stacked_folds)
+
+            ensemble_fitted = ec.fit(X_train, y_train)
+            ens_estimators[meta_est_name] = {}
+            ens_estimators[meta_est_name]['model'] = ensemble_fitted
+            ens_estimators[meta_est_name]['error'] = metrics.brier_score_loss(
+                ensemble_fitted.predict(X_test), y_test)
+            ens_estimators[meta_est_name]['score'] = \
+                metrics.balanced_accuracy_score(
+                ensemble_fitted.predict(X_test), y_test)
 
     # Select best SuperLearner
     best_estimator = min(ens_estimators,
-                         key=lambda v: ens_estimators[v]['score'])
+                         key=lambda v: ens_estimators[v]['error'])
     final_est = Pipeline([(best_estimator,
                            ens_estimators[best_estimator]['model'])])
     return final_est, best_estimator
@@ -1192,7 +1290,7 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
             )
         )
     else:
-        if X.shape[1] < 25:
+        if 'feature_select' not in list(fitted.named_steps.keys()):
             best_positions = list(X.columns)
         else:
             best_positions = [
@@ -1234,13 +1332,16 @@ def boot_nested_iteration(X, y, predict_type, boot,
                           k_folds_inner=10, k_folds_outer=10,
                           pca_reduce=True, dummy_run=False,
                           search_method='grid', stack=False,
-                          stack_prefix_list=[]):
+                          stack_prefix_list=[], voting=True):
 
     # Grab CV prediction values
     if predict_type == 'classifier':
         final_scorer = 'roc_auc'
     else:
         final_scorer = 'r2'
+
+    if stack is True:
+        k_folds_outer = len(stack_prefix_list)**2
 
     # Instantiate a dictionary of estimators
     if predict_type == 'regressor':
@@ -1284,9 +1385,10 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     if stack is True and predict_type == 'classifier':
         final_est, best_estimator = build_stacked_ensemble(
-            X, y, estimators, boot,
+            X, y, estimators, boot, False,
             k_folds_inner, predict_type=predict_type,
-            search_method=search_method, prefixes=stack_prefix_list)
+            search_method=search_method, prefixes=stack_prefix_list,
+            stacked_folds=k_folds_outer, voting=voting)
     else:
         final_est, best_estimator = nested_fit(
             X, y, estimators, boot, pca_reduce, k_folds_inner, predict_type,
@@ -1307,13 +1409,17 @@ def boot_nested_iteration(X, y, predict_type, boot,
     if stack is True:
         for super_fitted in prediction["estimator"]:
             for sub_fitted in super_fitted.named_steps[best_estimator].estimators_:
-                X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X))
+                X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X), columns=sub_fitted.named_steps['selector'].get_feature_names())
                 best_sub_estimator = [i for i in sub_fitted.named_steps.keys() if i in list(estimators.keys())[0] and i is not 'selector'][0]
                 best_positions, feat_imp_dict = get_feature_imp(
                     X_subspace, pca_reduce, sub_fitted, best_sub_estimator, predict_type,
                     dummy_run, stack)
                 feature_imp_dicts.append(feat_imp_dict)
                 best_positions_list.append(best_positions)
+                # print(X_subspace[list(best_positions)].columns)
+                # print(len(X_subspace[list(best_positions)].columns))
+                # X_subspace[list(best_positions)].to_csv(f"X_{X_subspace.columns[0][:3].upper()}_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
+        # y.to_csv(f"y_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
     else:
         for fitted in prediction["estimator"]:
             best_positions, feat_imp_dict = get_feature_imp(
@@ -1398,14 +1504,15 @@ def bootstrapped_nested_cv(
     stack=False,
     stack_prefix_list=[],
     remove_multi=True,
-    n_jobs=2
+    n_jobs=2,
+    voting=True
 ):
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
 
     # Preprocess data
     [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns,
-                            remove_multi=remove_multi)
+                            remove_multi=remove_multi, oversample=True)
 
     if X.empty or len(X.columns) < 5:
         return (
@@ -1438,7 +1545,7 @@ def bootstrapped_nested_cv(
         delayed(boot_nested_iteration)(X, y, predict_type, boot,
                               [], [], {}, {}, {}, {}, dummy_run=dummy_run,
                               search_method=search_method, stack=stack,
-                              stack_prefix_list=stack_prefix_list)
+                              stack_prefix_list=stack_prefix_list, voting=True)
         for boot in range(0, n_boots))
 
     feature_imp_dicts = []
@@ -1768,9 +1875,18 @@ class MakeXY(SimpleInterface):
                     drop_cols = [self.inputs.target_var,
                                  "rum_inertia",
                                  "dep_inertia",
-                                 "dep_1", "rum_1", "dep_2", "rum_2"]
+                                 "dep_1", "rum_1", "dep_2", "rum_2",
+                                 'MDE_conversion', 'MDE_chronic']
 
-                drop_cols = drop_cols + ['Behavioral_brooding_severity', 'Behavioral_emotion_utilization', 'Behavioral_social_ability_sum', 'Behavioral_disability', 'Behavioral_emotional_appraisal', 'Behavioral_emotional_control', 'Behavioral_Trait_anxiety', 'Behavioral_State_anxiety', 'Behavioral_perceptual_IQ']
+                drop_cols = drop_cols + ['Behavioral_brooding_severity',
+                                         'Behavioral_emotion_utilization',
+                                         'Behavioral_social_ability_sum',
+                                         'Behavioral_disability',
+                                         'Behavioral_emotional_appraisal',
+                                         'Behavioral_emotional_control',
+                                         'Behavioral_Trait_anxiety',
+                                         'Behavioral_State_anxiety',
+                                         'Behavioral_perceptual_IQ']
 
                 drop_cols = drop_cols + ["id", "participant_id"]
 

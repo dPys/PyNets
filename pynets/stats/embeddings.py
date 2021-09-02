@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @author: Derek Pisner
 """
 from pathlib import Path
@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def _omni_embed(pop_array, atlas, graph_path_list, ID,
+def _omni_embed(pop_array, atlas, graph_path_list,
                 subgraph_name="all_nodes", n_components=None, norm=1):
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
@@ -108,7 +108,7 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
                                                      omni_fit.shape[0]))
 
         out_path = (
-            f"{namer_dir}/gradient-OMNI_{atlas}_{subgraph_name}_"
+            f"{namer_dir}/gradient-OMNI_rsn-{atlas}_res-{subgraph_name}_"
             f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
         )
 
@@ -132,14 +132,17 @@ def _omni_embed(pop_array, atlas, graph_path_list, ID,
     else:
         # Add a null tmp file to prevent pool from breaking
         out_path = f"{namer_dir}/gradient-OMNI" \
-                   f"_{atlas}_{subgraph_name}_" \
+                   f"_rsn-{atlas}_res-{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
+        # TODO: Replace this band-aid solution with the real fix
+        out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                'res-')
         if not os.path.exists(out_path):
             os.mknod(out_path)
     return out_path
 
 
-def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
+def _mase_embed(pop_array, atlas, graph_path, subgraph_name="all_nodes",
                 n_components=2):
     """
     Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
@@ -229,7 +232,7 @@ def _mase_embed(pop_array, atlas, graph_path, ID, subgraph_name="all_nodes",
     return out_path
 
 
-def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
+def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
                n_components=None, prune=0, norm=1):
     """
 
@@ -320,11 +323,13 @@ def _ase_embed(mat, atlas, graph_path, ID, subgraph_name="all_nodes",
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
-               f"_{atlas}_{subgraph_name}_{os.path.basename(graph_path)}"
+               f"_rsn-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
     # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
     #                f"_{subgraph_name}" \
     #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
+    # TODO: Replace this band-aid solution with the real fix
+    out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-', 'res-')
     #dump(ase, out_path_est)
 
     print("Saving...")
@@ -384,8 +389,10 @@ def build_asetomes(est_path_iterlist, ID):
             subgraph = res.split("rsn-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
-        out_path = _ase_embed(mat, atlas, file_, ID, subgraph_name=subgraph,
-                              n_components=n_components)
+
+            out_path = _ase_embed(mat, atlas, file_, subgraph_name=subgraph,
+                                  n_components=n_components, prune=0, norm=1)
+
         if out_path is not None:
             out_paths.append(out_path)
         else:
@@ -395,7 +402,11 @@ def build_asetomes(est_path_iterlist, ID):
             if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
-                       f"_{atlas}_{subgraph}_{os.path.basename(file_)}_NULL"
+                       f"_rsn-{atlas}_res-{subgraph}_" \
+                       f"{os.path.basename(file_)}_NULL"
+            # TODO: Replace this band-aid solution with the real fix
+            out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                    'res-')
             if not os.path.exists(out_path):
                 os.mknod(out_path)
             out_paths.append(out_path)
@@ -465,7 +476,6 @@ def build_masetome(est_path_iterlist, ID):
             pop_list,
             atlas,
             pairs[0],
-            ID,
             subgraph_name=subgraph, n_components=n_components)
 
         if out_path is not None:
@@ -647,8 +657,9 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding...")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path_list, ID, rsn,
-                                n_components
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
                             )
                             out_paths_func.append(out_path)
                         else:
@@ -668,9 +679,11 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in "
                                 "graph population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas,
-                                               graph_path_list, ID,
-                                               n_components=n_components)
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
                         out_paths_func.append(out_path)
                     else:
                         print(
@@ -697,8 +710,9 @@ def build_omnetome(est_path_iterlist, ID):
                                     " vertices in graph population "
                                     "that precludes embedding")
                             out_path = _omni_embed(
-                                pop_rsn_list, atlas, graph_path_list, ID,
-                                rsn, n_components
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
                             )
                             out_paths_dwi.append(out_path)
                         else:
@@ -718,9 +732,11 @@ def build_omnetome(est_path_iterlist, ID):
                             raise RuntimeWarning(
                                 "Inconsistent number of vertices in graph"
                                 " population that precludes embedding")
-                        out_path = _omni_embed(pop_list, atlas,
-                                               graph_path_list,
-                                               ID, n_components=n_components)
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
                         out_paths_dwi.append(out_path)
                     else:
                         print(

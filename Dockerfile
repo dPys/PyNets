@@ -88,7 +88,8 @@ RUN apt-get update -qq \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
-    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
+    && head -c 10G </dev/urandom > /tmp/10G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -183,7 +184,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir /outputs && \
     chmod -R 777 /outputs \
     && mkdir /working && \
-    chmod -R 777 /working
+    chmod -R 777 /working \
+    && rm -f /tmp/10G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
@@ -204,9 +206,4 @@ ENV OPENBLAS_NUM_THREADS=4 \
     OMP_NUM_THREADS=4
 ENV QT_QPA_PLATFORM=offscreen
 
-#SHELL ["/bin/bash", "-c"]
-
 RUN . /home/neuro/.bashrc
-
-# and add it as an entrypoint
-#ENTRYPOINT ["/bin/bash"]

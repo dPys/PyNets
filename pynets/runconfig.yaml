@@ -137,6 +137,22 @@ local_atlases:
     - 'sub-colin27_label-L2018_desc-scale3_atlas'
     - 'sub-colin27_label-L2018_desc-scale4_atlas'
     - 'sub-colin27_label-L2018_desc-scale5_atlas'
+    - 'rsn-intersection_res-200'
+    - 'rsn-intersection_res-400'
+    - 'rsn-intersection_res-600'
+    - 'rsn-intersection_res-800'
+    - 'rsn-language_res-200'
+    - 'rsn-language_res-400'
+    - 'rsn-language_res-600'
+    - 'rsn-language_res-800'
+    - 'rsn-union_res-200'
+    - 'rsn-union_res-400'
+    - 'rsn-union_res-600'
+    - 'rsn-union_res-800'
+    - 'rsn-ventral_res-200'
+    - 'rsn-ventral_res-400'
+    - 'rsn-ventral_res-600'
+    - 'rsn-ventral_res-800'
 labeling_atlases:
     - 'talairach_labels'
     - 'mni_labels'
@@ -172,11 +188,6 @@ gradients:
 #    db_path:
 #    username:
 #    password:
-#sentiment_labeling:
-#    liwc_file:
-#        - '/Users/derekpisner/Documents/LIWC2015_English.dic' # Must be purchased and licensed. Visit https://liwc.wpengine.com/ for more information.
-#    neurosynth_db:
-#        - '/Users/derekpisner/Documents/neurosynth_nimare_with_abstracts.pkl.gz' # https://nimare.readthedocs.io/
 plotting:
     connectogram:
         - False
@@ -203,24 +214,42 @@ plotting:
             color_theme:
               - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
+      - 'pass_meta_ins_node':
+        - (1, 2)
+      - 'pass_meta_outs_node':
+        - (1, 2)
+      - 'pass_meta_ins_multi_node':
+        - (1, 2)
+      - 'pass_meta_outs_multi_node':
+        - (1, 2)
+      - 'pass_meta_ins_func_node':
+        - (1, 2)
+      - 'pass_meta_outs_func_node':
+        - (1, 2)
+      - 'pass_meta_ins_struct_node':
+        - (1, 2)
+      - 'pass_meta_outs_struct_node':
+        - (1, 2)
       - 'fetch_nodes_and_labels_node':
-        - (4, 6)
+        - (4, 8)
       - 'save_nifti_parcels_node':
-        - (4, 1)
+        - (4, 4)
       - 'gtab_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'save_coords_and_labels_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'check_orient_and_dims_func_node':
         - (2, 4)
       - 'check_orient_and_dims_mask_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'check_orient_and_dims_uatlas_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'check_orient_and_dims_anat_node':
-        - (2, 0.5)
+        - (2, 2)
       - 'node_gen_node':
         - (4, 8)
+      - 'prep_spherical_nodes_node':
+        - (6, 12)
       - 'get_node_membership_node':
         - (2, 6)
       - 'check_orient_and_dims_dwi_node':
@@ -229,28 +258,34 @@ resource_dict: # Nipype workflow resource settings
         - (2, 2)
       - 'extract_ts_node':
         - (4, 8)
+      - 'extract_ts_info_node':
+        - (2, 4)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
-        - (2, 2)
+        - (2, 8)
       - 'thresh_func_node':
         - (1, 2)
+      - 'thresh_diff_node':
+        - (1, 1.5)
+      - 'thresh_info_node':
+        - (1, 2)
       - 'register_node':
-        - (4, 3)
+        - (4, 8)
       - 'register_atlas_node':
-        - (1, 1)
+        - (2, 4)
+      - 'RegisterParcellation2MNIFunc_node':
+        - (2, 4)
       - 'get_fa_node':
         - (2, 2)
       - 'run_tracking_node':
-        - (3, 10)
-      - 'thresh_diff_node':
-        - (1, 1.5)
+        - (4, 8)
       - 'dsn_node':
         - (1, 2)
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (3, 6)
+        - (4, 8)
       - 'build_multigraphs_node':
         - (2, 8)
       - 'plot_all_struct_func_node':
@@ -258,6 +293,14 @@ resource_dict: # Nipype workflow resource settings
       - 'mase_embedding_node':
         - (2, 6)
       - 'omni_embedding_node':
+        - (1, 2)
+      - 'omni_embedding_node_func':
+        - (1, 2)
+      - 'omni_embedding_node_struct':
+        - (1, 2)
+      - 'ase_embedding_node_func':
+        - (1, 2)
+      - 'ase_embedding_node_struct':
         - (1, 2)
       - 'join_iters_node_thr':
         - (1, 4)
@@ -286,11 +329,11 @@ resource_dict: # Nipype workflow resource settings
       - 'AggregateOutputs':
         - (1, 3)
       - 'load_mat_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'load_mat_ext_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'save_mat_thresholded_node':
-        - (1, 0.5)
+        - (1, 1)
       - 'CombineOutputs':
         - (1, 1)
 execution_dict: # Nipype workflow global settings
@@ -317,7 +360,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.1
+        - 0.2
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

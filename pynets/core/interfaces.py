@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -352,6 +352,7 @@ class FetchNodesLabels(SimpleInterface):
         # TODO: Optimize this with 4d array concatenation and .npyz
 
         parcel_list_4d = concat_imgs([i for i in parcel_list])
+        del parcel_list
         out_path = f"{runtime.cwd}/parcel_list.nii.gz"
         nib.save(parcel_list_4d, out_path)
         self._results["parcel_list"] = out_path
@@ -1815,7 +1816,6 @@ class RegisterAtlasDWI(SimpleInterface):
             t1_aligned_mni_tmp_path,
             t1w2dwi_bbr_xfm_tmp_path,
             t1w2dwi_xfm_tmp_path,
-            wm_gm_int_in_dwi_tmp_path,
             t1w_brain_tmp_path
         ]
         for j in reg_tmp:
@@ -3252,7 +3252,6 @@ class Tracking(SimpleInterface):
                 self._results["streams"] = None
                 self._results["dm_path"] = None
             tmp_files = [gtab_file_tmp_path,
-                         labels_im_file_tmp_path_wm_gm_int,
                          wm_in_dwi_tmp_path, gm_in_dwi_tmp_path,
                          vent_csf_in_dwi_tmp_path, t1w2dwi_tmp_path]
 
@@ -3296,9 +3295,9 @@ class Tracking(SimpleInterface):
                     os.system(f"rm -f {j} &")
 
         # Exercise caution when deleting copied recon_path
-        if recon_path is not None:
-            if os.path.isfile(recon_path):
-                os.remove(recon_path)
+        # if recon_path is not None:
+        #     if os.path.isfile(recon_path):
+        #         os.remove(recon_path)
 
         return runtime
 

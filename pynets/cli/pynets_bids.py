@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-PyNets BIDS cli
+Copyright (C) 2017
+@author: Derek Pisner (dPys)
 """
 import bids
 
