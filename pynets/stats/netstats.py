@@ -1,6 +1,1088 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Copyright (C) 2017
+@authors: Derek Pisner
+"""
+from pynets.stats.benchmarking import *
+
+
+def main():
+    import sys
+    import os
+    from datetime import datetime
+    from joblib import Parallel, delayed
+    import tempfile
+    import dill
+    from pynets.stats.utils import make_subject_dict, cleanNullTerms, \
+        get_ensembles_top, get_ensembles_embedding, \
+        build_grid
+    from colorama import Fore, Style
+    try:
+        import pynets
+    except ImportError:
+        print(
+            "PyNets not installed! Ensure that you are referencing the correct"
+            " site-packages and using Python3.6+"
+        )
+
+    if len(sys.argv) < 1:
+        print("\nMissing command-line inputs! See help options with the -h"
+              " flag.\n")
+        sys.exit(1)
+
+    # Parse inputs
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
+    #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
+    #base_dir = '/working/hcp_test_retest'
+    base_dir = '/media/dpys/data/HCP_trt'
+    thr_type = "MST"
+    icc = False
+    disc = True
+    int_consist = False
+    modality = 'func'
+
+    embedding_types = ['ASE', 'OMNI', 'betweenness', 'eigenvector']
+    rsns = ['intersection', 'language', 'ventral', 'union']
+    # template = 'CN200'
+    template = 'MNI152_T1'
+    mets = []
+
+    metaparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
+    metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
+
+    #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    sessions = ['1', '2']
+    ####
+
+    print(f"{Fore.LIGHTBLUE_EX}\nBenchmarking API\n")
+
+    print(Style.RESET_ALL)
+
+    print(f"{Fore.LIGHTGREEN_EX}Gathering sampled data...")
+
+    print(Style.RESET_ALL)
+
+    for embedding_type in embedding_types:
+        subject_dict_file_path = (
+            f"{base_dir}/pynets_subject_dict_{modality}_"
+            f"{embedding_type}_{template}_{rsns}.pkl"
+        )
+        subject_mod_grids_file_path = (
+            f"{base_dir}/pynets_modality_grids_{modality}_"
+            f"{embedding_type}_{template}_{rsns}.pkl"
+        )
+        missingness_summary = (
+            f"{base_dir}/pynets_missingness_summary_{modality}_"
+            f"{embedding_type}_{template}_{rsns}.csv"
+        )
+        icc_tmps_dir = f"{base_dir}/icc_tmps/{rsns}_{modality}_" \
+                       f"{embedding_type}"
+        os.makedirs(icc_tmps_dir, exist_ok=True)
+        if not os.path.isfile(subject_dict_file_path):
+            subject_dict, modality_grids, missingness_frames = \
+                make_subject_dict(
+                    [modality], base_dir, thr_type, mets, [embedding_type],
+                    template, sessions, rsns
+                )
+            sub_dict_clean = cleanNullTerms(subject_dict)
+            missingness_frames = [i for i in missingness_frames if
+                                  isinstance(i, pd.DataFrame)]
+            if len(missingness_frames) != 0:
+                if len(missingness_frames) > 0:
+                    if len(missingness_frames) > 1:
+                        final_missingness_summary = pd.concat(
+                            missingness_frames)
+                        final_missingness_summary.to_csv(missingness_summary,
+                                                         index=False)
+                        final_missingness_summary.id = \
+                            final_missingness_summary.id.astype(
+                                'str').str.split('_', expand=True)[0]
+                    elif len(missingness_frames) == 1:
+                        final_missingness_summary = missingness_frames[0]
+                        final_missingness_summary.to_csv(missingness_summary,
+                                                         index=False)
+                        final_missingness_summary.id = \
+                            final_missingness_summary.id.astype(
+                                'str').str.split('_', expand=True)[0]
+                    else:
+                        final_missingness_summary = pd.Series()
+                else:
+                    final_missingness_summary = pd.Series()
+            else:
+                final_missingness_summary = pd.Series()
+            with open(subject_dict_file_path, "wb") as f:
+                dill.dump(sub_dict_clean, f)
+            f.close()
+            with open(subject_mod_grids_file_path, "wb") as f:
+                dill.dump(modality_grids, f)
+            f.close()
+        else:
+            with open(subject_dict_file_path, 'rb') as f:
+                sub_dict_clean = dill.load(f)
+            f.close()
+            with open(subject_mod_grids_file_path, "rb") as f:
+                modality_grids = dill.load(f)
+            f.close()
+            if os.path.isfile(missingness_summary):
+                final_missingness_summary = pd.read_csv(missingness_summary)
+                final_missingness_summary.id = \
+                    final_missingness_summary.id.astype('str').str.split(
+                        '_', expand=True)[0]
+            else:
+                final_missingness_summary = pd.Series()
+        ids = sub_dict_clean.keys()
+
+        # print(f"MODALITY: {modality}")
+        metaparams = eval(f"metaparams_{modality}")
+        metaparam_dict = {}
+
+        # print(f"EMBEDDING TYPE: {embedding_type}")
+        # if os.path.isfile(f"{base_dir}/grid_clean_{modality}_{alg}.csv"):
+        #     continue
+
+        if embedding_type == 'topology':
+            ensembles, df_top = get_ensembles_top(modality, thr_type,
+                                                  f"{base_dir}/pynets")
+        else:
+            ensembles = get_ensembles_embedding(modality, embedding_type,
+                                                base_dir)
+        grid = build_grid(
+            modality, metaparam_dict, sorted(list(set(metaparams))),
+            ensembles)[1]
+
+        grid = [i for i in grid if any(n in i for n in rsns)]
+
+        good_grids = []
+        for grid_param in grid:
+            grid_finds = []
+            for ID in ids:
+                if ID not in sub_dict_clean.keys():
+                    print(f"ID: {ID} not found...")
+                    continue
+
+                if str(sessions[0]) not in sub_dict_clean[ID].keys():
+                    print(f"Session: {sessions[0]} not found for ID {ID}...")
+                    continue
+
+                if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
+                    print(f"Modality: {modality} not found for ID {ID}, "
+                          f"ses-{sessions[0]}...")
+                    continue
+
+                if embedding_type not in \
+                    sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                    print(
+                        f"Modality: {modality} not found for ID {ID}, "
+                        f"ses-{sessions[0]}, {embedding_type}..."
+                    )
+                    continue
+
+                if grid_param in \
+                    list(sub_dict_clean[ID][str(sessions[0])][modality][
+                             embedding_type].keys()):
+                    grid_finds.append(grid_param)
+            if len(grid_finds) < 0.75 * len(ids):
+                print(
+                    f"Less than 75% of {grid_param} found. Removing from "
+                    f"grid...")
+                continue
+            else:
+                good_grids.append(grid_param)
+
+        modality_grids[modality] = good_grids
+
+        cache_dir = tempfile.mkdtemp()
+
+        with Parallel(
+            n_jobs=-1, backend='loky',
+            verbose=10, max_nbytes='200000M',
+            temp_folder=cache_dir
+        ) as parallel:
+            outs = parallel(
+                delayed(benchmark_reproducibility)(
+                    base_dir, comb, modality, embedding_type, sub_dict_clean,
+                    disc, final_missingness_summary, icc_tmps_dir, icc,
+                    mets, ids, template
+                )
+                for comb in grid
+            )
+        # outs = []
+        # for comb in grid:
+        #     outs.append(benchmark_reproducibility(
+        #             base_dir, comb, modality, embedding_type, sub_dict_clean,
+        #             disc, final_missingness_summary, icc_tmps_dir, icc,
+        #             mets, ids, template
+        #         ))
+
+        df_summary = pd.concat([i for i in outs if i is not None and not
+                                i.empty], axis=0)
+        df_summary = df_summary.dropna(axis=0, how='all')
+        print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_"
+              f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
+        df_summary.to_csv(f"{base_dir}"
+                          f"/grid_clean_{modality}_{embedding_type}_{rsns}_"
+                          f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
+                          f".csv", index=False)
+
+        # int_consist
+        if int_consist is True and embedding_type == 'topology':
+            try:
+                import pingouin as pg
+            except ImportError:
+                print(
+                    "Cannot evaluate test-retest int_consist. pingouin"
+                    " must be installed!")
+
+            df_summary_cronbach = pd.DataFrame(
+                columns=['modality', 'embedding', 'cronbach'])
+            df_summary_cronbach.at[0, "modality"] = modality
+            df_summary_cronbach.at[0, "embedding"] = embedding_type
+
+            for met in mets:
+                cronbach_ses_list = []
+                for ses in range(1, len(sessions)):
+                    id_dict = {}
+                    for ID in ids:
+                        id_dict[ID] = {}
+                        for comb in grid:
+                            if modality == 'func':
+                                try:
+                                    extract, hpass, model, res, atlas, \
+                                        smooth = comb
+                                except BaseException:
+                                    print(f"Missing {comb}...")
+                                    extract, hpass, model, res, atlas = comb
+                                    smooth = '0'
+                                comb_tuple = (
+                                    atlas, extract, hpass, model, res,
+                                    smooth)
+                            else:
+                                directget, minlength, model, res, atlas, \
+                                    tol = comb
+                                comb_tuple = (
+                                    atlas, directget, minlength, model,
+                                    res, tol)
+                            if comb_tuple in sub_dict_clean[ID][str(ses)][
+                                    modality][embedding_type].keys():
+                                if isinstance(sub_dict_clean[ID][str(ses)][
+                                    modality][embedding_type
+                                              ][comb_tuple], np.ndarray):
+                                    id_dict[ID][comb] = sub_dict_clean[ID][
+                                        str(ses)][modality][embedding_type
+                                                            ][comb_tuple][
+                                        mets.index(met)][0]
+                                else:
+                                    continue
+                            else:
+                                continue
+                    df_wide = pd.DataFrame(id_dict)
+                    if df_wide.empty is True:
+                        continue
+                    else:
+                        df_wide = df_wide.add_prefix(f"{met}_comb_")
+                        df_wide.replace(0, np.nan, inplace=True)
+                        print(df_wide)
+                    try:
+                        c_alpha = pg.cronbach_alpha(data=df_wide.dropna(
+                            axis=1, how='all'), nan_policy='listwise')
+                        cronbach_ses_list.append(c_alpha[0])
+                    except BaseException:
+                        print('FAILED...')
+                        print(df_wide)
+                        del df_wide
+                    del df_wide
+                df_summary_cronbach.at[0, f"average_cronbach_{met}"] = \
+                    np.nanmean(cronbach_ses_list)
+            print(f"Saving to {base_dir}/grid_clean_{modality}_"
+                  f"{embedding_type}_cronbach_"
+                  f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
+            df_summary_cronbach.to_csv(
+                f"{base_dir}/grid_clean_{modality}_"
+                f"{embedding_type}_cronbach"
+                f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
+                f".csv", index=False)
+
+    return
+
+
+if __name__ == "__main__":
+    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
+               "frozen_importlib.BuiltinImporter'>)"
+    main()
+(base) dpys@zinc:~/Applications/PyNets$ cat pynets/stats/embeddings.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Nov  7 10:40:07 2017
+Copyright (C) 2017
+@author: Derek Pisner
+"""
+from pathlib import Path
+import os
+import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+def _omni_embed(pop_array, atlas, graph_path_list,
+                subgraph_name="all_nodes", n_components=None, prune=0, norm=1):
+    """
+    Omnibus embedding of arbitrary number of input graphs with matched vertex
+    sets.
+
+    Given :math:`A_1, A_2, ..., A_m` a collection of (possibly weighted)
+    adjacency matrices of a collection :math:`m` undirected graphs with
+    matched vertices.
+    Then the :math:`(mn \times mn)` omnibus matrix, :math:`M`, has the
+    subgraph where :math:`M_{ij} = \frac{1}{2}(A_i + A_j)`. The omnibus
+    matrix is then embedded using adjacency spectral embedding.
+
+
+    Parameters
+    ----------
+    pop_array : list of nx.Graph or ndarray, or ndarray
+        If list of nx.Graph, each Graph must contain same number of nodes.
+        If list of ndarray, each array must have shape (n_vertices,
+        n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices,
+        n_vertices).
+    atlas : str
+        The name of an atlas (indicating the node definition).
+    graph_pathlist : list
+        List of file paths to graphs in pop_array.
+    ID : str
+        An arbitrary subject identifier.
+    subgraph_name : str
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing omni embedding tensor.
+
+    References
+    ----------
+    .. [1] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E.
+      (2017, November). A central limit theorem for an omnibus embedding of
+      multiple random dot product graphs. In Data Mining Workshops (ICDMW),
+      2017 IEEE International Conference on (pp. 964-967). IEEE.
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K.,
+      Helm, H. S., & Vogelstein, J. T. (2019). Graspy: Graph statistics in
+      python. Journal of Machine Learning Research.
+
+    """
+    import os
+    import networkx as nx
+    import numpy as np
+    from pynets.core.utils import flatten
+    from graspologic.embed.omni import OmnibusEmbed
+    from graspologic.embed.mds import ClassicalMDS
+    from joblib import dump
+    from pynets.stats.netstats import CleanGraphs
+
+    dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
+
+    namer_dir = f"{dir_path}/embeddings"
+    if os.path.isdir(namer_dir) is False:
+        os.makedirs(namer_dir, exist_ok=True)
+
+    clean_mats = []
+    i = 0
+    for graph_path in graph_path_list:
+        if 'thr-' in graph_path:
+            thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
+        else:
+            thr = 1.0
+        cg = CleanGraphs(thr,
+                         graph_path.split('model-')[1].split('_')[
+                             0], graph_path, prune, norm, pop_array[i])
+
+        if float(norm) >= 1:
+            G = cg.normalize_graph()
+            mat_clean = nx.to_numpy_array(G)
+        else:
+            mat_clean = pop_array[i]
+
+        mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
+        if np.isnan(np.sum(mat_clean)) == False:
+            clean_mats.append(mat_clean)
+        i += 1
+
+    clean_mats = [i for i in clean_mats if np.isfinite(i).all()]
+
+    if len(clean_mats) > 0:
+        # Omnibus embedding
+        print(
+            f"{'Embedding unimodal omnetome for atlas: '}{atlas} and "
+            f"{subgraph_name}{'...'}"
+        )
+        omni = OmnibusEmbed(n_components=n_components, check_lcc=False)
+        mds = ClassicalMDS(n_components=n_components)
+        omni_fit = omni.fit_transform(clean_mats)
+
+        # Transform omnibus tensor into dissimilarity feature
+        mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
+                                                     omni_fit.shape[2],
+                                                     omni_fit.shape[0]))
+
+        out_path = (
+            f"{namer_dir}/gradient-OMNI_rsn-{atlas}_res-{subgraph_name}_"
+            f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
+        )
+
+        # out_path_est_omni = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                     f"{subgraph_name}_" \
+        #                     f"{os.path.basename(graph_path).split(
+        #                     '_thrtype')[0]}" \
+        #                     f"_MDS.joblib"
+        # out_path_est_mds = f"{namer_dir}/gradient-OMNI_{atlas}_" \
+        #                    f"{subgraph_name}_" \
+        #                    f"{os.path.basename(graph_path).split(
+        #                    '_thrtype')[0]}" \
+        #                    f"_MDS.joblib"
+
+        # dump(omni, out_path_est_omni)
+        # dump(omni, out_path_est_mds)
+
+        print("Saving...")
+        np.save(out_path, mds_fit)
+        del mds, mds_fit, omni, omni_fit
+    else:
+        # Add a null tmp file to prevent pool from breaking
+        out_path = f"{namer_dir}/gradient-OMNI" \
+                   f"_rsn-{atlas}_res-{subgraph_name}_" \
+                   f"{os.path.basename(graph_path_list[0])}_NULL"
+        # TODO: Replace this band-aid solution with the real fix
+        out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                'res-')
+        if not os.path.exists(out_path):
+            os.mknod(out_path)
+    return out_path
+
+
+def _mase_embed(pop_array, atlas, graph_path, subgraph_name="all_nodes",
+                n_components=2):
+    """
+    Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
+    input graphs with matched vertex sets.
+
+    For a population of undirected graphs, MASE assumes that the population of
+    graphs is sampled from :math:`VR^{(i)}V^T` where :math:`V \in
+    \mathbb{R}^{n\times d}` and :math:`R^{(i)} \in \mathbb{R}^{d\times d}`.
+    Score matrices, :math:`R^{(i)}`, are allowed to vary for each graph, but
+    are symmetric. All graphs share a common a latent position matrix
+    :math:`V`.
+
+    For a population of directed graphs, MASE assumes that the population is
+    sampled from :math:`UR^{(i)}V^T` where :math:`U \in
+    \mathbb{R}^{n\times d_1}`,
+    :math:`V \in \mathbb{R}^{n\times d_2}`, and
+    :math:`R^{(i)} \in \mathbb{R}^{d_1\times d_2}`. In this case, score
+    matrices
+    :math:`R^{(i)}` can be assymetric and non-square, but all graphs still
+    share a common latent position matrices :math:`U` and :math:`V`.
+
+
+    Parameters
+    ----------
+    pop_array : list of nx.Graph or ndarray, or ndarray
+        If list of nx.Graph, each Graph must contain same number of nodes.
+        If list of ndarray, each array must have shape (n_vertices,
+        n_vertices). If ndarray, then array must have shape (n_graphs,
+        n_vertices, n_vertices).
+    atlas : str
+    graph_path : str
+    ID : str
+    subgraph_name : str
+    n_components : int
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing MASE embedding.
+
+    References
+    ----------
+    .. [1] Inference for multiple heterogeneous networks with a common
+      invariant subspace J Arroyo, A Athreya, J Cape, G Chen, CE Priebe,
+      JT Vogelstein arXiv preprint arXiv:1906.10026
+    .. [2] Chung, J., Pedigo, B. D., Bridgeford, E. W., Varjavand, B. K.,
+      Helm, H. S., & Vogelstein, J. T. (2019). Graspy: Graph statistics in
+      python. Journal of Machine Learning Research.
+
+    """
+    import os
+    import numpy as np
+    from graspologic.embed.mase import MultipleASE
+    from joblib import dump
+
+    # Multiple Adjacency Spectral embedding
+    print(
+        f"{'Embedding multimodal masetome for atlas: '}{atlas} and "
+        f"{subgraph_name}{'...'}"
+    )
+    mase = MultipleASE(n_components=n_components)
+
+    clean_mats = [i for i in pop_array if np.isfinite(i).all()]
+
+    if len(pop_array) != len(clean_mats):
+        return None
+
+    dir_path = str(Path(os.path.dirname(graph_path)))
+    namer_dir = f"{dir_path}/mplx_embeddings"
+    if os.path.isdir(namer_dir) is False:
+        os.makedirs(namer_dir, exist_ok=True)
+
+    out_path = (
+        f"{namer_dir}/gradient-MASE_{atlas}_{subgraph_name}"
+        f"_{os.path.basename(graph_path)}"
+    )
+    out_path_est = f"{namer_dir}/gradient-MASE_{atlas}_" \
+                   f"{subgraph_name}" \
+                   f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
+
+    dump(mase, out_path_est)
+
+    print("Saving...")
+    np.save(out_path, mase.fit_transform(clean_mats))
+    del mase
+
+    return out_path
+
+
+def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
+               n_components=None, prune=0, norm=1):
+    """
+
+    Class for computing the adjacency spectral embedding of a graph.
+
+    The adjacency spectral embedding (ASE) is a k-dimensional Euclidean
+    representation of the graph based on its adjacency matrix. It relies on an
+    SVD to reduce the dimensionality to the specified k, or if k is
+    unspecified, can find a number of dimensions automatically
+
+    Parameters
+    ----------
+    mat : ndarray or nx.Graph
+        An nxn adjacency matrix or graph object.
+    atlas : str
+        The name of an atlas (indicating the node definition).
+    graph_path : str
+    ID : str
+    subgraph_name : str
+
+    Returns
+    -------
+    out_path : str
+        File path to .npy file containing ASE embedding tensor.
+
+    Notes
+    -----
+    The singular value decomposition:
+
+    .. math:: A = U \Sigma V^T
+
+    is used to find an orthonormal basis for a matrix, which in our case is the
+    adjacency matrix of the graph. These basis vectors (in the matrices U or
+    V) are ordered according to the amount of variance they explain in the
+    original matrix. By selecting a subset of these basis vectors (through
+    our choice of dimensionality reduction) we can find a lower dimensional
+    space in which to represent the graph.
+
+    References
+    ----------
+    .. [1] Sussman, D.L., Tang, M., Fishkind, D.E., Priebe, C.E.  "A
+      Consistent Adjacency Spectral Embedding for Stochastic Blockmodel
+      Graphs," Journal of the American Statistical Association,
+      Vol. 107(499), 2012
+
+    """
+    import os
+    import pickle
+    import networkx as nx
+    import numpy as np
+    from pynets.core.utils import flatten
+    from graspologic.embed.ase import AdjacencySpectralEmbed
+    from joblib import dump
+    from pynets.stats.netstats import CleanGraphs
+
+    # Adjacency Spectral embedding
+    print(
+        f"{'Embedding unimodal asetome for atlas: '}{atlas} and "
+        f"{subgraph_name}{'...'}"
+    )
+    ase = AdjacencySpectralEmbed(n_components=n_components)
+
+    if 'thr-' in graph_path:
+        thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
+    else:
+        thr = 1.0
+
+    cg = CleanGraphs(thr,
+                     graph_path.split('model-')[1].split('-')[1].split('_')[0],
+                     graph_path, prune, norm, mat)
+
+    if float(norm) >= 1:
+        G = cg.normalize_graph()
+        mat_clean = nx.to_numpy_array(G)
+    else:
+        mat_clean = mat
+
+    if float(prune) >= 1:
+        graph_path_tmp = cg.prune_graph()[1]
+        with open(f"{graph_path_tmp}.pkl", "rb") as input_file:
+            G_pruned = pickle.load(input_file)
+        input_file.close()
+        mat_clean = nx.to_numpy_matrix(G_pruned)
+
+    mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
+
+    if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
+        return None
+
+    ase_fit = ase.fit_transform(mat_clean)
+
+    dir_path = str(Path(os.path.dirname(graph_path)).parent)
+
+    namer_dir = f"{dir_path}/embeddings"
+    if os.path.isdir(namer_dir) is False:
+        os.makedirs(namer_dir, exist_ok=True)
+
+    out_path = f"{namer_dir}/gradient-ASE" \
+               f"_rsn-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
+    # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
+    #                f"_{subgraph_name}" \
+    #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
+
+    # TODO: Replace this band-aid solution with the real fix
+    out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-', 'res-')
+    #dump(ase, out_path_est)
+
+    print("Saving...")
+    np.save(out_path, ase_fit)
+    del ase, ase_fit
+
+    return out_path
+
+
+def build_asetomes(est_path_iterlist, ID):
+    """
+    Embeds single graphs using the ASE algorithm.
+
+    Parameters
+    ----------
+    est_path_iterlist : list
+        List of file paths to .npy files, each containing a graph.
+    ID : str
+        A subject id or other unique identifier.
+
+    """
+    from pathlib import Path
+    import os
+    import numpy as np
+    from pynets.core.utils import prune_suffices, flatten
+    from pynets.stats.embeddings import _ase_embed
+    from pynets.core.utils import load_runconfig
+
+    # Available functional and structural connectivity models
+    hardcoded_params = load_runconfig()
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        import sys
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
+
+    if isinstance(est_path_iterlist, list):
+        est_path_iterlist = list(flatten(est_path_iterlist))
+    else:
+        est_path_iterlist = [est_path_iterlist]
+
+    out_paths = []
+    for file_ in est_path_iterlist:
+        mat = np.load(file_)
+        if np.isfinite(mat).all() == False:
+            continue
+
+        atlas = prune_suffices(file_.split("/")[-3])
+        res = prune_suffices("_".join(file_.split(
+            "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
+        if "rsn" in res:
+            subgraph = res.split("rsn-")[1].split('_')[0]
+        else:
+            subgraph = "all_nodes"
+
+            out_path = _ase_embed(mat, atlas, file_, subgraph_name=subgraph,
+                                  n_components=n_components, prune=0, norm=1)
+
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(file_)).parent)
+            namer_dir = f"{dir_path}/embeddings"
+            if os.path.isdir(namer_dir) is False:
+                os.makedirs(namer_dir, exist_ok=True)
+            out_path = f"{namer_dir}/gradient-ASE" \
+                       f"_rsn-{atlas}_res-{subgraph}_" \
+                       f"{os.path.basename(file_)}_NULL"
+            # TODO: Replace this band-aid solution with the real fix
+            out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+                                                                    'res-')
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
+            out_paths.append(out_path)
+
+    return out_paths
+
+
+def build_masetome(est_path_iterlist, ID):
+    """
+    Embeds structural-functional graph pairs into a common invariant subspace.
+
+    Parameters
+    ----------
+    est_path_iterlist : list
+        List of list of pairs of file paths (.npy) corresponding to
+        structural and functional connectomes matched at a given node
+        resolution.
+    ID : str
+        A subject id or other unique identifier.
+
+    References
+    ----------
+    .. [1] Rosenthal, G., Váša, F., Griffa, A., Hagmann, P., Amico, E., Goñi,
+      J., Sporns, O. (2018). Mapping higher-order relations between brain
+      structure and function with embedded vector representations of
+      connectomes. Nature Communications.
+      https://doi.org/10.1038/s41467-018-04614-w
+
+    """
+    from pathlib import Path
+    import os
+    import numpy as np
+    from pynets.core.utils import prune_suffices
+    from pynets.stats.embeddings import _mase_embed
+    from pynets.core.utils import load_runconfig
+
+    # Available functional and structural connectivity models
+    hardcoded_params = load_runconfig()
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        import sys
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
+
+    out_paths = []
+    for pairs in est_path_iterlist:
+        pop_list = []
+        for _file in pairs:
+            mat = np.load(_file)
+            if np.isfinite(mat).all():
+                pop_list.append(mat)
+        if len(pop_list) != len(pairs):
+            continue
+        atlas = prune_suffices(pairs[0].split("/")[-3])
+        res = prune_suffices("_".join(pairs[0].split(
+            "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
+        if "rsn" in res:
+            subgraph = res.split("rsn-")[1].split('_')[0]
+        else:
+            subgraph = "all_nodes"
+        out_path = _mase_embed(
+            pop_list,
+            atlas,
+            pairs[0],
+            subgraph_name=subgraph, n_components=n_components)
+
+        if out_path is not None:
+            out_paths.append(out_path)
+        else:
+            # Add a null tmp file to prevent pool from breaking
+            dir_path = str(Path(os.path.dirname(pairs[0])))
+            namer_dir = f"{dir_path}/mplx_embeddings"
+            if os.path.isdir(namer_dir) is False:
+                os.makedirs(namer_dir, exist_ok=True)
+
+            out_path = (
+                f"{namer_dir}/gradient-MASE_{atlas}_{subgraph}"
+                f"_{os.path.basename(pairs[0])}_NULL"
+            )
+            if not os.path.exists(out_path):
+                os.mknod(out_path)
+            out_paths.append(out_path)
+
+    return out_paths
+
+
+def build_omnetome(est_path_iterlist, ID):
+    """
+    Embeds ensemble population of graphs into an embedded ensemble feature
+    vector.
+
+    Parameters
+    ----------
+    est_path_iterlist : list
+        List of file paths to .npy file containing graph.
+    ID : str
+        A subject id or other unique identifier.
+
+    References
+    ----------
+    .. [1] Liu, Y., He, L., Cao, B., Yu, P. S., Ragin, A. B., & Leow, A. D.
+      (2018). Multi-view multi-graph embedding for brain network clustering
+      analysis. 32nd AAAI Conference on Artificial Intelligence, AAAI 2018.
+    .. [2] Levin, K., Athreya, A., Tang, M., Lyzinski, V., & Priebe, C. E.
+      (2017, November). A central limit theorem for an omnibus embedding of
+      multiple random dot product graphs. In Data Mining Workshops (ICDMW),
+      2017 IEEE International Conference on (pp. 964-967). IEEE.
+
+    """
+    from pathlib import Path
+    import sys
+    import numpy as np
+    from pynets.core.utils import flatten
+    from pynets.stats.embeddings import _omni_embed
+    from pynets.core.utils import load_runconfig
+
+    # Available functional and structural connectivity models
+    hardcoded_params = load_runconfig()
+
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError:
+        print(
+            "ERROR: available functional models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        struct_models = hardcoded_params["available_models"][
+            "struct_models"]
+    except KeyError:
+        print(
+            "ERROR: available structural models not sucessfully extracted"
+            " from runconfig.yaml"
+        )
+        sys.exit(1)
+    try:
+        n_components = hardcoded_params["gradients"][
+            "n_components"][0]
+    except KeyError:
+        print(
+            "ERROR: available gradient dimensionality presets not "
+            "sucessfully extracted from runconfig.yaml"
+        )
+        sys.exit(1)
+
+    if isinstance(est_path_iterlist, list):
+        est_path_iterlist = list(flatten(est_path_iterlist))
+    else:
+        est_path_iterlist = [est_path_iterlist]
+
+    if len(est_path_iterlist) > 1:
+        atlases = list(set([x.split("/")[-3].split("/")[0]
+                            for x in est_path_iterlist]))
+        parcel_dict_func = dict.fromkeys(atlases)
+        parcel_dict_dwi = dict.fromkeys(atlases)
+
+        est_path_iterlist_dwi = list(
+            set(
+                [
+                    i
+                    for i in est_path_iterlist
+                    if i.split("model-")[1].split("_")[0] in struct_models
+                ]
+            )
+        )
+        est_path_iterlist_func = list(
+            set(
+                [
+                    i
+                    for i in est_path_iterlist
+                    if i.split("model-")[1].split("_")[0] in func_models
+                ]
+            )
+        )
+
+        if "_rsn" in ";".join(est_path_iterlist_func):
+            func_subnets = list(
+                set([i.split("_rsn-")[1].split("_")[0] for i in
+                     est_path_iterlist_func])
+            )
+        else:
+            func_subnets = []
+        if "_rsn" in ";".join(est_path_iterlist_dwi):
+            dwi_subnets = list(
+                set([i.split("_rsn-")[1].split("_")[0] for i in
+                     est_path_iterlist_dwi])
+            )
+        else:
+            dwi_subnets = []
+
+        out_paths_func = []
+        out_paths_dwi = []
+        for atlas in atlases:
+            if len(func_subnets) >= 1:
+                parcel_dict_func[atlas] = {}
+                for sub_net in func_subnets:
+                    parcel_dict_func[atlas][sub_net] = []
+            else:
+                parcel_dict_func[atlas] = []
+
+            if len(dwi_subnets) >= 1:
+                parcel_dict_dwi[atlas] = {}
+                for sub_net in dwi_subnets:
+                    parcel_dict_dwi[atlas][sub_net] = []
+            else:
+                parcel_dict_dwi[atlas] = []
+
+            for graph_path in est_path_iterlist_dwi:
+                if atlas in graph_path:
+                    if len(dwi_subnets) >= 1:
+                        for sub_net in dwi_subnets:
+                            if sub_net in graph_path:
+                                parcel_dict_dwi[atlas][sub_net].append(
+                                    graph_path)
+                    else:
+                        parcel_dict_dwi[atlas].append(graph_path)
+
+            for graph_path in est_path_iterlist_func:
+                if atlas in graph_path:
+                    if len(func_subnets) >= 1:
+                        for sub_net in func_subnets:
+                            if sub_net in graph_path:
+                                parcel_dict_func[atlas][sub_net].append(
+                                    graph_path)
+                    else:
+                        parcel_dict_func[atlas].append(graph_path)
+            if len(parcel_dict_func[atlas]) > 0:
+                if isinstance(parcel_dict_func[atlas], dict):
+                    # RSN case
+                    for rsn in parcel_dict_func[atlas]:
+                        pop_rsn_list = []
+                        graph_path_list = []
+                        for graph in parcel_dict_func[atlas][rsn]:
+                            pop_rsn_list.append(np.load(graph))
+                            graph_path_list.append(graph)
+                        if len(pop_rsn_list) > 1:
+                            if len(
+                                    list(set([i.shape for i in
+                                              pop_rsn_list]))) > 1:
+                                raise RuntimeWarning(
+                                    "Inconsistent number of"
+                                    " vertices in graph population "
+                                    "that precludes embedding...")
+                            out_path = _omni_embed(
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
+                            )
+                            out_paths_func.append(out_path)
+                        else:
+                            print(
+                                "WARNING: Only one graph sampled, omnibus"
+                                " embedding not applicable."
+                            )
+                            pass
+                else:
+                    pop_list = []
+                    graph_path_list = []
+                    for pop_ref in parcel_dict_func[atlas]:
+                        pop_list.append(np.load(pop_ref))
+                        graph_path_list.append(pop_ref)
+                    if len(pop_list) > 1:
+                        if len(list(set([i.shape for i in pop_list]))) > 1:
+                            raise RuntimeWarning(
+                                "Inconsistent number of vertices in "
+                                "graph population that precludes embedding")
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
+                        out_paths_func.append(out_path)
+                    else:
+                        print(
+                            "WARNING: Only one graph sampled, omnibus "
+                            "embedding not applicable."
+                        )
+                        pass
+
+            if len(parcel_dict_dwi[atlas]) > 0:
+                if isinstance(parcel_dict_dwi[atlas], dict):
+                    # RSN case
+                    graph_path_list = []
+                    for rsn in parcel_dict_dwi[atlas]:
+                        pop_rsn_list = []
+                        for graph in parcel_dict_dwi[atlas][rsn]:
+                            pop_rsn_list.append(np.load(graph))
+                            graph_path_list.append(graph)
+                        if len(pop_rsn_list) > 1:
+                            if len(
+                                    list(set([i.shape for i in
+                                              pop_rsn_list]))) > 1:
+                                raise RuntimeWarning(
+                                    "Inconsistent number of"
+                                    " vertices in graph population "
+                                    "that precludes embedding")
+                            out_path = _omni_embed(
+                                pop_rsn_list, atlas, graph_path_list,
+                                subgraph_name="all_nodes",
+                                n_components=n_components
+                            )
+                            out_paths_dwi.append(out_path)
+                        else:
+                            print(
+                                "WARNING: Only one graph sampled, omnibus"
+                                " embedding not applicable."
+                            )
+                            pass
+                else:
+                    pop_list = []
+                    graph_path_list = []
+                    for pop_ref in parcel_dict_dwi[atlas]:
+                        pop_list.append(np.load(pop_ref))
+                        graph_path_list.append(pop_ref)
+                    if len(pop_list) > 1:
+                        if len(list(set([i.shape for i in pop_list]))) > 1:
+                            raise RuntimeWarning(
+                                "Inconsistent number of vertices in graph"
+                                " population that precludes embedding")
+                        out_path = _omni_embed(
+                            pop_list, atlas, graph_path_list,
+                            subgraph_name="all_nodes",
+                            n_components=n_components
+                        )
+                        out_paths_dwi.append(out_path)
+                    else:
+                        print(
+                            "WARNING: Only one graph sampled, omnibus "
+                            "embedding not applicable."
+                        )
+                        pass
+    else:
+        print("At least two graphs required to build an omnetome...")
+        out_paths_func = []
+        out_paths_dwi = []
+        pass
+
+    return out_paths_dwi, out_paths_func
+
+(base) dpys@zinc:~/Applications/PyNets$ cat pynets/stats/netstats.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 @author: Derek Pisner
@@ -1412,7 +2494,6 @@ class CleanGraphs(object):
         self.in_mat = thresholding.autofix(self.in_mat)
         self.G = nx.from_numpy_array(self.in_mat)
 
-        return self.G
         return self.G
 
     def prune_graph(self, remove_self_loops=True):

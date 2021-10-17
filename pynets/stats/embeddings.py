@@ -765,5 +765,3 @@ def build_omnetome(est_path_iterlist, ID):
         pass
 
     return out_paths_dwi, out_paths_func
-
-

@@ -35,14 +35,14 @@ def main():
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/triple'
     #base_dir = '/scratch/04171/dpisner/HNU/HNU_outs/outputs_language'
     #base_dir = '/working/hcp_test_retest'
-    base_dir = '/working/HNU/outputs_dwi'
+    base_dir = '/media/dpys/data/HCP_trt'
     thr_type = "MST"
     icc = False
     disc = True
     int_consist = False
     modality = 'func'
 
-    embedding_types = ['ASE', 'OMNI', 'eigenvector', 'betweenness']
+    embedding_types = ['ASE', 'OMNI', 'betweenness', 'eigenvector']
     rsns = ['intersection', 'language', 'ventral', 'union']
     # template = 'CN200'
     template = 'MNI152_T1'
