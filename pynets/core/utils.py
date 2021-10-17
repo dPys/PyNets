@@ -1412,7 +1412,7 @@ def load_runconfig():
     shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
                  temp_path)
     with open(temp_path, mode='r+') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
     stream.close()
     os.remove(temp_path)
     del stream

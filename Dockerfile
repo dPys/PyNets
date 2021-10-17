@@ -7,8 +7,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG miniconda_version="4.3.27"
 
 ENV LANG="C.UTF-8" \
-    LC_ALL="C.UTF-8" \
-    PIP_DEFAULT_TIMEOUT=100
+    LC_ALL="C.UTF-8"
 
 RUN apt-get update -qq \
     && apt-get install -y --no-install-recommends software-properties-common \
@@ -112,10 +111,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
-    && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
     && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
