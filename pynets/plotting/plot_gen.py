@@ -184,6 +184,7 @@ def create_gb_palette(
         prune=True,
         centrality_type='eig',
         max_node_size=None,
+        max_edge_size=2,
         node_aff_mat=None):
     """
     Create connectome color palette based on graph topography.
@@ -282,7 +283,8 @@ def create_gb_palette(
     for edge_dict in [i[1] for i in nx.all_pairs_shortest_path_length(G)]:
         edge_lengths.extend(list(edge_dict.values()))
 
-    edge_sizes = np.array(minmax_scale(edge_lengths, feature_range=(0.5, 2)))
+    edge_sizes = np.array(minmax_scale(edge_lengths,
+                                       feature_range=(0.5, max_edge_size)))
 
     # Nodes
     if not node_cmap:

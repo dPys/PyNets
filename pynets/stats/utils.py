@@ -576,7 +576,7 @@ def graph_theory_prep(df, thr_type, drop_thr=0.50):
 
 def make_subject_dict(
         modalities, base_dir, thr_type, mets, embedding_types, template,
-        sessions, rsns):
+        sessions, rsns, IDS=None):
     from joblib.externals.loky import get_reusable_executor
     from joblib import Parallel, delayed
     from pynets.core.utils import mergedicts
@@ -600,11 +600,14 @@ def make_subject_dict(
         for alg in embedding_types:
             print(f"EMBEDDING TYPE: {alg}")
             for ses_name in sessions:
-                ids = [
-                    f"{os.path.basename(i)}_ses-{ses_name}"
-                    for i in glob.glob(f"{base_dir}/pynets/*")
-                    if os.path.basename(i).startswith("sub")
-                ]
+                if not IDS:
+                    ids = [
+                        f"{os.path.basename(i)}_ses-{ses_name}"
+                        for i in glob.glob(f"{base_dir}/pynets/*")
+                        if os.path.basename(i).startswith("sub")
+                    ]
+                else:
+                    ids = IDS
 
                 if alg != "topology" and alg in embedding_methods:
                     df_top = None

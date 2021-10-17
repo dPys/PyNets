@@ -242,7 +242,7 @@ def main():
     rsns = pre_args.nets
     sessions = pre_args.session_label
 
-    # Percent if subjects with usable data for a particular universe
+    # Percent of subjects with usable data for a particular universe
     grid_thr = 0.75
 
     # mets = [
@@ -257,20 +257,20 @@ def main():
     # ]
     mets = []
 
-    # import sys
-    # print(f"rsns = {rsns}")
-    # print(f"sessions = {sessions}")
-    # print(f"base_dir = {base_dir}")
-    # print(f"n_boots = {n_boots}")
-    # print(f"target_vars = {target_vars}")
-    # print(f"embedding_types = {embedding_types}")
-    # print(f"modality = {modality}")
-    # print(f"thr_type = {thr_type}")
-    # print(f"template = {template}")
-    # print(f"data_file = {data_file}")
-    # print(f"drop_cols = {drop_cols}")
-    # print(f"nuisance_cols = {nuisance_cols}")
-    # sys.exit(0)
+    import sys
+    print(f"rsns = {rsns}")
+    print(f"sessions = {sessions}")
+    print(f"base_dir = {base_dir}")
+    print(f"n_boots = {n_boots}")
+    print(f"target_vars = {target_vars}")
+    print(f"embedding_types = {embedding_types}")
+    print(f"modality = {modality}")
+    print(f"thr_type = {thr_type}")
+    print(f"template = {template}")
+    print(f"data_file = {data_file}")
+    print(f"drop_cols = {drop_cols}")
+    print(f"nuisance_cols = {nuisance_cols}")
+    #sys.exit(0)
 
     hyperparams_func = ["rsn", "res", "model", "hpass", "extract", "smooth"]
     hyperparams_dwi = ["rsn", "res", "model", "directget", "minlength", "tol"]
@@ -288,12 +288,34 @@ def main():
         f"{embedding_types}_{template}_{thr_type}.csv"
     )
 
+    # Load in data
+    if data_file.endswith(".csv"):
+        df = pd.read_csv(
+            data_file,
+            index_col=False
+        )
+    elif data_file.endswith(".pkl"):
+        df = pd.read_pickle(data_file)
+    else:
+        raise ValueError("File format not recognized for phenotype data.")
+
+    if 'tuning_set' in data_file or 'dysphoric' in data_file:
+        for ID in df["participant_id"]:
+            if len(ID) == 1:
+                df.loc[df.participant_id == ID, "participant_id"] = "s00" +\
+                                                                    str(ID)
+            if len(ID) == 2:
+                df.loc[df.participant_id == ID, "participant_id"] = "s0" + \
+                                                                    str(ID)
+
+    df = df.loc[df["usable_mri"] == True]
+
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path
     ):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
             [modality], base_dir, thr_type, mets, embedding_types, template,
-            sessions, rsns
+            sessions, rsns, IDS=list(df["participant_id"].values)
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
         missingness_frames = [i for i in missingness_frames if
@@ -317,26 +339,6 @@ def main():
         with open(subject_mod_grids_file_path, "rb") as f:
             modality_grids = dill.load(f)
         f.close()
-
-    # Load in data
-    if data_file.endswith(".csv"):
-        df = pd.read_csv(
-            data_file,
-            index_col=False
-        )
-    elif data_file.endswith(".pkl"):
-        df = pd.read_pickle(data_file)
-    else:
-        raise ValueError("File format not recognized for phenotype data.")
-
-    if 'tuning_set' in data_file or 'dysphoric' in data_file:
-        for ID in df["participant_id"]:
-            if len(ID) == 1:
-                df.loc[df.participant_id == ID, "participant_id"] = "s00" +\
-                                                                    str(ID)
-            if len(ID) == 2:
-                df.loc[df.participant_id == ID, "participant_id"] = "s0" + \
-                                                                    str(ID)
 
     # Subset only those participants which have usable data
     df = df[df["participant_id"].isin(list(sub_dict_clean.keys()))]

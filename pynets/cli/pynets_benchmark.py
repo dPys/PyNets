@@ -37,12 +37,12 @@ def main():
     #base_dir = '/working/hcp_test_retest'
     base_dir = '/working/HNU/outputs_dwi'
     thr_type = "MST"
-    icc = True
-    disc = False
+    icc = False
+    disc = True
     int_consist = False
-    modality = 'dwi'
+    modality = 'func'
 
-    embedding_types = ['ASE']
+    embedding_types = ['ASE', 'OMNI', 'eigenvector', 'betweenness']
     rsns = ['intersection', 'language', 'ventral', 'union']
     # template = 'CN200'
     template = 'MNI152_T1'
@@ -52,7 +52,7 @@ def main():
     metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
 
     #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-    sessions = ['1', '2', '3']
+    sessions = ['1', '2']
     ####
 
     print(f"{Fore.LIGHTBLUE_EX}\nBenchmarking API\n")

@@ -54,7 +54,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
             reorder="average",
             auto_fit=True,
             grid=False,
-            colorbar=False,
+            colorbar=True,
             cmap=cmap,
         )
     except RuntimeWarning:

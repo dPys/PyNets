@@ -14,7 +14,6 @@ from nipype.interfaces.base import (
     traits,
     SimpleInterface,
 )
-from scipy import stats
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, \
     cross_validate, StratifiedKFold
@@ -30,9 +29,13 @@ from pynets.core.utils import flatten
 from sklearn.svm import LinearSVC
 from sklearn.base import BaseEstimator, TransformerMixin, clone, \
     ClassifierMixin
-from sklearn.linear_model import LinearRegression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import train_test_split
+from scipy import stats
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.linear_model import LinearRegression
+from sklearn.naive_bayes import GaussianNB
 
 try:
     from sklearn.utils._testing import ignore_warnings
@@ -631,7 +634,7 @@ class DeConfounder(BaseEstimator, TransformerMixin):
         return X - X_confounds
 
 
-def de_outlier(X, y, sd, predict_type):
+def de_outlier(X, y, sd, deoutlier_type='IF'):
     """
     Remove any gross outlier row in X whose linear residual
     when regressing y against X is > sd standard deviations
@@ -640,23 +643,38 @@ def de_outlier(X, y, sd, predict_type):
     linear regression.
 
     """
-    from scipy import stats
-    from sklearn.linear_model import LinearRegression
-    from sklearn.naive_bayes import GaussianNB
-
-    if predict_type == 'classifier':
-        reg = GaussianNB()
-    elif predict_type == 'regressor':
-        reg = LinearRegression(normalize=True)
+    if deoutlier_type == 'IF':
+        model = IsolationForest(random_state=42,
+                                bootstrap=True, contamination='auto')
+        outlier_mask = model.fit_predict(X)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
+    elif deoutlier_type == 'LOF':
+        mask = np.zeros(X.shape, dtype=np.bool)
+        model = LocalOutlierFactor(n_neighbors=10, metric='mahalanobis')
+        model.fit_predict(X)
+        X_scores = model.negative_outlier_factor_
+        X_scores = (X_scores.max() - X_scores) / (
+                X_scores.max() - X_scores.min())
+        median_score = np.median(X_scores)
+        outlier_mask = np.logical_or(
+            [X_scores[i] > median_score for i in range(len(X.shape[0]))], mask)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
     else:
-        raise ValueError('predict_type not recognized!')
-    reg.fit(X, y)
-    predicted_y = reg.predict(X)
+        if deoutlier_type == 'NB':
+            model = GaussianNB()
+        elif deoutlier_type == 'LR':
+            model = LinearRegression(normalize=True)
+        else:
+            raise ValueError('predict_type not recognized!')
+        model.fit(X, y)
+        predicted_y = model.predict(X)
 
-    resids = (y - predicted_y)**2
+        resids = (y - predicted_y)**2
 
-    outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
-                    float(sd)).all(axis=1)
+        outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
+                        float(sd)).all(axis=1)
 
     return X[outlier_mask], y[outlier_mask]
 
@@ -881,7 +899,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
+def preprocess_x_y(X, y, nuisance_cols, nodrop_columns=[],
                    var_thr=.85, remove_multi=True,
                    remove_outliers=True, standardize=True,
                    std_dev=3, vif_thr=10, missingness_thr=0.50,
@@ -969,7 +987,7 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
 
     # Remove outliers
     if remove_outliers is True:
-        X, y = de_outlier(X, y, std_dev, predict_type)
+        X, y = de_outlier(X, y, std_dev, 'IF')
         if X.empty and len(y) < 50:
             print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
                   f"{X}{Style.RESET_ALL}\n\n")
@@ -993,7 +1011,8 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
             rvif = ReduceVIF(thresh=vif_thr)
             X = rvif.fit_transform(X)[0]
             if X.empty or len(X.columns) < 5:
-                print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+                print(f"\n\n{Fore.RED}Empty feature-space "
+                      f"(multicollinearity): "
                       f"{X}{Style.RESET_ALL}\n\n")
                 return X, y
         except:
@@ -1511,8 +1530,8 @@ def bootstrapped_nested_cv(
     from pynets.core.utils import mergedicts
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns,
-                            remove_multi=remove_multi, oversample=True)
+    [X, y] = preprocess_x_y(X, y, nuisance_cols, nodrop_columns,
+                            remove_multi=remove_multi, oversample=False)
 
     if X.empty or len(X.columns) < 5:
         return (

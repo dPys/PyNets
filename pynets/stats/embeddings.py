@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 
 
 def _omni_embed(pop_array, atlas, graph_path_list,
-                subgraph_name="all_nodes", n_components=None, norm=1):
+                subgraph_name="all_nodes", n_components=None, prune=0, norm=1):
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
     sets.
@@ -77,7 +77,13 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     clean_mats = []
     i = 0
     for graph_path in graph_path_list:
-        cg = CleanGraphs(None, None, graph_path, 0, norm)
+        if 'thr-' in graph_path:
+            thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
+        else:
+            thr = 1.0
+        cg = CleanGraphs(thr,
+                         graph_path.split('model-')[1].split('_')[
+                             0], graph_path, prune, norm, pop_array[i])
 
         if float(norm) >= 1:
             G = cg.normalize_graph()
@@ -294,7 +300,15 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
         f"{subgraph_name}{'...'}"
     )
     ase = AdjacencySpectralEmbed(n_components=n_components)
-    cg = CleanGraphs(None, None, graph_path, prune, norm)
+
+    if 'thr-' in graph_path:
+        thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
+    else:
+        thr = 1.0
+
+    cg = CleanGraphs(thr,
+                     graph_path.split('model-')[1].split('-')[1].split('_')[0],
+                     graph_path, prune, norm, mat)
 
     if float(norm) >= 1:
         G = cg.normalize_graph()

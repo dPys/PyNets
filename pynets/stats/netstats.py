@@ -1363,8 +1363,8 @@ class CleanGraphs(object):
         self.in_mat = np.array(
             np.array(
                 thresholding.autofix(
-                    np.abs(
-                        self.in_mat_raw))))
+                    np.array(np.abs(
+                        self.in_mat_raw)))))
 
         # Load numpy matrix as networkx graph
         self.G = nx.from_numpy_array(self.in_mat)
@@ -1412,6 +1412,7 @@ class CleanGraphs(object):
         self.in_mat = thresholding.autofix(self.in_mat)
         self.G = nx.from_numpy_array(self.in_mat)
 
+        return self.G
         return self.G
 
     def prune_graph(self, remove_self_loops=True):
