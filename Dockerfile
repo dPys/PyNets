@@ -45,8 +45,6 @@ RUN apt-get update -qq \
         libssl-dev \
         libffi-dev \
         jq \
-        nodejs \
-        npm \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -66,9 +64,10 @@ RUN apt-get update -qq \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
+    && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
     && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
     apt-get update && \
-    apt-get install -y git-lfs \
+    apt-get install -y git-lfs nodejs npm \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
