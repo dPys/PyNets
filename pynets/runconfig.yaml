@@ -249,7 +249,7 @@ resource_dict: # Nipype workflow resource settings
       - 'node_gen_node':
         - (4, 8)
       - 'prep_spherical_nodes_node':
-        - (6, 12)
+        - (4, 8)
       - 'get_node_membership_node':
         - (2, 6)
       - 'check_orient_and_dims_dwi_node':
@@ -350,7 +350,7 @@ execution_dict: # Nipype workflow global settings
     - 'matplotlib_backend':
         - 'Agg'
     - 'use_relative_paths':
-        - True
+        - False
     - 'keep_inputs':
         - False
     - 'remove_unnecessary_outputs':

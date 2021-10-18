@@ -83,7 +83,82 @@ def normalize_gradients(
     return bvecs, bvals.astype("uint16")
 
 
-def generate_sl(streamlines):
+def random_seeds_from_mask(mask, seeds_count):
+    """Create randomly placed seeds for fiber tracking from a binary mask.
+    Seeds points are placed randomly distributed in voxels of ``mask``
+    which are ``True``.
+    If ``seed_count_per_voxel`` is ``True``, this function is
+    similar to ``seeds_from_mask()``, with the difference that instead of
+    evenly distributing the seeds, it randomly places the seeds within the
+    voxels specified by the ``mask``.
+    Parameters
+    ----------
+    mask : binary 3d array_like
+        A binary array specifying where to place the seeds for fiber tracking.
+    affine : array, (4, 4)
+        The mapping between voxel indices and the point space for seeds.
+        The voxel_to_rasmm matrix, typically from a NIFTI file.
+        A seed point at the center the voxel ``[i, j, k]``
+        will be represented as ``[x, y, z]`` where
+        ``[x, y, z, 1] == np.dot(affine, [i, j, k , 1])``.
+    seeds_count : int
+        The number of seeds to generate. If ``seed_count_per_voxel`` is True,
+        specifies the number of seeds to place in each voxel. Otherwise,
+        specifies the total number of seeds to place in the mask.
+    seed_count_per_voxel: bool
+        If True, seeds_count is per voxel, else seeds_count is the total number
+        of seeds.
+    random_seed : int
+        The seed for the random seed generator (numpy.random.seed).
+    See Also
+    --------
+    seeds_from_mask
+    Raises
+    ------
+    ValueError
+        When ``mask`` is not a three-dimensional array
+    """
+    from scipy.sparse import csr_matrix
+    from scipy import prod
+
+    mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
+    if mask.ndim != 3:
+        raise ValueError('mask cannot be more than 3d')
+
+    # Randomize the voxels
+    shape = mask.shape
+    indices = np.arange(len(mask.flatten()))
+    np.random.shuffle(indices)
+
+    where = [np.unravel_index(i, shape) for i in csr_matrix(
+        (
+        np.ones(len(indices)), indices, np.arange(0, len(indices) + 1, 1)),
+        shape=(prod(shape), len(indices)), dtype=np.int,
+    ).nonzero()[1]]
+
+    seeds_per_voxel = seeds_count // len(where) + 1
+
+    return np.asarray([where + np.random.random((len(indices), 3)) - .5 for i in range(1, seeds_per_voxel + 1)][0])[:seeds_count]
+
+
+def generate_seeds(seeds):
+    """
+    Helper function that takes a sequence and returns a generator
+
+    Parameters
+    ----------
+    seeds : sequence
+        Usually, this would be a list of 2D arrays, representing seeds
+    Returns
+    -------
+    generator
+    """
+
+    for seed in seeds:
+        yield seed.astype('float32')
+
+
+def generate_sl(streamlines, min_length=0):
     """
     Helper function that takes a sequence and returns a generator
 
@@ -91,14 +166,14 @@ def generate_sl(streamlines):
     ----------
     streamlines : sequence
         Usually, this would be a list of 2D arrays, representing streamlines
-
     Returns
     -------
     generator
-
     """
+
     for sl in streamlines:
-        yield sl
+        if len(sl) >= float(min_length):
+            yield sl.astype("float32")
 
 
 def extract_b0(in_file, b0_ixs, out_path=None):

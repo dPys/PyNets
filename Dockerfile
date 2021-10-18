@@ -42,7 +42,11 @@ RUN apt-get update -qq \
         libgsl0-dev \
         openssl \
         openssh-server \
+        libssl-dev \
+        libffi-dev \
         jq \
+        nodejs \
+        npm \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -141,8 +145,10 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
 #    && pip install dask[dataframe] --upgrade \
+    && pip install cvxpy datalad==0.13.6 \
     && pip uninstall -y pandas \
     && pip install pandas -U \
+    && npm install brainlife \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -170,7 +176,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	ca-certificates \
 	gnupg \
 	g++ \
-	openssl \
 	git-lfs \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
