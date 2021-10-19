@@ -653,7 +653,10 @@ def streams2graph(
 
             # Map the streamlines coordinates to voxel coordinates and get
             # labels for label_volume
-            vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
+            s = Streamlines(s)
+            if s.data.shape[0] == 0:
+                continue
+            vox_coords = _to_voxel_coordinates(s, lin_T, offset)
 
             lab_coords = [
                 nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape)

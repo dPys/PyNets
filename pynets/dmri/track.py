@@ -526,7 +526,7 @@ def track_ensemble(
 
                 out_streams = concatenate(
                     [ArraySequence(i) for i in out_streams if
-                                    i is not None and
+                                    i is not None and i is not
                                     len(i) > 5],
                     axis=0)
 
