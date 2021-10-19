@@ -83,6 +83,24 @@ def normalize_gradients(
     return bvecs, bvals.astype("uint16")
 
 
+def generate_sl(streamlines, min_length=5):
+    """
+    Helper function that takes a sequence and returns a generator
+
+    Parameters
+    ----------
+    streamlines : sequence
+        Usually, this would be a list of 2D arrays, representing streamlines
+    Returns
+    -------
+    generator
+    """
+
+    for sl in [i for i in streamlines]:
+        if len(sl) >= float(min_length):
+            yield sl.astype("float32")
+
+
 def random_seeds_from_mask(mask, seeds_count):
     """Create randomly placed seeds for fiber tracking from a binary mask.
     Seeds points are placed randomly distributed in voxels of ``mask``
@@ -156,24 +174,6 @@ def generate_seeds(seeds):
 
     for seed in seeds:
         yield seed.astype('float32')
-
-
-def generate_sl(streamlines, min_length=0):
-    """
-    Helper function that takes a sequence and returns a generator
-
-    Parameters
-    ----------
-    streamlines : sequence
-        Usually, this would be a list of 2D arrays, representing streamlines
-    Returns
-    -------
-    generator
-    """
-
-    for sl in streamlines:
-        if len(sl) >= float(min_length):
-            yield sl.astype("float32")
 
 
 def extract_b0(in_file, b0_ixs, out_path=None):

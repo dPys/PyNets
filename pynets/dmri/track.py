@@ -413,7 +413,7 @@ def track_ensemble(
     import time
     import warnings
     import time
-    from joblib import Parallel, delayed
+    from joblib import Parallel, delayed, Memory
     import itertools
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
@@ -423,11 +423,10 @@ def track_ensemble(
     from nilearn.masking import intersect_masks
     from nilearn.image import math_img
     from pynets.core.utils import load_runconfig
+    from dipy.tracking import utils
     warnings.filterwarnings("ignore")
 
-    tmp_files_dir = f"{cache_dir}/tmp_files"
     joblib_dir = f"{cache_dir}/joblib_tracking"
-    os.makedirs(tmp_files_dir, exist_ok=True)
     os.makedirs(joblib_dir, exist_ok=True)
 
     hardcoded_params = load_runconfig()
@@ -467,7 +466,6 @@ def track_ensemble(
             connected=False,
         )
         nib.save(atlas_data_wm_gm_int_img, seeding_mask)
-        iter_ix = 5
     else:
         atlas_data_wm_gm_int_img = intersect_masks(
             [
@@ -478,7 +476,6 @@ def track_ensemble(
             connected=False,
         )
         nib.save(atlas_data_wm_gm_int_img, seeding_mask)
-        iter_ix = 4
 
     tissues4d = save_3d_to_4d([B0_mask, labels_im_file, seeding_mask,
                                t1w2dwi, gm_in_dwi, vent_csf_in_dwi, wm_in_dwi])
@@ -492,25 +489,64 @@ def track_ensemble(
     all_streams = []
     ix = 0
 
+    memory = Memory(joblib_dir, verbose=0)
+    os.chdir(joblib_dir)
+
+    @memory.cache
+    def load_recon_data(recon_path):
+        import h5py
+        with h5py.File(recon_path, 'r+') as hf:
+            recon_data = hf['reconstruction'][:].astype('float32')
+        hf.close()
+        return recon_data
+
+    recon_shelved = load_recon_data.call_and_shelve(recon_path)
+
+    @memory.cache
+    def load_tissue_data(tissues4d):
+        return nib.load(tissues4d)
+
+    tissue_shelved = load_tissue_data.call_and_shelve(tissues4d)
+
     try:
         while float(stream_counter) < float(target_samples) and \
                 float(ix) < 0.50*float(len(all_combs)):
             with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', temp_folder=joblib_dir,
                           verbose=0, timeout=timeout) as parallel:
+
                 out_streams = parallel(
                     delayed(run_tracking)(
-                        i, recon_path, n_seeds_per_iter, directget,
+                        i, recon_shelved, n_seeds_per_iter, directget,
                         maxcrossing, max_length, pft_back_tracking_dist,
                         pft_front_tracking_dist, particle_count,
-                        roi_neighborhood_tol, waymask, min_length,
+                        roi_neighborhood_tol, min_length,
                         track_type, min_separation_angle, sphere, tiss_class,
-                        tissues4d, tmp_files_dir) for i in
-                    all_combs)
+                        tissue_shelved) for i in all_combs)
 
                 out_streams = concatenate(
-                    [[i for i in out if i is not None and len(i) > 0] for out
-                     in out_streams], axis=0)
+                    [ArraySequence(i) for i in out_streams if
+                                    i is not None and
+                                    len(i) > 5],
+                    axis=0)
+
+                if waymask is not None and os.path.isfile(waymask):
+                    try:
+                        out_streams = out_streams[
+                            utils.near_roi(
+                                out_streams,
+                                np.eye(4),
+                                np.asarray(nib.load(waymask
+                                                    ).dataobj).astype(
+                                    "bool"),
+                                tol=int(round(roi_neighborhood_tol * 0.50, 1)),
+                                mode="all"
+                            )
+                        ]
+                    except BaseException:
+                        print(
+                            'No streamlines remaining in waymask\'s vacinity.')
+                        return None
 
                 if len(out_streams) < min_streams:
                     ix += 1
@@ -520,10 +556,8 @@ def track_ensemble(
                           f"anatomical constraints. Check {tissues4d} or "
                           f"{recon_path} for errors...")
                     if ix > 3:
-                        os.system(f"rm -rf {joblib_dir}/* &")
-                        os.system(f"rm -rf {tmp_files_dir} &")
                         print('No streamlines generated!')
-                        # return None
+                        return None
                     # if track_type != 'particle':
                     #     tiss_class = 'wb'
                     # roi_neighborhood_tol = float(roi_neighborhood_tol) * 1.25
@@ -551,23 +585,20 @@ def track_ensemble(
                 if time.time() > timer:
                     print(
                         f"Tractography timed out: {timer}")
-                    os.system(f"rm -rf {joblib_dir}/* &")
-                    os.system(f"rm -rf {tmp_files_dir} &")
-                    # return None
-        os.system(f"rm -rf {joblib_dir}/* &")
+                    os.system(f"rm -rf {joblib_dir} &")
+                    return None
+        os.system(f"rm -rf {joblib_dir} &")
     except RuntimeWarning as e:
         print(f"Tracking Failed:\n{e}")
-        os.system(f"rm -rf {tmp_files_dir} &")
+        os.system(f"rm -rf {joblib_dir} &")
         return None
 
     if ix >= 0.75*len(all_combs) and \
             float(stream_counter) < float(target_samples):
         print(f"Tractography failed. >{len(all_combs)} consecutive sampling "
               f"iterations with few streamlines.")
-        os.system(f"rm -rf {tmp_files_dir} &")
         return None
     else:
-        os.system(f"rm -rf {tmp_files_dir} &")
         print("Tracking Complete: ", str(time.time() - start))
 
     del parallel, all_combs
@@ -581,17 +612,15 @@ def track_ensemble(
         return None
 
 
-def run_tracking(step_curv_combinations, recon_path,
+def run_tracking(step_curv_combinations, recon_shelved,
                  n_seeds_per_iter, directget, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
-                 particle_count, roi_neighborhood_tol, waymask, min_length,
+                 particle_count, roi_neighborhood_tol, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
-                 tissues4d, cache_dir, verbose=False):
+                 tissue_shelved, verbose=False):
 
     import gc
     import time
-    import os
-    import h5py
     from dipy.tracking import utils
     from dipy.tracking.streamline import select_by_rois
     from dipy.tracking.local_tracking import LocalTracking, \
@@ -605,52 +634,9 @@ def run_tracking(step_curv_combinations, recon_path,
     from pynets.dmri.utils import generate_sl, generate_seeds, \
         random_seeds_from_mask
     from pynets.dmri.track import prep_tissues
-    from nipype.utils.filemanip import copyfile, fname_presuffix
-    import uuid
-    from time import strftime
+    from nibabel.streamlines.array_sequence import ArraySequence
 
     start_time = time.time()
-
-    run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
-
-    recon_path_tmp_path = fname_presuffix(
-        recon_path,
-        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-               f"{run_uuid}",
-        newpath=cache_dir
-    )
-    copyfile(
-        recon_path,
-        recon_path_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    tissues4d_tmp_path = fname_presuffix(
-        tissues4d,
-        suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-               f"{run_uuid}",
-        newpath=cache_dir
-    )
-    copyfile(
-        tissues4d,
-        tissues4d_tmp_path,
-        copy=True,
-        use_hardlink=False)
-
-    if waymask is not None:
-        waymask_tmp_path = fname_presuffix(
-            waymask,
-            suffix=f"_{'_'.join([str(i) for i in step_curv_combinations])}_"
-                   f"{run_uuid}",
-            newpath=cache_dir
-        )
-        copyfile(
-            waymask,
-            waymask_tmp_path,
-            copy=True,
-            use_hardlink=False)
-    else:
-        waymask_tmp_path = None
 
     if verbose is True:
         print("%s%s%s" % (
@@ -658,7 +644,7 @@ def run_tracking(step_curv_combinations, recon_path,
         np.round(time.time() - start_time, 1), 's'))
         start_time = time.time()
 
-    tissue_img = nib.load(tissues4d_tmp_path)
+    tissue_img = tissue_shelved.get()
 
     # Order:
     B0_mask = index_img(tissue_img, 0)
@@ -684,44 +670,41 @@ def run_tracking(step_curv_combinations, recon_path,
     #     np.round(time.time() - start_time, 1), 's'))
     #     start_time = time.time()
 
-    with h5py.File(recon_path_tmp_path, 'r+') as hf:
+    if verbose is True:
+        print("%s%s%s" % (
+        'Loading reconstruction:',
+        np.round(time.time() - start_time, 1), 's'))
+        start_time = time.time()
 
-        if verbose is True:
-            print("%s%s%s" % (
-            'Loading reconstruction:',
-            np.round(time.time() - start_time, 1), 's'))
-            start_time = time.time()
+        print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
-            print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
-
-        # Instantiate DirectionGetter
-        if directget.lower() in ["probabilistic", "prob"]:
-            dg = ProbabilisticDirectionGetter.from_shcoeff(
-                hf['reconstruction'][:].astype('float32'),
-                max_angle=float(step_curv_combinations[1]),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        elif directget.lower() in ["closestpeaks", "cp"]:
-            dg = ClosestPeakDirectionGetter.from_shcoeff(
-                hf['reconstruction'][:].astype('float32'),
-                max_angle=float(step_curv_combinations[1]),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        elif directget.lower() in ["deterministic", "det"]:
-            maxcrossing = 1
-            dg = DeterministicMaximumDirectionGetter.from_shcoeff(
-                hf['reconstruction'][:].astype('float32'),
-                max_angle=float(step_curv_combinations[1]),
-                sphere=sphere,
-                min_separation_angle=min_separation_angle,
-            )
-        else:
-            raise ValueError(
-                "ERROR: No valid direction getter(s) specified."
-            )
-    hf.close()
+    # Instantiate DirectionGetter
+    if directget.lower() in ["probabilistic", "prob"]:
+        dg = ProbabilisticDirectionGetter.from_shcoeff(
+            recon_shelved.get(),
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    elif directget.lower() in ["closestpeaks", "cp"]:
+        dg = ClosestPeakDirectionGetter.from_shcoeff(
+            recon_shelved.get(),
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    elif directget.lower() in ["deterministic", "det"]:
+        maxcrossing = 1
+        dg = DeterministicMaximumDirectionGetter.from_shcoeff(
+            recon_shelved.get(),
+            max_angle=float(step_curv_combinations[1]),
+            sphere=sphere,
+            min_separation_angle=min_separation_angle,
+        )
+    else:
+        raise ValueError(
+            "ERROR: No valid direction getter(s) specified."
+        )
 
     if verbose is True:
         print("%s%s%s" % (
@@ -840,39 +823,31 @@ def run_tracking(step_curv_combinations, recon_path,
               'Check registrations.')
         return None
 
+    if verbose is True:
+        print("%s%s%s" % (
+        'Selecting by parcellation:',
+        np.round(time.time() - start_time, 1), 's'))
+        start_time = time.time()
+
     del parcels
 
     gc.collect()
 
-    if waymask is not None and os.path.isfile(waymask_tmp_path):
-        try:
-            roi_proximal_streamlines = utils.near_roi(
-                    roi_proximal_streamlines,
-                    np.eye(4),
-                    np.asarray(nib.load(waymask_tmp_path
-                                        ).dataobj).astype("bool"),
-                    tol=int(round(roi_neighborhood_tol*0.50, 1)),
-                    mode="all"
-                )
-        except BaseException:
-            print('No streamlines remaining in waymask\'s vacinity.')
-            return None
-
     try:
-        roi_proximal_streamlines = generate_sl(roi_proximal_streamlines,
-                                               min_length=float(min_length))
+        roi_proximal_streamlines = generate_sl(
+            roi_proximal_streamlines, min_length=float(min_length))
 
     except BaseException:
         print('No streamlines remaining after applying minimal length '
               'criterion.')
         return None
-
-    tmp_files = [tissues4d_tmp_path, waymask_tmp_path, recon_path_tmp_path]
-    for j in tmp_files:
-        if j is not None:
-            if os.path.isfile(j):
-                os.system(f"rm -f {j} &")
+    if verbose is True:
+        print("%s%s%s" % (
+        'Selecting by minimum length criterion:',
+        np.round(time.time() - start_time, 1), 's'))
 
     gc.collect()
 
-    return roi_proximal_streamlines
+    return ArraySequence([s.astype("float32") for s in
+                          roi_proximal_streamlines])
+

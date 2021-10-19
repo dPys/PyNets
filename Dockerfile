@@ -42,8 +42,8 @@ RUN apt-get update -qq \
         libgsl0-dev \
         openssl \
         openssh-server \
-        libssl-dev \
-        libffi-dev \
+#        libssl-dev \
+#        libffi-dev \
         jq \
         gsl-bin \
         libglu1-mesa-dev \
@@ -64,10 +64,9 @@ RUN apt-get update -qq \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
-    && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
     && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
     apt-get update && \
-    apt-get install -y git-lfs nodejs npm \
+    apt-get install -y git-lfs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && curl -o /tmp/libxp6.deb -sSL http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
@@ -114,7 +113,9 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
+    && conda clean -tipsy \
     && conda install -yq python=3.6 ipython \
+    && conda clean -tipsy \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
@@ -144,10 +145,9 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
 #    && pip install dask[dataframe] --upgrade \
-    && pip install cvxpy datalad==0.13.6 \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && npm install brainlife \
+    && pip install pyOpenSSL -U \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -171,6 +171,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	gcc \
 	wget \
 	curl \
+#	openssl \
 	build-essential \
 	ca-certificates \
 	gnupg \
