@@ -36,7 +36,7 @@ tracking:
         - 16
     sphere:
         - 'repulsion724'
-    n_seeds_per_iter:  # Increasing this value will decrease runtime with distributed execution, but increase runtime with serial execution.
+    n_seeds_per_iter:  # Decreasing this value will make distributed openMP-like execution more efficient, but serial execution less efficient.
         - 500
     max_length:
         - 500
@@ -55,13 +55,13 @@ tracking:
     seeding_mask_thr:
         - 0.0075
     track_timeout:
-        - 3600 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
+        - 7200 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
 nthreads:
-    - 1
+    - 2
 graph_file_format:
     - 'npy'
 low_pass:
@@ -81,11 +81,11 @@ graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former req
 embed:
     - 'ASE'
     - 'OMNI'
-    - 'MASE'
+#    - 'MASE'
     - 'eigenvector'
-    - 'degree'
+#    - 'degree'
     - 'betweenness'
-    - 'clustering'
+#    - 'clustering'
 metaparams_func:
     - 'rsn'
     - 'res'
@@ -215,19 +215,19 @@ plotting:
               - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'pass_meta_ins_node':
-        - (1, 2)
+        - (1, 1)
       - 'pass_meta_outs_node':
         - (1, 2)
       - 'pass_meta_ins_multi_node':
-        - (1, 2)
+        - (1, 1)
       - 'pass_meta_outs_multi_node':
         - (1, 2)
       - 'pass_meta_ins_func_node':
-        - (1, 2)
+        - (1, 1)
       - 'pass_meta_outs_func_node':
         - (1, 2)
       - 'pass_meta_ins_struct_node':
-        - (1, 2)
+        - (1, 1)
       - 'pass_meta_outs_struct_node':
         - (1, 2)
       - 'fetch_nodes_and_labels_node':
@@ -245,7 +245,7 @@ resource_dict: # Nipype workflow resource settings
       - 'check_orient_and_dims_uatlas_node':
         - (1, 1)
       - 'check_orient_and_dims_anat_node':
-        - (2, 2)
+        - (1, 1)
       - 'node_gen_node':
         - (4, 8)
       - 'prep_spherical_nodes_node':
@@ -259,17 +259,17 @@ resource_dict: # Nipype workflow resource settings
       - 'extract_ts_node':
         - (4, 8)
       - 'extract_ts_info_node':
-        - (2, 4)
+        - (1, 2)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
-        - (2, 8)
+        - (2, 6)
       - 'thresh_func_node':
         - (1, 2)
       - 'thresh_diff_node':
-        - (1, 1.5)
-      - 'thresh_info_node':
         - (1, 2)
+      - 'thresh_info_node':
+        - (1, 1)
       - 'register_node':
         - (4, 8)
       - 'register_atlas_node':
@@ -285,7 +285,7 @@ resource_dict: # Nipype workflow resource settings
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
-        - (4, 8)
+        - (4, 6)
       - 'build_multigraphs_node':
         - (2, 8)
       - 'plot_all_struct_func_node':

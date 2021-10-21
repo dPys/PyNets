@@ -704,8 +704,6 @@ def parcel_masker(
     import pkg_resources
     import sys
 
-    mask_img = math_img("img > 0", img=nib.load(roi))
-
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
@@ -732,11 +730,10 @@ def parcel_masker(
             print(e, f"\nCannot load MNI template. Do you have git-lfs "
                   f"installed?")
 
-    mask_img_res = resample_to_img(
-        mask_img, template_img, interpolation='nearest'
-    )
-
-    mask_data = mask_img_res.get_fdata().astype('bool')
+    mask_data = resample_to_img(
+        math_img("img > 0", img=nib.load(roi)), template_img,
+        interpolation='nearest'
+    ).get_fdata().astype('bool')
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = iter_img([resample_to_img(i, template_img,

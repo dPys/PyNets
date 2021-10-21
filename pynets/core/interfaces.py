@@ -3104,7 +3104,7 @@ class Tracking(SimpleInterface):
             # Iteratively build a list of streamlines for each ROI while
             # tracking
             print(
-                f"{Fore.GREEN}Target number of cumulative streamlines: "
+                f"{Fore.GREEN}Target streamlines per iteration: "
                 f"{Fore.BLUE} "
                 f"{self.inputs.target_samples}"
             )
@@ -3155,12 +3155,12 @@ class Tracking(SimpleInterface):
                     B0_mask_tmp_path,
                     t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
                     vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-                    self.inputs.tiss_class,
-                    runtime.cwd
+                    self.inputs.tiss_class
                 )
                 gc.collect()
-            except BaseException:
-                print(UserWarning("Tractography failed..."))
+            except BaseException as w:
+                print(f"\n{Fore.RED}Tractography failed: {w}")
+                print(Style.RESET_ALL)
                 streamlines = None
 
             if streamlines is not None:

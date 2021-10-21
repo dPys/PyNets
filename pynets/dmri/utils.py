@@ -83,7 +83,7 @@ def normalize_gradients(
     return bvecs, bvals.astype("uint16")
 
 
-def generate_sl(streamlines, min_length=5):
+def generate_sl(streamlines):
     """
     Helper function that takes a sequence and returns a generator
 
@@ -96,12 +96,11 @@ def generate_sl(streamlines, min_length=5):
     generator
     """
 
-    for sl in [i for i in streamlines]:
-        if len(sl) >= float(min_length):
-            yield sl.astype("float32")
+    for sl in streamlines:
+        yield sl.astype("float32")
 
 
-def random_seeds_from_mask(mask, seeds_count):
+def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
     """Create randomly placed seeds for fiber tracking from a binary mask.
     Seeds points are placed randomly distributed in voxels of ``mask``
     which are ``True``.
@@ -136,27 +135,48 @@ def random_seeds_from_mask(mask, seeds_count):
     ValueError
         When ``mask`` is not a three-dimensional array
     """
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csc_matrix
     from scipy import prod
+    from nilearn.image import math_img
 
     mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
     if mask.ndim != 3:
         raise ValueError('mask cannot be more than 3d')
 
     # Randomize the voxels
+    np.random.seed(random_seed)
     shape = mask.shape
-    indices = np.arange(len(mask.flatten()))
+    mask = mask.flatten()
+    indices = np.arange(len(mask))
     np.random.shuffle(indices)
 
-    where = [np.unravel_index(i, shape) for i in csr_matrix(
-        (
-        np.ones(len(indices)), indices, np.arange(0, len(indices) + 1, 1)),
-        shape=(prod(shape), len(indices)), dtype=np.int,
-    ).nonzero()[1]]
+    # Unravel_index accepts > 1 index value as of numpy v1.6 :-)
+    # TODO: PR this into Dipy
+    where = list(map(tuple,
+                     np.dstack(np.unravel_index(indices[mask[indices]==1],
+                                                shape))[-1, :]))
 
-    seeds_per_voxel = seeds_count // len(where) + 1
+    num_voxels = len(where)
+    seeds_per_voxel = seeds_count // num_voxels + 1
 
-    return np.asarray([where + np.random.random((len(indices), 3)) - .5 for i in range(1, seeds_per_voxel + 1)][0])[:seeds_count]
+    def sample_rand_seed(s, i, random_seed):
+        if random_seed is not None:
+            s_random_seed = hash((np.sum(s) + 1) * i + random_seed) \
+                            % (2 ** 32 - 1)
+            np.random.seed(s_random_seed)
+        return s + np.random.random(3) - .5
+
+    seeds = np.asarray([[sample_rand_seed(s, i, random_seed) for s in
+                         where] for i in
+             range(1, seeds_per_voxel + 1)])[-1, :][:seeds_count]
+
+    # Apply the spatial transform
+    if seeds.any():
+        # Use affine to move seeds into real world coordinates
+        seeds = np.dot(seeds, affine[:3, :3].T)
+        seeds += affine[:3, 3]
+
+    return seeds
 
 
 def generate_seeds(seeds):

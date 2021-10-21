@@ -144,7 +144,7 @@ def _omni_embed(pop_array, atlas, graph_path_list,
         out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
                                                                 'res-')
         if not os.path.exists(out_path):
-            os.mknod(out_path)
+            open(out_path, 'w').close()
     return out_path
 
 
@@ -422,7 +422,7 @@ def build_asetomes(est_path_iterlist, ID):
             out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
                                                                     'res-')
             if not os.path.exists(out_path):
-                os.mknod(out_path)
+                open(out_path, 'w').close()
             out_paths.append(out_path)
 
     return out_paths
@@ -506,7 +506,7 @@ def build_masetome(est_path_iterlist, ID):
                 f"_{os.path.basename(pairs[0])}_NULL"
             )
             if not os.path.exists(out_path):
-                os.mknod(out_path)
+                open(out_path, 'w').close()
             out_paths.append(out_path)
 
     return out_paths

@@ -2051,7 +2051,7 @@ def extractnetstats(
                 "smallworldness",
                 "weighted_transitivity",
             ]
-            metric_dict_global = yaml.load(stream)
+            metric_dict_global = yaml.load(stream, Loader=yaml.FullLoader)
             metric_list_global = metric_dict_global["metric_list_global"]
             if metric_list_global is not None:
                 metric_list_global = [
@@ -2093,7 +2093,7 @@ def extractnetstats(
         "r",
     ) as stream:
         try:
-            metric_dict_nodal = yaml.load(stream)
+            metric_dict_nodal = yaml.load(stream, Loader=yaml.FullLoader)
             metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
             if metric_list_nodal is not None:
                 print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")

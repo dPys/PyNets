@@ -118,6 +118,7 @@ def atlas2t1w2dwi_align(
     t1w2dwi_align.
     """
     import time
+    import gc
     from nilearn.image import resample_to_img
     from pynets.core.utils import checkConsecutive
     from pynets.registration import utils as regutils
@@ -231,6 +232,7 @@ def atlas2t1w2dwi_align(
     atlas_mask_img.uncache()
     wm_gm_img.uncache()
     wm_gm_mask_img.uncache()
+    gc.collect()
 
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_skull
 
