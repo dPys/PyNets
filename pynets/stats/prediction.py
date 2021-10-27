@@ -1872,28 +1872,28 @@ class MakeXY(SimpleInterface):
                 elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
                                  'MDE_conversion']
-                elif self.inputs.target_var == "dep_inertia":
+                elif self.inputs.target_var == "dep_persistence":
                     drop_cols = [self.inputs.target_var,
-                                 "rum_inertia",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "rum_1"]
-                elif self.inputs.target_var == "rum_inertia":
+                elif self.inputs.target_var == "rum_persistence":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
+                                 "dep_persistence",
                                  "rum_2", "dep_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
-                                 "rum_inertia",
+                                 "dep_persistence",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "dep_1"]
                 elif self.inputs.target_var == "dep_1":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
-                                 "rum_inertia",
+                                 "dep_persistence",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "rum_1"]
                 else:
                     drop_cols = [self.inputs.target_var,
-                                 "rum_inertia",
-                                 "dep_inertia",
+                                 "rum_persistence",
+                                 "dep_persistence",
                                  "dep_1", "rum_1", "dep_2", "rum_2",
                                  'MDE_conversion', 'MDE_chronic']
 

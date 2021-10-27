@@ -241,7 +241,7 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
         nib.load(B0_mask).dataobj)).astype("bool")).shm_coeff
     # Clip any negative values
     csa_mod = np.clip(csa_mod, 0, np.max(csa_mod, -1)[..., None])
-    return csa_mod, model
+    return csa_mod.astype("float32"), model
 
 
 def csd_mod_est(gtab, data, B0_mask, sh_order=8):
@@ -304,8 +304,9 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     # print(f"CSD Reponse: {response}")
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
+    csd_mod = np.clip(csd_mod, 0, np.max(csd_mod, -1)[..., None])
     del response, B0_mask_data
-    return csd_mod, model
+    return csd_mod.astype("float32"), model
 
 
 def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
@@ -396,8 +397,9 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
     model = MultiShellDeconvModel(gtab, response_mcsd)
 
     mcsd_mod = model.fit(data, B0_mask_data).shm_coeff
+    mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
     del response, B0_mask_data
-    return mcsd_mod, model
+    return mcsd_mod.astype("float32"), model
 
 
 def sfm_mod_est(gtab, data, B0_mask):
@@ -441,8 +443,8 @@ def sfm_mod_est(gtab, data, B0_mask):
     sf_mod = model.fit(data, mask=np.nan_to_num(np.asarray(nib.load(
         B0_mask).dataobj)).astype("bool"))
     sf_odf = sf_mod.odf(sphere)
-
-    return sf_odf, model
+    sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])
+    return sf_odf.astype("float32"), model
 
 
 def streams2graph(
@@ -670,14 +672,14 @@ def streams2graph(
             )
         ]
 
-        # from fury import actor, window
+        # from fury import actor, window, colormap
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
         #                                         color=(50, 50, 50),
         #                                         opacity=1)
         # renderer.add(template_actor)
-        # lines_actor = actor.streamtube(streamlines, window.colors.orange,
-        #                                linewidth=0.3, opacity=0.9)
+        # lines_actor = actor.line(streamlines,
+        #                                colormap.line_colors(streamlines))
         # renderer.add(lines_actor)
         # window.show(renderer)
         #

@@ -308,14 +308,16 @@ def main():
                 df.loc[df.participant_id == ID, "participant_id"] = "s0" + \
                                                                     str(ID)
 
-    df = df.loc[df["usable_mri"] == True]
+    #df = df.loc[df["usable_mri"] == True]
+    df_subs = df.copy()
+    df_subs.participant_id = [f"sub-{i}_ses-1" for i in df_subs.participant_id.values.tolist() if 'sub-' not in i]
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path
     ):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
             [modality], base_dir, thr_type, mets, embedding_types, template,
-            sessions, rsns, IDS=list(df["participant_id"].values)
+            sessions, rsns, IDS=list(df_subs["participant_id"].values)
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
         missingness_frames = [i for i in missingness_frames if
