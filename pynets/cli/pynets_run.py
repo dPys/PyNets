@@ -3211,7 +3211,7 @@ def build_workflow(args, retval):
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf_multi.base_dir),
-                    "log_to_file": True,
+                    "log_to_file": False,
                 },
                 monitoring={
                     "enabled": True,
@@ -3416,7 +3416,7 @@ def build_workflow(args, retval):
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf.base_dir),
-                    "log_to_file": True,
+                    "log_to_file": False,
                 },
                 monitoring={
                     "enabled": True,

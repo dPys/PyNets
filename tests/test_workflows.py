@@ -11,6 +11,7 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
+import yaml
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -119,7 +120,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     extract_strategy_list = None
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         for i in range(len(hardcoded_params['resource_dict'])):
@@ -273,7 +274,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     extract_strategy_list = None
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         for i in range(len(hardcoded_params['resource_dict'])):
@@ -425,7 +426,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     error_margin = 6
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         maxcrossing = hardcoded_params['tracking']['maxcrossing'][0]

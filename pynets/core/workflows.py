@@ -268,11 +268,12 @@ def workflow_selector(
                     "utils_level": "INFO",
                     "log_to_file": False,
                     "interface_level": "DEBUG",
-                    "filemanip_level": "DEBUG",
+                    "filemanip_level": "DEBUG"
                 }
             )
-            sub_struct_wf.config.update_config(cfg_v)
-            sub_struct_wf.config.enable_resource_monitor()
+            logging.update_logging(config)
+            config.update_config(cfg_v)
+            config.enable_resource_monitor()
     else:
         outdir_mod_struct = None
 
