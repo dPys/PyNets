@@ -319,7 +319,8 @@ def waymask2dwi_align(
             waymask_in_t1w,
             warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, waymask_res, mni2t1_xfm, waymask_in_t1w)
+        regutils.applyxfm(t1w_brain, waymask_res, mni2t1_xfm,
+                          waymask_in_t1w)
 
     time.sleep(0.5)
     # Apply transform from t1w to native dwi space
@@ -362,12 +363,14 @@ def roi2t1w_align(
     roi_res = f"{roi.split('.nii')[0]}_res.nii.gz"
     nib.save(roi_img_res, roi_res)
 
-    # Apply warp or transformer resulting from the inverse MNI->T1w created
-    # earlier
+    # Apply warp or transformer resulting from the inverse
+    # MNI->T1w created earlier
     if simple is False:
-        regutils.apply_warp(t1w_brain, roi_res, roi_in_t1w, warp=mni2t1w_warp)
+        regutils.apply_warp(t1w_brain, roi_res, roi_in_t1w,
+                            warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, roi_res, mni2t1_xfm, roi_in_t1w)
+        regutils.applyxfm(t1w_brain, roi_res, mni2t1_xfm,
+                          roi_in_t1w)
 
     time.sleep(0.5)
 
@@ -798,8 +801,8 @@ def apply_warp(
 
 def inverse_warp(ref, out, warp):
     """
-    Generates the inverse of a warp from a reference image space to the input
-    image used in generating the warp.
+    Generates the inverse of a warp from a reference image space to
+    the input image used in generating the warp.
 
     Parameters
     ----------
@@ -896,7 +899,9 @@ def warp_streamlines(
         sum(d, s)
         for d, s in zip(
             values_from_volume(
-                mapping.get_forward_field(), streams_in_curr_grid, ref_grid_aff
+                mapping.get_forward_field(),
+                streams_in_curr_grid,
+                ref_grid_aff
             ),
             streams_in_curr_grid,
         )
@@ -1013,13 +1018,15 @@ def wm_syn(t1w_brain, ap_path, working_dir, fa_path=None,
     sigmas = [3.0, 1.0, 0.0]
     factors = [4, 2, 1]
     affine_reg = AffineRegistration(
-        metric=metric, level_iters=level_iters, sigmas=sigmas, factors=factors
+        metric=metric, level_iters=level_iters,
+        sigmas=sigmas, factors=factors
     )
     transform = TranslationTransform3D()
 
     params0 = None
     translation = affine_reg.optimize(
-        static, moving, transform, params0, static_affine, moving_affine
+        static, moving, transform, params0,
+        static_affine, moving_affine
     )
     transform = RigidTransform3D()
 
@@ -1056,21 +1063,28 @@ def wm_syn(t1w_brain, ap_path, working_dir, fa_path=None,
         from nilearn.image import resample_to_img
         fa_img = nib.load(fa_path)
         template_img = nib.load(template_fa_path)
-        template_img_res = resample_to_img(template_img, t1w_brain_img)
-        static = np.asarray(template_img_res.dataobj, dtype=np.float32)
+        template_img_res = resample_to_img(
+            template_img, t1w_brain_img)
+        static = np.asarray(template_img_res.dataobj,
+                            dtype=np.float32)
         static_affine = template_img_res.affine
-        moving = np.asarray(fa_img.dataobj, dtype=np.float32)
+        moving = np.asarray(fa_img.dataobj,
+                            dtype=np.float32)
         moving_affine = fa_img.affine
     else:
-        static = np.asarray(t1w_brain_img.dataobj, dtype=np.float32)
+        static = np.asarray(t1w_brain_img.dataobj,
+                            dtype=np.float32)
         static_affine = t1w_brain_img.affine
-        moving = np.asarray(ap_img.dataobj, dtype=np.float32)
+        moving = np.asarray(ap_img.dataobj,
+                            dtype=np.float32)
         moving_affine = ap_img.affine
 
-    sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
+    sdr = SymmetricDiffeomorphicRegistration(
+        metric, level_iters)
 
     mapping = sdr.optimize(
-        static, moving, static_affine, moving_affine, affine_opt.affine
+        static, moving, static_affine, moving_affine,
+        affine_opt.affine
     )
     warped_moving = mapping.transform(moving)
 
@@ -1102,7 +1116,9 @@ def wm_syn(t1w_brain, ap_path, working_dir, fa_path=None,
 
 def median(in_file):
     """Average a 4D dataset across the last dimension using median."""
-    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=False)
+    out_file = fname_presuffix(
+        in_file, suffix="_mean.nii.gz",
+        use_ext=False)
 
     img = nib.load(in_file)
     if img.dataobj.ndim == 3:
@@ -1111,12 +1127,14 @@ def median(in_file):
         nib.squeeze_image(img).to_filename(out_file)
         return out_file
 
-    median_data = np.median(img.get_fdata(dtype="float32"), axis=-1)
+    median_data = np.median(
+        img.get_fdata(dtype="float32"), axis=-1)
 
     hdr = img.header.copy()
     hdr.set_xyzt_units("mm")
     hdr.set_data_dtype(np.float32)
-    nib.Nifti1Image(median_data, img.affine, hdr).to_filename(out_file)
+    nib.Nifti1Image(median_data, img.affine,
+                    hdr).to_filename(out_file)
     return out_file
 
 
@@ -1127,8 +1145,8 @@ def check_orient_and_dims(
         bvecs=None,
         overwrite=True):
     """
-    An API to reorient any image to RAS+ and resample any image to a given
-    voxel resolution.
+    An API to reorient any image to RAS+ and resample
+    any image to a given voxel resolution.
 
     Parameters
     ----------
@@ -1141,15 +1159,16 @@ def check_orient_and_dims(
     bvecs : str
         File path to corresponding bvecs file if infile is a dwi.
     overwrite : bool
-        Boolean indicating whether to overwrite existing outputs. Default is
-        True.
+        Boolean indicating whether to overwrite existing outputs.
+        Default is True.
 
     Returns
     -------
     outfile : str
         File path to the reoriented and/or resample Nifti1Image.
     bvecs : str
-        File path to corresponding reoriented bvecs file if outfile is a dwi.
+        File path to corresponding reoriented bvecs file if outfile
+        is a dwi.
 
     """
     from pynets.registration.utils import (
@@ -1286,7 +1305,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     bvec_fname = bvecs
 
     out_bvec_fname = (
-        f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_bvecs_reor.bvec"
+        f"{out_dir}/"
+        f"{dwi_prep.split('/')[-1].split('.nii')[0]}"
+        f"_bvecs_reor.bvec"
     )
 
     input_img = nib.load(fname)
@@ -1297,7 +1318,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     new_axcodes = ("R", "A", "S")
     if normalized is not input_img:
         out_fname = (
-            f"{out_dir}/{dwi_prep.split('/')[-1].split('.nii')[0]}_"
+            f"{out_dir}/"
+            f"{dwi_prep.split('/')[-1].split('.nii')[0]}_"
             f"reor-RAS.nii.gz"
         )
         if (
@@ -1321,8 +1343,10 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
                 raise ValueError("Unrecognized bvec format")
 
             output_array = np.zeros_like(bvec_array)
-            for this_axnum, (axnum, flip) in enumerate(transform_orientation):
-                output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
+            for this_axnum, (axnum, flip) in enumerate(
+                transform_orientation):
+                output_array[this_axnum] = bvec_array[int(axnum)
+                                           ] * float(flip)
             np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
         out_fname = (
@@ -1392,10 +1416,11 @@ def reorient_img(img, out_dir, overwrite=True):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
-                         remove_orig=True):
+def match_target_vox_res(img_file, vox_size, out_dir,
+                         overwrite=True, remove_orig=True):
     """
-    A function to resample an image to a given isotropic voxel resolution.
+    A function to resample an image to a given isotropic voxel
+    resolution.
 
     Parameters
     ----------
@@ -1428,7 +1453,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
 
     if (abs(zooms[0]), abs(zooms[1]), abs(zooms[2])) != new_zooms:
         img_file_res = (
-            f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
+            f"{out_dir}/"
+            f"{os.path.basename(img_file).split('.nii')[0]}_"
             f"res-{vox_size}.nii.gz"
         )
         if overwrite is False and os.path.isfile(img_file_res):
@@ -1437,7 +1463,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
         else:
             import gc
             data = img.get_fdata(dtype=np.float32)
-            print(f"Reslicing image {img_file} to {vox_size}...")
+            print(f"Reslicing image {img_file} "
+                  f"to {vox_size}...")
             data2, affine2 = reslice(
                 data, img.affine, zooms, new_zooms
             )
@@ -1451,7 +1478,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
             gc.collect()
     else:
         img_file_nores = (
-            f"{out_dir}/{os.path.basename(img_file).split('.nii')[0]}_"
+            f"{out_dir}/"
+            f"{os.path.basename(img_file).split('.nii')[0]}_"
             f"nores-{vox_size}"
             f".nii.gz")
         if overwrite is False and os.path.isfile(img_file_nores):

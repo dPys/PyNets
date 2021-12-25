@@ -18,14 +18,15 @@ warnings.filterwarnings("ignore")
 
 
 def normalize_gradients(
-    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True
+    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1,
+    b_scale=True
 ):
     """
     Normalize b-vectors and b-values.
 
-    The resulting b-vectors will be of unit length for the non-zero b-values.
-    The resultinb b-values will be normalized by the square of the
-    corresponding vector amplitude.
+    The resulting b-vectors will be of unit length for the non-zero
+    b-values. The resulting b-values will be normalized by the
+    square of the corresponding vector amplitude.
 
     Parameters
     ----------
@@ -34,7 +35,8 @@ def normalize_gradients(
     bvals : 1d array
         Raw b-values float array.
     b0_threshold : float
-        Gradient threshold below which volumes and vectors are considered B0's.
+        Gradient threshold below which volumes and vectors are
+        considered B0's.
 
     Returns
     -------
@@ -108,6 +110,7 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
     similar to ``seeds_from_mask()``, with the difference that instead of
     evenly distributing the seeds, it randomly places the seeds within the
     voxels specified by the ``mask``.
+
     Parameters
     ----------
     mask : binary 3d array_like
@@ -127,6 +130,7 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
         of seeds.
     random_seed : int
         The seed for the random seed generator (numpy.random.seed).
+
     See Also
     --------
     seeds_from_mask
@@ -187,6 +191,7 @@ def generate_seeds(seeds):
     ----------
     seeds : sequence
         Usually, this would be a list of 2D arrays, representing seeds
+
     Returns
     -------
     generator

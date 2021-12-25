@@ -199,8 +199,11 @@ def tens_mod_est(gtab, data, B0_mask):
 
     print("Reconstructing tensors...")
     model = TensorModel(gtab)
-    mod = model.fit(data, np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool"))
+    mod = model.fit(data,
+                    np.nan_to_num(
+                        np.asarray(
+                            nib.load(B0_mask).dataobj)
+                    ).astype("bool"))
     mod_odf = mod.odf(get_sphere("repulsion724"))
     return mod_odf, model
 

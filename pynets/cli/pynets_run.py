@@ -169,7 +169,7 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    # Modality-pervasive metaparameters
+    # Modality-pervasive hyperparameters
     parser.add_argument(
         "-mod",
         metavar="Connectivity estimation/reconstruction method",
@@ -188,7 +188,7 @@ def get_parser():
             "csd",
             "sfm",
         ],
-        help="(metaparameter): Specify connectivity estimation model. "
+        help="(hyperparameter): Specify connectivity estimation model. "
              "For fMRI, possible models include: corr for correlation, "
              "cov for covariance, sps for precision covariance, partcorr for "
              "partial correlation. If skgmm is "
@@ -202,7 +202,7 @@ def get_parser():
         metavar="Atlas",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify an atlas name from nilearn or "
+        help="(hyperparameter): Specify an atlas name from nilearn or "
              "local (pynets) library, and/or specify a path to a custom "
              "parcellation/atlas Nifti1Image file in MNI space. Labels should"
              "be spatially distinct across hemispheres and ordered with "
@@ -236,7 +236,7 @@ def get_parser():
         metavar="Spherical centroid node size",
         default=4,
         nargs="+",
-        help="(metaparameter): Optionally specify coordinate-based node "
+        help="(hyperparameter): Optionally specify coordinate-based node "
              "radius size(s). Default is 4 "
         "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline "
              "across multiple node sizes, separate the list "
@@ -255,29 +255,29 @@ def get_parser():
         "-min_thr",
         metavar="Multi-thresholding minimum threshold",
         default=None,
-        help="(metaparameter): Minimum threshold for multi-thresholding.\n",
+        help="(hyperparameter): Minimum threshold for multi-thresholding.\n",
     )
     parser.add_argument(
         "-max_thr",
         metavar="Multi-thresholding maximum threshold",
         default=None,
-        help="(metaparameter): Maximum threshold for multi-thresholding.",
+        help="(hyperparameter): Maximum threshold for multi-thresholding.",
     )
     parser.add_argument(
         "-step_thr",
         metavar="Multi-thresholding step size",
         default=None,
-        help="(metaparameter): Threshold step value for multi-thresholding. "
+        help="(hyperparameter): Threshold step value for multi-thresholding. "
              "Default is 0.01.\n",
     )
 
-    # fMRI metaparameters
+    # fMRI hyperparameters
     parser.add_argument(
         "-sm",
         metavar="Smoothing value (mm fwhm)",
         default=0,
         nargs="+",
-        help="(metaparameter): Optionally specify smoothing width(s). "
+        help="(hyperparameter): Optionally specify smoothing width(s). "
              "Default is 0 / no smoothing. If you wish to iterate the pipeline"
              " across multiple smoothing separate the list "
              "by space (e.g. 2 4 6). Safe range: [0-8]\n",
@@ -287,7 +287,7 @@ def get_parser():
         metavar="High-pass filter (Hz)",
         default=None,
         nargs="+",
-        help="(metaparameter): Optionally specify high-pass filter values "
+        help="(hyperparameter): Optionally specify high-pass filter values "
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
              "multiple values, separate the list by space (e.g. 0 0.02 0.1). "
@@ -318,7 +318,7 @@ def get_parser():
         metavar="Number of k clusters",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify a number of clusters to produce. "
+        help="(hyperparameter): Specify a number of clusters to produce. "
              "If you wish to iterate the pipeline across multiple values of k,"
              " separate the list by space (e.g. 200, 400, 600, 800).\n",
     )
@@ -329,7 +329,7 @@ def get_parser():
         nargs="+",
         choices=["ward", "rena", "kmeans", "complete", "average", "single",
                  "ncut"],
-        help="(metaparameter): Specify the types of clustering to use. "
+        help="(hyperparameter): Specify the types of clustering to use. "
              "Recommended options are: ward, rena, kmeans, or ncut. Note that "
              "imposing spatial constraints with a mask consisting of "
              "disconnected components will leading to clustering instability "
@@ -341,18 +341,18 @@ def get_parser():
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify the path to a Nifti1Image mask file"
+        help="(hyperparameter): Specify the path to a Nifti1Image mask file"
              " to constrained functional clustering. If specifying a list of "
              "paths to multiple cluster masks, separate them by space.\n",
     )
 
-    # dMRI metaparameters
+    # dMRI hyperparameters
     parser.add_argument(
         "-ml",
         metavar="Minimum fiber length for tracking",
         default=10,
         nargs="+",
-        help="(metaparameter): Include this flag to manually specify a "
+        help="(hyperparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
              "is 10. If you wish to iterate the pipeline across multiple "
              "minimums, separate the list by space (e.g. 10 30 50). "
@@ -365,7 +365,7 @@ def get_parser():
         metavar="Error margin",
         default=5,
         nargs="+",
-        help="(metaparameter): Distance (in the units of the streamlines, "
+        help="(hyperparameter): Distance (in the units of the streamlines, "
              "usually mm). If any coordinate in the streamline is within this "
              "distance from the center of any voxel in the ROI, the filtering "
              "criterion is set to True for this streamline, otherwise False. "
@@ -378,7 +378,7 @@ def get_parser():
         default="det",
         nargs="+",
         choices=["det", "prob", "clos"],
-        help="(metaparameter): Include this flag to manually specify the "
+        help="(hyperparameter): Include this flag to manually specify the "
              "statistical approach to tracking for dmri connectome estimation."
              " Options are: det (deterministic), closest (clos), and "
              "prob (probabilistic). Default is det. If you wish to iterate the"
@@ -444,20 +444,20 @@ def get_parser():
              " via the disparity filter approach. -thr values in this case "
              "correspond to α.\n",
     )
-    parser.add_argument(
-        "-mplx",
-        metavar="Perform various levels of multiplex graph analysis (only) if"
-                " both structural and diffusion connectometry is run "
-                "simultaneously.",
-        default=0,
-        nargs=1,
-        choices=["0", "1", "2"],
-        help="Include this flag to perform multiplex graph analysis across "
-             "structural-functional connectome modalities. Options include "
-             "level (1) Create multiplex graphs using motif-matched adaptive "
-             "thresholding; (2) Additionally perform multiplex graph embedding"
-             " and analysis. Default is (0) which is no multiplex analysis.\n",
-    )
+    # parser.add_argument(
+    #     "-mplx",
+    #     metavar="Perform various levels of multiplex graph analysis (only) if"
+    #             " both structural and diffusion connectometry is run "
+    #             "simultaneously.",
+    #     default=0,
+    #     nargs=1,
+    #     choices=["0", "1", "2"],
+    #     help="Include this flag to perform multiplex graph analysis across "
+    #          "structural-functional connectome modalities. Options include "
+    #          "level (1) Create multiplex graphs using motif-matched adaptive "
+    #          "thresholding; (2) Additionally perform multiplex graph embedding"
+    #          " and analysis. Default is (0) which is no multiplex analysis.\n",
+    # )
     parser.add_argument(
         "-embed",
         default=False,
@@ -628,8 +628,7 @@ def build_workflow(args, retval):
             return retval
 
     # Start timer
-    now = datetime.datetime.now()
-    timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
+    timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(f"{Fore.MAGENTA}{timestamp}")
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
@@ -739,13 +738,9 @@ def build_workflow(args, retval):
         multi_subject_graph = None
         multi_subject_multigraph = None
 
-    if (ID is None) and (
-        graph is None
-        and multi_graph is None
-        and multi_subject_graph is None
-        and multi_subject_multigraph is None
-    ):
-        print("\nERROR: You must include a subject ID in your command "
+    if not ID and not graph and not multi_graph and not multi_subject_graph \
+        and not multi_subject_multigraph:
+        print("\nERROR: You must include a subject ID in a command "
               "line call.")
         retval["return_code"] = 1
         return retval
@@ -781,9 +776,8 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         import psutil
-        nthreads = psutil.cpu_count()
         vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
-        procmem = [int(nthreads),
+        procmem = [int(psutil.cpu_count()),
                    [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
@@ -1118,14 +1112,9 @@ def build_workflow(args, retval):
         multi_thr = False
 
     # Check required inputs for existence, and configure run
-    if (
-        (func_file is None)
-        and (dwi_file is None)
-        and (graph is None)
-        and (multi_graph is None)
-        and (multi_subject_graph is None)
-        and (multi_subject_multigraph is None)
-    ):
+    if func_file is None and dwi_file is None and graph is None \
+        and multi_graph is None and multi_subject_graph is None \
+        and multi_subject_multigraph is None:
         print(
             "\nERROR: You must include a file path to either a 4d BOLD EPI"
             " image in T1w space"

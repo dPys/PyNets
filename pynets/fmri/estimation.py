@@ -289,8 +289,8 @@ def get_conn_matrix(
             kind = "covariance"
         else:
             raise ValueError(
-                "\nERROR! No connectivity model specified at runtime. Select a"
-                " valid estimator using the -mod flag.")
+                "\nERROR! No connectivity model specified at runtime. "
+                "Select a valid estimator using the -mod flag.")
 
         # Try with the best-fitting Lasso estimator
         if estimator:
@@ -307,7 +307,8 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLasso. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLasso
             # credit: skggm
@@ -322,26 +323,28 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLassoCV
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoCV. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoCV. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoCV
             # credit: skggm
             model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoCV precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoCV precision "
+                  "matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "QuicGraphicalLassoEBIC":
             try:
                 from inverse_covariance import QuicGraphicalLassoEBIC
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoEBIC. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoEBIC. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoEBIC
             # credit: skggm
             model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoEBIC precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoEBIC "
+                  "precision matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "AdaptiveQuicGraphicalLasso":
@@ -351,7 +354,8 @@ def get_conn_matrix(
                     QuicGraphicalLassoEBIC,
                 )
             except ImportError as e:
-                print(e, "Cannot run AdaptiveGraphLasso. Skggm not installed!")
+                print(e, "Cannot run AdaptiveGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via
             # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
@@ -393,9 +397,10 @@ def get_conn_matrix(
 
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
-            "\nMatrix estimation selection yielded an empty or"
-            " 1-dimensional graph. "
-            "Check time-series for errors or try using a different atlas")
+            "\nMatrix estimation selection yielded an "
+            "empty or 1-dimensional graph. "
+            "Check time-series for errors or try using a "
+            "different atlas")
 
     if network is not None:
         atlas_name = f"{atlas}_{network}_stage-rawgraph"
@@ -545,8 +550,8 @@ class TimeseriesExtraction(object):
             self.low_pass = hardcoded_params["low_pass"][0]
         except KeyError as e:
             print(e,
-                  "ERROR: Plotting configuration not successfully extracted "
-                  "from runconfig.yaml"
+                  "ERROR: Plotting configuration not successfully "
+                  "extracted from runconfig.yaml"
                   )
 
     def prepare_inputs(self, num_std_dev=1.5):

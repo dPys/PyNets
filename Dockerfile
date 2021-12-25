@@ -88,9 +88,9 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=5G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && head -c 10G </dev/urandom > /tmp/10G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
+    && head -c 5G </dev/urandom > /tmp/5G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -113,9 +113,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
     && conda install -yq python=3.6 ipython \
-    && conda clean -tipsy \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
@@ -147,7 +145,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 #    && pip install dask[dataframe] --upgrade \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && pip install pyOpenSSL -U \
+    && conda clean -tipsy \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -171,7 +169,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	gcc \
 	wget \
 	curl \
-#	openssl \
+	openssl \
 	build-essential \
 	ca-certificates \
 	gnupg \
@@ -187,7 +185,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     chmod -R 777 /outputs \
     && mkdir /working && \
     chmod -R 777 /working \
-    && rm -f /tmp/10G_heap.txt
+    && rm -f /tmp/5G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
