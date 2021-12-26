@@ -42,8 +42,6 @@ RUN apt-get update -qq \
         libgsl0-dev \
         openssl \
         openssh-server \
-#        libssl-dev \
-#        libffi-dev \
         jq \
         gsl-bin \
         libglu1-mesa-dev \
@@ -88,9 +86,9 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=5G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && head -c 5G </dev/urandom > /tmp/5G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
+    && head -c 10G </dev/urandom > /tmp/10G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -172,9 +170,20 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	openssl \
 	build-essential \
 	ca-certificates \
+	libc6-dev \
 	gnupg \
 	g++ \
 	git-lfs \
+	libwebkitgtk-1.0-common \
+#	libfdisk1 \
+#	libudev1 \
+#	libpoppler64 \
+#	perl-base \
+#	openssh-client \
+#	libnss3 \
+#	libxml2 \
+#	libwebp6 \
+#	libgd3 \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
@@ -185,7 +194,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     chmod -R 777 /outputs \
     && mkdir /working && \
     chmod -R 777 /working \
-    && rm -f /tmp/5G_heap.txt
+    && rm -f /tmp/10G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
