@@ -128,7 +128,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         cython \
         libgfortran \
         matplotlib \
-#        openblas \
+        openblas \
         graph-tool \
 #        dask \
     && pip install certifi -U --ignore-installed \
@@ -181,7 +181,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	libjavascriptcoregtk-* \
 	perl-modules-* \
 	libperl* \
-    && rm -rf /var/lib/{apt,dpkg,cache,log}/
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
