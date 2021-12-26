@@ -124,12 +124,11 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
-    # Install skggm
     && conda install -yq \
         cython \
         libgfortran \
         matplotlib \
-        openblas \
+#        openblas \
         graph-tool \
 #        dask \
     && pip install certifi -U --ignore-installed \
@@ -162,6 +161,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
+    && apt-get clean autoclean \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \
@@ -174,16 +174,14 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	gnupg \
 	g++ \
 	git-lfs \
-	libwebkitgtk-1.0-common \
-#	libfdisk1 \
-#	libudev1 \
-#	libpoppler64 \
-#	perl-base \
-#	openssh-client \
-#	libnss3 \
-#	libxml2 \
-#	libwebp6 \
-#	libgd3 \
+	libwebkit2gtk-* \
+	gnome-icon-theme \
+	libgtk-*-common \
+	libgtk*-common \
+	libjavascriptcoregtk-* \
+	perl-modules-* \
+	libperl* \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
