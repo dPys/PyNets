@@ -119,12 +119,12 @@ def as_directory(dir_, remove=False, return_as_path=False):
 
 def create_est_path_func(
     ID,
-    network,
+    subnet,
     conn_model,
     thr,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     thr_type,
     hpass,
@@ -139,8 +139,8 @@ def create_est_path_func(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -153,7 +153,7 @@ def create_est_path_func(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -188,8 +188,8 @@ def create_est_path_func(
               "No template specified in runconfig.yaml"
               )
 
-    if (node_size is None) and (parc is True):
-        node_size = "_parc"
+    if (node_radius is None) and (parc is True):
+        node_radius = "_parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -208,8 +208,8 @@ def create_est_path_func(
         ID,
         "_modality-func_",
         "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
+                         subnet,
+                         "_") if subnet is not None else ""),
         "%s" % ("%s%s%s" % ("roi-",
                          op.basename(
                              roi).split(".")[0],
@@ -220,10 +220,10 @@ def create_est_path_func(
         template_name,
         "_",
         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
+                         node_radius,
                          "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
+         (node_radius != "parc") and (
+             node_radius is not None)) else "nodetype-parc_"),
         "%s" % ("%s%s%s" % ("smooth-",
                          smooth,
                          "fwhm_") if float(smooth) > 0 else ""),
@@ -245,12 +245,12 @@ def create_est_path_func(
 
 def create_est_path_diff(
     ID,
-    network,
+    subnet,
     conn_model,
     thr,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     target_samples,
     track_type,
     thr_type,
@@ -267,8 +267,8 @@ def create_est_path_diff(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -281,7 +281,7 @@ def create_est_path_diff(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     target_samples : int
@@ -317,8 +317,8 @@ def create_est_path_diff(
               "No template specified in runconfig.yaml"
               )
 
-    if (node_size is None) and (parc is True):
-        node_size = "parc"
+    if (node_radius is None) and (parc is True):
+        node_radius = "parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -331,8 +331,8 @@ def create_est_path_diff(
         ID,
         "_modality-dwi_",
         "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
+                         subnet,
+                         "_") if subnet is not None else ""),
         "%s" % ("%s%s%s" % ("roi-",
                          op.basename(
                              roi).split(".")[0],
@@ -343,10 +343,10 @@ def create_est_path_diff(
         template_name,
         "_",
         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
+                         node_radius,
                          "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
+         (node_radius != "parc") and (
+             node_radius is not None)) else "nodetype-parc_"),
         "%s" % ("%s%s%s" % ("samples-",
                          int(
                              target_samples),
@@ -370,11 +370,11 @@ def create_est_path_diff(
 
 def create_raw_path_func(
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     hpass,
     parc,
@@ -388,8 +388,8 @@ def create_raw_path_func(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -399,7 +399,7 @@ def create_raw_path_func(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -432,8 +432,8 @@ def create_raw_path_func(
               "No template specified in runconfig.yaml"
               )
 
-    if (node_size is None) and (parc is True):
-        node_size = "parc"
+    if (node_radius is None) and (parc is True):
+        node_radius = "parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -452,8 +452,8 @@ def create_raw_path_func(
         ID,
         "_modality-func_",
         "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
+                         subnet,
+                         "_") if subnet is not None else ""),
         "%s" % ("%s%s%s" % ("roi-",
                          op.basename(
                              roi).split(".")[0],
@@ -464,10 +464,10 @@ def create_raw_path_func(
         template_name,
         "_",
         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
+                         node_radius,
                          "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
+         (node_radius != "parc") and (
+             node_radius is not None)) else "nodetype-parc_"),
         "%s" % ("%s%s%s" % ("smooth-",
                          smooth,
                          "fwhm_") if float(smooth) > 0 else ""),
@@ -485,11 +485,11 @@ def create_raw_path_func(
 
 def create_raw_path_diff(
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     target_samples,
     track_type,
     parc,
@@ -505,8 +505,8 @@ def create_raw_path_diff(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -516,7 +516,7 @@ def create_raw_path_diff(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     target_samples : int
@@ -550,8 +550,8 @@ def create_raw_path_diff(
               "No template specified in runconfig.yaml"
               )
 
-    if (node_size is None) and (parc is True):
-        node_size = "_parc"
+    if (node_radius is None) and (parc is True):
+        node_radius = "_parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -564,8 +564,8 @@ def create_raw_path_diff(
         ID,
         "_modality-dwi_",
         "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
+                         subnet,
+                         "_") if subnet is not None else ""),
         "%s" % ("%s%s%s" % ("roi-",
                          op.basename(
                              roi).split(".")[0],
@@ -576,10 +576,10 @@ def create_raw_path_diff(
         template_name,
         "_",
         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
+                         node_radius,
                          "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
+         (node_radius != "parc") and (
+             node_radius is not None)) else "nodetype-parc_"),
         "%s" % ("%s%s%s" % ("samples-",
                          int(
                              target_samples),
@@ -674,7 +674,7 @@ def load_mat(est_path):
 def load_mat_ext(
     est_path,
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     prune,
@@ -691,7 +691,7 @@ def load_mat_ext(
         conn_matrix,
         est_path,
         ID,
-        network,
+        subnet,
         conn_model,
         roi,
         prune,
@@ -787,7 +787,7 @@ def save_mat_thresholded(
     est_path_orig,
     thr_type,
     ID,
-    network,
+    subnet,
     thr,
     conn_model,
     roi,
@@ -807,7 +807,7 @@ def save_mat_thresholded(
 
     save_mat(conn_matrix, est_path, fmt="npy")
 
-    return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
+    return est_path, ID, subnet, thr, conn_model, roi, prune, norm, binary
 
 
 def pass_meta_outs(
@@ -905,7 +905,7 @@ def pass_meta_outs(
 def pass_meta_ins(
         conn_model,
         est_path,
-        network,
+        subnet,
         thr,
         prune,
         ID,
@@ -923,8 +923,8 @@ def pass_meta_ins(
        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
@@ -949,8 +949,8 @@ def pass_meta_ins(
        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
@@ -969,7 +969,7 @@ def pass_meta_ins(
     """
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
-    network_iterlist = network
+    network_iterlist = subnet
     thr_iterlist = thr
     prune_iterlist = prune
     ID_iterlist = ID
@@ -1033,7 +1033,7 @@ def pass_meta_ins_multi(
         File path to .npy file containing functional graph with thresholding
         applied.
     network_func : str
-        Functional resting-state network based on Yeo-7 and Yeo-17 naming
+        Functional resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_func : float
         A value, between 0 and 1, to threshold the functional graph using any
@@ -1059,7 +1059,7 @@ def pass_meta_ins_multi(
         File path to .npy file containing diffusion structural graph with
         thresholding applied.
     network_struct : str
-        Diffusion structural resting-state network based on Yeo-7 and Yeo-17
+        Diffusion structural resting-state subnet based on Yeo-7 and Yeo-17
         naming (e.g. 'Default') used to filter nodes in the study of brain
         subgraphs.
     thr_struct : float
@@ -1227,7 +1227,7 @@ def proportional(k, voxels_list):
 
 
 def collect_pandas_df(
-    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
+    subnet, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
 ):
     """
     API for summarizing independent lists of pickled pandas dataframes of
@@ -1235,8 +1235,8 @@ def collect_pandas_df(
 
     Parameters
     ----------
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -1283,9 +1283,9 @@ def collect_pandas_df(
 
     if multi_nets is not None:
         net_mets_csv_list_nets = net_mets_csv_list
-        for network in multi_nets:
+        for subnet in multi_nets:
             net_mets_csv_list = list(
-                set([i for i in net_mets_csv_list_nets if network in i])
+                set([i for i in net_mets_csv_list_nets if subnet in i])
             )
             if multimodal is True:
                 net_mets_csv_list_dwi = list(
@@ -1299,7 +1299,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_dwi = collect_pandas_df_make(
-                    net_mets_csv_list_dwi, ID, network, plot_switch, embed
+                    net_mets_csv_list_dwi, ID, subnet, plot_switch, embed
                 )
                 net_mets_csv_list_func = list(
                     set(
@@ -1312,7 +1312,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_func = collect_pandas_df_make(
-                    net_mets_csv_list_func, ID, network, plot_switch, embed
+                    net_mets_csv_list_func, ID, subnet, plot_switch, embed
                 )
 
                 if (
@@ -1324,7 +1324,7 @@ def collect_pandas_df(
                     combination_complete = False
             else:
                 combination_complete = collect_pandas_df_make(
-                    net_mets_csv_list, ID, network, plot_switch, embed
+                    net_mets_csv_list, ID, subnet, plot_switch, embed
                 )
     else:
         if multimodal is True:
@@ -1338,7 +1338,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_dwi = collect_pandas_df_make(
-                net_mets_csv_list_dwi, ID, network, plot_switch, embed
+                net_mets_csv_list_dwi, ID, subnet, plot_switch, embed
             )
             net_mets_csv_list_func = list(
                 set(
@@ -1350,7 +1350,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_func = collect_pandas_df_make(
-                net_mets_csv_list_func, ID, network, plot_switch, embed
+                net_mets_csv_list_func, ID, subnet, plot_switch, embed
             )
 
             if combination_complete_dwi is \
@@ -1360,7 +1360,7 @@ def collect_pandas_df(
                 combination_complete = False
         else:
             combination_complete = collect_pandas_df_make(
-                net_mets_csv_list, ID, network, plot_switch, embed
+                net_mets_csv_list, ID, subnet, plot_switch, embed
             )
 
     return combination_complete
@@ -1420,7 +1420,7 @@ def load_runconfig():
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,
-                                   network='all_nodes', indices=None):
+                                   subnet='all_nodes', indices=None):
     """
     Save coordinates and labels to json.
 
@@ -1433,8 +1433,8 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         List of string labels corresponding to ROI nodes.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    network : str
-        Restricted sub-network name.
+    subnet : str
+        Restricted sub-subnet name.
 
     Returns
     -------
@@ -1481,7 +1481,7 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_list.append(node_dict)
         i += 1
 
-    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_" \
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(subnet)}_" \
                  f"count-{len(labels)}.json"
 
     with open(nodes_path, 'w') as f:
@@ -1533,7 +1533,7 @@ def get_template_tf(template_name, vox_size):
     return template, template_mask, templateflow_home
 
 
-def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
+def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
                            vox_size):
     """
     This function takes a Nifti1Image parcellation object resulting from some
@@ -1545,8 +1545,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     net_parcels_map_nifti : Nifti1Image
         A nibabel-based nifti image consisting of a 3D array with integer
@@ -1583,7 +1583,7 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         namer_dir,
         "/parcellation_space-",
         template_name,
-        "%s" % ("%s%s" % ("_rsn-", network) if network is not None else ""),
+        "%s" % ("%s%s" % ("_rsn-", subnet) if subnet is not None else ""),
         ".nii.gz",
     )
 
@@ -1615,13 +1615,13 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
 
 def save_ts_to_file(
     roi,
-    network,
+    subnet,
     ID,
     dir_path,
     ts_within_nodes,
     smooth,
     hpass,
-    node_size,
+    node_radius,
     extract_strategy,
 ):
     """
@@ -1631,8 +1631,8 @@ def save_ts_to_file(
     ----------
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -1647,7 +1647,7 @@ def save_ts_to_file(
         signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for time-series extraction.
     extract_strategy : str
@@ -1681,17 +1681,17 @@ def save_ts_to_file(
         ID,
         "_",
         "%s" % ("%s%s%s" % ("rsn-",
-                          network,
-                          "_") if network is not None else ""),
+                          subnet,
+                          "_") if subnet is not None else ""),
         "%s" % ("%s%s%s" % ("roi-",
                           op.basename(
                               roi).split(".")[0],
                           "_") if roi is not None else ""),
         "%s" % ("%s%s%s" % ("spheres-",
-                          node_size,
+                          node_radius,
                           "mm_") if (
-          (node_size != "parc") and (
-              node_size is not None)) else "parc_"),
+          (node_radius != "parc") and (
+              node_radius is not None)) else "parc_"),
         "%s" % ("%s%s%s" % ("smooth-",
                           smooth,
                           "fwhm_") if float(smooth) > 0 else ""),

@@ -149,7 +149,7 @@ def fetch_nilearn_atlas_coords(atlas):
     atlas_name : str
         Name of atlas parcellation (can differ slightly from fetch API string).
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined
+        List of subnet's and their associated cooordinates, if predefined
         uniquely for a given atlas.
     labels : list
         List of string labels corresponding to atlas nodes.
@@ -207,9 +207,9 @@ def nilearn_atlas_helper(atlas, parc):
     labels : list
         List of string labels corresponding to atlas nodes.
     networks_list : list
-        List of RSN's and their associated cooordinates, if predefined
+        List of subnet's and their associated cooordinates, if predefined
         uniquely for a given atlas.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     """
     from nilearn import datasets
@@ -245,9 +245,9 @@ def nilearn_atlas_helper(atlas, parc):
         atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}")()
     if len(list(atlas_fetch_obj.keys())) > 0:
         if "maps" in list(atlas_fetch_obj.keys()):
-            uatlas = atlas_fetch_obj.maps
+            parcellation = atlas_fetch_obj.maps
         else:
-            uatlas = None
+            parcellation = None
         if "labels" in list(atlas_fetch_obj.keys()):
             try:
                 labels = [i.decode("utf-8") for i in atlas_fetch_obj.labels]
@@ -266,7 +266,7 @@ def nilearn_atlas_helper(atlas, parc):
     else:
         raise RuntimeWarning("Extraction from nilearn datasets failed!")
 
-    return labels, networks_list, uatlas
+    return labels, networks_list, parcellation
 
 
 def mmToVox(img_affine, mmcoords):
@@ -300,7 +300,7 @@ def VoxTomm(img_affine, voxcoords):
 
 
 def get_node_membership(
-        network,
+        subnet,
         infile,
         coords,
         labels,
@@ -310,12 +310,12 @@ def get_node_membership(
         error=4):
     """
     Evaluate the affinity of any arbitrary list of coordinate or parcel nodes
-    for a user-specified RSN based on Yeo-7 or Yeo-17 definitions.
+    for a user-specified subnet based on Yeo-7 or Yeo-17 definitions.
 
     Parameters
     ----------
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
          used to filter nodes in the study of brain subgraphs.
     infile : str
         File path to Nifti1Image object whose affine will provide resampling
@@ -334,27 +334,27 @@ def get_node_membership(
         corresponding to ROI masks.
     perc_overlap : float
         Value 0-1 indicating a threshold of spatial overlap to use as a
-        spatial error cushion in the case of evaluating RSN membership from a
+        spatial error cushion in the case of evaluating subnet membership from a
         given list of parcel masks. Default is 0.75.
     error : int
         Rounded euclidean distance, in units of voxel number, to use as a
-        spatial error cushion in the case of evaluating RSN membership from a
+        spatial error cushion in the case of evaluating subnet membership from a
         given list of coordinates. Default is 4.
 
     Returns
     -------
     coords_mm : list
         Filtered list of (x, y, z) tuples in mm-space with a spatial affinity
-         for the specified RSN.
+         for the specified subnet.
     RSN_parcels : list
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images
          corresponding to ROI masks with a spatial affinity for the
-         specified RSN.
+         specified subnet.
     net_labels : list
         Filtered list of string labels corresponding to ROI nodes with a
-        spatial affinity for the specified RSN.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+        spatial affinity for the specified subnet.
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
          used to filter nodes in the study of brain subgraphs.
 
     References
@@ -448,7 +448,7 @@ def get_node_membership(
     ]
 
     # 17 triple: SalVentAttnA 7 (6), ContB 12 (11), DefaultA 14 (13)
-    if network in seventeen_nets:
+    if subnet in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
                 "pynets", "templates/rsnrefs/BIGREF1mm.nii.gz"
@@ -458,11 +458,11 @@ def get_node_membership(
                 "pynets", "templates/rsnrefs/BIGREF2mm.nii.gz"
             )
 
-        # Grab RSN reference file
+        # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
             "pynets", "templates/rsnrefs/Schaefer2018_1000_17nets_ref.txt"
         )
-    elif network in seven_nets:
+    elif subnet in seven_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
                 "pynets", "templates/rsnrefs/SMALLREF1mm.nii.gz"
@@ -472,7 +472,7 @@ def get_node_membership(
                 "pynets", "templates/rsnrefs/SMALLREF2mm.nii.gz"
             )
 
-        # Grab RSN reference file
+        # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
             "pynets", "templates/rsnrefs/Schaefer2018_1000_7nets_ref.txt"
         )
@@ -481,7 +481,7 @@ def get_node_membership(
 
     if not nets_ref_txt:
         raise ValueError(
-            f"Network: {str(network)} not found!\nSee valid network names "
+            f"subnet: {str(subnet)} not found!\nSee valid subnet names "
             f"using the `--help` flag with "
             f"`pynets`")
 
@@ -504,20 +504,20 @@ def get_node_membership(
             rsn_img = nib.load(par_file)
         except indexed_gzip.ZranError as e:
             print(e,
-                  f"\nCannot load RSN reference image. Do you have git-lfs "
+                  f"\nCannot load subnet reference image. Do you have git-lfs "
                   f"installed?")
     else:
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
-            print(e, f"\nCannot load RSN reference image. Do you have git-lfs "
+            print(e, f"\nCannot load subnet reference image. Do you have git-lfs "
                   f"installed?")
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
     )
 
-    RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(network)]
+    RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(subnet)]
     RSNmask = np.asarray(rsn_img_res.dataobj)[:, :, :, RSN_ix]
 
     coords_vox = []
@@ -539,7 +539,7 @@ def get_node_membership(
             sphere_vol[tuple(coords)] = 1
             i = i + 1
             if (RSNmask.astype("bool") & sphere_vol).any():
-                print(f"{coords}{' coords falls within '}{network}{'...'}")
+                print(f"{coords}{' coords falls within '}{subnet}{'...'}")
                 RSN_coords_vox.append(coords)
                 net_labels.append(labels[i])
                 continue
@@ -551,7 +551,7 @@ def get_node_membership(
                 if (RSNmask.astype("bool") & sphere_vol).any():
                     print(
                         f"{coords} coords is within a + or - "
-                        f"{float(error):.2f} mm neighborhood of {network}..."
+                        f"{float(error):.2f} mm neighborhood of {subnet}..."
                     )
                     RSN_coords_vox.append(coords)
                     net_labels.append(labels[i])
@@ -589,14 +589,14 @@ def get_node_membership(
             if overlap_count > 0:
                 overlap = float(overlap_count / total_count)
             else:
-                print(f"No overlap of parcel {i} with rsn mask...")
+                print(f"No overlap of parcel {i} with subnet mask...")
                 i += 1
                 continue
 
             if overlap >= perc_overlap:
                 print(
                     f"{100 * overlap:.2f}% of parcel {labels[i]} falls within"
-                    f" {str(network)} mask..."
+                    f" {str(subnet)} mask..."
                 )
                 RSN_parcels.append(parcel)
                 coords_with_parc.append(coords[i])
@@ -610,7 +610,7 @@ def get_node_membership(
     if len(coords_mm) <= 1:
         raise ValueError(
             f"\nNo coords from the specified atlas found within"
-            f" {network} network."
+            f" {subnet} subnet."
         )
 
     if RSN_parcels:
@@ -618,16 +618,16 @@ def get_node_membership(
     else:
         assert len(coords_mm) == len(net_labels)
 
-    return coords_mm, RSN_parcels, net_labels, network
+    return coords_mm, RSN_parcels, net_labels, subnet
 
 
-def drop_badixs_from_parcellation(uatlas, bad_idxs, enf_hemi=True):
+def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
     import os
     import nibabel as nib
     import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
-    parcellation_img = nib.load(uatlas)
+    parcellation_img = nib.load(parcellation)
 
     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
 
@@ -637,8 +637,8 @@ def drop_badixs_from_parcellation(uatlas, bad_idxs, enf_hemi=True):
         parlist_img_data[np.where(parlist_img_data == int(val))] = 0
 
     parcellation = fname_presuffix(
-        uatlas, suffix="_pruned",
-        newpath=os.path.dirname(uatlas))
+        parcellation, suffix="_pruned",
+        newpath=os.path.dirname(parcellation))
     nib.save(
         nib.Nifti1Image(parlist_img_data,
                         affine=parcellation_img.affine),
@@ -951,14 +951,14 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     return coords, labels
 
 
-def get_names_and_coords_of_parcels(uatlas, background_label=0):
+def get_names_and_coords_of_parcels(parcellation, background_label=0):
     """
     Return list of coordinates and max label intensity for a 3D atlas
     parcellation image.
 
     Parameters
     ----------
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
@@ -977,15 +977,15 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     matplotlib.use("agg")
     import os.path as op
     from nilearn.plotting import find_parcellation_cut_coords
-    if not op.isfile(uatlas):
+    if not op.isfile(parcellation):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
             "the file(s) specified with the -a flag exist(s)")
 
-    atlas = uatlas.split("/")[-1].split(".")[0]
+    atlas = parcellation.split("/")[-1].split(".")[0]
 
     [coords, label_intensities] = find_parcellation_cut_coords(
-        uatlas, background_label, return_label_names=True
+        parcellation, background_label, return_label_names=True
     )
     print(f"Parcel intensities:\n{label_intensities}")
 
@@ -994,7 +994,7 @@ def get_names_and_coords_of_parcels(uatlas, background_label=0):
     return coords, atlas, par_max, label_intensities
 
 
-def gen_img_list(uatlas):
+def gen_img_list(parcellation):
     """
     Return list of boolean nifti masks where each masks corresponds to a unique
     atlas label for the provided atlas parcellation. Path string to
@@ -1002,7 +1002,7 @@ def gen_img_list(uatlas):
 
     Parameters
     ----------
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
@@ -1017,12 +1017,12 @@ def gen_img_list(uatlas):
     import os.path as op
     from nilearn.image import new_img_like
 
-    if not op.isfile(uatlas):
+    if not op.isfile(parcellation):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that the"
             " file(s) specified with the -a flag exist(s)")
 
-    bna_img = nib.load(uatlas)
+    bna_img = nib.load(parcellation)
     bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
 
     # Get an array of unique parcels
@@ -1050,7 +1050,7 @@ def gen_img_list(uatlas):
     return iter_img(img_list)
 
 
-def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
+def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
                                             background_label=0):
     """
     Check for hemispherically distinct and consecutive labels and rebuild
@@ -1058,14 +1058,14 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
 
     Parameters
     ----------
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     label_names : list
         List of string label names corresponding to ROI nodes.
 
     Returns
     -------
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     label_names : list
         List of string label names corresponding to ROI nodes.
@@ -1074,7 +1074,7 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
     from nilearn.image.resampling import coord_transform
     from nilearn.image import new_img_like, reorder_img, iter_img
 
-    labels_img = reorder_img(nib.load(uatlas))
+    labels_img = reorder_img(nib.load(parcellation))
     labels_data = labels_img.get_fdata()
     labels_affine = labels_img.affine
 
@@ -1122,13 +1122,13 @@ def enforce_hem_distinct_consecutive_labels(uatlas, label_names=None,
 
     # Enforce consecutive labelings
     atlas_img_corr = create_parcel_atlas(img_list)[0]
-    nib.save(atlas_img_corr, uatlas)
+    nib.save(atlas_img_corr, parcellation)
 
     atlas_img_corr.uncache()
     del img_list, atlas_img_corr
     gc.collect()
 
-    return uatlas, label_names
+    return parcellation, label_names
 
 
 def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
@@ -1199,18 +1199,18 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
     return parcellation, coords, labels
 
 
-def gen_network_parcels(uatlas, network, labels, dir_path):
+def gen_network_parcels(parcellation, subnet, labels, dir_path):
     """
     Return a modified verion of an atlas parcellation label, where labels have
-    been filtered based on their spatial affinity for a specified RSN
+    been filtered based on their spatial affinity for a specified subnet
     definition.
 
     Parameters
     ----------
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
          used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -1220,7 +1220,7 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     Returns
     -------
     out_path : str
-        File path to a new, RSN-filtered atlas parcellation Nifti1Image.
+        File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
     """
     import gc
     import sys
@@ -1228,15 +1228,15 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
     from pynets.core import nodemaker
     import os.path as op
 
-    if not op.isfile(uatlas):
+    if not op.isfile(parcellation):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
             "the file(s) specified with the -a flag exist(s)")
 
-    img_list = nodemaker.gen_img_list(uatlas)
+    img_list = nodemaker.gen_img_list(parcellation)
     print(
-        f"\nExtracting parcels associated with {network} "
-        f"network locations...\n")
+        f"\nExtracting parcels associated with {subnet} "
+        f"subnet locations...\n")
     net_parcels = [i for j, i in enumerate(img_list) if j in labels]
     net_parcels_concatted = concat_imgs(net_parcels)
     net_parcels_sum = np.sum(
@@ -1245,9 +1245,11 @@ def gen_network_parcels(uatlas, network, labels, dir_path):
         axis=3,
         dtype=np.uint16,
     )
+    parcellation_name = \
+        op.basename(parcellation).split(op.splitext(parcellation)[1])[0]
     out_path = f"{dir_path}" \
-               f"/{op.basename(uatlas).split(op.splitext(uatlas)[1])[0]}_" \
-               f"{network}_parcels.nii.gz"
+               f"/{parcellation_name}_" \
+               f"{subnet}_parcels.nii.gz"
     nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
     del net_parcels_concatted, img_list
     gc.collect()
@@ -1408,7 +1410,8 @@ def parcel_naming(coords, vox_size):
     return new_labels
 
 
-def get_brainnetome_node_attributes(node_files, emb_shape):
+def get_node_attributes(node_files, emb_shape,
+                                    atlas='BrainnetomeAtlasFan2016'):
     import ast
     import re
     from pynets.stats.utils import parse_closest_ixs
@@ -1422,10 +1425,10 @@ def get_brainnetome_node_attributes(node_files, emb_shape):
             ast.literal_eval(
                 re.search('({.+})',
                           i['label']).group(0))[
-                'BrainnetomeAtlasFan2016'] for i in
+                atlas] for i in
             node_dict.values()]
     else:
-        labels = [i['label']['BrainnetomeAtlasFan2016'] for i in
+        labels = [i['label'][atlas] for i in
                   node_dict.values()]
 
     return coords, labels, ixs
@@ -1440,7 +1443,7 @@ def node_gen_masking(
     ID,
     parc,
     atlas,
-    uatlas,
+    parcellation,
     vox_size,
     perc_overlap=0.10,
     error=2
@@ -1472,15 +1475,15 @@ def node_gen_masking(
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas
         supported for fetching. See Nilearn's datasets.atlas module for more
         detailed reference.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     perc_overlap : float
         Value 0-1 indicating a threshold of spatial overlap to use as a spatial
-         error cushion in the case of evaluating mask/RSN membership from a
+         error cushion in the case of evaluating mask/subnet membership from a
          given list of parcel masks. Default is 0.75.
     error : int
         Rounded euclidean distance, in units of voxel number, to use as a
-        spatial error cushion in the case of evaluating mask/RSN membership
+        spatial error cushion in the case of evaluating mask/subnet membership
         from a given list of coordinates. Default is 4.
 
     Returns
@@ -1498,7 +1501,7 @@ def node_gen_masking(
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas
         supported for fetching. See Nilearn's datasets.atlas module for more
         detailed reference.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -1539,10 +1542,11 @@ def node_gen_masking(
                                      ) if i != 0])
     )
 
-    return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
+    return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
 
 
-def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
+def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
+             parcellation):
     """
     In the case that masking was not applied, this function generate nodes
     based on atlas definitions established by fetch_nodes_and_labels.
@@ -1568,7 +1572,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas
         supported for fetching. See Nilearn's datasets.atlas module for more
         detailed reference.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     Returns
@@ -1586,7 +1590,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
         Name of a Nilearn-hosted coordinate or parcellation/label-based atlas
         supported for fetching. See Nilearn's datasets.atlas module for more
         detailed reference.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     dir_path : str
         Path to directory containing subject derivative data for given run.
@@ -1621,7 +1625,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas, uatlas):
                                      ) if i != 0])
     )
 
-    return net_parcels_map_nifti, coords, labels, atlas, uatlas, dir_path
+    return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
 
 
 def mask_roi(dir_path, roi, mask, img_file):
@@ -1681,14 +1685,14 @@ def mask_roi(dir_path, roi, mask, img_file):
     return roi
 
 
-def create_spherical_roi_volumes(node_size, coords, template_mask):
+def create_spherical_roi_volumes(node_radius, coords, template_mask):
     """
     Create volume ROI mask of spheres from a given set of coordinates and
     radius.
 
     Parameters
     ----------
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     coords : list
@@ -1706,7 +1710,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
          to ROI masks.
     par_max : int
         The maximum label intensity in the parcellation image.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     parc : bool
@@ -1723,7 +1727,7 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     mask_shape = mask_img.shape
     mask_img.uncache()
 
-    print(f"Creating spherical ROI atlas with radius: {node_size}")
+    print(f"Creating spherical ROI atlas with radius: {node_radius}")
 
     coords_vox = []
     for i in coords:
@@ -1741,7 +1745,8 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
         sphere_vol[
             tuple(
                 get_sphere(
-                    coord, node_size, (np.abs(x_vox), y_vox, z_vox), mask_shape
+                    coord, node_radius, (np.abs(x_vox), y_vox, z_vox),
+                    mask_shape
                 ).T
             )
         ] = (i * 1)
@@ -1774,4 +1779,4 @@ def create_spherical_roi_volumes(node_size, coords, template_mask):
     else:
         raise ValueError("Number of nodes is zero.")
 
-    return iter_img(parcel_list), par_max, node_size, parc
+    return iter_img(parcel_list), par_max, node_radius, parc

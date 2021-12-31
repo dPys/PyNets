@@ -228,16 +228,18 @@ def test_reorient_dwi():
     base_dir = str(Path(__file__).parent/"examples")
     test_dir = f"{base_dir}/003/test_out/test_reorient_dwi"
 
-    # iso_eddy_corrected_data_denoised_LAS.nii.gz was the original image in radiological orientation.
-    # fslswapdim and fslorient manually used to create RAS image. This test attempts to convert RAS
-    # image back to LAS. Confirms by checking output array is equal to origal LAS image array.
+    # iso_eddy_corrected_data_denoised_LAS.nii.gz was the original image in
+    # radiological orientation. fslswapdim and fslorient manually used to
+    # create RAS image. This test attempts to convert RAS image back to LAS.
+    # Confirms by checking output array is equal to origal LAS image array.
 
     dwi_prep_rad = f"{test_dir}/iso_eddy_corrected_data_denoised_LAS.nii.gz"
     dwi_prep_neu = f"{test_dir}/iso_eddy_corrected_data_denoised_RAS.nii.gz"
     bvecs_orig = f"{test_dir}/bvec.bvec"
     out_dir = f"{test_dir}/output"
 
-    dwi_prep_out, bvecs_out = utils.reorient_dwi(dwi_prep_neu, bvecs_orig, out_dir)
+    dwi_prep_out, bvecs_out = utils.reorient_dwi(dwi_prep_neu, bvecs_orig,
+                                                 out_dir)
 
     orig_rad = nib.load(dwi_prep_rad)
     orig_rad_data = orig_rad.get_data()
@@ -281,9 +283,12 @@ def test_reorient_img():
     RAStoRAS_img = nib.load(RAStoRAS_img_out)
 
     # Assert that arrays are equal
-    check_LAS_input = np.allclose(LAStoRAS_img.affine.astype('int'), orig_RAS_img.affine.astype('int'))
-    check_RAS_input = np.allclose(RAStoRAS_img.affine.astype('int'), orig_RAS_img.affine.astype('int'))
-    check_both_outputs = np.allclose(LAStoRAS_img.affine.astype('int'), RAStoRAS_img.affine.astype('int'))
+    check_LAS_input = np.allclose(LAStoRAS_img.affine.astype('int'),
+                                  orig_RAS_img.affine.astype('int'))
+    check_RAS_input = np.allclose(RAStoRAS_img.affine.astype('int'),
+                                  orig_RAS_img.affine.astype('int'))
+    check_both_outputs = np.allclose(LAStoRAS_img.affine.astype('int'),
+                                     RAStoRAS_img.affine.astype('int'))
 
     assert check_LAS_input is True
     assert check_RAS_input is True
@@ -303,15 +308,21 @@ def test_check_orient_and_dims():
     anat_LAS = f"{test_dir}/anat_LAS/sub-003_T1w_LAS.nii.gz"
     anat_RAS = f"{test_dir}/anat_RAS/sub-003_T1w_RAS.nii.gz"
     # Diffusion: 2x2x2mm
-    dmri_LAS = f"{test_dir}/dmri_LAS/iso_eddy_corrected_data_denoised_LAS.nii.gz"
-    dmri_RAS = f"{test_dir}/dmri_RAS/iso_eddy_corrected_data_denoised_RAS.nii.gz"
+    dmri_LAS = f"{test_dir}/dmri_LAS/iso_eddy_corrected_data_denoised_LAS." \
+               f"nii.gz"
+    dmri_RAS = f"{test_dir}/dmri_RAS/iso_eddy_corrected_data_denoised_RAS." \
+               f"nii.gz"
     bvecs_LAS = f"{test_dir}/dmri_LAS/bvec.orig.bvec"
     bvecs_RAS = f"{test_dir}/dmri_RAS/bvec.trans.bvec"
 
-    anat_LAStoRAS = utils.check_orient_and_dims(anat_LAS, test_dir, '2mm', bvecs=None)
-    anat_RAStoRAS = utils.check_orient_and_dims(anat_RAS, test_dir, '2mm', bvecs=None)
-    dmri_LAStoRAS, bvecs_LAStoRAS = utils.check_orient_and_dims(dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
-    dmri_RAStoRAS, bvecs_RAStoRAS = utils.check_orient_and_dims(dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
+    anat_LAStoRAS = utils.check_orient_and_dims(anat_LAS, test_dir, '2mm',
+                                                bvecs=None)
+    anat_RAStoRAS = utils.check_orient_and_dims(anat_RAS, test_dir, '2mm',
+                                                bvecs=None)
+    dmri_LAStoRAS, bvecs_LAStoRAS = utils.check_orient_and_dims(
+        dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
+    dmri_RAStoRAS, bvecs_RAStoRAS = utils.check_orient_and_dims(
+        dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
 
     anat_LAStoRAS = nib.load(anat_LAStoRAS)
 

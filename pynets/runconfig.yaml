@@ -163,7 +163,6 @@ labeling_atlases:
     - 'DesikanKlein2012'
     - 'BrainnetomeAtlasFan2016'
     - 'MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics'
-    - 'Hammers_mithAtlasn30r83Hammers2003Gousias2008'
     - 'AICHAreorderedJoliot2015'
 available_models:
     func_models:
@@ -196,7 +195,7 @@ plotting:
     adjacency:
         - True
     dpi:
-        - 600
+        - 400
     labeling_atlas:
         - 'BrainnetomeAtlasFan2016'
     functional:
@@ -238,13 +237,13 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
       - 'save_coords_and_labels_node':
         - (1, 1)
-      - 'check_orient_and_dims_func_node':
+      - 'orient_reslice_func_node':
         - (2, 4)
-      - 'check_orient_and_dims_mask_node':
+      - 'orient_reslice_mask_node':
         - (1, 1)
-      - 'check_orient_and_dims_uatlas_node':
+      - 'orient_reslice_uatlas_node':
         - (1, 1)
-      - 'check_orient_and_dims_anat_node':
+      - 'orient_reslice_anat_node':
         - (1, 1)
       - 'node_gen_node':
         - (4, 8)
@@ -252,7 +251,7 @@ resource_dict: # Nipype workflow resource settings
         - (4, 8)
       - 'get_node_membership_node':
         - (2, 6)
-      - 'check_orient_and_dims_dwi_node':
+      - 'orient_reslice_dwi_node':
         - (2, 4)
       - 'get_anisopwr_node':
         - (2, 2)
@@ -272,7 +271,7 @@ resource_dict: # Nipype workflow resource settings
         - (1, 1)
       - 'register_node':
         - (4, 8)
-      - 'register_atlas_node':
+      - 'reg_nodes_node':
         - (2, 4)
       - 'RegisterParcellation2MNIFunc_node':
         - (2, 4)

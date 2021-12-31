@@ -8,6 +8,7 @@ Copyright (C) 2017
 import os
 import numpy as np
 import sys
+import gc
 import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
@@ -52,15 +53,11 @@ def gen_mask(t1w_head, t1w_brain, mask):
         del t1w_data
 
     # Threshold T1w brain to binary in anat space
-    t_img = nib.load(t1w_brain_mask)
-    img = math_img("img > 0.0", img=t_img)
-    img.to_filename(t1w_brain_mask)
-    t_img.uncache()
-    time.sleep(0.5)
+    math_img("img > 0.0001", img=nib.load(t1w_brain_mask)
+             ).to_filename(t1w_brain_mask)
 
     t1w_brain = regutils.apply_mask_to_image(t1w_head, t1w_brain_mask,
                                              t1w_brain)
-    time.sleep(0.5)
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)
@@ -75,7 +72,7 @@ def deep_skull_strip(t1w_data, t1w_brain_mask, img):
     from deepbrain import Extractor
     import logging
 
-    print('Attempting deepbrain skull-stripping...')
+    print('Stripping skull and extracting brain...')
     logger = tf.get_logger()
     logger.setLevel(logging.ERROR)
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -92,8 +89,8 @@ def deep_skull_strip(t1w_data, t1w_brain_mask, img):
 
 
 def atlas2t1w2dwi_align(
-    uatlas,
-    uatlas_parcels,
+    parcellation,
+    parcellation4d,
     atlas,
     t1w_brain,
     t1w_brain_mask,
@@ -126,23 +123,23 @@ def atlas2t1w2dwi_align(
     from nilearn.masking import intersect_masks
 
     template_img = nib.load(t1_aligned_mni)
-    if uatlas_parcels:
-        atlas_img_orig = nib.load(uatlas_parcels)
+    if parcellation4d:
+        atlas_img_orig = nib.load(parcellation4d)
     else:
-        atlas_img_orig = nib.load(uatlas)
+        atlas_img_orig = nib.load(parcellation)
 
     old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
 
-    uatlas_res_template = resample_to_img(
+    parcellation_res_template = resample_to_img(
         atlas_img_orig, template_img, interpolation="nearest"
     )
 
-    uatlas_res_template = nib.Nifti1Image(
-        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
-        affine=uatlas_res_template.affine,
-        header=uatlas_res_template.header,
+    parcellation_res_template = nib.Nifti1Image(
+        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        affine=parcellation_res_template.affine,
+        header=parcellation_res_template.header,
     )
-    nib.save(uatlas_res_template, aligned_atlas_t1mni)
+    nib.save(parcellation_res_template, aligned_atlas_t1mni)
 
     if simple is False:
         try:
@@ -208,12 +205,9 @@ def atlas2t1w2dwi_align(
                                                      B0_mask,
                                                      dwi_aligned_atlas)
 
-    time.sleep(0.5)
-
     dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
         dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int)
 
-    time.sleep(0.5)
     final_dat = atlas_img_corr.get_fdata()
     unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
 
@@ -378,7 +372,7 @@ def roi2t1w_align(
 
 
 def RegisterParcellation2MNIFunc_align(
-    uatlas,
+    parcellation,
     template,
     template_mask,
     t1w_brain,
@@ -395,19 +389,19 @@ def RegisterParcellation2MNIFunc_align(
     from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
-    atlas_img = nib.load(uatlas)
+    atlas_img = nib.load(parcellation)
     t1w_brain_img = nib.load(t1w_brain)
 
-    uatlas_res_template = resample_to_img(
+    parcellation_res_template = resample_to_img(
         atlas_img, t1w_brain_img, interpolation="nearest"
     )
 
-    uatlas_res_template = nib.Nifti1Image(
-        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
-        affine=uatlas_res_template.affine,
-        header=uatlas_res_template.header,
+    parcellation_res_template = nib.Nifti1Image(
+        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        affine=parcellation_res_template.affine,
+        header=parcellation_res_template.header,
     )
-    nib.save(uatlas_res_template, aligned_atlas_t1w)
+    nib.save(parcellation_res_template, aligned_atlas_t1w)
 
     if simple is False:
         try:
@@ -452,8 +446,8 @@ def RegisterParcellation2MNIFunc_align(
 
 
 def atlas2t1w_align(
-    uatlas,
-    uatlas_parcels,
+    parcellation,
+    parcellation4d,
     atlas,
     t1w_brain,
     t1w_brain_mask,
@@ -476,23 +470,23 @@ def atlas2t1w_align(
     # from pynets.core.utils import checkConsecutive
 
     template_img = nib.load(t1_aligned_mni)
-    if uatlas_parcels:
-        atlas_img_orig = nib.load(uatlas_parcels)
+    if parcellation4d:
+        atlas_img_orig = nib.load(parcellation4d)
     else:
-        atlas_img_orig = nib.load(uatlas)
+        atlas_img_orig = nib.load(parcellation)
 
     # old_count = len(np.unique(np.asarray(atlas_img_orig.dataobj)))
 
-    uatlas_res_template = resample_to_img(
+    parcellation_res_template = resample_to_img(
         atlas_img_orig, template_img, interpolation="nearest"
     )
 
-    uatlas_res_template = nib.Nifti1Image(
-        np.asarray(uatlas_res_template.dataobj).astype('uint16'),
-        affine=uatlas_res_template.affine,
-        header=uatlas_res_template.header,
+    parcellation_res_template = nib.Nifti1Image(
+        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        affine=parcellation_res_template.affine,
+        header=parcellation_res_template.header,
     )
-    nib.save(uatlas_res_template, aligned_atlas_t1mni)
+    nib.save(parcellation_res_template, aligned_atlas_t1mni)
 
     if simple is False:
         try:
@@ -526,7 +520,6 @@ def atlas2t1w_align(
                                                     t1w_brain_mask,
                                                     aligned_atlas_gm)
 
-    time.sleep(0.5)
     atlas_img = nib.load(aligned_atlas_gm)
 
     atlas_img_corr = nib.Nifti1Image(
@@ -560,7 +553,7 @@ def atlas2t1w_align(
     return aligned_atlas_gm, aligned_atlas_skull
 
 
-def segment_t1w(t1w, basename, opts=""):
+def segment_t1w(t1w, basename, nclass=3, beta=0.1):
     """
     A function to use FSL's FAST to segment an anatomical
     image into GM, WM, and CSF prob maps.
@@ -571,10 +564,6 @@ def segment_t1w(t1w, basename, opts=""):
         File path to an anatomical T1-weighted image.
     basename : str
         A basename to use for output files.
-    opts : str
-        Additional options that can optionally be passed to fast.
-        Desirable options might be -P, which will use prior probability maps
-        if the input T1w MRI is in standard space.
 
     Returns
     -------
@@ -582,15 +571,36 @@ def segment_t1w(t1w, basename, opts=""):
         File path to the probability map Nifti1Image consisting of GM, WM,
         and CSF in the 4th dimension.
     """
-    print("Segmenting Anatomical Image into WM, GM, and CSF...")
-    # run FAST, with options -t for the image type and -n to
-    # segment into CSF (pve_0), GM (pve_1), WM (pve_2)
-    cmd = f"fast -t 1 {opts} -n 3 -o {basename} {t1w}"
-    os.system(cmd)
-    out = {}  # the outputs
-    out["wm_prob"] = f"{basename}_{'pve_2.nii.gz'}"
-    out["gm_prob"] = f"{basename}_{'pve_1.nii.gz'}"
-    out["csf_prob"] = f"{basename}_{'pve_0.nii.gz'}"
+    from dipy.segment.tissue import TissueClassifierHMRF
+    from nilearn.image import new_img_like
+
+    print("Segmenting T1w...")
+
+    t1w_img = nib.load(t1w)
+    hmrf = TissueClassifierHMRF()
+    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta)[2]
+
+    new_img_like(t1w_img, PVE[..., 2]).to_filename(
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}")
+
+    new_img_like(t1w_img, PVE[..., 1]).to_filename(
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_1.nii.gz'}")
+
+    new_img_like(t1w_img, PVE[..., 0]).to_filename(
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_2.nii.gz'}")
+
+    out = {} # the outputs
+    out["wm_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
+                     f"pve_0.nii.gz"
+    out["gm_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
+                     f"pve_1.nii.gz"
+    out["csf_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
+                      f"pve_2.nii.gz"
+
+    del PVE
+    t1w_img.uncache()
+    gc.collect()
+
     return out
 
 
@@ -853,11 +863,12 @@ def invert_xfm(in_mat, out_mat):
 
 
 def apply_mask_to_image(input, mask, output):
-    import os
+    from nilearn.image import math_img
 
-    cmd = f"fslmaths {input} -mas {mask} -thrp 0.0001 {output}"
-    print(cmd)
-    os.system(cmd)
+    img = math_img("input*mask", input=nib.load(input), mask=nib.load(mask))
+    img.dataobj[img.dataobj < 0.001] = 0
+    img.to_filename(output)
+    img.uncache()
 
     return output
 
@@ -1138,7 +1149,7 @@ def median(in_file):
     return out_file
 
 
-def check_orient_and_dims(
+def orient_reslice(
         infile,
         outdir,
         vox_size,
@@ -1444,8 +1455,7 @@ def match_target_vox_res(img_file, vox_size, out_dir,
     orig_img = img_file
     img = nib.load(img_file, mmap=False)
 
-    hdr = img.header
-    zooms = hdr.get_zooms()[:3]
+    zooms = img.header.get_zooms()[:3]
     if vox_size == "1mm":
         new_zooms = (1.0, 1.0, 1.0)
     elif vox_size == "2mm":
@@ -1462,11 +1472,10 @@ def match_target_vox_res(img_file, vox_size, out_dir,
             pass
         else:
             import gc
-            data = img.get_fdata(dtype=np.float32)
             print(f"Reslicing image {img_file} "
                   f"to {vox_size}...")
             data2, affine2 = reslice(
-                data, img.affine, zooms, new_zooms
+                img.get_fdata(dtype=np.float32), img.affine, zooms, new_zooms
             )
             nib.save(
                 nib.Nifti1Image(
@@ -1474,7 +1483,7 @@ def match_target_vox_res(img_file, vox_size, out_dir,
                     affine=affine2),
                 img_file_res)
             img_file = img_file_res
-            del data2, data
+            del data2
             gc.collect()
     else:
         img_file_nores = (

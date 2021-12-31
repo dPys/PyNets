@@ -43,13 +43,15 @@ def main():
     modality = 'func'
 
     embedding_types = ['ASE', 'OMNI', 'betweenness', 'eigenvector']
-    rsns = ['intersection', 'language', 'ventral', 'union']
+    parcellations = ['intersection', 'language', 'ventral', 'union']
     # template = 'CN200'
     template = 'MNI152_T1'
     mets = []
 
-    metaparams_func = ["rsn", "res", "model", 'hpass', 'extract', 'smooth']
-    metaparams_dwi = ["rsn", "res", "model", 'directget', 'minlength', 'tol']
+    metaparams_func = ["parcellation", "res", "model", 'hpass', 'extract',
+                       'smooth']
+    metaparams_dwi = ["parcellation", "res", "model", 'directget',
+                      'minlength', 'tol']
 
     #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     sessions = ['1', '2']
@@ -66,24 +68,24 @@ def main():
     for embedding_type in embedding_types:
         subject_dict_file_path = (
             f"{base_dir}/pynets_subject_dict_{modality}_"
-            f"{embedding_type}_{template}_{rsns}.pkl"
+            f"{embedding_type}_{template}_{parcellations}.pkl"
         )
         subject_mod_grids_file_path = (
             f"{base_dir}/pynets_modality_grids_{modality}_"
-            f"{embedding_type}_{template}_{rsns}.pkl"
+            f"{embedding_type}_{template}_{parcellations}.pkl"
         )
         missingness_summary = (
             f"{base_dir}/pynets_missingness_summary_{modality}_"
-            f"{embedding_type}_{template}_{rsns}.csv"
+            f"{embedding_type}_{template}_{parcellations}.csv"
         )
-        icc_tmps_dir = f"{base_dir}/icc_tmps/{rsns}_{modality}_" \
+        icc_tmps_dir = f"{base_dir}/icc_tmps/{parcellations}_{modality}_" \
                        f"{embedding_type}"
         os.makedirs(icc_tmps_dir, exist_ok=True)
         if not os.path.isfile(subject_dict_file_path):
             subject_dict, modality_grids, missingness_frames = \
                 make_subject_dict(
                     [modality], base_dir, thr_type, mets, [embedding_type],
-                    template, sessions, rsns
+                    template, sessions, parcellations
                 )
             sub_dict_clean = cleanNullTerms(subject_dict)
             missingness_frames = [i for i in missingness_frames if
@@ -151,7 +153,7 @@ def main():
             modality, metaparam_dict, sorted(list(set(metaparams))),
             ensembles)[1]
 
-        grid = [i for i in grid if any(n in i for n in rsns)]
+        grid = [i for i in grid if any(n in i for n in parcellations)]
 
         good_grids = []
         for grid_param in grid:
@@ -221,7 +223,7 @@ def main():
         print(f"Saving to {base_dir}/grid_clean_{modality}_{embedding_type}_"
               f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}.csv...")
         df_summary.to_csv(f"{base_dir}"
-                          f"/grid_clean_{modality}_{embedding_type}_{rsns}_"
+                          f"/grid_clean_{modality}_{embedding_type}_{parcellations}_"
                           f"{datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}"
                           f".csv", index=False)
 

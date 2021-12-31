@@ -457,8 +457,8 @@ def streams2graph(
     track_type,
     target_samples,
     conn_model,
-    network,
-    node_size,
+    subnet,
+    node_radius,
     dens_thresh,
     ID,
     roi,
@@ -467,7 +467,7 @@ def streams2graph(
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
@@ -495,10 +495,10 @@ def streams2graph(
         Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -513,14 +513,14 @@ def streams2graph(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -560,10 +560,10 @@ def streams2graph(
         Path to directory containing subject derivative data for given run.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -578,14 +578,14 @@ def streams2graph(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -615,7 +615,7 @@ def streams2graph(
       using diffusion MRI: why, how and but. NMR in Biomedicine.
       https://doi.org/10.1002/nbm.3752
     .. [3] Chung, M. K., Hanson, J. L., Adluru, N., Alexander, A. L., Davidson,
-      R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
+      R. J., & Pollak, S. D. (2017). Integrative Structural Brain subnet
       Analysis in Diffusion Tensor Imaging. Brain Connectivity.
       https://doi.org/10.1089/brain.2016.0481
     """
@@ -875,8 +875,8 @@ def streams2graph(
 
     assert len(coords) == len(labels) == conn_matrix.shape[0]
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-rawgraph"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-rawgraph"
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
@@ -887,18 +887,18 @@ def streams2graph(
     labels = np.array(labels)
 
     if parc is True:
-        node_size = "parc"
+        node_radius = "parc"
 
     # Save unthresholded
     utils.save_mat(
         conn_matrix,
         utils.create_raw_path_diff(
             ID,
-            network,
+            subnet,
             conn_model,
             roi,
             dir_path,
-            node_size,
+            node_radius,
             target_samples,
             track_type,
             parc,
@@ -916,8 +916,8 @@ def streams2graph(
         target_samples,
         dir_path,
         conn_model,
-        network,
-        node_size,
+        subnet,
+        node_radius,
         dens_thresh,
         ID,
         roi,
@@ -926,7 +926,7 @@ def streams2graph(
         parc,
         prune,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,

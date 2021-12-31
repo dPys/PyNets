@@ -114,7 +114,7 @@ def _omni_embed(pop_array, atlas, graph_path_list,
                                                      omni_fit.shape[0]))
 
         out_path = (
-            f"{namer_dir}/gradient-OMNI_rsn-{atlas}_res-{subgraph_name}_"
+            f"{namer_dir}/gradient-OMNI_subnet-{atlas}_res-{subgraph_name}_"
             f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
         )
 
@@ -138,10 +138,10 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     else:
         # Add a null tmp file to prevent pool from breaking
         out_path = f"{namer_dir}/gradient-OMNI" \
-                   f"_rsn-{atlas}_res-{subgraph_name}_" \
+                   f"_subnet-{atlas}_res-{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
         # TODO: Replace this band-aid solution with the real fix
-        out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+        out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-',
                                                                 'res-')
         if not os.path.exists(out_path):
             open(out_path, 'w').close()
@@ -337,13 +337,13 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
-               f"_rsn-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
+               f"_subnet-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
     # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
     #                f"_{subgraph_name}" \
     #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
     # TODO: Replace this band-aid solution with the real fix
-    out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-', 'res-')
+    out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-', 'res-')
     #dump(ase, out_path_est)
 
     print("Saving...")
@@ -369,7 +369,7 @@ def build_asetomes(est_path_iterlist, ID):
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
-    from pynets.stats.embeddings import _ase_embed
+    from pynets.stats.spectral import _ase_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -399,8 +399,8 @@ def build_asetomes(est_path_iterlist, ID):
         atlas = prune_suffices(file_.split("/")[-3])
         res = prune_suffices("_".join(file_.split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
-        if "rsn" in res:
-            subgraph = res.split("rsn-")[1].split('_')[0]
+        if "subnet" in res:
+            subgraph = res.split("subnet-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
 
@@ -416,10 +416,10 @@ def build_asetomes(est_path_iterlist, ID):
             if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
-                       f"_rsn-{atlas}_res-{subgraph}_" \
+                       f"_subnet-{atlas}_res-{subgraph}_" \
                        f"{os.path.basename(file_)}_NULL"
             # TODO: Replace this band-aid solution with the real fix
-            out_path = out_path.replace('rsn-rsn-', 'rsn-').replace('res-res-',
+            out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-',
                                                                     'res-')
             if not os.path.exists(out_path):
                 open(out_path, 'w').close()
@@ -454,7 +454,7 @@ def build_masetome(est_path_iterlist, ID):
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices
-    from pynets.stats.embeddings import _mase_embed
+    from pynets.stats.spectral import _mase_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -482,8 +482,8 @@ def build_masetome(est_path_iterlist, ID):
         atlas = prune_suffices(pairs[0].split("/")[-3])
         res = prune_suffices("_".join(pairs[0].split(
             "/")[-1].split("modality")[1].split("_")[1:]).split("_est")[0])
-        if "rsn" in res:
-            subgraph = res.split("rsn-")[1].split('_')[0]
+        if "subnet" in res:
+            subgraph = res.split("subnet-")[1].split('_')[0]
         else:
             subgraph = "all_nodes"
         out_path = _mase_embed(
@@ -539,7 +539,7 @@ def build_omnetome(est_path_iterlist, ID):
     import sys
     import numpy as np
     from pynets.core.utils import flatten
-    from pynets.stats.embeddings import _omni_embed
+    from pynets.stats.spectral import _omni_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -604,14 +604,14 @@ def build_omnetome(est_path_iterlist, ID):
 
         if "_rsn" in ";".join(est_path_iterlist_func):
             func_subnets = list(
-                set([i.split("_rsn-")[1].split("_")[0] for i in
+                set([i.split("_subnet-")[1].split("_")[0] for i in
                      est_path_iterlist_func])
             )
         else:
             func_subnets = []
         if "_rsn" in ";".join(est_path_iterlist_dwi):
             dwi_subnets = list(
-                set([i.split("_rsn-")[1].split("_")[0] for i in
+                set([i.split("_subnet-")[1].split("_")[0] for i in
                      est_path_iterlist_dwi])
             )
         else:
@@ -655,11 +655,11 @@ def build_omnetome(est_path_iterlist, ID):
                         parcel_dict_func[atlas].append(graph_path)
             if len(parcel_dict_func[atlas]) > 0:
                 if isinstance(parcel_dict_func[atlas], dict):
-                    # RSN case
-                    for rsn in parcel_dict_func[atlas]:
+                    # subnet case
+                    for subnet in parcel_dict_func[atlas]:
                         pop_rsn_list = []
                         graph_path_list = []
-                        for graph in parcel_dict_func[atlas][rsn]:
+                        for graph in parcel_dict_func[atlas][subnet]:
                             pop_rsn_list.append(np.load(graph))
                             graph_path_list.append(graph)
                         if len(pop_rsn_list) > 1:
@@ -708,11 +708,11 @@ def build_omnetome(est_path_iterlist, ID):
 
             if len(parcel_dict_dwi[atlas]) > 0:
                 if isinstance(parcel_dict_dwi[atlas], dict):
-                    # RSN case
+                    # subnet case
                     graph_path_list = []
-                    for rsn in parcel_dict_dwi[atlas]:
+                    for subnet in parcel_dict_dwi[atlas]:
                         pop_rsn_list = []
-                        for graph in parcel_dict_dwi[atlas][rsn]:
+                        for graph in parcel_dict_dwi[atlas][subnet]:
                             pop_rsn_list.append(np.load(graph))
                             graph_path_list.append(graph)
                         if len(pop_rsn_list) > 1:

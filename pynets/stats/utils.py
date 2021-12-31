@@ -21,15 +21,15 @@ def get_ensembles_embedding(modality, alg, base_dir):
         ensembles_pre = list(
             set(
                 [
-                    "rsn-"
-                    + i.split('rsn-')[1].split("_")[0]
+                    "subnet-"
+                    + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
                     + i.split('res-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".npy", "")
                     for i in glob.glob(
-                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/rsn-*/"
+                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/subnet-*/"
                         f"embeddings/gradient-{alg}*.npy"
                     )
                 ]
@@ -46,15 +46,15 @@ def get_ensembles_embedding(modality, alg, base_dir):
         ensembles_pre = list(
             set(
                 [
-                    "rsn-"
-                    + i.split('rsn-')[1].split("_")[0]
+                    "subnet-"
+                    + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
                     + i.split('res-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".csv", "")
                     for i in glob.glob(
-                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/rsn-*/"
+                        f"{base_dir}/pynets/sub-*/ses-*/{modality}/subnet-*/"
                         f"embeddings/gradient-{alg}*.csv"
                     )
                 ]
@@ -193,9 +193,10 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
         except:
             print(f"Failed to parse ensemble {ensemble}...")
 
-    if "rsn" in hyperparam_dict.keys():
-        hyperparam_dict["rsn"] = [i for i in hyperparam_dict["rsn"] if "res"
-                                  not in i]
+    if "subnet" in hyperparam_dict.keys():
+        hyperparam_dict["subnet"] = [i for i in
+                                     hyperparam_dict["subnet"] if "res"
+                                     not in i]
 
     hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(),
                                          key=lambda x: x[0]))
@@ -210,7 +211,7 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
 def get_index_labels(base_dir, ID, ses, modality, atlas, res, emb_shape):
 
     node_files = glob.glob(
-        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
         f"{atlas}_res-{res}/nodes/*.json")
 
     if len(node_files) > 0:
@@ -354,7 +355,7 @@ def make_node_dict_from_parcellation(parcellation, dir_path, vox_size='2mm'):
         get_names_and_coords_of_parcels(parcellation)
     labels = parcel_naming(coords, vox_size)
     node_file = save_coords_and_labels_to_json(coords, labels,
-                                               dir_path, network='regen',
+                                               dir_path, subnet='regen',
                                                indices=label_intensities)
     return node_file
 
@@ -405,7 +406,7 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
 
             if len(ixs) != emb_shape:
                 node_files = glob.glob(
-                    f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-"
+                    f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
                     f"{grid_param[-2]}_res-{grid_param[-3]}/nodes/*.json")
                 ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
@@ -417,19 +418,19 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                     )
                     if rsn_dict["data"].shape[1] == 1:
                         df_lps = pd.DataFrame(rsn_arr,
-                                              columns=[f"{i}_rsn-"
+                                              columns=[f"{i}_subnet-"
                                                        f"{grid_param[-2]}_"
                                                        f"res-{grid_param[-3]}_"
                                                        f"dim1" for i in ixs])
                     elif rsn_dict["data"].shape[1] == 3:
                         df_lps = pd.DataFrame(
                             rsn_arr,
-                            columns=[f"{i}_rsn-{grid_param[-2]}_"
+                            columns=[f"{i}_subnet-{grid_param[-2]}_"
                                      f"res-{grid_param[-3]}_dim1" for
                                      i in ixs]
-                            + [f"{i}_rsn-{grid_param[-2]}_"
+                            + [f"{i}_subnet-{grid_param[-2]}_"
                                f"res-{grid_param[-3]}_dim2" for i in ixs]
-                            + [f"{i}_rsn-{grid_param[-2]}_"
+                            + [f"{i}_subnet-{grid_param[-2]}_"
                                f"res-{grid_param[-3]}_dim3" for i in ixs],
                         )
                     else:
@@ -810,14 +811,15 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/rsn-{atlas}_res-{res}/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-{atlas}_res-"
+            f"{res}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if (alg in i) and
                           (f"res-{res}" in i) and
-                          (f"rsn-{atlas}" in i) and
+                          (f"subnet-{atlas}" in i) and
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
                           (f"minlength-{minlength}" in i) and
@@ -825,7 +827,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
         else:
             embeddings = [i for i in embeddings if (alg in i) and
                           (f"res-{res}" in i) and
-                          (f"rsn-{atlas}" in i) and
+                          (f"subnet-{atlas}" in i) and
                           (f"template-{template}" in i) and
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
@@ -858,15 +860,17 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                  (f"/rsn-{atlas}_res-{res}/"
+                                  (f"/subnet-{atlas}_res-{res}/"
                                             in i) and
-                                  (atlas in os.path.basename(i)) and (res in os.path.basename(i))]
+                                  (atlas in os.path.basename(i)) and
+                                  (res in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=lambda x: int(
                         x.partition('samples-')[2].partition('streams')[0]),
                            reverse=False)
-                    # TODO: Change "reverse" above to True to grab the MOST number of samples (ideal).
+                    # TODO: Change "reverse" above to True to grab the MOST
+                    #  number of samples (ideal).
 
                     sorted_embeddings = sorted(sorted_embeddings,
                                                key=os.path.getmtime)
@@ -874,7 +878,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                     print(
                         f"Multiple structural embeddings found for {ID} and"
                         f" {comb_tuple}:\n{sorted_embeddings}\nTaking the most"
-                        f" recent with the largest number of samples {embedding}..."
+                        f" recent with the largest number of samples "
+                        f"{embedding}..."
                     )
                 else:
                     return subject_dict, missingness_frame
@@ -960,7 +965,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             f"directget-{directget}",
             f"model-{model}",
             f"res-{res}",
-            f"rsn-{atlas}",
+            f"subnet-{atlas}",
             f"tol-{tol}",
             f"thrtype-{thr_type}",
         ]
@@ -1018,7 +1023,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 f"UNIVERSE: {comb_tuple}, "
                 f"COMPLETENESS: {completion_status}")
         subject_dict[ID][str(ses)][modality][alg][comb_tuple] = data
-        # save_embed_data_to_sql(data, ixs, ID, str(ses), modality, alg, comb_tuple)
+        # save_embed_data_to_sql(data, ixs, ID, str(ses), modality, alg,
+        # comb_tuple)
         # print(data)
     del comb, comb_tuple
     gc.collect()
@@ -1051,14 +1057,14 @@ def func_grabber(comb, subject_dict, missingness_frame,
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
             f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
-            f"rsn-{atlas}_res-{res}/"
+            f"subnet-{atlas}_res-{res}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if ((alg in i) and
                                                     (f"res-{res}" in i) and
-                                                    (f"rsn-{atlas}" in i) and
+                                                    (f"subnet-{atlas}" in i) and
                                                     (f"model-{model}" in i)
                                                     and (f"hpass-{hpass}Hz" in i)
                                                     and (f"extract-{extract}" in
@@ -1066,7 +1072,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
         else:
             embeddings = [i for i in embeddings if ((alg in i) and
                                                     (f"res-{res}" in i) and
-                                                    (f"rsn-{atlas}" in i) and
+                                                    (f"subnet-{atlas}" in i) and
                                                     (f"template-{template}" in i) and
                                                     (f"model-{model}" in i)
                                                     and (f"hpass-{hpass}Hz" in i)
@@ -1113,9 +1119,10 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                            f"/rsn-{atlas}_res-{res}/"
+                                            f"/subnet-{atlas}_res-{res}/"
                                             in i and
-                                            (atlas in os.path.basename(i)) and (res in os.path.basename(i))]
+                                            (atlas in os.path.basename(i))
+                                  and (res in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=os.path.getmtime)
@@ -1123,7 +1130,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                     print(
                         f"Multiple structural embeddings found for {ID} and"
                         f" {comb_tuple}:\n{sorted_embeddings}\nTaking the most"
-                        f" recent with the largest number of samples {embedding}..."
+                        f" recent with the largest number of samples "
+                        f"{embedding}..."
                     )
                 else:
                     return subject_dict, missingness_frame
@@ -1210,7 +1218,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
                 f"res-{res}",
-                f"rsn-{atlas}",
+                f"subnet-{atlas}",
                 f"thrtype-{thr_type}",
             ]
         else:
@@ -1219,7 +1227,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
                 f"res-{res}",
-                f"rsn-{atlas}",
+                f"subnet-{atlas}",
                 f"smooth-{smooth}fwhm",
                 f"thrtype-{thr_type}",
             ]

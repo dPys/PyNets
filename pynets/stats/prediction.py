@@ -1327,7 +1327,8 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
             coefs = list(flatten(np.abs(
                 np.ones(len(best_positions))).tolist()))
         elif stack is True:
-            coefs = list(flatten(np.abs(fitted.named_steps[best_estimator].coef_)))
+            coefs = list(flatten(np.abs(
+                fitted.named_steps[best_estimator].coef_)))
         else:
             coefs = list(flatten(np.abs(fitted.named_steps[
                                             best_estimator.split(
@@ -1427,18 +1428,30 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     if stack is True:
         for super_fitted in prediction["estimator"]:
-            for sub_fitted in super_fitted.named_steps[best_estimator].estimators_:
-                X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X), columns=sub_fitted.named_steps['selector'].get_feature_names())
-                best_sub_estimator = [i for i in sub_fitted.named_steps.keys() if i in list(estimators.keys())[0] and i is not 'selector'][0]
+            for sub_fitted in \
+                super_fitted.named_steps[best_estimator].estimators_:
+                X_subspace = pd.DataFrame(
+                    sub_fitted.named_steps['selector'].transform(X),
+                    columns=sub_fitted.named_steps['selector'
+                    ].get_feature_names())
+                best_sub_estimator = [i for i in
+                                      sub_fitted.named_steps.keys() if i in
+                                      list(estimators.keys())[0] and i is not
+                                      'selector'][0]
                 best_positions, feat_imp_dict = get_feature_imp(
-                    X_subspace, pca_reduce, sub_fitted, best_sub_estimator, predict_type,
+                    X_subspace, pca_reduce, sub_fitted, best_sub_estimator,
+                    predict_type,
                     dummy_run, stack)
                 feature_imp_dicts.append(feat_imp_dict)
                 best_positions_list.append(best_positions)
-                # print(X_subspace[list(best_positions)].columns)
-                # print(len(X_subspace[list(best_positions)].columns))
-                # X_subspace[list(best_positions)].to_csv(f"X_{X_subspace.columns[0][:3].upper()}_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
-        # y.to_csv(f"y_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
+        #         print(X_subspace[list(best_positions)].columns)
+        #         print(len(X_subspace[list(best_positions)].columns))
+        #         X_subspace[list(best_positions)].to_csv(
+        #             f"X_{X_subspace.columns[0][:3].upper()}_"
+        #             f"{y.columns[0].split('_')[1]}_stack-"
+        #             f"{'_'.join(stack_prefix_list)}.csv", index=False)
+        # y.to_csv(f"y_{y.columns[0].split('_')[1]}_stack-"
+        #          f"{'_'.join(stack_prefix_list)}.csv", index=False)
     else:
         for fitted in prediction["estimator"]:
             best_positions, feat_imp_dict = get_feature_imp(
@@ -1723,7 +1736,7 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
 
     if len(files_) > 1:
         dfs = []
-        rsns = []
+        parcellations = []
         for file_ in files_:
             df = pd.read_csv(file_, chunksize=100000).read()
             try:
@@ -1731,13 +1744,14 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
             except BaseException:
                 pass
             dfs.append(df)
-            rsns.append(file_.split('_grid_param_')[1].split('/')[0].split('.')[-2])
+            parcellations.append(
+                file_.split('_grid_param_')[1].split('/')[0].split('.')[-2])
         try:
             frame = pd.concat(dfs, axis=0, join="outer", sort=True,
                               ignore_index=False)
 
             out_path = f"{out_dir}/final_predictions_modality-{modality}_" \
-                       f"rsn-{str(list(set(rsns)))}_" \
+                       f"subnet-{str(list(set(parcellations)))}_" \
                        f"gradient-{embedding_type}_outcome-{target_var}_" \
                        f"boots-{n_boots}_search-{search_method}"
 
@@ -2012,14 +2026,15 @@ class BSNestedCV(SimpleInterface):
                     mega_feat_imp_dict,
                     grand_mean_y_predicted,
                     final_est
-                ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                           nuisance_cols=self.inputs.nuisance_cols,
-                                           predict_type=predict_type,
-                                           n_boots=self.inputs.n_boots,
-                                           dummy_run=self.inputs.dummy_run,
-                                           search_method=self.inputs.search_method,
-                                           stack=self.inputs.stack,
-                                           stack_prefix_list=self.inputs.stack_prefix_list)
+                ] = bootstrapped_nested_cv(
+                    self.inputs.X, self.inputs.y,
+                    nuisance_cols=self.inputs.nuisance_cols,
+                    predict_type=predict_type,
+                    n_boots=self.inputs.n_boots,
+                    dummy_run=self.inputs.dummy_run,
+                    search_method=self.inputs.search_method,
+                    stack=self.inputs.stack,
+                    stack_prefix_list=self.inputs.stack_prefix_list)
                 if final_est:
                     grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
@@ -2072,7 +2087,8 @@ class BSNestedCV(SimpleInterface):
                         )
                         print(
                             f"{Fore.BLUE}Modality: "
-                            f"{Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
+                            f"{Fore.RED}{self.inputs.modality}"
+                            f"{Style.RESET_ALL}"
                         )
                 else:
                     print(f"{Fore.RED}Empty feature-space for "
@@ -2213,10 +2229,13 @@ class MakeDF(SimpleInterface):
             y_pred_vals = np.nan
 
         if bool(self.inputs.grand_mean_best_estimator) is True:
-            df_summary.at[0, "best_estimator"] = list(self.inputs.grand_mean_best_estimator.values())
-            df_summary.at[0, "Score"] = list(self.inputs.grand_mean_best_score.values())
+            df_summary.at[0, "best_estimator"] = list(
+                self.inputs.grand_mean_best_estimator.values())
+            df_summary.at[0, "Score"] = list(
+                self.inputs.grand_mean_best_score.values())
             df_summary.at[0, "Predicted_y"] = y_pred_vals
-            df_summary.at[0, "Error"] = list(self.inputs.grand_mean_best_error.values())
+            df_summary.at[0, "Error"] = list(
+                self.inputs.grand_mean_best_error.values())
             df_summary.at[0, "Score_95CI_upper"] = get_CI(
                 list(self.inputs.grand_mean_best_score.values()),
                 alpha=0.95)[1]
@@ -2559,8 +2578,10 @@ def build_predict_workflow(args, retval, verbose=True):
         name="meta_outputnode"
     )
 
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 8
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 24
+    create_wf_node.get_node('bootstrapped_nested_cv_node'
+                            ).interface.n_procs = 8
+    create_wf_node.get_node('bootstrapped_nested_cv_node'
+                            ).interface._mem_gb = 24
     create_wf_node.get_node('make_x_y_func_node').interface.n_procs = 1
     create_wf_node.get_node('make_x_y_func_node').interface._mem_gb = 6
 

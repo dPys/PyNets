@@ -220,21 +220,21 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     error = 2
     start_time = time.time()
     [coords, _, _, labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
-    print("%s%s%s" % ('fetch_nilearn_atlas_coords (Masking RSN version) --> '
+    print("%s%s%s" % ('fetch_nilearn_atlas_coords (Masking subnet version) --> '
                       'finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
     [net_coords, _, net_labels, network] = nodemaker.get_node_membership(
         network, template, coords, labels, parc, parcel_list)
-    print("%s%s%s" % ('get_node_membership (Masking RSN version) --> '
+    print("%s%s%s" % ('get_node_membership (Masking subnet version) --> '
                       'finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     start_time = time.time()
     [net_coords_masked, net_labels_masked] = nodemaker.coords_masker(
         roi, net_coords, net_labels, error)
-    print("%s%s%s" % ('coords_masker (Masking RSN version) --> finished: ',
+    print("%s%s%s" % ('coords_masker (Masking subnet version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
     assert coords is not None
@@ -467,10 +467,10 @@ def test_enforce_hem_distinct_consecutive_labels():
     shutil.copy2(parlistfile, f"{dir_path}/{os.path.basename(parlistfile)}")
     parlistfile = f"{dir_path}/{os.path.basename(parlistfile)}"
 
-    uatlas = nodemaker.enforce_hem_distinct_consecutive_labels(parlistfile)[0]
-    uatlas_img = nib.load(uatlas)
-    parcels_uatlas = len(np.unique(uatlas_img.get_fdata())) - 1
-    assert parcels_uatlas == 354
+    parcellation = nodemaker.enforce_hem_distinct_consecutive_labels(parlistfile)[0]
+    parcellation_img = nib.load(parcellation)
+    parcels_parcellation = len(np.unique(parcellation_img.get_fdata())) - 1
+    assert parcels_parcellation == 354
 
 
 def test_drop_coords_labels_from_restricted_parcellation():

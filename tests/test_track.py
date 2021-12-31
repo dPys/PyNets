@@ -50,17 +50,17 @@ def test_create_density_map():
 
     conn_model = 'csd'
     target_samples = 10000
-    node_size = None
+    node_radius = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
-    network = None
+    subnet = None
     roi = None
     directget = 'prob'
     max_length = 0
 
     [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streams_final_filt_final, conn_model,
-                                                   target_samples, node_size, curv_thr_list, step_list,
-                                                   network, roi, directget, max_length, '/tmp')
+                                                   target_samples, node_radius, curv_thr_list, step_list,
+                                                   subnet, roi, directget, max_length, '/tmp')
 
     assert dir_path is not None
     assert dm_path is not None
@@ -79,7 +79,8 @@ def test_prep_tissues(tiss_class):
     vent_csf_in_dwi = f"{base_dir}/003/dmri/csf_mask_dmri.nii.gz"
     wm_in_dwi = f"{base_dir}/003/dmri/wm_mask_dmri.nii.gz"
 
-    tiss_classifier = track.prep_tissues(nib.load(t1w_mask), nib.load(gm_in_dwi), nib.load(vent_csf_in_dwi),
+    tiss_classifier = track.prep_tissues(nib.load(t1w_mask),
+                                         nib.load(gm_in_dwi), nib.load(vent_csf_in_dwi),
                                          nib.load(wm_in_dwi), tiss_class, nib.load(B0_mask),
                                          cmc_step_size=0.2)
     assert tiss_classifier is not None

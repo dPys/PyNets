@@ -109,7 +109,7 @@ def prep_tissues(
     import gc
     from dipy.tracking.stopping_criterion import (
         ActStoppingCriterion,
-        # CmcStoppingCriterion,
+        CmcStoppingCriterion,
         BinaryStoppingCriterion,
     )
     from nilearn.masking import intersect_masks
@@ -154,14 +154,14 @@ def prep_tissues(
                 ).dataobj
             )
         )
-    # elif tiss_class == "cmc":
-    #     tiss_classifier = CmcStoppingCriterion.from_pve(
-    #         wm_data,
-    #         gm_data,
-    #         vent_csf_in_dwi_data,
-    #         step_size=cmc_step_size,
-    #         average_voxel_size=np.average(mask_img.header["pixdim"][1:4]),
-    #     )
+    elif tiss_class == "cmc":
+        tiss_classifier = CmcStoppingCriterion.from_pve(
+            wm_data,
+            gm_data,
+            vent_csf_in_dwi_data,
+            step_size=cmc_step_size,
+            average_voxel_size=np.average(mask_img.header["pixdim"][1:4]),
+        )
     elif tiss_class == "wb":
         tiss_classifier = BinaryStoppingCriterion(
             np.asarray(
@@ -197,10 +197,10 @@ def create_density_map(
     streamlines,
     conn_model,
     target_samples,
-    node_size,
+    node_radius,
     curv_thr_list,
     step_list,
-    network,
+    subnet,
     roi,
     directget,
     min_length,
@@ -221,15 +221,15 @@ def create_density_map(
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     target_samples : int
         Total number of streamline samples specified to generate streams.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     curv_thr_list : list
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
         List of float step-sizes used to perform ensemble tracking.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
@@ -274,7 +274,7 @@ def create_density_map(
     dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
         "/density_map_",
-        "%s" % (network + "_" if network is not None else ""),
+        "%s" % (subnet + "_" if subnet is not None else ""),
         "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else
                 ""),
         conn_model,
@@ -283,8 +283,8 @@ def create_density_map(
         "_",
         "%s"
         % (
-            "%s%s" % (node_size, "mm_")
-            if ((node_size != "parc") and (node_size is not None))
+            "%s%s" % (node_radius, "mm_")
+            if ((node_radius != "parc") and (node_radius is not None))
             else "parc_"
         ),
         "curv-",

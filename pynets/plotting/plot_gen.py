@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 matplotlib.use("agg")
 
 
-def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
+def plot_timeseries(time_series, subnet, ID, dir_path, atlas, labels):
     """
     Plot time-series.
 
@@ -30,8 +30,8 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     time-series : array
         2D m x n array consisting of the time-series signal for each ROI node
         where m = number of scans and n = number of ROI's.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g.
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g.
         'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -54,9 +54,9 @@ def plot_timeseries(time_series, network, ID, dir_path, atlas, labels):
     plt.ylabel("Normalized Signal")
     plt.legend()
     # plt.tight_layout()
-    if network:
-        plt.title(f"{network}{' Time Series'}")
-        out_path_fig = f"{dir_path}/timseries_sub-{ID}_rsn-{network}.png"
+    if subnet:
+        plt.title(f"{subnet}{' Time Series'}")
+        out_path_fig = f"{dir_path}/timseries_sub-{ID}_subnet-{subnet}.png"
     else:
         plt.title("Time Series")
         out_path_fig = f"{dir_path}/timseries_sub-{ID}.png"
@@ -70,7 +70,7 @@ def plot_network_clusters(
     communities,
     out_path,
     figsize=(8, 8),
-    node_size=50,
+    node_radius=50,
     plot_overlaps=False,
     plot_labels=False,
 ):
@@ -86,7 +86,7 @@ def plot_network_clusters(
         Path to save figure.
     figsize : Tuple of integers
         The figure size; it is a pair of float, default (8, 8).
-    node_size: int
+    node_radius: int
         Default 50.
     plot_overlaps : bool
         Flag to control if multiple algorithms memberships are plotted.
@@ -143,16 +143,16 @@ def plot_network_clusters(
     position = nx.fruchterman_reingold_layout(graph)
 
     nx.draw_networkx_nodes(
-        graph, position, node_size=node_size, node_color="w", edgecolors="k"
+        graph, position, node_size=node_radius, node_color="w", edgecolors="k"
     )
     nx.draw_networkx_edges(graph, position, alpha=0.5)
 
     for i in range(n_communities):
         if len(partition[i]) > 0:
             if plot_overlaps:
-                size = (n_communities - i) * node_size
+                size = (n_communities - i) * node_radius
             else:
-                size = node_size
+                size = node_radius
 
             nx.draw_networkx_nodes(
                 graph,
@@ -179,11 +179,11 @@ def create_gb_palette(
         edge_cmap,
         coords,
         labels,
-        node_size="auto",
+        node_radius="auto",
         node_cmap=None,
         prune=True,
         centrality_type='eig',
-        max_node_size=None,
+        max_node_radius=None,
         max_edge_size=2,
         node_aff_mat=None):
     """
@@ -200,10 +200,10 @@ def create_gb_palette(
         (e.g. a coordinate atlas).
     labels : list
         List of string labels corresponding to ROI nodes.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    node_size: scalar or array_like
+    node_radius: scalar or array_like
         size(s) of the nodes in points^2.
     node_cmap: colormap
         colormap used for representing the community assignment of the nodes.
@@ -264,12 +264,12 @@ def create_gb_palette(
     except BaseException:
         node_centralities = len(coords) * [1]
 
-    if not max_node_size:
-        max_node_size = 1 / mat.shape[0] * \
-            1e3 + 0.5 if node_size == "auto" else node_size
+    if not max_node_radius:
+        max_node_radius = 1 / mat.shape[0] * \
+            1e3 + 0.5 if node_radius == "auto" else node_radius
 
-    node_sizes = np.array(
-        minmax_scale(node_centralities, feature_range=(1, max_node_size))
+    node_radii = np.array(
+        minmax_scale(node_centralities, feature_range=(1, max_node_radius))
     )
 
     # Node communities
@@ -333,7 +333,7 @@ def create_gb_palette(
         mat,
         clust_pal_edges,
         clust_pal_nodes,
-        node_sizes,
+        node_radii,
         edge_sizes,
         z_min,
         z_max,
@@ -348,16 +348,16 @@ def plot_all_func(
     atlas,
     dir_path,
     ID,
-    network,
+    subnet,
     labels,
     roi,
     coords,
     thr,
-    node_size,
+    node_radius,
     edge_threshold,
     smooth,
     prune,
-    uatlas,
+    parcellation,
     norm,
     binary,
     hpass,
@@ -382,8 +382,8 @@ def plot_all_func(
         Path to directory containing subject derivative data for given run.
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -395,7 +395,7 @@ def plot_all_func(
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
         methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     edge_threshold : float
@@ -406,7 +406,7 @@ def plot_all_func(
         signal from ROI's.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image.
     norm : int
         Indicates method of normalizing resulting graph.
@@ -538,7 +538,7 @@ def plot_all_func(
                 try:
                     plot_gen.plot_connectogram(
                         conn_matrix, conn_model, atlas, namer_dir, ID,
-                        network, labels)
+                        subnet, labels)
                 except RuntimeWarning:
                     print("\n\n\nWarning: Connectogram plotting failed!")
             else:
@@ -548,8 +548,8 @@ def plot_all_func(
                 )
 
         # Plot adj. matrix based on determined inputs
-        if not node_size or node_size == "None":
-            node_size = "parc"
+        if not node_radius or node_radius == "None":
+            node_radius = "parc"
 
         if adjacency is True:
             plot_graphs.plot_conn_mat_func(
@@ -558,11 +558,11 @@ def plot_all_func(
                 atlas,
                 namer_dir,
                 ID,
-                network,
+                subnet,
                 labels,
                 roi,
                 thr,
-                node_size,
+                node_radius,
                 smooth,
                 hpass,
                 extract_strategy,
@@ -577,9 +577,9 @@ def plot_all_func(
                  "/glassbrain_",
                  ID,
                  "_modality-func_",
-                 "%s" % ("%s%s%s" % ("rsn-",
-                                     network,
-                                     "_") if network is not None else ""),
+                 "%s" % ("%s%s%s" % ("subnet-",
+                                     subnet,
+                                     "_") if subnet is not None else ""),
                  "%s" % ("%s%s%s" % ("roi-",
                                      op.basename(roi).split(".")[0],
                                      "_") if roi is not None else ""),
@@ -587,10 +587,10 @@ def plot_all_func(
                  conn_model,
                  "_",
                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                     node_size,
+                                     node_radius,
                                      "mm_") if (
-                     (node_size != "parc") and (
-                         node_size is not None)) else "nodetype-parc_"),
+                     (node_radius != "parc") and (
+                         node_radius is not None)) else "nodetype-parc_"),
                  "%s" % ("%s%s%s" % ("smooth-",
                                      smooth,
                                      "fwhm_") if float(smooth) > 0 else ""),
@@ -614,7 +614,7 @@ def plot_all_func(
                 conn_matrix,
                 clust_pal_edges,
                 clust_pal_nodes,
-                node_sizes,
+                node_radii,
                 edge_sizes,
                 z_min,
                 z_max,
@@ -652,7 +652,7 @@ def plot_all_func(
                 edge_cmap=clust_pal_edges,
                 edge_vmax=float(z_max),
                 edge_vmin=float(z_min),
-                node_size=node_sizes,
+                node_size=node_radii,
                 node_color=clust_pal_nodes,
                 edge_kwargs={"alpha": 0.45, 'zorder': 1},
                 node_kwargs={'zorder': 1000}
@@ -731,15 +731,15 @@ def plot_all_struct(
     atlas,
     dir_path,
     ID,
-    network,
+    subnet,
     labels,
     roi,
     coords,
     thr,
-    node_size,
+    node_radius,
     edge_threshold,
     prune,
-    uatlas,
+    parcellation,
     target_samples,
     norm,
     binary,
@@ -766,8 +766,8 @@ def plot_all_struct(
         Path to directory containing subject derivative data for given run.
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -779,7 +779,7 @@ def plot_all_struct(
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
         methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     edge_threshold : float
@@ -787,7 +787,7 @@ def plot_all_struct(
         (can differ from thr if target was not successfully obtained.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image.
     target_samples : int
         Total number of streamline samples specified to generate streams.
@@ -896,7 +896,7 @@ def plot_all_struct(
                 try:
                     plot_gen.plot_connectogram(
                         conn_matrix, conn_model, atlas, namer_dir, ID,
-                        network, labels)
+                        subnet, labels)
                 except RuntimeWarning:
                     print("\n\n\nWarning: Connectogram plotting failed!")
             else:
@@ -906,8 +906,8 @@ def plot_all_struct(
                 )
 
         # Plot adj. matrix based on determined inputs
-        if not node_size or node_size == "None":
-            node_size = "parc"
+        if not node_radius or node_radius == "None":
+            node_radius = "parc"
 
         if adjacency is True:
             plot_graphs.plot_conn_mat_struct(
@@ -916,11 +916,11 @@ def plot_all_struct(
                 atlas,
                 namer_dir,
                 ID,
-                network,
+                subnet,
                 labels,
                 roi,
                 thr,
-                node_size,
+                node_radius,
                 target_samples,
                 track_type,
                 directget,
@@ -937,9 +937,9 @@ def plot_all_struct(
                  "/glassbrain_",
                  ID,
                  "_modality-dwi_",
-                 "%s" % ("%s%s%s" % ("rsn-",
-                                     network,
-                                     "_") if network is not None else ""),
+                 "%s" % ("%s%s%s" % ("subnet-",
+                                     subnet,
+                                     "_") if subnet is not None else ""),
                  "%s" % ("%s%s%s" % ("roi-",
                                      op.basename(roi).split(".")[0],
                                      "_") if roi is not None else ""),
@@ -947,10 +947,10 @@ def plot_all_struct(
                  conn_model,
                  "_",
                  "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                     node_size,
+                                     node_radius,
                                      "mm_") if (
-                     (node_size != "parc") and (
-                         node_size is not None)) else "nodetype-parc_"),
+                     (node_radius != "parc") and (
+                         node_radius is not None)) else "nodetype-parc_"),
                  "%s" % ("%s%s%s" % ("samples-",
                                      int(target_samples),
                                      "streams_") if float(target_samples) > 0
@@ -978,7 +978,7 @@ def plot_all_struct(
                 conn_matrix,
                 clust_pal_edges,
                 clust_pal_nodes,
-                node_sizes,
+                node_radii,
                 edge_sizes,
                 _,
                 _,
@@ -1014,7 +1014,7 @@ def plot_all_struct(
                 edge_cmap=clust_pal_edges,
                 edge_vmax=float(1),
                 edge_vmin=float(1),
-                node_size=node_sizes,
+                node_size=node_radii,
                 node_color=clust_pal_nodes,
                 edge_kwargs={"alpha": 0.30, 'zorder': 1},
                 node_kwargs={'zorder': 1000}
@@ -1308,7 +1308,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         [func_mat,
          clust_pal_edges,
          clust_pal_nodes,
-         node_sizes,
+         node_radii,
          edge_sizes_func,
          z_min,
          z_max,
@@ -1327,7 +1327,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             edge_kwargs={"alpha": 0.50, 'zorder': 500},
             edge_vmax=float(z_max),
             edge_vmin=float(z_min),
-            node_size=node_sizes,
+            node_size=node_radii,
             node_color=clust_pal_nodes,
             node_kwargs={'zorder': 1000}
         )

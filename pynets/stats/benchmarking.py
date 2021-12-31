@@ -287,7 +287,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 else:
                                     node_files = glob.glob(
                                         f"{base_dir}/pynets/sub-{ID}/ses-"
-                                        f"{ses}/{modality}/rsn-"
+                                        f"{ses}/{modality}/subnet-"
                                         f"{atlas}_res-{res}/nodes/*.json")
                                     emb_data = par_dict[ID][str(ses)][
                                         modality][alg][comb_tuple]['data']
@@ -303,7 +303,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             node_files, emb_shape)
                                     if isinstance(node_dict, dict):
                                         try:
-                                            coords = [node_dict[i]['coord'] for i
+                                            coords = [node_dict[i]['coord']
+                                                      for i
                                                       in node_dict.keys()]
                                             try:
                                                 labels = [node_dict[i][
@@ -341,7 +342,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"rsn-{atlas}_res-"
+                                        f"subnet-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     # labels = [
@@ -351,7 +352,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"rsn-{atlas}_res-"
+                                        f"subnet-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
@@ -412,7 +413,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not
                                                  in i]:
             ix = int(lp.split(f"{alg}_")[1].split('_')[0])
-            rsn = lp.split(f"{alg}_{ix}_")[1]
+            parcellation = lp.split(f"{alg}_{ix}_")[1]
             df_long_clean = df_long[['id', 'ses', lp]]
             # df_long_clean = df_long[['id', 'ses', lp]].loc[(df_long[['id',
             # 'ses', lp]]['id'].duplicated() == True) & (df_long[['id', 'ses',
@@ -434,10 +435,12 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 icc_val = c_icc3['ICC'].values[0]
                 if nodes is True:
                     coord_in = np.array(ast.literal_eval(
-                        coords_frames_icc[f"{rsn}_{ix}"].mode().values[0]),
+                        coords_frames_icc[f"{parcellation}_"
+                                          f"{ix}"].mode().values[0]),
                         dtype=np.dtype("O"))
                     label_in = np.array(
-                        labels_frames_icc[f"{rsn}_{ix}"].mode().values[0],
+                        labels_frames_icc[f"{parcellation}_"
+                                          f"{ix}"].mode().values[0],
                         dtype=np.dtype("O"))
                 else:
                     coord_in = np.nan
