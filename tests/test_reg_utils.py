@@ -173,7 +173,7 @@ def test_segment_t1w():
     base_dir = str(Path(__file__).parent/"examples")
     anat_dir = f"{base_dir}/003/anat"
     t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
-    basename = f"{anat_dir}/test_segment_t1w"
+    basename = f"test_segment_t1w"
     out = utils.segment_t1w(t1w, basename)
     print(out)
     assert out is not None
