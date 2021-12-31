@@ -7,8 +7,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG miniconda_version="4.3.27"
 
 ENV LANG="C.UTF-8" \
-    LC_ALL="C.UTF-8" \
-    PIP_DEFAULT_TIMEOUT=100
+    LC_ALL="C.UTF-8"
 
 RUN apt-get update -qq \
     && apt-get install -y --no-install-recommends software-properties-common \
@@ -87,9 +86,9 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R $FSLDIR/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=5G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && head -c 10G </dev/urandom > /tmp/10G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We'll delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
+    && head -c 5G </dev/urandom > /tmp/5G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -112,10 +111,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
     && conda install -yq python=3.6 ipython \
     && pip install --upgrade pip \
-    && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
     && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
@@ -127,7 +124,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
-    # Install skggm
     && conda install -yq \
         cython \
         libgfortran \
@@ -146,6 +142,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 #    && pip install dask[dataframe] --upgrade \
     && pip uninstall -y pandas \
     && pip install pandas -U \
+    && conda clean -tipsy \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -164,17 +161,25 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
+    && apt-get clean autoclean \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \
 	wget \
 	curl \
+	openssl \
 	build-essential \
 	ca-certificates \
+	libc6-dev \
 	gnupg \
 	g++ \
-	openssl \
 	git-lfs \
+	libwebkit2gtk-* \
+	gnome-icon-theme \
+	libgtk-*-common \
+	libgtk*-common \
+	libjavascriptcoregtk-* \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
@@ -185,7 +190,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     chmod -R 777 /outputs \
     && mkdir /working && \
     chmod -R 777 /working \
-    && rm -f /tmp/10G_heap.txt
+    && rm -f /tmp/5G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH

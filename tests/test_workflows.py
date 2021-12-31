@@ -11,6 +11,7 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
+import yaml
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -21,7 +22,7 @@ base_dir = str(Path(__file__).parent/"examples")
 @pytest.mark.parametrize("hpass", [0.08, None])
 @pytest.mark.parametrize("smooth", [2, [0, 4], None])
 @pytest.mark.parametrize("conn_model", [['partcorr', 'sps'], 'partcorr'])
-@pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
+@pytest.mark.parametrize("subnet", ['Default', ['Default', 'Limbic'], None])
 @pytest.mark.parametrize("thr,max_thr,min_thr,step_thr,multi_thr,thr_type",
     [
         pytest.param(1.0, None, None, None, False, 'prop'),
@@ -29,55 +30,90 @@ base_dir = str(Path(__file__).parent/"examples")
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
+@pytest.mark.parametrize("parc,node_radius,node_size_list,atlas,multi_atlas,"
+                         "parcellation,user_atlas_list",
     [
-        pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
-        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None, None),
-        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
-        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None, None),
-        pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
-        pytest.param(False, 4, None, None, None, None, None, marks=pytest.mark.xfail),
+        pytest.param(False, None, [4, 8], None, None, None, None,
+                     marks=pytest.mark.xfail),
+        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
+                     None),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'], None,
+                     None),
+        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
+                     None),
+        pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
+                                            'coords_power_2011'], None, None),
+        pytest.param(False, 4, None, None, None, None, None,
+                     marks=pytest.mark.xfail),
         pytest.param(True, None, None, None, None, None, None),
-        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
+        pytest.param(False, None, [4, 8], None, None,
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz",
                      None),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None,
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
-        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'],
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'],
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(False, 4, None, 'coords_dosenbach_2010', None,
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(False, 4, None, None,
                      ['coords_dosenbach_2010', 'coords_power_2011'],
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(False, 4, None, None, None,
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(True, None, None, None, None,
-                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz", None),
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(False, None, [4, 8], None, None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'], None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'], None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
         pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
+                                            'coords_power_2011'], None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
         pytest.param(False, 4, None, None, None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
         pytest.param(True, None, None, None, None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"])
     ]
 )
-def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atlas, multi_atlas, network, thr, max_thr,
-                  min_thr, step_thr, multi_thr, thr_type, node_size, node_size_list, plot_switch):
+def test_func_all(hpass, smooth, parc, conn_model, parcellation,
+                  user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
+                  min_thr, step_thr, multi_thr, thr_type, node_radius,
+                  node_size_list, plot_switch):
     """
     Test functional connectometry
     """
@@ -90,11 +126,15 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     from multiprocessing import cpu_count
 
     base_dir = str(Path(__file__).parent/"examples")
-    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
-    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_" \
+           f"desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_" \
+                f"task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_" \
+                f"desc-preproc_T1w.nii.gz"
     ID = '25659_1'
     ref_txt = None
     nthreads = cpu_count()
@@ -118,15 +158,18 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     extract_strategy = 'mean'
     extract_strategy_list = None
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
+              'r') as stream:
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
+            runtime_dict[list(hardcoded_params['resource_dict'
+                              ][i].keys())[0]] = ast.literal_eval(list(
                 hardcoded_params['resource_dict'][i].values())[0][0])
         for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
+            execution_dict[list(hardcoded_params['execution_dict'
+                                ][i].keys())[0]] = list(
                 hardcoded_params['execution_dict'][i].values())[0][0]
 
     if thr_type == 'dens_thresh':
@@ -146,9 +189,9 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
         min_span_tree = False
         disp_filt = False
 
-    if isinstance(network, list) and len(network) > 1:
-        multi_nets = network
-        network = None
+    if isinstance(subnet, list) and len(subnet) > 1:
+        multi_nets = subnet
+        subnet = None
     else:
         multi_nets = None
 
@@ -170,7 +213,7 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     else:
         hpass_list = None
 
-    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatlas, conn_model,
+    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
                                                k_clustering, user_atlas_list, clust_mask_list, node_size_list,
@@ -211,8 +254,8 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
 @pytest.mark.parametrize("mask", [f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz",
                                   None])
 @pytest.mark.parametrize("roi", [f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz", None])
-@pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
-@pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
+@pytest.mark.parametrize("subnet", ['Default', ['Default', 'Limbic'], None])
+@pytest.mark.parametrize("parc,node_radius,node_size_list,atlas,multi_atlas,parcellation,user_atlas_list",
     [
         pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None, None),
         pytest.param(True, None, None, None, None, None, None),
@@ -229,8 +272,8 @@ def test_func_all(hpass, smooth, parc, conn_model, uatlas, user_atlas_list, atla
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
-                    clust_type, clust_type_list, plot_switch, roi, mask, network, node_size, node_size_list, atlas,
+def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
+                    clust_type, clust_type_list, plot_switch, roi, mask, subnet, node_radius, node_size_list, atlas,
                     multi_atlas):
     """
     Test functional connectometry with clustering
@@ -273,7 +316,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     extract_strategy_list = None
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         for i in range(len(hardcoded_params['resource_dict'])):
@@ -287,9 +330,9 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     min_span_tree = False
     disp_filt = False
 
-    if isinstance(network, list) and len(network) > 1:
-        multi_nets = network
-        network = None
+    if isinstance(subnet, list) and len(subnet) > 1:
+        multi_nets = subnet
+        subnet = None
     else:
         multi_nets = None
 
@@ -311,7 +354,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     else:
         hpass_list = None
 
-    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, network, node_size, roi, thr, uatlas, conn_model,
+    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
                                                k_clustering, user_atlas_list, clust_mask_list, node_size_list,
@@ -327,7 +370,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
 
 
-@pytest.mark.parametrize("network", ['Default', ['Default', 'Limbic'], None])
+@pytest.mark.parametrize("subnet", ['Default', ['Default', 'Limbic'], None])
 @pytest.mark.parametrize("thr,max_thr,min_thr,step_thr,multi_thr,thr_type",
     [
         pytest.param(1.0, None, None, None, False, 'MST'),
@@ -344,7 +387,7 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
         pytest.param('local', 'wb', None, ['csa', 'sfm']),
     ]
 )
-@pytest.mark.parametrize("parc,node_size,node_size_list,atlas,multi_atlas,uatlas,user_atlas_list",
+@pytest.mark.parametrize("parc,node_radius,node_size_list,atlas,multi_atlas,parcellation,user_atlas_list",
     [
         pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
         pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None, None),
@@ -388,9 +431,9 @@ def test_func_clust(parc, uatlas, user_atlas_list, k, k_list, k_clustering, clus
                                                           f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
-def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, min_thr,
+def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr, min_thr,
                     step_thr, multi_thr, thr_type, tiss_class, directget, min_length, track_type, node_size_list,
-                    atlas, multi_atlas, uatlas, user_atlas_list, network, plot_switch, mask):
+                    atlas, multi_atlas, parcellation, user_atlas_list, subnet, plot_switch, mask):
     """
     Test structural connectometry
     """
@@ -425,7 +468,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     error_margin = 6
 
     with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream)
+        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
         runtime_dict = {}
         execution_dict = {}
         maxcrossing = hardcoded_params['tracking']['maxcrossing'][0]
@@ -455,9 +498,9 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
         min_span_tree = False
         disp_filt = False
 
-    if isinstance(network, list) and len(network) > 1:
-        multi_nets = network
-        network = None
+    if isinstance(subnet, list) and len(subnet) > 1:
+        multi_nets = subnet
+        subnet = None
     else:
         multi_nets = None
 
@@ -479,7 +522,7 @@ def test_struct_all(node_size, parc, conn_model, conn_model_list, thr, max_thr, 
     else:
         error_margin_list = None
 
-    dmri_connectometry_wf = dmri_connectometry(ID, atlas, network, node_size, roi, uatlas, plot_switch, parc, ref_txt,
+    dmri_connectometry_wf = dmri_connectometry(ID, atlas, subnet, node_radius, roi, parcellation, plot_switch, parc, ref_txt,
                                                procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
                                                conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
                                                step_thr, node_size_list, conn_model_list, min_span_tree,

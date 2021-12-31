@@ -33,7 +33,7 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
     temp_dir = tempfile.TemporaryDirectory()
     dir_path = str(temp_dir.name)
 
-    network = None
+    subnet = None
     ID = '002'
     thr = 0.95
     node_size = 2
@@ -49,7 +49,7 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+    ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -63,7 +63,7 @@ def test_plot_conn_mat_nonet_mask(plotting_data):
 
     temp_dir = tempfile.TemporaryDirectory()
     dir_path = str(temp_dir.name)
-    network = None
+    subnet = None
     ID = '002'
     thr = 0.95
     node_size = 2
@@ -79,7 +79,7 @@ def test_plot_conn_mat_nonet_mask(plotting_data):
 
     start_time = time.time()
     plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, network, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+    ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -94,7 +94,7 @@ def test_plot_all_nonet_no_mask(plotting_data):
     base_dir = str(Path(__file__).parent/"examples")
     temp_dir = tempfile.TemporaryDirectory()
     dir_path = str(temp_dir.name)
-    network = None
+    subnet = None
     ID = '002'
     thr = 0.95
     node_size = 2
@@ -115,7 +115,7 @@ def test_plot_all_nonet_no_mask(plotting_data):
     coords = plotting_data['coords']
 
     start_time = time.time()
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
                            coords, thr, node_size, edge_threshold, smooth, prune,
                            parlistfile, norm, binary, hpass, extract_strategy)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
@@ -130,7 +130,7 @@ def test_plot_all_nonet_with_mask(plotting_data):
 
     temp_dir = tempfile.TemporaryDirectory()
     dir_path = str(temp_dir.name)
-    network = None
+    subnet = None
     ID = '002'
     thr = 0.95
     node_size = 'None'
@@ -159,7 +159,7 @@ def test_plot_all_nonet_with_mask(plotting_data):
     labels = np.array(labels)
 
     start_time = time.time()
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, coords, thr,
+    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi, coords, thr,
                            node_size, edge_threshold, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy,
                            edge_color_override=True)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
@@ -167,8 +167,8 @@ def test_plot_all_nonet_with_mask(plotting_data):
     temp_dir.cleanup()
 
 
-@pytest.mark.parametrize("network", ["Default", None])
-def test_plot_timeseries(plotting_data, network):
+@pytest.mark.parametrize("subnet", ["Default", None])
+def test_plot_timeseries(plotting_data, subnet):
     """
     Test plot_timeseries functionality
     """
@@ -184,7 +184,7 @@ def test_plot_timeseries(plotting_data, network):
     labels = plotting_data['labels']
 
     start_time = time.time()
-    plot_gen.plot_timeseries(time_series, network, ID, dir_path, atlas, labels)
+    plot_gen.plot_timeseries(time_series, subnet, ID, dir_path, atlas, labels)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     temp_dir.cleanup()
@@ -192,7 +192,7 @@ def test_plot_timeseries(plotting_data, network):
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
 def test_plot_network_clusters(plotting_data, plot_overlaps):
-    """ Test plotting network clusters"""
+    """ Test plotting subnet clusters"""
 
     from pynets.stats.netstats import community_resolution_selection
 
@@ -274,7 +274,7 @@ def test_plot_all_struct(plotting_data, roi):
     conn_model = 'corr'
     atlas = b'whole_brain_cluster_labels_PCA200'
     ID = '002'
-    network = None
+    subnet = None
     if roi:
         roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
     else:
@@ -283,7 +283,7 @@ def test_plot_all_struct(plotting_data, roi):
     node_size = None
     edge_threshold = '99%'
     prune = True
-    uatlas = None
+    parcellation = None
     target_samples = 500
     norm = 6
     binary = False
@@ -292,8 +292,8 @@ def test_plot_all_struct(plotting_data, roi):
     min_length = 10
     error_margin = 2
 
-    plot_gen.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi,
-                             coords, thr, node_size, edge_threshold, prune, uatlas, target_samples,
+    plot_gen.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
+                             coords, thr, node_size, edge_threshold, prune, parcellation, target_samples,
                              norm, binary, track_type, directget, min_length, error_margin)
 
     temp_dir.cleanup()
@@ -378,7 +378,7 @@ def test_plot_graph_measure_hists(nan):
 #     conn_model = 'sps'
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ID = '997'
-#     network = None
+#     subnet = None
 #     labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_wb.pkl"
 #     labels_file = open(labels_file_path,'rb')
 #     labels = pickle.load(labels_file)
@@ -387,7 +387,7 @@ def test_plot_graph_measure_hists(nan):
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, network, labels, roi, thr,
+#     plotting.plot_conn_mat_struct(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi, thr,
 #                                   node_size, smooth)
 
 # def test_structural_plotting():
@@ -400,7 +400,7 @@ def test_plot_graph_measure_hists(nan):
 #     atlas = 'whole_brain_cluster_labels_PCA200'
 #     ID = '002'
 #     bedpostx_dir = base_dir + 'bedpostx_s002.bedpostX'
-#     network = None
+#     subnet = None
 #     parc = True
 #     roi = None
 #     coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
@@ -411,7 +411,7 @@ def test_plot_graph_measure_hists(nan):
 #     node_size = 2
 #     smooth = 2
 #
-#     plotting.structural_plotting(conn_matrix, labels, atlas, ID, bedpostx_dir, network, parc, roi, coords,
+#     plotting.structural_plotting(conn_matrix, labels, atlas, ID, bedpostx_dir, subnet, parc, roi, coords,
 #                                  dir_path, conn_model, thr, node_size, smooth)
 
 

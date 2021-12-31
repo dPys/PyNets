@@ -180,8 +180,8 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
 
     atlas = nip.create_clean_mask()
 
-    if not nip.uatlas:
-        nip.uatlas = f"{tmpdir.name}/clust-{clust_type}_k{str(k)}.nii.gz"
+    if not nip.parcellation:
+        nip.parcellation = f"{tmpdir.name}/clust-{clust_type}_k{str(k)}.nii.gz"
     nip._clust_mask_corr_img = nib.load(clust_mask)
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{str(tmpdir.name)}/parc_tmp.nii.gz"

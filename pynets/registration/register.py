@@ -31,8 +31,8 @@ def direct_streamline_norm(
     track_type,
     target_samples,
     conn_model,
-    network,
-    node_size,
+    subnet,
+    node_radius,
     dens_thresh,
     ID,
     roi,
@@ -42,7 +42,7 @@ def direct_streamline_norm(
     prune,
     atlas,
     labels_im_file,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
@@ -76,10 +76,10 @@ def direct_streamline_norm(
         Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -94,7 +94,7 @@ def direct_streamline_norm(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
@@ -103,7 +103,7 @@ def direct_streamline_norm(
         Name of atlas parcellation used.
     labels_im_file : str
         File path to atlas parcellation Nifti1Image aligned to dwi space.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -145,10 +145,10 @@ def direct_streamline_norm(
         Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -163,14 +163,14 @@ def direct_streamline_norm(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -198,7 +198,7 @@ def direct_streamline_norm(
     ----------
     .. [1] Greene, C., Cieslak, M., & Grafton, S. T. (2017). Effect of
       different spatial normalization approaches on tractography and structural
-      brain networks. Network Neuroscience, 1-19.
+      brain subnets. subnet Neuroscience, 1-19.
     """
     import sys
     import gc
@@ -248,7 +248,7 @@ def direct_streamline_norm(
         streams_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_t1w_",
-            "%s" % (network + "_" if network is not None else ""),
+            "%s" % (subnet + "_" if subnet is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
             conn_model,
@@ -256,8 +256,8 @@ def direct_streamline_norm(
             target_samples,
             "%s"
             % (
-                "%s%s" % ("_" + str(node_size), "mm_")
-                if ((node_size != "parc") and (node_size is not None))
+                "%s%s" % ("_" + str(node_radius), "mm_")
+                if ((node_radius != "parc") and (node_radius is not None))
                 else "_"
             ),
             "curv",
@@ -276,7 +276,7 @@ def direct_streamline_norm(
         density_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_t1w_",
-            "%s" % (network + "_" if network is not None else ""),
+            "%s" % (subnet + "_" if subnet is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
             conn_model,
@@ -284,8 +284,8 @@ def direct_streamline_norm(
             target_samples,
             "%s"
             % (
-                "%s%s" % ("_" + str(node_size), "mm_")
-                if ((node_size != "parc") and (node_size is not None))
+                "%s%s" % ("_" + str(node_radius), "mm_")
+                if ((node_radius != "parc") and (node_radius is not None))
                 else "_"
             ),
             "curv",
@@ -374,8 +374,8 @@ def direct_streamline_norm(
         )
 
         # Map parcellation from native space back to MNI-space and create an
-        # 'uncertainty-union' parcellation with original mni-space uatlas
-        warped_uatlas = affine_map.transform_inverse(
+        # 'uncertainty-union' parcellation with original mni-space parcellation
+        warped_parcellation = affine_map.transform_inverse(
             mapping.transform(
                 np.asarray(atlas_img.dataobj).astype("int"),
                 interpolation="nearestneighbour",
@@ -383,29 +383,29 @@ def direct_streamline_norm(
             interp="nearest",
         )
         atlas_img.uncache()
-        warped_uatlas_img_res_data = np.asarray(
+        warped_parcellation_img_res_data = np.asarray(
             resample_to_img(
-                nib.Nifti1Image(warped_uatlas, affine=warped_fa_affine),
+                nib.Nifti1Image(warped_parcellation, affine=warped_fa_affine),
                 atlas_t1w_img,
                 interpolation="nearest",
             ).dataobj
         )
-        uatlas_t1w_data = np.asarray(atlas_t1w_img.dataobj)
+        parcellation_t1w_data = np.asarray(atlas_t1w_img.dataobj)
         atlas_t1w_img.uncache()
         overlap_mask = np.invert(
-            warped_uatlas_img_res_data.astype("bool") *
-            uatlas_t1w_data.astype("bool"))
+            warped_parcellation_img_res_data.astype("bool") *
+            parcellation_t1w_data.astype("bool"))
         os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
         atlas_for_streams = f"{dir_path}/parcellations/" \
-                            f"{op.basename(uatlas).split('.nii')[0]}" \
+                            f"{op.basename(parcellation).split('.nii')[0]}" \
                             f"_t1w_liberal.nii.gz"
 
         nib.save(
             nib.Nifti1Image(
-                warped_uatlas_img_res_data * overlap_mask.astype("int")
-                + uatlas_t1w_data * overlap_mask.astype("int")
+                warped_parcellation_img_res_data * overlap_mask.astype("int")
+                + parcellation_t1w_data * overlap_mask.astype("int")
                 + np.invert(overlap_mask).astype("int")
-                * warped_uatlas_img_res_data.astype("int"),
+                * warped_parcellation_img_res_data.astype("int"),
                 affine=atlas_t1w_img.affine,
             ),
             atlas_for_streams,
@@ -414,8 +414,8 @@ def direct_streamline_norm(
         del (
             tractogram,
             streamlines,
-            warped_uatlas_img_res_data,
-            uatlas_t1w_data,
+            warped_parcellation_img_res_data,
+            parcellation_t1w_data,
             overlap_mask,
             stf,
             streams_final_filt_final,
@@ -442,8 +442,8 @@ def direct_streamline_norm(
         track_type,
         target_samples,
         conn_model,
-        network,
-        node_size,
+        subnet,
+        node_radius,
         dens_thresh,
         ID,
         roi,
@@ -452,7 +452,7 @@ def direct_streamline_norm(
         parc,
         prune,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,
@@ -662,19 +662,18 @@ class DmriReg(object):
             and overwrite is False
         ):
             print("Existing segmentations detected...")
-            wm_mask = regutils.check_orient_and_dims(
+            wm_mask = regutils.orient_reslice(
                 wm_mask_existing, self.basedir_path, self.vox_size,
                 overwrite=False)
-            gm_mask = regutils.check_orient_and_dims(
+            gm_mask = regutils.orient_reslice(
                 gm_mask_existing, self.basedir_path, self.vox_size,
                 overwrite=False)
-            csf_mask = regutils.check_orient_and_dims(
+            csf_mask = regutils.orient_reslice(
                 csf_mask_existing, self.basedir_path, self.vox_size,
                 overwrite=False)
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
-                time.sleep(0.5)
                 wm_mask = maps["wm_prob"]
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
@@ -685,9 +684,8 @@ class DmriReg(object):
                       )
 
         # Threshold WM to binary in dwi space
-        t_img = nib.load(wm_mask)
-        mask = math_img("img > 0.10", img=t_img)
-        mask.to_filename(self.wm_mask_thr)
+        math_img("img > 0.10", img=nib.load(wm_mask)
+                 ).to_filename(self.wm_mask_thr)
 
         # Extract wm edge
         self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
@@ -955,12 +953,10 @@ class DmriReg(object):
                 use_hardlink=False)
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
-        harvardoxford_temp_img = resample_to_img(nib.load(self.mni_atlas),
-                                                 nib.load(
-                                                     self.input_mni_brain),
-                                                 interpolation='nearest')
-
-        harvardoxford_temp_img.to_filename(self.mni_roi_ref)
+        resample_to_img(nib.load(self.mni_atlas),
+                        nib.load(
+                            self.input_mni_brain),
+                        interpolation='nearest').to_filename(self.mni_roi_ref)
 
         out = gen_img_list(self.mni_roi_ref)
         roi_parcels = [i for j, i in enumerate(out)]
@@ -969,7 +965,7 @@ class DmriReg(object):
                                  img2=roi_parcels[13])
 
         ventricle_roi.to_filename(self.mni_vent_loc)
-        del roi_parcels, harvardoxford_temp_img, out, ventricle_roi
+        del roi_parcels, out, ventricle_roi
 
         # Create transform from the HarvardOxford atlas in MNI to T1w.
         # This will be used to transform the ventricles to dwi space.
@@ -1099,59 +1095,57 @@ class DmriReg(object):
             gm_thr = 0.075
 
         # Threshold WM to binary in dwi space
-        thr_img = nib.load(self.wm_in_dwi)
-        thr_img = math_img(f"img > {wm_thr}", img=thr_img)
-        nib.save(thr_img, self.wm_in_dwi_bin)
+        nib.save(math_img(f"img > {wm_thr}",
+                          img=nib.load(self.wm_in_dwi)),
+                 self.wm_in_dwi_bin)
 
         # Threshold GM to binary in dwi space
-        thr_img = nib.load(self.gm_in_dwi)
-        thr_img = math_img(f"img > {gm_thr}", img=thr_img)
-        nib.save(thr_img, self.gm_in_dwi_bin)
+        nib.save(math_img(f"img > {gm_thr}",
+                          img=nib.load(self.gm_in_dwi)),
+                 self.gm_in_dwi_bin)
 
         # Threshold CSF to binary in dwi space
-        thr_img = nib.load(self.csf_mask_dwi)
-        thr_img = math_img(f"img > {csf_thr}", img=thr_img)
-        nib.save(thr_img, self.csf_mask_dwi_bin)
+        nib.save(math_img(f"img > {csf_thr}",
+                          img=nib.load(self.csf_mask_dwi)),
+                 self.csf_mask_dwi_bin)
 
         # Threshold WM to binary in dwi space
         self.wm_in_dwi = regutils.apply_mask_to_image(self.wm_in_dwi,
                                                       self.wm_in_dwi_bin,
                                                       self.wm_in_dwi)
-        time.sleep(0.5)
+
         # Threshold GM to binary in dwi space
         self.gm_in_dwi = regutils.apply_mask_to_image(self.gm_in_dwi,
                                                       self.gm_in_dwi_bin,
                                                       self.gm_in_dwi)
-        time.sleep(0.5)
+
         # Threshold CSF to binary in dwi space
         self.csf_mask = regutils.apply_mask_to_image(self.csf_mask_dwi,
                                                      self.csf_mask_dwi_bin,
                                                      self.csf_mask_dwi)
-        time.sleep(0.5)
+
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
-        os.system(
-            f"fslmaths {self.vent_mask_dwi} -kernel sphere 10 -ero "
-            f"-bin {self.vent_mask_dwi}"
-        )
-        time.sleep(1)
-        os.system(
-            f"fslmaths {self.csf_mask_dwi} -add {self.vent_mask_dwi} "
-            f"-bin {self.vent_csf_in_dwi}"
-        )
-        time.sleep(1)
+        math_img("(img1 + img2) > 0.0001",
+                 img1=nib.load(self.csf_mask_dwi),
+                 img2=nib.load(self.vent_mask_dwi)).to_filename(
+            self.vent_csf_in_dwi)
+
         print("Creating Corpus Callosum mask...")
-        os.system(
-            f"fslmaths {self.corpuscallosum_dwi} -mas {self.wm_in_dwi_bin} "
-            f"-sub {self.vent_csf_in_dwi} "
-            f"-bin {self.corpuscallosum_dwi}")
-        time.sleep(1)
-        # Create gm-wm interface image
-        os.system(
-            f"fslmaths {self.gm_in_dwi_bin} -mul {self.wm_in_dwi_bin} "
-            f"-add {self.corpuscallosum_dwi} "
-            f"-mas {self.B0_mask} -bin {self.wm_gm_int_in_dwi}")
-        time.sleep(1)
+        math_img("(img1*img2 - img3) > 0.0001",
+                 img1=nib.load(self.corpuscallosum_dwi),
+                 img2=nib.load(self.wm_in_dwi_bin),
+                 img3=nib.load(self.vent_csf_in_dwi)).to_filename(
+            self.corpuscallosum_dwi)
+
+        # Create GM-WM interface image
+        math_img("((img1*img2 + img3)*img4) > 0.0001",
+                 img1=nib.load(self.gm_in_dwi_bin),
+                 img2=nib.load(self.wm_in_dwi_bin),
+                 img3=nib.load(self.corpuscallosum_dwi),
+                 img4=nib.load(self.B0_mask)).to_filename(
+            self.wm_gm_int_in_dwi)
+
         return
 
 
@@ -1208,8 +1202,7 @@ class FmriReg(object):
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
             f"{'_brain_mask.nii.gz'}"
         )
-        self.map_name = f"{self.reg_path_img}{'/'}" \
-                        f"{self.t1w_name}{'_seg'}"
+        self.map_name = f"{self.t1w_name}{'_seg'}"
         self.gm_mask = f"{self.reg_path_img}{'/'}" \
                        f"{self.t1w_name}{'_gm.nii.gz'}"
         self.gm_mask_thr = f"{self.reg_path_img}{'/'}" \
@@ -1266,10 +1259,10 @@ class FmriReg(object):
             and overwrite is False
         ):
             print("Existing segmentations detected...")
-            gm_mask = regutils.check_orient_and_dims(
+            gm_mask = regutils.orient_reslice(
                 gm_mask_existing, self.basedir_path, self.vox_size,
                 overwrite=False)
-            wm_mask = regutils.check_orient_and_dims(
+            wm_mask = regutils.orient_reslice(
                 wm_mask_existing, self.basedir_path, self.vox_size,
                 overwrite=False)
         else:
@@ -1285,24 +1278,20 @@ class FmriReg(object):
                       )
 
         # Threshold GM to binary in func space
-        t_img = nib.load(gm_mask)
-        mask = math_img("img > 0.01", img=t_img)
-        mask.to_filename(self.gm_mask_thr)
+        math_img("img > 0.01", img=nib.load(gm_mask)).to_filename(
+            self.gm_mask_thr)
         self.gm_mask = regutils.apply_mask_to_image(gm_mask,
                                                     self.gm_mask_thr,
                                                     self.gm_mask)
-        time.sleep(0.5)
 
         # Threshold WM to binary in dwi space
-        t_img = nib.load(wm_mask)
-        mask = math_img("img > 0.50", img=t_img)
-        mask.to_filename(self.wm_mask_thr)
-        time.sleep(0.5)
+        math_img("img > 0.50", img=nib.load(wm_mask)).to_filename(
+            self.wm_mask_thr)
+
         self.wm_mask = regutils.apply_mask_to_image(wm_mask,
                                                     self.wm_mask_thr,
                                                     self.wm_mask)
         # Extract wm edge
-        time.sleep(0.5)
         self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
                                                self.wm_edge)
 

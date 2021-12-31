@@ -75,10 +75,10 @@ def get_conn_matrix(
     time_series,
     conn_model,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     dens_thresh,
-    network,
+    subnet,
     ID,
     roi,
     min_span_tree,
@@ -86,7 +86,7 @@ def get_conn_matrix(
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
@@ -110,7 +110,7 @@ def get_conn_matrix(
        correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -119,8 +119,8 @@ def get_conn_matrix(
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -131,14 +131,14 @@ def get_conn_matrix(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -166,7 +166,7 @@ def get_conn_matrix(
        correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     smooth : int
@@ -175,8 +175,8 @@ def get_conn_matrix(
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -187,14 +187,14 @@ def get_conn_matrix(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -289,8 +289,8 @@ def get_conn_matrix(
             kind = "covariance"
         else:
             raise ValueError(
-                "\nERROR! No connectivity model specified at runtime. Select a"
-                " valid estimator using the -mod flag.")
+                "\nERROR! No connectivity model specified at runtime. "
+                "Select a valid estimator using the -mod flag.")
 
         # Try with the best-fitting Lasso estimator
         if estimator:
@@ -307,7 +307,8 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLasso. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLasso
             # credit: skggm
@@ -322,26 +323,28 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLassoCV
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoCV. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoCV. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoCV
             # credit: skggm
             model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoCV precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoCV precision "
+                  "matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "QuicGraphicalLassoEBIC":
             try:
                 from inverse_covariance import QuicGraphicalLassoEBIC
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoEBIC. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoEBIC. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoEBIC
             # credit: skggm
             model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoEBIC precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoEBIC "
+                  "precision matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "AdaptiveQuicGraphicalLasso":
@@ -351,7 +354,8 @@ def get_conn_matrix(
                     QuicGraphicalLassoEBIC,
                 )
             except ImportError as e:
-                print(e, "Cannot run AdaptiveGraphLasso. Skggm not installed!")
+                print(e, "Cannot run AdaptiveGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via
             # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
@@ -372,18 +376,18 @@ def get_conn_matrix(
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
 
     if parc is True:
-        node_size = "parc"
+        node_radius = "parc"
 
     # Save unthresholded
     utils.save_mat(
         conn_matrix,
         utils.create_raw_path_func(
             ID,
-            network,
+            subnet,
             conn_model,
             roi,
             dir_path,
-            node_size,
+            node_radius,
             smooth,
             hpass,
             parc,
@@ -393,12 +397,13 @@ def get_conn_matrix(
 
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
-            "\nMatrix estimation selection yielded an empty or"
-            " 1-dimensional graph. "
-            "Check time-series for errors or try using a different atlas")
+            "\nMatrix estimation selection yielded an "
+            "empty or 1-dimensional graph. "
+            "Check time-series for errors or try using a "
+            "different atlas")
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-rawgraph"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-rawgraph"
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
@@ -416,10 +421,10 @@ def get_conn_matrix(
         conn_matrix,
         conn_model,
         dir_path,
-        node_size,
+        node_radius,
         smooth,
         dens_thresh,
-        network,
+        subnet,
         ID,
         roi,
         min_span_tree,
@@ -427,7 +432,7 @@ def get_conn_matrix(
         parc,
         prune,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,
@@ -502,13 +507,13 @@ class TimeseriesExtraction(object):
     def __init__(
         self,
         net_parcels_nii_path,
-        node_size,
+        node_radius,
         conf,
         func_file,
         roi,
         dir_path,
         ID,
-        network,
+        subnet,
         smooth,
         hpass,
         mask,
@@ -518,13 +523,13 @@ class TimeseriesExtraction(object):
         import yaml
         import pkg_resources
         self.net_parcels_nii_path = net_parcels_nii_path
-        self.node_size = node_size
+        self.node_radius = node_radius
         self.conf = conf
         self.func_file = func_file
         self.roi = roi
         self.dir_path = dir_path
         self.ID = ID
-        self.network = network
+        self.subnet = subnet
         self.smooth = smooth
         self.mask = mask
         self.hpass = hpass
@@ -545,8 +550,8 @@ class TimeseriesExtraction(object):
             self.low_pass = hardcoded_params["low_pass"][0]
         except KeyError as e:
             print(e,
-                  "ERROR: Plotting configuration not successfully extracted "
-                  "from runconfig.yaml"
+                  "ERROR: Plotting configuration not successfully "
+                  "extracted from runconfig.yaml"
                   )
 
     def prepare_inputs(self, num_std_dev=1.5):
@@ -717,7 +722,7 @@ class TimeseriesExtraction(object):
             raise RuntimeError("\nTime-series extraction failed!")
 
         else:
-            self.node_size = "parc"
+            self.node_radius = "parc"
 
         return
 
@@ -729,13 +734,13 @@ class TimeseriesExtraction(object):
         # Save time series as file
         utils.save_ts_to_file(
             self.roi,
-            self.network,
+            self.subnet,
             self.ID,
             self.dir_path,
             self.ts_within_nodes,
             self.smooth,
             self.hpass,
-            self.node_size,
+            self.node_radius,
             self.extract_strategy,
         )
 

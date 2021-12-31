@@ -27,8 +27,8 @@ warnings.filterwarnings("ignore")
 class _FetchNodesLabelsInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for FetchNodesLabels"""
 
-    atlas = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     ref_txt = traits.Any()
     in_file = traits.Any(mandatory=True)
     parc = traits.Bool(mandatory=True)
@@ -47,7 +47,7 @@ class _FetchNodesLabelsOutputSpec(TraitedSpec):
     networks_list = traits.Any()
     parcel_list = traits.Any()
     par_max = traits.Any()
-    uatlas = traits.Any()
+    parcellation = traits.Any()
     dir_path = traits.Any()
 
 
@@ -90,25 +90,28 @@ class FetchNodesLabels(SimpleInterface):
             if "_4d" not in i
         ]
 
-        if self.inputs.uatlas is None and self.inputs.atlas in \
+        if self.inputs.parcellation is None and self.inputs.atlas in \
                 nilearn_parc_atlases:
-            [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
+            [labels, networks_list,
+             parcellation] = nodemaker.nilearn_atlas_helper(
                 self.inputs.atlas, self.inputs.parc
             )
-            if uatlas:
-                if not isinstance(uatlas, str):
+            if parcellation:
+                if not isinstance(parcellation, str):
                     nib.save(
-                        uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
-                    uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                        parcellation, f"{runtime.cwd}"
+                                      f"{self.inputs.atlas}{'.nii.gz'}")
+                    parcellation = f"{runtime.cwd}" \
+                                   f"{self.inputs.atlas}{'.nii.gz'}"
                 if self.inputs.clustering is False:
-                    [uatlas,
+                    [parcellation,
                      labels] = \
                         nodemaker.enforce_hem_distinct_consecutive_labels(
-                        uatlas, label_names=labels)
+                        parcellation, label_names=labels)
                 [coords, atlas, par_max, label_intensities] = \
-                    nodemaker.get_names_and_coords_of_parcels(uatlas)
+                    nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(uatlas)
+                    parcel_list = nodemaker.gen_img_list(parcellation)
                 else:
                     parcel_list = None
             else:
@@ -118,7 +121,7 @@ class FetchNodesLabels(SimpleInterface):
 
             atlas = self.inputs.atlas
         elif (
-            self.inputs.uatlas is None
+            self.inputs.parcellation is None
             and self.inputs.parc is False
             and self.inputs.atlas in nilearn_coords_atlases
         ):
@@ -133,10 +136,10 @@ class FetchNodesLabels(SimpleInterface):
             parcel_list = None
             par_max = None
             atlas = self.inputs.atlas
-            uatlas = None
+            parcellation = None
             label_intensities = None
         elif (
-            self.inputs.uatlas is None
+            self.inputs.parcellation is None
             and self.inputs.parc is False
             and self.inputs.atlas in nilearn_prob_atlases
         ):
@@ -149,22 +152,25 @@ class FetchNodesLabels(SimpleInterface):
                 " library..."
             )
             # Fetch nilearn atlas coords
-            [labels, networks_list, uatlas] = nodemaker.nilearn_atlas_helper(
+            [labels, networks_list,
+             parcellation] = nodemaker.nilearn_atlas_helper(
                 self.inputs.atlas, self.inputs.parc
             )
-            coords = find_probabilistic_atlas_cut_coords(maps_img=uatlas)
-            if uatlas:
-                if not isinstance(uatlas, str):
+            coords = find_probabilistic_atlas_cut_coords(maps_img=parcellation)
+            if parcellation:
+                if not isinstance(parcellation, str):
                     nib.save(
-                        uatlas, f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}")
-                    uatlas = f"{runtime.cwd}{self.inputs.atlas}{'.nii.gz'}"
+                        parcellation, f"{runtime.cwd}"
+                                      f"{self.inputs.atlas}{'.nii.gz'}")
+                    parcellation = f"{runtime.cwd}" \
+                                   f"{self.inputs.atlas}{'.nii.gz'}"
                 if self.inputs.clustering is False:
-                    [uatlas,
+                    [parcellation,
                      labels] = \
                         nodemaker.enforce_hem_distinct_consecutive_labels(
-                        uatlas, label_names=labels)
+                        parcellation, label_names=labels)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(uatlas)
+                    parcel_list = nodemaker.gen_img_list(parcellation)
                 else:
                     parcel_list = None
             else:
@@ -174,31 +180,33 @@ class FetchNodesLabels(SimpleInterface):
             par_max = None
             atlas = self.inputs.atlas
             label_intensities = None
-        elif self.inputs.uatlas is None and self.inputs.atlas in local_atlases:
-            uatlas_pre = (
+        elif self.inputs.parcellation is None and self.inputs.atlas in \
+            local_atlases:
+            parcellation_pre = (
                 f"{str(Path(base_path).parent.parent)}/templates/atlases/"
                 f"{self.inputs.atlas}.nii.gz"
             )
-            uatlas = fname_presuffix(
-                uatlas_pre, newpath=runtime.cwd)
-            copyfile(uatlas_pre, uatlas, copy=True, use_hardlink=False)
+            parcellation = fname_presuffix(
+                parcellation_pre, newpath=runtime.cwd)
+            copyfile(parcellation_pre, parcellation, copy=True,
+                     use_hardlink=False)
             try:
-                par_img = nib.load(uatlas)
+                par_img = nib.load(parcellation)
             except indexed_gzip.ZranError as e:
                 print(e,
-                      "\nCannot load RSN reference image. Do you have git-lfs "
-                      "installed?")
+                      "\nCannot load subnetwork reference image. "
+                      "Do you have git-lfs installed?")
             try:
                 if self.inputs.clustering is False:
-                    [uatlas, _] = \
+                    [parcellation, _] = \
                         nodemaker.enforce_hem_distinct_consecutive_labels(
-                            uatlas)
+                            parcellation)
 
                 # Fetch user-specified atlas coords
                 [coords, _, par_max, label_intensities] = \
-                    nodemaker.get_names_and_coords_of_parcels(uatlas)
+                    nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(uatlas)
+                    parcel_list = nodemaker.gen_img_list(parcellation)
                 else:
                     parcel_list = None
                 # Describe user atlas coords
@@ -211,35 +219,35 @@ class FetchNodesLabels(SimpleInterface):
             labels = None
             networks_list = None
             atlas = self.inputs.atlas
-        elif self.inputs.uatlas:
+        elif self.inputs.parcellation:
             if self.inputs.clustering is True:
                 while True:
-                    if op.isfile(self.inputs.uatlas):
+                    if op.isfile(self.inputs.parcellation):
                         break
                     else:
                         print("Waiting for atlas file...")
                         time.sleep(5)
 
             try:
-                uatlas_tmp_path = fname_presuffix(
-                    self.inputs.uatlas, newpath=runtime.cwd
+                parcellation_tmp_path = fname_presuffix(
+                    self.inputs.parcellation, newpath=runtime.cwd
                 )
                 copyfile(
-                    self.inputs.uatlas,
-                    uatlas_tmp_path,
+                    self.inputs.parcellation,
+                    parcellation_tmp_path,
                     copy=True,
                     use_hardlink=False)
                 # Fetch user-specified atlas coords
                 if self.inputs.clustering is False:
-                    [uatlas,
+                    [parcellation,
                      _] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                        uatlas_tmp_path)
+                        parcellation_tmp_path)
                 else:
-                    uatlas = uatlas_tmp_path
+                    parcellation = parcellation_tmp_path
                 [coords, atlas, par_max, label_intensities] = \
-                    nodemaker.get_names_and_coords_of_parcels(uatlas)
+                    nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(uatlas)
+                    parcel_list = nodemaker.gen_img_list(parcellation)
                 else:
                     parcel_list = None
 
@@ -338,7 +346,8 @@ class FetchNodesLabels(SimpleInterface):
 
         print(f"Coordinates:\n{coords}")
         print(f"Labels:\n"
-              f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}")
+              f"{textwrap.shorten(str(labels), width=1000, placeholder='...')}"
+              f"")
 
         assert len(coords) == len(labels)
 
@@ -357,7 +366,7 @@ class FetchNodesLabels(SimpleInterface):
         nib.save(parcel_list_4d, out_path)
         self._results["parcel_list"] = out_path
         self._results["par_max"] = par_max
-        self._results["uatlas"] = uatlas
+        self._results["parcellation"] = parcellation
         self._results["dir_path"] = dir_path
 
         return runtime
@@ -367,7 +376,7 @@ class NetworkAnalysisInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for NetworkAnalysis"""
 
     ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=False)
+    subnet = traits.Any(mandatory=False)
     thr = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     est_path = File(exists=True, mandatory=True)
@@ -394,7 +403,7 @@ class NetworkAnalysis(BaseInterface):
 
         out = extractnetstats(
             self.inputs.ID,
-            self.inputs.network,
+            self.inputs.subnet,
             self.inputs.thr,
             self.inputs.conn_model,
             self.inputs.est_path,
@@ -416,7 +425,7 @@ class CombineOutputsInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for CombineOutputs"""
 
     ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=False)
+    subnet = traits.Any(mandatory=False)
     net_mets_csv_list = traits.List(mandatory=True)
     plot_switch = traits.Bool(False, usedefault=True)
     multi_nets = traits.Any(mandatory=False)
@@ -440,7 +449,7 @@ class CombineOutputs(SimpleInterface):
         from pynets.core.utils import collect_pandas_df
 
         combination_complete = collect_pandas_df(
-            self.inputs.network,
+            self.inputs.subnet,
             self.inputs.ID,
             self.inputs.net_mets_csv_list,
             self.inputs.plot_switch,
@@ -480,7 +489,7 @@ class _IndividualClusteringInputSpec(BaseInterfaceInputSpec):
 class _IndividualClusteringOutputSpec(TraitedSpec):
     """Output interface wrapper for IndividualClustering"""
 
-    uatlas = File(exists=True)
+    parcellation = File(exists=True)
     atlas = traits.Str(mandatory=True)
     clustering = traits.Bool(True, usedefault=True)
     clust_mask = File(exists=True, mandatory=True)
@@ -503,7 +512,7 @@ class IndividualClustering(SimpleInterface):
         from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from pynets.fmri import clustools
-        from pynets.registration.utils import check_orient_and_dims
+        from pynets.registration.utils import orient_reslice
         from joblib import Parallel, delayed
         from joblib.externals.loky.backend import resource_tracker
         from pynets.registration import utils as regutils
@@ -533,7 +542,7 @@ class IndividualClustering(SimpleInterface):
 
         clust_list = ["kmeans", "ward", "complete", "average", "ncut", "rena"]
 
-        clust_mask_temp_path = check_orient_and_dims(
+        clust_mask_temp_path = orient_reslice(
             self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size
         )
         cm_suf = os.path.basename(self.inputs.clust_mask).split('.nii')[0]
@@ -719,7 +728,7 @@ class IndividualClustering(SimpleInterface):
                     boot_parcellations,
                     int(self.inputs.k)
                 )
-                nib.save(consensus_parcellation, nip.uatlas)
+                nib.save(consensus_parcellation, nip.parcellation)
                 memory.clear(warn=False)
                 shutil.rmtree(cache_dir, ignore_errors=True)
                 del parallel, memory, cache_dir
@@ -757,17 +766,17 @@ class IndividualClustering(SimpleInterface):
 
         # Give it a minute
         ix = 0
-        while not os.path.isfile(nip.uatlas) and ix < 60:
+        while not os.path.isfile(nip.parcellation) and ix < 60:
             print('Waiting for clustered parcellation...')
             time.sleep(1)
             ix += 1
 
-        if not os.path.isfile(nip.uatlas):
+        if not os.path.isfile(nip.parcellation):
             raise FileNotFoundError(f"Parcellation clustering failed for"
-                                    f" {nip.uatlas}")
+                                    f" {nip.parcellation}")
 
         self._results["atlas"] = atlas
-        self._results["uatlas"] = nip.uatlas
+        self._results["parcellation"] = nip.parcellation
         self._results["clust_mask"] = clust_mask_in_t1w_path
         self._results["k"] = self.inputs.k
         self._results["clust_type"] = self.inputs.clust_type
@@ -800,15 +809,15 @@ class _ExtractTimeseriesInputSpec(BaseInterfaceInputSpec):
     roi = traits.Any(mandatory=False)
     dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=False)
+    subnet = traits.Any(mandatory=False)
     smooth = traits.Any(mandatory=True)
-    atlas = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=False)
+    atlas = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
     mask = traits.Any(mandatory=False)
     parc = traits.Bool()
-    node_size = traits.Any(mandatory=False)
+    node_radius = traits.Any(mandatory=False)
     net_parcels_nii_path = traits.Any(mandatory=False)
     extract_strategy = traits.Str("mean", mandatory=False, usedefault=True)
 
@@ -817,11 +826,11 @@ class _ExtractTimeseriesOutputSpec(TraitedSpec):
     """Output interface wrapper for ExtractTimeseries"""
 
     ts_within_nodes = traits.Any(mandatory=True)
-    node_size = traits.Any(mandatory=True)
+    node_radius = traits.Any(mandatory=True)
     smooth = traits.Any(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
-    atlas = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
     coords = traits.Any(mandatory=True)
     hpass = traits.Any(mandatory=True)
@@ -894,13 +903,13 @@ class ExtractTimeseries(SimpleInterface):
 
         te = estimation.TimeseriesExtraction(
             net_parcels_nii_path=out_name_net_parcels_nii_path,
-            node_size=self.inputs.node_size,
+            node_radius=self.inputs.node_radius,
             conf=out_name_conf,
             func_file=out_name_func_file,
             roi=self.inputs.roi,
             dir_path=self.inputs.dir_path,
             ID=self.inputs.ID,
-            network=self.inputs.network,
+            subnet=self.inputs.subnet,
             smooth=self.inputs.smooth,
             hpass=self.inputs.hpass,
             mask=out_name_mask,
@@ -926,12 +935,12 @@ class ExtractTimeseries(SimpleInterface):
                        self.inputs.labels, te.ts_within_nodes.shape)
 
         self._results["ts_within_nodes"] = te.ts_within_nodes
-        self._results["node_size"] = te.node_size
+        self._results["node_radius"] = te.node_radius
         self._results["smooth"] = te.smooth
         self._results["extract_strategy"] = te.extract_strategy
         self._results["dir_path"] = te.dir_path
         self._results["atlas"] = self.inputs.atlas
-        self._results["uatlas"] = self.inputs.uatlas
+        self._results["parcellation"] = self.inputs.parcellation
         self._results["labels"] = self.inputs.labels
         self._results["coords"] = self.inputs.coords
         self._results["hpass"] = te.hpass
@@ -948,18 +957,18 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
 
     conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
-    atlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
     dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=True)
+    subnet = traits.Any(mandatory=True)
     labels = traits.Array(mandatory=True)
     roi = traits.Any(mandatory=True)
     coords = traits.Array(mandatory=True)
     thr = traits.Any(mandatory=True)
-    node_size = traits.Any(mandatory=True)
+    node_radius = traits.Any(mandatory=True)
     edge_threshold = traits.Any(mandatory=True)
     prune = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    parcellation = traits.Any(mandatory=False)
     target_samples = traits.Any(mandatory=True)
     norm = traits.Any(mandatory=True)
     binary = traits.Bool(mandatory=True)
@@ -1001,15 +1010,15 @@ class PlotStruct(SimpleInterface):
                 self.inputs.atlas,
                 self.inputs.dir_path,
                 self.inputs.ID,
-                self.inputs.network,
+                self.inputs.subnet,
                 self.inputs.labels.tolist(),
                 self.inputs.roi,
                 [tuple(coord) for coord in self.inputs.coords.tolist()],
                 self.inputs.thr,
-                self.inputs.node_size,
+                self.inputs.node_radius,
                 self.inputs.edge_threshold,
                 self.inputs.prune,
-                self.inputs.uatlas,
+                self.inputs.parcellation,
                 self.inputs.target_samples,
                 self.inputs.norm,
                 self.inputs.binary,
@@ -1029,19 +1038,19 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
 
     conn_matrix = traits.Any()
     conn_model = traits.Str(mandatory=True)
-    atlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
     dir_path = Directory(exists=True, mandatory=True)
     ID = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=True)
+    subnet = traits.Any(mandatory=True)
     labels = traits.Array(mandatory=True)
     roi = traits.Any(mandatory=True)
     coords = traits.Array(mandatory=True)
     thr = traits.Any(mandatory=True)
-    node_size = traits.Any(mandatory=True)
+    node_radius = traits.Any(mandatory=True)
     edge_threshold = traits.Any(mandatory=True)
     smooth = traits.Any(mandatory=True)
     prune = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    parcellation = traits.Any(mandatory=False)
     norm = traits.Any(mandatory=True)
     binary = traits.Bool(mandatory=True)
     hpass = traits.Any(mandatory=True)
@@ -1082,16 +1091,16 @@ class PlotFunc(SimpleInterface):
                 self.inputs.atlas,
                 self.inputs.dir_path,
                 self.inputs.ID,
-                self.inputs.network,
+                self.inputs.subnet,
                 self.inputs.labels.tolist(),
                 self.inputs.roi,
                 [tuple(coord) for coord in self.inputs.coords.tolist()],
                 self.inputs.thr,
-                self.inputs.node_size,
+                self.inputs.node_radius,
                 self.inputs.edge_threshold,
                 self.inputs.smooth,
                 self.inputs.prune,
-                self.inputs.uatlas,
+                self.inputs.parcellation,
                 self.inputs.norm,
                 self.inputs.binary,
                 self.inputs.hpass,
@@ -1162,7 +1171,7 @@ class RegisterDWI(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.utils import check_orient_and_dims
+        from pynets.registration.utils import orient_reslice
 
         fa_tmp_path = fname_presuffix(
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
@@ -1222,7 +1231,7 @@ class RegisterDWI(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
-                mask_tmp_path = check_orient_and_dims(
+                mask_tmp_path = orient_reslice(
                     mask_tmp_path, runtime.cwd, self.inputs.vox_size
                 )
             else:
@@ -1238,7 +1247,7 @@ class RegisterDWI(SimpleInterface):
                 gm_mask,
                 copy=True,
                 use_hardlink=False)
-            gm_mask = check_orient_and_dims(
+            gm_mask = orient_reslice(
                 gm_mask, runtime.cwd, self.inputs.vox_size
             )
         else:
@@ -1254,7 +1263,7 @@ class RegisterDWI(SimpleInterface):
                 wm_mask,
                 copy=True,
                 use_hardlink=False)
-            wm_mask = check_orient_and_dims(
+            wm_mask = orient_reslice(
                 wm_mask, runtime.cwd, self.inputs.vox_size
             )
         else:
@@ -1271,7 +1280,7 @@ class RegisterDWI(SimpleInterface):
                 csf_mask,
                 copy=True,
                 use_hardlink=False)
-            csf_mask = check_orient_and_dims(
+            csf_mask = orient_reslice(
                 csf_mask, runtime.cwd, self.inputs.vox_size
             )
         else:
@@ -1299,11 +1308,9 @@ class RegisterDWI(SimpleInterface):
 
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
-        time.sleep(0.5)
 
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, csf_mask, self.inputs.overwrite)
-        time.sleep(0.5)
 
         # Align t1w to mni template
         # from joblib import Memory
@@ -1376,12 +1383,12 @@ class RegisterDWI(SimpleInterface):
 class _RegisterAtlasDWIInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterAtlasDWI"""
 
-    atlas = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=True)
-    uatlas_parcels = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
+    subnet = traits.Any(mandatory=True)
+    parcellation4d = traits.Any(mandatory=True)
+    parcellation = traits.Any(mandatory=False)
     basedir_path = Directory(exists=True, mandatory=True)
-    node_size = traits.Any(mandatory=True)
+    node_radius = traits.Any(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     ap_path = File(exists=True, mandatory=True)
     B0_mask = File(exists=True, mandatory=True)
@@ -1415,10 +1422,10 @@ class _RegisterAtlasDWIOutputSpec(TraitedSpec):
     dwi_aligned_atlas_wmgm_int = File(exists=True, mandatory=True)
     dwi_aligned_atlas = File(exists=True, mandatory=True)
     aligned_atlas_t1w = File(exists=True, mandatory=True)
-    node_size = traits.Any(mandatory=True)
-    atlas = traits.Any(mandatory=True)
-    uatlas_parcels = traits.Any(mandatory=False)
-    uatlas = traits.Any(mandatory=False)
+    node_radius = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
+    parcellation4d = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
     wm_in_dwi = File(exists=True, mandatory=True)
@@ -1463,27 +1470,27 @@ class RegisterAtlasDWI(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        if self.inputs.uatlas is None:
-            uatlas_tmp_path = None
+        if self.inputs.parcellation is None:
+            parcellation_tmp_path = None
         else:
-            uatlas_tmp_path = fname_presuffix(
-                self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+            parcellation_tmp_path = fname_presuffix(
+                self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.uatlas,
-                uatlas_tmp_path,
+                self.inputs.parcellation,
+                parcellation_tmp_path,
                 copy=True,
                 use_hardlink=False)
 
-        if self.inputs.uatlas_parcels is None:
-            uatlas_parcels_tmp_path = None
+        if self.inputs.parcellation4d is None:
+            parcellation4d_tmp_path = None
         else:
-            uatlas_parcels_tmp_path = fname_presuffix(
-                self.inputs.uatlas_parcels, suffix="_tmp", newpath=runtime.cwd
+            parcellation4d_tmp_path = fname_presuffix(
+                self.inputs.parcellation4d, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.uatlas_parcels,
-                uatlas_parcels_tmp_path,
+                self.inputs.parcellation4d,
+                parcellation4d_tmp_path,
                 copy=True,
                 use_hardlink=False,
             )
@@ -1602,13 +1609,13 @@ class RegisterAtlasDWI(SimpleInterface):
             use_hardlink=False,
         )
 
-        if self.inputs.network or self.inputs.waymask:
+        if self.inputs.subnet or self.inputs.waymask:
             if self.inputs.waymask:
                 wm_suf = os.path.basename(self.inputs.waymask).split('.nii')[0]
                 atlas_name = f"{self.inputs.atlas}_" \
                              f"{wm_suf}"
             else:
-                atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+                atlas_name = f"{self.inputs.atlas}_{self.inputs.subnet}"
         else:
             atlas_name = f"{self.inputs.atlas}"
 
@@ -1628,8 +1635,8 @@ class RegisterAtlasDWI(SimpleInterface):
             f"{base_dir_tmp}{'/'}{atlas_name}{'_dwi_track_wmgm_int.nii.gz'}"
         )
 
-        if self.inputs.node_size is not None:
-            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+        if self.inputs.node_radius is not None:
+            atlas_name = f"{atlas_name}{'_'}{self.inputs.node_radius}"
 
         # Apply warps/coregister atlas to dwi
         [
@@ -1637,8 +1644,8 @@ class RegisterAtlasDWI(SimpleInterface):
             dwi_aligned_atlas,
             aligned_atlas_t1w,
         ] = regutils.atlas2t1w2dwi_align(
-            uatlas_tmp_path,
-            uatlas_parcels_tmp_path,
+            parcellation_tmp_path,
+            parcellation4d_tmp_path,
             atlas_name,
             t1w_brain_tmp_path,
             t1w_brain_mask_tmp_path,
@@ -1700,20 +1707,20 @@ class RegisterAtlasDWI(SimpleInterface):
         else:
             waymask_in_dwi = None
 
-        if self.inputs.uatlas is None:
-            uatlas_out = self.inputs.uatlas_parcels
+        if self.inputs.parcellation is None:
+            parcellation_out = self.inputs.parcellation4d
             copyfile(
                 dwi_aligned_atlas,
-                f"{os.path.dirname(uatlas_out)}/"
+                f"{os.path.dirname(parcellation_out)}/"
                 f"{os.path.basename(dwi_aligned_atlas)}",
                 copy=True,
                 use_hardlink=False,
             )
         else:
-            uatlas_out = self.inputs.uatlas
+            parcellation_out = self.inputs.parcellation
             copyfile(
                 dwi_aligned_atlas,
-                f"{os.path.dirname(uatlas_out)}/parcellations/"
+                f"{os.path.dirname(parcellation_out)}/parcellations/"
                 f"{os.path.basename(dwi_aligned_atlas)}",
                 copy=True,
                 use_hardlink=False,
@@ -1744,10 +1751,10 @@ class RegisterAtlasDWI(SimpleInterface):
             dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
         self._results["aligned_atlas_t1w"] = aligned_atlas_t1w
-        self._results["node_size"] = self.inputs.node_size
+        self._results["node_radius"] = self.inputs.node_radius
         self._results["atlas"] = self.inputs.atlas
-        self._results["uatlas_parcels"] = uatlas_parcels_tmp_path
-        self._results["uatlas"] = uatlas_out
+        self._results["parcellation4d"] = parcellation4d_tmp_path
+        self._results["parcellation"] = parcellation_out
         self._results["coords"] = coords
         self._results["labels"] = labels
         self._results["gm_in_dwi"] = self.inputs.gm_in_dwi
@@ -1809,7 +1816,7 @@ class RegisterAtlasDWI(SimpleInterface):
             )
 
         reg_tmp = [
-            uatlas_tmp_path,
+            parcellation_tmp_path,
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
             t1w_brain_mask_tmp_path,
@@ -2048,7 +2055,7 @@ class RegisterFunc(SimpleInterface):
         import os.path as op
         from pynets.registration import register
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.registration.utils import check_orient_and_dims
+        from pynets.registration.utils import orient_reslice
 
         anat_mask_existing = [
             i
@@ -2082,7 +2089,7 @@ class RegisterFunc(SimpleInterface):
                     mask_tmp_path,
                     copy=True,
                     use_hardlink=False)
-                mask_tmp_path = check_orient_and_dims(
+                mask_tmp_path = orient_reslice(
                     mask_tmp_path, runtime.cwd, self.inputs.vox_size
                 )
             else:
@@ -2099,7 +2106,7 @@ class RegisterFunc(SimpleInterface):
                 gm_mask,
                 copy=True,
                 use_hardlink=False)
-            gm_mask = check_orient_and_dims(
+            gm_mask = orient_reslice(
                 gm_mask, runtime.cwd, self.inputs.vox_size
             )
         else:
@@ -2116,7 +2123,7 @@ class RegisterFunc(SimpleInterface):
                 wm_mask,
                 copy=True,
                 use_hardlink=False)
-            wm_mask = check_orient_and_dims(
+            wm_mask = orient_reslice(
                 wm_mask, runtime.cwd, self.inputs.vox_size
             )
         else:
@@ -2141,11 +2148,9 @@ class RegisterFunc(SimpleInterface):
 
         # Generate T1w brain mask
         reg.gen_mask(mask_tmp_path)
-        time.sleep(0.5)
 
         # Perform anatomical segmentation
         reg.gen_tissue(wm_mask, gm_mask, self.inputs.overwrite)
-        time.sleep(0.5)
 
         # Align t1w to mni template
         # from joblib import Memory
@@ -2178,7 +2183,7 @@ class RegisterFunc(SimpleInterface):
 class _RegisterParcellation2MNIFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterParcellation2MNIFunc"""
 
-    uatlas = traits.Any(mandatory=True)
+    parcellation = traits.Any(mandatory=False)
     t1w2mni_xfm = File(exists=True, mandatory=True)
     vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
@@ -2245,16 +2250,16 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             copy=True,
             use_hardlink=False)
 
-        uatlas_tmp_path = fname_presuffix(
-            self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+        parcellation_tmp_path = fname_presuffix(
+            self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.uatlas,
-            uatlas_tmp_path,
+            self.inputs.parcellation,
+            parcellation_tmp_path,
             copy=True,
             use_hardlink=False)
 
-        atlas_name = prune_suffices(os.path.basename(self.inputs.uatlas
+        atlas_name = prune_suffices(os.path.basename(self.inputs.parcellation
                                                      ).split('.nii')[0])
 
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
@@ -2286,7 +2291,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             use_hardlink=False)
 
         aligned_atlas_mni = regutils.RegisterParcellation2MNIFunc_align(
-            uatlas_tmp_path,
+            parcellation_tmp_path,
             template_tmp_path,
             template_mask_tmp_path,
             t1w_brain_tmp_path,
@@ -2309,7 +2314,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         self._results["aligned_atlas_mni"] = aligned_atlas_mni
 
         reg_tmp = [
-            uatlas_tmp_path,
+            parcellation_tmp_path,
             template_tmp_path,
             t1w2mni_xfm_tmp_path,
             t1w2mni_warp_tmp_path,
@@ -2329,10 +2334,10 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
 class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     """Input interface wrapper for RegisterAtlasFunc"""
 
-    atlas = traits.Any(mandatory=True)
-    network = traits.Any(mandatory=True)
-    uatlas_parcels = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=True)
+    atlas = traits.Any(mandatory=False)
+    subnet = traits.Any(mandatory=True)
+    parcellation4d = traits.Any(mandatory=True)
+    parcellation = traits.Any(mandatory=False)
     basedir_path = Directory(exists=True, mandatory=True)
     anat_file = File(exists=True, mandatory=True)
     t1w_brain = File(exists=True, mandatory=True)
@@ -2343,7 +2348,7 @@ class _RegisterAtlasFuncInputSpec(BaseInterfaceInputSpec):
     gm_mask = File(exists=True, mandatory=True)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
-    node_size = traits.Any(mandatory=True)
+    node_radius = traits.Any(mandatory=True)
     vox_size = traits.Str("2mm", mandatory=True, usedefault=True)
     reg_fmri_complete = traits.Bool()
     template_name = traits.Str("MNI152_T1", mandatory=True, usedefault=True)
@@ -2358,7 +2363,7 @@ class _RegisterAtlasFuncOutputSpec(TraitedSpec):
     aligned_atlas_gm = File(exists=True, mandatory=True)
     coords = traits.Any(mandatory=True)
     labels = traits.Any(mandatory=True)
-    node_size = traits.Any()
+    node_radius = traits.Any()
     atlas = traits.Any()
 
 
@@ -2379,8 +2384,8 @@ class RegisterAtlasFunc(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
         from nilearn.image import new_img_like
 
-        if self.inputs.network:
-            atlas_name = f"{self.inputs.atlas}_{self.inputs.network}"
+        if self.inputs.subnet:
+            atlas_name = f"{self.inputs.atlas}_{self.inputs.subnet}"
         else:
             atlas_name = f"{self.inputs.atlas}"
 
@@ -2402,28 +2407,28 @@ class RegisterAtlasFunc(SimpleInterface):
                 print(e, 'T1w-space parcellation not found. Did you delete '
                       'outputs?')
         else:
-            if self.inputs.uatlas is None:
-                uatlas_tmp_path = None
+            if self.inputs.parcellation is None:
+                parcellation_tmp_path = None
             else:
-                uatlas_tmp_path = fname_presuffix(
-                    self.inputs.uatlas, suffix="_tmp", newpath=runtime.cwd
+                parcellation_tmp_path = fname_presuffix(
+                    self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
                 )
                 copyfile(
-                    self.inputs.uatlas,
-                    uatlas_tmp_path,
+                    self.inputs.parcellation,
+                    parcellation_tmp_path,
                     copy=True,
                     use_hardlink=False)
 
-            if self.inputs.uatlas_parcels is None:
-                uatlas_parcels_tmp_path = None
+            if self.inputs.parcellation4d is None:
+                parcellation4d_tmp_path = None
             else:
-                uatlas_parcels_tmp_path = fname_presuffix(
-                    self.inputs.uatlas_parcels, suffix="_tmp",
+                parcellation4d_tmp_path = fname_presuffix(
+                    self.inputs.parcellation4d, suffix="_tmp",
                     newpath=runtime.cwd
                 )
                 copyfile(
-                    self.inputs.uatlas_parcels,
-                    uatlas_parcels_tmp_path,
+                    self.inputs.parcellation4d,
+                    parcellation4d_tmp_path,
                     copy=True,
                     use_hardlink=False,
                 )
@@ -2475,8 +2480,8 @@ class RegisterAtlasFunc(SimpleInterface):
                                   f"t1w_skull.nii.gz"
             aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
 
-            if self.inputs.node_size is not None:
-                atlas_name = f"{atlas_name}{'_'}{self.inputs.node_size}"
+            if self.inputs.node_radius is not None:
+                atlas_name = f"{atlas_name}{'_'}{self.inputs.node_radius}"
 
             mni2t1_xfm_tmp_path = fname_presuffix(
                 self.inputs.mni2t1_xfm, suffix="_tmp", newpath=runtime.cwd
@@ -2498,8 +2503,8 @@ class RegisterAtlasFunc(SimpleInterface):
             )
 
             aligned_atlas_gm, aligned_atlas_skull = regutils.atlas2t1w_align(
-                uatlas_tmp_path,
-                uatlas_parcels_tmp_path,
+                parcellation_tmp_path,
+                parcellation4d_tmp_path,
                 atlas_name,
                 t1w_brain_tmp_path,
                 t1w_brain_mask_tmp_path,
@@ -2520,8 +2525,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 aligned_atlas_gm, self.inputs.coords, self.inputs.labels)
 
             reg_tmp = [
-                uatlas_parcels_tmp_path,
-                uatlas_tmp_path,
+                parcellation4d_tmp_path,
+                parcellation_tmp_path,
                 gm_mask_tmp_path,
                 t1_aligned_mni_tmp_path,
                 t1w_brain_mask_tmp_path,
@@ -2529,20 +2534,20 @@ class RegisterAtlasFunc(SimpleInterface):
                 mni2t1_xfm_tmp_path,
             ]
 
-            if self.inputs.uatlas is None:
-                uatlas_out = self.inputs.uatlas_parcels
+            if self.inputs.parcellation is None:
+                parcellation_out = self.inputs.parcellation4d
                 copyfile(
                     aligned_atlas_gm,
-                    f"{os.path.dirname(uatlas_out)}/"
+                    f"{os.path.dirname(parcellation_out)}/"
                     f"{os.path.basename(aligned_atlas_gm)}",
                     copy=True,
                     use_hardlink=False,
                 )
             else:
-                uatlas_out = self.inputs.uatlas
+                parcellation_out = self.inputs.parcellation
                 copyfile(
                     aligned_atlas_gm,
-                    f"{os.path.dirname(uatlas_out)}/parcellations/"
+                    f"{os.path.dirname(parcellation_out)}/parcellations/"
                     f"{os.path.basename(aligned_atlas_gm)}",
                     copy=True,
                     use_hardlink=False,
@@ -2572,7 +2577,7 @@ class RegisterAtlasFunc(SimpleInterface):
         self._results["coords"] = coords
         self._results["labels"] = labels
         self._results["atlas"] = self.inputs.atlas
-        self._results["node_size"] = self.inputs.node_size
+        self._results["node_radius"] = self.inputs.node_radius
 
         gc.collect()
 
@@ -2720,17 +2725,17 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     conn_model = traits.Str(mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
-    network = traits.Any(mandatory=False)
-    node_size = traits.Any(mandatory=True)
-    dens_thresh = traits.Bool(mandatory=True)
+    subnet = traits.Any(mandatory=False)
+    node_radius = traits.Any(mandatory=True)
+    dens_thresh = traits.Bool(False, mandatory=False)
     ID = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=False)
-    min_span_tree = traits.Bool(mandatory=True)
-    disp_filt = traits.Bool(mandatory=True)
+    min_span_tree = traits.Bool(False, mandatory=False)
+    disp_filt = traits.Bool(False, mandatory=False)
     parc = traits.Bool(mandatory=True)
     prune = traits.Any(mandatory=True)
-    atlas = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=False)
+    atlas = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
     coords = traits.Any(mandatory=True)
     norm = traits.Any(mandatory=True)
@@ -2749,17 +2754,17 @@ class _TrackingOutputSpec(TraitedSpec):
     target_samples = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
-    network = traits.Any(mandatory=False)
-    node_size = traits.Any()
-    dens_thresh = traits.Bool()
+    subnet = traits.Any(mandatory=False)
+    node_radius = traits.Any()
+    dens_thresh = traits.Bool(False, mandatory=False)
     ID = traits.Any(mandatory=True)
     roi = traits.Any(mandatory=False)
-    min_span_tree = traits.Bool()
-    disp_filt = traits.Bool()
+    min_span_tree = traits.Bool(False, mandatory=False)
+    disp_filt = traits.Bool(False, mandatory=False)
     parc = traits.Bool()
     prune = traits.Any()
-    atlas = traits.Any(mandatory=True)
-    uatlas = traits.Any(mandatory=False)
+    atlas = traits.Any(mandatory=False)
+    parcellation = traits.Any(mandatory=False)
     labels = traits.Any(mandatory=True)
     coords = traits.Any(mandatory=True)
     norm = traits.Any()
@@ -2864,7 +2869,7 @@ class Tracking(SimpleInterface):
             runtime.cwd,
             "/streamlines_",
             "%s"
-            % (self.inputs.network + "_" if self.inputs.network is not None
+            % (self.inputs.subnet + "_" if self.inputs.subnet is not None
                else ""),
             "%s"
             % (
@@ -2878,10 +2883,10 @@ class Tracking(SimpleInterface):
             "_",
             "%s"
             % (
-                "%s%s" % (self.inputs.node_size, "mm_")
+                "%s%s" % (self.inputs.node_radius, "mm_")
                 if (
-                    (self.inputs.node_size != "parc")
-                    and (self.inputs.node_size is not None)
+                    (self.inputs.node_radius != "parc")
+                    and (self.inputs.node_radius is not None)
                 )
                 else "parc_"
             ),
@@ -2920,10 +2925,10 @@ class Tracking(SimpleInterface):
                     streamlines,
                     self.inputs.conn_model,
                     self.inputs.target_samples,
-                    self.inputs.node_size,
+                    self.inputs.node_radius,
                     self.inputs.curv_thr_list,
                     self.inputs.step_list,
-                    self.inputs.network,
+                    self.inputs.subnet,
                     self.inputs.roi,
                     self.inputs.directget,
                     self.inputs.min_length,
@@ -2947,7 +2952,7 @@ class Tracking(SimpleInterface):
                 runtime.cwd,
                 "/reconstruction_",
                 "%s"
-                % (self.inputs.network + "_" if self.inputs.network is not None
+                % (self.inputs.subnet + "_" if self.inputs.subnet is not None
                    else ""),
                 "%s"
                 % (
@@ -2959,10 +2964,10 @@ class Tracking(SimpleInterface):
                 "_",
                 "%s"
                 % (
-                    "%s%s" % (self.inputs.node_size, "mm")
+                    "%s%s" % (self.inputs.node_radius, "mm")
                     if (
-                        (self.inputs.node_size != "parc")
-                        and (self.inputs.node_size is not None)
+                        (self.inputs.node_radius != "parc")
+                        and (self.inputs.node_radius is not None)
                     )
                     else "parc"
                 ),
@@ -3104,7 +3109,7 @@ class Tracking(SimpleInterface):
             # Iteratively build a list of streamlines for each ROI while
             # tracking
             print(
-                f"{Fore.GREEN}Target number of cumulative streamlines: "
+                f"{Fore.GREEN}Target streamlines per iteration: "
                 f"{Fore.BLUE} "
                 f"{self.inputs.target_samples}"
             )
@@ -3155,12 +3160,12 @@ class Tracking(SimpleInterface):
                     B0_mask_tmp_path,
                     t1w2dwi_tmp_path, gm_in_dwi_tmp_path,
                     vent_csf_in_dwi_tmp_path, wm_in_dwi_tmp_path,
-                    self.inputs.tiss_class,
-                    runtime.cwd
+                    self.inputs.tiss_class
                 )
                 gc.collect()
-            except BaseException:
-                print(UserWarning("Tractography failed..."))
+            except BaseException as w:
+                print(f"\n{Fore.RED}Tractography failed: {w}")
+                print(Style.RESET_ALL)
                 streamlines = None
 
             if streamlines is not None:
@@ -3230,10 +3235,10 @@ class Tracking(SimpleInterface):
                         streamlines,
                         self.inputs.conn_model,
                         self.inputs.target_samples,
-                        self.inputs.node_size,
+                        self.inputs.node_radius,
                         self.inputs.curv_thr_list,
                         self.inputs.step_list,
-                        self.inputs.network,
+                        self.inputs.subnet,
                         self.inputs.roi,
                         self.inputs.directget,
                         self.inputs.min_length,
@@ -3264,8 +3269,8 @@ class Tracking(SimpleInterface):
         self._results["target_samples"] = self.inputs.target_samples
         self._results["conn_model"] = self.inputs.conn_model
         self._results["dir_path"] = dir_path
-        self._results["network"] = self.inputs.network
-        self._results["node_size"] = self.inputs.node_size
+        self._results["subnet"] = self.inputs.subnet
+        self._results["node_radius"] = self.inputs.node_radius
         self._results["dens_thresh"] = self.inputs.dens_thresh
         self._results["ID"] = self.inputs.ID
         self._results["roi"] = self.inputs.roi
@@ -3274,7 +3279,7 @@ class Tracking(SimpleInterface):
         self._results["parc"] = self.inputs.parc
         self._results["prune"] = self.inputs.prune
         self._results["atlas"] = self.inputs.atlas
-        self._results["uatlas"] = self.inputs.uatlas
+        self._results["parcellation"] = self.inputs.parcellation
         self._results["labels"] = self.inputs.labels
         self._results["coords"] = self.inputs.coords
         self._results["norm"] = self.inputs.norm

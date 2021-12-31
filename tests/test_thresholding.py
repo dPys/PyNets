@@ -255,10 +255,10 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
         conn_matrix = np.random.rand(10, 10)
 
     ID = '002'
-    network = 'Default'
+    subnet = 'Default'
     conn_model = 'sps'
     thr = 0.5
-    node_size = 6
+    node_radius = 6
     smooth = 2
     roi = f"{dir_path}/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz"
     coord_file_path = f"{dir_path}/Default_func_coords_wb.pkl"
@@ -270,19 +270,19 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     # The arguments below arr never used in the thresholding.tresh_func, but are returned.
     prune = True
     atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = None
+    parcellation = None
     norm = 1
     binary = False
     hpass = False
     extract_strategy = 'mean'
 
-    edge_threshold, est_path, thr, node_size, network, conn_model, roi, smooth, \
-    prune, ID, dir_path, atlas, uatlas, labels, coords, norm, binary, hpass, extract_strategy = \
+    edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, smooth, \
+    prune, ID, dir_path, atlas, parcellation, labels, coords, norm, binary, hpass, extract_strategy = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
-                                 network, ID, dir_path,
-                                 roi, node_size, min_span_tree, smooth,
+                                 subnet, ID, dir_path,
+                                 roi, node_radius, min_span_tree, smooth,
                                  disp_filt, parc, prune,
-                                 atlas, uatlas, labels, coords, norm, binary,
+                                 atlas, parcellation, labels, coords, norm, binary,
                                  hpass, extract_strategy,
                                  check_consistency=False)
 
@@ -292,11 +292,11 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
         assert isinstance(edge_threshold, str)
     assert os.path.isfile(est_path) is True
     assert (0 <= thr <= 1)
-    if isinstance(node_size, str):
-        assert node_size is 'parc'
+    if isinstance(node_radius, str):
+        assert node_radius is 'parc'
     else:
-        assert isinstance(node_size, int)
-    assert isinstance(network, str)
+        assert isinstance(node_radius, int)
+    assert isinstance(subnet, str)
     assert isinstance(conn_model, str)
     if roi is not None:
         assert isinstance(roi, str)
@@ -306,9 +306,9 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert isinstance(ID, str)
     assert isinstance(dir_path, str)
     assert isinstance(atlas, str)
-    if uatlas is not None:
-        assert isinstance(uatlas, str)
-        assert os.path.isfile(uatlas) is True
+    if parcellation is not None:
+        assert isinstance(parcellation, str)
+        assert os.path.isfile(parcellation) is True
     assert isinstance(labels, list)
     assert isinstance(coords, list)
     assert isinstance(norm, int)
@@ -327,14 +327,14 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     min_length = 20
     error_margin = 6
 
-    edge_threshold, est_path, thr, node_size, network, conn_model, roi, prune, \
-    ID, dir_path, atlas, uatlas, labels, coords, norm, binary, target_samples, track_type, \
+    edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, prune, \
+    ID, dir_path, atlas, parcellation, labels, coords, norm, binary, target_samples, track_type, \
     atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(
         dens_thresh, thr, conn_matrix,
-        conn_model, network, ID,
-        dir_path, roi, node_size,
+        conn_model, subnet, ID,
+        dir_path, roi, node_radius,
         min_span_tree, disp_filt, parc,
-        prune, atlas, uatlas, labels,
+        prune, atlas, parcellation, labels,
         coords, norm, binary,
         target_samples, track_type,
         atlas_for_streams, streams, directget,
@@ -344,20 +344,20 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert (0 <= thr <= 1)
     assert conn_matrix.size is 100
     assert isinstance(conn_model, str)
-    assert isinstance(network, str)
+    assert isinstance(subnet, str)
     assert isinstance(ID, str)
     assert isinstance(dir_path, str)
     assert isinstance(roi, str)
-    if isinstance(node_size, str):
-        assert node_size is 'parc'
+    if isinstance(node_radius, str):
+        assert node_radius is 'parc'
     else:
-        assert isinstance(node_size, int)
+        assert isinstance(node_radius, int)
     assert isinstance(min_span_tree, bool)
     assert isinstance(disp_filt, bool)
     assert isinstance(parc, bool)
     assert isinstance(prune, bool)
     assert isinstance(atlas, str)
-    assert uatlas is None
+    assert parcellation is None
     assert isinstance(labels, list)
     assert len(coords) is len(labels)
     assert isinstance(coords, list)

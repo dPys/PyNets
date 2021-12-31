@@ -27,7 +27,7 @@ def batch_submit(
     modality,
     participant_label,
     session_label,
-    user_atlas,
+    parcellation,
     cluster_mask,
     roi,
     ref,
@@ -59,7 +59,7 @@ def batch_submit(
         push_dir,
         modality,
         seshs,
-        user_atlas,
+        parcellation,
         cluster_mask,
         roi,
         ref,
@@ -152,7 +152,7 @@ def create_json(
     push_dir,
     modality,
     seshs,
-    user_atlas,
+    parcellation,
     cluster_mask,
     roi,
     ref,
@@ -204,9 +204,9 @@ def create_json(
     co["vcpus"] = int(procmem[0])
     co["memory"] = int(1000 * float(procmem[1]))
 
-    if user_atlas is not None:
+    if parcellation is not None:
         cmd.append("-ua")
-        for i in user_atlas:
+        for i in parcellation:
             cmd.append(i)
     if cluster_mask is not None:
         cmd.append("-cm")
@@ -503,7 +503,7 @@ def main():
     session_label = result.session_label
     verbose = result.v
     working_dir = result.work
-    user_atlas = result.ua
+    parcellation = result.ua
     cluster_mask = result.cm
     roi = result.roi
     ref = result.ref
@@ -524,7 +524,7 @@ def main():
         modality=modality,
         participant_label=participant_label,
         session_label=session_label,
-        user_atlas=user_atlas,
+        parcellation=parcellation,
         cluster_mask=cluster_mask,
         roi=roi,
         ref=ref,

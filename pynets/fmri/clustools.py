@@ -788,7 +788,7 @@ class NiParcellate(object):
         self.clust_type = clust_type
         self.conf = conf
         self.local_corr = local_corr
-        self.uatlas = None
+        self.parcellation = None
         self.atlas = None
         self._detrending = True
         self._standardize = True
@@ -822,8 +822,9 @@ class NiParcellate(object):
             f" {str(self.k)} for {str(self.atlas)}...\n"
         )
         self._dir_path = utils.do_dir_path(self.atlas, self.outdir)
-        self.uatlas = f"{self._dir_path}/{mask_name}_clust-{self.clust_type}" \
-                      f"_k{str(self.k)}.nii.gz"
+        self.parcellation = f"{self._dir_path}/{mask_name}_" \
+                            f"clust-{self.clust_type}" \
+                            f"_k{str(self.k)}.nii.gz"
 
         # Load clustering mask
         self._func_img.set_data_dtype(np.float32)
@@ -934,7 +935,7 @@ class NiParcellate(object):
 
             if self.local_corr == "tcorr" or self.local_corr == "scorr":
                 self._local_conn_mat_path = (
-                    f"{self.uatlas.split('.nii')[0]}_"
+                    f"{self.parcellation.split('.nii')[0]}_"
                     f"{self.local_corr}_conn.npz"
                 )
 

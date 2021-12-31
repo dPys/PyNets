@@ -54,7 +54,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
             reorder="average",
             auto_fit=True,
             grid=False,
-            colorbar=False,
+            colorbar=True,
             cmap=cmap,
         )
     except RuntimeWarning:
@@ -196,11 +196,11 @@ def plot_conn_mat_func(
     atlas,
     dir_path,
     ID,
-    network,
+    subnet,
     labels,
     roi,
     thr,
-    node_size,
+    node_radius,
     smooth,
     hpass,
     extract_strategy,
@@ -223,8 +223,8 @@ def plot_conn_mat_func(
         Path to directory containing subject derivative data for given run.
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g.
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g.
         'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -233,7 +233,7 @@ def plot_conn_mat_func(
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
         methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -260,9 +260,9 @@ def plot_conn_mat_func(
          "/adjacency_",
          ID,
          "_modality-func_",
-         "%s" % ("%s%s%s" % ("rsn-",
-                             network,
-                             "_") if network is not None else ""),
+         "%s" % ("%s%s%s" % ("subnet-",
+                             subnet,
+                             "_") if subnet is not None else ""),
          "%s" % ("%s%s%s" % ("roi-",
                              op.basename(roi).split(".")[0],
                              "_") if roi is not None else ""),
@@ -270,10 +270,10 @@ def plot_conn_mat_func(
          conn_model,
          "_",
          "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                             node_size,
+                             node_radius,
                              "mm_") if (
-             (node_size != "parc") and (
-                 node_size is not None)) else "nodetype-parc_"),
+             (node_radius != "parc") and (
+                 node_radius is not None)) else "nodetype-parc_"),
          "%s" % ("%s%s%s" % ("smooth-",
                              smooth,
                              "fwhm_") if float(smooth) > 0 else ""),
@@ -315,9 +315,9 @@ def plot_conn_mat_func(
              "/adjacency-communities_",
              ID,
              "_modality-func_",
-             "%s" % ("%s%s%s" % ("rsn-",
-                                 network,
-                                 "_") if network is not None else ""),
+             "%s" % ("%s%s%s" % ("subnet-",
+                                 subnet,
+                                 "_") if subnet is not None else ""),
              "%s" % ("%s%s%s" % ("roi-",
                                  op.basename(roi).split(".")[0],
                                  "_") if roi is not None else ""),
@@ -325,10 +325,10 @@ def plot_conn_mat_func(
              conn_model,
              "_",
              "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                 node_size,
+                                 node_radius,
                                  "mm_") if (
-                 (node_size != "parc") and (
-                     node_size is not None)) else "nodetype-parc_"),
+                 (node_radius != "parc") and (
+                     node_radius is not None)) else "nodetype-parc_"),
              "%s" % ("%s%s%s" % ("smooth-",
                                  smooth,
                                  "fwhm_") if float(smooth) > 0 else ""),
@@ -364,11 +364,11 @@ def plot_conn_mat_struct(
     atlas,
     dir_path,
     ID,
-    network,
+    subnet,
     labels,
     roi,
     thr,
-    node_size,
+    node_radius,
     target_samples,
     track_type,
     directget,
@@ -393,8 +393,8 @@ def plot_conn_mat_struct(
         Path to directory containing subject derivative data for given run.
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -403,7 +403,7 @@ def plot_conn_mat_struct(
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
         methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     target_samples : int
@@ -432,9 +432,9 @@ def plot_conn_mat_struct(
          "/adjacency_",
          ID,
          "_modality-dwi_",
-         "%s" % ("%s%s%s" % ("rsn-",
-                             network,
-                             "_") if network is not None else ""),
+         "%s" % ("%s%s%s" % ("subnet-",
+                             subnet,
+                             "_") if subnet is not None else ""),
          "%s" % ("%s%s%s" % ("roi-",
                              op.basename(roi).split(".")[0],
                              "_") if roi is not None else ""),
@@ -442,10 +442,10 @@ def plot_conn_mat_struct(
          conn_model,
          "_",
          "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                             node_size,
+                             node_radius,
                              "mm_") if (
-             (node_size != "parc") and (
-                 node_size is not None)) else "nodetype-parc_"),
+             (node_radius != "parc") and (
+                 node_radius is not None)) else "nodetype-parc_"),
          "%s" % ("%s%s%s" % ("samples-",
                              int(target_samples),
                              "streams_") if float(target_samples) > 0
@@ -490,9 +490,9 @@ def plot_conn_mat_struct(
                "/adjacency-communities_",
                ID,
                "_modality-dwi_",
-               "%s" % ("%s%s%s" % ("rsn-",
-                                   network,
-                                   "_") if network is not None else ""),
+               "%s" % ("%s%s%s" % ("subnet-",
+                                   subnet,
+                                   "_") if subnet is not None else ""),
                "%s" % ("%s%s%s" % ("roi-",
                                    op.basename(roi).split(".")[0],
                                    "_") if roi is not None else ""),
@@ -500,10 +500,10 @@ def plot_conn_mat_struct(
                conn_model,
                "_",
                "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                   node_size,
+                                   node_radius,
                                    "mm_") if (
-                   (node_size != "parc") and (
-                       node_size is not None)) else "nodetype-parc_"),
+                   (node_radius != "parc") and (
+                       node_radius is not None)) else "nodetype-parc_"),
                "%s" % ("%s%s%s" % ("samples-",
                                    int(target_samples),
                                    "streams_") if float(target_samples) > 0

@@ -39,12 +39,12 @@ def test_save_coords_and_labels_to_json():
                        f"wb.pkl"
     labels_file = open(labels_file_path, 'rb')
     labels = pickle.load(labels_file)
-    network = 'Default'
+    subnet = 'Default'
     indices = np.arange(len(coords) + 1)[np.arange(len(coords) + 1)
                                          != 0].tolist()
 
     nodes_path = utils.save_coords_and_labels_to_json(coords, labels,
-                                                      dir_path, network,
+                                                      dir_path, subnet,
                                                       indices)
 
     assert os.path.isfile(nodes_path) is True
@@ -59,13 +59,13 @@ def test_save_nifti_parcels_map():
     os.makedirs(dir_path)
     ID = '002'
     vox_size = '2mm'
-    network = None
+    subnet = None
     array_data = np.arange(24, dtype=np.int16).reshape((2, 3, 4))
     affine = np.diag([1, 2, 3, 1])
     net_parcels_map_nifti = nib.Nifti1Image(array_data, affine)
 
     net_parcels_nii_path = utils.save_nifti_parcels_map(ID, dir_path,
-                                                        network,
+                                                        subnet,
                                                         net_parcels_map_nifti,
                                                         vox_size)
     assert os.path.isfile(net_parcels_nii_path) is True
@@ -82,13 +82,13 @@ def test_save_ts_to_file():
     roi = None
     smooth = None
     hpass = None
-    network = None
+    subnet = None
     node_size = 'parc'
     extract_strategy = 'mean'
     ID = '002'
     ts_within_nodes = f"{base_dir}/miscellaneous/002_Default_rsn_net_ts.npy"
 
-    out_path_ts = utils.save_ts_to_file(roi, network, ID, dir_path,
+    out_path_ts = utils.save_ts_to_file(roi, subnet, ID, dir_path,
                                         ts_within_nodes, smooth, hpass,
                                         node_size, extract_strategy)
     assert os.path.isfile(out_path_ts) is True
@@ -134,11 +134,11 @@ def test_collect_pandas_df(plot_switch, embed):
     base_dir = str(Path(__file__).parent/"examples")
     multi_nets = None
     multimodal = False
-    network = None
+    subnet = None
     ID = '002'
     net_mets_csv_list = [i for i in glob.glob(f"{base_dir}/topology/*.csv")
                          if '_neat.csv' not in i]
-    out = utils.collect_pandas_df(network, ID, net_mets_csv_list,
+    out = utils.collect_pandas_df(subnet, ID, net_mets_csv_list,
                                   plot_switch, multi_nets, multimodal, embed)
     assert out is True
     assert isinstance(net_mets_csv_list, list)
@@ -157,7 +157,7 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     conn_model = 'corr'
     roi = None
@@ -165,7 +165,7 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
     thr = 0.75
     extract_strategy = 'mean'
 
-    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
+    est_path = utils.create_est_path_func(ID, subnet, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
                                           thr_type, hpass, parc,
                                           extract_strategy)
@@ -182,7 +182,7 @@ def test_create_est_path_diff(node_size, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     roi = None
     directget = 'prob'
@@ -194,7 +194,7 @@ def test_create_est_path_diff(node_size, parc):
     thr = 0.75
     error_margin = 6
 
-    est_path = utils.create_est_path_diff(ID, network, conn_model, thr, roi,
+    est_path = utils.create_est_path_diff(ID, subnet, conn_model, thr, roi,
                                           dir_path, node_size, target_samples,
                                           track_type, thr_type, parc,
                                           directget, min_length, error_margin)
@@ -211,7 +211,7 @@ def test_create_csv_path():
     os.makedirs(dir_path)
 
     # fmri case
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     conn_model = 'corr'
     roi = None
@@ -223,7 +223,7 @@ def test_create_csv_path():
     thr_type = 'prop'
     extract_strategy = 'mean'
 
-    est_path = utils.create_est_path_func(ID, network, conn_model, thr, roi,
+    est_path = utils.create_est_path_func(ID, subnet, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
                                           thr_type, hpass, parc,
                                           extract_strategy)
@@ -263,18 +263,18 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
 
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     conn_model = 'corr'
     roi = None
     extract_strategy = 'mean'
 
-    unthr_path_func = utils.create_raw_path_func(ID, network, conn_model, roi,
+    unthr_path_func = utils.create_raw_path_func(ID, subnet, conn_model, roi,
                                                  dir_path, node_size, smooth,
                                                  hpass, parc, extract_strategy)
     assert unthr_path_func is not None
 
-    network = 'Default'
+    subnet = 'Default'
     target_samples = 1000
     track_type = 'local'
     conn_model = 'csd'
@@ -283,7 +283,7 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
     min_length = 20
     error_margin = 6
 
-    unthr_path_diff = utils.create_raw_path_diff(ID, network, conn_model, roi,
+    unthr_path_diff = utils.create_raw_path_diff(ID, subnet, conn_model, roi,
                                                  dir_path, node_size,
                                                  target_samples, track_type,
                                                  parc, directget, min_length,
@@ -377,7 +377,7 @@ def test_pass_meta_ins():
                f"Default_model-tensor_nodetype-parc_samples-100000streams_" \
                f"tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_" \
                f"thr-0.09.npy"
-    network = 'Default'
+    subnet = 'Default'
     thr = 0.09
     prune = True
     ID = 'sub-0021001'
@@ -385,14 +385,14 @@ def test_pass_meta_ins():
     norm = 10
     binary = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
+    [conn_model_iterlist, est_path_iterlist, subnet_iterlist, thr_iterlist,
      prune_iterlist, ID_iterlist, roi_iterlist,
         norm_iterlist, binary_iterlist] = utils.pass_meta_ins(
-        conn_model, est_path, network, thr, prune, ID, roi, norm, binary)
+        conn_model, est_path, subnet, thr, prune, ID, roi, norm, binary)
 
     assert conn_model_iterlist is not None
     assert est_path_iterlist is not None
-    assert network_iterlist is not None
+    assert subnet_iterlist is not None
     assert thr_iterlist is not None
     assert prune_iterlist is not None
     assert ID_iterlist is not None
@@ -417,8 +417,8 @@ def test_pass_meta_ins_multi():
                       f"csd_nodetype-parc_samples-10000streams_tt-particle_" \
                       f"dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-" \
                       f"1.0.npy"
-    network_func = 'Default'
-    network_struct = 'Default'
+    subnet_func = 'Default'
+    subnet_struct = 'Default'
     thr_func = 0.95
     thr_struct = 1.00
     prune_func = True
@@ -432,18 +432,18 @@ def test_pass_meta_ins_multi():
     binary_func = False
     binary_struct = True
 
-    [conn_model_iterlist, est_path_iterlist, network_iterlist, thr_iterlist,
+    [conn_model_iterlist, est_path_iterlist, subnet_iterlist, thr_iterlist,
      prune_iterlist, ID_iterlist, roi_iterlist,
      norm_iterlist, binary_iterlist] = utils.pass_meta_ins_multi(
-        conn_model_func, est_path_func, network_func, thr_func, prune_func,
+        conn_model_func, est_path_func, subnet_func, thr_func, prune_func,
         ID_func, roi_func, norm_func, binary_func,
-        conn_model_struct, est_path_struct, network_struct, thr_struct,
+        conn_model_struct, est_path_struct, subnet_struct, thr_struct,
         prune_struct, ID_struct, roi_struct,
         norm_struct, binary_struct)
 
     assert len(conn_model_iterlist) == 2
     assert len(est_path_iterlist) == 2
-    assert len(network_iterlist) == 2
+    assert len(subnet_iterlist) == 2
     assert len(thr_iterlist) == 2
     assert len(prune_iterlist) == 2
     assert len(ID_iterlist) == 2

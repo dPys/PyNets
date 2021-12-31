@@ -14,7 +14,6 @@ from nipype.interfaces.base import (
     traits,
     SimpleInterface,
 )
-from scipy import stats
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, \
     cross_validate, StratifiedKFold
@@ -30,9 +29,13 @@ from pynets.core.utils import flatten
 from sklearn.svm import LinearSVC
 from sklearn.base import BaseEstimator, TransformerMixin, clone, \
     ClassifierMixin
-from sklearn.linear_model import LinearRegression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import train_test_split
+from scipy import stats
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.linear_model import LinearRegression
+from sklearn.naive_bayes import GaussianNB
 
 try:
     from sklearn.utils._testing import ignore_warnings
@@ -631,7 +634,7 @@ class DeConfounder(BaseEstimator, TransformerMixin):
         return X - X_confounds
 
 
-def de_outlier(X, y, sd, predict_type):
+def de_outlier(X, y, sd, deoutlier_type='IF'):
     """
     Remove any gross outlier row in X whose linear residual
     when regressing y against X is > sd standard deviations
@@ -640,23 +643,38 @@ def de_outlier(X, y, sd, predict_type):
     linear regression.
 
     """
-    from scipy import stats
-    from sklearn.linear_model import LinearRegression
-    from sklearn.naive_bayes import GaussianNB
-
-    if predict_type == 'classifier':
-        reg = GaussianNB()
-    elif predict_type == 'regressor':
-        reg = LinearRegression(normalize=True)
+    if deoutlier_type == 'IF':
+        model = IsolationForest(random_state=42,
+                                bootstrap=True, contamination='auto')
+        outlier_mask = model.fit_predict(X)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
+    elif deoutlier_type == 'LOF':
+        mask = np.zeros(X.shape, dtype=np.bool)
+        model = LocalOutlierFactor(n_neighbors=10, metric='mahalanobis')
+        model.fit_predict(X)
+        X_scores = model.negative_outlier_factor_
+        X_scores = (X_scores.max() - X_scores) / (
+                X_scores.max() - X_scores.min())
+        median_score = np.median(X_scores)
+        outlier_mask = np.logical_or(
+            [X_scores[i] > median_score for i in range(len(X.shape[0]))], mask)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
     else:
-        raise ValueError('predict_type not recognized!')
-    reg.fit(X, y)
-    predicted_y = reg.predict(X)
+        if deoutlier_type == 'NB':
+            model = GaussianNB()
+        elif deoutlier_type == 'LR':
+            model = LinearRegression(normalize=True)
+        else:
+            raise ValueError('predict_type not recognized!')
+        model.fit(X, y)
+        predicted_y = model.predict(X)
 
-    resids = (y - predicted_y)**2
+        resids = (y - predicted_y)**2
 
-    outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
-                    float(sd)).all(axis=1)
+        outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
+                        float(sd)).all(axis=1)
 
     return X[outlier_mask], y[outlier_mask]
 
@@ -881,7 +899,7 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
+def preprocess_x_y(X, y, nuisance_cols, nodrop_columns=[],
                    var_thr=.85, remove_multi=True,
                    remove_outliers=True, standardize=True,
                    std_dev=3, vif_thr=10, missingness_thr=0.50,
@@ -969,7 +987,7 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
 
     # Remove outliers
     if remove_outliers is True:
-        X, y = de_outlier(X, y, std_dev, predict_type)
+        X, y = de_outlier(X, y, std_dev, 'IF')
         if X.empty and len(y) < 50:
             print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
                   f"{X}{Style.RESET_ALL}\n\n")
@@ -993,7 +1011,8 @@ def preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns=[],
             rvif = ReduceVIF(thresh=vif_thr)
             X = rvif.fit_transform(X)[0]
             if X.empty or len(X.columns) < 5:
-                print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+                print(f"\n\n{Fore.RED}Empty feature-space "
+                      f"(multicollinearity): "
                       f"{X}{Style.RESET_ALL}\n\n")
                 return X, y
         except:
@@ -1308,7 +1327,8 @@ def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
             coefs = list(flatten(np.abs(
                 np.ones(len(best_positions))).tolist()))
         elif stack is True:
-            coefs = list(flatten(np.abs(fitted.named_steps[best_estimator].coef_)))
+            coefs = list(flatten(np.abs(
+                fitted.named_steps[best_estimator].coef_)))
         else:
             coefs = list(flatten(np.abs(fitted.named_steps[
                                             best_estimator.split(
@@ -1408,18 +1428,30 @@ def boot_nested_iteration(X, y, predict_type, boot,
 
     if stack is True:
         for super_fitted in prediction["estimator"]:
-            for sub_fitted in super_fitted.named_steps[best_estimator].estimators_:
-                X_subspace = pd.DataFrame(sub_fitted.named_steps['selector'].transform(X), columns=sub_fitted.named_steps['selector'].get_feature_names())
-                best_sub_estimator = [i for i in sub_fitted.named_steps.keys() if i in list(estimators.keys())[0] and i is not 'selector'][0]
+            for sub_fitted in \
+                super_fitted.named_steps[best_estimator].estimators_:
+                X_subspace = pd.DataFrame(
+                    sub_fitted.named_steps['selector'].transform(X),
+                    columns=sub_fitted.named_steps['selector'
+                    ].get_feature_names())
+                best_sub_estimator = [i for i in
+                                      sub_fitted.named_steps.keys() if i in
+                                      list(estimators.keys())[0] and i is not
+                                      'selector'][0]
                 best_positions, feat_imp_dict = get_feature_imp(
-                    X_subspace, pca_reduce, sub_fitted, best_sub_estimator, predict_type,
+                    X_subspace, pca_reduce, sub_fitted, best_sub_estimator,
+                    predict_type,
                     dummy_run, stack)
                 feature_imp_dicts.append(feat_imp_dict)
                 best_positions_list.append(best_positions)
-                # print(X_subspace[list(best_positions)].columns)
-                # print(len(X_subspace[list(best_positions)].columns))
-                # X_subspace[list(best_positions)].to_csv(f"X_{X_subspace.columns[0][:3].upper()}_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
-        # y.to_csv(f"y_{y.columns[0].split('_')[1]}_stack-{'_'.join(stack_prefix_list)}.csv", index=False)
+        #         print(X_subspace[list(best_positions)].columns)
+        #         print(len(X_subspace[list(best_positions)].columns))
+        #         X_subspace[list(best_positions)].to_csv(
+        #             f"X_{X_subspace.columns[0][:3].upper()}_"
+        #             f"{y.columns[0].split('_')[1]}_stack-"
+        #             f"{'_'.join(stack_prefix_list)}.csv", index=False)
+        # y.to_csv(f"y_{y.columns[0].split('_')[1]}_stack-"
+        #          f"{'_'.join(stack_prefix_list)}.csv", index=False)
     else:
         for fitted in prediction["estimator"]:
             best_positions, feat_imp_dict = get_feature_imp(
@@ -1511,8 +1543,8 @@ def bootstrapped_nested_cv(
     from pynets.core.utils import mergedicts
 
     # Preprocess data
-    [X, y] = preprocess_x_y(X, y, predict_type, nuisance_cols, nodrop_columns,
-                            remove_multi=remove_multi, oversample=True)
+    [X, y] = preprocess_x_y(X, y, nuisance_cols, nodrop_columns,
+                            remove_multi=remove_multi, oversample=False)
 
     if X.empty or len(X.columns) < 5:
         return (
@@ -1704,7 +1736,7 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
 
     if len(files_) > 1:
         dfs = []
-        rsns = []
+        parcellations = []
         for file_ in files_:
             df = pd.read_csv(file_, chunksize=100000).read()
             try:
@@ -1712,13 +1744,14 @@ def concatenate_frames(out_dir, modality, embedding_type, target_var, files_,
             except BaseException:
                 pass
             dfs.append(df)
-            rsns.append(file_.split('_grid_param_')[1].split('/')[0].split('.')[-2])
+            parcellations.append(
+                file_.split('_grid_param_')[1].split('/')[0].split('.')[-2])
         try:
             frame = pd.concat(dfs, axis=0, join="outer", sort=True,
                               ignore_index=False)
 
             out_path = f"{out_dir}/final_predictions_modality-{modality}_" \
-                       f"rsn-{str(list(set(rsns)))}_" \
+                       f"subnet-{str(list(set(parcellations)))}_" \
                        f"gradient-{embedding_type}_outcome-{target_var}_" \
                        f"boots-{n_boots}_search-{search_method}"
 
@@ -1853,28 +1886,28 @@ class MakeXY(SimpleInterface):
                 elif self.inputs.target_var == 'MDE_chronic':
                     drop_cols = [self.inputs.target_var,
                                  'MDE_conversion']
-                elif self.inputs.target_var == "dep_inertia":
+                elif self.inputs.target_var == "dep_persistence":
                     drop_cols = [self.inputs.target_var,
-                                 "rum_inertia",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "rum_1"]
-                elif self.inputs.target_var == "rum_inertia":
+                elif self.inputs.target_var == "rum_persistence":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
+                                 "dep_persistence",
                                  "rum_2", "dep_2"]
                 elif self.inputs.target_var == "rum_1":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
-                                 "rum_inertia",
+                                 "dep_persistence",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "dep_1"]
                 elif self.inputs.target_var == "dep_1":
                     drop_cols = [self.inputs.target_var,
-                                 "dep_inertia",
-                                 "rum_inertia",
+                                 "dep_persistence",
+                                 "rum_persistence",
                                  "rum_2", "dep_2", "rum_1"]
                 else:
                     drop_cols = [self.inputs.target_var,
-                                 "rum_inertia",
-                                 "dep_inertia",
+                                 "rum_persistence",
+                                 "dep_persistence",
                                  "dep_1", "rum_1", "dep_2", "rum_2",
                                  'MDE_conversion', 'MDE_chronic']
 
@@ -1993,14 +2026,15 @@ class BSNestedCV(SimpleInterface):
                     mega_feat_imp_dict,
                     grand_mean_y_predicted,
                     final_est
-                ] = bootstrapped_nested_cv(self.inputs.X, self.inputs.y,
-                                           nuisance_cols=self.inputs.nuisance_cols,
-                                           predict_type=predict_type,
-                                           n_boots=self.inputs.n_boots,
-                                           dummy_run=self.inputs.dummy_run,
-                                           search_method=self.inputs.search_method,
-                                           stack=self.inputs.stack,
-                                           stack_prefix_list=self.inputs.stack_prefix_list)
+                ] = bootstrapped_nested_cv(
+                    self.inputs.X, self.inputs.y,
+                    nuisance_cols=self.inputs.nuisance_cols,
+                    predict_type=predict_type,
+                    n_boots=self.inputs.n_boots,
+                    dummy_run=self.inputs.dummy_run,
+                    search_method=self.inputs.search_method,
+                    stack=self.inputs.stack,
+                    stack_prefix_list=self.inputs.stack_prefix_list)
                 if final_est:
                     grid_param_name = self.inputs.grid_param.replace(', ', '_')
                     out_path_est = f"{runtime.cwd}/estimator_" \
@@ -2053,7 +2087,8 @@ class BSNestedCV(SimpleInterface):
                         )
                         print(
                             f"{Fore.BLUE}Modality: "
-                            f"{Fore.RED}{self.inputs.modality}{Style.RESET_ALL}"
+                            f"{Fore.RED}{self.inputs.modality}"
+                            f"{Style.RESET_ALL}"
                         )
                 else:
                     print(f"{Fore.RED}Empty feature-space for "
@@ -2194,10 +2229,13 @@ class MakeDF(SimpleInterface):
             y_pred_vals = np.nan
 
         if bool(self.inputs.grand_mean_best_estimator) is True:
-            df_summary.at[0, "best_estimator"] = list(self.inputs.grand_mean_best_estimator.values())
-            df_summary.at[0, "Score"] = list(self.inputs.grand_mean_best_score.values())
+            df_summary.at[0, "best_estimator"] = list(
+                self.inputs.grand_mean_best_estimator.values())
+            df_summary.at[0, "Score"] = list(
+                self.inputs.grand_mean_best_score.values())
             df_summary.at[0, "Predicted_y"] = y_pred_vals
-            df_summary.at[0, "Error"] = list(self.inputs.grand_mean_best_error.values())
+            df_summary.at[0, "Error"] = list(
+                self.inputs.grand_mean_best_error.values())
             df_summary.at[0, "Score_95CI_upper"] = get_CI(
                 list(self.inputs.grand_mean_best_score.values()),
                 alpha=0.95)[1]
@@ -2540,8 +2578,10 @@ def build_predict_workflow(args, retval, verbose=True):
         name="meta_outputnode"
     )
 
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface.n_procs = 8
-    create_wf_node.get_node('bootstrapped_nested_cv_node').interface._mem_gb = 24
+    create_wf_node.get_node('bootstrapped_nested_cv_node'
+                            ).interface.n_procs = 8
+    create_wf_node.get_node('bootstrapped_nested_cv_node'
+                            ).interface._mem_gb = 24
     create_wf_node.get_node('make_x_y_func_node').interface.n_procs = 1
     create_wf_node.get_node('make_x_y_func_node').interface._mem_gb = 6
 
