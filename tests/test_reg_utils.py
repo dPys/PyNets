@@ -174,7 +174,7 @@ def test_segment_t1w():
     anat_dir = f"{base_dir}/003/anat"
     t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
     basename = f"{anat_dir}/test_segment_t1w"
-    out = utils.segment_t1w(t1w, basename, opts='')
+    out = utils.segment_t1w(t1w, basename)
     print(out)
     assert out is not None
 
@@ -295,14 +295,14 @@ def test_reorient_img():
     assert check_both_outputs is True
 
 
-def test_check_orient_and_dims():
+def test_orient_reslice():
     """
-    Test check_orient_and_dims functionality
+    Test orient_reslice functionality
     """
     # This test has a bak folder in its test_dir.
     # To replicate test rm data in test_dir and cp from bak
     base_dir = str(Path(__file__).parent/"examples")
-    test_dir = f"{base_dir}/003/test_out/test_check_orient_and_dims"
+    test_dir = f"{base_dir}/003/test_out/test_orient_reslice"
 
     # Antomical: 1x1x1mm
     anat_LAS = f"{test_dir}/anat_LAS/sub-003_T1w_LAS.nii.gz"
@@ -315,13 +315,13 @@ def test_check_orient_and_dims():
     bvecs_LAS = f"{test_dir}/dmri_LAS/bvec.orig.bvec"
     bvecs_RAS = f"{test_dir}/dmri_RAS/bvec.trans.bvec"
 
-    anat_LAStoRAS = utils.check_orient_and_dims(anat_LAS, test_dir, '2mm',
+    anat_LAStoRAS = utils.orient_reslice(anat_LAS, test_dir, '2mm',
                                                 bvecs=None)
-    anat_RAStoRAS = utils.check_orient_and_dims(anat_RAS, test_dir, '2mm',
+    anat_RAStoRAS = utils.orient_reslice(anat_RAS, test_dir, '2mm',
                                                 bvecs=None)
-    dmri_LAStoRAS, bvecs_LAStoRAS = utils.check_orient_and_dims(
+    dmri_LAStoRAS, bvecs_LAStoRAS = utils.orient_reslice(
         dmri_LAS, test_dir, '1mm', bvecs=bvecs_LAS)
-    dmri_RAStoRAS, bvecs_RAStoRAS = utils.check_orient_and_dims(
+    dmri_RAStoRAS, bvecs_RAStoRAS = utils.orient_reslice(
         dmri_RAS, test_dir, '1mm', bvecs=bvecs_RAS)
 
     anat_LAStoRAS = nib.load(anat_LAStoRAS)
