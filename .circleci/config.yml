@@ -295,6 +295,7 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
       - DEBIAN_FRONTEND: noninteractive
+    resource_class: X-large
     steps:
       - checkout
       - restore_cache:
