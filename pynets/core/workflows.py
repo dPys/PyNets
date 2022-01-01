@@ -2371,7 +2371,8 @@ def dmri_connectometry(
     else:
         dmri_wf.connect(
             [
-                (inputnode, run_tracking_node, [("node_radius", "node_radius")]),
+                (inputnode, run_tracking_node,
+                 [("node_radius", "node_radius")]),
                 (inputnode, node_gen_node, [("parc", "parc")]),
                 (inputnode, reg_nodes_node, [("node_radius", "node_radius")]),
                 (

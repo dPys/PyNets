@@ -11,7 +11,11 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
-import yaml
+import time
+import numpy as np
+import networkx as nx
+from pynets.core.workflows import fmri_connectometry, dmri_connectometry
+from multiprocessing import cpu_count
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -117,14 +121,6 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     """
     Test functional connectometry
     """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import fmri_connectometry
-    from multiprocessing import cpu_count
-
     base_dir = str(Path(__file__).parent/"examples")
     conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_" \
            f"desc-confounds_regressors.tsv"
@@ -145,7 +141,7 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     norm = 6
     binary = False
     local_corr = 'tcorr'
-    outdir = base_dir + '/outputs'
+    outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     k = None
@@ -158,19 +154,82 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     extract_strategy = 'mean'
     extract_strategy_list = None
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
-              'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'
-                              ][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'
-                                ][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
+    execution_dict = {'stop_on_first_crash': True,
+                     'crashfile_format': 'txt',
+                     'parameterize_dirs': False,
+                     'display_variable': ':0',
+                     'job_finished_timeout': 120,
+                     'matplotlib_backend': 'Agg',
+                     'use_relative_paths': False,
+                     'keep_inputs': False,
+                     'remove_unnecessary_outputs': True,
+                     'remove_node_directories': False,
+                     'raise_insufficient': False,
+                     'poll_sleep_duration': 0.2,
+                     'hash_method': 'timestamp',
+                     'local_hash_check': False}
+
+    runtime_dict = {'pass_meta_ins_node': (1, 1),
+                 'pass_meta_outs_node': (1, 2),
+                 'pass_meta_ins_multi_node': (1, 1),
+                 'pass_meta_outs_multi_node': (1, 2),
+                 'pass_meta_ins_func_node': (1, 1),
+                 'pass_meta_outs_func_node': (1, 2),
+                 'pass_meta_ins_struct_node': (1, 1),
+                 'pass_meta_outs_struct_node': (1, 2),
+                 'fetch_nodes_and_labels_node': (4, 8),
+                 'save_nifti_parcels_node': (4, 4),
+                 'gtab_node': (1, 1),
+                 'save_coords_and_labels_node': (1, 1),
+                 'orient_reslice_func_node': (2, 4),
+                 'orient_reslice_mask_node': (1, 1),
+                 'orient_reslice_uatlas_node': (1, 1),
+                 'orient_reslice_anat_node': (1, 1),
+                 'node_gen_node': (4, 8),
+                 'prep_spherical_nodes_node': (4, 8),
+                 'get_node_membership_node': (2, 6),
+                 'orient_reslice_dwi_node': (2, 4),
+                 'get_anisopwr_node': (2, 2),
+                 'extract_ts_node': (4, 8),
+                 'extract_ts_info_node': (1, 2),
+                 'clustering_node': (4, 8),
+                 'get_conn_matrix_node': (2, 6),
+                 'thresh_func_node': (1, 2),
+                 'thresh_diff_node': (1, 2),
+                 'thresh_info_node': (1, 1),
+                 'register_node': (4, 8),
+                 'reg_nodes_node': (2, 4),
+                 'RegisterParcellation2MNIFunc_node': (2, 4),
+                 'get_fa_node': (2, 2),
+                 'run_tracking_node': (4, 8),
+                 'dsn_node': (1, 2),
+                 'plot_all_node': (1, 2),
+                 'streams2graph_node': (4, 6),
+                 'build_multigraphs_node': (2, 8),
+                 'plot_all_struct_func_node': (1, 2),
+                 'mase_embedding_node': (2, 6),
+                 'omni_embedding_node': (1, 2),
+                 'omni_embedding_node_func': (1, 2),
+                 'omni_embedding_node_struct': (1, 2),
+                 'ase_embedding_node_func': (1, 2),
+                 'ase_embedding_node_struct': (1, 2),
+                 'join_iters_node_thr': (1, 4),
+                 'join_iters_node_nets': (1, 1),
+                 'join_iters_node_atlas': (1, 1),
+                 'join_iters_node_ext_ts': (1, 1),
+                 'join_iters_extract_ts_node': (1, 1),
+                 'join_iters_node': (1, 4),
+                 'join_iters_node_g': (1, 4),
+                 'join_iters_prep_spheres_node': (1, 1),
+                 'join_iters_get_conn_matrix_node': (1, 1),
+                 'join_iters_run_track_node': (1, 1),
+                 'clust_join_node': (1, 1),
+                 'NetworkAnalysis': (1, 4),
+                 'AggregateOutputs': (1, 3),
+                 'load_mat_node': (1, 1),
+                 'load_mat_ext_node': (1, 1),
+                 'save_mat_thresholded_node': (1, 1),
+                 'CombineOutputs': (1, 1)}
 
     if thr_type == 'dens_thresh':
         dens_thresh = True
@@ -213,6 +272,7 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     else:
         hpass_list = None
 
+    # start_time = time.time()
     fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
@@ -222,6 +282,8 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
                                                extract_strategy_list, outdir)
+    # print("%s%s%s" % ('fmri_connectometry: ',
+    #                   str(np.round(time.time() - start_time, 1)), 's'))
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -278,14 +340,6 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     """
     Test functional connectometry with clustering
     """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import fmri_connectometry
-    from multiprocessing import cpu_count
-
     base_dir = str(Path(__file__).parent/"examples")
     conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
@@ -301,7 +355,7 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     norm = 6
     binary = False
     local_corr = 'tcorr'
-    outdir = base_dir + '/outputs'
+    outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     hpass = None
@@ -315,16 +369,82 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     extract_strategy = 'mean'
     extract_strategy_list = None
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
+    execution_dict = {'stop_on_first_crash': True,
+                      'crashfile_format': 'txt',
+                      'parameterize_dirs': False,
+                      'display_variable': ':0',
+                      'job_finished_timeout': 120,
+                      'matplotlib_backend': 'Agg',
+                      'use_relative_paths': False,
+                      'keep_inputs': False,
+                      'remove_unnecessary_outputs': True,
+                      'remove_node_directories': False,
+                      'raise_insufficient': False,
+                      'poll_sleep_duration': 0.2,
+                      'hash_method': 'timestamp',
+                      'local_hash_check': False}
+
+    runtime_dict = {'pass_meta_ins_node': (1, 1),
+                    'pass_meta_outs_node': (1, 2),
+                    'pass_meta_ins_multi_node': (1, 1),
+                    'pass_meta_outs_multi_node': (1, 2),
+                    'pass_meta_ins_func_node': (1, 1),
+                    'pass_meta_outs_func_node': (1, 2),
+                    'pass_meta_ins_struct_node': (1, 1),
+                    'pass_meta_outs_struct_node': (1, 2),
+                    'fetch_nodes_and_labels_node': (4, 8),
+                    'save_nifti_parcels_node': (4, 4),
+                    'gtab_node': (1, 1),
+                    'save_coords_and_labels_node': (1, 1),
+                    'orient_reslice_func_node': (2, 4),
+                    'orient_reslice_mask_node': (1, 1),
+                    'orient_reslice_uatlas_node': (1, 1),
+                    'orient_reslice_anat_node': (1, 1),
+                    'node_gen_node': (4, 8),
+                    'prep_spherical_nodes_node': (4, 8),
+                    'get_node_membership_node': (2, 6),
+                    'orient_reslice_dwi_node': (2, 4),
+                    'get_anisopwr_node': (2, 2),
+                    'extract_ts_node': (4, 8),
+                    'extract_ts_info_node': (1, 2),
+                    'clustering_node': (4, 8),
+                    'get_conn_matrix_node': (2, 6),
+                    'thresh_func_node': (1, 2),
+                    'thresh_diff_node': (1, 2),
+                    'thresh_info_node': (1, 1),
+                    'register_node': (4, 8),
+                    'reg_nodes_node': (2, 4),
+                    'RegisterParcellation2MNIFunc_node': (2, 4),
+                    'get_fa_node': (2, 2),
+                    'run_tracking_node': (4, 8),
+                    'dsn_node': (1, 2),
+                    'plot_all_node': (1, 2),
+                    'streams2graph_node': (4, 6),
+                    'build_multigraphs_node': (2, 8),
+                    'plot_all_struct_func_node': (1, 2),
+                    'mase_embedding_node': (2, 6),
+                    'omni_embedding_node': (1, 2),
+                    'omni_embedding_node_func': (1, 2),
+                    'omni_embedding_node_struct': (1, 2),
+                    'ase_embedding_node_func': (1, 2),
+                    'ase_embedding_node_struct': (1, 2),
+                    'join_iters_node_thr': (1, 4),
+                    'join_iters_node_nets': (1, 1),
+                    'join_iters_node_atlas': (1, 1),
+                    'join_iters_node_ext_ts': (1, 1),
+                    'join_iters_extract_ts_node': (1, 1),
+                    'join_iters_node': (1, 4),
+                    'join_iters_node_g': (1, 4),
+                    'join_iters_prep_spheres_node': (1, 1),
+                    'join_iters_get_conn_matrix_node': (1, 1),
+                    'join_iters_run_track_node': (1, 1),
+                    'clust_join_node': (1, 1),
+                    'NetworkAnalysis': (1, 4),
+                    'AggregateOutputs': (1, 3),
+                    'load_mat_node': (1, 1),
+                    'load_mat_ext_node': (1, 1),
+                    'save_mat_thresholded_node': (1, 1),
+                    'CombineOutputs': (1, 1)}
 
     dens_thresh = False
     min_span_tree = False
@@ -354,6 +474,7 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     else:
         hpass_list = None
 
+    # start_time = time.time()
     fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
@@ -363,6 +484,8 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
                                                extract_strategy_list, outdir)
+    # print("%s%s%s" % ('fmri_connectometry (clust): ',
+    #                   str(np.round(time.time() - start_time, 1)), 's'))
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -437,14 +560,6 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     """
     Test structural connectometry
     """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import dmri_connectometry
-    from multiprocessing import cpu_count
-
     base_dir = str(Path(__file__).parent/"examples")
     dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
     fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bvec.bvec"
@@ -461,25 +576,91 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     norm = 6
     binary = False
     waymask = None
-    outdir = base_dir + '/outputs'
+    outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     target_samples = 1000
     error_margin = 6
+    maxcrossing = 3
+    step_list = [0.1, 0.3, 0.4, 0.4, 0.5, 0.5, 0.6, 0.8]
+    curv_thr_list = [80, 50, 40, 40, 30, 10]
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        maxcrossing = hardcoded_params['tracking']['maxcrossing'][0]
-        step_list = hardcoded_params['tracking']['step_list']
-        curv_thr_list = hardcoded_params['tracking']['curv_thr_list']
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
+    execution_dict = {'stop_on_first_crash': True,
+                      'crashfile_format': 'txt',
+                      'parameterize_dirs': False,
+                      'display_variable': ':0',
+                      'job_finished_timeout': 120,
+                      'matplotlib_backend': 'Agg',
+                      'use_relative_paths': False,
+                      'keep_inputs': False,
+                      'remove_unnecessary_outputs': True,
+                      'remove_node_directories': False,
+                      'raise_insufficient': False,
+                      'poll_sleep_duration': 0.2,
+                      'hash_method': 'timestamp',
+                      'local_hash_check': False}
+
+    runtime_dict = {'pass_meta_ins_node': (1, 1),
+                    'pass_meta_outs_node': (1, 2),
+                    'pass_meta_ins_multi_node': (1, 1),
+                    'pass_meta_outs_multi_node': (1, 2),
+                    'pass_meta_ins_func_node': (1, 1),
+                    'pass_meta_outs_func_node': (1, 2),
+                    'pass_meta_ins_struct_node': (1, 1),
+                    'pass_meta_outs_struct_node': (1, 2),
+                    'fetch_nodes_and_labels_node': (4, 8),
+                    'save_nifti_parcels_node': (4, 4),
+                    'gtab_node': (1, 1),
+                    'save_coords_and_labels_node': (1, 1),
+                    'orient_reslice_func_node': (2, 4),
+                    'orient_reslice_mask_node': (1, 1),
+                    'orient_reslice_uatlas_node': (1, 1),
+                    'orient_reslice_anat_node': (1, 1),
+                    'node_gen_node': (4, 8),
+                    'prep_spherical_nodes_node': (4, 8),
+                    'get_node_membership_node': (2, 6),
+                    'orient_reslice_dwi_node': (2, 4),
+                    'get_anisopwr_node': (2, 2),
+                    'extract_ts_node': (4, 8),
+                    'extract_ts_info_node': (1, 2),
+                    'clustering_node': (4, 8),
+                    'get_conn_matrix_node': (2, 6),
+                    'thresh_func_node': (1, 2),
+                    'thresh_diff_node': (1, 2),
+                    'thresh_info_node': (1, 1),
+                    'register_node': (4, 8),
+                    'reg_nodes_node': (2, 4),
+                    'RegisterParcellation2MNIFunc_node': (2, 4),
+                    'get_fa_node': (2, 2),
+                    'run_tracking_node': (4, 8),
+                    'dsn_node': (1, 2),
+                    'plot_all_node': (1, 2),
+                    'streams2graph_node': (4, 6),
+                    'build_multigraphs_node': (2, 8),
+                    'plot_all_struct_func_node': (1, 2),
+                    'mase_embedding_node': (2, 6),
+                    'omni_embedding_node': (1, 2),
+                    'omni_embedding_node_func': (1, 2),
+                    'omni_embedding_node_struct': (1, 2),
+                    'ase_embedding_node_func': (1, 2),
+                    'ase_embedding_node_struct': (1, 2),
+                    'join_iters_node_thr': (1, 4),
+                    'join_iters_node_nets': (1, 1),
+                    'join_iters_node_atlas': (1, 1),
+                    'join_iters_node_ext_ts': (1, 1),
+                    'join_iters_extract_ts_node': (1, 1),
+                    'join_iters_node': (1, 4),
+                    'join_iters_node_g': (1, 4),
+                    'join_iters_prep_spheres_node': (1, 1),
+                    'join_iters_get_conn_matrix_node': (1, 1),
+                    'join_iters_run_track_node': (1, 1),
+                    'clust_join_node': (1, 1),
+                    'NetworkAnalysis': (1, 4),
+                    'AggregateOutputs': (1, 3),
+                    'load_mat_node': (1, 1),
+                    'load_mat_ext_node': (1, 1),
+                    'save_mat_thresholded_node': (1, 1),
+                    'CombineOutputs': (1, 1)}
 
     if thr_type == 'dens_thresh':
         dens_thresh = True
@@ -522,6 +703,7 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     else:
         error_margin_list = None
 
+    # start_time = time.time()
     dmri_connectometry_wf = dmri_connectometry(ID, atlas, subnet, node_radius, roi, parcellation, plot_switch, parc, ref_txt,
                                                procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
                                                conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
@@ -531,6 +713,9 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
                                                track_type, min_length, error_margin, maxcrossing, directget, tiss_class,
                                                runtime_dict, execution_dict, multi_directget, template_name,
                                                vox_size, waymask, min_length_list, error_margin_list, outdir)
+
+    # print("%s%s%s" % ('dmri_connectometry: ',
+    #                   str(np.round(time.time() - start_time, 1)), 's'))
 
 #    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True
