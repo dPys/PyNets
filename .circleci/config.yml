@@ -266,7 +266,11 @@ jobs:
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
-            - /*
+                -../../../etc
+                -../../../home
+                -../../../lib*
+                -../../../opt
+                -../../../usr
 
   unit_and_integration_tests:
     machine:
@@ -495,7 +499,7 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
-              
+
       - installation:
           requires:
             - get_data
