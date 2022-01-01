@@ -260,11 +260,17 @@ jobs:
              echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
              echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
              echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
-             echo 'FSLBROWSER=/etc/alternatives/x-www-browser' >> $BASH_ENV
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - persist_to_workspace:
           root: /
+          paths:
+                - tmp/src/pynets
+                - usr/*
+                - etc/*
+                - lib/*
+                - opt/*
+                - home/*
 
   unit_and_integration_tests:
     machine:
