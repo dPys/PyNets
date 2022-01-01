@@ -280,7 +280,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: /tmp/src/pynets
+          at: /
       - run:
           name: Run unit and integration tests
           no_output_timeout: 3h
