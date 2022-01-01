@@ -495,28 +495,32 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
+              
+      - installation:
+          requires:
+            - get_data
+          filters:
+            branches:
+              ignore:
+                - /docs?\/.*/
+            tags:
+              only: /.*/
+
       - unit_and_integration_tests:
           requires:
             - get_data
+            - installation
           filters:
             branches:
               ignore:
                 - /docs?\/.*/
             tags:
               only: /.*/
-      - coverage:
-          requires:
-            - get_data
-            - unit_and_integration_tests
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-            tags:
-              only: /.*/
+
       - build:
           requires:
             - get_data
+            - installation
             - unit_and_integration_tests
           filters:
             branches:
