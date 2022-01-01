@@ -264,13 +264,7 @@ jobs:
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
       - persist_to_workspace:
-          root: /tmp/src/pynets
-          paths:
-                -../../../etc
-                -../../../home
-                -../../../lib*
-                -../../../opt
-                -../../../usr
+          root: /
 
   unit_and_integration_tests:
     machine:
