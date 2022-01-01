@@ -229,7 +229,7 @@ jobs:
             mkdir -p ~/.nipype
             echo "[monitoring]" > ~/.nipype/nipype.cfg
             echo "enabled = true" >> ~/.nipype/nipype.cfg
-            python -m pip install hyppo==0.1.3
+            python -m pip install --upgrade numpy
       - run:
           name: Install FSL
           no_output_timeout: 40m
