@@ -155,7 +155,7 @@ jobs:
           paths:
             - tests/*
 
-  unit_and_integration_tests:
+  installation:
     machine:
       image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
@@ -165,7 +165,6 @@ jobs:
       - PYTHONUNBUFFERED: 1
       - DEBIAN_FRONTEND: noninteractive
     resource_class: medium
-    parallelism: 4
     steps:
       - checkout
       - attach_workspace:
@@ -264,29 +263,12 @@ jobs:
              echo 'FSLBROWSER=/etc/alternatives/x-www-browser' >> $BASH_ENV
              echo 'export FSLDIR PATH' >> $BASH_ENV
              source $BASH_ENV
-      - run:
-          name: Run unit and integration tests
-          no_output_timeout: 6h
-          command: |
-            set -e
-            mkdir test-results
-            export PYTHONUNBUFFERED=1
-            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
-            sudo chmod 777 -R /usr/lib/python3/dist-packages
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
-            - .coverage*
-      - save_cache:
-          key: unit&integrationtests-{{ arch}}
-          paths:
-            - ~/test_cache
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
+            - /*
 
-  coverage:
+  unit_and_integration_tests:
     machine:
       image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
@@ -295,46 +277,21 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
       - DEBIAN_FRONTEND: noninteractive
-    resource_class: X-large
+    resource_class: xlarge
+    parallelism: 8
     steps:
       - checkout
-      - restore_cache:
-          key: unit&integrationtests-{{ arch}}
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
-          name: "Switch to Python v3.6"
-          no_output_timeout: 30m
+          name: Run unit and integration tests
+          no_output_timeout: 3h
           command: |
-            pyenv local --unset
-            pyenv uninstall -f 3.7.0 || true
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update -qq
-            sudo apt-get upgrade -y
-            sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
-            pyenv install -f 3.7.0 || true
-            eval "$(pyenv init -)"
-            pyenv global 3.7.0
-            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib
-      - run:
-          name: Install graph_tool
-          no_output_timeout: 30m
-          command: |
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
-            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update -qq
-            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.7.0/lib/python3.7/site-packages/graph_tool
-            python -c "import graph_tool.all as gt"
+            set -e
+            mkdir test-results
+            export PYTHONUNBUFFERED=1
+            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --circleci-parallelize --verbose --junitxml="test-results/junit.xml" tests/test_*.py
+            sudo chmod 777 -R /usr/lib/python3/dist-packages
       - run:
           name: Update codecov
           command: |
@@ -344,6 +301,14 @@ jobs:
             python -m coverage html -i --rcfile=.coveragerc --omit=_*,*.local*
             python -m coverage xml -i --rcfile=.coveragerc --omit=_*,*.local*
             bash <(curl https://codecov.io/bash) -f coverage.xml
+      - save_cache:
+          key: unit&integrationtests-{{ arch}}
+          paths:
+            - ~/test_cache
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
 
   deploy_docker_patches:
     machine:
