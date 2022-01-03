@@ -2,7 +2,7 @@
 """
 Created on Monday July 29 16:19:14 2019
 
-@authors: Ryan Hammonds
+@authors: Ryan Hammonds and Derek Pisner
 
 """
 import numpy as np
@@ -302,7 +302,7 @@ def test_orient_reslice():
     # This test has a bak folder in its test_dir.
     # To replicate test rm data in test_dir and cp from bak
     base_dir = str(Path(__file__).parent/"examples")
-    test_dir = f"{base_dir}/003/test_out/test_orient_reslice"
+    test_dir = f"{base_dir}/003/test_out/test_check_orient_and_dims"
 
     # Antomical: 1x1x1mm
     anat_LAS = f"{test_dir}/anat_LAS/sub-003_T1w_LAS.nii.gz"
