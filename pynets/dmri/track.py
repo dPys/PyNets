@@ -421,7 +421,7 @@ def track_ensemble(
     os.makedirs(joblib_dir, exist_ok=True)
 
     hardcoded_params = load_runconfig()
-    nthreads = hardcoded_params["nthreads"][0]
+    nthreads = hardcoded_params["omp_threads"][0]
     n_seeds_per_iter = \
         hardcoded_params['tracking']["n_seeds_per_iter"][0]
     max_length = \

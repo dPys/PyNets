@@ -538,7 +538,7 @@ class IndividualClustering(SimpleInterface):
 
         hardcoded_params = load_runconfig()
         c_boot = hardcoded_params["c_boot"][0]
-        nthreads = hardcoded_params["nthreads"][0]
+        nthreads = hardcoded_params["omp_threads"][0]
 
         clust_list = ["kmeans", "ward", "complete", "average", "ncut", "rena"]
 

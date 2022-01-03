@@ -509,7 +509,7 @@ class TimeseriesExtraction(object):
                  'hpass', 'extract_strategy', 'ts_within_nodes',
                  '_mask_img', '_mask_path', '_func_img', '_t_r',
                  '_detrending', '_net_parcels_nii_temp_path',
-                 '_net_parcels_map_nifti', '_parcel_masker')
+                 '_net_parcels_map_nifti', '_parcel_masker', 'low_pass')
 
     def __init__(
         self,
@@ -565,7 +565,6 @@ class TimeseriesExtraction(object):
         import nibabel as nib
         from nilearn.image import math_img, index_img, resample_to_img
         from nilearn.masking import intersect_masks
-        from nilearn.image import new_img_like
 
         if not op.isfile(self.func_file):
             raise FileNotFoundError(
