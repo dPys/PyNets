@@ -212,3 +212,4 @@ ENV OPENBLAS_NUM_THREADS=4 \
 ENV QT_QPA_PLATFORM=offscreen
 
 RUN . /home/neuro/.bashrc
+

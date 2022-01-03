@@ -297,7 +297,10 @@ def test_timseries_extraction_extract(conf):
     te._mask_path = te._mask_img
     te.save_and_cleanup()
 
-    assert '_parcel_masker' not in te.__dict__.keys()
+    assert te._net_parcels_map_nifti.in_memory is False
+    assert os.path.isfile(f"{te.dir_path}/timeseries/nodetimeseries_sub-002_"
+                          f"rsn-Default_parc_smooth-2fwhm_hpass-100.0Hz_"
+                          f"extract-mean.npy")
 
     func_file.close()
     parcels_tmp.close()

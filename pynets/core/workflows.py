@@ -6,8 +6,19 @@ Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
-import numpy as np
 import sys
+import gc
+import os
+import shutil
+import itertools
+import pkg_resources
+import numpy as np
+import os.path as op
+from nipype.pipeline import engine as pe
+from nipype.interfaces import utility as niu
+
+from pathlib import Path
+
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 # from ..due import due, BibTeX
@@ -91,22 +102,21 @@ def workflow_selector(
 ):
     """A meta-interface for selecting modality-specific workflows to nest
     into a single-subject workflow"""
-    import gc
-    import os
-    import sys
     from pynets.core.utils import load_runconfig
-    from pathlib import Path
-    from pynets.core import workflows
     from nipype import Workflow
     from pynets.stats import spectral
-    from nipype.pipeline import engine as pe
-    from nipype.interfaces import utility as niu
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, \
         pass_meta_ins_multi
 
     import_list = [
+        "import gc",
         "import sys",
         "import os",
+        "import yaml",
+        "import shutil",
+        "import itertools",
+        "import pkg_resources",
+        "import os.path as op",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
@@ -115,7 +125,8 @@ def workflow_selector(
         'np.warnings.filterwarnings("ignore")',
         'warnings.simplefilter("ignore")',
         "from pathlib import Path",
-        "import yaml",
+        "from nipype.pipeline import engine as pe",
+        "from nipype.interfaces import utility as niu",
     ]
 
     # Available functional and structural connectivity models
@@ -186,9 +197,6 @@ def workflow_selector(
 
     # for each file input, delete corresponding t1w anatomical copies.
     if clean is True:
-        import os.path as op
-        import shutil
-
         file_list = [dwi_file, func_file, anat_file]
         for _file in file_list:
             if _file is not None:
@@ -199,7 +207,7 @@ def workflow_selector(
     if dwi_file is not None:
         outdir_mod_struct = f"{outdir}/dwi"
         os.makedirs(outdir_mod_struct, exist_ok=True)
-        sub_struct_wf = workflows.dmri_connectometry(
+        sub_struct_wf = dmri_connectometry(
             ID,
             atlas,
             subnet,
@@ -281,7 +289,7 @@ def workflow_selector(
     if func_file is not None:
         outdir_mod_func = f"{outdir}/func"
         os.makedirs(outdir_mod_func, exist_ok=True)
-        sub_func_wf = workflows.fmri_connectometry(
+        sub_func_wf = fmri_connectometry(
             func_file,
             ID,
             atlas,
@@ -1186,117 +1194,116 @@ def workflow_selector(
                     ]
                 )
     if multimodal is True:
-        mase_embedding_node = pe.Node(
-            niu.Function(
-                input_names=["est_path_iterlist", "ID"],
-                output_names=["out_paths"],
-                function=spectral.build_masetome,
-            ),
-            name="mase_embedding_node",
-            imports=import_list,
-        )
+        print("Multiplex connectome modeling is temporarily unsupported.")
+        # mase_embedding_node = pe.Node(
+        #     niu.Function(
+        #         input_names=["est_path_iterlist", "ID"],
+        #         output_names=["out_paths"],
+        #         function=spectral.build_masetome,
+        #     ),
+        #     name="mase_embedding_node",
+        #     imports=import_list,
+        # )
+        #
+        # # Multiplex magic happens in the meta-workflow space.
+        # meta_wf.connect(
+        #     [
+        #         (
+        #             pass_meta_ins_multi_node,
+        #             pass_meta_outs_node,
+        #             [
+        #                 ("conn_model_iterlist", "conn_model_iterlist"),
+        #                 ("est_path_iterlist", "est_path_iterlist"),
+        #                 ("network_iterlist", "network_iterlist"),
+        #                 ("thr_iterlist", "thr_iterlist"),
+        #                 ("prune_iterlist", "prune_iterlist"),
+        #                 ("ID_iterlist", "ID_iterlist"),
+        #                 ("roi_iterlist", "roi_iterlist"),
+        #                 ("norm_iterlist", "norm_iterlist"),
+        #                 ("binary_iterlist", "binary_iterlist"),
+        #             ],
+        #         )
+        #     ]
+        # )
 
-        # Multiplex magic happens in the meta-workflow space.
-        meta_wf.connect(
-            [
-                (
-                    pass_meta_ins_multi_node,
-                    pass_meta_outs_node,
-                    [
-                        ("conn_model_iterlist", "conn_model_iterlist"),
-                        ("est_path_iterlist", "est_path_iterlist"),
-                        ("network_iterlist", "network_iterlist"),
-                        ("thr_iterlist", "thr_iterlist"),
-                        ("prune_iterlist", "prune_iterlist"),
-                        ("ID_iterlist", "ID_iterlist"),
-                        ("roi_iterlist", "roi_iterlist"),
-                        ("norm_iterlist", "norm_iterlist"),
-                        ("binary_iterlist", "binary_iterlist"),
-                    ],
-                )
-            ]
-        )
-
-        if float(multiplex) > 0:
-            from pynets.stats import netmotifs
-
-            build_multigraphs_node = pe.Node(
-                niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
-                    output_names=[
-                        "multigraph_list_all",
-                        "graph_path_list_top",
-                        "namer_dir",
-                        "name_list",
-                        "metadata_list",
-                    ],
-                    function=netmotifs.build_multigraphs,
-                ),
-                name="build_multigraphs_node",
-                imports=import_list,
-            )
-            meta_wf.connect(
-                [
-                    (
-                        pass_meta_ins_multi_node,
-                        build_multigraphs_node,
-                        [("est_path_iterlist", "est_path_iterlist")],
-                    ),
-                    (meta_inputnode, build_multigraphs_node, [("ID", "ID")]),
-                ]
-            )
-
-            if plot_switch is True:
-                from pynets.plotting.plot_gen import plot_all_struct_func
-
-                plot_all_struct_func_node = pe.MapNode(
-                    niu.Function(
-                        input_names=[
-                            "mG_path",
-                            "namer_dir",
-                            "name",
-                            "modality_paths",
-                            "metadata",
-                        ],
-                        function=plot_all_struct_func,
-                    ),
-                    iterfield=[
-                        "mG_path",
-                        "namer_dir",
-                        "name",
-                        "modality_paths",
-                        "metadata",
-                    ],
-                    name="plot_all_struct_func_node",
-                    imports=import_list,
-                )
-                meta_wf.connect(
-                    [
-                        (
-                            build_multigraphs_node,
-                            plot_all_struct_func_node,
-                            [
-                                ("name_list", "name"),
-                                ("namer_dir", "namer_dir"),
-                                ("multigraph_list_all", "mG_path"),
-                                ("graph_path_list_top", "modality_paths"),
-                                ("metadata_list", "metadata"),
-                            ],
-                        )
-                    ]
-                )
-
-            if embed is True and 'MASE' in embedding_methods:
-                meta_wf.connect(
-                    [
-                        (
-                            build_multigraphs_node,
-                            mase_embedding_node,
-                            [("graph_path_list_top", "est_path_iterlist")],
-                        ),
-                        (meta_inputnode, mase_embedding_node, [("ID", "ID")]),
-                    ]
-                )
+        # if float(multiplex) > 0:
+        #     build_multigraphs_node = pe.Node(
+        #         niu.Function(
+        #             input_names=["est_path_iterlist", "ID"],
+        #             output_names=[
+        #                 "multigraph_list_all",
+        #                 "graph_path_list_top",
+        #                 "namer_dir",
+        #                 "name_list",
+        #                 "metadata_list",
+        #             ],
+        #             function=build_multigraphs,
+        #         ),
+        #         name="build_multigraphs_node",
+        #         imports=import_list,
+        #     )
+        #     meta_wf.connect(
+        #         [
+        #             (
+        #                 pass_meta_ins_multi_node,
+        #                 build_multigraphs_node,
+        #                 [("est_path_iterlist", "est_path_iterlist")],
+        #             ),
+        #             (meta_inputnode, build_multigraphs_node, [("ID", "ID")]),
+        #         ]
+        #     )
+        #
+        #     if plot_switch is True:
+        #         from pynets.plotting.plot_gen import plot_all_struct_func
+        #
+        #         plot_all_struct_func_node = pe.MapNode(
+        #             niu.Function(
+        #                 input_names=[
+        #                     "mG_path",
+        #                     "namer_dir",
+        #                     "name",
+        #                     "modality_paths",
+        #                     "metadata",
+        #                 ],
+        #                 function=plot_all_struct_func,
+        #             ),
+        #             iterfield=[
+        #                 "mG_path",
+        #                 "namer_dir",
+        #                 "name",
+        #                 "modality_paths",
+        #                 "metadata",
+        #             ],
+        #             name="plot_all_struct_func_node",
+        #             imports=import_list,
+        #         )
+        #         meta_wf.connect(
+        #             [
+        #                 (
+        #                     build_multigraphs_node,
+        #                     plot_all_struct_func_node,
+        #                     [
+        #                         ("name_list", "name"),
+        #                         ("namer_dir", "namer_dir"),
+        #                         ("multigraph_list_all", "mG_path"),
+        #                         ("graph_path_list_top", "modality_paths"),
+        #                         ("metadata_list", "metadata"),
+        #                     ],
+        #                 )
+        #             ]
+        #         )
+        #
+        #     if embed is True and 'MASE' in embedding_methods:
+        #         meta_wf.connect(
+        #             [
+        #                 (
+        #                     build_multigraphs_node,
+        #                     mase_embedding_node,
+        #                     [("graph_path_list_top", "est_path_iterlist")],
+        #                 ),
+        #                 (meta_inputnode, mase_embedding_node, [("ID", "ID")]),
+        #             ]
+        #         )
 
     # Set resource restrictions at level of the meta wf
     if func_file:
@@ -1400,26 +1407,10 @@ def dmri_connectometry(
     """
     A function interface for generating a dMRI connectometry nested workflow
     """
-    import sys
-    import itertools
-    import pkg_resources
-    import nibabel as nib
-    from nipype.pipeline import engine as pe
-    from nipype.interfaces import utility as niu
-    from pynets.core import nodemaker, thresholding, utils
+    from pynets.core import nodemaker, thresholding, utils, interfaces
     from pynets.registration import register
     from pynets.registration import utils as regutils
     from pynets.dmri import estimation
-    from pynets.core.interfaces import (
-        PlotStruct,
-        RegisterDWI,
-        Tracking,
-        MakeGtabBmask,
-        RegisterAtlasDWI,
-        FetchNodesLabels,
-        RegisterROIDWI,
-    )
-    import os.path as op
 
     import_list = [
         "import warnings",
@@ -1630,7 +1621,7 @@ def dmri_connectometry(
     )
 
     fetch_nodes_and_labels_node = pe.Node(
-        FetchNodesLabels(), name="fetch_nodes_and_labels_node"
+        interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
 
     fetch_nodes_and_labels_node.synchronize = True
@@ -1734,7 +1725,7 @@ def dmri_connectometry(
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
 
-    gtab_node = pe.Node(MakeGtabBmask(), name="gtab_node")
+    gtab_node = pe.Node(interfaces.MakeGtabBmask(), name="gtab_node")
 
     get_fa_node = pe.Node(
         niu.Function(
@@ -1756,7 +1747,8 @@ def dmri_connectometry(
         name="get_anisopwr_node",
     )
 
-    register_node = pe.Node(RegisterDWI(in_dir=in_dir), name="register_node")
+    register_node = pe.Node(interfaces.RegisterDWI(in_dir=in_dir),
+                            name="register_node")
     register_node._n_procs = runtime_dict["register_node"][0]
     register_node._mem_gb = runtime_dict["register_node"][1]
 
@@ -1772,12 +1764,13 @@ def dmri_connectometry(
     )
 
     reg_nodes_node = pe.Node(
-        RegisterAtlasDWI(),
+        interfaces.RegisterAtlasDWI(),
         name="reg_nodes_node")
     reg_nodes_node._n_procs = runtime_dict["reg_nodes_node"][0]
     reg_nodes_node._mem_gb = runtime_dict["reg_nodes_node"][1]
 
-    run_tracking_node = pe.Node(Tracking(), name="run_tracking_node")
+    run_tracking_node = pe.Node(interfaces.Tracking(),
+                                name="run_tracking_node")
     run_tracking_node.synchronize = True
     run_tracking_node._n_procs = runtime_dict["run_tracking_node"][0]
     run_tracking_node._mem_gb = runtime_dict["run_tracking_node"][1]
@@ -2156,7 +2149,8 @@ def dmri_connectometry(
             name="orient_reslice_roi_node",
         )
 
-        register_roi_node = pe.Node(RegisterROIDWI(), name="register_roi_node")
+        register_roi_node = pe.Node(interfaces.RegisterROIDWI(),
+                                    name="register_roi_node")
         dmri_wf.connect([(inputnode,
                                         orient_reslice_roi_node,
                                         [("roi",
@@ -2371,7 +2365,8 @@ def dmri_connectometry(
     else:
         dmri_wf.connect(
             [
-                (inputnode, run_tracking_node, [("node_radius", "node_radius")]),
+                (inputnode, run_tracking_node,
+                 [("node_radius", "node_radius")]),
                 (inputnode, node_gen_node, [("parc", "parc")]),
                 (inputnode, reg_nodes_node, [("node_radius", "node_radius")]),
                 (
@@ -2941,13 +2936,14 @@ def dmri_connectometry(
             or flexi_atlas is True
         ):
             plot_all_node = pe.MapNode(
-                PlotStruct(),
+                interfaces.PlotStruct(),
                 iterfield=plot_fields,
                 name="plot_all_node",
                 nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(PlotStruct(), name="plot_all_node")
+            plot_all_node = pe.Node(interfaces.PlotStruct(),
+                                    name="plot_all_node")
 
         # Connect thresh_diff_node outputs to plotting node
         dmri_wf.connect(
@@ -3510,6 +3506,7 @@ def dmri_connectometry(
         for setting, value in cfg[key].items():
             dmri_wf.config[key][setting] = value
 
+    gc.collect()
     return dmri_wf
 
 
@@ -3570,24 +3567,9 @@ def fmri_connectometry(
     """
     A function interface for generating an fMRI connectometry nested workflow
     """
-    import itertools
-    import pkg_resources
-    import os.path as op
-    import nibabel as nib
-    from nipype.pipeline import engine as pe
-    from nipype.interfaces import utility as niu
-    from pynets.core import nodemaker, utils, thresholding
+    from pynets.core import nodemaker, utils, thresholding, interfaces
     from pynets.fmri import estimation
     from pynets.registration import utils as regutils
-    from pynets.core.interfaces import (
-        ExtractTimeseries,
-        PlotFunc,
-        RegisterFunc,
-        RegisterAtlasFunc,
-        FetchNodesLabels,
-        RegisterROIEPI,
-        RegisterParcellation2MNIFunc
-    )
 
     import_list = [
         "import warnings",
@@ -3805,21 +3787,20 @@ def fmri_connectometry(
         name="orient_reslice_anat_node",
     )
 
-    register_node = pe.Node(RegisterFunc(in_dir=in_dir), name="register_node")
+    register_node = pe.Node(interfaces.RegisterFunc(in_dir=in_dir),
+                            name="register_node")
 
     register_node._n_procs = runtime_dict["register_node"][0]
     register_node._mem_gb = runtime_dict["register_node"][1]
 
     reg_nodes_node = pe.Node(
-        RegisterAtlasFunc(),
+        interfaces.RegisterAtlasFunc(),
         name="reg_nodes_node")
 
     # Clustering
     if float(k_clustering) > 0:
-        from pynets.core.interfaces import IndividualClustering
-
         reg_nodes_node = pe.Node(
-            RegisterAtlasFunc(already_run=True),
+            interfaces.RegisterAtlasFunc(already_run=True),
             name="reg_nodes_node")
 
         clustering_info_node = pe.Node(
@@ -3828,7 +3809,7 @@ def fmri_connectometry(
         )
 
         clustering_node = pe.Node(
-            IndividualClustering(),
+            interfaces.IndividualClustering(),
             name="clustering_node")
 
         clustering_node.interface.n_procs = runtime_dict["clustering_node"][0]
@@ -4015,7 +3996,7 @@ def fmri_connectometry(
     # Define nodes
     # Create node definitions Node
     fetch_nodes_and_labels_node = pe.Node(
-        FetchNodesLabels(), name="fetch_nodes_and_labels_node"
+        interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
     fetch_nodes_and_labels_node.synchronize = True
 
@@ -4023,7 +4004,7 @@ def fmri_connectometry(
     if float(k_clustering) > 0:
 
         RegisterParcellation2MNIFunc_node = pe.Node(
-            RegisterParcellation2MNIFunc(),
+            interfaces.RegisterParcellation2MNIFunc(),
             name="RegisterParcellation2MNIFunc_node"
         )
 
@@ -4365,7 +4346,7 @@ def fmri_connectometry(
                     "dir_path",
                 ],
                 function=nodemaker.node_gen_masking,
-                imports=import_list,
+                imports=import_list
             ),
             name="node_gen_node",
         )
@@ -4413,7 +4394,7 @@ def fmri_connectometry(
         ),
     )
     extract_ts_node = pe.Node(
-        ExtractTimeseries(),
+        interfaces.ExtractTimeseries(),
         name="extract_ts_node",
     )
 
@@ -4651,7 +4632,8 @@ def fmri_connectometry(
             name="orient_reslice_roi_node",
         )
 
-        register_roi_node = pe.Node(RegisterROIEPI(), name="register_roi_node")
+        register_roi_node = pe.Node(interfaces.RegisterROIEPI(),
+                                    name="register_roi_node")
 
         fmri_wf.connect([(inputnode,
                                         orient_reslice_roi_node,
@@ -5297,13 +5279,14 @@ def fmri_connectometry(
         ):
 
             plot_all_node = pe.MapNode(
-                PlotFunc(),
+                interfaces.PlotFunc(),
                 iterfield=plot_fields,
                 name="plot_all_node",
                 nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(PlotFunc(), name="plot_all_node")
+            plot_all_node = pe.Node(interfaces.PlotFunc(),
+                                    name="plot_all_node")
 
         if user_atlas_list or multi_atlas or multi_nets:
             edge_color_override = True
@@ -5760,6 +5743,7 @@ def fmri_connectometry(
         for setting, value in cfg[key].items():
             fmri_wf.config[key][setting] = value
 
+    gc.collect()
     return fmri_wf
 
 
@@ -5785,11 +5769,8 @@ def raw_graph_workflow(
     net_mets_node,
     runtime_dict
 ):
-    import numpy as np
     from pynets.core.utils import load_mat, load_mat_ext, save_mat_thresholded
     from pynets.core.thresholding import thresh_raw_graph
-    from nipype.pipeline import engine as pe
-    from nipype.interfaces import utility as niu
 
     import_list = [
         "import warnings",
@@ -5877,8 +5858,10 @@ def raw_graph_workflow(
             name="save_mat_thresholded_node",
             imports=import_list,
         )
-        save_mat_thresholded_node._n_procs = runtime_dict["save_mat_thresholded_node"][0]
-        save_mat_thresholded_node._mem_gb = runtime_dict["save_mat_thresholded_node"][1]
+        save_mat_thresholded_node._n_procs = runtime_dict[
+            "save_mat_thresholded_node"][0]
+        save_mat_thresholded_node._mem_gb = runtime_dict[
+            "save_mat_thresholded_node"][1]
 
     if multi_graph:
         inputinfo = pe.Node(
@@ -6415,4 +6398,5 @@ def raw_graph_workflow(
                 ]
             )
 
+    gc.collect()
     return wf

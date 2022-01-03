@@ -11,7 +11,9 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
-import yaml
+import networkx as nx
+from pynets.core import workflows
+from multiprocessing import cpu_count
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -117,14 +119,6 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     """
     Test functional connectometry
     """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import fmri_connectometry
-    from multiprocessing import cpu_count
-
     base_dir = str(Path(__file__).parent/"examples")
     conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_" \
            f"desc-confounds_regressors.tsv"
@@ -145,7 +139,7 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     norm = 6
     binary = False
     local_corr = 'tcorr'
-    outdir = base_dir + '/outputs'
+    outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     k = None
@@ -158,19 +152,82 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     extract_strategy = 'mean'
     extract_strategy_list = None
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
-              'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'
-                              ][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'
-                                ][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
+    execution_dict = {'stop_on_first_crash': True,
+                     'crashfile_format': 'txt',
+                     'parameterize_dirs': False,
+                     'display_variable': ':0',
+                     'job_finished_timeout': 120,
+                     'matplotlib_backend': 'Agg',
+                     'use_relative_paths': True,
+                     'keep_inputs': True,
+                     'remove_unnecessary_outputs': False,
+                     'remove_node_directories': False,
+                     'raise_insufficient': False,
+                     'poll_sleep_duration': 0,
+                     'hash_method': 'timestamp',
+                     'local_hash_check': False}
+
+    runtime_dict = {'pass_meta_ins_node': (1, 1),
+                 'pass_meta_outs_node': (1, 2),
+                 'pass_meta_ins_multi_node': (1, 1),
+                 'pass_meta_outs_multi_node': (1, 2),
+                 'pass_meta_ins_func_node': (1, 1),
+                 'pass_meta_outs_func_node': (1, 2),
+                 'pass_meta_ins_struct_node': (1, 1),
+                 'pass_meta_outs_struct_node': (1, 2),
+                 'fetch_nodes_and_labels_node': (4, 8),
+                 'save_nifti_parcels_node': (4, 4),
+                 'gtab_node': (1, 1),
+                 'save_coords_and_labels_node': (1, 1),
+                 'orient_reslice_func_node': (2, 4),
+                 'orient_reslice_mask_node': (1, 1),
+                 'orient_reslice_uatlas_node': (1, 1),
+                 'orient_reslice_anat_node': (1, 1),
+                 'node_gen_node': (4, 8),
+                 'prep_spherical_nodes_node': (4, 8),
+                 'get_node_membership_node': (2, 6),
+                 'orient_reslice_dwi_node': (2, 4),
+                 'get_anisopwr_node': (2, 2),
+                 'extract_ts_node': (4, 8),
+                 'extract_ts_info_node': (1, 2),
+                 'clustering_node': (4, 8),
+                 'get_conn_matrix_node': (2, 6),
+                 'thresh_func_node': (1, 2),
+                 'thresh_diff_node': (1, 2),
+                 'thresh_info_node': (1, 1),
+                 'register_node': (4, 8),
+                 'reg_nodes_node': (2, 4),
+                 'RegisterParcellation2MNIFunc_node': (2, 4),
+                 'get_fa_node': (2, 2),
+                 'run_tracking_node': (4, 8),
+                 'dsn_node': (1, 2),
+                 'plot_all_node': (1, 2),
+                 'streams2graph_node': (4, 6),
+                 'build_multigraphs_node': (2, 8),
+                 'plot_all_struct_func_node': (1, 2),
+                 'mase_embedding_node': (2, 6),
+                 'omni_embedding_node': (1, 2),
+                 'omni_embedding_node_func': (1, 2),
+                 'omni_embedding_node_struct': (1, 2),
+                 'ase_embedding_node_func': (1, 2),
+                 'ase_embedding_node_struct': (1, 2),
+                 'join_iters_node_thr': (1, 4),
+                 'join_iters_node_nets': (1, 1),
+                 'join_iters_node_atlas': (1, 1),
+                 'join_iters_node_ext_ts': (1, 1),
+                 'join_iters_extract_ts_node': (1, 1),
+                 'join_iters_node': (1, 4),
+                 'join_iters_node_g': (1, 4),
+                 'join_iters_prep_spheres_node': (1, 1),
+                 'join_iters_get_conn_matrix_node': (1, 1),
+                 'join_iters_run_track_node': (1, 1),
+                 'clust_join_node': (1, 1),
+                 'NetworkAnalysis': (1, 4),
+                 'AggregateOutputs': (1, 3),
+                 'load_mat_node': (1, 1),
+                 'load_mat_ext_node': (1, 1),
+                 'save_mat_thresholded_node': (1, 1),
+                 'CombineOutputs': (1, 1)}
 
     if thr_type == 'dens_thresh':
         dens_thresh = True
@@ -213,7 +270,8 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     else:
         hpass_list = None
 
-    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
+    # start_time = time.time()
+    fmri_connectometry_wf = workflows.fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
                                                k_clustering, user_atlas_list, clust_mask_list, node_size_list,
@@ -222,6 +280,8 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
                                                extract_strategy_list, outdir)
+    # print("%s%s%s" % ('fmri_connectometry: ',
+    #                   str(np.round(time.time() - start_time, 1)), 's'))
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
@@ -278,14 +338,6 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     """
     Test functional connectometry with clustering
     """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import fmri_connectometry
-    from multiprocessing import cpu_count
-
     base_dir = str(Path(__file__).parent/"examples")
     conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
@@ -301,7 +353,7 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     norm = 6
     binary = False
     local_corr = 'tcorr'
-    outdir = base_dir + '/outputs'
+    outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
     hpass = None
@@ -315,16 +367,82 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     extract_strategy = 'mean'
     extract_strategy_list = None
 
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
+    execution_dict = {'stop_on_first_crash': True,
+                     'crashfile_format': 'txt',
+                     'parameterize_dirs': False,
+                     'display_variable': ':0',
+                     'job_finished_timeout': 120,
+                     'matplotlib_backend': 'Agg',
+                     'use_relative_paths': True,
+                     'keep_inputs': True,
+                     'remove_unnecessary_outputs': False,
+                     'remove_node_directories': False,
+                     'raise_insufficient': False,
+                     'poll_sleep_duration': 0,
+                     'hash_method': 'timestamp',
+                     'local_hash_check': False}
+
+    runtime_dict = {'pass_meta_ins_node': (1, 1),
+                    'pass_meta_outs_node': (1, 2),
+                    'pass_meta_ins_multi_node': (1, 1),
+                    'pass_meta_outs_multi_node': (1, 2),
+                    'pass_meta_ins_func_node': (1, 1),
+                    'pass_meta_outs_func_node': (1, 2),
+                    'pass_meta_ins_struct_node': (1, 1),
+                    'pass_meta_outs_struct_node': (1, 2),
+                    'fetch_nodes_and_labels_node': (4, 8),
+                    'save_nifti_parcels_node': (4, 4),
+                    'gtab_node': (1, 1),
+                    'save_coords_and_labels_node': (1, 1),
+                    'orient_reslice_func_node': (2, 4),
+                    'orient_reslice_mask_node': (1, 1),
+                    'orient_reslice_uatlas_node': (1, 1),
+                    'orient_reslice_anat_node': (1, 1),
+                    'node_gen_node': (4, 8),
+                    'prep_spherical_nodes_node': (4, 8),
+                    'get_node_membership_node': (2, 6),
+                    'orient_reslice_dwi_node': (2, 4),
+                    'get_anisopwr_node': (2, 2),
+                    'extract_ts_node': (4, 8),
+                    'extract_ts_info_node': (1, 2),
+                    'clustering_node': (4, 8),
+                    'get_conn_matrix_node': (2, 6),
+                    'thresh_func_node': (1, 2),
+                    'thresh_diff_node': (1, 2),
+                    'thresh_info_node': (1, 1),
+                    'register_node': (4, 8),
+                    'reg_nodes_node': (2, 4),
+                    'RegisterParcellation2MNIFunc_node': (2, 4),
+                    'get_fa_node': (2, 2),
+                    'run_tracking_node': (4, 8),
+                    'dsn_node': (1, 2),
+                    'plot_all_node': (1, 2),
+                    'streams2graph_node': (4, 6),
+                    'build_multigraphs_node': (2, 8),
+                    'plot_all_struct_func_node': (1, 2),
+                    'mase_embedding_node': (2, 6),
+                    'omni_embedding_node': (1, 2),
+                    'omni_embedding_node_func': (1, 2),
+                    'omni_embedding_node_struct': (1, 2),
+                    'ase_embedding_node_func': (1, 2),
+                    'ase_embedding_node_struct': (1, 2),
+                    'join_iters_node_thr': (1, 4),
+                    'join_iters_node_nets': (1, 1),
+                    'join_iters_node_atlas': (1, 1),
+                    'join_iters_node_ext_ts': (1, 1),
+                    'join_iters_extract_ts_node': (1, 1),
+                    'join_iters_node': (1, 4),
+                    'join_iters_node_g': (1, 4),
+                    'join_iters_prep_spheres_node': (1, 1),
+                    'join_iters_get_conn_matrix_node': (1, 1),
+                    'join_iters_run_track_node': (1, 1),
+                    'clust_join_node': (1, 1),
+                    'NetworkAnalysis': (1, 4),
+                    'AggregateOutputs': (1, 3),
+                    'load_mat_node': (1, 1),
+                    'load_mat_ext_node': (1, 1),
+                    'save_mat_thresholded_node': (1, 1),
+                    'CombineOutputs': (1, 1)}
 
     dens_thresh = False
     min_span_tree = False
@@ -354,7 +472,8 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     else:
         hpass_list = None
 
-    fmri_connectometry_wf = fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
+    # start_time = time.time()
+    fmri_connectometry_wf = workflows.fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
                                                dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
                                                multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
                                                k_clustering, user_atlas_list, clust_mask_list, node_size_list,
@@ -363,176 +482,10 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
                                                mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
                                                hpass_list, template_name, vox_size, local_corr, extract_strategy,
                                                extract_strategy_list, outdir)
+    # print("%s%s%s" % ('fmri_connectometry (clust): ',
+    #                   str(np.round(time.time() - start_time, 1)), 's'))
 
 #    fmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-
-
-@pytest.mark.parametrize("subnet", ['Default', ['Default', 'Limbic'], None])
-@pytest.mark.parametrize("thr,max_thr,min_thr,step_thr,multi_thr,thr_type",
-    [
-        pytest.param(1.0, None, None, None, False, 'MST'),
-        pytest.param(None, 0.80, 0.20, 0.10, True, 'prop'),
-    ]
-)
-@pytest.mark.parametrize("directget", ['prob', ['det', 'prob']])
-@pytest.mark.parametrize("min_length", [0, 5, [0, 5]])
-@pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"])
-@pytest.mark.parametrize("track_type,tiss_class,conn_model,conn_model_list",
-    [
-        pytest.param('local', 'wb', 'csd', None),
-        pytest.param('local', 'wb', None, ['csa', 'sfm']),
-    ]
-)
-@pytest.mark.parametrize("parc,node_radius,node_size_list,atlas,multi_atlas,parcellation,user_atlas_list",
-    [
-        pytest.param(False, None, [4, 8], None, None, None, None, marks=pytest.mark.xfail),
-        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None, None),
-        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
-        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None, None),
-        pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None, None),
-        pytest.param(False, 4, None, None, None, None, None, marks=pytest.mark.xfail),
-        pytest.param(True, None, None, None, None, None, None),
-        pytest.param(False, None, [4, 8], None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                     None),
-        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, f"{base_dir}/miscellaneous/whole_brain_cluster_labels_"
-        f"PCA200.nii.gz", None),
-        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010', 'coords_power_2011'], f"{base_dir}/miscellaneous/whole_"
-        f"brain_cluster_labels_PCA200.nii.gz", None),
-        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200."
-        f"nii.gz", None),
-        pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], f"{base_dir}/miscellaneous/whole_brain_"
-        f"cluster_labels_PCA200.nii.gz", None),
-        pytest.param(False, 4, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                     None),
-        pytest.param(True, None, None, None, None, f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                     None),
-        pytest.param(False, None, [4, 8], None, None, None, [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                                                             f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010',
-                     None, None, [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                                  f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, None, [4, 8], None,
-                     ['coords_dosenbach_2010', 'coords_power_2011'], None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, 4, None, None, ['coords_dosenbach_2010', 'coords_power_2011'], None,
-                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(False, 4, None, None, None, None, [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                                                        f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"]),
-        pytest.param(True, None, None, None, None, None, [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz",
-                                                          f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
-    ]
-)
-def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr, min_thr,
-                    step_thr, multi_thr, thr_type, tiss_class, directget, min_length, track_type, node_size_list,
-                    atlas, multi_atlas, parcellation, user_atlas_list, subnet, plot_switch, mask):
-    """
-    Test structural connectometry
-    """
-    import os
-    import networkx as nx
-    import ast
-    import yaml
-    import pkg_resources
-    from pynets.core.workflows import dmri_connectometry
-    from multiprocessing import cpu_count
-
-    base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
-    fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bvec.bvec"
-    fbvec = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
-    roi = None
-    ID = '25659_1'
-    ref_txt = None
-    nthreads = cpu_count()
-    procmem = [int(nthreads), int(float(nthreads) * 2)]
-    prune = 3
-    use_AAL_naming = True
-    plugin_type = 'MultiProc'
-    norm = 6
-    binary = False
-    waymask = None
-    outdir = base_dir + '/outputs'
-    vox_size = '2mm'
-    template_name = 'MNI152_T1'
-    target_samples = 1000
-    error_margin = 6
-
-    with open(pkg_resources.resource_filename("pynets", "runconfig.yaml"), 'r') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-        runtime_dict = {}
-        execution_dict = {}
-        maxcrossing = hardcoded_params['tracking']['maxcrossing'][0]
-        step_list = hardcoded_params['tracking']['step_list']
-        curv_thr_list = hardcoded_params['tracking']['curv_thr_list']
-        for i in range(len(hardcoded_params['resource_dict'])):
-            runtime_dict[list(hardcoded_params['resource_dict'][i].keys())[0]] = ast.literal_eval(list(
-                hardcoded_params['resource_dict'][i].values())[0][0])
-        for i in range(len(hardcoded_params['execution_dict'])):
-            execution_dict[list(hardcoded_params['execution_dict'][i].keys())[0]] = list(
-                hardcoded_params['execution_dict'][i].values())[0][0]
-
-    if thr_type == 'dens_thresh':
-        dens_thresh = True
-        min_span_tree = False
-        disp_filt = False
-    elif thr_type == 'min_span_tree':
-        dens_thresh = False
-        min_span_tree = True
-        disp_filt = False
-    elif thr_type == 'disp_filt':
-        dens_thresh = False
-        min_span_tree = False
-        disp_filt = True
-    else:
-        dens_thresh = False
-        min_span_tree = False
-        disp_filt = False
-
-    if isinstance(subnet, list) and len(subnet) > 1:
-        multi_nets = subnet
-        subnet = None
-    else:
-        multi_nets = None
-
-    if isinstance(min_length, list) and len(min_length) > 1:
-        min_length_list = min_length
-        min_length = None
-    else:
-        min_length_list = None
-
-    if isinstance(directget, list) and len(directget) > 1:
-        multi_directget = directget
-        directget = None
-    else:
-        multi_directget = None
-
-    if isinstance(error_margin, list) and len(error_margin) > 1:
-        error_margin_list = error_margin
-        error_margin = None
-    else:
-        error_margin_list = None
-
-    dmri_connectometry_wf = dmri_connectometry(ID, atlas, subnet, node_radius, roi, parcellation, plot_switch, parc, ref_txt,
-                                               procmem, dwi_file, fbval, fbvec, anat_file, thr, dens_thresh,
-                                               conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
-                                               step_thr, node_size_list, conn_model_list, min_span_tree,
-                                               use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
-                                               binary, target_samples, curv_thr_list, step_list,
-                                               track_type, min_length, error_margin, maxcrossing, directget, tiss_class,
-                                               runtime_dict, execution_dict, multi_directget, template_name,
-                                               vox_size, waymask, min_length_list, error_margin_list, outdir)
-
-#    dmri_connectometry_wf.write_graph(graph2use='hierarchical', simple_form=False)
-    assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True
-    # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
-    # out = dmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)

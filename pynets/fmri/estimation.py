@@ -504,6 +504,13 @@ class TimeseriesExtraction(object):
     Class for implementing various time-series extracting routines.
     """
 
+    __slots__ = ('net_parcels_nii_path', 'node_radius', 'conf', 'func_file',
+                 'roi', 'dir_path', 'ID', 'subnet', 'smooth', 'mask',
+                 'hpass', 'extract_strategy', 'ts_within_nodes',
+                 '_mask_img', '_mask_path', '_func_img', '_t_r',
+                 '_detrending', '_net_parcels_nii_temp_path',
+                 '_net_parcels_map_nifti', '_parcel_masker', 'low_pass')
+
     def __init__(
         self,
         net_parcels_nii_path,
@@ -519,9 +526,6 @@ class TimeseriesExtraction(object):
         mask,
         extract_strategy,
     ):
-        import sys
-        import yaml
-        import pkg_resources
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_radius = node_radius
         self.conf = conf
@@ -561,7 +565,6 @@ class TimeseriesExtraction(object):
         import nibabel as nib
         from nilearn.image import math_img, index_img, resample_to_img
         from nilearn.masking import intersect_masks
-        from nilearn.image import new_img_like
 
         if not op.isfile(self.func_file):
             raise FileNotFoundError(

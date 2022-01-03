@@ -1223,9 +1223,8 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
         File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
     """
     import gc
-    import sys
     from nilearn.image import concat_imgs
-    from pynets.core import nodemaker
+    from pynets.core.nodemaker import gen_img_list
     import os.path as op
 
     if not op.isfile(parcellation):
@@ -1233,7 +1232,7 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
             "\nUser-specified atlas input not found! Check that "
             "the file(s) specified with the -a flag exist(s)")
 
-    img_list = nodemaker.gen_img_list(parcellation)
+    img_list = gen_img_list(parcellation)
     print(
         f"\nExtracting parcels associated with {subnet} "
         f"subnet locations...\n")
@@ -1508,7 +1507,7 @@ def node_gen_masking(
     """
     import gc
     from nilearn.image import index_img, iter_img
-    from pynets.core import nodemaker
+    from pynets.core.nodemaker import parcel_masker, create_parcel_atlas
 
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
@@ -1516,7 +1515,7 @@ def node_gen_masking(
                        range(parcel_list_img.shape[-1])])
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
-    [coords, labels, parcel_list_masked] = nodemaker.parcel_masker(
+    [coords, labels, parcel_list_masked] = parcel_masker(
         roi, coords, parcel_list, labels, dir_path, ID, perc_overlap, vox_size,
     )
     del parcel_list
@@ -1529,7 +1528,7 @@ def node_gen_masking(
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = nodemaker.create_parcel_atlas(
+    [net_parcels_map_nifti, _] = create_parcel_atlas(
         parcel_list_masked, label_intensities)
 
     del parcel_list_masked
@@ -1597,7 +1596,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
     """
     import gc
     from nilearn.image import index_img, iter_img
-    from pynets.core import nodemaker
+    from pynets.core.nodemaker import create_parcel_atlas
 
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
@@ -1611,8 +1610,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = \
-        nodemaker.create_parcel_atlas(parcel_list, label_intensities)
+    [net_parcels_map_nifti, _] = create_parcel_atlas(parcel_list,
+                                                     label_intensities)
     del parcel_list
     gc.collect()
 

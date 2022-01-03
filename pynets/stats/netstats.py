@@ -2029,7 +2029,7 @@ def extractnetstats(
     # import random
     import pkg_resources
     import networkx
-    import pynets.stats.netstats
+    from pynets.stats import netstats
     from pathlib import Path
 
     # Load netstats config and parse graph algorithms as objects
@@ -2059,7 +2059,7 @@ def extractnetstats(
                     for i in metric_list_global
                     if i in nx_algs
                 ] + [
-                    getattr(pynets.stats.netstats, i)
+                    getattr(netstats, i)
                     for i in metric_list_global
                     if i in pynets_algs
                 ]
