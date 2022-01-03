@@ -2382,7 +2382,6 @@ class RegisterAtlasFunc(SimpleInterface):
         from pynets.core.nodemaker import \
             drop_coords_labels_from_restricted_parcellation
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from nilearn.image import new_img_like
 
         if self.inputs.subnet:
             atlas_name = f"{self.inputs.atlas}_{self.inputs.subnet}"
@@ -2788,7 +2787,6 @@ class Tracking(SimpleInterface):
     def _run_interface(self, runtime):
         import gc
         import os
-        import sys
         import time
         import os.path as op
         from dipy.io import load_pickle

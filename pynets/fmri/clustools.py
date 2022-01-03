@@ -729,6 +729,12 @@ class NiParcellate(object):
     """
     Class for implementing various clustering routines.
     """
+    __slots__ = ('func_file', 'clust_mask', 'k', 'clust_type', 'conf',
+                 'local_corr', 'parcellation', 'atlas', '_detrending',
+                 '_standardize', '_func_img', 'mask', '_mask_img',
+                 '_local_conn_mat_path', '_dir_path', '_local_conn',
+                 '_clust_mask_corr_img', '_func_img_data',
+                 '_masked_fmri_vol', '_conn_comps', 'num_conn_comps', 'outdir')
 
     def __init__(
         self,

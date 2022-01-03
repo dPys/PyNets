@@ -60,7 +60,7 @@ clustering_local_conn: # If you are running agglomerative-type clustering (e.g. 
     - 'tcorr'
 c_boot: # Number of bootstrapped iterations for spatially-constrained clustering
     - 16
-nthreads:
+omp_threads:
     - 2
 graph_file_format:
     - 'npy'

@@ -2370,19 +2370,7 @@ def build_workflow(args, retval):
 
         wf = pe.Workflow(
             name=f"{ID}_{strftime('%Y%m%d_%H%M%S')}")
-        import_list = [
-            "import sys",
-            "import os",
-            "import numpy as np",
-            "import networkx as nx",
-            "import nibabel as nib",
-            "import warnings",
-            'warnings.filterwarnings("ignore")',
-            'np.warnings.filterwarnings("ignore")',
-            'warnings.simplefilter("ignore")',
-            "from pathlib import Path",
-            "import yaml",
-        ]
+
         inputnode = pe.Node(
             niu.IdentityInterface(
                 fields=[
@@ -2402,8 +2390,7 @@ def build_workflow(args, retval):
                     "embed",
                 ]
             ),
-            name="inputnode",
-            imports=import_list,
+            name="inputnode"
         )
         if verbose is True:
             from nipype import config, logging
@@ -2583,7 +2570,6 @@ def build_workflow(args, retval):
                 "binary",
             ],
             nested=True,
-            imports=import_list,
         )
         net_mets_node.synchronize = True
         net_mets_node._n_procs = runtime_dict["NetworkAnalysis"][0]
@@ -2596,7 +2582,6 @@ def build_workflow(args, retval):
                 function=collectpandasjoin,
             ),
             name="AggregateOutputs",
-            imports=import_list,
         )
         collect_pd_list_net_csv_node._n_procs = \
             runtime_dict["AggregateOutputs"][0]
@@ -2606,8 +2591,7 @@ def build_workflow(args, retval):
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
             interface=CombineOutputs(),
-            name="CombineOutputs",
-            imports=import_list)
+            name="CombineOutputs")
         combine_pandas_dfs_node._n_procs = runtime_dict["CombineOutputs"][0]
         combine_pandas_dfs_node._mem_gb = runtime_dict["CombineOutputs"][1]
 
