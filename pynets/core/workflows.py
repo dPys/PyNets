@@ -1194,116 +1194,116 @@ def workflow_selector(
                     ]
                 )
     if multimodal is True:
-        print("Multiplex connectome modeling is temporarily unsupported.")
-        # mase_embedding_node = pe.Node(
-        #     niu.Function(
-        #         input_names=["est_path_iterlist", "ID"],
-        #         output_names=["out_paths"],
-        #         function=spectral.build_masetome,
-        #     ),
-        #     name="mase_embedding_node",
-        #     imports=import_list,
-        # )
-        #
-        # # Multiplex magic happens in the meta-workflow space.
-        # meta_wf.connect(
-        #     [
-        #         (
-        #             pass_meta_ins_multi_node,
-        #             pass_meta_outs_node,
-        #             [
-        #                 ("conn_model_iterlist", "conn_model_iterlist"),
-        #                 ("est_path_iterlist", "est_path_iterlist"),
-        #                 ("network_iterlist", "network_iterlist"),
-        #                 ("thr_iterlist", "thr_iterlist"),
-        #                 ("prune_iterlist", "prune_iterlist"),
-        #                 ("ID_iterlist", "ID_iterlist"),
-        #                 ("roi_iterlist", "roi_iterlist"),
-        #                 ("norm_iterlist", "norm_iterlist"),
-        #                 ("binary_iterlist", "binary_iterlist"),
-        #             ],
-        #         )
-        #     ]
-        # )
+        # print("Multiplex connectome modeling is temporarily unsupported.")
+        mase_embedding_node = pe.Node(
+            niu.Function(
+                input_names=["est_path_iterlist", "ID"],
+                output_names=["out_paths"],
+                function=spectral.build_masetome,
+            ),
+            name="mase_embedding_node",
+            imports=import_list,
+        )
 
-        # if float(multiplex) > 0:
-        #     build_multigraphs_node = pe.Node(
-        #         niu.Function(
-        #             input_names=["est_path_iterlist", "ID"],
-        #             output_names=[
-        #                 "multigraph_list_all",
-        #                 "graph_path_list_top",
-        #                 "namer_dir",
-        #                 "name_list",
-        #                 "metadata_list",
-        #             ],
-        #             function=build_multigraphs,
-        #         ),
-        #         name="build_multigraphs_node",
-        #         imports=import_list,
-        #     )
-        #     meta_wf.connect(
-        #         [
-        #             (
-        #                 pass_meta_ins_multi_node,
-        #                 build_multigraphs_node,
-        #                 [("est_path_iterlist", "est_path_iterlist")],
-        #             ),
-        #             (meta_inputnode, build_multigraphs_node, [("ID", "ID")]),
-        #         ]
-        #     )
-        #
-        #     if plot_switch is True:
-        #         from pynets.plotting.plot_gen import plot_all_struct_func
-        #
-        #         plot_all_struct_func_node = pe.MapNode(
-        #             niu.Function(
-        #                 input_names=[
-        #                     "mG_path",
-        #                     "namer_dir",
-        #                     "name",
-        #                     "modality_paths",
-        #                     "metadata",
-        #                 ],
-        #                 function=plot_all_struct_func,
-        #             ),
-        #             iterfield=[
-        #                 "mG_path",
-        #                 "namer_dir",
-        #                 "name",
-        #                 "modality_paths",
-        #                 "metadata",
-        #             ],
-        #             name="plot_all_struct_func_node",
-        #             imports=import_list,
-        #         )
-        #         meta_wf.connect(
-        #             [
-        #                 (
-        #                     build_multigraphs_node,
-        #                     plot_all_struct_func_node,
-        #                     [
-        #                         ("name_list", "name"),
-        #                         ("namer_dir", "namer_dir"),
-        #                         ("multigraph_list_all", "mG_path"),
-        #                         ("graph_path_list_top", "modality_paths"),
-        #                         ("metadata_list", "metadata"),
-        #                     ],
-        #                 )
-        #             ]
-        #         )
-        #
-        #     if embed is True and 'MASE' in embedding_methods:
-        #         meta_wf.connect(
-        #             [
-        #                 (
-        #                     build_multigraphs_node,
-        #                     mase_embedding_node,
-        #                     [("graph_path_list_top", "est_path_iterlist")],
-        #                 ),
-        #                 (meta_inputnode, mase_embedding_node, [("ID", "ID")]),
-        #             ]
-        #         )
+        # Multiplex magic happens in the meta-workflow space.
+        meta_wf.connect(
+            [
+                (
+                    pass_meta_ins_multi_node,
+                    pass_meta_outs_node,
+                    [
+                        ("conn_model_iterlist", "conn_model_iterlist"),
+                        ("est_path_iterlist", "est_path_iterlist"),
+                        ("network_iterlist", "network_iterlist"),
+                        ("thr_iterlist", "thr_iterlist"),
+                        ("prune_iterlist", "prune_iterlist"),
+                        ("ID_iterlist", "ID_iterlist"),
+                        ("roi_iterlist", "roi_iterlist"),
+                        ("norm_iterlist", "norm_iterlist"),
+                        ("binary_iterlist", "binary_iterlist"),
+                    ],
+                )
+            ]
+        )
+
+        if float(multiplex) > 0:
+            build_multigraphs_node = pe.Node(
+                niu.Function(
+                    input_names=["est_path_iterlist", "ID"],
+                    output_names=[
+                        "multigraph_list_all",
+                        "graph_path_list_top",
+                        "namer_dir",
+                        "name_list",
+                        "metadata_list",
+                    ],
+                    function=build_multigraphs,
+                ),
+                name="build_multigraphs_node",
+                imports=import_list,
+            )
+            meta_wf.connect(
+                [
+                    (
+                        pass_meta_ins_multi_node,
+                        build_multigraphs_node,
+                        [("est_path_iterlist", "est_path_iterlist")],
+                    ),
+                    (meta_inputnode, build_multigraphs_node, [("ID", "ID")]),
+                ]
+            )
+
+            if plot_switch is True:
+                from pynets.plotting.plot_gen import plot_all_struct_func
+
+                plot_all_struct_func_node = pe.MapNode(
+                    niu.Function(
+                        input_names=[
+                            "mG_path",
+                            "namer_dir",
+                            "name",
+                            "modality_paths",
+                            "metadata",
+                        ],
+                        function=plot_all_struct_func,
+                    ),
+                    iterfield=[
+                        "mG_path",
+                        "namer_dir",
+                        "name",
+                        "modality_paths",
+                        "metadata",
+                    ],
+                    name="plot_all_struct_func_node",
+                    imports=import_list,
+                )
+                meta_wf.connect(
+                    [
+                        (
+                            build_multigraphs_node,
+                            plot_all_struct_func_node,
+                            [
+                                ("name_list", "name"),
+                                ("namer_dir", "namer_dir"),
+                                ("multigraph_list_all", "mG_path"),
+                                ("graph_path_list_top", "modality_paths"),
+                                ("metadata_list", "metadata"),
+                            ],
+                        )
+                    ]
+                )
+
+            if embed is True and 'MASE' in embedding_methods:
+                meta_wf.connect(
+                    [
+                        (
+                            build_multigraphs_node,
+                            mase_embedding_node,
+                            [("graph_path_list_top", "est_path_iterlist")],
+                        ),
+                        (meta_inputnode, mase_embedding_node, [("ID", "ID")]),
+                    ]
+                )
 
     # Set resource restrictions at level of the meta wf
     if func_file:

@@ -164,8 +164,8 @@ jobs:
       - FSLOUTPUTTYPE: 'NIFTI'
       - PYTHONUNBUFFERED: 1
       - DEBIAN_FRONTEND: noninteractive
-    resource_class: xlarge
-    parallelism: 8
+    resource_class: large
+    parallelism: 4
     steps:
       - checkout
       - attach_workspace:
