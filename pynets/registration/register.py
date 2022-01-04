@@ -483,31 +483,24 @@ class DmriReg(object):
       algorithm. IEEE Trans Med Imaging. 2001 Jan;20(1):45–57.
       doi:10.1109/42.906424.
     """
-    __slots__ = ('simple' 'ap_path' 'fa_path' 'B0_mask' 't1w' 'vox_size'
-                 'template_name' 't1w_name' 'dwi_name' 'basedir_path'
-                 'tmp_path' 'reg_path' 'reg_path_mat' 'reg_path_warp'
-                 'reg_path_img' 't12mni_xfm_init' 't12mni_xfm' 'mni2t1_xfm'
-                 'mni2t1w_warp' 'warp_t1w2mni' 't1w2dwi' 't1_aligned_mni'
-                 't1w_brain' 't1w_head' 't1w_brain_mask'
-                 't1w_brain_mask_in_dwi' 'dwi2t1w_xfm' 't1w2dwi_xfm'
-                 't1w2dwi_bbr_xfm' 'dwi2t1w_bbr_xfm' 't1wtissue2dwi_xfm'
-                 'temp2dwi_xfm' 'map_name' 'wm_mask' 'wm_mask_thr' 'wm_edge'
-                 'csf_mask' 'gm_mask' 'xfm_roi2mni_init' 'csf_mask_dwi'
-                 'gm_in_dwi' 'wm_in_dwi' 'csf_mask_dwi_bin' 'gm_in_dwi_bin'
-                 'wm_in_dwi_bin' 'vent_mask_dwi' 'vent_csf_in_dwi'
-                 'mni_vent_loc' 'vent_mask_mni' 'vent_mask_t1w' 'input_mni'
-                 'input_mni_brain' 'input_mni_mask'
-                 'mni_atlas' 'mni_roi_ref' 'wm_gm_int_in_dwi'
-                 'wm_gm_int_in_dwi_bin' 'corpuscallosum'
-                 'corpuscallosum_mask_t1w' 'corpuscallosum_dwi'
-                 'fa_template_res' 'fa_template_t1w' 'xfm_roi2mni_init'
-                 'csf_mask_dwi' 'gm_in_dwi' 'wm_in_dwi' 'csf_mask_dwi_bin'
-                 'gm_in_dwi_bin' 'wm_in_dwi_bin' 'vent_mask_dwi'
-                 'vent_csf_in_dwi' 'mni_vent_loc' 'vent_mask_mni'
-                 'vent_mask_t1w' 'csf_mask' 't1w_brain_mask_in_dwi'
-                 'dwi2t1w_xfm' 't1w2dwi_xfm' 't1w2dwi_bbr_xfm'
-                 'dwi2t1w_bbr_xfm' 't1wtissue2dwi_xfm' 'temp2dwi_xfm'
-                 't1w2dwi' 'tmp_path' 'dwi_name')
+    __slots__ = ('simple', 'ap_path', 'fa_path', 'B0_mask', 't1w',
+                 'vox_size', 'template_name', 't1w_name', 'dwi_name',
+                 'basedir_path', 'tmp_path', 'reg_path', 'reg_path_mat',
+                 'reg_path_warp', 'reg_path_img', 't12mni_xfm_init',
+                 't12mni_xfm', 'mni2t1_xfm', 'mni2t1w_warp', 'warp_t1w2mni',
+                 't1w2dwi', 't1_aligned_mni', 't1w_brain', 't1w_head',
+                 't1w_brain_mask', 't1w_brain_mask_in_dwi', 'dwi2t1w_xfm',
+                 't1w2dwi_xfm', 't1w2dwi_bbr_xfm', 'dwi2t1w_bbr_xfm',
+                 't1wtissue2dwi_xfm', 'temp2dwi_xfm', 'map_name', 'wm_mask',
+                 'wm_mask_thr', 'wm_edge', 'csf_mask', 'gm_mask',
+                 'xfm_roi2mni_init', 'csf_mask_dwi', 'gm_in_dwi', 'wm_in_dwi',
+                 'csf_mask_dwi_bin', 'gm_in_dwi_bin', 'wm_in_dwi_bin',
+                 'vent_mask_dwi', 'vent_csf_in_dwi', 'mni_vent_loc',
+                 'vent_mask_mni', 'vent_mask_t1w', 'input_mni',
+                 'input_mni_brain', 'input_mni_mask', 'mni_atlas',
+                 'mni_roi_ref', 'wm_gm_int_in_dwi', 'wm_gm_int_in_dwi_bin',
+                 'corpuscallosum', 'corpuscallosum_mask_t1w',
+                 'corpuscallosum_dwi', 'fa_template_res', 'fa_template_t1w')
 
     def __init__(
         self,
