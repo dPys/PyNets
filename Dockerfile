@@ -174,11 +174,11 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	gnupg \
 	g++ \
 	git-lfs \
-	libwebkit2gtk-* \
-	gnome-icon-theme \
-	libgtk-*-common \
-	libgtk*-common \
-	libjavascriptcoregtk-* \
+#	libwebkit2gtk-* \
+#	gnome-icon-theme \
+#	libgtk-*-common \
+#	libgtk*-common \
+#	libjavascriptcoregtk-* \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && conda clean -tipsy \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
