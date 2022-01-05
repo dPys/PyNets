@@ -11,6 +11,8 @@ import time
 from pathlib import Path
 from pynets.stats import netstats
 import logging
+import tempfile
+from nilearn._utils.data_gen import generate_mni_space_img
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -108,8 +110,24 @@ def test_average_shortest_path_length_for_all():
     assert avgest_path_len > 0
     assert type(avgest_path_len) == float
 
+@pytest.mark.parametrize("weight", ["weight", "not_weight"])
+def test_average_shortest_path_length_fast(weight):
+    """
+    Test for average_shortest_path_length_fast functionality
+    """
+    base_dir = str(Path(__file__).parent/"examples")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    G = nx.from_numpy_array(in_mat)
 
-def test_average_local_efficiency():
+    start_time = time.time()
+    avgest_path_len = netstats.average_shortest_path_length_fast(G, weight=weight)
+    print("%s%s%s" % ('test_average_shortest_path_length_fast --> finished: ',
+                      np.round(time.time() - start_time, 1), 's'))
+    assert avgest_path_len > 0
+    assert type(avgest_path_len) == np.float64
+
+@pytest.mark.parametrize("engine", ["GT", "NX"])
+def test_average_local_efficiency(engine):
     """
     Test for average_local_efficiency functionality
     """
@@ -121,11 +139,9 @@ def test_average_local_efficiency():
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    average_local_efficiency = netstats.average_local_efficiency(G,
-                                                                 engine='nx')
-    print("%s%s%s" % (
-    'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    np.round(time.time() - start_time, 1), 's'))
+    average_local_efficiency = netstats.average_local_efficiency(G, engine = engine)
+    print("%s%s%s" % ('test_average_local_efficiency --> finished: ',
+                      np.round(time.time() - start_time, 1), 's'))
     assert average_local_efficiency > 0
     assert average_local_efficiency.dtype == float
 
@@ -267,10 +283,9 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-
-@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness",
-                                    "eigenvector"])
-def test_most_important(method):
+@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness", "eigenvector"])
+@pytest.mark.parametrize("engine", ["GT", "NX"])
+def test_most_important(method, engine):
     """
     Test pruning for most important nodes functionality
     """
@@ -282,10 +297,9 @@ def test_most_important(method):
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    Gt, pruned_nodes = netstats.most_important(G, method=method)
-    print("%s%s%s" % (
-    'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
+    Gt, pruned_nodes = netstats.most_important(G, method=method, engine=engine)
+    print("%s%s%s" % ('test_most_important --> finished: ',
+                      str(np.round(time.time() - start_time, 1)), 's'))
 
     assert Gt is not None
     assert pruned_nodes is not None
@@ -339,21 +353,15 @@ def test_extractnetstats(binary, prune, norm, conn_model):
     except PermissionError:
         pass
 
-
-def test_raw_mets():
+@pytest.mark.parametrize("engine", ["GT", "NX"])
+def test_raw_mets(engine):
     """
     Test raw_mets extraction functionality
     """
-    from pynets.stats.netstats import global_efficiency, \
-        average_local_efficiency
-    from networkx.algorithms import degree_assortativity_coefficient, \
-        average_clustering, average_shortest_path_length, \
-        degree_pearson_correlation_coefficient, graph_number_of_cliques, \
-        transitivity, sigma
-    base_dir = str(Path(__file__).parent / "examples")
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
-               f"nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_" \
-               f"thr-0.19.npy"
+    from pynets.stats.netstats import global_efficiency, average_local_efficiency, smallworldness
+    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, sigma
+    base_dir = str(Path(__file__).parent/"examples")
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
     [G, _] = netstats.prune_disconnected(G)
@@ -361,11 +369,15 @@ def test_raw_mets():
                         degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length,
                         degree_pearson_correlation_coefficient,
-                        graph_number_of_cliques, transitivity]
+                        graph_number_of_cliques, transitivity,
+                        smallworldness]
     for i in metric_list_glob:
-        net_met_val = netstats.raw_mets(G, i, engine='nx')
+        net_met_val = netstats.raw_mets(G, i, engine=engine)
         assert net_met_val is not np.nan
-        assert type(net_met_val) == float
+        if (engine == 'nx'):
+            assert type(net_met_val) == float
+        elif (engine == 'gt'):
+            assert type(net_met_val) == np.float64
 
 
 def test_subgraph_number_of_cliques_for_all():
@@ -558,11 +570,10 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert num_comms == sim_num_comms
     assert resolution is not None
 
-
-@pytest.mark.parametrize("metric",
-                         ['participation', 'diversity', 'local_efficiency',
-                          'comm_centrality', 'rich_club_coeff'])
-def test_get_metrics(metric):
+@pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
+                                    'comm_centrality', 'rich_club_coeff'])
+@pytest.mark.parametrize("engine", ["GT", "NX"])
+def test_get_metrics(metric, engine):
     """
     Test various wrappers for getting nx graph metrics
     """
@@ -595,11 +606,9 @@ def test_get_metrics(metric):
                np.shape(netstats.diversity_coef_sign(in_mat, ci))[1] + 1
     elif metric == 'local_efficiency':
         metric_list_names, net_met_val_list_final = \
-            netstats.get_local_efficiency(G, metric_list_names,
-                                          net_met_val_list_final)
-        assert len(metric_list_names) == len(netstats.local_efficiency(G)) + 1
-        assert len(net_met_val_list_final) == len(
-            netstats.local_efficiency(G)) + 1
+            netstats.get_local_efficiency(G, metric_list_names, net_met_val_list_final)
+        assert len(metric_list_names) == len(netstats.local_efficiency(G, engine=engine))+1
+        assert len(net_met_val_list_final) == len(netstats.local_efficiency(G, engine=engine))+1
     elif metric == 'comm_centrality':
         metric_list_names, net_met_val_list_final = \
             netstats.get_comm_centrality(G, metric_list_names,
