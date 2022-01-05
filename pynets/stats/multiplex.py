@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2018
 @author: Derek Pisner & James Kunert-Graf
 """
 import numpy as np
 import warnings
 import os
-import networkx as nx
+import gc
 from copy import copy
 from pathlib import Path
 from collections import Counter
@@ -38,7 +38,6 @@ def countmotifs(A, N=4):
       PLoS Biology. https://doi.org/10.1371/journal.pbio.0020369
 
     """
-    import gc
 
     assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
     X2 = np.array([[k] for k in range(A.shape[0] - 1)])
@@ -78,7 +77,7 @@ def countmotifs(A, N=4):
     return umotifs
 
 
-def adaptivethresh(in_mat, thr, mlib, N, use_gt=False):
+def adaptivethresh(in_mat, thr, mlib, N):
     """
     Counts number of motifs with a given absolute threshold.
 
@@ -104,24 +103,13 @@ def adaptivethresh(in_mat, thr, mlib, N, use_gt=False):
       https://doi.org/10.1063/1.4979282
 
     """
+    from pynets.stats.multiplex import countmotifs
 
-    if use_gt is True:
-        try:
-            import graph_tool.all as gt
-            from pynets.stats.netstats import np2gt
-
-            g = np2gt((in_mat > thr).astype(int))
-            mlib, mf = gt.motifs(gt.GraphView(g, directed=False), k=N)
-        except ImportError as e:
-            print(e, "graph_tool not installed!")
-    else:
-        from pynets.stats.netmotifs import countmotifs
-        mf = countmotifs((in_mat > thr).astype(int), N=N)
-
+    mf = countmotifs((in_mat > thr).astype(int), N=N)
     try:
         mf = np.array([mf[k] for k in mlib])
     except BaseException:
-        print('0 motifs...')
+        print('Zero motifs detected...')
         mf = np.zeros(len(mlib))
     return mf
 
@@ -154,14 +142,12 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
       https://doi.org/10.1063/1.4979282
 
     """
-    from pynets.stats.netmotifs import adaptivethresh
+    from pynets.stats.multiplex import adaptivethresh
     from pynets.core.thresholding import threshold_absolute
     from pynets.core.thresholding import standardize
     from scipy import spatial
     from nilearn.connectome import sym_matrix_to_vec
     import pandas as pd
-    import gc
-    import math
 
     mlib = ["1113", "1122", "1223", "2222", "2233", "3333"]
 
@@ -201,11 +187,11 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
     for thr_func in threshes_func:
         # Count
         at_func = adaptivethresh(func_mat, float(thr_func), mlib, N)
-        motif_dict["struct"]["%s%s" % ("thr-", np.round(thr_func, 4))] = \
-            at_struct
+        motif_dict["struct"]["%s%s" %
+                             ("thr-", np.round(thr_func, 4))] = at_struct
         motif_dict["func"]["%s%s" % ("thr-", np.round(thr_func, 4))] = at_func
-        mat_dict["funcs"]["%s%s" % ("thr-", np.round(thr_func, 4))] = \
-            sym_matrix_to_vec(
+        mat_dict["funcs"]["%s%s" %
+                          ("thr-", np.round(thr_func, 4))] = sym_matrix_to_vec(
             threshold_absolute(func_mat, thr_func), discard_diagonal=True)
 
         print(
@@ -220,16 +206,13 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
         )
         gc.collect()
 
-        if np.sum(at_struct) == np.sum(at_func):
-            break
-
     df = pd.DataFrame(motif_dict)
 
     for idx in range(len(df)):
         df.at[
             df.index[idx],
             "motif_dist"] = spatial.distance.cosine(df["struct"][idx],
-                                                    df["func"][idx])
+                                                      df["func"][idx])
 
     df = df[pd.notnull(df["motif_dist"])]
 
@@ -239,13 +222,13 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
             "graph_dist_cosine"] = spatial.distance.cosine(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-        )
+            )
         df.at[
             df.index[idx],
             "graph_dist_correlation"] = spatial.distance.correlation(
                 mat_dict["struct"].reshape(-1, 1),
                 mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-        )
+            )
 
     df["struct_func_3333"] = np.zeros(len(df))
     df["struct_func_2233"] = np.zeros(len(df))
@@ -266,24 +249,24 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
     df["struct_1113"] = np.zeros(len(df))
     df["func_1113"] = np.zeros(len(df))
 
-    # for idx in range(len(df)):
-    #     df.at[df.index[idx], "struct_3333"] = df["struct"][idx][-1]
-    #     df.at[df.index[idx], "func_3333"] = df["func"][idx][-1]
-    #
-    #     df.at[df.index[idx], "struct_2233"] = df["struct"][idx][-2]
-    #     df.at[df.index[idx], "func_2233"] = df["func"][idx][-2]
-    #
-    #     df.at[df.index[idx], "struct_2222"] = df["struct"][idx][-3]
-    #     df.at[df.index[idx], "func_2222"] = df["func"][idx][-3]
-    #
-    #     df.at[df.index[idx], "struct_1223"] = df["struct"][idx][-4]
-    #     df.at[df.index[idx], "func_1223"] = df["func"][idx][-4]
-    #
-    #     df.at[df.index[idx], "struct_1122"] = df["struct"][idx][-5]
-    #     df.at[df.index[idx], "func_1122"] = df["func"][idx][-5]
-    #
-    #     df.at[df.index[idx], "struct_1113"] = df["struct"][idx][-6]
-    #     df.at[df.index[idx], "func_1113"] = df["func"][idx][-6]
+    for idx in range(len(df)):
+        df.at[df.index[idx], "struct_3333"] = df["struct"][idx][-1]
+        df.at[df.index[idx], "func_3333"] = df["func"][idx][-1]
+
+        df.at[df.index[idx], "struct_2233"] = df["struct"][idx][-2]
+        df.at[df.index[idx], "func_2233"] = df["func"][idx][-2]
+
+        df.at[df.index[idx], "struct_2222"] = df["struct"][idx][-3]
+        df.at[df.index[idx], "func_2222"] = df["func"][idx][-3]
+
+        df.at[df.index[idx], "struct_1223"] = df["struct"][idx][-4]
+        df.at[df.index[idx], "func_1223"] = df["func"][idx][-4]
+
+        df.at[df.index[idx], "struct_1122"] = df["struct"][idx][-5]
+        df.at[df.index[idx], "func_1122"] = df["func"][idx][-5]
+
+        df.at[df.index[idx], "struct_1113"] = df["struct"][idx][-6]
+        df.at[df.index[idx], "func_1113"] = df["func"][idx][-6]
 
     df["struct_func_3333"] = np.abs(df["struct_3333"] - df["func_3333"])
     df["struct_func_2233"] = np.abs(df["struct_2233"] - df["func_2233"])
@@ -346,7 +329,7 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
     )
 
     # Take the top 25th percentile
-    df = df.head(int(math.ceil(0.25 * len(df))))
+    df = df.head(int(0.25 * len(df)))
     best_threshes = []
     best_mats = []
     best_multigraphs = []
@@ -439,32 +422,80 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     return mG_path
 
 
-def multigraph_matching(paths):
+def motif_matching(
+    paths,
+    ID,
+    atlas,
+    namer_dir,
+    name_list,
+    metadata_list,
+    multigraph_list_all,
+    graph_path_list_all,
+    rsn=None,
+):
     import networkx as nx
     import numpy as np
     import glob
+    import pickle
     from pynets.core import thresholding
+    from pynets.stats.multiplex import compare_motifs
+    from sklearn.metrics.pairwise import cosine_similarity
+    from pynets.stats.netstats import community_resolution_selection
     from graspologic.utils import remove_loops, symmetrize, \
-        multigraph_lcc_intersection
-    from graspologic.match import GraphMatch
-    from pynets.core.nodemaker import get_brainnetome_node_attributes
+        largest_connected_component
 
     [struct_graph_path, func_graph_path] = paths
     struct_mat = np.load(struct_graph_path)
     func_mat = np.load(func_graph_path)
 
-    [struct_coords, struct_labels, struct_label_intensities] = \
-        get_brainnetome_node_attributes(glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/*.json"),
-        struct_mat.shape[0])
+    if rsn is not None:
+        struct_coords_path = glob.glob(
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_coords_rsn.pkl"
+        )[0]
+        func_coords_path = glob.glob(
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_coords_rsn.pkl"
+        )[0]
+        struct_labels_path = glob.glob(
+            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_labels_rsn.pkl"
+        )[0]
+        func_labels_path = glob.glob(
+            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
+            f"{rsn}_mni_labels_rsn.pkl"
+        )[0]
+    else:
+        struct_coords_path = glob.glob(
+            f"{str(Path(struct_graph_path).parent.parent)}/"
+            f"nodes/all_mni_coords.pkl"
+        )[0]
+        func_coords_path = glob.glob(
+            f"{str(Path(func_graph_path).parent.parent)}/"
+            f"nodes/all_mni_coords.pkl"
+        )[0]
+        struct_labels_path = glob.glob(
+            f"{str(Path(struct_graph_path).parent.parent)}/"
+            f"nodes/all_mni_labels.pkl"
+        )[0]
+        func_labels_path = glob.glob(
+            f"{str(Path(func_graph_path).parent.parent)}/"
+            f"nodes/all_mni_labels.pkl"
+        )[0]
 
-    [func_coords, func_labels, func_label_intensities] = \
-        get_brainnetome_node_attributes(glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/*.json"),
-        func_mat.shape[0])
+    with open(struct_coords_path, "rb") as file_:
+        struct_coords = pickle.load(file_)
+    with open(func_coords_path, "rb") as file_:
+        func_coords = pickle.load(file_)
+    with open(struct_labels_path, "rb") as file_:
+        struct_labels = pickle.load(file_)
+    with open(func_labels_path, "rb") as file_:
+        func_labels = pickle.load(file_)
 
     # Find intersecting nodes across modalities (i.e. assuming the same
     # parcellation, but accomodating for the possibility of dropped nodes)
+    func_label_intensities = [i[1] for i in func_labels]
+    struct_label_intensities = [i[1] for i in struct_labels]
     diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
     diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
     G_struct = nx.from_numpy_array(struct_mat)
@@ -496,73 +527,80 @@ def multigraph_matching(paths):
     func_mat = nx.to_numpy_array(G_func)
 
     struct_mat = thresholding.autofix(symmetrize(remove_loops(struct_mat)))
+
     func_mat = thresholding.autofix(symmetrize(remove_loops(func_mat)))
 
-    metadata = {}
-    assert (
-        len(struct_coords)
-        == len(struct_labels)
-        == len(func_coords)
-        == len(func_labels)
-        == func_mat.shape[0]
-    )
-    metadata["coords"] = struct_coords
-    metadata["labels"] = struct_labels
-
-    gmp = GraphMatch()
-    gmp = gmp.fit(struct_mat, func_mat)
-    func_mat = func_mat[np.ix_(gmp.perm_inds_, gmp.perm_inds_)]
-    print("Number of edge disagreements after matching: ",
-         np.sum(abs(struct_mat - func_mat)))
-
-    func_mat[~struct_mat.astype("bool")] = 0
-    struct_mat[~func_mat.astype("bool")] = 0
-    print(
-        "Edge disagreements after masking: ",
-        sum(sum(abs(func_mat - struct_mat))),
-    )
-
-    metadata = {}
-    assert (
-        len(struct_coords)
-        == len(struct_labels)
-        == len(func_coords)
-        == len(func_labels)
-        == func_mat.shape[0]
-    )
-    metadata["coords"] = struct_coords
-    metadata["labels"] = struct_labels
-
-    return struct_mat, func_mat, metadata
-
-
-def motif_matching(
-    paths,
-    ID,
-    atlas,
-    namer_dir,
-    name_list,
-    metadata_list,
-    multigraph_list_all,
-    graph_path_list_all,
-    rsn=None,
-):
-    import numpy as np
-    from pynets.stats.netmotifs import compare_motifs
-
-    [struct_graph_path, func_graph_path] = paths
-
-    [struct_mat, func_mat, metadata] = multigraph_matching(paths)
-
-    metadata_list.append(metadata)
-
     if func_mat.shape == struct_mat.shape:
+        func_mat[~struct_mat.astype("bool")] = 0
+        struct_mat[~func_mat.astype("bool")] = 0
+        print(
+            "Number of edge disagreements after matching: ",
+            sum(sum(abs(func_mat - struct_mat))),
+        )
+
+        metadata = {}
+        assert (
+            len(struct_coords)
+            == len(struct_labels)
+            == len(func_coords)
+            == len(func_labels)
+            == func_mat.shape[0]
+        )
+        metadata["coords"] = struct_coords
+        metadata["labels"] = struct_labels
+        metadata_list.append(metadata)
+
+        struct_mat = np.maximum(struct_mat, struct_mat.T)
+        func_mat = np.maximum(func_mat, func_mat.T)
+        struct_mat = thresholding.standardize(struct_mat)
+        func_mat = thresholding.standardize(func_mat)
+
+        struct_node_comm_aff_mat = community_resolution_selection(
+            nx.from_numpy_matrix(np.abs(struct_mat))
+        )[1]
+
+        func_node_comm_aff_mat = community_resolution_selection(
+            nx.from_numpy_matrix(np.abs(func_mat))
+        )[1]
+
+        struct_comms = []
+        for i in np.unique(struct_node_comm_aff_mat):
+            struct_comms.append(struct_node_comm_aff_mat == i)
+
+        func_comms = []
+        for i in np.unique(func_node_comm_aff_mat):
+            func_comms.append(func_node_comm_aff_mat == i)
+
+        sims = cosine_similarity(struct_comms, func_comms)
+        try:
+            struct_comm = struct_comms[np.argmax(sims, axis=0)[0]]
+        except BaseException:
+            print('Matching by structural communities failed...')
+            struct_comm = struct_mat
+        try:
+            func_comm = func_comms[np.argmax(sims, axis=0)[0]]
+        except BaseException:
+            print('Matching by functional communities failed...')
+            func_comm = func_mat
+
+        comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
+
+        try:
+            assert comm_mask.shape == struct_mat.shape == func_mat.shape
+        except AssertionError as e:
+            e.args += (comm_mask, comm_mask.shape, struct_mat,
+                       struct_mat.shape, func_mat, func_mat.shape)
+
+        struct_mat[~comm_mask] = 0
+        func_mat[~comm_mask] = 0
         struct_name = struct_graph_path.split("/rawgraph_"
                                               )[-1].split(".npy")[0]
         func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
         name = f"sub-{ID}_{atlas}_mplx_Layer-1_{struct_name}_" \
                f"Layer-2_{func_name}"
         name_list.append(name)
+        struct_mat = np.maximum(struct_mat, struct_mat.T)
+        func_mat = np.maximum(func_mat, func_mat.T)
         try:
             [mldict, g_dict] = compare_motifs(
                 struct_mat, func_mat, name, namer_dir)
@@ -576,7 +614,6 @@ def motif_matching(
         for thr in list(g_dict.keys()):
             multigraph_path_list_dict = {}
             [struct, func] = g_dict[thr]
-
             struct_out = f"{namer_dir}/struct_{atlas}_{struct_name}.npy"
             func_out = f"{namer_dir}/struct_{atlas}_{func_name}_" \
                        f"motif-{thr}.npy"
@@ -625,13 +662,14 @@ def build_multigraphs(est_path_iterlist, ID):
       Journal of Nonlinear Science. https://doi.org/10.1007/s00332-017-9436-8
 
     """
+    import pkg_resources
+    import yaml
     import os
     import itertools
     import numpy as np
     from pathlib import Path
     from pynets.core.utils import flatten
-    from pynets.stats.netmotifs import motif_matching
-    from pynets.core.utils import load_runconfig
+    from pynets.stats.multiplex import motif_matching
 
     raw_est_path_iterlist = list(
         set(
@@ -644,22 +682,26 @@ def build_multigraphs(est_path_iterlist, ID):
     )
 
     # Available functional and structural connectivity models
-    hardcoded_params = load_runconfig()
-    try:
-        func_models = hardcoded_params["available_models"]["func_models"]
-    except KeyError:
-        print(
-            "ERROR: available functional models not sucessfully extracted"
-            " from runconfig.yaml"
-        )
-    try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
-    except KeyError:
-        print(
-            "ERROR: available structural models not sucessfully extracted"
-            " from runconfig.yaml"
-        )
+    with open(
+        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+    ) as stream:
+        hardcoded_params = yaml.load(stream)
+        try:
+            func_models = hardcoded_params["available_models"]["func_models"]
+        except KeyError:
+            print(
+                "ERROR: available functional models not sucessfully extracted"
+                " from runconfig.yaml"
+            )
+        try:
+            struct_models = hardcoded_params["available_models"][
+                "struct_models"]
+        except KeyError:
+            print(
+                "ERROR: available structural models not sucessfully extracted"
+                " from runconfig.yaml"
+            )
+    stream.close()
 
     atlases = list(set([x.split("/")[-3].split("/")[0]
                         for x in raw_est_path_iterlist]))

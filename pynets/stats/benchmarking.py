@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @authors: Derek Pisner
 """
 import os
@@ -238,58 +238,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     #                                   ].drop_duplicates(subset='id')
 
     # icc
-    if icc is True and alg == 'topology':
-        try:
-            import pingouin as pg
-        except ImportError:
-            print(
-                "Cannot evaluate ICC. pingouin"
-                " must be installed!")
-        for met in mets:
-            id_dict = {}
-            dfs = []
-            for ses in [str(i) for i in range(1, 11)]:
-                for ID in ids:
-                    id_dict[ID] = {}
-                    if comb_tuple in par_dict[ID][str(ses)][modality][alg
-                                                                      ].keys():
-                        id_dict[ID][str(ses)] = \
-                            par_dict[ID][str(ses)][modality][alg][comb_tuple][
-                                mets.index(met)][0]
-                    df = pd.DataFrame(id_dict).T
-                    if df.empty:
-                        del df
-                        return df_summary
-                    df.columns.values[0] = f"{met}"
-                    df.replace(0, np.nan, inplace=True)
-                    df['id'] = df.index
-                    df['ses'] = ses
-                    df.reset_index(drop=True, inplace=True)
-                    dfs.append(df)
-            df_long = pd.concat(dfs, names=['id', 'ses', f"{met}"]).drop(
-                columns=[str(i) for i in range(1, 10)])
-            if '10' in df_long.columns:
-                df_long[f"{met}"] = df_long[f"{met}"].fillna(df_long['10'])
-                df_long = df_long.drop(columns='10')
-            try:
-                c_icc = pg.intraclass_corr(data=df_long, targets='id',
-                                           raters='ses', ratings=f"{met}",
-                                           nan_policy='omit').round(3)
-                c_icc = c_icc.set_index("Type")
-                c_icc3 = c_icc.drop(index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k',
-                                           'ICC3'])
-                df_summary.at[0, f"icc_{met}"] = c_icc3['ICC'].values[0]
-                df_summary.at[0, f"icc_{met}_CI95%_L"] = \
-                    c_icc3['CI95%'].values[0][0]
-                df_summary.at[0, f"icc_{met}_CI95%_U"] = \
-                    c_icc3['CI95%'].values[0][1]
-            except BaseException:
-                print('FAILED...')
-                print(df_long)
-                del df_long
-                return df_summary
-            del df_long
-    elif icc is True and alg != 'topology':
+    if icc is True:
         from pynets.stats.utils import parse_closest_ixs
         try:
             import pingouin as pg
@@ -338,7 +287,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                 else:
                                     node_files = glob.glob(
                                         f"{base_dir}/pynets/sub-{ID}/ses-"
-                                        f"{ses}/{modality}/rsn-"
+                                        f"{ses}/{modality}/subnet-"
                                         f"{atlas}_res-{res}/nodes/*.json")
                                     emb_data = par_dict[ID][str(ses)][
                                         modality][alg][comb_tuple]['data']
@@ -353,20 +302,37 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         ixs, node_dict = parse_closest_ixs(
                                             node_files, emb_shape)
                                     if isinstance(node_dict, dict):
-                                        coords = [node_dict[i]['coord'] for i
-                                                  in node_dict.keys()]
-                                        labels = [node_dict[i][
-                                            'label'][
-                                            'BrainnetomeAtlas'
-                                            'Fan2016'] for i in
-                                            node_dict.keys()]
+                                        try:
+                                            coords = [node_dict[i]['coord']
+                                                      for i
+                                                      in node_dict.keys()]
+                                            try:
+                                                labels = [node_dict[i][
+                                                    'label'][
+                                                    'BrainnetomeAtlas'
+                                                    'Fan2016'] for i in
+                                                    node_dict.keys()]
+                                            except:
+                                                labels = [node_dict[i][
+                                                    'label'] for i in
+                                                    node_dict.keys()]
+                                        except ValueError:
+                                            print(comb)
                                     elif isinstance(node_dict[0], list):
-                                        coords = [node_dict[i]['coord'] for i
-                                                  in range(len(node_dict))]
-                                        labels = [node_dict[i]['label'][
-                                                      'BrainnetomeAtlas' \
-                                                      'Fan2016'] for i
-                                                  in range(len(node_dict))]
+                                        try:
+                                            coords = [node_dict[i]['coord'] for i
+                                                      in range(len(node_dict))]
+                                            try:
+                                                labels = [node_dict[i]['label'][
+                                                              'BrainnetomeAtlas' \
+                                                              'Fan2016'] for i
+                                                          in range(len(node_dict))]
+                                            except:
+                                                labels = [node_dict[i][
+                                                    'label'] for i in
+                                                    node_dict.keys()]
+                                        except ValueError:
+                                            print(comb)
                                     else:
                                         print(f"Failed to parse coords/"
                                               f"labels from {node_files}. "
@@ -376,7 +342,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"rsn-{atlas}_res-"
+                                        f"subnet-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     # labels = [
@@ -386,7 +352,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"rsn-{atlas}_res-"
+                                        f"subnet-{atlas}_res-"
                                         f"{res}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
@@ -447,7 +413,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not
                                                  in i]:
             ix = int(lp.split(f"{alg}_")[1].split('_')[0])
-            rsn = lp.split(f"{alg}_{ix}_")[1]
+            parcellation = lp.split(f"{alg}_{ix}_")[1]
             df_long_clean = df_long[['id', 'ses', lp]]
             # df_long_clean = df_long[['id', 'ses', lp]].loc[(df_long[['id',
             # 'ses', lp]]['id'].duplicated() == True) & (df_long[['id', 'ses',
@@ -469,10 +435,12 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 icc_val = c_icc3['ICC'].values[0]
                 if nodes is True:
                     coord_in = np.array(ast.literal_eval(
-                        coords_frames_icc[f"{rsn}_{ix}"].mode().values[0]),
+                        coords_frames_icc[f"{parcellation}_"
+                                          f"{ix}"].mode().values[0]),
                         dtype=np.dtype("O"))
                     label_in = np.array(
-                        labels_frames_icc[f"{rsn}_{ix}"].mode().values[0],
+                        labels_frames_icc[f"{parcellation}_"
+                                          f"{ix}"].mode().values[0],
                         dtype=np.dtype("O"))
                 else:
                     coord_in = np.nan

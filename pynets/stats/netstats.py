@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @author: Derek Pisner
 """
 from pynets.core.utils import load_runconfig
@@ -250,7 +250,7 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     Notes
     -----
     The published definition includes a scale factor based on a completely
-    connected graph. In the case of an unweighted network, the scaling factor
+    connected graph. In the case of an unweighted subnet, the scaling factor
     is 1 and can be ignored. In the case of a weighted graph, calculating the
     scaling factor requires somehow knowing the weights of the edges required
     to make a completely connected graph. Since that knowlege may not exist,
@@ -318,7 +318,7 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     Notes
     -----
     The published definition includes a scale factor based on a completely
-    connected graph. In the case of an unweighted network, the scaling factor
+    connected graph. In the case of an unweighted subnet, the scaling factor
     is 1 and can be ignored. In the case of a weighted graph, calculating the
     scaling factor requires somehow knowing the weights of the edges required
     to make a completely connected graph. Since that knowlege may not exist,
@@ -663,7 +663,7 @@ def participation_coef(W, ci, degree="undirected"):
     ----------
     .. [1] Guimera, R., & Amaral, L. A. N. (2005). Functional cartography of
       complex metabolic networks. Nature, 433, 895-900.
-    .. [2] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
+    .. [2] Rubinov, M., & Sporns, O. (2010). Complex subnet measures of brain
       connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
 
     """
@@ -711,7 +711,7 @@ def participation_coef_sign(W, ci):
     ----------
     .. [1] Guimera, R., & Amaral, L. A. N. (2005). Functional cartography of
       complex metabolic networks. Nature, 433, 895-900.
-    .. [2] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
+    .. [2] Rubinov, M., & Sporns, O. (2010). Complex subnet measures of brain
       connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
 
     """
@@ -764,7 +764,7 @@ def diversity_coef_sign(W, ci):
 
     References
     ----------
-    .. [1] Rubinov, M., & Sporns, O. (2010). Complex network measures of brain
+    .. [1] Rubinov, M., & Sporns, O. (2010). Complex subnet measures of brain
       connectivity: Uses and interpretations. NeuroImage, 52, 1059-1069.
 
     """
@@ -797,11 +797,11 @@ def diversity_coef_sign(W, ci):
 
 def link_communities(W, type_clustering="single"):
     """
-    The optimal community structure is a subdivision of the network into
+    The optimal community structure is a subdivision of the subnet into
     nonoverlapping groups of nodes which maximizes the number of within-group
     edges and minimizes the number of between-group edges.
     This algorithm uncovers overlapping community structure via hierarchical
-    clustering of network links. This algorithm is generalized for
+    clustering of subnet links. This algorithm is generalized for
     weighted/directed/fully-connected networks
 
     Parameters
@@ -1026,7 +1026,7 @@ def weighted_transitivity(G):
 
     References
     ----------
-    .. [1] Wasserman, S., and Faust, K. (1994). Social Network Analysis:
+    .. [1] Wasserman, S., and Faust, K. (1994). Social subnet Analysis:
       Methods and Applications. Cambridge: Cambridge University Press.
     .. [2] Alain Barrat, Marc Barthelemy, Romualdo Pastor-Satorras, Alessandro
       Vespignani: The architecture of complex weighted networks, Proc. Natl.
@@ -1066,8 +1066,8 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
       with Node-Wise Thresholding. Brain Connectivity.
       https://doi.org/10.1089/brain.2017.0523
     .. [2] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain
-      Network Analysis. https://doi.org/10.1016/C2012-0-06036-X
+      Fundamentals of Brain subnet Analysis. In Fundamentals of Brain
+      subnet Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
     print("Pruning disconnected...")
@@ -1302,7 +1302,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
 
 class CleanGraphs(object):
     """
-    A Class for cleaning graphs in preparation for network analysis.
+    A Class for cleaning graphs in preparation for subnet analysis.
 
     Parameters
     ----------
@@ -1363,8 +1363,8 @@ class CleanGraphs(object):
         self.in_mat = np.array(
             np.array(
                 thresholding.autofix(
-                    np.abs(
-                        self.in_mat_raw))))
+                    np.array(np.abs(
+                        self.in_mat_raw)))))
 
         # Load numpy matrix as networkx graph
         self.G = nx.from_numpy_array(self.in_mat)
@@ -1896,7 +1896,7 @@ def get_eigen_centrality(G, metric_list_names, net_met_val_list_final,
 def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     from networkx.algorithms import communicability_betweenness_centrality
 
-    cc_vector = communicability_betweenness_centrality(G, normalized=True)
+    cc_vector = communicability_betweenness_centrality(G)
     print("\nExtracting Local Communicability Centralities...")
     cc_vals = list(cc_vector.values())
     cc_nodes = list(cc_vector.keys())
@@ -1965,7 +1965,7 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final,
 
 def extractnetstats(
         ID,
-        network,
+        subnet,
         thr,
         conn_model,
         est_path,
@@ -1980,8 +1980,8 @@ def extractnetstats(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr : float
         The value, between 0 and 1, used to threshold the graph using any
@@ -2011,10 +2011,10 @@ def extractnetstats(
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network
+      Fundamentals of Brain subnet Analysis. In Fundamentals of Brain subnet
       Analysis. https://doi.org/10.1016/C2012-0-06036-X
     .. [2] Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart,
-      “Exploring network structure, dynamics, and function using NetworkX”,
+      “Exploring subnet structure, dynamics, and function using NetworkX”,
       in Proceedings of the 7th Python in Science Conference (SciPy2008),
       Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds),
       (Pasadena, CA USA), pp. 11–15, Aug 2008
@@ -2029,13 +2029,13 @@ def extractnetstats(
     # import random
     import pkg_resources
     import networkx
-    import pynets.stats.netstats
+    from pynets.stats import netstats
     from pathlib import Path
 
     # Load netstats config and parse graph algorithms as objects
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/global_graph_measures.yaml"),
+                                        "stats/global.yaml"),
         "r",
     ) as stream:
         try:
@@ -2059,7 +2059,7 @@ def extractnetstats(
                     for i in metric_list_global
                     if i in nx_algs
                 ] + [
-                    getattr(pynets.stats.netstats, i)
+                    getattr(netstats, i)
                     for i in metric_list_global
                     if i in pynets_algs
                 ]
@@ -2085,11 +2085,11 @@ def extractnetstats(
                 metric_list_global_names = []
         except FileNotFoundError as e:
             import sys
-            print(e, "Failed to parse global_graph_measures.yaml")
+            print(e, "Failed to parse global.yaml")
 
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/local_graph_measures.yaml"),
+                                        "stats/local.yaml"),
         "r",
     ) as stream:
         try:
@@ -2102,7 +2102,7 @@ def extractnetstats(
                 metric_list_nodal = []
         except FileNotFoundError as e:
             import sys
-            print(e, "Failed to parse local_graph_measures.yaml")
+            print(e, "Failed to parse local.yaml")
 
     if os.path.isfile(est_path):
         cg = CleanGraphs(thr, conn_model, est_path, prune, norm)
@@ -2117,10 +2117,7 @@ def extractnetstats(
             except ValueError as e:
                 print(e, f"Graph normalization failed for {est_path}.")
 
-        if 'modality-func' in est_path and 'model-sps' not in est_path and \
-            'rawgraph' not in est_path and \
-            float(os.path.splitext(est_path)[0].split(
-                'thr-')[1].split('_')[0]):
+        if 'modality-func' in est_path and 'model-sps' not in est_path:
             binary = True
 
         if binary is True:
@@ -2407,7 +2404,7 @@ def extractnetstats(
 def collect_pandas_df_make(
     net_mets_csv_list,
     ID,
-    network,
+    subnet,
     plot_switch,
     embed=False,
     create_summary=False,
@@ -2423,8 +2420,8 @@ def collect_pandas_df_make(
         List of file paths to pickled pandas dataframes as themselves.
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
@@ -2666,7 +2663,7 @@ def collect_pandas_df_make(
                                 df_summary_auc_nodes[node_top_cols]
                             out_path = f"{embed_dir}/gradient-" \
                                        f"{node_top_type}_" \
-                                       f"rsn-{atlas}_auc_nodes_" \
+                                       f"subnet-{atlas}_auc_nodes_" \
                                        f"{base_name}.csv"
                             embedding_frame.to_csv(out_path, index=False)
 
@@ -2715,7 +2712,7 @@ def collect_pandas_df_make(
                                                    groupby(df_nodes,
                                                            lambda s: s.split(
                                                                "_")[1])]
-                        atlas = os.path.dirname(file_).split('rsn-')[1].split(
+                        atlas = os.path.dirname(file_).split('subnet-')[1].split(
                             '_')[0]
                         if 'thr-' in os.path.basename(file_):
                             base_name = os.path.basename(file_).split(
@@ -2730,7 +2727,7 @@ def collect_pandas_df_make(
                             embedding_frame = df_nodes[node_top_cols]
                             out_path = f"{embed_dir}/gradient-" \
                                        f"{node_top_type}_" \
-                                       f"rsn-{atlas}_nodes_" \
+                                       f"subnet-{atlas}_nodes_" \
                                        f"{base_name}"
                             embedding_frame.to_csv(out_path, index=False)
                 dfs_non_auc.append(df)
@@ -2796,7 +2793,7 @@ def collect_pandas_df_make(
                 print(f"\nConcatenating dataframes for {str(ID)}...\n")
                 net_csv_summary_out_path = (
                     f"{summary_dir}/avg_topology_sub-{str(ID)}"
-                    f"{'%s' % ('_' + network if network is not None else '')}"
+                    f"{'%s' % ('_' + subnet if subnet is not None else '')}"
                     f".csv")
                 if os.path.isfile(net_csv_summary_out_path):
                     try:
@@ -2824,9 +2821,9 @@ def collect_pandas_df_make(
         else:
             combination_complete = True
     else:
-        if network is not None:
+        if subnet is not None:
             print(
-                f"\nSingle dataframe for the {network} network for subject "
+                f"\nSingle dataframe for the {subnet} subnet for subject "
                 f"{ID}\n")
         else:
             print(f"\nSingle dataframe for subject {ID}\n")

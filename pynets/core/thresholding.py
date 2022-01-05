@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
+Copyright (C) 2017
 @author: Derek Pisner (dPys)
 """
 import warnings
@@ -36,7 +36,7 @@ def threshold_absolute(W, thr, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -90,7 +90,7 @@ def threshold_proportional(W, p, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -131,7 +131,7 @@ def normalize(W):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -155,7 +155,7 @@ def standardize(W):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -191,7 +191,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
       Comparing brain networks of different size and connectivity
       density using graph theory. PLoS ONE.
       https://doi.org/10.1371/journal.pone.0013701
-    .. [2] Complex network measures of brain connectivity: Uses and
+    .. [2] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -271,7 +271,7 @@ def thr2prob(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -301,7 +301,7 @@ def binarize(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -333,7 +333,7 @@ def invert(W, copy=False):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -359,7 +359,7 @@ def weight_conversion(W, wcm, copy=True):
     weighted clustering coefficient.
     Conversion of connection weights to connection lengths is needed
     prior to computation of weighted distance-based measures, such as
-    distance and betweenness centrality. In a weighted connection network,
+    distance and betweenness centrality. In a weighted connection subnet,
     higher weights are naturally interpreted as shorter lengths. The
     connection-lengths matrix here is defined as the inverse of the
     connection-weights matrix.
@@ -391,7 +391,7 @@ def weight_conversion(W, wcm, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -421,7 +421,7 @@ def autofix(W, copy=True):
 
     References
     ----------
-    .. [1] Complex network measures of brain connectivity: Uses and
+    .. [1] Complex subnet measures of brain connectivity: Uses and
       interpretations. Rubinov M, Sporns O (2010) NeuroImage 52:1059-69.
 
     """
@@ -495,7 +495,7 @@ def disparity_filter(G, weight="weight"):
 
             elif k_out == 1 and G.in_degree(list(G.successors(u))[0]) == 1:
                 # we need to keep the connection as it is the only way to
-                # maintain the connectivity of the network
+                # maintain the connectivity of the subnet
                 v = list(G.successors(u))[0]
                 w = G[u][v][weight]
                 N.add_edge(u, v, weight=w, alpha_out=0.0, alpha_in=0.0)
@@ -703,7 +703,7 @@ def local_thresholding_prop(conn_matrix, thr):
       schizophrenia. Frontiers in Systems Neuroscience.
       https://doi.org/10.3389/fnsys.2010.00147
     .. [2] Tewarie, P., van Dellen, E., Hillebrand, A., & Stam, C. J. (2015).
-      The minimum spanning tree: An unbiased method for brain network analysis.
+      The minimum spanning tree: An unbiased method for brain subnet analysis.
       NeuroImage. https://doi.org/10.1016/j.neuroimage.2014.10.015
 
     """
@@ -806,7 +806,7 @@ def perform_thresholding(
     References
     ----------
     .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain Network Analysis. In Fundamentals of Brain Network
+      Fundamentals of Brain subnet Analysis. In Fundamentals of Brain subnet
       Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
@@ -867,18 +867,18 @@ def thresh_func(
     thr,
     conn_matrix,
     conn_model,
-    network,
+    subnet,
     ID,
     dir_path,
     roi,
-    node_size,
+    node_radius,
     min_span_tree,
     smooth,
     disp_filt,
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
@@ -905,8 +905,8 @@ def thresh_func(
        Connectivity estimation model (e.g. corr for correlation, cov for
        covariance, sps for precision covariance, partcorr for partial
        correlation). sps type is used by default.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -914,7 +914,7 @@ def thresh_func(
         Path to directory containing subject derivative data for given run.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     min_span_tree : bool
@@ -925,14 +925,14 @@ def thresh_func(
         signal from ROI's.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -962,11 +962,11 @@ def thresh_func(
     thr : float
         The value, between 0 and 1, used to threshold the graph using any
         variety of methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -985,7 +985,7 @@ def thresh_func(
         Path to directory containing subject derivative data for given run.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -1028,12 +1028,12 @@ def thresh_func(
     # Save thresholded mat
     est_path = utils.create_est_path_func(
         ID,
-        network,
+        subnet,
         conn_model,
         thr,
         roi,
         dir_path,
-        node_size,
+        node_radius,
         smooth,
         thr_type,
         hpass,
@@ -1047,8 +1047,8 @@ def thresh_func(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-post_thr"
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
@@ -1059,8 +1059,8 @@ def thresh_func(
         edge_threshold,
         est_path,
         thr,
-        node_size,
-        network,
+        node_radius,
+        subnet,
         conn_model,
         roi,
         smooth,
@@ -1068,7 +1068,7 @@ def thresh_func(
         ID,
         dir_path,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,
@@ -1083,17 +1083,17 @@ def thresh_struct(
     thr,
     conn_matrix,
     conn_model,
-    network,
+    subnet,
     ID,
     dir_path,
     roi,
-    node_size,
+    node_radius,
     min_span_tree,
     disp_filt,
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
@@ -1125,8 +1125,8 @@ def thresh_struct(
        Connectivity estimation model (e.g. corr for correlation, cov for
        covariance, sps for precision covariance, partcorr for partial
        correlation). sps type is used by default.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -1134,7 +1134,7 @@ def thresh_struct(
         Path to directory containing subject derivative data for given run.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     min_span_tree : bool
@@ -1142,14 +1142,14 @@ def thresh_struct(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -1189,11 +1189,11 @@ def thresh_struct(
     thr : float
         The value, between 0 and 1, used to threshold the graph using any
         variety of methods triggered through other options.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -1209,7 +1209,7 @@ def thresh_struct(
         Path to directory containing subject derivative data for given run.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -1249,7 +1249,7 @@ def thresh_struct(
     from pynets.core import utils, thresholding
 
     if parc is True:
-        node_size = "parc"
+        node_radius = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
         print(UserWarning("Raw connectivity matrix contains only"
@@ -1265,12 +1265,12 @@ def thresh_struct(
     # Save thresholded mat
     est_path = utils.create_est_path_diff(
         ID,
-        network,
+        subnet,
         conn_model,
         thr,
         roi,
         dir_path,
-        node_size,
+        node_radius,
         target_samples,
         track_type,
         thr_type,
@@ -1286,8 +1286,8 @@ def thresh_struct(
     if check_consistency is True:
         assert len(coords) == len(labels) == conn_matrix_thr.shape[0]
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-post_thr"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-post_thr"
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
@@ -1298,15 +1298,15 @@ def thresh_struct(
         edge_threshold,
         est_path,
         thr,
-        node_size,
-        network,
+        node_radius,
+        subnet,
         conn_model,
         roi,
         prune,
         ID,
         dir_path,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,

@@ -41,8 +41,6 @@ def test_atlases():
         pkg_resources.resource_filename("pynets", f"templates/atlases/CorticalAreaParcellationfromRestingStateCorrelationsGordon2014.nii.gz"))
     DesikanKlein2012 = nib.load(pkg_resources.resource_filename("pynets", f"templates/atlases/DesikanKlein2012.nii.gz"))
     destrieux2009_rois = nib.load(pkg_resources.resource_filename("pynets", f"templates/atlases/destrieux2009_rois.nii.gz"))
-    Hammers_mithAtlasn30r83Hammers2003Gousias2008 = nib.load(
-        pkg_resources.resource_filename("pynets", f"templates/atlases/Hammers_mithAtlasn30r83Hammers2003Gousias2008.nii.gz"))
     HarvardOxfordThr252mmWholeBrainMakris2006 = nib.load(
         pkg_resources.resource_filename("pynets", f"templates/atlases/HarvardOxfordThr252mmWholeBrainMakris2006.nii.gz"))
     Juelichgmthr252mmEickhoff2005 = nib.load(pkg_resources.resource_filename("pynets", f"templates/atlases/Juelichgmthr252mmEickhoff2005.nii.gz"))
@@ -63,7 +61,6 @@ def test_atlases():
     assert CorticalAreaParcellationfromRestingStateCorrelationsGordon2014 is not None
     assert DesikanKlein2012 is not None
     assert destrieux2009_rois is not None
-    assert Hammers_mithAtlasn30r83Hammers2003Gousias2008 is not None
     assert HarvardOxfordThr252mmWholeBrainMakris2006 is not None
     assert Juelichgmthr252mmEickhoff2005 is not None
     assert MICCAI2012MultiAtlasLabelingWorkshopandChallengeNeuromorphometrics is not None

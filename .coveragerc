@@ -31,7 +31,6 @@ omit =
 	pynets/core/atlases/*
 	pynets/core/labelcharts/*
 	pynets/runconfig.yaml
-	pynets/conftest.py
 	pynets/stats/nodal_graph_measures.yaml
 	pynets/stats/global_graph_measures.yaml
 	pynets/stats/netmotifs.py

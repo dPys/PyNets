@@ -65,15 +65,15 @@ def generate_random_img(shape, length=1, affine=np.eye(4),
 def test_get_conn_matrix(conn_model_in, n_features):
     """ Test computing a functional connectivity matrix."""
 
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     smooth = 2
     coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
-    node_size = 8
+    node_radius = 8
     extract_strategy = 'zscore'
     roi = None
     atlas = None
-    uatlas = None
+    parcellation = None
     labels = [1, 2, 3]
 
     time_series = generate_signals(n_features=n_features,
@@ -85,10 +85,10 @@ def test_get_conn_matrix(conn_model_in, n_features):
         time_series,
         conn_model_in,
         tempfile.TemporaryDirectory(),
-        node_size,
+        node_radius,
         smooth,
         False,
-        network,
+        subnet,
         ID,
         roi,
         False,
@@ -96,7 +96,7 @@ def test_get_conn_matrix(conn_model_in, n_features):
         True,
         True,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         3,
@@ -147,10 +147,12 @@ def test_fill_confound_nans():
     assert conf_corr[0] == np.mean(conf_corr[1:])
 
 
-@pytest.mark.parametrize("conf", [True, pytest.param(False, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("conf",
+                         [True, pytest.param(False, marks=pytest.mark.xfail)])
 @pytest.mark.parametrize("hpass", [None, 0.028, 0.080])
 @pytest.mark.parametrize("mask", [True, None])
-@pytest.mark.parametrize("func_file", [True, pytest.param(None, marks=pytest.mark.xfail)])
+@pytest.mark.parametrize("func_file",
+                         [True, pytest.param(None, marks=pytest.mark.xfail)])
 def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file):
     """ Test preparing inputs method of the TimeseriesExtraction class."""
 
@@ -182,25 +184,28 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file):
     if conf:
         conf_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
         conf_mat = np.random.rand(length)
-        conf_df = pd.DataFrame({'Conf1': conf_mat, "Conf2": [np.nan]*len(conf_mat)})
+        conf_df = pd.DataFrame({'Conf1': conf_mat,
+                                "Conf2": [np.nan]*len(conf_mat)})
         conf_df.to_csv(conf_file.name, sep='\t', index=False)
         conf = conf_file.name
 
     smooth = 1
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     smooth = 2
     coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
-    node_size = 8
+    node_radius = 8
     extract_strategy = 'median'
     roi = None
     atlas = None
-    uatlas = None
+    parcellation = None
     labels = [1, 2, 3]
 
-    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
+    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file,
+                              node_radius=node_radius,
                               conf=conf, func_file=func_file.name, roi=roi,
-                              dir_path=dir_path, ID=ID, network=network, smooth=smooth,
+                              dir_path=dir_path, ID=ID, subnet=subnet,
+                              smooth=smooth,
                               hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
@@ -226,7 +231,8 @@ def test_timseries_extraction_prepare_inputs(conf, hpass, mask, func_file):
 
 @pytest.mark.parametrize("conf", [True, None])
 def test_timseries_extraction_extract(conf):
-    """Test timeseries extraction and save methods of the TimeseriesExtraction class."""
+    """Test timeseries extraction and save methods of the
+    TimeseriesExtraction class."""
 
     dir_path_tmp = tempfile.TemporaryDirectory()
     dir_path = dir_path_tmp.name
@@ -261,34 +267,40 @@ def test_timseries_extraction_extract(conf):
         conf = conf_file.name
 
     smooth = 1
-    network = 'Default'
+    subnet = 'Default'
     ID = '002'
     smooth = 2
     hpass = 100
     extract_strategy = 'mean'
     coords = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
-    node_size = 2
+    node_radius = 2
     roi = None
     atlas = None
-    uatlas = None
+    parcellation = None
     labels = [1, 2, 3]
 
-    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file, node_size=node_size,
+    te = TimeseriesExtraction(net_parcels_nii_path=net_parcels_map_nifti_file,
+                              node_radius=node_radius,
                               conf=conf, func_file=func_file.name,
-                              roi=roi, dir_path=dir_path, ID=ID, network=network, smooth=smooth,
+                              roi=roi, dir_path=dir_path, ID=ID,
+                              subnet=subnet, smooth=smooth,
                               hpass=hpass, mask=mask,
                               extract_strategy=extract_strategy)
     te.prepare_inputs()
 
     # Test parc extraction
     te.extract_ts_parc()
-    assert np.shape(te.ts_within_nodes) == (np.shape(func_img)[-1] - 5, len(np.unique(parcels)) - 1)
+    assert np.shape(te.ts_within_nodes) == (np.shape(func_img)[-1] - 5,
+                                            len(np.unique(parcels)) - 1)
 
     # Test save and clean up
     te._mask_path = te._mask_img
     te.save_and_cleanup()
 
-    assert '_parcel_masker' not in te.__dict__.keys()
+    assert te._net_parcels_map_nifti.in_memory is False
+    assert os.path.isfile(f"{te.dir_path}/timeseries/nodetimeseries_sub-002_"
+                          f"rsn-Default_parc_smooth-2fwhm_hpass-100.0Hz_"
+                          f"extract-mean.npy")
 
     func_file.close()
     parcels_tmp.close()
@@ -399,7 +411,8 @@ def test_csd_mod_est(dmri_estimation_data):
     nib.save(B0_mask_img, B0_mask_file.name)
     dwi_data = dwi_img.get_fdata()
 
-    [csd_mod, model] = csd_mod_est(gtab, dwi_data, B0_mask_file.name, sh_order=0)
+    [csd_mod, model] = csd_mod_est(gtab, dwi_data, B0_mask_file.name,
+                                   sh_order=0)
 
     assert csd_mod is not None
     assert model is not None
@@ -437,7 +450,8 @@ def test_streams2graph(fa_wei, dsn):
     import os
 
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_res-2mm.nii.gz"
+    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_" \
+               f"res-2mm.nii.gz"
     conn_model = 'csd'
     min_length = 10
     error_margin = 2
@@ -449,17 +463,22 @@ def test_streams2graph(fa_wei, dsn):
     norm = 6
     binary = False
     roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    network = 'Default'
+    subnet = 'Default'
     ID = '003'
     parc = True
     disp_filt = False
-    node_size = None
+    node_radius = None
     dens_thresh = False
     atlas = 'whole_brain_cluster_labels_PCA200'
-    uatlas = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-    t1_aligned_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-    atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_track.nii.gz"
-    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-1000streams_tracktype-particle_directget-prob_minlength-10.trk"
+    parcellation = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_" \
+                   f"PCA200.nii.gz"
+    t1_aligned_mni = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_" \
+                     f"PCA200.nii.gz"
+    atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_" \
+                f"track.nii.gz"
+    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
+              f"nodetype-parc_samples-1000streams_tracktype-particle_" \
+              f"directget-prob_minlength-10.trk"
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     dir_path = f"{base_dir}/003/dmri"
     bvals = f"{dir_path}/sub-003_dwi.bval"
@@ -474,36 +493,41 @@ def test_streams2graph(fa_wei, dsn):
     save_pickle(gtab_file, gtab)
     fa_path = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
 
-    coords = [(random.random()*2.0, random.random()*2.0, random.random()*2.0) for _ in range(200)]
-    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+    coords = [(random.random()*2.0, random.random()*2.0, random.random()*2.0)
+              for _ in range(200)]
+    labels = np.arange(len(coords) + 1)[np.arange(len(coords
+                                                      ) + 1) != 0].tolist()
 
     # if dsn is True:
     #     os.makedirs(f"{dir_path}/dmri_reg/DSN", exist_ok=True)
-    #     (streams_mni, dir_path, track_type, target_samples, conn_model, network, node_size, dens_thresh, ID, roi,
-    #      min_span_tree, disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary, atlas_mni, directget,
+    #     (streams_mni, dir_path, track_type, target_samples, conn_model, subnet, node_radius, dens_thresh, ID, roi,
+    #      min_span_tree, disp_filt, parc, prune, atlas, parcellation, labels, coords, norm, binary, atlas_mni, directget,
     #      warped_fa, min_length, error_margin) = register.direct_streamline_norm(streams, fa_path, fa_path, dir_path,
     #                                                                             track_type, target_samples, conn_model,
-    #                                                                             network, node_size, dens_thresh, ID,
+    #                                                                             subnet, node_radius, dens_thresh, ID,
     #                                                                             roi, min_span_tree, disp_filt, parc,
-    #                                                                             prune, atlas, atlas_dwi, uatlas,
-    #                                                                             labels, coords, norm, binary, uatlas,
+    #                                                                             prune, atlas, atlas_dwi, parcellation,
+    #                                                                             labels, coords, norm, binary, parcellation,
     #                                                                             dir_path, [0.1, 0.2], [40, 30],
     #                                                                             directget, min_length, t1_aligned_mni,
     #                                                                             error_margin)
     #
     #     conn_matrix = streams2graph(atlas_mni, streams_mni, dir_path, track_type, target_samples,
-    #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-    #                                 disp_filt, parc, prune, atlas, uatlas, labels, coords, norm, binary,
+    #                                 conn_model, subnet, node_radius, dens_thresh, ID, roi, min_span_tree,
+    #                                 disp_filt, parc, prune, atlas, parcellation, labels, coords, norm, binary,
     #                                 directget, warped_fa, error_margin, min_length)[2]
     # else:
     #     conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type, target_samples,
-    #                                 conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
+    #                                 conn_model, subnet, node_radius, dens_thresh, ID, roi, min_span_tree,
     #                                 disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
     #                                 directget, fa_path, error_margin, min_length)[2]
 
-    conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type, target_samples,
-                                conn_model, network, node_size, dens_thresh, ID, roi, min_span_tree,
-                                disp_filt, parc, prune, atlas, atlas_dwi, labels, coords, norm, binary,
-                                directget, fa_path, min_length, error_margin)[2]
+    conn_matrix = streams2graph(atlas_dwi, streams, dir_path, track_type,
+                                target_samples, conn_model, subnet,
+                                node_radius, dens_thresh, ID, roi,
+                                min_span_tree, disp_filt, parc, prune, atlas,
+                                atlas_dwi, labels, coords, norm, binary,
+                                directget, fa_path, min_length,
+                                error_margin)[2]
 
     assert conn_matrix is not None

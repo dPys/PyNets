@@ -33,7 +33,8 @@ setup(
             'pynets_cloud=pynets.cli.pynets_cloud:main',
             'pynets_bids=pynets.cli.pynets_bids:main',
             'pynets_benchmark=pynets.cli.pynets_benchmark:main',
-            'pynets_predict=pynets.cli.pynets_predict:main'
+            'pynets_predict=pynets.cli.pynets_predict:main',
+            'pynets_config=pynets.cli.pynets_config:main'
         ]
     },
     include_package_data=True,
