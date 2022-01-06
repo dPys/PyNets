@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Copyright (C) 2017
-@authors: Derek Pisner
 """
 import pandas as pd
 import os
-import re
 import glob
 import numpy as np
 import itertools
@@ -707,7 +705,6 @@ def populate_subject_dict(
     df_top=None,
 ):
     from colorama import Fore, Style
-    from joblib import Parallel, delayed
     import gc
 
     # print(id)

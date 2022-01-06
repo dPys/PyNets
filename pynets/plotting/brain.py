@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np
@@ -12,7 +11,6 @@ import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 import networkx as nx
-import os.path as op
 import tkinter
 import matplotlib
 import matplotlib.pyplot as plt
@@ -221,8 +219,8 @@ def create_gb_palette(
     import mplcyberpunk
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
-    from pynets.stats.netstats import community_resolution_selection, \
-        prune_disconnected
+    from pynets.stats.individual.netstats import \
+        community_resolution_selection, prune_disconnected
 
     plt.style.use("cyberpunk")
 
@@ -435,8 +433,7 @@ def plot_all_func(
     import pickle
     from scipy.spatial import distance
     from pynets.core.utils import load_mat
-    from pynets.plotting import plot_gen, plot_graphs
-    from pynets.plotting.plot_gen import create_gb_palette
+    from pynets.plotting import adjacency, connectogram
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/ch2better.nii.gz"
@@ -494,7 +491,7 @@ def plot_all_func(
     except KeyError as e:
         print(e,
               "Plotting configuration not successfully extracted "
-              "from runconfig.yaml"
+              "from advanced.yaml"
               )
 
     if not isinstance(coords, list):
@@ -536,7 +533,7 @@ def plot_all_func(
         if connectogram is True:
             if len(conn_matrix) > 20:
                 try:
-                    plot_gen.plot_connectogram(
+                    connectogram.plot_connectogram(
                         conn_matrix, conn_model, atlas, namer_dir, ID,
                         subnet, labels)
                 except RuntimeWarning:
@@ -552,7 +549,7 @@ def plot_all_func(
             node_radius = "parc"
 
         if adjacency is True:
-            plot_graphs.plot_conn_mat_func(
+            adjacency.plot_conn_mat_func(
                 conn_matrix,
                 conn_model,
                 atlas,
@@ -818,8 +815,7 @@ def plot_all_struct(
     import pickle
     from scipy.spatial import distance
     from pynets.core.utils import load_mat
-    from pynets.plotting import plot_gen, plot_graphs
-    from pynets.plotting.plot_gen import create_gb_palette
+    from pynets.plotting import adjacency
     import mplcyberpunk
 
     plt.style.use("cyberpunk")
@@ -894,7 +890,7 @@ def plot_all_struct(
         if connectogram is True:
             if len(conn_matrix) > 20:
                 try:
-                    plot_gen.plot_connectogram(
+                    connectogram.plot_connectogram(
                         conn_matrix, conn_model, atlas, namer_dir, ID,
                         subnet, labels)
                 except RuntimeWarning:
@@ -910,7 +906,7 @@ def plot_all_struct(
             node_radius = "parc"
 
         if adjacency is True:
-            plot_graphs.plot_conn_mat_struct(
+            adjacency.plot_conn_mat_struct(
                 conn_matrix,
                 conn_model,
                 atlas,
@@ -1133,7 +1129,6 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     from pynets.core import thresholding
-    from pynets.plotting.plot_gen import create_gb_palette
     import mplcyberpunk
     from scipy.spatial import distance
 

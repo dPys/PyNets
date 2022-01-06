@@ -103,7 +103,6 @@ def adaptivethresh(in_mat, thr, mlib, N):
       https://doi.org/10.1063/1.4979282
 
     """
-    from pynets.stats.multiplex import countmotifs
 
     mf = countmotifs((in_mat > thr).astype(int), N=N)
     try:
@@ -142,7 +141,6 @@ def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
       https://doi.org/10.1063/1.4979282
 
     """
-    from pynets.stats.multiplex import adaptivethresh
     from pynets.core.thresholding import threshold_absolute
     from pynets.core.thresholding import standardize
     from scipy import spatial
@@ -438,11 +436,9 @@ def motif_matching(
     import glob
     import pickle
     from pynets.core import thresholding
-    from pynets.stats.multiplex import compare_motifs
     from sklearn.metrics.pairwise import cosine_similarity
-    from pynets.stats.netstats import community_resolution_selection
-    from graspologic.utils import remove_loops, symmetrize, \
-        largest_connected_component
+    from pynets.stats.individual.netstats import community_resolution_selection
+    from graspologic.utils import remove_loops, symmetrize
 
     [struct_graph_path, func_graph_path] = paths
     struct_mat = np.load(struct_graph_path)
@@ -669,7 +665,6 @@ def build_multigraphs(est_path_iterlist, ID):
     import numpy as np
     from pathlib import Path
     from pynets.core.utils import flatten
-    from pynets.stats.multiplex import motif_matching
 
     raw_est_path_iterlist = list(
         set(
@@ -683,7 +678,7 @@ def build_multigraphs(est_path_iterlist, ID):
 
     # Available functional and structural connectivity models
     with open(
-        pkg_resources.resource_filename("pynets", "runconfig.yaml"), "r"
+        pkg_resources.resource_filename("pynets", "advanced.yaml"), "r"
     ) as stream:
         hardcoded_params = yaml.load(stream)
         try:
@@ -691,7 +686,7 @@ def build_multigraphs(est_path_iterlist, ID):
         except KeyError:
             print(
                 "ERROR: available functional models not sucessfully extracted"
-                " from runconfig.yaml"
+                " from advanced.yaml"
             )
         try:
             struct_models = hardcoded_params["available_models"][
@@ -699,7 +694,7 @@ def build_multigraphs(est_path_iterlist, ID):
         except KeyError:
             print(
                 "ERROR: available structural models not sucessfully extracted"
-                " from runconfig.yaml"
+                " from advanced.yaml"
             )
     stream.close()
 

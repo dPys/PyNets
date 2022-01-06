@@ -21,7 +21,7 @@ try:
     DEFAULT_ENGINE = hardcoded_params["graph_analysis_engine"][0]
 except FileNotFoundError as e:
     import sys
-    print(e, "Failed to parse runconfig.yaml")
+    print(e, "Failed to parse advanced.yaml")
 
 
 def get_prop_type(value, key=None):
@@ -1415,7 +1415,6 @@ class CleanGraphs(object):
         return self.G
 
     def prune_graph(self, remove_self_loops=True):
-        import os
         from pynets.core import utils
         from graspologic.utils import largest_connected_component, \
             remove_loops, symmetrize
@@ -1442,7 +1441,7 @@ class CleanGraphs(object):
                                              method=hub_detection_method)
             except FileNotFoundError as e:
                 import sys
-                print(e, "Failed to parse runconfig.yaml")
+                print(e, "Failed to parse advanced.yaml")
 
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
@@ -2029,13 +2028,12 @@ def extractnetstats(
     # import random
     import pkg_resources
     import networkx
-    from pynets.stats import netstats
     from pathlib import Path
 
     # Load netstats config and parse graph algorithms as objects
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/global.yaml"),
+                                        "stats/individual/global.yaml"),
         "r",
     ) as stream:
         try:
@@ -2089,7 +2087,7 @@ def extractnetstats(
 
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/local.yaml"),
+                                        "stats/individual/local.yaml"),
         "r",
     ) as stream:
         try:

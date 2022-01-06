@@ -22,7 +22,8 @@ logger.setLevel(50)
 def test_extract_b0():
 
     base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    dwi_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
+               f"dwi.nii.gz"
     fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
     b0_ixs = np.where(np.loadtxt(fbval) <= 50)[0].tolist()[:2]
     out_path = dmriutils.extract_b0(dwi_path, b0_ixs)

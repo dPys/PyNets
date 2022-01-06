@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
 Created on Monday July 29 16:19:14 2019
-
-@authors: Ryan Hammonds and Derek Pisner
-
 """
 import pytest
 import numpy as np
@@ -59,7 +56,8 @@ def test_applyxfm():
 
     ## First test: Apply xfm from test_align to orig anat img.
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    ref = pkg_resources.resource_filename(
+        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)

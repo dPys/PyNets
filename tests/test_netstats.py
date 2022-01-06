@@ -9,10 +9,8 @@ import numpy as np
 import networkx as nx
 import time
 from pathlib import Path
-from pynets.stats import netstats
+from pynets.stats.individual import netstats
 import logging
-import tempfile
-from nilearn._utils.data_gen import generate_mni_space_img
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -143,7 +141,7 @@ def test_average_local_efficiency(engine):
     print("%s%s%s" % ('test_average_local_efficiency --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
     assert average_local_efficiency > 0
-    assert average_local_efficiency.dtype == float
+    assert type(average_local_efficiency) == float
 
 
 # used random node_comm_aff_mat
@@ -358,10 +356,15 @@ def test_raw_mets(engine):
     """
     Test raw_mets extraction functionality
     """
-    from pynets.stats.netstats import global_efficiency, average_local_efficiency, smallworldness
-    from networkx.algorithms import degree_assortativity_coefficient, average_clustering, average_shortest_path_length, degree_pearson_correlation_coefficient, graph_number_of_cliques, transitivity, sigma
+    from pynets.stats.individual.netstats import global_efficiency, \
+        average_local_efficiency, smallworldness
+    from networkx.algorithms import degree_assortativity_coefficient, \
+        average_clustering, average_shortest_path_length, \
+        degree_pearson_correlation_coefficient, graph_number_of_cliques, \
+        transitivity
     base_dir = str(Path(__file__).parent/"examples")
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
+    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-" \
+               f"parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
     in_mat = np.load(est_path)
     G = nx.from_numpy_array(in_mat)
     [G, _] = netstats.prune_disconnected(G)

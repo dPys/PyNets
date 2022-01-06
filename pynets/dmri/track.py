@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np
@@ -29,6 +28,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         4D array of dwi data.
     B0_mask : str
         File path to B0 brain mask.
+
     Returns
     -------
     mod_fit : ndarray
@@ -92,6 +92,7 @@ def prep_tissues(
         Tissue classification method.
     cmc_step_size : float
         Step size from CMC tissue classification method.
+
     Returns
     -------
     tiss_classifier : obj
@@ -238,6 +239,7 @@ def create_density_map(
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+
     Returns
     -------
     streams : str
@@ -387,6 +389,7 @@ def track_ensemble(
         Number of particles to use in the particle filter.
     min_separation_angle : float
         The minimum angle between directions [0, 90].
+
     Returns
     -------
     streamlines : ArraySequence
@@ -619,7 +622,6 @@ def run_tracking(step_curv_combinations, recon_shelved,
     )
     from nilearn.image import index_img
     from pynets.dmri.utils import generate_seeds, random_seeds_from_mask
-    from pynets.dmri.track import prep_tissues
     from nibabel.streamlines.array_sequence import ArraySequence
     from nilearn.image import math_img
 

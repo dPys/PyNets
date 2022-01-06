@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np
@@ -555,7 +554,7 @@ class TimeseriesExtraction(object):
         except KeyError as e:
             print(e,
                   "ERROR: Plotting configuration not successfully "
-                  "extracted from runconfig.yaml"
+                  "extracted from advanced.yaml"
                   )
 
     def prepare_inputs(self, num_std_dev=1.5):

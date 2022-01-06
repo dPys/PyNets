@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@authors: Derek Pisner
 """
 import os
 from sklearn.metrics.pairwise import (
@@ -19,7 +18,6 @@ import pandas as pd
 import numpy as np
 import warnings
 from sklearn.preprocessing import StandardScaler
-from pynets.stats.utils import flatten_latent_positions
 from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
 

@@ -3,12 +3,11 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
-import numpy as np
-import tkinter
+
 import matplotlib
+import numpy as np
 
 warnings.filterwarnings("ignore")
 matplotlib.use("agg")
@@ -32,7 +31,6 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     warnings.filterwarnings("ignore")
     import matplotlib
     matplotlib.use('Agg')
-    import mplcyberpunk
     from matplotlib import pyplot as plt
     plt.style.use("cyberpunk")
     from matplotlib import pyplot as plt
@@ -78,6 +76,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     return
 
 
+# noinspection PyUnresolvedReferences
 def plot_community_conn_mat(
         conn_matrix,
         labels,
@@ -105,7 +104,6 @@ def plot_community_conn_mat(
     import matplotlib
     from matplotlib import pyplot as plt
     matplotlib.use("agg")
-    import mplcyberpunk
     plt.style.use("cyberpunk")
     import matplotlib.patches as patches
     import matplotlib.ticker as mticker
@@ -249,10 +247,8 @@ def plot_conn_mat_func(
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
-    import sys
     import networkx as nx
     import os.path as op
-    from pynets.plotting import plot_graphs
 
     out_path_fig = \
         "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
@@ -295,16 +291,17 @@ def plot_conn_mat_func(
     except KeyError as e:
         print(e,
               "Plotting configuration not successfully extracted from"
-              " runconfig.yaml"
+              " advanced.yaml"
               )
 
-    plot_graphs.plot_conn_mat(
+    plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
     )
 
     # Plot community adj. matrix
     try:
-        from pynets.stats.netstats import community_resolution_selection
+        from pynets.stats.individual.netstats import \
+            community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = \
@@ -342,7 +339,7 @@ def plot_conn_mat_func(
              thr,
              ".png",
              )
-        plot_graphs.plot_community_conn_mat(
+        plot_community_conn_mat(
             conn_matrix,
             labels,
             out_path_fig_comm,
@@ -421,8 +418,7 @@ def plot_conn_mat_struct(
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
-    import sys
-    from pynets.plotting import plot_graphs
+    from pynets.plotting import adjacency
     import networkx as nx
     import os.path as op
 
@@ -470,16 +466,17 @@ def plot_conn_mat_struct(
     except KeyError as e:
         print(e,
               "Plotting configuration not successfully extracted from"
-              " runconfig.yaml"
+              " advanced.yaml"
               )
 
-    plot_graphs.plot_conn_mat(
+    adjacency.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
     )
 
     # Plot community adj. matrix
     try:
-        from pynets.stats.netstats import community_resolution_selection
+        from pynets.stats.individual.netstats import \
+            community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
         _, node_comm_aff_mat, resolution, num_comms = \
@@ -520,7 +517,7 @@ def plot_conn_mat_struct(
                thr,
                ".png",
                )
-        plot_graphs.plot_community_conn_mat(
+        adjacency.plot_community_conn_mat(
             conn_matrix,
             labels,
             out_path_fig_comm,

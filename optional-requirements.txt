@@ -3,4 +3,6 @@ pingouin>=0.3.7
 imbalanced-learn>=0.8.0
 awscli>=1.16.0
 skggm>=0.2.8
+ConfigParser>=3.7.4
+templateflow>=0.7.0
 git+https://github.com/dPys/multinetx.git@master

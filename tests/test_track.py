@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
 Created on Thur July 18 20:19:14 2019
-
-@authors: Derek Pisner & Ryan Hammonds
-
 """
 import pytest
 try:

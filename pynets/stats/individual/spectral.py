@@ -6,8 +6,6 @@ Copyright (C) 2017
 @author: Derek Pisner
 """
 from pathlib import Path
-import os
-import numpy as np
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -37,10 +35,8 @@ def _omni_embed(pop_array, atlas, graph_path_list,
         n_vertices).
     atlas : str
         The name of an atlas (indicating the node definition).
-    graph_pathlist : list
+    graph_path_list : list
         List of file paths to graphs in pop_array.
-    ID : str
-        An arbitrary subject identifier.
     subgraph_name : str
 
     Returns
@@ -62,11 +58,9 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     import os
     import networkx as nx
     import numpy as np
-    from pynets.core.utils import flatten
     from graspologic.embed.omni import OmnibusEmbed
     from graspologic.embed.mds import ClassicalMDS
-    from joblib import dump
-    from pynets.stats.netstats import CleanGraphs
+    from pynets.stats.individual.netstats import CleanGraphs
 
     dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
 
@@ -78,7 +72,8 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     i = 0
     for graph_path in graph_path_list:
         if 'thr-' in graph_path:
-            thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
+            thr = float(graph_path.split('thr-'
+                                         )[1].split('_')[0].split('.npy')[0])
         else:
             thr = 1.0
         cg = CleanGraphs(thr,
@@ -141,8 +136,8 @@ def _omni_embed(pop_array, atlas, graph_path_list,
                    f"_subnet-{atlas}_res-{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
         # TODO: Replace this band-aid solution with the real fix
-        out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-',
-                                                                'res-')
+        out_path = out_path.replace('subnet-subnet-',
+                                    'subnet-').replace('res-res-', 'res-')
         if not os.path.exists(out_path):
             open(out_path, 'w').close()
     return out_path
@@ -180,7 +175,6 @@ def _mase_embed(pop_array, atlas, graph_path, subgraph_name="all_nodes",
         n_vertices, n_vertices).
     atlas : str
     graph_path : str
-    ID : str
     subgraph_name : str
     n_components : int
 
@@ -256,7 +250,6 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     atlas : str
         The name of an atlas (indicating the node definition).
     graph_path : str
-    ID : str
     subgraph_name : str
 
     Returns
@@ -289,10 +282,8 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     import pickle
     import networkx as nx
     import numpy as np
-    from pynets.core.utils import flatten
     from graspologic.embed.ase import AdjacencySpectralEmbed
-    from joblib import dump
-    from pynets.stats.netstats import CleanGraphs
+    from pynets.stats.individual.netstats import CleanGraphs
 
     # Adjacency Spectral embedding
     print(
@@ -337,13 +328,15 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
-               f"_subnet-{atlas}_res-{subgraph_name}_{os.path.basename(graph_path)}"
+               f"_subnet-{atlas}_res-{subgraph_name}_" \
+               f"{os.path.basename(graph_path)}"
     # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
     #                f"_{subgraph_name}" \
     #                f"_{os.path.basename(graph_path).split('.npy')[0]}.joblib"
 
     # TODO: Replace this band-aid solution with the real fix
-    out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-', 'res-')
+    out_path = out_path.replace('subnet-subnet-', 'subnet-').replace(
+        'res-res-', 'res-')
     #dump(ase, out_path_est)
 
     print("Saving...")
@@ -369,7 +362,6 @@ def build_asetomes(est_path_iterlist, ID):
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices, flatten
-    from pynets.stats.spectral import _ase_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -381,7 +373,7 @@ def build_asetomes(est_path_iterlist, ID):
         import sys
         print(
             "ERROR: available gradient dimensionality presets not "
-            "sucessfully extracted from runconfig.yaml"
+            "sucessfully extracted from advanced.yaml"
         )
         sys.exit(1)
 
@@ -419,8 +411,8 @@ def build_asetomes(est_path_iterlist, ID):
                        f"_subnet-{atlas}_res-{subgraph}_" \
                        f"{os.path.basename(file_)}_NULL"
             # TODO: Replace this band-aid solution with the real fix
-            out_path = out_path.replace('subnet-subnet-', 'subnet-').replace('res-res-',
-                                                                    'res-')
+            out_path = out_path.replace('subnet-subnet-',
+                                        'subnet-').replace('res-res-', 'res-')
             if not os.path.exists(out_path):
                 open(out_path, 'w').close()
             out_paths.append(out_path)
@@ -454,7 +446,6 @@ def build_masetome(est_path_iterlist, ID):
     import os
     import numpy as np
     from pynets.core.utils import prune_suffices
-    from pynets.stats.spectral import _mase_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -466,7 +457,7 @@ def build_masetome(est_path_iterlist, ID):
         import sys
         print(
             "ERROR: available gradient dimensionality presets not "
-            "sucessfully extracted from runconfig.yaml"
+            "sucessfully extracted from advanced.yaml"
         )
         sys.exit(1)
 
@@ -539,7 +530,6 @@ def build_omnetome(est_path_iterlist, ID):
     import sys
     import numpy as np
     from pynets.core.utils import flatten
-    from pynets.stats.spectral import _omni_embed
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
@@ -550,7 +540,7 @@ def build_omnetome(est_path_iterlist, ID):
     except KeyError:
         print(
             "ERROR: available functional models not sucessfully extracted"
-            " from runconfig.yaml"
+            " from advanced.yaml"
         )
         sys.exit(1)
     try:
@@ -559,7 +549,7 @@ def build_omnetome(est_path_iterlist, ID):
     except KeyError:
         print(
             "ERROR: available structural models not sucessfully extracted"
-            " from runconfig.yaml"
+            " from advanced.yaml"
         )
         sys.exit(1)
     try:
@@ -568,7 +558,7 @@ def build_omnetome(est_path_iterlist, ID):
     except KeyError:
         print(
             "ERROR: available gradient dimensionality presets not "
-            "sucessfully extracted from runconfig.yaml"
+            "sucessfully extracted from advanced.yaml"
         )
         sys.exit(1)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import bids
 
@@ -547,14 +547,14 @@ def main():
 
     if s3 or len(sec_s3_objs) > 0:
         from boto3.session import Session
-        from pynets.core import cloud_utils
+        from pynets.core import cloud
         from pynets.core.utils import as_directory
 
         home = os.path.expanduser("~")
-        creds = bool(cloud_utils.get_credentials())
+        creds = bool(cloud.get_credentials())
 
         if s3:
-            buck, remo = cloud_utils.parse_path(bids_args.bids_dir)
+            buck, remo = cloud.parse_path(bids_args.bids_dir)
             os.makedirs(f"{home}/.pynets", exist_ok=True)
             os.makedirs(f"{home}/.pynets/input", exist_ok=True)
             os.makedirs(f"{home}/.pynets/output", exist_ok=True)
@@ -576,31 +576,31 @@ def main():
                         info = "sub-" + partic + "/ses-" + ses
                     elif ses is None:
                         info = "sub-" + partic
-                    cloud_utils.s3_get_data(
+                    cloud.s3_get_data(
                         buck, remo, bids_dir, modality, info=info)
             elif analysis_level == "group":
                 if len(session_label) > 1 and session_label[0] != "None":
                     for ses in session_label:
                         info = "ses-" + ses
-                        cloud_utils.s3_get_data(
+                        cloud.s3_get_data(
                             buck, remo, bids_dir, modality, info=info
                         )
                 else:
-                    cloud_utils.s3_get_data(buck, remo, bids_dir, modality)
+                    cloud.s3_get_data(buck, remo, bids_dir, modality)
 
         if len(sec_s3_objs) > 0:
-            [access_key, secret_key] = cloud_utils.get_credentials()
+            [access_key, secret_key] = cloud.get_credentials()
 
             session = Session(
                 aws_access_key_id=access_key, aws_secret_access_key=secret_key
             )
 
             s3_r = session.resource("s3")
-            s3_c = cloud_utils.s3_client(service="s3")
+            s3_c = cloud.s3_client(service="s3")
             sec_dir = as_directory(
                 home + "/.pynets/secondary_files", remove=False)
             for s3_obj in [i for i in sec_s3_objs if i is not None]:
-                buck, remo = cloud_utils.parse_path(s3_obj)
+                buck, remo = cloud.parse_path(s3_obj)
                 s3_c.download_file(
                     buck, remo, f"{sec_dir}/{os.path.basename(s3_obj)}")
 
@@ -842,9 +842,9 @@ def main():
 
     if bids_args.push_location:
         print(f"Pushing to s3 at {bids_args.push_location}.")
-        push_buck, push_remo = cloud_utils.parse_path(bids_args.push_location)
+        push_buck, push_remo = cloud.parse_path(bids_args.push_location)
         for id in id_list:
-            cloud_utils.s3_push_data(
+            cloud.s3_push_data(
                 push_buck,
                 push_remo,
                 output_dir,

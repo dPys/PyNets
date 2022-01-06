@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner
 """
 import os
 import numpy as np
@@ -22,9 +21,7 @@ except KeyError as e:
 
 
 def gen_mask(t1w_head, t1w_brain, mask):
-    import time
     import os.path as op
-    from pynets.registration import utils as regutils
     from nilearn.image import math_img
 
     t1w_brain_mask = f"{op.dirname(t1w_head)}/t1w_brain_mask.nii.gz"
@@ -56,7 +53,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     math_img("img > 0.0001", img=nib.load(t1w_brain_mask)
              ).to_filename(t1w_brain_mask)
 
-    t1w_brain = regutils.apply_mask_to_image(t1w_head, t1w_brain_mask,
+    t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask,
                                              t1w_brain)
 
     assert op.isfile(t1w_brain)
@@ -118,7 +115,6 @@ def atlas2t1w2dwi_align(
     import gc
     from nilearn.image import resample_to_img
     from pynets.core.utils import checkConsecutive
-    from pynets.registration import utils as regutils
     from nilearn.image import math_img
     from nilearn.masking import intersect_masks
 
@@ -143,7 +139,7 @@ def atlas2t1w2dwi_align(
 
     if simple is False:
         try:
-            regutils.apply_warp(
+            apply_warp(
                 t1w_brain,
                 aligned_atlas_t1mni,
                 aligned_atlas_skull,
@@ -155,7 +151,7 @@ def atlas2t1w2dwi_align(
             time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
-            regutils.applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_xfm,
+            applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
         except BaseException:
@@ -163,21 +159,21 @@ def atlas2t1w2dwi_align(
                 "Warning: Atlas is not in correct dimensions, or input is low"
                 " quality,\nusing linear template registration.")
 
-            regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+            applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
                               aligned_atlas_skull, interp="nearestneighbour")
             time.sleep(0.5)
             combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
-            regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
+            applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                               dwi_aligned_atlas, interp="nearestneighbour")
             time.sleep(0.5)
     else:
-        regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+        applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
                           aligned_atlas_skull, interp="nearestneighbour")
         time.sleep(0.5)
         combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
         time.sleep(0.5)
-        regutils.applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
+        applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
                           dwi_aligned_atlas, interp="nearestneighbour")
         time.sleep(0.5)
 
@@ -201,15 +197,15 @@ def atlas2t1w2dwi_align(
     nib.save(atlas_img_corr, dwi_aligned_atlas)
     nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
 
-    dwi_aligned_atlas = regutils.apply_mask_to_image(dwi_aligned_atlas,
+    dwi_aligned_atlas = apply_mask_to_image(dwi_aligned_atlas,
                                                      B0_mask,
                                                      dwi_aligned_atlas)
 
-    dwi_aligned_atlas_wmgm_int = regutils.apply_mask_to_image(
+    dwi_aligned_atlas_wmgm_int = apply_mask_to_image(
         dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int)
 
-    final_dat = atlas_img_corr.get_fdata()
-    unique_a = sorted(set(np.array(final_dat.flatten().tolist())))
+    unique_a = sorted(set(np.array(
+        np.ndarray.flatten(np.asarray(atlas_img_corr.dataobj)).tolist())))
 
     if not checkConsecutive(unique_a):
         print("Warning! Non-consecutive integers found in parcellation...")
@@ -248,7 +244,6 @@ def roi2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     roi_img = nib.load(roi)
@@ -263,13 +258,13 @@ def roi2dwi_align(
     # Apply warp or transformer resulting from the inverse MNI->T1w created
     # earlier
     if simple is False:
-        regutils.apply_warp(t1w_brain, roi, roi_in_t1w, warp=mni2t1w_warp)
+        apply_warp(t1w_brain, roi, roi_in_t1w, warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
+        applyxfm(t1w_brain, roi, mni2t1_xfm, roi_in_t1w)
 
     time.sleep(0.5)
     # Apply transform from t1w to native dwi space
-    regutils.applyxfm(ap_path, roi_in_t1w, t1wtissue2dwi_xfm, roi_in_dwi)
+    applyxfm(ap_path, roi_in_t1w, t1wtissue2dwi_xfm, roi_in_dwi)
 
     return roi_in_dwi
 
@@ -292,7 +287,6 @@ def waymask2dwi_align(
     MNI space --> T1w --> dwi.
     """
     import time
-    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     # Apply warp or transformer resulting from the inverse MNI->T1w created
@@ -307,18 +301,18 @@ def waymask2dwi_align(
     nib.save(waymask_img_res, waymask_res)
 
     if simple is False:
-        regutils.apply_warp(
+        apply_warp(
             t1w_brain,
             waymask_res,
             waymask_in_t1w,
             warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, waymask_res, mni2t1_xfm,
+        applyxfm(t1w_brain, waymask_res, mni2t1_xfm,
                           waymask_in_t1w)
 
     time.sleep(0.5)
     # Apply transform from t1w to native dwi space
-    regutils.applyxfm(
+    applyxfm(
         ap_path,
         waymask_in_t1w,
         t1wtissue2dwi_xfm,
@@ -326,7 +320,7 @@ def waymask2dwi_align(
 
     time.sleep(0.5)
 
-    waymask_in_dwi = regutils.apply_mask_to_image(waymask_in_dwi,
+    waymask_in_dwi = apply_mask_to_image(waymask_in_dwi,
                                                   B0_mask_tmp_path,
                                                   waymask_in_dwi)
 
@@ -345,7 +339,6 @@ def roi2t1w_align(
     A function to perform alignment of a roi from MNI space --> T1w.
     """
     import time
-    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     roi_img = nib.load(roi)
@@ -360,10 +353,10 @@ def roi2t1w_align(
     # Apply warp or transformer resulting from the inverse
     # MNI->T1w created earlier
     if simple is False:
-        regutils.apply_warp(t1w_brain, roi_res, roi_in_t1w,
+        apply_warp(t1w_brain, roi_res, roi_in_t1w,
                             warp=mni2t1w_warp)
     else:
-        regutils.applyxfm(t1w_brain, roi_res, mni2t1_xfm,
+        applyxfm(t1w_brain, roi_res, mni2t1_xfm,
                           roi_in_t1w)
 
     time.sleep(0.5)
@@ -386,7 +379,6 @@ def RegisterParcellation2MNIFunc_align(
     A function to perform atlas alignment from T1w atlas --> MNI.
     """
     import time
-    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
 
     atlas_img = nib.load(parcellation)
@@ -405,7 +397,7 @@ def RegisterParcellation2MNIFunc_align(
 
     if simple is False:
         try:
-            regutils.apply_warp(
+            apply_warp(
                 template,
                 aligned_atlas_t1w,
                 aligned_atlas_mni,
@@ -419,7 +411,7 @@ def RegisterParcellation2MNIFunc_align(
                 "Warning: Atlas is not in correct dimensions, or input is "
                 "low quality,\nusing linear template registration.")
 
-            regutils.align(
+            align(
                 aligned_atlas_t1w,
                 template,
                 init=t1w2mni_xfm,
@@ -431,7 +423,7 @@ def RegisterParcellation2MNIFunc_align(
             )
             time.sleep(0.5)
     else:
-        regutils.align(
+        align(
             aligned_atlas_t1w,
             template,
             init=t1w2mni_xfm,
@@ -465,7 +457,6 @@ def atlas2t1w_align(
     A function to perform atlas alignment from atlas --> T1w.
     """
     import time
-    from pynets.registration import utils as regutils
     from nilearn.image import resample_to_img
     # from pynets.core.utils import checkConsecutive
 
@@ -490,7 +481,7 @@ def atlas2t1w_align(
 
     if simple is False:
         try:
-            regutils.apply_warp(
+            apply_warp(
                 t1w_brain,
                 aligned_atlas_t1mni,
                 aligned_atlas_skull,
@@ -505,18 +496,18 @@ def atlas2t1w_align(
                 "Warning: Atlas is not in correct dimensions, or input is low "
                 "quality,\nusing linear template registration.")
 
-            regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+            applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
                               aligned_atlas_skull, interp="nearestneighbour")
             time.sleep(0.5)
     else:
-        regutils.applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
+        applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
                           aligned_atlas_skull, interp="nearestneighbour")
         time.sleep(0.5)
 
-    # aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+    # aligned_atlas_gm = apply_mask_to_image(aligned_atlas_skull,
     #                                                 gm_mask,
     #                                                 aligned_atlas_gm)
-    aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+    aligned_atlas_gm = apply_mask_to_image(aligned_atlas_skull,
                                                     t1w_brain_mask,
                                                     aligned_atlas_gm)
 
@@ -541,7 +532,7 @@ def atlas2t1w_align(
     # if diff > gm_fail_tol:
     #     print(f"Grey-Matter mask too restrictive >{str(gm_fail_tol)} for this "
     #           f"parcellation. Falling back to the T1w mask...")
-    #     aligned_atlas_gm = regutils.apply_mask_to_image(aligned_atlas_skull,
+    #     aligned_atlas_gm = apply_mask_to_image(aligned_atlas_skull,
     #                                                     t1w_brain_mask,
     #                                                     aligned_atlas_gm)
     #     time.sleep(5)
@@ -1182,11 +1173,8 @@ def orient_reslice(
         is a dwi.
 
     """
-    from pynets.registration.utils import (
-        reorient_dwi,
-        reorient_img,
-        match_target_vox_res,
-    )
+    from pynets.registration.utils import reorient_img, reorient_dwi, \
+        match_target_vox_res
     import time
 
     img = nib.load(infile)
@@ -1199,13 +1187,13 @@ def orient_reslice(
         if ("reor-RAS" not in infile) or (overwrite is True):
             [infile, bvecs] = reorient_dwi(
                 infile, bvecs, outdir, overwrite=overwrite)
-            time.sleep(0.5)
+            time.sleep(0.25)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
-            time.sleep(0.5)
+            time.sleep(0.25)
             print(outfile)
         else:
             outfile = infile
@@ -1214,13 +1202,13 @@ def orient_reslice(
         # Check orientation
         if ("reor-RAS" not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir, overwrite=overwrite)
-            time.sleep(0.5)
+            time.sleep(0.25)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
-            time.sleep(0.5)
+            time.sleep(0.25)
             print(outfile)
         else:
             outfile = infile
@@ -1229,13 +1217,13 @@ def orient_reslice(
         # Check orientation
         if ("reor-RAS" not in infile) or (overwrite is True):
             infile = reorient_img(infile, outdir, overwrite=overwrite)
-            time.sleep(0.5)
+            time.sleep(0.25)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
             outfile = match_target_vox_res(
                 infile, vox_size, outdir, overwrite=overwrite
             )
-            time.sleep(0.5)
+            time.sleep(0.25)
             print(outfile)
         else:
             outfile = infile
@@ -1310,7 +1298,6 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
 
     """
     import os
-    from pynets.registration.utils import normalize_xform
 
     fname = dwi_prep
     bvec_fname = bvecs
@@ -1397,8 +1384,6 @@ def reorient_img(img, out_dir, overwrite=True):
         File path to reoriented Nifti1Image.
 
     """
-    from pynets.registration.utils import normalize_xform
-
     # Load image, orient as RAS
     orig_img = nib.load(img)
     normalized = normalize_xform(nib.as_closest_canonical(orig_img))
@@ -1427,8 +1412,8 @@ def reorient_img(img, out_dir, overwrite=True):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir,
-                         overwrite=True, remove_orig=True):
+def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
+                         remove_orig=True):
     """
     A function to resample an image to a given isotropic voxel
     resolution.
