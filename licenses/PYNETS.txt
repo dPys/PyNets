@@ -23,17 +23,56 @@
         both PyNets Standard and PyNets Enterprise editions, as defined
         below.
 
-    (b) "PyNets Standard edition" shall mean all non-workflow functionality
-        available in the open source version of PyNets, available free of
-        charge at:
+    (b) "Workflow Features" shall mean the software interface elements
+        which automate the flow of connectome modeling, benchmarking, and
+        prediction as one or more processes. Said elements comprise
+        all source code found in pynets/cli, as well as modules:
 
-            https://github.com/dPys/PyNets
+            pynets/core/workflows.py
+            pynets/core/interfaces.py
+            pynets/dmri/interfaces.py
+            pynets/fmri/interfaces.py
+            pynets/plotting/interfaces.py
+            pynets/registration/interfaces.py
+            pynets/stats/interfaces.py
 
-    (c) "PyNets Enterprise edition" shall mean the workflow features made
-        available by the Licensor, the use of which is subject to additional
-        terms set out below.
+    (c) "Non-Workflow Features" shall mean the collection of non-volatile
+        software elements (configuration data, documentation, help data,
+        message templates, pre-written code and subroutines, and values or
+        type specifications) used by Workflow Features. Said elements
+        comprise all source code found in pynets/templates and
+        pynets/runconfigs, as well as modules:
 
-    (d) "Contribution" shall mean any work of authorship, including the original
+            pynets/core/cloud.py
+            pynets/core/nodemaker.py
+            pynets/core/thresholding.py
+            pynets/core/utils.py
+            pynets/dmri/estimation.py
+            pynets/dmri/track.py
+            pynets/dmri/utils.py
+            pynets/fmri/clustools.py
+            pynets/fmri/estimation.py
+            pynets/plotting/adjacency.py
+            pynets/plotting/brain.py
+            pynets/plotting/connectogram.py
+            pynets/registration/register.py
+            pynets/registration/utils.py
+            pynets/registration/register.py
+            pynets/stats/multiplex.py
+            pynets/stats/spectral.py
+            pynets/stats/utils.py
+
+    (d) "PyNets Standard edition" shall mean all Non-Workflow Features
+        of the open source version of PyNets (https://github.com/dPys/PyNets),
+        which is subject to the Apache License referenced in 2a, and provided
+        in full in licenses/APL.txt
+
+    (e) "PyNets Enterprise edition" shall mean all Workflow Features of the
+        open source version of PyNets (https://github.com/dPys/PyNets),
+        which is subject to additional restrictions set out in terms
+        2-13 below.
+
+    (f) "Contribution" shall mean any work of authorship, including the original
         version of the Work and any modifications or additions to that Work or
         Derivative Works thereof, that is intentionally submitted the Licensor
         for inclusion in the Work by the copyright owner or by an individual or
@@ -47,12 +86,12 @@
         communication that is conspicuously marked or otherwise designated in
         writing by the copyright owner as "Not a Contribution."
 
-    (e) "Contributor" shall mean any copyright owner or individual or Legal
+    (g) "Contributor" shall mean any copyright owner or individual or Legal
         Entity authorized by the copyright owner, other than the Licensor,
         from whom the Licensor receives a Contribution that the Licensor
         subsequently incorporates within the Work.
 
-    (f) "Derivative Works" shall mean any work, whether in Source or Object
+    (h) "Derivative Works" shall mean any work, whether in Source or Object
         form, that is based on (or derived from) the Work, such as a
         translation, abridgement, condensation, or any other recasting,
         transformation, or adaptation for which the editorial revisions,
@@ -62,7 +101,7 @@
         merely link (or bind by name) to the interfaces of, the Work and
         Derivative Works thereof.
 
-    (g) "Legal Entity" shall mean the union of the acting entity and all other
+    (i) "Legal Entity" shall mean the union of the acting entity and all other
         entities that control, are controlled by, or are under common control
         with that entity.  For the purposes of this definition, "control" means
         (i) the power, direct or indirect, to cause the direction or management
@@ -70,30 +109,30 @@
         fifty percent (50%) or more of the outstanding shares, or (iii)
         beneficial ownership of such entity.
 
-    (h) "License" shall mean the terms and conditions for use, reproduction, and
+    (j) "License" shall mean the terms and conditions for use, reproduction, and
         distribution of a Work as defined by this Agreement.
 
-    (i) "Licensor" shall mean the Licensor or a Contributor, as applicable.
+    (k) "Licensor" shall mean the Licensor or a Contributor, as applicable.
 
-    (j) "Object" form shall mean any form resulting from mechanical
+    (l) "Object" form shall mean any form resulting from mechanical
         transformation or translation of a Source form, including but not
         limited to compiled object code, generated documentation, and
         conversions to other media types.
 
-    (k) "Source" form shall mean the preferred form for making modifications,
+    (m) "Source" form shall mean the preferred form for making modifications,
         including but not limited to software source code, documentation source,
         and configuration files.
 
-    (l) "Third Party Works" shall mean Works, including Contributions, and other
+    (n) "Third Party Works" shall mean Works, including Contributions, and other
         technology owned by a person or Legal Entity other than the Licensor,
         as indicated by a copyright notice that is included in or attached to
         such Works or technology.
 
-    (m) "Work" shall mean the work of authorship, whether in Source or Object
+    (o) "Work" shall mean the work of authorship, whether in Source or Object
         form, made available under a License, as indicated by a copyright notice
         that is included in or attached to the work.
 
-    (n) "You" (or "Your") shall mean an individual or Legal Entity exercising
+    (p) "You" (or "Your") shall mean an individual or Legal Entity exercising
         permissions granted by this License.
 
   2. Licenses.
