@@ -21,7 +21,8 @@ licenses/AGPL-3.0.txt, and which are summarized briefly herein:
     GNU Affero General Public License for more details.
 
 *This product includes software that depends on open-source libraries
-developed by the NiPy Community (https://nipy.org/).
+developed by the SciPy (https://scipy.org/), Scikit-Learn
+(https://scikit-learn.org/), and NiPy (https://nipy.org/) Communities.
 See `licenses/THIRDPARTY.txt` for details.
 
 *Portions of this product were developed while the author was a graduate
