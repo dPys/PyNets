@@ -1,6 +1,7 @@
 include AUTHORS.rst
 include CONTRIBUTING.rst
-include LICENSE
+include licenses/*
+include NOTICE
 include README.rst
 include versioneer.py
 include pynets/_version.py
@@ -14,7 +15,7 @@ recursive-include * *.txt
 recursive-include * *.csv
 recursive-include pynets/cli *
 recursive-include pynets/core *
-recursive-include pynets/runconfigs *
+recursive-include pynets/initializers *
 recursive-include pynets/templates/labelcharts *
 recursive-include pynets/registration *
 recursive-include pynets/fmri *
@@ -23,9 +24,9 @@ recursive-include pynets/templates/atlases *
 recursive-include pynets/templates/rsnrefs *
 recursive-include pynets/dmri *
 recursive-include pynets/plotting *
-recursive-include pynets/stats *
-recursive-include pynets/stats/individual *
-recursive-include pynets/stats/group *
+recursive-include pynets/statistics *
+recursive-include pynets/statistics/individual *
+recursive-include pynets/statistics/group *
 recursive-exclude tests *
 recursive-exclude * *__pycache__
 recursive-exclude * *.py[co]
