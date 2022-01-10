@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 
@@ -111,7 +110,7 @@ def get_parser():
              "brain mask Nifti images in the case of running multiple "
              "participants, in which case paths should be separated by "
              "a space. If no brain mask is supplied, the template mask will "
-             "be used (see runconfig.yaml).\n",
+             "be used (see advanced.yaml).\n",
     )
     parser.add_argument(
         "-conf",
@@ -531,10 +530,10 @@ def get_parser():
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single"
-             " subject run, entered as two integers seperated by comma. "
-             "Otherwise, default is `auto`, which uses all resources "
-             "detected on the current compute node.\n",
+        help="Maximum number of cores and GB of memory, stated as two integers "
+             "seperated by comma. Otherwise, default is `auto`, which uses all "
+             "available resources detected on the compute node(s) used for "
+             "execution.\n",
     )
     parser.add_argument(
         "-plug",
@@ -566,6 +565,13 @@ def get_parser():
         help="Disable post-workflow clean-up of temporary runtime metadata.\n",
     )
     parser.add_argument(
+        "-config",
+        metavar="Advanced configuration file",
+        default="advanced.yaml",
+        help="Optionally override advanced configuration parameters. "
+             "Default is advanced.yaml.\n",
+    )
+    parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
@@ -583,6 +589,7 @@ def build_workflow(args, retval):
     import os
     import glob
     import ast
+    import pkg_resources
     import os.path as op
     import timeit
     from datetime import timedelta
@@ -632,6 +639,11 @@ def build_workflow(args, retval):
     print(f"{Fore.MAGENTA}{timestamp}")
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
+
+    adv_config = args.config
+    if adv_config != 'advanced.yaml':
+        os.replace(adv_config,
+                   pkg_resources.resource_filename("pynets", "advanced.yaml"))
 
     # Hard-coded:
     hardcoded_params = load_runconfig()
@@ -2282,7 +2294,8 @@ def build_workflow(args, retval):
 
     warnings.filterwarnings("ignore")
     from pynets.core.utils import collectpandasjoin
-    from pynets.core.interfaces import CombineOutputs, NetworkAnalysis
+    from pynets.core.interfaces import CombineOutputs
+    from pynets.statistics.interfaces import NetworkAnalysis
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector

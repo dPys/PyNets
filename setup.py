@@ -3,10 +3,9 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
-#from pynets.__about__ import __version__, DOWNLOAD_URL
-from pynets.__about__ import __version__
+from setuptools import setup
 import versioneer
+from pynets.__about__ import __version__
 cmdclass = versioneer.get_cmdclass()
 
 with open('README.rst') as readme_file:
@@ -41,13 +40,13 @@ setup(
     install_requires=requirements,
     dependency_links=['git+https://github.com/dPys/nilearn.git@enh/parc_conn#egg=nilearn',
                       'git+https://github.com/dPys/deepbrain.git@master#egg=deepbrain'],
-    license="GNU General Public License v3",
+    # license="Open Research License",
     zip_safe=False,
     keywords='pynets',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 2 - Beta',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        # 'License :: Open Research License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

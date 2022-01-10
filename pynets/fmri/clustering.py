@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import sys
 if sys.platform.startswith('win') is False:
@@ -36,11 +35,10 @@ def indx_1dto3d(idx, sz):
     z : int
         z-coordinate of 3D matrix coordinates.
     """
-    from scipy import divide, prod
 
-    x = divide(idx, prod(sz[1:3]))
-    y = divide(idx - x * prod(sz[1:3]), sz[2])
-    z = idx - x * prod(sz[1:3]) - y * sz[2]
+    x = np.divide(idx, np.prod(sz[1:3]))
+    y = np.divide(idx - x * np.prod(sz[1:3]), sz[2])
+    z = idx - x * np.prod(sz[1:3]) - y * sz[2]
     return x, y, z
 
 
@@ -61,12 +59,11 @@ def indx_3dto1d(idx, sz):
     idx1 : array
         A 1D numpy coordinate vector.
     """
-    from scipy import prod
 
     if np.linalg.matrix_rank(idx) == 1:
-        idx1 = idx[0] * prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
+        idx1 = idx[0] * np.prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
     else:
-        idx1 = idx[:, 0] * prod(sz[1:3]) + idx[:, 1] * sz[2] + idx[:, 2]
+        idx1 = idx[:, 0] * np.prod(sz[1:3]) + idx[:, 1] * sz[2] + idx[:, 2]
     return idx1
 
 
@@ -384,9 +381,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     """
     from scipy.sparse import csc_matrix
-    from scipy import prod
     from itertools import product
-    from pynets.fmri.clustools import indx_1dto3d, indx_3dto1d
 
     neighbors = np.array(
         sorted(
@@ -409,7 +404,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     mskdat = np.reshape(
         np.asarray(
             clust_mask_img.dataobj).astype("bool"),
-        prod(msz))
+        np.prod(msz))
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -418,7 +413,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     func_data = func_img.get_fdata(dtype=np.float32)
-    imdat = np.reshape(func_data, (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
     del func_data
 
     # Mask the datset to only the in-mask voxels
@@ -448,7 +443,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix(
-        (vndx + 1, (iv, np.zeros(m))), shape=(prod(msz), 1), dtype=np.float32
+        (vndx + 1, (iv, np.zeros(m))), shape=(np.prod(msz), 1),
+        dtype=np.float32
     )
 
     sparse_i = []
@@ -506,7 +502,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         sparse_w = np.append(sparse_w, R[nndx, :], 1)
 
     # Ensure that the weight vector is the correct shape
-    sparse_w = np.reshape(sparse_w, prod(np.shape(sparse_w)))
+    sparse_w = np.reshape(sparse_w, np.prod(np.shape(sparse_w)))
 
     # Concatenate the i, j, and w_ij vectors
     outlist = sparse_i
@@ -566,9 +562,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     """
     from scipy.sparse import csc_matrix
-    from scipy import prod
     from itertools import product
-    from pynets.fmri.clustools import indx_1dto3d, indx_3dto1d
 
     # Index array used to calculate 3D neigbors
     neighbors = np.array(
@@ -592,7 +586,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     mskdat = np.reshape(
         np.asarray(
             clust_mask_img.dataobj).astype("bool"),
-        prod(msz))
+        np.prod(msz))
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -602,13 +596,13 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Reshape fmri data to a num_voxels x num_timepoints array
     func_data = func_img.get_fdata(dtype=np.float32)
-    imdat = np.reshape(func_data, (prod(sz[:3]), sz[3]))
+    imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
     del func_data
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix(
         (list(range(1, m + 1)), (iv, np.zeros(m))),
-        shape=(prod(sz[:-1]), 1),
+        shape=(np.prod(sz[:-1]), 1),
         dtype=np.float32,
     )
     sparse_i = []
@@ -947,7 +941,7 @@ class NiParcellate(object):
 
                 if (not op.isfile(self._local_conn_mat_path)) or (
                         overwrite is True):
-                    from pynets.fmri.clustools import (
+                    from pynets.fmri.clustering import (
                         make_local_connectivity_tcorr,
                         make_local_connectivity_scorr,
                     )

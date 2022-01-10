@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import sys
@@ -17,11 +16,8 @@ import os.path as op
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 
-from pathlib import Path
-
 if sys.platform.startswith('win') is False:
-    import indexed_gzip
-# from ..due import due, BibTeX
+    pass
 
 warnings.filterwarnings("ignore")
 
@@ -104,7 +100,7 @@ def workflow_selector(
     into a single-subject workflow"""
     from pynets.core.utils import load_runconfig
     from nipype import Workflow
-    from pynets.stats import spectral
+    from pynets.statistics.individual import spectral
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, \
         pass_meta_ins_multi
 
@@ -139,7 +135,7 @@ def workflow_selector(
     except KeyError as e:
         print(e,
               "available functional models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
     try:
         struct_models = hardcoded_params["available_models"][
@@ -147,7 +143,7 @@ def workflow_selector(
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
 
     # Handle modality logic
@@ -1096,7 +1092,7 @@ def workflow_selector(
                         function=spectral.build_omnetome,
                     ),
                     name="omni_embedding_node_func",
-                    imports=import_list,
+                    imports=import_list
                 )
                 meta_wf.connect(
                     [
@@ -1117,7 +1113,7 @@ def workflow_selector(
                         function=spectral.build_asetomes,
                     ),
                     name="ase_embedding_node_func",
-                    imports=import_list,
+                    imports=import_list
                 )
                 meta_wf.connect(
                     [
@@ -1159,7 +1155,7 @@ def workflow_selector(
                         function=spectral.build_omnetome,
                     ),
                     name="omni_embedding_node_struct",
-                    imports=import_list,
+                    imports=import_list
                 )
                 meta_wf.connect(
                     [
@@ -1180,7 +1176,7 @@ def workflow_selector(
                         function=spectral.build_asetomes,
                     ),
                     name="ase_embedding_node_struct",
-                    imports=import_list,
+                    imports=import_list
                 )
                 meta_wf.connect(
                     [
@@ -1202,7 +1198,7 @@ def workflow_selector(
                 function=spectral.build_masetome,
             ),
             name="mase_embedding_node",
-            imports=import_list,
+            imports=import_list
         )
 
         # Multiplex magic happens in the meta-workflow space.
@@ -1227,6 +1223,7 @@ def workflow_selector(
         )
 
         if float(multiplex) > 0:
+            from pynets.statistics.individual.multiplex import build_multigraphs
             build_multigraphs_node = pe.Node(
                 niu.Function(
                     input_names=["est_path_iterlist", "ID"],
@@ -1240,7 +1237,7 @@ def workflow_selector(
                     function=build_multigraphs,
                 ),
                 name="build_multigraphs_node",
-                imports=import_list,
+                imports=import_list
             )
             meta_wf.connect(
                 [
@@ -1254,7 +1251,7 @@ def workflow_selector(
             )
 
             if plot_switch is True:
-                from pynets.plotting.plot_gen import plot_all_struct_func
+                from pynets.plotting.brain import plot_all_struct_func
 
                 plot_all_struct_func_node = pe.MapNode(
                     niu.Function(
@@ -1275,7 +1272,7 @@ def workflow_selector(
                         "metadata",
                     ],
                     name="plot_all_struct_func_node",
-                    imports=import_list,
+                    imports=import_list
                 )
                 meta_wf.connect(
                     [
@@ -1407,10 +1404,8 @@ def dmri_connectometry(
     """
     A function interface for generating a dMRI connectometry nested workflow
     """
-    from pynets.core import nodemaker, thresholding, utils, interfaces
-    from pynets.registration import register
-    from pynets.registration import utils as regutils
-    from pynets.dmri import estimation
+    from pynets.core import nodemaker, utils, thresholding, interfaces
+    from pynets import dmri, registration
 
     import_list = [
         "import warnings",
@@ -1597,8 +1592,8 @@ def dmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size", "bvecs"],
             output_names=["outfile", "bvecs"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_dwi_node",
     )
@@ -1614,8 +1609,8 @@ def dmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size"],
             output_names=["outfile"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_anat_node",
     )
@@ -1632,7 +1627,7 @@ def dmri_connectometry(
                 input_names=["coords", "node_radius", "template_mask"],
                 output_names=["parcel_list", "par_max", "node_radius", "parc"],
                 function=nodemaker.create_spherical_roi_volumes,
-                imports=import_list,
+                imports=import_list
             ),
             name="prep_spherical_nodes_node",
         )
@@ -1655,7 +1650,7 @@ def dmri_connectometry(
                          "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
-            imports=import_list,
+            imports=import_list
         ),
         name="save_nifti_parcels_node",
     )
@@ -1686,7 +1681,7 @@ def dmri_connectometry(
                     "dir_path",
                 ],
                 function=nodemaker.node_gen_masking,
-                imports=import_list,
+                imports=import_list
             ),
             name="node_gen_node",
         )
@@ -1718,21 +1713,21 @@ def dmri_connectometry(
                     "dir_path",
                 ],
                 function=nodemaker.node_gen,
-                imports=import_list,
+                imports=import_list
             ),
             name="node_gen_node",
         )
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
 
-    gtab_node = pe.Node(interfaces.MakeGtabBmask(), name="gtab_node")
+    gtab_node = pe.Node(dmri.interfaces.MakeGtabBmask(), name="gtab_node")
 
     get_fa_node = pe.Node(
         niu.Function(
             input_names=["gtab_file", "dwi_file", "B0_mask"],
             output_names=["fa_path", "B0_mask", "gtab_file", "dwi_file"],
-            function=estimation.tens_mod_fa_est,
-            imports=import_list,
+            function=dmri.estimation.tens_mod_fa_est,
+            imports=import_list
         ),
         name="get_fa_node",
     )
@@ -1741,13 +1736,13 @@ def dmri_connectometry(
         niu.Function(
             input_names=["gtab_file", "dwi_file", "B0_mask"],
             output_names=["anisopwr_path", "B0_mask", "gtab_file", "dwi_file"],
-            function=estimation.create_anisopowermap,
-            imports=import_list,
+            function=dmri.estimation.create_anisopowermap,
+            imports=import_list
         ),
         name="get_anisopwr_node",
     )
 
-    register_node = pe.Node(interfaces.RegisterDWI(in_dir=in_dir),
+    register_node = pe.Node(registration.interfaces.RegisterDWI(in_dir=in_dir),
                             name="register_node")
     register_node._n_procs = runtime_dict["register_node"][0]
     register_node._mem_gb = runtime_dict["register_node"][1]
@@ -1757,19 +1752,19 @@ def dmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size"],
             output_names=["outfile"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_parcellation_node",
     )
 
     reg_nodes_node = pe.Node(
-        interfaces.RegisterAtlasDWI(),
+        registration.interfaces.RegisterAtlasDWI(),
         name="reg_nodes_node")
     reg_nodes_node._n_procs = runtime_dict["reg_nodes_node"][0]
     reg_nodes_node._mem_gb = runtime_dict["reg_nodes_node"][1]
 
-    run_tracking_node = pe.Node(interfaces.Tracking(),
+    run_tracking_node = pe.Node(dmri.interfaces.Tracking(),
                                 name="run_tracking_node")
     run_tracking_node.synchronize = True
     run_tracking_node._n_procs = runtime_dict["run_tracking_node"][0]
@@ -1932,8 +1927,8 @@ def dmri_connectometry(
                 "warped_fa",
                 "min_length",
             ],
-            function=register.direct_streamline_norm,
-            imports=import_list,
+            function=registration.register.direct_streamline_norm,
+            imports=import_list
         ),
         name="dsn_node",
     )
@@ -1995,8 +1990,8 @@ def dmri_connectometry(
                 "min_length",
                 "error_margin"
             ],
-            function=estimation.streams2graph,
-            imports=import_list,
+            function=dmri.estimation.streams2graph,
+            imports=import_list
         ),
         name="streams2graph_node",
     )
@@ -2143,13 +2138,13 @@ def dmri_connectometry(
             niu.Function(
                 input_names=["infile", "outdir", "vox_size"],
                 output_names=["outfile"],
-                function=regutils.orient_reslice,
-                imports=import_list,
+                function=registration.utils.orient_reslice,
+                imports=import_list
             ),
             name="orient_reslice_roi_node",
         )
 
-        register_roi_node = pe.Node(interfaces.RegisterROIDWI(),
+        register_roi_node = pe.Node(registration.interfaces.RegisterROIDWI(),
                                     name="register_roi_node")
         dmri_wf.connect([(inputnode,
                                         orient_reslice_roi_node,
@@ -2168,7 +2163,7 @@ def dmri_connectometry(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "subnet", "indices"],
             function=utils.save_coords_and_labels_to_json,
-            imports=import_list,
+            imports=import_list
         ),
         name="save_coords_and_labels_node",
     )
@@ -2193,7 +2188,7 @@ def dmri_connectometry(
                     "net_labels",
                     "subnet"],
                 function=nodemaker.get_node_membership,
-                imports=import_list,
+                imports=import_list
             ),
             name="get_node_membership_node",
         )
@@ -2775,7 +2770,7 @@ def dmri_connectometry(
                     "error_margin"
                 ],
                 function=thresholding.thresh_struct,
-                imports=import_list,
+                imports=import_list
             ),
             name="thresh_diff_node",
         )
@@ -2809,7 +2804,7 @@ def dmri_connectometry(
                     "error_margin"
                 ],
                 function=thresholding.thresh_struct,
-                imports=import_list,
+                imports=import_list
             ),
             name="thresh_diff_node",
             iterfield=thr_struct_fields,
@@ -2900,6 +2895,7 @@ def dmri_connectometry(
 
     # Plotting
     if plot_switch is True:
+        from pynets import plotting
         plot_fields = [
             "conn_matrix",
             "conn_model",
@@ -2936,13 +2932,13 @@ def dmri_connectometry(
             or flexi_atlas is True
         ):
             plot_all_node = pe.MapNode(
-                interfaces.PlotStruct(),
+                plotting.interfaces.PlotStruct(),
                 iterfield=plot_fields,
                 name="plot_all_node",
                 nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(interfaces.PlotStruct(),
+            plot_all_node = pe.Node(plotting.interfaces.PlotStruct(),
                                     name="plot_all_node")
 
         # Connect thresh_diff_node outputs to plotting node
@@ -3260,8 +3256,8 @@ def dmri_connectometry(
             niu.Function(
                 input_names=["infile", "outdir", "vox_size"],
                 output_names=["outfile"],
-                function=regutils.orient_reslice,
-                imports=import_list,
+                function=registration.utils.orient_reslice,
+                imports=import_list
             ),
             name="orient_reslice_waymask_node",
         )
@@ -3302,8 +3298,8 @@ def dmri_connectometry(
             niu.Function(
                 input_names=["infile", "outdir", "vox_size"],
                 output_names=["outfile"],
-                function=regutils.orient_reslice,
-                imports=import_list,
+                function=registration.utils.orient_reslice,
+                imports=import_list
             ),
             name="orient_reslice_mask_node",
         )
@@ -3568,8 +3564,7 @@ def fmri_connectometry(
     A function interface for generating an fMRI connectometry nested workflow
     """
     from pynets.core import nodemaker, utils, thresholding, interfaces
-    from pynets.fmri import estimation
-    from pynets.registration import utils as regutils
+    from pynets import fmri, registration
 
     import_list = [
         "import warnings",
@@ -3764,8 +3759,8 @@ def fmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size"],
             output_names=["outfile"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_func_node",
     )
@@ -3781,26 +3776,27 @@ def fmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size"],
             output_names=["outfile"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_anat_node",
     )
 
-    register_node = pe.Node(interfaces.RegisterFunc(in_dir=in_dir),
-                            name="register_node")
+    register_node = pe.Node(
+        registration.interfaces.RegisterFunc(in_dir=in_dir),
+        name="register_node")
 
     register_node._n_procs = runtime_dict["register_node"][0]
     register_node._mem_gb = runtime_dict["register_node"][1]
 
     reg_nodes_node = pe.Node(
-        interfaces.RegisterAtlasFunc(),
+        registration.interfaces.RegisterAtlasFunc(),
         name="reg_nodes_node")
 
     # Clustering
     if float(k_clustering) > 0:
         reg_nodes_node = pe.Node(
-            interfaces.RegisterAtlasFunc(already_run=True),
+            registration.interfaces.RegisterAtlasFunc(already_run=True),
             name="reg_nodes_node")
 
         clustering_info_node = pe.Node(
@@ -3809,7 +3805,7 @@ def fmri_connectometry(
         )
 
         clustering_node = pe.Node(
-            interfaces.IndividualClustering(),
+            fmri.interfaces.IndividualClustering(),
             name="clustering_node")
 
         clustering_node.interface.n_procs = runtime_dict["clustering_node"][0]
@@ -4004,7 +4000,7 @@ def fmri_connectometry(
     if float(k_clustering) > 0:
 
         RegisterParcellation2MNIFunc_node = pe.Node(
-            interfaces.RegisterParcellation2MNIFunc(),
+            registration.interfaces.RegisterParcellation2MNIFunc(),
             name="RegisterParcellation2MNIFunc_node"
         )
 
@@ -4378,7 +4374,7 @@ def fmri_connectometry(
                     "dir_path",
                 ],
                 function=nodemaker.node_gen,
-                imports=import_list,
+                imports=import_list
             ),
             name="node_gen_node",
         )
@@ -4394,7 +4390,7 @@ def fmri_connectometry(
         ),
     )
     extract_ts_node = pe.Node(
-        interfaces.ExtractTimeseries(),
+        fmri.interfaces.ExtractTimeseries(),
         name="extract_ts_node",
     )
 
@@ -4415,7 +4411,7 @@ def fmri_connectometry(
                 input_names=["coords", "node_radius", "template_mask"],
                 output_names=["parcel_list", "par_max", "node_radius", "parc"],
                 function=nodemaker.create_spherical_roi_volumes,
-                imports=import_list,
+                imports=import_list
             ),
             name="prep_spherical_nodes_node",
         )
@@ -4451,7 +4447,7 @@ def fmri_connectometry(
                          "vox_size"],
             output_names=["net_parcels_nii_path"],
             function=utils.save_nifti_parcels_map,
-            imports=import_list,
+            imports=import_list
         ),
         name="save_nifti_parcels_node",
     )
@@ -4604,8 +4600,8 @@ def fmri_connectometry(
                 "hpass",
                 "extract_strategy",
             ],
-            function=estimation.get_conn_matrix,
-            imports=import_list,
+            function=fmri.estimation.get_conn_matrix,
+            imports=import_list
         ),
         name="get_conn_matrix_node",
     )
@@ -4626,13 +4622,13 @@ def fmri_connectometry(
             niu.Function(
                 input_names=["infile", "outdir", "vox_size"],
                 output_names=["outfile"],
-                function=regutils.orient_reslice,
-                imports=import_list,
+                function=registration.utils.orient_reslice,
+                imports=import_list
             ),
             name="orient_reslice_roi_node",
         )
 
-        register_roi_node = pe.Node(interfaces.RegisterROIEPI(),
+        register_roi_node = pe.Node(registration.interfaces.RegisterROIEPI(),
                                     name="register_roi_node")
 
         fmri_wf.connect([(inputnode,
@@ -4654,7 +4650,7 @@ def fmri_connectometry(
         niu.Function(
             input_names=["coords", "labels", "dir_path", "subnet", "indices"],
             function=utils.save_coords_and_labels_to_json,
-            imports=import_list,
+            imports=import_list
         ),
         name="save_coords_and_labels_node",
     )
@@ -4679,7 +4675,7 @@ def fmri_connectometry(
                     "net_labels",
                     "subnet"],
                 function=nodemaker.get_node_membership,
-                imports=import_list,
+                imports=import_list
             ),
             name="get_node_membership_node",
         )
@@ -5129,7 +5125,7 @@ def fmri_connectometry(
                     "extract_strategy",
                 ],
                 function=thresholding.thresh_func,
-                imports=import_list,
+                imports=import_list
             ),
             name="thresh_func_node",
         )
@@ -5159,7 +5155,7 @@ def fmri_connectometry(
                     "extract_strategy",
                 ],
                 function=thresholding.thresh_func,
-                imports=import_list,
+                imports=import_list
             ),
             name="thresh_func_node",
             iterfield=thr_func_fields,
@@ -5242,6 +5238,7 @@ def fmri_connectometry(
 
     # Plotting
     if plot_switch is True:
+        from pynets import plotting
         plot_fields = [
             "conn_matrix",
             "conn_model",
@@ -5279,13 +5276,13 @@ def fmri_connectometry(
         ):
 
             plot_all_node = pe.MapNode(
-                interfaces.PlotFunc(),
+                plotting.interfaces.PlotFunc(),
                 iterfield=plot_fields,
                 name="plot_all_node",
                 nested=True)
         else:
             # Plotting singular graph solution
-            plot_all_node = pe.Node(interfaces.PlotFunc(),
+            plot_all_node = pe.Node(plotting.interfaces.PlotFunc(),
                                     name="plot_all_node")
 
         if user_atlas_list or multi_atlas or multi_nets:
@@ -5447,8 +5444,8 @@ def fmri_connectometry(
             niu.Function(
                 input_names=["infile", "outdir", "vox_size"],
                 output_names=["outfile"],
-                function=regutils.orient_reslice,
-                imports=import_list,
+                function=registration.utils.orient_reslice,
+                imports=import_list
             ),
             name="orient_reslice_mask_node",
         )
@@ -5620,8 +5617,8 @@ def fmri_connectometry(
         niu.Function(
             input_names=["infile", "outdir", "vox_size"],
             output_names=["outfile"],
-            function=regutils.orient_reslice,
-            imports=import_list,
+            function=registration.utils.orient_reslice,
+            imports=import_list
         ),
         name="orient_reslice_parcellation_node",
     )
@@ -5803,7 +5800,7 @@ def raw_graph_workflow(
                 function=thresh_raw_graph,
             ),
             name="thresholding_node",
-            imports=import_list,
+            imports=import_list
         )
 
         thr_info_node = pe.Node(
@@ -5856,7 +5853,7 @@ def raw_graph_workflow(
                 function=save_mat_thresholded,
             ),
             name="save_mat_thresholded_node",
-            imports=import_list,
+            imports=import_list
         )
         save_mat_thresholded_node._n_procs = runtime_dict[
             "save_mat_thresholded_node"][0]
@@ -5961,7 +5958,7 @@ def raw_graph_workflow(
                     function=load_mat_ext,
                 ),
                 name="load_mat_ext_node",
-                imports=import_list,
+                imports=import_list
             )
             load_mat_node._n_procs = runtime_dict["load_mat_ext_node"][0]
             load_mat_node._mem_gb = runtime_dict["load_mat_ext_node"][1]
@@ -6048,7 +6045,7 @@ def raw_graph_workflow(
                     function=load_mat,
                 ),
                 name="load_mat_node",
-                imports=import_list,
+                imports=import_list
             )
             load_mat_node._n_procs = runtime_dict["load_mat_node"][0]
             load_mat_node._mem_gb = runtime_dict["load_mat_node"][1]

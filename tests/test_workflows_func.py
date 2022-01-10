@@ -1,8 +1,6 @@
 ﻿#!/usr/bin/env python
 """
 Created on Wed Dec 27 16:19:14 2017
-
-@authors: Derek Pisner & Ryan Hammonds
 """
 from pathlib import Path
 try:

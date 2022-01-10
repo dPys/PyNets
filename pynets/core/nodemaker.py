@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner
 """
 import warnings
 import numpy as np
@@ -334,12 +333,12 @@ def get_node_membership(
         corresponding to ROI masks.
     perc_overlap : float
         Value 0-1 indicating a threshold of spatial overlap to use as a
-        spatial error cushion in the case of evaluating subnet membership from a
-        given list of parcel masks. Default is 0.75.
+        spatial error cushion in the case of evaluating subnet membership from
+        a given list of parcel masks. Default is 0.75.
     error : int
         Rounded euclidean distance, in units of voxel number, to use as a
-        spatial error cushion in the case of evaluating subnet membership from a
-        given list of coordinates. Default is 4.
+        spatial error cushion in the case of evaluating subnet membership from
+        a given list of coordinates. Default is 4.
 
     Returns
     -------
@@ -709,7 +708,7 @@ def parcel_masker(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     template_brain = pkg_resources.resource_filename(
@@ -848,11 +847,10 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
         spatial affinity for the specified ROI mask.
     """
     import nibabel as nib
-    from nilearn.image import math_img
+    from nilearn.image import math_img, resample_to_img
     from pynets.core.nodemaker import mmToVox
     import pkg_resources
     import sys
-    from nilearn.image import resample_to_img
     from pynets.core.utils import load_runconfig
 
     mask_img = math_img("img > 0", img=nib.load(roi))
@@ -862,7 +860,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     template_brain = pkg_resources.resource_filename(
@@ -888,7 +886,6 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
-
     mask_aff = mask_img_res.affine
 
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
@@ -1304,13 +1301,13 @@ def parcel_naming(coords, vox_size):
         labeling_atlases = hardcoded_params["labeling_atlases"]
     except KeyError as e:
         print(e,
-              "No labeling atlases listed in runconfig.yaml"
+              "No labeling atlases listed in advanced.yaml"
               )
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     template_brain = pkg_resources.resource_filename(
@@ -1413,7 +1410,7 @@ def get_node_attributes(node_files, emb_shape,
                                     atlas='BrainnetomeAtlasFan2016'):
     import ast
     import re
-    from pynets.stats.utils import parse_closest_ixs
+    from pynets.statistics.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 

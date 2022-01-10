@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@authors: Derek Pisner
 """
 import os
 from sklearn.metrics.pairwise import (
@@ -19,7 +18,6 @@ import pandas as pd
 import numpy as np
 import warnings
 from sklearn.preprocessing import StandardScaler
-from pynets.stats.utils import flatten_latent_positions
 from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
 
@@ -203,7 +201,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     from pathlib import Path
     import ast
     import matplotlib
-    from pynets.stats.utils import gen_sub_vec
+    from pynets.statistics.utils import gen_sub_vec
     matplotlib.use('Agg')
 
     df_summary = pd.DataFrame(
@@ -239,7 +237,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     # icc
     if icc is True:
-        from pynets.stats.utils import parse_closest_ixs
+        from pynets.statistics.utils import parse_closest_ixs
         try:
             import pingouin as pg
         except ImportError:

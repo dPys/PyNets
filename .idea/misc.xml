@@ -3,7 +3,13 @@
   <component name="JavaScriptSettings">
     <option name="languageLevel" value="ES6" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (PyNets)" project-jdk-type="Python SDK" />
+  <component name="ProjectPlainTextFileTypeManager">
+    <file url="file://$PROJECT_DIR$/licenses/AGPL-3.0.txt" />
+    <file url="file://$PROJECT_DIR$/licenses/PYNETS.txt" />
+    <file url="file://$PROJECT_DIR$/licenses/THIRDPARTY.txt" />
+    <file url="file://$PROJECT_DIR$/NOTICE" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.10 (sftp://dpys@192.168.1.92:22/usr/bin/python)" project-jdk-type="Python SDK" />
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
       <map>

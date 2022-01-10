@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@authors: Derek Pisner
 """
-from pynets.stats.prediction import *
 
 
 def get_parser():
@@ -195,10 +194,9 @@ def main():
     import os
     import sys
     import dill
-    from pynets.stats.utils import make_feature_space_dict, \
+    from pynets.statistics.utils import make_feature_space_dict, \
         make_subject_dict, cleanNullTerms
     from pynets.core.utils import mergedicts
-    from colorama import Fore, Style
     try:
         import pynets
     except ImportError:
@@ -257,7 +255,6 @@ def main():
     # ]
     mets = []
 
-    import sys
     print(f"parcellations = {parcellations}")
     print(f"sessions = {sessions}")
     print(f"base_dir = {base_dir}")
@@ -484,7 +481,7 @@ if __name__ == "__main__":
     import gc
     import json
     from multiprocessing import set_start_method, Process, Manager
-    from pynets.stats.prediction import build_predict_workflow
+    from pynets.statistics.group.prediction import build_predict_workflow
 
     try:
         set_start_method("forkserver")

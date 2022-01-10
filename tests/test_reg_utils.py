@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 """
 Created on Monday July 29 16:19:14 2019
-
-@authors: Ryan Hammonds and Derek Pisner
-
 """
+import pytest
 import numpy as np
 from pynets.registration import utils
 import os
@@ -58,7 +56,8 @@ def test_applyxfm():
 
     ## First test: Apply xfm from test_align to orig anat img.
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
-    ref = pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+    ref = pkg_resources.resource_filename(
+        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
@@ -384,14 +383,16 @@ def test_make_median_b0():
 
     assert os.path.isfile(mean_file_out)
 
-
-def test_gen_mask():
+@pytest.mark.parametrize("mask_type", ['Normal', 'Empty'])
+def test_gen_mask(mask_type):
     base_dir = str(Path(__file__).parent/"examples")
     t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
-    mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
+    if(mask_type == 'Normal'):
+        mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
+    elif(mask_type == 'Empty'):
+        mask = None
     utils.gen_mask(t1w_head, t1w_brain, mask)
-
 
 def test_deep_skull_strip():
     base_dir = str(Path(__file__).parent/"examples")

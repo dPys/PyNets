@@ -1,8 +1,6 @@
 ﻿#!/usr/bin/env python
 """
 Created on Wed Dec 27 16:19:14 2017
-
-@authors: Derek Pisner & Ryan Hammonds
 """
 import numpy as np
 import os
@@ -484,7 +482,7 @@ def test_timeout(s):
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
 def test_build_mp_dict(modality):
     import tempfile
-    from pynets.stats.utils import build_mp_dict
+    from pynets.statistics.utils import build_mp_dict
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path)
     base_dir = str(Path(__file__).parent / "examples")

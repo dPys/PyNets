@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Dec 27 16:19:14 2017
-
-@authors: Derek Pisner & Ryan Hammonds
-
 """
 import os
 import numpy as np
@@ -15,10 +12,9 @@ except ImportError:
     import _pickle as pickle
 from pathlib import Path
 import pytest
-from pynets.plotting import plot_gen, plot_graphs
+from pynets.plotting import brain, adjacency
 import tempfile
 import logging
-import pkg_resources
 import networkx as nx
 
 logger = logging.getLogger(__name__)
@@ -48,8 +44,8 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
     labels = plotting_data['labels']
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+    adjacency.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
+                                 ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -78,8 +74,8 @@ def test_plot_conn_mat_nonet_mask(plotting_data):
     labels = plotting_data['labels']
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-    ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+    adjacency.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
+                                 ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -115,9 +111,9 @@ def test_plot_all_nonet_no_mask(plotting_data):
     coords = plotting_data['coords']
 
     start_time = time.time()
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
-                           coords, thr, node_size, edge_threshold, smooth, prune,
-                           parlistfile, norm, binary, hpass, extract_strategy)
+    brain.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
+                        coords, thr, node_size, edge_threshold, smooth, prune,
+                        parlistfile, norm, binary, hpass, extract_strategy)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     temp_dir.cleanup()
@@ -159,9 +155,9 @@ def test_plot_all_nonet_with_mask(plotting_data):
     labels = np.array(labels)
 
     start_time = time.time()
-    plot_gen.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi, coords, thr,
-                           node_size, edge_threshold, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy,
-                           edge_color_override=True)
+    brain.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi, coords, thr,
+                        node_size, edge_threshold, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy,
+                        edge_color_override=True)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     temp_dir.cleanup()
@@ -184,7 +180,7 @@ def test_plot_timeseries(plotting_data, subnet):
     labels = plotting_data['labels']
 
     start_time = time.time()
-    plot_gen.plot_timeseries(time_series, subnet, ID, dir_path, atlas, labels)
+    brain.plot_timeseries(time_series, subnet, ID, dir_path, atlas, labels)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     temp_dir.cleanup()
@@ -194,7 +190,7 @@ def test_plot_timeseries(plotting_data, subnet):
 def test_plot_network_clusters(plotting_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
-    from pynets.stats.netstats import community_resolution_selection
+    from pynets.statistics.individual.algorithms import community_resolution_selection
 
     temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure', suffix='.png')
     fname = str(temp_file.name)
@@ -205,9 +201,9 @@ def test_plot_network_clusters(plotting_data, plot_overlaps):
     _, communities, _, _ = community_resolution_selection(G)
     plot_labels = True
 
-    plot_gen.plot_network_clusters(G, communities, fname,
-                                   plot_overlaps=plot_overlaps,
-                                   plot_labels=plot_labels)
+    brain.plot_network_clusters(G, communities, fname,
+                                plot_overlaps=plot_overlaps,
+                                plot_labels=plot_labels)
 
     assert os.path.isfile(fname)
 
@@ -232,8 +228,8 @@ def test_create_gb_palette(plotting_data, prune, node_cmap):
 
     color_theme = 'binary'
 
-    palette = plot_gen.create_gb_palette(conn_matrix, color_theme, coords, labels,
-                                         prune=prune, node_cmap=node_cmap)
+    palette = brain.create_gb_palette(conn_matrix, color_theme, coords, labels,
+                                      prune=prune, node_cmap=node_cmap)
     for param in palette:
         assert param is not None
 
@@ -250,7 +246,7 @@ def test_plot_conn_mat_rois_gt_100(plotting_data):
     labels = plotting_data['labels']
 
     start_time = time.time()
-    plot_graphs.plot_conn_mat(conn_matrix, labels, dir_path, cmap='Blues')
+    adjacency.plot_conn_mat(conn_matrix, labels, dir_path, cmap='Blues')
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
 
     temp_dir.cleanup()
@@ -292,9 +288,9 @@ def test_plot_all_struct(plotting_data, roi):
     min_length = 10
     error_margin = 2
 
-    plot_gen.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
-                             coords, thr, node_size, edge_threshold, prune, parcellation, target_samples,
-                             norm, binary, track_type, directget, min_length, error_margin)
+    brain.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
+                          coords, thr, node_size, edge_threshold, prune, parcellation, target_samples,
+                          norm, binary, track_type, directget, min_length, error_margin)
 
     temp_dir.cleanup()
 
@@ -350,9 +346,9 @@ def test_plot_graph_measure_hists(nan):
         df = pd.read_csv(df_csv)
         df[df.columns[4]] = np.nan
         df.to_csv(f"{dir_name}/TEST.csv", index=False)
-        fig = plot_gen.plot_graph_measure_hists(f"{dir_name}/TEST.csv")
+        fig = brain.plot_graph_measure_hists(f"{dir_name}/TEST.csv")
     else:
-        fig = plot_gen.plot_graph_measure_hists(df_csv)
+        fig = brain.plot_graph_measure_hists(df_csv)
     assert fig is not None
     temp_dir.cleanup()
 

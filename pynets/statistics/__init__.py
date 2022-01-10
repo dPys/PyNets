@@ -3,7 +3,7 @@
 __author__ = """Derek Pisner"""
 __email__ = "dpisner@utexas.edu"
 
-from . import *
+from .individual import multiplex
 import warnings
 
 warnings.filterwarnings("ignore")

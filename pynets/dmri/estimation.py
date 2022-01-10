@@ -3,7 +3,6 @@
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import numpy as np

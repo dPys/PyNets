@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Copyright (C) 2017
-@authors: Derek Pisner
 """
 import pandas as pd
 import os
@@ -26,7 +25,6 @@ from collections import OrderedDict
 from operator import itemgetter
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pynets.core.utils import flatten
-from sklearn.svm import LinearSVC
 from sklearn.base import BaseEstimator, TransformerMixin, clone, \
     ClassifierMixin
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1648,7 +1646,6 @@ def bootstrapped_nested_cv(
 
 def make_x_y(input_dict, drop_cols, target_var, embedding_type, grid_param):
     import pandas as pd
-    from time import sleep
     import json
 
     print(target_var)
@@ -1859,11 +1856,8 @@ class MakeXY(SimpleInterface):
     output_spec = _MakeXYOutputSpec
 
     def _run_interface(self, runtime):
-        import gc
         import os
-        import time
         from ast import literal_eval
-        from pynets.stats.prediction import make_x_y
 
         self._results["embedding_type"] = self.inputs.embedding_type
         self._results["grid_param"] = self.inputs.grid_param
@@ -1998,7 +1992,6 @@ class BSNestedCV(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
-        import os
         from colorama import Fore, Style
         from joblib import dump
 
@@ -2166,11 +2159,9 @@ class MakeDF(SimpleInterface):
 
     def _run_interface(self, runtime):
         import gc
-        import os
         from ast import literal_eval
         import pandas as pd
         import numpy as np
-        from colorama import Fore, Style
 
         def get_CI(stats, alpha=0.95):
             p = ((1.0 - alpha) / 2.0) * 100
@@ -2297,8 +2288,6 @@ class MakeDF(SimpleInterface):
 
 def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols, dummy_run,
               search_method, stack, stack_prefix_list):
-    from pynets.stats.prediction import MakeXY, MakeDF, BSNestedCV, \
-        concatenate_frames
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     import uuid
@@ -2474,7 +2463,6 @@ def create_wf(grid_params_mod, basedir, n_boots, nuisance_cols, dummy_run,
 
 
 def build_predict_workflow(args, retval, verbose=True):
-    from pynets.stats.prediction import create_wf
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     import uuid

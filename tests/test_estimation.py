@@ -262,7 +262,8 @@ def test_timseries_extraction_extract(conf):
     if conf:
         conf_file = tempfile.NamedTemporaryFile(mode='w+', suffix='.tsv')
         conf_mat = np.random.rand(length)
-        conf_df = pd.DataFrame({'Conf1': conf_mat, "Conf2": [np.nan]*len(conf_mat)})
+        conf_df = pd.DataFrame({'Conf1': conf_mat,
+                                "Conf2": [np.nan]*len(conf_mat)})
         conf_df.to_csv(conf_file.name, sep='\t', index=False)
         conf = conf_file.name
 

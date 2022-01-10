@@ -3,10 +3,8 @@
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
-import os
 import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
@@ -125,9 +123,6 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
         The number of seeds to generate. If ``seed_count_per_voxel`` is True,
         specifies the number of seeds to place in each voxel. Otherwise,
         specifies the total number of seeds to place in the mask.
-    seed_count_per_voxel: bool
-        If True, seeds_count is per voxel, else seeds_count is the total number
-        of seeds.
     random_seed : int
         The seed for the random seed generator (numpy.random.seed).
 
@@ -139,9 +134,6 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
     ValueError
         When ``mask`` is not a three-dimensional array
     """
-    from scipy.sparse import csc_matrix
-    from scipy import prod
-    from nilearn.image import math_img
 
     mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
     if mask.ndim != 3:

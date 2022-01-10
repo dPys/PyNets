@@ -3,7 +3,6 @@
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
-@author: Derek Pisner (dPys)
 """
 import warnings
 import os
@@ -177,7 +176,6 @@ def create_est_path_func(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -185,7 +183,7 @@ def create_est_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     if (node_radius is None) and (parc is True):
@@ -306,7 +304,6 @@ def create_est_path_diff(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -314,7 +311,7 @@ def create_est_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     if (node_radius is None) and (parc is True):
@@ -421,7 +418,6 @@ def create_raw_path_func(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -429,7 +425,7 @@ def create_raw_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     if (node_radius is None) and (parc is True):
@@ -539,7 +535,6 @@ def create_raw_path_diff(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -547,7 +542,7 @@ def create_raw_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     if (node_radius is None) and (parc is True):
@@ -684,7 +679,6 @@ def load_mat_ext(
     dens_thresh,
     disp_filt,
 ):
-    from pynets.core.utils import load_mat
 
     conn_matrix = load_mat(est_path)
     return (
@@ -720,9 +714,9 @@ def save_mat(conn_matrix, est_path, fmt=None):
     """
     import numpy as np
     import networkx as nx
+    from pynets.core.utils import load_runconfig
 
     if fmt is None:
-        from pynets.core.utils import load_runconfig
         hardcoded_params = load_runconfig()
         fmt = hardcoded_params["graph_file_format"][0]
 
@@ -796,7 +790,6 @@ def save_mat_thresholded(
     binary,
 ):
     import numpy as np
-    from pynets.core.utils import save_mat
     from nipype.utils.filemanip import fname_presuffix
 
     est_path = fname_presuffix(est_path_orig,
@@ -1256,10 +1249,9 @@ def collect_pandas_df(
         If True, then collect_pandas_df completed successfully.
 
     """
-    import sys
     from pathlib import Path
-    from pynets.core.utils import flatten, load_runconfig
-    from pynets.stats.netstats import collect_pandas_df_make
+    from pynets.statistics.individual.algorithms import collect_pandas_df_make
+    from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
@@ -1268,7 +1260,7 @@ def collect_pandas_df(
     except KeyError as e:
         print(e,
               "available functional models not sucessfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
     try:
         struct_models = hardcoded_params["available_models"][
@@ -1276,7 +1268,7 @@ def collect_pandas_df(
     except KeyError as e:
         print(e,
               "available structural models not sucessfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
@@ -1401,7 +1393,7 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def load_runconfig():
+def load_runconfig(location=None):
     import pkg_resources
     import yaml
     import tempfile
@@ -1409,8 +1401,11 @@ def load_runconfig():
     import os
 
     fd, temp_path = tempfile.mkstemp()
-    shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
-                 temp_path)
+
+    if not location:
+        location = pkg_resources.resource_filename("pynets", "advanced.yaml")
+
+    shutil.copy2(location, temp_path)
     with open(temp_path, mode='r+') as stream:
         hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
     stream.close()
@@ -1564,15 +1559,15 @@ def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
     import os
     import pkg_resources
     import sys
-    from nilearn.image import resample_to_img
     from pynets.core.utils import load_runconfig
+    from nilearn.image import resample_to_img
 
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     namer_dir = f"{dir_path}/parcellations"
@@ -1851,7 +1846,7 @@ def build_args_from_config(modality, arg_dict):
     except KeyError as e:
         print(e,
               "available functional models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
     try:
         struct_models = hardcoded_params["available_models"][
@@ -1859,7 +1854,7 @@ def build_args_from_config(modality, arg_dict):
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
 
     arg_list = []

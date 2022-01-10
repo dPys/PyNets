@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 """
 Created on Wed Dec 27 16:19:14 2017
-
-@authors: Derek Pisner & Ryan Hammonds
-
 """
 import pytest
 import numpy as np
@@ -16,7 +13,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from pynets.fmri import clustools
+from pynets.fmri import clustering
 import os
 import logging
 
@@ -31,7 +28,7 @@ def test_indx_1dto3d():
     sz = np.random.rand(10, 10, 10)
     idx = 45
 
-    x, y, z = clustools.indx_1dto3d(idx, sz)
+    x, y, z = clustering.indx_1dto3d(idx, sz)
     assert x is not None
     assert y is not None
     assert z is not None
@@ -44,7 +41,7 @@ def test_indx_3dto1d():
     sz = np.random.rand(10, 10, 10)
     idx = 45
 
-    x, y, z = clustools.indx_1dto3d(idx, sz)
+    x, y, z = clustering.indx_1dto3d(idx, sz)
     assert x is not None
     assert y is not None
     assert z is not None
@@ -63,12 +60,12 @@ def test_make_local_connectivity_tcorr():
         f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
-    W = clustools.make_local_connectivity_tcorr(func_img, mask_img,
-                                                thresh=0.50)
+    W = clustering.make_local_connectivity_tcorr(func_img, mask_img,
+                                                 thresh=0.50)
 
     assert W is not None
 
-    out_img = clustools.parcellate_ncut(W, 200, mask_img)
+    out_img = clustering.parcellate_ncut(W, 200, mask_img)
 
     assert isinstance(out_img, nib.Nifti1Image)
 
@@ -86,12 +83,12 @@ def test_make_local_connectivity_scorr():
         f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
-    W = clustools.make_local_connectivity_scorr(func_img, mask_img,
-                                                thresh=0.50)
+    W = clustering.make_local_connectivity_scorr(func_img, mask_img,
+                                                 thresh=0.50)
 
     assert W is not None
 
-    out_img = clustools.parcellate_ncut(W, 200, mask_img)
+    out_img = clustering.parcellate_ncut(W, 200, mask_img)
 
     assert out_img is not None
 
@@ -122,21 +119,21 @@ def test_ni_parcellate(clust_type):
                 f"task-rest_space-MNI152NLin6Asym_desc-" \
         f"smoothAROMAnonaggr_bold_short.nii.gz"
     func_img = nib.load(func_file)
-    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask,
-                                 k=k, clust_type=clust_type,
-                                 local_corr=local_corr, outdir=out_dir,
-                                 conf=None, mask=mask)
+    nip = clustering.NiParcellate(func_file=func_file, clust_mask=clust_mask,
+                                  k=k, clust_type=clust_type,
+                                  local_corr=local_corr, outdir=out_dir,
+                                  conf=None, mask=mask)
     atlas = nip.create_clean_mask()
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{str(tmpdir.name)}/parc_tmp.nii.gz"
-    parcellation = clustools.parcellate(func_img, local_corr,
-                              clust_type, nip._local_conn_mat_path,
-                              nip.num_conn_comps,
-                              nip._clust_mask_corr_img,
-                              nip._standardize,
-                              nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, tmpdir.name,
-                              nip._conn_comps)
+    parcellation = clustering.parcellate(func_img, local_corr,
+                                         clust_type, nip._local_conn_mat_path,
+                                         nip.num_conn_comps,
+                                         nip._clust_mask_corr_img,
+                                         nip._standardize,
+                                         nip._detrending, nip.k, nip._local_conn,
+                                         nip.conf, tmpdir.name,
+                                         nip._conn_comps)
 
     nib.save(parcellation, out_path)
     assert out_path is not None
@@ -173,10 +170,10 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/" \
            f"sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
     func_img = nib.load(func_file)
-    nip = clustools.NiParcellate(func_file=func_file, clust_mask=clust_mask,
-                                 k=k, clust_type=clust_type,
-                                 local_corr=local_corr, outdir=out_dir,
-                                 conf=conf, mask=mask)
+    nip = clustering.NiParcellate(func_file=func_file, clust_mask=clust_mask,
+                                  k=k, clust_type=clust_type,
+                                  local_corr=local_corr, outdir=out_dir,
+                                  conf=conf, mask=mask)
 
     atlas = nip.create_clean_mask()
 
@@ -186,14 +183,14 @@ def test_ni_parcellate_mult_conn_comps(clust_type):
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{str(tmpdir.name)}/parc_tmp.nii.gz"
 
-    parcellation = clustools.parcellate(func_img, local_corr,
-                              clust_type, nip._local_conn_mat_path,
-                              nip.num_conn_comps,
-                              nip._clust_mask_corr_img,
-                              nip._standardize,
-                              nip._detrending, nip.k, nip._local_conn,
-                              nip.conf, tmpdir.name,
-                              nip._conn_comps)
+    parcellation = clustering.parcellate(func_img, local_corr,
+                                         clust_type, nip._local_conn_mat_path,
+                                         nip.num_conn_comps,
+                                         nip._clust_mask_corr_img,
+                                         nip._standardize,
+                                         nip._detrending, nip.k, nip._local_conn,
+                                         nip.conf, tmpdir.name,
+                                         nip._conn_comps)
 
     nib.save(parcellation, out_path)
     assert atlas is not None
