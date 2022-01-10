@@ -106,7 +106,7 @@ def test_average_shortest_path_length_for_all():
     'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
     assert avgest_path_len > 0
-    assert type(avgest_path_len) == float
+    assert type(avgest_path_len) == np.float64
 
 @pytest.mark.parametrize("weight", ["weight", "not_weight"])
 def test_average_shortest_path_length_fast(weight):
@@ -137,11 +137,12 @@ def test_average_local_efficiency(engine):
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    average_local_efficiency = netstats.average_local_efficiency(G, engine = engine)
+    average_local_efficiency = netstats.average_local_efficiency(
+        G, engine=engine)
     print("%s%s%s" % ('test_average_local_efficiency --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
     assert average_local_efficiency > 0
-    assert type(average_local_efficiency) == float
+    assert type(average_local_efficiency) == np.float64
 
 
 # used random node_comm_aff_mat
@@ -201,7 +202,7 @@ def test_modularity():
     'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert type(ci_dict) == dict
-    assert type(mod) == float
+    assert type(mod) == np.float64
 
 
 def test_diversity_coef_sign():
@@ -378,7 +379,7 @@ def test_raw_mets(engine):
         net_met_val = netstats.raw_mets(G, i, engine=engine)
         assert net_met_val is not np.nan
         if (engine == 'nx'):
-            assert type(net_met_val) == float
+            assert type(net_met_val) == np.float64
         elif (engine == 'gt'):
             assert type(net_met_val) == np.float64
 
