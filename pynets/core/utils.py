@@ -1250,7 +1250,7 @@ def collect_pandas_df(
 
     """
     from pathlib import Path
-    from pynets.stats.individual.netstats import collect_pandas_df_make
+    from pynets.statistics.individual.algorithms import collect_pandas_df_make
     from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models

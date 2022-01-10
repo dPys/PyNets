@@ -194,7 +194,7 @@ def main():
     import os
     import sys
     import dill
-    from pynets.stats.utils import make_feature_space_dict, \
+    from pynets.statistics.utils import make_feature_space_dict, \
         make_subject_dict, cleanNullTerms
     from pynets.core.utils import mergedicts
     try:
@@ -481,7 +481,7 @@ if __name__ == "__main__":
     import gc
     import json
     from multiprocessing import set_start_method, Process, Manager
-    from pynets.stats.group.prediction import build_predict_workflow
+    from pynets.statistics.group.prediction import build_predict_workflow
 
     try:
         set_start_method("forkserver")

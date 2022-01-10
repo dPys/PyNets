@@ -46,7 +46,7 @@ class NetworkAnalysis(BaseInterface):
     output_spec = NetworkAnalysisOutputSpec
 
     def _run_interface(self, runtime):
-        from pynets.stats.individual.netstats import extractnetstats
+        from pynets.statistics.individual.algorithms import extractnetstats
 
         out = extractnetstats(
             self.inputs.ID,

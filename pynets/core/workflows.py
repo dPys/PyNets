@@ -100,7 +100,7 @@ def workflow_selector(
     into a single-subject workflow"""
     from pynets.core.utils import load_runconfig
     from nipype import Workflow
-    from pynets.stats.individual import spectral
+    from pynets.statistics.individual import spectral
     from pynets.core.utils import pass_meta_ins, pass_meta_outs, \
         pass_meta_ins_multi
 
@@ -1223,7 +1223,7 @@ def workflow_selector(
         )
 
         if float(multiplex) > 0:
-            from pynets.stats.individual.multiplex import build_multigraphs
+            from pynets.statistics.individual.multiplex import build_multigraphs
             build_multigraphs_node = pe.Node(
                 niu.Function(
                     input_names=["est_path_iterlist", "ID"],

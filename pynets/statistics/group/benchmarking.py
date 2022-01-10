@@ -201,7 +201,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     from pathlib import Path
     import ast
     import matplotlib
-    from pynets.stats.utils import gen_sub_vec
+    from pynets.statistics.utils import gen_sub_vec
     matplotlib.use('Agg')
 
     df_summary = pd.DataFrame(
@@ -237,7 +237,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     # icc
     if icc is True:
-        from pynets.stats.utils import parse_closest_ixs
+        from pynets.statistics.utils import parse_closest_ixs
         try:
             import pingouin as pg
         except ImportError:

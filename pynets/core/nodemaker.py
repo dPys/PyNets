@@ -1410,7 +1410,7 @@ def get_node_attributes(node_files, emb_shape,
                                     atlas='BrainnetomeAtlasFan2016'):
     import ast
     import re
-    from pynets.stats.utils import parse_closest_ixs
+    from pynets.statistics.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 

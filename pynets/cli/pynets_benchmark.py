@@ -4,7 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-from pynets.stats.group.benchmarking import *
+from pynets.statistics.group.benchmarking import *
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
     from joblib import Parallel, delayed
     import tempfile
     import dill
-    from pynets.stats.utils import make_subject_dict, cleanNullTerms, \
+    from pynets.statistics.utils import make_subject_dict, cleanNullTerms, \
         get_ensembles_top, get_ensembles_embedding, \
         build_grid
     from colorama import Fore, Style

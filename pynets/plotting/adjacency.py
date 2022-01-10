@@ -300,7 +300,7 @@ def plot_conn_mat_func(
 
     # Plot community adj. matrix
     try:
-        from pynets.stats.individual.netstats import \
+        from pynets.statistics.individual.algorithms import \
             community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
@@ -475,7 +475,7 @@ def plot_conn_mat_struct(
 
     # Plot community adj. matrix
     try:
-        from pynets.stats.individual.netstats import \
+        from pynets.statistics.individual.algorithms import \
             community_resolution_selection
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))

@@ -67,7 +67,7 @@ class IndividualClustering(SimpleInterface):
         import nibabel as nib
         from pynets.core.utils import load_runconfig
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.fmri import clustools
+        from pynets.fmri import clustering
         from pynets.registration.utils import orient_reslice
         from joblib import Parallel, delayed
         from joblib.externals.loky.backend import resource_tracker
@@ -178,7 +178,7 @@ class IndividualClustering(SimpleInterface):
         else:
             out_name_conf = None
 
-        nip = clustools.NiParcellate(
+        nip = clustering.NiParcellate(
             func_file=out_name_func_file,
             clust_mask=clust_mask_in_t1w,
             k=int(self.inputs.k),
@@ -224,7 +224,7 @@ class IndividualClustering(SimpleInterface):
                     import os
                     import time
                     import gc
-                    from pynets.fmri.clustools import parcellate
+                    from pynets.fmri.clustering import parcellate
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
@@ -280,7 +280,7 @@ class IndividualClustering(SimpleInterface):
                 print(boot_parcellations)
                 print("Creating spatially-constrained consensus "
                       "parcellation...")
-                consensus_parcellation = clustools.ensemble_parcellate(
+                consensus_parcellation = clustering.ensemble_parcellate(
                     boot_parcellations,
                     int(self.inputs.k)
                 )
@@ -300,17 +300,17 @@ class IndividualClustering(SimpleInterface):
                     "Creating spatially-constrained parcellation...")
                 out_path = f"{runtime.cwd}/{atlas}_{str(self.inputs.k)}.nii.gz"
                 func_img = nib.load(out_name_func_file)
-                parcellation = clustools.parcellate(func_img,
-                                                    self.inputs.local_corr,
-                                                    self.inputs.clust_type,
-                                                    nip._local_conn_mat_path,
-                                                    nip.num_conn_comps,
-                                                    nip._clust_mask_corr_img,
-                                                    nip._standardize,
-                                                    nip._detrending, nip.k,
-                                                    nip._local_conn,
-                                                    nip.conf, nip._dir_path,
-                                                    nip._conn_comps)
+                parcellation = clustering.parcellate(func_img,
+                                                     self.inputs.local_corr,
+                                                     self.inputs.clust_type,
+                                                     nip._local_conn_mat_path,
+                                                     nip.num_conn_comps,
+                                                     nip._clust_mask_corr_img,
+                                                     nip._standardize,
+                                                     nip._detrending, nip.k,
+                                                     nip._local_conn,
+                                                     nip.conf, nip._dir_path,
+                                                     nip._conn_comps)
                 parcellation.to_filename(out_path)
 
         else:

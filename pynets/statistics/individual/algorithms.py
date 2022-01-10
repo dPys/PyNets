@@ -2444,7 +2444,7 @@ def collect_pandas_df_make(
     import os.path as op
     import pandas as pd
     from pynets.core import utils
-    from pynets.stats.utils import build_mp_dict
+    from pynets.statistics.utils import build_mp_dict
     from itertools import groupby
     import re
     from pynets.core.utils import load_runconfig

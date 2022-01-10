@@ -190,7 +190,7 @@ def test_plot_timeseries(plotting_data, subnet):
 def test_plot_network_clusters(plotting_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
-    from pynets.stats.individual.netstats import community_resolution_selection
+    from pynets.statistics.individual.algorithms import community_resolution_selection
 
     temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure', suffix='.png')
     fname = str(temp_file.name)

@@ -60,7 +60,7 @@ def plot_connectogram(
     from pathlib import Path
     from networkx.readwrite import json_graph
     from pynets.core.thresholding import normalize
-    from pynets.stats.individual.netstats import most_important, \
+    from pynets.statistics.individual.algorithms import most_important, \
         link_communities, community_resolution_selection
 
     # from scipy.cluster.hierarchy import linkage, fcluster

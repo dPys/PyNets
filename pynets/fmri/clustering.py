@@ -941,7 +941,7 @@ class NiParcellate(object):
 
                 if (not op.isfile(self._local_conn_mat_path)) or (
                         overwrite is True):
-                    from pynets.fmri.clustools import (
+                    from pynets.fmri.clustering import (
                         make_local_connectivity_tcorr,
                         make_local_connectivity_scorr,
                     )

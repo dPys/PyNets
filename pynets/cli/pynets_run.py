@@ -2295,7 +2295,7 @@ def build_workflow(args, retval):
     warnings.filterwarnings("ignore")
     from pynets.core.utils import collectpandasjoin
     from pynets.core.interfaces import CombineOutputs
-    from pynets.stats.interfaces import NetworkAnalysis
+    from pynets.statistics.interfaces import NetworkAnalysis
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector

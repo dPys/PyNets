@@ -219,7 +219,7 @@ def create_gb_palette(
     import mplcyberpunk
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
-    from pynets.stats.individual.netstats import \
+    from pynets.statistics.individual.algorithms import \
         community_resolution_selection, prune_disconnected
 
     plt.style.use("cyberpunk")
