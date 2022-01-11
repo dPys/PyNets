@@ -339,7 +339,8 @@ def test_plot_graph_measure_hists(nan):
     temp_dir = tempfile.TemporaryDirectory()
     dir_name = str(temp_dir.name)
 
-    df_csv = (f"{base_dir}/miscellaneous/metrics_sub-OAS31172_ses-d0407_topology_auc_clean.csv")
+    df_csv = f"{base_dir}/miscellaneous/metrics_sub-OAS31172_ses-d0407_" \
+             f"topology_auc_clean.csv"
 
     # Hack the dataframe
     if nan is True:

@@ -776,7 +776,7 @@ def diversity_coef_sign(W, ci):
         Snm = np.zeros((n, m))
         for i in range(m):
             Snm[:, i] = np.sum(w_[:, ci == i + 1], axis=1)
-        pnm = Snm / (np.tile(S, (m, 1)).T)
+        pnm = Snm / np.tile(S, (m, 1)).T
         pnm[np.isnan(pnm)] = 0
         pnm[np.logical_not(pnm)] = 1
         return -np.sum(pnm * np.log(pnm), axis=1) / np.log(m)
@@ -2029,11 +2029,12 @@ def extractnetstats(
     import pkg_resources
     import networkx
     from pathlib import Path
+    from pynets.statistics.individual import algorithms
 
     # Load netstats config and parse graph algorithms as objects
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/individual/global.yaml"),
+                                        "statistics/individual/global.yaml"),
         "r",
     ) as stream:
         try:
@@ -2057,7 +2058,7 @@ def extractnetstats(
                     for i in metric_list_global
                     if i in nx_algs
                 ] + [
-                    getattr(netstats, i)
+                    getattr(algorithms, i)
                     for i in metric_list_global
                     if i in pynets_algs
                 ]
@@ -2087,7 +2088,7 @@ def extractnetstats(
 
     with open(
         pkg_resources.resource_filename("pynets",
-                                        "stats/individual/local.yaml"),
+                                        "statistics/individual/local.yaml"),
         "r",
     ) as stream:
         try:

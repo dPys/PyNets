@@ -115,7 +115,7 @@ def test_get_conn_matrix(conn_model_in, n_features):
         assert (is_spd(conn_matrix_out, decimal=7))
         d = np.sqrt(np.diag(np.diag(conn_matrix_out)))
         assert_array_almost_equal(np.diag(conn_matrix_out),
-                                  np.ones((n_features)))
+                                  np.ones(n_features))
     elif "partcorr" in conn_model_in:
         prec = np.linalg.inv(conn_matrix_out)
         d = np.sqrt(np.diag(np.diag(prec)))

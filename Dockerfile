@@ -82,9 +82,9 @@ RUN apt-get update -qq \
     apt-get clean && cd /tmp \
     && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
-    && cp fsl/bin/* $FSLDIR/bin/ \
+    && cp fsl/bin/* /usr/share/fsl/5.0/bin/ \
     && rm -r fsl* \
-    && chmod 777 -R $FSLDIR/bin \
+    && chmod 777 -R /usr/share/fsl/5.0/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
     && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=5G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
@@ -181,7 +181,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 #	libjavascriptcoregtk-* \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && conda clean -tipsy \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
     && find /opt/conda/ -type f,l -name '*.pyc' -delete \
     && mkdir /inputs && \

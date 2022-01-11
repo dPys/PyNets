@@ -5,11 +5,13 @@
   </component>
   <component name="ProjectPlainTextFileTypeManager">
     <file url="file://$PROJECT_DIR$/licenses/AGPL-3.0.txt" />
-    <file url="file://$PROJECT_DIR$/licenses/PYNETS.txt" />
     <file url="file://$PROJECT_DIR$/licenses/THIRDPARTY.txt" />
     <file url="file://$PROJECT_DIR$/NOTICE" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.10 (sftp://dpys@192.168.1.92:22/usr/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.5 (sftp://root@192.168.1.92:22/usr/local/anaconda3/bin/python3)" project-jdk-type="Python SDK" />
+  <component name="PyPackaging">
+    <option name="earlyReleasesAsUpgrades" value="true" />
+  </component>
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
       <map>

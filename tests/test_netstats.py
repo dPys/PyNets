@@ -378,9 +378,9 @@ def test_raw_mets(engine):
     for i in metric_list_glob:
         net_met_val = algorithms.raw_mets(G, i, engine=engine)
         assert net_met_val is not np.nan
-        if (engine == 'nx'):
+        if engine == 'nx':
             assert type(net_met_val) == np.float64
-        elif (engine == 'gt'):
+        elif engine == 'gt':
             assert type(net_met_val) == np.float64
 
 
