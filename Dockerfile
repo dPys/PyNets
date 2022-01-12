@@ -82,7 +82,7 @@ RUN apt-get update -qq \
     apt-get clean && cd /tmp \
     && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
-    && cp fsl/bin/* /usr/share/fsl/5.0/bin/ \
+    && cp fsl/bin/* /usr/share/fsl/5.0/bin \
     && rm -r fsl* \
     && chmod 777 -R /usr/share/fsl/5.0/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \

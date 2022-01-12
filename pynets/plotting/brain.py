@@ -208,6 +208,7 @@ def create_gb_palette(
 
     """
     import matplotlib
+    import mplcyberpunk
     matplotlib.use('Agg')
     import warnings
     warnings.filterwarnings("ignore")
@@ -216,7 +217,6 @@ def create_gb_palette(
     import networkx as nx
     from pynets.core import thresholding
     import matplotlib.pyplot as plt
-    import mplcyberpunk
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.statistics.individual.algorithms import \
@@ -485,7 +485,7 @@ def plot_all_func(
 
         connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -548,7 +548,7 @@ def plot_all_func(
         if not node_radius or node_radius == "None":
             node_radius = "parc"
 
-        if adjacency is True:
+        if adj is True:
             adjacency.plot_conn_mat_func(
                 conn_matrix,
                 conn_model,
@@ -804,6 +804,7 @@ def plot_all_struct(
 
     """
     import matplotlib
+    import mplcyberpunk
     matplotlib.use("agg")
     import os
     from pynets.core.utils import load_runconfig
@@ -845,7 +846,7 @@ def plot_all_struct(
             "glassbrain"]["color_theme"][0]
         connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -905,7 +906,7 @@ def plot_all_struct(
         if not node_radius or node_radius == "None":
             node_radius = "parc"
 
-        if adjacency is True:
+        if adj is True:
             adjacency.plot_conn_mat_struct(
                 conn_matrix,
                 conn_model,
@@ -1120,6 +1121,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         import indexed_gzip
     import nibabel as nib
     import multinetx as mx
+    import mplcyberpunk
     import matplotlib
     matplotlib.use("agg")
     import pkg_resources
@@ -1129,7 +1131,6 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     from pynets.core import thresholding
-    import mplcyberpunk
     from scipy.spatial import distance
 
     coords = metadata["coords"]
@@ -1162,7 +1163,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             "glassbrain"
         ]["color_theme"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -1187,7 +1188,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     [struct_mat, func_mat] = [
         np.load(modality_paths[0]), np.load(modality_paths[1])]
 
-    if adjacency is True:
+    if adj is True:
         # Multiplex adjacency
         mG = nx.read_gpickle(mG_path)
 

@@ -30,6 +30,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    import mplcyberpunk
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     plt.style.use("cyberpunk")
@@ -102,6 +103,7 @@ def plot_community_conn_mat(
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    import mplcyberpunk
     from matplotlib import pyplot as plt
     matplotlib.use("agg")
     plt.style.use("cyberpunk")
