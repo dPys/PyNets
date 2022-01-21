@@ -4,10 +4,10 @@ pynets.dmri package
 Submodules
 ----------
 
-pynets.dmri.dmri\_utils module
-------------------------------
+pynets.dmri.utils module
+------------------------
 
-.. automodule:: pynets.dmri.dmri_utils
+.. automodule:: pynets.dmri.utils
     :members:
     :undoc-members:
     :show-inheritance:
@@ -27,7 +27,6 @@ pynets.dmri.track module
     :members:
     :undoc-members:
     :show-inheritance:
-
 
 Module contents
 ---------------

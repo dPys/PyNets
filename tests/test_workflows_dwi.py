@@ -2,6 +2,7 @@
 """
 Created on Wed Dec 27 16:19:14 2017
 """
+import os
 from pathlib import Path
 try:
     import cPickle as pickle
@@ -9,6 +10,7 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
+import tempfile
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
@@ -27,7 +29,7 @@ base_dir = str(Path(__file__).parent/"examples")
         pytest.param(None, 0.80, 0.20, 0.10, True, 'prop'),
     ]
 )
-@pytest.mark.parametrize("directget", ['prob', ['det', 'prob']])
+@pytest.mark.parametrize("traversal", ['prob', ['det', 'prob']])
 @pytest.mark.parametrize("min_length", [0, 5, [0, 5]])
 @pytest.mark.parametrize("plot_switch", [True, False])
 @pytest.mark.parametrize("mask", [None, f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_mask.nii.gz"])
@@ -81,17 +83,24 @@ base_dir = str(Path(__file__).parent/"examples")
                                                           f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
-def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr, min_thr,
-                    step_thr, multi_thr, thr_type, tiss_class, directget, min_length, track_type, node_size_list,
-                    atlas, multi_atlas, parcellation, user_atlas_list, subnet, plot_switch, mask):
+def test_struct_all(dmri_estimation_data, node_radius, parc, conn_model,
+                    conn_model_list, thr, max_thr, min_thr, step_thr,
+                    multi_thr, thr_type, tiss_class, traversal, min_length,
+                    track_type, node_size_list, atlas, multi_atlas,
+                    parcellation, user_atlas_list, subnet, plot_switch, mask):
     """
     Test structural connectometry
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
-    fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bvec.bvec"
-    fbvec = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    dir_path = tempfile.TemporaryDirectory()
+    base_dir = str(dir_path.name)
+    if not os.path.isdir(base_dir):
+        os.makedirs(base_dir)
+
+    dwi_file = dmri_estimation_data['dwi_file']
+    fbval = dmri_estimation_data['fbvals']
+    fbvec = dmri_estimation_data['fbvecs']
+    anat_file = dmri_estimation_data['t1w_file']
+
     roi = None
     ID = '25659_1'
     ref_txt = None
@@ -106,7 +115,6 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     outdir = f"{base_dir}/outputs"
     vox_size = '2mm'
     template_name = 'MNI152_T1'
-    target_samples = 1000
     error_margin = 6
     maxcrossing = 3
     step_list = [0.1, 0.3, 0.4, 0.4, 0.5, 0.5, 0.6, 0.8]
@@ -218,9 +226,9 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     else:
         min_length_list = None
 
-    if isinstance(directget, list) and len(directget) > 1:
-        multi_directget = directget
-        directget = None
+    if isinstance(traversal, list) and len(traversal) > 1:
+        multi_directget = traversal
+        traversal = None
     else:
         multi_directget = None
 
@@ -236,8 +244,8 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
                                                conn_model, user_atlas_list, multi_thr, multi_atlas, max_thr, min_thr,
                                                step_thr, node_size_list, conn_model_list, min_span_tree,
                                                use_AAL_naming, disp_filt, plugin_type, multi_nets, prune, mask, norm,
-                                               binary, target_samples, curv_thr_list, step_list,
-                                               track_type, min_length, error_margin, maxcrossing, directget, tiss_class,
+                                               binary, curv_thr_list, step_list,
+                                               track_type, min_length, error_margin, maxcrossing, traversal, tiss_class,
                                                runtime_dict, execution_dict, multi_directget, template_name,
                                                vox_size, waymask, min_length_list, error_margin_list, outdir)
 
@@ -248,3 +256,5 @@ def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr
     assert nx.is_directed_acyclic_graph(dmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = dmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
+
+    dir_path.cleanup()

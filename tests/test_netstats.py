@@ -5,6 +5,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 """
 import pytest
+import os
 import numpy as np
 import networkx as nx
 import time
@@ -49,7 +50,7 @@ def test_nx2gt():
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     nxG = nx.from_numpy_array(in_mat)
 
@@ -73,7 +74,7 @@ def test_np2gt():
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
 
     start_time = time.time()
@@ -96,7 +97,7 @@ def test_average_shortest_path_length_for_all():
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
@@ -106,7 +107,7 @@ def test_average_shortest_path_length_for_all():
     'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     np.round(time.time() - start_time, 1), 's'))
     assert avgest_path_len > 0
-    assert type(avgest_path_len) == np.float64
+    assert type(avgest_path_len) == float
 
 @pytest.mark.parametrize("weight", ["weight", "not_weight"])
 def test_average_shortest_path_length_fast(weight):
@@ -114,11 +115,14 @@ def test_average_shortest_path_length_fast(weight):
     Test for average_shortest_path_length_fast functionality
     """
     base_dir = str(Path(__file__).parent/"examples")
-    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+    in_mat = np.load(f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-"
+                     f"Default_model-cov_nodetype-spheres-2mm_tol-2fwhm_"
+                     f"hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    avgest_path_len = algorithms.average_shortest_path_length_fast(G, weight=weight)
+    avgest_path_len = algorithms.average_shortest_path_length_fast(
+        G, weight=weight)
     print("%s%s%s" % ('test_average_shortest_path_length_fast --> finished: ',
                       np.round(time.time() - start_time, 1), 's'))
     assert avgest_path_len > 0
@@ -132,7 +136,7 @@ def test_average_local_efficiency(engine):
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
@@ -170,7 +174,7 @@ def test_participation_coef(degree):
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     ci = np.ones(in_mat.shape[0])
     ci_dim = int(np.shape(ci)[0])
@@ -192,7 +196,7 @@ def test_modularity():
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_matrix(in_mat)
     start_time = time.time()
@@ -202,7 +206,7 @@ def test_modularity():
     'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     assert type(ci_dict) == dict
-    assert type(mod) == np.float64
+    assert type(mod) == float
 
 
 def test_diversity_coef_sign():
@@ -212,7 +216,7 @@ def test_diversity_coef_sign():
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     ci = np.ones(in_mat.shape[0])
     ci_dim = int(np.shape(ci)[0])
@@ -262,7 +266,7 @@ def test_prune_disconnected(connected_case, fallback_lcc):
     if connected_case is True:
         in_mat = np.load(
             f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-            f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+            f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
             f"thrtype-PROP_thr-0.95.npy")
         G = nx.from_numpy_array(in_mat)
     elif connected_case is False:
@@ -282,7 +286,8 @@ def test_prune_disconnected(connected_case, fallback_lcc):
         assert len(pruned_nodes) > 0
         assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness", "eigenvector"])
+@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness",
+                                    "eigenvector"])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_most_important(method, engine):
     """
@@ -291,12 +296,13 @@ def test_most_important(method, engine):
     base_dir = str(Path(__file__).parent / "examples")
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
-        f"model-cov_nodetype-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_"
+        f"model-cov_nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_"
         f"thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     start_time = time.time()
-    Gt, pruned_nodes = algorithms.most_important(G, method=method, engine=engine)
+    Gt, pruned_nodes = algorithms.most_important(G, method=method,
+                                                 engine=engine)
     print("%s%s%s" % ('test_most_important --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -325,9 +331,8 @@ def test_extractnetstats(binary, prune, norm, conn_model):
     roi = None
 
     start_time = time.time()
-    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model, est_path,
-                                          roi, prune,
-                                          norm, binary)
+    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
+                                          est_path, roi, prune, norm, binary)
     print("%s%s%s" % (
     'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
@@ -392,7 +397,7 @@ def test_subgraph_number_of_cliques_for_all():
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
         f"model-cov_nodety"
-        f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+        f"pe-spheres-2mm_tol-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
     G = nx.from_numpy_array(in_mat)
 
     cliques = algorithms.subgraph_number_of_cliques_for_all(G)
@@ -447,7 +452,7 @@ def test_participation_coef_sign():
     in_mat = np.load(
         f"{base_dir}/miscellaneous/graphs/002_modality-func_rsn-Default_"
         f"model-cov_nodety"
-        f"pe-spheres-2mm_smooth-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
+        f"pe-spheres-2mm_tol-2fwhm_hpass-0.1Hz_thrtype-PROP_thr-0.95.npy")
 
     ci = np.ones(in_mat.shape[0])
     ci_dim = int(np.shape(ci)[0])
@@ -523,7 +528,10 @@ def test_save_netmets():
     """ Test save netmets functionality using dummy metrics
     """
     import tempfile
-    dir_path = str(tempfile.TemporaryDirectory().name)
+
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     base_dir = str(Path(__file__).parent / "examples")
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
@@ -535,7 +543,7 @@ def test_save_netmets():
 
     algorithms.save_netmets(dir_path, est_path, metric_list_names,
                             net_met_val_list_final)
-
+    tmp.cleanup()
 
 @pytest.mark.parametrize("true_metric", [True, False])
 def test_iterate_nx_global_measures(true_metric):
@@ -567,14 +575,15 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
           netstats.community_resolution_selection.
     """
     G = nx.caveman_graph(sim_num_comms, sim_size)
-    node_ci, ci, resolution, num_comms = algorithms.community_resolution_selection(
-        G)
+    node_ci, ci, resolution, num_comms = \
+        algorithms.community_resolution_selection(G)
 
     assert len(node_ci) == len(ci)
     assert num_comms == sim_num_comms
     assert resolution is not None
 
-@pytest.mark.parametrize("metric", ['participation', 'diversity', 'local_efficiency',
+@pytest.mark.parametrize("metric", ['participation', 'diversity',
+                                    'local_efficiency',
                                     'comm_centrality', 'rich_club_coeff'])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_get_metrics(metric, engine):
@@ -610,9 +619,12 @@ def test_get_metrics(metric, engine):
                np.shape(algorithms.diversity_coef_sign(in_mat, ci))[1] + 1
     elif metric == 'local_efficiency':
         metric_list_names, net_met_val_list_final = \
-            algorithms.get_local_efficiency(G, metric_list_names, net_met_val_list_final)
-        assert len(metric_list_names) == len(algorithms.local_efficiency(G, engine=engine)) + 1
-        assert len(net_met_val_list_final) == len(algorithms.local_efficiency(G, engine=engine)) + 1
+            algorithms.get_local_efficiency(G, metric_list_names,
+                                            net_met_val_list_final)
+        assert len(metric_list_names) == \
+               len(algorithms.local_efficiency(G, engine=engine)) + 1
+        assert len(net_met_val_list_final) == len(algorithms.local_efficiency(
+            G, engine=engine)) + 1
     elif metric == 'comm_centrality':
         metric_list_names, net_met_val_list_final = \
             algorithms.get_comm_centrality(G, metric_list_names,
@@ -632,7 +644,6 @@ def test_get_metrics(metric, engine):
 
 
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("sql_out", [True, False])
 @pytest.mark.parametrize("embed", [True, False])
 @pytest.mark.parametrize("create_summary", [True, False])
 @pytest.mark.parametrize("graph_num", [
@@ -640,8 +651,7 @@ def test_get_metrics(metric, engine):
     pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
     1,
     2])
-def test_collect_pandas_df_make(plot_switch, sql_out, embed, create_summary,
-                                graph_num):
+def test_collect_pandas_df_make(plot_switch, embed, create_summary, graph_num):
     """
     Test for collect_pandas_df_make() functionality
     """
@@ -667,6 +677,6 @@ def test_collect_pandas_df_make(plot_switch, sql_out, embed, create_summary,
 
     combination_complete = algorithms.collect_pandas_df_make(
         net_mets_csv_list, ID, subnet, plot_switch=plot_switch, embed=embed,
-        create_summary=create_summary, sql_out=sql_out)
+        create_summary=create_summary)
 
     assert combination_complete is True

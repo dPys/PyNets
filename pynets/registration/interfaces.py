@@ -1319,7 +1319,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 parcellation_tmp_path = None
             else:
                 parcellation_tmp_path = fname_presuffix(
-                    self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
+                    self.inputs.parcellation, suffix="_tmp",
+                    newpath=runtime.cwd
                 )
                 copyfile(
                     self.inputs.parcellation,

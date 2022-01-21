@@ -269,9 +269,9 @@ def main():
     print(f"nuisance_cols = {nuisance_cols}")
     #sys.exit(0)
 
-    hyperparams_func = ["parcellation", "res", "model", "hpass", "extract",
-                        "smooth"]
-    hyperparams_dwi = ["parcellation", "res", "model", "directget",
+    hyperparams_func = ["parcellation", "granularity", "model", "hpass",
+                        "signal", "tol"]
+    hyperparams_dwi = ["parcellation", "granularity", "model", "traversal",
                        "minlength", "tol"]
 
     subject_dict_file_path = (

@@ -28,7 +28,6 @@ def direct_streamline_norm(
     ap_path,
     dir_path,
     track_type,
-    target_samples,
     conn_model,
     subnet,
     node_radius,
@@ -50,9 +49,10 @@ def direct_streamline_norm(
     basedir_path,
     curv_thr_list,
     step_list,
-    directget,
+    traversal,
     min_length,
-    t1w_brain
+    t1w_brain,
+    run_dsn=False
 ):
     """
     A Function to perform normalization of streamlines tracked in native
@@ -71,8 +71,6 @@ def direct_streamline_norm(
         pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     subnet : str
@@ -123,7 +121,7 @@ def direct_streamline_norm(
         List of integer curvature thresholds used to perform ensemble tracking.
     step_list : list
         List of float step-sizes used to perform ensemble tracking.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
@@ -140,8 +138,6 @@ def direct_streamline_norm(
         pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     subnet : str
@@ -184,7 +180,7 @@ def direct_streamline_norm(
     atlas_for_streams : str
         File path to atlas parcellation Nifti1Image in the same
         morphological space as the streamlines.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det
         (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -199,29 +195,16 @@ def direct_streamline_norm(
       different spatial normalization approaches on tractography and structural
       brain subnets. subnet Neuroscience, 1-19.
     """
-    import sys
     import gc
     from dipy.tracking.streamline import transform_streamlines
     from pynets.registration import utils as regutils
-    # from pynets.plotting import plot_gen
-    import pkg_resources
+    from pynets.plotting.brain import show_template_bundles
     import os.path as op
-    from pynets.registration.utils import vdc
-    from nilearn.image import resample_to_img
     from dipy.io.streamline import load_tractogram
-    from dipy.tracking import utils
     from dipy.tracking._utils import _mapping_to_voxel
+    from dipy.tracking.utils import density_map
     from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
     from dipy.io.streamline import save_tractogram
-    from pynets.core.utils import load_runconfig
-
-    # from pynets.core.utils import missing_elements
-
-    hardcoded_params = load_runconfig()
-    try:
-        run_dsn = hardcoded_params['tracking']["DSN"][0]
-    except FileNotFoundError as e:
-        print(e, "Failed to parse runconfig.yaml")
 
     if run_dsn is True:
         dsn_dir = f"{basedir_path}/dmri_reg/DSN"
@@ -236,23 +219,18 @@ def direct_streamline_norm(
 
         # Run SyN and normalize streamlines
         fa_img = nib.load(fa_path)
-        vox_size = fa_img.header.get_zooms()[0]
-
-        atlas_for_streams = atlas_t1w
 
         atlas_t1w_img = nib.load(atlas_t1w)
         t1w_brain_img = nib.load(t1w_brain)
         brain_mask = np.asarray(t1w_brain_img.dataobj).astype("bool")
 
-        streams_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        streams_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/streamlines_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
             conn_model,
-            "_",
-            target_samples,
             "%s"
             % (
                 "%s%s" % ("_" + str(node_radius), "mm_")
@@ -265,22 +243,20 @@ def direct_streamline_norm(
             str(step_list).replace(", ", "_"),
             "tracktype-",
             track_type,
-            "_directget-",
-            directget,
+            "_traversal-",
+            traversal,
             "_minlength-",
             min_length,
             ".trk",
         )
 
-        density_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+        density_t1w = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
             namer_dir,
             "/density_map_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
             "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
                     else ""),
             conn_model,
-            "_",
-            target_samples,
             "%s"
             % (
                 "%s%s" % ("_" + str(node_radius), "mm_")
@@ -293,14 +269,14 @@ def direct_streamline_norm(
             str(step_list).replace(", ", "_"),
             "tracktype-",
             track_type,
-            "_directget-",
-            directget,
+            "_traversal-",
+            traversal,
             "_minlength-",
             min_length,
             ".nii.gz",
         )
 
-        # streams_warp_png = '/tmp/dsn.png'
+        streams_warp_png = '/tmp/dsn.png'
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
@@ -322,13 +298,16 @@ def direct_streamline_norm(
         warped_fa_shape = warped_fa_img.shape
 
         adjusted_affine = affine_map.affine.copy()
+        adjusted_affine[0][3] = -adjusted_affine[0][3]
         adjusted_affine[1][3] = -adjusted_affine[1][3]
-        adjusted_affine[2][3] = -adjusted_affine[2][3]*0.95
+        adjusted_affine[2][3] = -adjusted_affine[2][3]
+        # adjusted_affine[..., 3] = np.dot(adjusted_affine,
+        #                                  np.array([0.5, 0.5, 0.5, 1]))
 
         streams_in_curr_grid = transform_streamlines(
-            streamlines, warped_fa_affine)
+            streamlines, adjusted_affine)
 
-        streams_final_filt = regutils.warp_streamlines(adjusted_affine,
+        streams_final_filt = regutils.warp_streamlines(t1w_brain_img.affine,
                                                        fa_img.affine,
                                                        mapping,
                                                        warped_fa_img,
@@ -357,13 +336,12 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        # plot_gen.show_template_bundles(streams_final_filt_final, atlas_t1w,
-        # streams_warp_png)
+        show_template_bundles(streams_final_filt_final, atlas_t1w,
+        streams_warp_png)
 
-        # Create and save MNI density map
         nib.save(
             nib.Nifti1Image(
-                utils.density_map(
+                density_map(
                     streams_final_filt_final,
                     affine=np.eye(4),
                     vol_dims=warped_fa_shape),
@@ -372,50 +350,9 @@ def direct_streamline_norm(
             density_t1w,
         )
 
-        # Map parcellation from native space back to MNI-space and create an
-        # 'uncertainty-union' parcellation with original mni-space parcellation
-        warped_parcellation = affine_map.transform_inverse(
-            mapping.transform(
-                np.asarray(atlas_img.dataobj).astype("int"),
-                interpolation="nearestneighbour",
-            ),
-            interp="nearest",
-        )
-        atlas_img.uncache()
-        warped_parcellation_img_res_data = np.asarray(
-            resample_to_img(
-                nib.Nifti1Image(warped_parcellation, affine=warped_fa_affine),
-                atlas_t1w_img,
-                interpolation="nearest",
-            ).dataobj
-        )
-        parcellation_t1w_data = np.asarray(atlas_t1w_img.dataobj)
-        atlas_t1w_img.uncache()
-        overlap_mask = np.invert(
-            warped_parcellation_img_res_data.astype("bool") *
-            parcellation_t1w_data.astype("bool"))
-        os.makedirs(f"{dir_path}/parcellations", exist_ok=True)
-        atlas_for_streams = f"{dir_path}/parcellations/" \
-                            f"{op.basename(parcellation).split('.nii')[0]}" \
-                            f"_t1w_liberal.nii.gz"
-
-        nib.save(
-            nib.Nifti1Image(
-                warped_parcellation_img_res_data * overlap_mask.astype("int")
-                + parcellation_t1w_data * overlap_mask.astype("int")
-                + np.invert(overlap_mask).astype("int")
-                * warped_parcellation_img_res_data.astype("int"),
-                affine=atlas_t1w_img.affine,
-            ),
-            atlas_for_streams,
-        )
-
         del (
             tractogram,
             streamlines,
-            warped_parcellation_img_res_data,
-            parcellation_t1w_data,
-            overlap_mask,
             stf,
             streams_final_filt_final,
             streams_final_filt,
@@ -426,6 +363,8 @@ def direct_streamline_norm(
         gc.collect()
 
         assert len(coords) == len(labels)
+
+        atlas_for_streams = atlas_t1w
 
     else:
         print(
@@ -439,7 +378,6 @@ def direct_streamline_norm(
         streams_t1w,
         dir_path,
         track_type,
-        target_samples,
         conn_model,
         subnet,
         node_radius,
@@ -457,7 +395,7 @@ def direct_streamline_norm(
         norm,
         binary,
         atlas_for_streams,
-        directget,
+        traversal,
         warped_fa,
         min_length
     )

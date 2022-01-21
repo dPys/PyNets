@@ -26,8 +26,9 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
     Test plot_conn_mat_nonet_no_mask functionality
     """
 
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     subnet = None
     ID = '002'
@@ -35,7 +36,7 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
     node_size = 2
     smooth = 2
     hpass = 0.1
-    extract_strategy = 'mean'
+    signal = 'mean'
     conn_model = 'sps'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
@@ -45,20 +46,21 @@ def test_plot_conn_mat_nonet_no_mask(plotting_data):
 
     start_time = time.time()
     adjacency.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-                                 ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+                                 ID, subnet, labels, roi, thr, node_size,
+                                 smooth, hpass, signal)
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
-
-    temp_dir.cleanup()
-
+    tmp.cleanup()
 
 def test_plot_conn_mat_nonet_mask(plotting_data):
     """
     Test plot_conn_mat_nonet_mask functionality
     """
 
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
+
     subnet = None
     ID = '002'
     thr = 0.95
@@ -66,7 +68,7 @@ def test_plot_conn_mat_nonet_mask(plotting_data):
     smooth = 2
     hpass = 0.1
     conn_model = 'sps'
-    extract_strategy = 'mean'
+    signal = 'mean'
     atlas = 'whole_brain_cluster_labels_PCA200'
     roi = None
 
@@ -75,21 +77,21 @@ def test_plot_conn_mat_nonet_mask(plotting_data):
 
     start_time = time.time()
     adjacency.plot_conn_mat_func(conn_matrix, conn_model, atlas, dir_path,
-                                 ID, subnet, labels, roi, thr, node_size, smooth, hpass, extract_strategy)
+                                 ID, subnet, labels, roi, thr, node_size,
+                                 smooth, hpass, signal)
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
+    tmp.cleanup()
 
-    temp_dir.cleanup()
 
-
-def test_plot_all_nonet_no_mask(plotting_data):
+def test_plot_all_nonet_no_mask(random_mni_roi_data, plotting_data):
     """
     Test plot_all_nonet_no_mask functionality
     """
 
-    base_dir = str(Path(__file__).parent/"examples")
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+    dir_path = str(tempfile.TemporaryDirectory().name)
+    os.makedirs(dir_path, exist_ok=True)
+
     subnet = None
     ID = '002'
     thr = 0.95
@@ -98,12 +100,12 @@ def test_plot_all_nonet_no_mask(plotting_data):
     conn_model = 'sps'
     parlistfile = None
     atlas = 'whole_brain_cluster_labels_PCA200'
-    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi = random_mni_roi_data['roi_file']
     prune = 1
     norm = 1
     hpass = 0.1
     binary = False
-    extract_strategy = 'mean'
+    signal = 'mean'
     edge_threshold = '99%'
 
     conn_matrix = plotting_data['conn_matrix']
@@ -113,10 +115,8 @@ def test_plot_all_nonet_no_mask(plotting_data):
     start_time = time.time()
     brain.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
                         coords, thr, node_size, edge_threshold, smooth, prune,
-                        parlistfile, norm, binary, hpass, extract_strategy)
+                        parlistfile, norm, binary, hpass, signal)
     print("%s%s%s" % ('plot_all --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    temp_dir.cleanup()
 
 
 def test_plot_all_nonet_with_mask(plotting_data):
@@ -124,8 +124,10 @@ def test_plot_all_nonet_with_mask(plotting_data):
     Test plot_all_nonet_with_mask functionality
     """
 
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
+
     subnet = None
     ID = '002'
     thr = 0.95
@@ -139,7 +141,7 @@ def test_plot_all_nonet_with_mask(plotting_data):
     atlas = b'whole_brain_cluster_labels_PCA200'
     parlistfile = None
     roi = None
-    extract_strategy = 'mean'
+    signal = 'mean'
     edge_threshold = '99%'
 
     conn_matrix = plotting_data['conn_matrix']
@@ -156,11 +158,10 @@ def test_plot_all_nonet_with_mask(plotting_data):
 
     start_time = time.time()
     brain.plot_all_func(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi, coords, thr,
-                        node_size, edge_threshold, smooth, prune, parlistfile, norm, binary, hpass, extract_strategy,
+                        node_size, edge_threshold, smooth, prune, parlistfile, norm, binary, hpass, signal,
                         edge_color_override=True)
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    temp_dir.cleanup()
+    tmp.cleanup()
 
 
 @pytest.mark.parametrize("subnet", ["Default", None])
@@ -170,8 +171,10 @@ def test_plot_timeseries(plotting_data, subnet):
     """
 
     base_dir = str(Path(__file__).parent/"examples")
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     ID = '002'
     atlas = 'whole_brain_cluster_labels_PCA200'
@@ -182,17 +185,17 @@ def test_plot_timeseries(plotting_data, subnet):
     start_time = time.time()
     brain.plot_timeseries(time_series, subnet, ID, dir_path, atlas, labels)
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    temp_dir.cleanup()
-
+    tmp.cleanup()
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
 def test_plot_network_clusters(plotting_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
-    from pynets.statistics.individual.algorithms import community_resolution_selection
+    from pynets.statistics.individual.algorithms import \
+        community_resolution_selection
 
-    temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure', suffix='.png')
+    temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure',
+                                            suffix='.png')
     fname = str(temp_file.name)
 
     conn_matrix = plotting_data['conn_matrix']
@@ -239,8 +242,9 @@ def test_plot_conn_mat_rois_gt_100(plotting_data):
     Test plot_conn_mat_rois_gt_100 functionality
     """
 
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     conn_matrix = plotting_data['conn_matrix']
     labels = plotting_data['labels']
@@ -248,16 +252,16 @@ def test_plot_conn_mat_rois_gt_100(plotting_data):
     start_time = time.time()
     adjacency.plot_conn_mat(conn_matrix, labels, dir_path, cmap='Blues')
     print("%s%s%s" % ('plot_timeseries --> finished: ', str(np.round(time.time() - start_time, 1)), 's'))
-
-    temp_dir.cleanup()
-
+    tmp.cleanup()
 
 @pytest.mark.parametrize("roi", [True, False])
 def test_plot_all_struct(plotting_data, roi):
     """Test structural plotting."""
     base_dir = str(Path(__file__).parent/"examples")
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_path = str(temp_dir.name)
+
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     conn_matrix = plotting_data['conn_matrix']
     labels = plotting_data['labels']
@@ -280,20 +284,17 @@ def test_plot_all_struct(plotting_data, roi):
     edge_threshold = '99%'
     prune = True
     parcellation = None
-    target_samples = 500
     norm = 6
     binary = False
-    directget = 'prob'
+    traversal = 'prob'
     track_type = 'particle'
     min_length = 10
     error_margin = 2
 
     brain.plot_all_struct(conn_matrix, conn_model, atlas, dir_path, ID, subnet, labels, roi,
-                          coords, thr, node_size, edge_threshold, prune, parcellation, target_samples,
-                          norm, binary, track_type, directget, min_length, error_margin)
-
-    temp_dir.cleanup()
-
+                          coords, thr, node_size, edge_threshold, prune, parcellation,
+                          norm, binary, track_type, traversal, min_length, error_margin)
+    tmp.cleanup()
 
 # def test_plot_all_struct_func(plotting_data):
 #     """Test structural and functional plotting."""
@@ -336,8 +337,10 @@ def test_plot_graph_measure_hists(nan):
     import pandas as pd
 
     base_dir = str(Path(__file__).parent/"examples")
-    temp_dir = tempfile.TemporaryDirectory()
-    dir_name = str(temp_dir.name)
+
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     df_csv = f"{base_dir}/miscellaneous/metrics_sub-OAS31172_ses-d0407_" \
              f"topology_auc_clean.csv"
@@ -346,13 +349,12 @@ def test_plot_graph_measure_hists(nan):
     if nan is True:
         df = pd.read_csv(df_csv)
         df[df.columns[4]] = np.nan
-        df.to_csv(f"{dir_name}/TEST.csv", index=False)
-        fig = brain.plot_graph_measure_hists(f"{dir_name}/TEST.csv")
+        df.to_csv(f"{dir_path}/TEST.csv", index=False)
+        fig = brain.plot_graph_measure_hists(f"{dir_path}/TEST.csv")
     else:
         fig = brain.plot_graph_measure_hists(df_csv)
     assert fig is not None
-    temp_dir.cleanup()
-
+    tmp.cleanup()
 
 # def test_plot_conn_mat_rois_lt_100():
 #     base_dir = str(Path(__file__).parent/"examples")

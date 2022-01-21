@@ -20,12 +20,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import VarianceThreshold
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 warnings.simplefilter("ignore")
 
 
 class ReduceVIF(BaseEstimator, TransformerMixin):
+
     def __init__(self, thresh=10.0):
         self.thresh = thresh
 
@@ -39,6 +39,8 @@ class ReduceVIF(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def calculate_vif(X, thresh=10.0):
+        from statsmodels.stats.outliers_influence import \
+            variance_inflation_factor
         dropped = True
         vif_cols = []
         while dropped:
@@ -132,11 +134,11 @@ def preprocess_x_y(X, y, nuisance_cols, nodrop_columns=[],
     sel = VarianceThreshold(threshold=var_thr)
     sel.fit(X)
     if len(nodrop_columns) > 0:
-        good_var_cols = X.columns[np.concatenate([sel.get_support(indices=True),
-                                                 np.array([X.columns.get_loc(c)
-                                                           for c in
-                                                           nodrop_columns if
-                                                           c in X])])]
+        good_var_cols = X.columns[np.concatenate(
+            [sel.get_support(indices=True), np.array([X.columns.get_loc(c)
+                                                      for c in
+                                                      nodrop_columns if
+                                                      c in X])])]
     else:
         good_var_cols = X.columns[sel.get_support(indices=True)]
 
@@ -246,7 +248,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     "subnet-"
                     + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
-                    + i.split('res-')[1].split("/")[0]
+                    + i.split('granularity-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".npy", "")
@@ -271,7 +273,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     "subnet-"
                     + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
-                    + i.split('res-')[1].split("/")[0]
+                    + i.split('granularity-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".csv", "")
@@ -362,28 +364,27 @@ def make_feature_space_dict(
     if target_modality == "func":
         for comb in grid_params:
             try:
-                extract, hpass, model, res, atlas, smooth = comb
-                grid_params_mod.append((extract, hpass, model, res, atlas,
-                                        str(smooth)))
+                signal, hpass, model, granularity, atlas, tol = comb
+                grid_params_mod.append((signal, hpass, model, granularity,
+                                        atlas, str(tol)))
             except:
                 try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
-                    grid_params_mod.append((extract, hpass, model, res, atlas,
-                                            str(smooth)))
+                    signal, hpass, model, granularity, atlas = comb
+                    tol = "0"
+                    grid_params_mod.append((signal, hpass, model, granularity,
+                                            atlas, str(tol)))
                 except:
                     print(f"Failed to parse: {comb}")
 
     elif target_modality == "dwi":
         for comb in grid_params:
             try:
-                directget, minlength, model, res, atlas, tol = comb
-                grid_params_mod.append((directget, minlength, model, res,
-                                        atlas, tol))
+                directget, minlength, model, granularity, atlas, tol = comb
+                grid_params_mod.append((directget, minlength, model,
+                                        granularity, atlas, tol))
             except:
                 print(f"Failed to parse: {comb}")
 
-    par_dict = subject_dict.copy()
 
     with Parallel(
         n_jobs=-1, backend='loky', verbose=10, temp_folder=cache_dir
@@ -393,7 +394,7 @@ def make_feature_space_dict(
                 base_dir,
                 df,
                 grid_param,
-                par_dict,
+                subject_dict.copy(),
                 ses,
                 target_modality,
                 target_embedding_type,
@@ -417,7 +418,7 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
 
     if "subnet" in hyperparam_dict.keys():
         hyperparam_dict["subnet"] = [i for i in
-                                     hyperparam_dict["subnet"] if "res"
+                                     hyperparam_dict["subnet"] if "granularity"
                                      not in i]
 
     hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(),
@@ -430,11 +431,12 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
     return hyperparam_dict, grid
 
 
-def get_index_labels(base_dir, ID, ses, modality, atlas, res, emb_shape):
+def get_index_labels(base_dir, ID, ses, modality, atlas, granularity,
+                     emb_shape):
 
     node_files = glob.glob(
         f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
-        f"{atlas}_res-{res}/nodes/*.json")
+        f"{atlas}_res-{granularity}/nodes/*.json")
 
     if len(node_files) > 0:
         ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
@@ -642,18 +644,21 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                         df_lps = pd.DataFrame(rsn_arr,
                                               columns=[f"{i}_subnet-"
                                                        f"{grid_param[-2]}_"
-                                                       f"res-{grid_param[-3]}_"
+                                                       f"granularity-"
+                                                       f"{grid_param[-3]}_"
                                                        f"dim1" for i in ixs])
                     elif rsn_dict["data"].shape[1] == 3:
                         df_lps = pd.DataFrame(
                             rsn_arr,
                             columns=[f"{i}_subnet-{grid_param[-2]}_"
-                                     f"res-{grid_param[-3]}_dim1" for
+                                     f"granularity-{grid_param[-3]}_dim1" for
                                      i in ixs]
                             + [f"{i}_subnet-{grid_param[-2]}_"
-                               f"res-{grid_param[-3]}_dim2" for i in ixs]
+                               f"granularity-{grid_param[-3]}_dim2" for
+                               i in ixs]
                             + [f"{i}_subnet-{grid_param[-2]}_"
-                               f"res-{grid_param[-3]}_dim3" for i in ixs],
+                               f"granularity-{grid_param[-3]}_dim3" for
+                               i in ixs],
                         )
                     else:
                         df_lps = None
@@ -1246,27 +1251,28 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     from colorama import Fore, Style
 
     try:
-        directget, minlength, model, res, atlas, tol = comb
+        directget, minlength, model, granularity, atlas, tol = comb
     except BaseException:
         print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                           f"{comb}{Style.RESET_ALL}"))
         return subject_dict, missingness_frame
 
-    #comb_tuple = (atlas, directget, minlength, model, res, tol)
+    #comb_tuple = (atlas, directget, minlength, model, granularity, tol)
     comb_tuple = comb
 
     # print(comb_tuple)
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-{atlas}_res-"
-            f"{res}/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
+            f"{atlas}_res-"
+            f"{granularity}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if (alg in i) and
-                          (f"res-{res}" in i) and
+                          (f"granularity-{granularity}" in i) and
                           (f"subnet-{atlas}" in i) and
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
@@ -1274,7 +1280,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                           (f"tol-{tol}" in i) and ('_NULL' not in i)]
         else:
             embeddings = [i for i in embeddings if (alg in i) and
-                          (f"res-{res}" in i) and
+                          (f"granularity-{granularity}" in i) and
                           (f"subnet-{atlas}" in i) and
                           (f"template-{template}" in i) and
                           (f"model-{model}" in i) and
@@ -1308,10 +1314,10 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                  (f"/subnet-{atlas}_res-{res}/"
+                                  (f"/subnet-{atlas}_res-{granularity}/"
                                             in i) and
                                   (atlas in os.path.basename(i)) and
-                                  (res in os.path.basename(i))]
+                                  (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=lambda x: int(
@@ -1366,7 +1372,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       atlas, res, emb_shape)
+                                       atlas, granularity, emb_shape)
             except BaseException:
                 print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
                       f"{embedding}{Style.RESET_ALL}")
@@ -1412,7 +1418,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             f"minlength-{minlength}",
             f"directget-{directget}",
             f"model-{model}",
-            f"res-{res}",
+            f"granularity-{granularity}",
             f"subnet-{atlas}",
             f"tol-{tol}",
             f"thrtype-{thr_type}",
@@ -1488,16 +1494,16 @@ def func_grabber(comb, subject_dict, missingness_frame,
     from colorama import Fore, Style
 
     try:
-        extract, hpass, model, res, atlas, smooth = comb
+        signal, hpass, model, granularity, atlas, tol = comb
     except:
         try:
-            extract, hpass, model, res, atlas = comb
-            smooth = "0"
+            signal, hpass, model, granularity, atlas = comb
+            tol = "0"
         except BaseException:
             print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                               f"{comb}{Style.RESET_ALL}"))
             return subject_dict, missingness_frame
-    # comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
+    # comb_tuple = (atlas, signal, hpass, model, granularity, str(tol))
     comb_tuple = comb
 
     # print(comb_tuple)
@@ -1505,39 +1511,50 @@ def func_grabber(comb, subject_dict, missingness_frame,
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
             f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
-            f"subnet-{atlas}_res-{res}/"
+            f"subnet-{atlas}_res-{granularity}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if ((alg in i) and
-                                                    (f"res-{res}" in i) and
-                                                    (f"subnet-{atlas}" in i) and
+                                                    (f"granularity-"
+                                                     f"{granularity}" in i)
+                                                    and
+                                                    (f"subnet-{atlas}" in i)
+                                                    and
                                                     (f"model-{model}" in i)
-                                                    and (f"hpass-{hpass}Hz" in i)
-                                                    and (f"extract-{extract}" in
-                                                         i)) and ('_NULL' not in i)]
+                                                    and (f"hpass-{hpass}Hz"
+                                                         in i)
+                                                    and (f"signal-{signal}" in
+                                                         i)) and ('_NULL' not
+                                                                  in i)]
         else:
             embeddings = [i for i in embeddings if ((alg in i) and
-                                                    (f"res-{res}" in i) and
-                                                    (f"subnet-{atlas}" in i) and
-                                                    (f"template-{template}" in i) and
+                                                    (f"granularity-"
+                                                     f"{granularity}" in i)
+                                                    and
+                                                    (f"subnet-{atlas}" in i)
+                                                    and
+                                                    (f"template-{template}"
+                                                     in i) and
                                                     (f"model-{model}" in i)
-                                                    and (f"hpass-{hpass}Hz" in i)
-                                                    and (f"extract-{extract}" in
-                                                         i)) and ('_NULL' not in i)]
+                                                    and (f"hpass-{hpass}Hz"
+                                                         in i)
+                                                    and (f"signal-{signal}" in
+                                                         i)) and ('_NULL' not
+                                                                  in i)]
 
-        if smooth == "0":
+        if tol == "0":
             embeddings = [
                 i
                 for i in embeddings
-                if "smooth" not in i
+                if "tol" not in i
             ]
         else:
             embeddings = [
                 i
                 for i in embeddings
-                if f"smooth-{smooth}fwhm" in i
+                if f"tol-{tol}fwhm" in i
             ]
 
         if len(embeddings) == 0:
@@ -1567,10 +1584,9 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                            f"/subnet-{atlas}_res-{res}/"
-                                            in i and
-                                            (atlas in os.path.basename(i))
-                                  and (res in os.path.basename(i))]
+                                  f"/subnet-{atlas}_res-{granularity}/"
+                                  in i and (atlas in os.path.basename(i))
+                                  and (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=os.path.getmtime)
@@ -1618,7 +1634,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       atlas, res, emb_shape)
+                                       atlas, granularity, emb_shape)
             except BaseException:
                 print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
                       f"{embedding} {Style.RESET_ALL}")
@@ -1660,23 +1676,23 @@ def func_grabber(comb, subject_dict, missingness_frame,
     elif alg == "topology":
         data = np.empty([len(mets), 1], dtype=np.float32)
         data[:] = np.nan
-        if smooth == '0':
+        if tol == '0':
             targets = [
-                f"extract-{extract}",
+                f"signal-{signal}",
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
-                f"res-{res}",
+                f"granularity-{granularity}",
                 f"subnet-{atlas}",
                 f"thrtype-{thr_type}",
             ]
         else:
             targets = [
-                f"extract-{extract}",
+                f"signal-{signal}",
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
-                f"res-{res}",
+                f"granularity-{granularity}",
                 f"subnet-{atlas}",
-                f"smooth-{smooth}fwhm",
+                f"tol-{tol}fwhm",
                 f"thrtype-{thr_type}",
             ]
 
@@ -1792,7 +1808,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
 
     for hyperparam in metaparams:
         if (
-            hyperparam != "smooth"
+            hyperparam != "tol"
             and hyperparam != "hpass"
             and hyperparam != "track_type"
             and hyperparam != "directget"
@@ -1801,7 +1817,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
             and hyperparam != "samples"
             and hyperparam != "nodetype"
             and hyperparam != "template"
-            and hyperparam != "extract"
+            and hyperparam != "signal"
 
         ):
             if hyperparam not in hyperparam_dict.keys():
@@ -1814,18 +1830,18 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 )
 
     if modality == "func":
-        if "smooth-" in file_renamed:
-            if "smooth" not in hyperparam_dict.keys():
-                hyperparam_dict["smooth"] = [str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0])]
+        if "tol-" in file_renamed:
+            if "tol" not in hyperparam_dict.keys():
+                hyperparam_dict["tol"] = [str(file_renamed.split(
+                    "tol-")[1].split("_")[0].split("fwhm")[0])]
             else:
-                hyperparam_dict["smooth"].append(str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0]))
+                hyperparam_dict["tol"].append(str(file_renamed.split(
+                    "tol-")[1].split("_")[0].split("fwhm")[0]))
         else:
-            if 'smooth' not in hyperparam_dict.keys():
-                hyperparam_dict['smooth'] = [str(0)]
-            hyperparam_dict["smooth"].append(str(0))
-            metaparams.append("smooth")
+            if 'tol' not in hyperparam_dict.keys():
+                hyperparam_dict['tol'] = [str(0)]
+            hyperparam_dict["tol"].append(str(0))
+            metaparams.append("tol")
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
                 hyperparam_dict["hpass"] = [str(file_renamed.split(
@@ -1835,16 +1851,16 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                     str(file_renamed.split("hpass-"
                                            )[1].split("_")[0].split("Hz")[0]))
             metaparams.append("hpass")
-        if "extract-" in file_renamed:
-            if "extract" not in hyperparam_dict.keys():
-                hyperparam_dict["extract"] = [
-                    str(file_renamed.split("extract-")[1].split("_")[0])
+        if "signal-" in file_renamed:
+            if "signal" not in hyperparam_dict.keys():
+                hyperparam_dict["signal"] = [
+                    str(file_renamed.split("signal-")[1].split("_")[0])
                 ]
             else:
-                hyperparam_dict["extract"].append(
-                    str(file_renamed.split("extract-")[1].split("_")[0])
+                hyperparam_dict["signal"].append(
+                    str(file_renamed.split("signal-")[1].split("_")[0])
                 )
-            metaparams.append("extract")
+            metaparams.append("signal")
 
     elif modality == "dwi":
         if "directget-" in file_renamed:

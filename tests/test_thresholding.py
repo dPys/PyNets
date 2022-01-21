@@ -271,16 +271,16 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     norm = 1
     binary = False
     hpass = False
-    extract_strategy = 'mean'
+    signal = 'mean'
 
     edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, smooth, \
-    prune, ID, dir_path, atlas, parcellation, labels, coords, norm, binary, hpass, extract_strategy = \
+    prune, ID, dir_path, atlas, parcellation, labels, coords, norm, binary, hpass, signal = \
         thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
                                  subnet, ID, dir_path,
                                  roi, node_radius, min_span_tree, smooth,
                                  disp_filt, parc, prune,
                                  atlas, parcellation, labels, coords, norm, binary,
-                                 hpass, extract_strategy,
+                                 hpass, signal,
                                  check_consistency=False)
 
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
@@ -316,25 +316,24 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     if all_zero == True and type == 'struct':
         conn_matrix = np.zeros((10, 10))
 
-    target_samples = 2
     track_type = 'local'
     atlas_for_streams = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
-    directget = 'prob'
+    traversal = 'prob'
     min_length = 20
     error_margin = 6
 
     edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, prune, \
-    ID, dir_path, atlas, parcellation, labels, coords, norm, binary, target_samples, track_type, \
-    atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(
+    ID, dir_path, atlas, parcellation, labels, coords, norm, binary, track_type, \
+    atlas_mni, streams, traversal, min_length, error_margin = thresholding.thresh_struct(
         dens_thresh, thr, conn_matrix,
         conn_model, subnet, ID,
         dir_path, roi, node_radius,
         min_span_tree, disp_filt, parc,
         prune, atlas, parcellation, labels,
         coords, norm, binary,
-        target_samples, track_type,
-        atlas_for_streams, streams, directget,
+        track_type,
+        atlas_for_streams, streams, traversal,
         min_length, error_margin, check_consistency=False)
 
     assert isinstance(dens_thresh, bool)
@@ -360,11 +359,10 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert isinstance(coords, list)
     assert isinstance(norm, int)
     assert isinstance(binary, bool)
-    assert isinstance(target_samples, int)
     assert isinstance(track_type, str)
     assert isinstance(atlas_mni, str)
     assert isinstance(streams, str)
-    assert isinstance(directget, str)
+    assert isinstance(traversal, str)
 
 
 def test_thresh_raw_graph():

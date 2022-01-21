@@ -318,13 +318,14 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             print(comb)
                                     elif isinstance(node_dict[0], list):
                                         try:
-                                            coords = [node_dict[i]['coord'] for i
-                                                      in range(len(node_dict))]
+                                            coords = \
+                                                [node_dict[i]['coord'] for i
+                                                 in range(len(node_dict))]
                                             try:
                                                 labels = \
-                                                    [node_dict[i]['label'][
-                                                         'BrainnetomeAtlas' \
-                                                         'Fan2016'] for i
+                                                    [node_dict[i]['label']
+                                                     ['BrainnetomeAtlas' \
+                                                      'Fan2016'] for i
                                                      in range(len(node_dict))]
                                             except:
                                                 labels = [node_dict[i][

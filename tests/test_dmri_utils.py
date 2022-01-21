@@ -19,26 +19,24 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_extract_b0():
+def test_extract_b0(dmri_estimation_data):
 
-    base_dir = str(Path(__file__).parent/"examples")
-    dwi_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
-               f"dwi.nii.gz"
-    fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
-    b0_ixs = np.where(np.loadtxt(fbval) <= 50)[0].tolist()[:2]
+    dwi_path = dmri_estimation_data['dwi_file']
+    fbvals = dmri_estimation_data['fbvals']
+
+    b0_ixs = np.where(np.loadtxt(fbvals) <= 50)[0].tolist()[:2]
     out_path = dmriutils.extract_b0(dwi_path, b0_ixs)
     assert os.path.isfile(out_path)
 
 
-def test_normalize_grads():
+def test_normalize_grads(dmri_estimation_data):
     """
     Test make_gtab_and_bmask functionality
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    fbval = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bval.bval"
-    fbvec = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_bvec.bvec"
-    bvals = np.loadtxt(fbval)
-    bvecs = np.loadtxt(fbvec)
+    fbvals = dmri_estimation_data['fbvals']
+    fbvecs = dmri_estimation_data['fbvecs']
+    bvals = np.loadtxt(fbvals)
+    bvecs = np.loadtxt(fbvecs).T
     b0_threshold = 50
     bvecs_normed, bvals_normed = dmriutils.normalize_gradients(
         bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True)
@@ -63,7 +61,7 @@ def test_evaluate_streamline_plausibility():
     B0_mask = f"{base_dir}/miscellaneous/tractography/mean_B0_bet_mask.nii.gz"
     streams = f"{base_dir}/miscellaneous/tractography/streamlines_csa_" \
               f"20000_parc_curv-[40_30]_step-[0.1_0.2_0.3_0.4_0.5]_" \
-              f"directget-prob_minlength-20.trk"
+              f"traversal-prob_minlength-20.trk"
 
     gtab = load_pickle(gtab_file)
     dwi_img = nib.load(dwi_path)

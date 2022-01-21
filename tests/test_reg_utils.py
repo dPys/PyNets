@@ -423,13 +423,10 @@ def test_wm_syn():
 
     base_dir = str(Path(__file__).parent/"examples")
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
-    fa_path = f"{base_dir}/003/anat/tensor_fa.nii.gz"
     ap_path = f"{base_dir}/003/anat/aniso_power_tmp.nii.gz"
 
     [mapping, affine_map, warped_fa] = utils.wm_syn(t1w_brain, ap_path,
-                                                    f"{base_dir}/003/dmri",
-                                                    fa_path,
-                                                    template_fa_path=None)
+                                                    f"{base_dir}/003/dmri")
     assert os.path.isfile(warped_fa) is True
     assert isinstance(mapping, imwarp.DiffeomorphicMap)
     assert isinstance(affine_map, imaffine.AffineMap) and \

@@ -4,22 +4,17 @@ pynets.registration package
 Submodules
 ----------
 
-pynets.registration.reg\_utils module
--------------------------------------
+pynets.registration.utils module
+--------------------------------
 
-.. automodule:: pynets.registration.reg_utils
+.. automodule:: pynets.registration.utils
     :members:
     :undoc-members:
     :show-inheritance:
-
-pynets.registration.register module
------------------------------------
 
 .. automodule:: pynets.registration.register
-    :members:
     :undoc-members:
     :show-inheritance:
-
 
 Module contents
 ---------------
@@ -28,3 +23,4 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+

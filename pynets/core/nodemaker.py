@@ -323,7 +323,7 @@ def get_node_membership(
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
-         parcellation node.
+        parcellation node.
     labels : list
         List of string labels corresponding to ROI nodes.
     parc : bool
@@ -344,17 +344,17 @@ def get_node_membership(
     -------
     coords_mm : list
         Filtered list of (x, y, z) tuples in mm-space with a spatial affinity
-         for the specified subnet.
+        for the specified subnet.
     RSN_parcels : list
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images
-         corresponding to ROI masks with a spatial affinity for the
-         specified subnet.
+        corresponding to ROI masks with a spatial affinity for the
+        specified subnet.
     net_labels : list
         Filtered list of string labels corresponding to ROI nodes with a
         spatial affinity for the specified subnet.
     subnet : str
         Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-         used to filter nodes in the study of brain subgraphs.
+        used to filter nodes in the study of brain subgraphs.
 
     References
     ----------
@@ -509,8 +509,8 @@ def get_node_membership(
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
-            print(e, f"\nCannot load subnet reference image. Do you have git-lfs "
-                  f"installed?")
+            print(e, f"\nCannot load subnet reference image. "
+                     f"Do you have git-lfs installed?")
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"

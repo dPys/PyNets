@@ -48,9 +48,9 @@ def main():
     template = 'MNI152_T1'
     mets = []
 
-    metaparams_func = ["parcellation", "res", "model", 'hpass', 'extract',
-                       'smooth']
-    metaparams_dwi = ["parcellation", "res", "model", 'directget',
+    metaparams_func = ["parcellation", "granularity", "model", 'hpass', 'signal',
+                       'tol']
+    metaparams_dwi = ["parcellation", "granularity", "model", 'traversal',
                       'minlength', 'tol']
 
     #sessions = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
@@ -250,21 +250,21 @@ def main():
                         for comb in grid:
                             if modality == 'func':
                                 try:
-                                    extract, hpass, model, res, atlas, \
-                                        smooth = comb
+                                    signal, hpass, model, granularity, atlas, \
+                                        tol = comb
                                 except BaseException:
                                     print(f"Missing {comb}...")
-                                    extract, hpass, model, res, atlas = comb
-                                    smooth = '0'
+                                    signal, hpass, model, granularity, atlas = comb
+                                    tol = '0'
                                 comb_tuple = (
-                                    atlas, extract, hpass, model, res,
-                                    smooth)
+                                    atlas, signal, hpass, model, granularity,
+                                    tol)
                             else:
-                                directget, minlength, model, res, atlas, \
+                                traversal, minlength, model, granularity, atlas, \
                                     tol = comb
                                 comb_tuple = (
-                                    atlas, directget, minlength, model,
-                                    res, tol)
+                                    atlas, traversal, minlength, model,
+                                    granularity, tol)
                             if comb_tuple in sub_dict_clean[ID][str(ses)][
                                     modality][embedding_type].keys():
                                 if isinstance(sub_dict_clean[ID][str(ses)][

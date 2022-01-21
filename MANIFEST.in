@@ -4,6 +4,7 @@ include licenses/*
 include NOTICE
 include README.rst
 include versioneer.py
+include pynets/__about__.py
 include pynets/_version.py
 include pynets/advanced.yaml
 include requirements.txt

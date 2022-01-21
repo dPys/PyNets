@@ -200,7 +200,8 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
         "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz"
     )
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
     parlistfile = pkg_resources.resource_filename(
         "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
@@ -306,6 +307,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     assert net_parcels_map_nifti is not None
     assert parcel_list_exp is not None
     assert network is not None
+    tmp.cleanup()
 
 
 @pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",

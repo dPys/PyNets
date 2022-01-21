@@ -2407,7 +2407,6 @@ def collect_pandas_df_make(
     plot_switch,
     embed=False,
     create_summary=False,
-    sql_out=False,
 ):
     """
     Summarize list of pickled pandas dataframes of graph metrics unique to
@@ -2424,8 +2423,6 @@ def collect_pandas_df_make(
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     plot_switch : bool
         Activate summary plotting (histograms, central tendency, AUC, etc.)
-    sql_out : bool
-        Optionally output data to sql.
 
     Returns
     -------
@@ -2551,18 +2548,6 @@ def collect_pandas_df_make(
                             continue
                 # For each unique threshold set, for each graph measure,
                 # extract AUC
-                if sql_out is True:
-                    try:
-                        import sqlalchemy
-
-                        sql_db = utils.build_sql_db(
-                            op.dirname(op.dirname(op.dirname(subject_path))),
-                            ID
-                        )
-                    except BaseException:
-                        sql_db = None
-                else:
-                    sql_db = None
                 for thr_set in meta.keys():
                     if len(meta[thr_set]["dataframes"].values()) > 1:
                         df_summary = pd.concat(
@@ -2665,18 +2650,6 @@ def collect_pandas_df_make(
                                        f"subnet-{atlas}_auc_nodes_" \
                                        f"{base_name}.csv"
                             embedding_frame.to_csv(out_path, index=False)
-
-                    if sql_out is True:
-                        sql_db.create_modality_table(modality)
-                        sql_db.add_hp_columns(
-                            list(set(hyperparams)) +
-                            list(df_summary_auc.columns)
-                        )
-                        sql_db.add_row_from_df(df_summary_auc, hyperparam_dict)
-                        # select_call = "SELECT * FROM func"
-                        # sql_db.engine.execute(select_call).fetchall()
-                        del sql_db
-                    del df_summary_auc
         else:
             models_grouped = None
             meta = {}
@@ -2711,7 +2684,8 @@ def collect_pandas_df_make(
                                                    groupby(df_nodes,
                                                            lambda s: s.split(
                                                                "_")[1])]
-                        atlas = os.path.dirname(file_).split('subnet-')[1].split(
+                        atlas = os.path.dirname(file_
+                                                ).split('subnet-')[1].split(
                             '_')[0]
                         if 'thr-' in os.path.basename(file_):
                             base_name = os.path.basename(file_).split(

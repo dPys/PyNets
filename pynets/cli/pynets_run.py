@@ -272,16 +272,6 @@ def get_parser():
 
     # fMRI hyperparameters
     parser.add_argument(
-        "-sm",
-        metavar="Smoothing value (mm fwhm)",
-        default=0,
-        nargs="+",
-        help="(hyperparameter): Optionally specify smoothing width(s). "
-             "Default is 0 / no smoothing. If you wish to iterate the pipeline"
-             " across multiple smoothing separate the list "
-             "by space (e.g. 2 4 6). Safe range: [0-8]\n",
-    )
-    parser.add_argument(
         "-hp",
         metavar="High-pass filter (Hz)",
         default=None,
@@ -294,7 +284,7 @@ def get_parser():
     )
     parser.add_argument(
         "-es",
-        metavar="Node extraction strategy",
+        metavar="Node signal extraction strategy",
         default="mean",
         nargs="+",
         choices=[
@@ -307,7 +297,7 @@ def get_parser():
             "standard_deviation",
         ],
         help="Include this flag if you are running functional connectometry "
-             "using parcel labels and wish to specify the name of a specific "
+             "and wish to specify the name of a specific "
              "function (i.e. other than the mean) to reduce the region's "
              "time-series. Options are: `sum`, `mean`, `median`, `mininum`, "
              "`maximum`, `variance`, `standard_deviation`.\n",
@@ -344,6 +334,20 @@ def get_parser():
              " to constrained functional clustering. If specifying a list of "
              "paths to multiple cluster masks, separate them by space.\n",
     )
+    parser.add_argument(
+        "-sm",
+        metavar="Error margin (mm FWHM)",
+        default=0,
+        nargs="+",
+        help="(hyperparameter): "
+             "Intersection distance in mm of a node to an edge."
+             "Corresponds to the magnitude of smoothing to be "
+             "applied to the node-extracted time-series. "
+             "Default is 0 mm FWHM. "
+             "Safe range for fMRI is: [0-9]."
+             "If you wish to iterate the pipeline across multiple smoothing "
+             "delimit the list by space (e.g. 2 4 6)\n",
+    )
 
     # dMRI hyperparameters
     parser.add_argument(
@@ -360,20 +364,8 @@ def get_parser():
              " values >60mm may fail.\n",
     )
     parser.add_argument(
-        "-tol",
-        metavar="Error margin",
-        default=5,
-        nargs="+",
-        help="(hyperparameter): Distance (in the units of the streamlines, "
-             "usually mm). If any coordinate in the streamline is within this "
-             "distance from the center of any voxel in the ROI, the filtering "
-             "criterion is set to True for this streamline, otherwise False. "
-             "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel. Default is 5. Safe range: [0-15].\n",
-    )
-    parser.add_argument(
         "-dg",
-        metavar="Direction getter",
+        metavar="Traversal strategy",
         default="det",
         nargs="+",
         choices=["det", "prob", "clos"],
@@ -381,9 +373,25 @@ def get_parser():
              "statistical approach to tracking for dmri connectome estimation."
              " Options are: det (deterministic), closest (clos), and "
              "prob (probabilistic). Default is det. If you wish to iterate the"
-             " pipeline across multiple direction-getting methods, separate "
+             " pipeline across multiple traversal methods, delimit "
              "the list by space (e.g. 'det', 'prob', 'clos').\n",
     )
+    parser.add_argument(
+        "-em",
+        metavar="Error margin (mm)",
+        default=5,
+        nargs="+",
+        help="(hyperparameter): "
+             "Intersection distance in mm of a node to an edge."
+             "Corresponds to the extent of parcel-streamline overlap "
+             "in tractography. If any coordinate in the streamline is within "
+             "this distance from the center of any voxel in the node. "
+             "Default is 5 mm. "
+             "Safe range for dMRI is: [0-15]. "
+             "If you wish to iterate the pipeline across multiple smoothing "
+             "delimit the list by space (e.g. 2 4 6)\n",
+    )
+
     # General settings
     parser.add_argument(
         "-norm",
@@ -846,23 +854,23 @@ def build_workflow(args, retval):
             hpass_list = None
     else:
         hpass_list = None
-    extract_strategy = args.es
-    if extract_strategy:
-        if (isinstance(extract_strategy, list)) and (
-                len(extract_strategy) > 1):
-            extract_strategy_list = extract_strategy
-            extract_strategy = "mean"
-        elif extract_strategy == ["None"]:
-            extract_strategy = "mean"
-            extract_strategy_list = None
-        elif isinstance(extract_strategy, list):
-            extract_strategy = extract_strategy[0]
-            extract_strategy_list = None
+    signal = args.es
+    if signal:
+        if (isinstance(signal, list)) and (
+                len(signal) > 1):
+            signal_list = signal
+            signal = "mean"
+        elif signal == ["None"]:
+            signal = "mean"
+            signal_list = None
+        elif isinstance(signal, list):
+            signal = signal[0]
+            signal_list = None
         else:
-            extract_strategy = "mean"
-            extract_strategy_list = None
+            signal = "mean"
+            signal_list = None
     else:
-        extract_strategy_list = None
+        signal_list = None
     roi = args.roi
     if isinstance(roi, list):
         roi = roi[0]
@@ -1052,7 +1060,7 @@ def build_workflow(args, retval):
             min_length_list = None
     else:
         min_length_list = None
-    error_margin = args.tol
+    error_margin = args.em
     if error_margin:
         if (isinstance(error_margin, list)) and (len(error_margin) > 1):
             error_margin_list = error_margin
@@ -1066,20 +1074,20 @@ def build_workflow(args, retval):
             error_margin_list = None
     else:
         error_margin_list = None
-    directget = args.dg
-    if directget:
-        if (isinstance(directget, list)) and (len(directget) > 1):
-            multi_directget = directget
-            directget = None
-        elif directget == ["None"]:
-            multi_directget = None
-        elif isinstance(directget, list):
-            directget = directget[0]
-            multi_directget = None
+    traversal = args.dg
+    if traversal:
+        if (isinstance(traversal, list)) and (len(traversal) > 1):
+            multi_traversal = traversal
+            traversal = None
+        elif traversal == ["None"]:
+            multi_traversal = None
+        elif isinstance(traversal, list):
+            traversal = traversal[0]
+            multi_traversal = None
         else:
-            multi_directget = None
+            multi_traversal = None
     else:
-        multi_directget = None
+        multi_traversal = None
     embed = args.embed
     multiplex = args.mplx
     if isinstance(multiplex, list):
@@ -1177,7 +1185,7 @@ def build_workflow(args, retval):
         dwi_file_list = None
         track_type = None
         tiss_class = None
-        directget = None
+        traversal = None
 
     if (ID is None) and (func_file_list is None):
         print("\nERROR: You must include a subject ID in your command line "
@@ -1515,19 +1523,19 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
-            if extract_strategy_list:
+            if signal_list:
                 print(
                     f"{Fore.GREEN}Extracting node signal using multiple"
                     f" strategies:"
                 )
                 print(
                     f"{Fore.BLUE}"
-                    f"{str(', '.join(str(n) for n in extract_strategy_list))}"
+                    f"{str(', '.join(str(n) for n in signal_list))}"
                 )
             else:
                 print(
                     f"{Fore.GREEN}Extracting node signal using a "
-                    f"{Fore.BLUE}{extract_strategy} {Fore.GREEN}strategy..."
+                    f"{Fore.BLUE}{signal} {Fore.GREEN}strategy..."
                 )
 
         if conn_model_list:
@@ -1786,7 +1794,7 @@ def build_workflow(args, retval):
                 pass
 
     if dwi_file or dwi_file_list:
-        if (conn_model == "ten") and (directget == "prob"):
+        if (conn_model == "ten") and (traversal == "prob"):
             print(
                 "\nERROR: Cannot perform probabilistic tracking with tensor "
                 "model estimation..."
@@ -1856,12 +1864,12 @@ def build_workflow(args, retval):
             else:
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
-        if directget:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} "
+        if traversal:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{traversal} "
                   f"{Fore.GREEN}direction getting...")
         else:
             print(f"{Fore.GREEN}Iterating direction getting:")
-            print(f"{Fore.BLUE}{', '.join(multi_directget)}")
+            print(f"{Fore.BLUE}{', '.join(multi_traversal)}")
         if min_length:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} "
                   f"minimum streamline length...")
@@ -1967,7 +1975,7 @@ def build_workflow(args, retval):
         clust_mask_list = None
         hpass = None
         smooth = None
-        extract_strategy = None
+        signal = None
         clust_type = None
         local_corr = None
         clust_type_list = None
@@ -2175,8 +2183,8 @@ def build_workflow(args, retval):
     retval["smooth_list"] = smooth_list
     retval["hpass"] = hpass
     retval["hpass_list"] = hpass_list
-    retval["extract_strategy"] = extract_strategy
-    retval["extract_strategy_list"] = extract_strategy_list
+    retval["signal"] = signal
+    retval["signal_list"] = signal_list
     retval["roi"] = roi
     retval["thr"] = thr
     retval["parcellation"] = parcellation
@@ -2210,8 +2218,8 @@ def build_workflow(args, retval):
     retval["multiplex"] = multiplex
     retval["track_type"] = track_type
     retval["tiss_class"] = tiss_class
-    retval["directget"] = directget
-    retval["multi_directget"] = multi_directget
+    retval["traversal"] = traversal
+    retval["multi_traversal"] = multi_traversal
     retval["func_file"] = func_file
     retval["dwi_file"] = dwi_file
     retval["fbval"] = fbval
@@ -2269,8 +2277,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('multiplex: ', multiplex))
     # print("%s%s" % ('track_type: ', track_type))
     # print("%s%s" % ('tiss_class: ', tiss_class))
-    # print("%s%s" % ('directget: ', directget))
-    # print("%s%s" % ('multi_directget: ', multi_directget))
+    # print("%s%s" % ('traversal: ', traversal))
+    # print("%s%s" % ('multi_traversal: ', multi_traversal))
     # print("%s%s" % ('func_file: ', func_file))
     # print("%s%s" % ('dwi_file: ', dwi_file))
     # print("%s%s" % ('fbval: ', fbval))
@@ -2283,8 +2291,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('fbval_list: ', fbval_list))
     # print("%s%s" % ('conf_list: ', conf_list))
     # print("%s%s" % ('anat_file_list: ', anat_file_list))
-    # print("%s%s" % ('extract_strategy: ', extract_strategy))
-    # print("%s%s" % ('extract_strategy_list: ', extract_strategy_list))
+    # print("%s%s" % ('signal: ', signal))
+    # print("%s%s" % ('signal_list: ', signal_list))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -2349,19 +2357,18 @@ def build_workflow(args, retval):
         binary,
         fbval,
         fbvec,
-        target_samples,
         curv_thr_list,
         step_list,
         track_type,
         min_length,
         maxcrossing,
         error_margin,
-        directget,
+        traversal,
         tiss_class,
         runtime_dict,
         execution_dict,
         embed,
-        multi_directget,
+        multi_traversal,
         multimodal,
         hpass,
         hpass_list,
@@ -2371,8 +2378,8 @@ def build_workflow(args, retval):
         local_corr,
         min_length_list,
         error_margin_list,
-        extract_strategy,
-        extract_strategy_list,
+        signal,
+        signal_list,
         outdir,
     ):
         """A function interface for generating a single-subject workflow"""
@@ -2491,19 +2498,18 @@ def build_workflow(args, retval):
                 binary,
                 fbval,
                 fbvec,
-                target_samples,
                 curv_thr_list,
                 step_list,
                 track_type,
                 min_length,
                 maxcrossing,
                 error_margin,
-                directget,
+                traversal,
                 tiss_class,
                 runtime_dict,
                 execution_dict,
                 embed,
-                multi_directget,
+                multi_traversal,
                 multimodal,
                 hpass,
                 hpass_list,
@@ -2513,8 +2519,8 @@ def build_workflow(args, retval):
                 local_corr,
                 min_length_list,
                 error_margin_list,
-                extract_strategy,
-                extract_strategy_list,
+                signal,
+                signal_list,
                 outdir,
             )
             try:
@@ -2785,19 +2791,18 @@ def build_workflow(args, retval):
         binary,
         fbval,
         fbvec,
-        target_samples,
         curv_thr_list,
         step_list,
         track_type,
         min_length,
         maxcrossing,
         error_margin,
-        directget,
+        traversal,
         tiss_class,
         runtime_dict,
         execution_dict,
         embed,
-        multi_directget,
+        multi_traversal,
         multimodal,
         hpass,
         hpass_list,
@@ -2807,8 +2812,8 @@ def build_workflow(args, retval):
         local_corr,
         min_length_list,
         error_margin_list,
-        extract_strategy,
-        extract_strategy_list,
+        signal,
+        signal_list,
         outdir,
     ):
         """A function interface for generating multiple single-subject
@@ -2913,19 +2918,18 @@ def build_workflow(args, retval):
                     binary=binary,
                     fbval=fbval_sub,
                     fbvec=fbvec_sub,
-                    target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
                     error_margin=error_margin,
-                    directget=directget,
+                    traversal=traversal,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
                     embed=embed,
-                    multi_directget=multi_directget,
+                    multi_traversal=multi_traversal,
                     multimodal=multimodal,
                     hpass=hpass,
                     hpass_list=hpass_list,
@@ -2935,8 +2939,8 @@ def build_workflow(args, retval):
                     local_corr=local_corr,
                     min_length_list=min_length_list,
                     error_margin_list=error_margin_list,
-                    extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list,
+                    signal=signal,
+                    signal_list=signal_list,
                     outdir=subj_dir,
                 )
                 wf_single_subject._n_procs = procmem[0]
@@ -3032,19 +3036,18 @@ def build_workflow(args, retval):
                     binary=binary,
                     fbval=fbval_sub,
                     fbvec=fbvec_sub,
-                    target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
                     error_margin=error_margin,
-                    directget=directget,
+                    traversal=traversal,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
                     embed=embed,
-                    multi_directget=multi_directget,
+                    multi_traversal=multi_traversal,
                     multimodal=multimodal,
                     hpass=hpass,
                     hpass_list=hpass_list,
@@ -3054,8 +3057,8 @@ def build_workflow(args, retval):
                     local_corr=local_corr,
                     min_length_list=min_length_list,
                     error_margin_list=error_margin_list,
-                    extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list,
+                    signal=signal,
+                    signal_list=signal_list,
                     outdir=subj_dir,
                 )
                 wf_single_subject._n_procs = procmem[0]
@@ -3149,19 +3152,18 @@ def build_workflow(args, retval):
             binary,
             fbval,
             fbvec,
-            target_samples,
             curv_thr_list,
             step_list,
             track_type,
             min_length,
             maxcrossing,
             error_margin,
-            directget,
+            traversal,
             tiss_class,
             runtime_dict,
             execution_dict,
             embed,
-            multi_directget,
+            multi_traversal,
             multimodal,
             hpass,
             hpass_list,
@@ -3171,8 +3173,8 @@ def build_workflow(args, retval):
             local_corr,
             min_length_list,
             error_margin_list,
-            extract_strategy,
-            extract_strategy_list,
+            signal,
+            signal_list,
             outdir,
         )
 
@@ -3338,19 +3340,18 @@ def build_workflow(args, retval):
             binary,
             fbval,
             fbvec,
-            target_samples,
             curv_thr_list,
             step_list,
             track_type,
             min_length,
             maxcrossing,
             error_margin,
-            directget,
+            traversal,
             tiss_class,
             runtime_dict,
             execution_dict,
             embed,
-            multi_directget,
+            multi_traversal,
             multimodal,
             hpass,
             hpass_list,
@@ -3360,8 +3361,8 @@ def build_workflow(args, retval):
             local_corr,
             min_length_list,
             error_margin_list,
-            extract_strategy,
-            extract_strategy_list,
+            signal,
+            signal_list,
             subj_dir,
         )
         import warnings

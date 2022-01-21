@@ -32,13 +32,12 @@ class _TrackingInputSpec(BaseInterfaceInputSpec):
     tiss_class = traits.Str(mandatory=True)
     labels_im_file_wm_gm_int = File(exists=True, mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
-    target_samples = traits.Any(mandatory=True)
     curv_thr_list = traits.List(mandatory=True)
     step_list = traits.List(mandatory=True)
     track_type = traits.Str(mandatory=True)
     min_length = traits.Any(mandatory=True)
     maxcrossing = traits.Any(mandatory=True)
-    directget = traits.Str(mandatory=True)
+    traversal = traits.Str(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     gtab_file = File(exists=True, mandatory=True)
     dwi_file = File(exists=True, mandatory=True)
@@ -68,7 +67,6 @@ class _TrackingOutputSpec(TraitedSpec):
 
     streams = traits.Any()
     track_type = traits.Str(mandatory=True)
-    target_samples = traits.Any(mandatory=True)
     conn_model = traits.Str(mandatory=True)
     dir_path = Directory(exists=True, mandatory=True)
     subnet = traits.Any(mandatory=False)
@@ -91,7 +89,7 @@ class _TrackingOutputSpec(TraitedSpec):
     step_list = traits.List(mandatory=True)
     fa_path = File(exists=True, mandatory=True)
     dm_path = traits.Any()
-    directget = traits.Str(mandatory=True)
+    traversal = traits.Str(mandatory=True)
     labels_im_file = File(exists=True, mandatory=True)
     min_length = traits.Any()
 
@@ -127,6 +125,7 @@ class Tracking(SimpleInterface):
         roi_neighborhood_tol = hardcoded_params['tracking'][
             "roi_neighborhood_tol"][0]
         sphere = hardcoded_params['tracking']["sphere"][0]
+        target_samples = hardcoded_params['tracking']["tracking_samples"][0]
 
         dir_path = utils.do_dir_path(
             self.inputs.atlas, os.path.dirname(self.inputs.dwi_file)
@@ -195,7 +194,7 @@ class Tracking(SimpleInterface):
             ),
             self.inputs.conn_model,
             "_",
-            self.inputs.target_samples,
+            target_samples,
             "_",
             "%s"
             % (
@@ -210,8 +209,8 @@ class Tracking(SimpleInterface):
             str(self.inputs.curv_thr_list).replace(", ", "_"),
             "_step-",
             str(self.inputs.step_list).replace(", ", "_"),
-            "_directget-",
-            self.inputs.directget,
+            "_traversal-",
+            self.inputs.traversal,
             "_minlength-",
             self.inputs.min_length,
             ".trk",
@@ -240,13 +239,13 @@ class Tracking(SimpleInterface):
                     dir_path,
                     streamlines,
                     self.inputs.conn_model,
-                    self.inputs.target_samples,
+                    target_samples,
                     self.inputs.node_radius,
                     self.inputs.curv_thr_list,
                     self.inputs.step_list,
                     self.inputs.subnet,
                     self.inputs.roi,
-                    self.inputs.directget,
+                    self.inputs.traversal,
                     self.inputs.min_length,
                     namer_dir,
                 )
@@ -427,7 +426,7 @@ class Tracking(SimpleInterface):
             print(
                 f"{Fore.GREEN}Target streamlines per iteration: "
                 f"{Fore.BLUE} "
-                f"{self.inputs.target_samples}"
+                f"{target_samples}"
             )
             print(Style.RESET_ALL)
             print(
@@ -441,13 +440,13 @@ class Tracking(SimpleInterface):
             print(f"{Fore.GREEN}Tracking type: {Fore.BLUE} "
                   f"{self.inputs.track_type}")
             print(Style.RESET_ALL)
-            if self.inputs.directget == "prob":
+            if self.inputs.traversal == "prob":
                 print(f"{Fore.GREEN}Direction-getting type: {Fore.BLUE}"
                       f"Probabilistic")
-            elif self.inputs.directget == "clos":
+            elif self.inputs.traversal == "clos":
                 print(f"{Fore.GREEN}Direction-getting type: "
                       f"{Fore.BLUE}Closest Peak")
-            elif self.inputs.directget == "det":
+            elif self.inputs.traversal == "det":
                 print(
                     f"{Fore.GREEN}Direction-getting type: "
                     f"{Fore.BLUE}Deterministic Maximum"
@@ -460,12 +459,12 @@ class Tracking(SimpleInterface):
             # Commence Ensemble Tractography
             try:
                 streamlines = track_ensemble(
-                    self.inputs.target_samples,
+                    target_samples,
                     labels_im_file_tmp_path_wm_gm_int,
                     labels_im_file_tmp_path,
                     recon_path,
                     get_sphere(sphere),
-                    self.inputs.directget,
+                    self.inputs.traversal,
                     self.inputs.curv_thr_list,
                     self.inputs.step_list,
                     self.inputs.track_type,
@@ -550,13 +549,13 @@ class Tracking(SimpleInterface):
                         dir_path,
                         streamlines,
                         self.inputs.conn_model,
-                        self.inputs.target_samples,
+                        target_samples,
                         self.inputs.node_radius,
                         self.inputs.curv_thr_list,
                         self.inputs.step_list,
                         self.inputs.subnet,
                         self.inputs.roi,
-                        self.inputs.directget,
+                        self.inputs.traversal,
                         self.inputs.min_length,
                         namer_dir,
                     )
@@ -582,7 +581,6 @@ class Tracking(SimpleInterface):
                         os.system(f"rm -f {j} &")
 
         self._results["track_type"] = self.inputs.track_type
-        self._results["target_samples"] = self.inputs.target_samples
         self._results["conn_model"] = self.inputs.conn_model
         self._results["dir_path"] = dir_path
         self._results["subnet"] = self.inputs.subnet
@@ -604,7 +602,7 @@ class Tracking(SimpleInterface):
         self._results["curv_thr_list"] = self.inputs.curv_thr_list
         self._results["step_list"] = self.inputs.step_list
         self._results["fa_path"] = fa_file_tmp_path
-        self._results["directget"] = self.inputs.directget
+        self._results["traversal"] = self.inputs.traversal
         self._results["labels_im_file"] = labels_im_file_tmp_path
         self._results["min_length"] = self.inputs.min_length
 

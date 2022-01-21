@@ -359,7 +359,7 @@ def plot_all_func(
     norm,
     binary,
     hpass,
-    extract_strategy,
+    signal,
     edge_color_override=False,
 ):
     """
@@ -413,7 +413,7 @@ def plot_all_func(
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
     edge_color_override : bool
@@ -562,7 +562,7 @@ def plot_all_func(
                 node_radius,
                 smooth,
                 hpass,
-                extract_strategy,
+                signal,
             )
 
         if glassbrain is True:
@@ -588,14 +588,14 @@ def plot_all_func(
                                      "mm_") if (
                      (node_radius != "parc") and (
                          node_radius is not None)) else "nodetype-parc_"),
-                 "%s" % ("%s%s%s" % ("smooth-",
+                 "%s" % ("%s%s%s" % ("tol-",
                                      smooth,
                                      "fwhm_") if float(smooth) > 0 else ""),
                  "%s" % ("%s%s%s" % ("hpass-",
                                      hpass,
                                      "Hz_") if hpass is not None else ""),
                  "%s" % ("%s%s" % ("extract-",
-                                   extract_strategy) if extract_strategy is
+                                   signal) if signal is
                          not None else ""),
                  "_thr-",
                  thr,
@@ -737,11 +737,10 @@ def plot_all_struct(
     edge_threshold,
     prune,
     parcellation,
-    target_samples,
     norm,
     binary,
     track_type,
-    directget,
+    traversal,
     min_length,
     error_margin
 ):
@@ -786,8 +785,6 @@ def plot_all_struct(
         Indicates whether to prune final graph of disconnected nodes/isolates.
     parcellation : str
         File path to atlas parcellation Nifti1Image.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -795,7 +792,7 @@ def plot_all_struct(
         unweighted graph.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -918,9 +915,8 @@ def plot_all_struct(
                 roi,
                 thr,
                 node_radius,
-                target_samples,
                 track_type,
-                directget,
+                traversal,
                 min_length,
                 error_margin
             )
@@ -929,7 +925,7 @@ def plot_all_struct(
             views = ["x", "y", "z"]
             # Plot connectome
             out_path_fig = \
-                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
                 (namer_dir,
                  "/glassbrain_",
                  ID,
@@ -948,14 +944,10 @@ def plot_all_struct(
                                      "mm_") if (
                      (node_radius != "parc") and (
                          node_radius is not None)) else "nodetype-parc_"),
-                 "%s" % ("%s%s%s" % ("samples-",
-                                     int(target_samples),
-                                     "streams_") if float(target_samples) > 0
-                         else "_"),
-                 "tracktype-",
+                 "_tracktype-",
                  track_type,
                  "_directget-",
-                 directget,
+                 traversal,
                  "_minlength-",
                  min_length,
                  "_tol-",

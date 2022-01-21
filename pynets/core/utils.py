@@ -128,7 +128,7 @@ def create_est_path_func(
     thr_type,
     hpass,
     parc,
-    extract_strategy,
+    signal,
 ):
     """
     Name the thresholded functional connectivity matrix file based on
@@ -164,7 +164,7 @@ def create_est_path_func(
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -186,9 +186,6 @@ def create_est_path_func(
               "No template specified in advanced.yaml"
               )
 
-    if (node_radius is None) and (parc is True):
-        node_radius = "_parc"
-
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
@@ -199,46 +196,17 @@ def create_est_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/graph_sub-",
-        ID,
-        "_modality-func_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         subnet,
-                         "_") if subnet is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_radius,
-                         "mm_") if (
-         (node_radius != "parc") and (
-             node_radius is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                         smooth,
-                         "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                         hpass,
-                         "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s%s" % ("extract-",
-                         extract_strategy,
-                         "_") if extract_strategy is not None else ""),
-        "thrtype-",
-        thr_type,
-        "_thr-",
-        thr,
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
 
-    return est_path
+    return f"{namer_dir}/graph_sub-{ID}_modality-func{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
+           f"signal-{signal}_thrtype-{thr_type}_thr-{thr}.npy"
 
 
 def create_est_path_diff(
@@ -249,11 +217,10 @@ def create_est_path_diff(
     roi,
     dir_path,
     node_radius,
-    target_samples,
     track_type,
     thr_type,
     parc,
-    directget,
+    traversal,
     min_length,
     error_margin,
 ):
@@ -282,15 +249,13 @@ def create_est_path_diff(
     node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     thr_type : str
         Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -314,55 +279,22 @@ def create_est_path_diff(
               "No template specified in advanced.yaml"
               )
 
-    if (node_radius is None) and (parc is True):
-        node_radius = "parc"
-
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/graph_sub-",
-        ID,
-        "_modality-dwi_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         subnet,
-                         "_") if subnet is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_radius,
-                         "mm_") if (
-         (node_radius != "parc") and (
-             node_radius is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("samples-",
-                         int(
-                             target_samples),
-                         "streams_") if float(target_samples) > 0 else "_"),
-        "tracktype-",
-        track_type,
-        "_directget-",
-        directget,
-        "_minlength-",
-        min_length,
-        "_tol-",
-        error_margin,
-        "_thrtype-",
-        thr_type,
-        "_thr-",
-        thr,
-        ".npy",
-        )
-    return est_path
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    return f"{namer_dir}/graph_sub-{ID}_modality-dwi{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tracktype-{track_type}_" \
+           f"traversal-{traversal}_minlength-{min_length}_" \
+           f"tol-{error_margin}_thrtype-{thr_type}_thr-{thr}.npy"
 
 
 def create_raw_path_func(
@@ -375,7 +307,7 @@ def create_raw_path_func(
     smooth,
     hpass,
     parc,
-    extract_strategy,
+    signal,
 ):
     """
     Name the raw functional connectivity matrix file based on relevant
@@ -406,7 +338,7 @@ def create_raw_path_func(
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -428,9 +360,6 @@ def create_raw_path_func(
               "No template specified in advanced.yaml"
               )
 
-    if (node_radius is None) and (parc is True):
-        node_radius = "parc"
-
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
@@ -441,42 +370,17 @@ def create_raw_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/rawgraph_sub-",
-        ID,
-        "_modality-func_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         subnet,
-                         "_") if subnet is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_radius,
-                         "mm_") if (
-         (node_radius != "parc") and (
-             node_radius is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                         smooth,
-                         "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                         hpass,
-                         "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s" % ("extract-",
-                       extract_strategy) if extract_strategy is not None
-                else ""),
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
 
-    return est_path
+    return f"{namer_dir}/rawgraph_sub-{ID}_modality-func{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
+           f"signal-{signal}.npy"
 
 
 def create_raw_path_diff(
@@ -486,10 +390,9 @@ def create_raw_path_diff(
     roi,
     dir_path,
     node_radius,
-    target_samples,
     track_type,
     parc,
-    directget,
+    traversal,
     min_length,
     error_margin
 ):
@@ -515,13 +418,11 @@ def create_raw_path_diff(
     node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -545,51 +446,22 @@ def create_raw_path_diff(
               "No template specified in advanced.yaml"
               )
 
-    if (node_radius is None) and (parc is True):
-        node_radius = "_parc"
-
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/rawgraph_sub-",
-        ID,
-        "_modality-dwi_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         subnet,
-                         "_") if subnet is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_radius,
-                         "mm_") if (
-         (node_radius != "parc") and (
-             node_radius is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("samples-",
-                         int(
-                             target_samples),
-                         "streams_") if float(target_samples) > 0 else ""),
-        "tracktype-",
-        track_type,
-        "_directget-",
-        directget,
-        "_minlength-",
-        min_length,
-        "_tol-",
-        error_margin,
-        ".npy",
-        )
-    return est_path
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    return f"{namer_dir}/rawgraph_sub-{ID}_modality-dwi{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tracktype-{track_type}_" \
+           f"traversal-{traversal}_minlength-{min_length}_" \
+           f"tol-{error_margin}.npy"
 
 
 def create_csv_path(dir_path, est_path):
@@ -617,10 +489,8 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/metrics_" \
-               f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
-
-    return out_path
+    return f"{namer_dir}/metrics_" \
+           f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
 
 
 def load_mat(est_path):
@@ -680,9 +550,8 @@ def load_mat_ext(
     disp_filt,
 ):
 
-    conn_matrix = load_mat(est_path)
     return (
-        conn_matrix,
+        load_mat(est_path),
         est_path,
         ID,
         subnet,
@@ -911,9 +780,9 @@ def pass_meta_ins(
     Parameters
     ----------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Connectivity estimation model (e.g. corr for correlation, cov for
+        covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     subnet : str
@@ -937,9 +806,9 @@ def pass_meta_ins(
     Returns
     -------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Connectivity estimation model (e.g. corr for correlation, cov for
+        covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     subnet : str
@@ -1019,9 +888,9 @@ def pass_meta_ins_multi(
     Parameters
     ----------
     conn_model_func : str
-       Functional connectivity estimation model (e.g. corr for correlation, cov
-       for covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Functional connectivity estimation model (e.g. corr for correlation, cov
+        for covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path_func : str
         File path to .npy file containing functional graph with thresholding
         applied.
@@ -1045,8 +914,8 @@ def pass_meta_ins_multi(
         Indicates whether to binarize resulting graph edges to form an
         unweighted functional graph.
     conn_model_struct : str
-       Diffusion structural connectivity estimation model (e.g. corr for
-       correlation, cov for covariance, sps for precision covariance, partcorr
+        Diffusion structural connectivity estimation model (e.g. corr for
+        correlation, cov for covariance, sps for precision covariance, partcorr
         for partial correlation). sps type is used by default.
     est_path_struct : str
         File path to .npy file containing diffusion structural graph with
@@ -1076,9 +945,9 @@ def pass_meta_ins_multi(
     Returns
     -------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for
-       correlation, cov for covariance, sps for precision covariance, partcorr
-       for partial correlation). sps type is used by default.
+        List of connectivity estimation model parameters (e.g. corr for
+        correlation, cov for covariance, sps for precision covariance, partcorr
+        for partial correlation). sps type is used by default.
     est_path_iterlist : list
         List of file paths to .npy file containing graph with thresholding
         applied.
@@ -1197,26 +1066,6 @@ def decompress_nifti(infile):
     # out_file.close()
     os.remove(infile)
     return out_file.name
-
-
-def proportional(k, voxels_list):
-    """Hagenbach-Bischoff Quota"""
-    quota = sum(voxels_list) / (1.0 + k)
-    frac = [voxels / quota for voxels in voxels_list]
-    res = [int(f) for f in frac]
-    n = k - sum(res)
-    if n == 0:
-        return res
-    if n < 0:
-        return [min(x, k) for x in res]
-    remainders = [ai - bi for ai, bi in zip(frac, res)]
-    limit = sorted(remainders, reverse=True)[n - 1]
-    for i, r in enumerate(remainders):
-        if r >= limit:
-            res[i] += 1
-            n -= 1
-            if n == 0:
-                return res
 
 
 def collect_pandas_df(
@@ -1617,7 +1466,7 @@ def save_ts_to_file(
     smooth,
     hpass,
     node_radius,
-    extract_strategy,
+    signal,
 ):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
@@ -1645,7 +1494,7 @@ def save_ts_to_file(
     node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for time-series extraction.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -1668,36 +1517,17 @@ def save_ts_to_file(
     if smooth is None:
         smooth = 0
 
-    # Save time series as npy file
-    out_path_ts = \
-        "%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/nodetimeseries_sub-",
-        ID,
-        "_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                          subnet,
-                          "_") if subnet is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                          op.basename(
-                              roi).split(".")[0],
-                          "_") if roi is not None else ""),
-        "%s" % ("%s%s%s" % ("spheres-",
-                          node_radius,
-                          "mm_") if (
-          (node_radius != "parc") and (
-              node_radius is not None)) else "parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                          smooth,
-                          "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                          hpass,
-                          "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s" % ("extract-",
-                        extract_strategy) if extract_strategy is not None
-                else ""),
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    out_path_ts = f"{namer_dir}/nodetimeseries_sub-{ID}_" \
+                  f"modality-func{subnet_suff}" \
+                  f"{roi_suff}{nodetype_suff}_tol-{smooth}fwhm_hpass-" \
+                  f"{hpass}Hz_signal-{signal}.npy"
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1754,70 +1584,6 @@ def timeout(seconds):
         return wraps(func)(wrapper)
 
     return decorator
-
-
-class build_sql_db(object):
-    """
-    A SQL exporter for AUC metrics.
-    """
-
-    def __init__(self, dir_path, ID):
-        from sqlalchemy import create_engine
-
-        self.ID = ID
-        db_file = dir_path + "/" + self.ID + "_auc_db.sql"
-        self.engine = create_engine(
-            "sqlite:///" + db_file, echo=False, encoding="utf-8"
-        )
-        self.hyperparams = None
-        self.modality = None
-        return
-
-    def create_modality_table(self, modality):
-        from sqlalchemy.sql import text
-
-        self.modality = modality
-        statement = """CREATE TABLE IF NOT EXISTS """ + \
-            self.modality + """(id TEXT);"""
-        self.engine.execute(text(statement.replace("'", "")))
-
-    def add_hp_columns(self, hyperparams):
-        from sqlalchemy.sql import text
-
-        self.hyperparams = hyperparams
-        for hp in self.hyperparams:
-            try:
-                statement = (
-                    """ALTER TABLE """
-                    + self.modality
-                    + """ ADD COLUMN """
-                    + hp
-                    + """;"""
-                )
-                self.engine.execute(text(statement.replace("'", "")))
-            except BaseException:
-                continue
-        return
-
-    def add_row_from_df(self, df_summary_auc, hyperparam_dict):
-        import pandas as pd
-
-        df_summary_auc_ext = pd.concat(
-            [
-                pd.DataFrame.from_dict(hyperparam_dict,
-                                       orient="index").transpose(),
-                df_summary_auc,
-            ],
-            axis=1,
-        )
-        df_summary_auc_ext.to_sql(
-            self.modality,
-            con=self.engine,
-            index=False,
-            chunksize=1000,
-            if_exists="replace",
-        )
-        return
 
 
 def filter_cols_from_targets(df, targets):

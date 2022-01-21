@@ -2,6 +2,7 @@
 """
 Created on Wed Dec 27 16:19:14 2017
 """
+import os
 from pathlib import Path
 try:
     import cPickle as pickle
@@ -9,6 +10,7 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
+import tempfile
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
@@ -110,23 +112,26 @@ base_dir = str(Path(__file__).parent/"examples")
                       f"bin.nii.gz"])
     ]
 )
-def test_func_all(hpass, smooth, parc, conn_model, parcellation,
+def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
+                  parc, conn_model, parcellation,
                   user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
                   min_thr, step_thr, multi_thr, thr_type, node_radius,
                   node_size_list, plot_switch):
     """
     Test functional connectometry
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_" \
-           f"desc-confounds_regressors.tsv"
-    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_" \
-                f"task-rest_space-T1w_desc-preproc_bold.nii.gz"
-    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
-           f"mask.nii.gz"
-    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_" \
-                f"desc-preproc_T1w.nii.gz"
+    dir_path = tempfile.TemporaryDirectory()
+    base_dir = str(dir_path.name)
+    if not os.path.isdir(base_dir):
+        os.makedirs(base_dir)
+
+    func_file = fmri_estimation_data['func_file']
+    mask = fmri_estimation_data['mask_file']
+    conf = fmri_estimation_data['conf_file']
+    anat_file = fmri_estimation_data['t1w_file']
+
+    roi = random_mni_roi_data['roi_file']
+
     ID = '25659_1'
     ref_txt = None
     nthreads = cpu_count()
@@ -269,15 +274,18 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
         hpass_list = None
 
     # start_time = time.time()
-    fmri_connectometry_wf = workflows.fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
-                                               dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
-                                               multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
-                                               k_clustering, user_atlas_list, clust_mask_list, node_size_list,
-                                               conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
-                                               disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
-                                               mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template_name, vox_size, local_corr, extract_strategy,
-                                               extract_strategy_list, outdir)
+    fmri_connectometry_wf = workflows.fmri_connectometry(
+        func_file,
+        ID, atlas, subnet, node_radius, roi, thr, parcellation,
+        conn_model, dens_thresh, conf,
+        plot_switch, parc, ref_txt, procmem,
+        multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask,
+        k_list, k_clustering, user_atlas_list, clust_mask_list, node_size_list,
+        conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
+        disp_filt, prune, multi_nets, clust_type, clust_type_list,
+        plugin_type, mask, norm, binary, anat_file, runtime_dict,
+        execution_dict, hpass, hpass_list, template_name, vox_size,
+        local_corr, extract_strategy, extract_strategy_list, outdir)
     # print("%s%s%s" % ('fmri_connectometry: ',
     #                   str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -285,7 +293,7 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-
+    dir_path.cleanup()
 
 @pytest.mark.parametrize("k,k_list,k_clustering,clust_mask,clust_mask_list,clust_type,clust_type_list",
     [
@@ -330,16 +338,22 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
+def test_func_clust(fmri_estimation_data, parc, parcellation, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
                     clust_type, clust_type_list, plot_switch, roi, mask, subnet, node_radius, node_size_list, atlas,
                     multi_atlas):
     """
     Test functional connectometry with clustering
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
-    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    dir_path = tempfile.TemporaryDirectory()
+    base_dir = str(dir_path.name)
+    if not os.path.isdir(base_dir):
+        os.makedirs(base_dir)
+
+    func_file = fmri_estimation_data['func_file']
+    mask = fmri_estimation_data['mask_file']
+    conf = fmri_estimation_data['conf_file']
+    anat_file = fmri_estimation_data['t1w_file']
+
     ID = '25659_1'
     parc = parc
     ref_txt = None
@@ -471,15 +485,16 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
         hpass_list = None
 
     # start_time = time.time()
-    fmri_connectometry_wf = workflows.fmri_connectometry(func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation, conn_model,
-                                               dens_thresh, conf, plot_switch, parc, ref_txt, procmem, multi_thr,
-                                               multi_atlas, max_thr, min_thr, step_thr, k, clust_mask, k_list,
-                                               k_clustering, user_atlas_list, clust_mask_list, node_size_list,
-                                               conn_model_list, min_span_tree, use_AAL_naming, smooth, smooth_list,
-                                               disp_filt, prune, multi_nets, clust_type, clust_type_list, plugin_type,
-                                               mask, norm, binary, anat_file, runtime_dict, execution_dict, hpass,
-                                               hpass_list, template_name, vox_size, local_corr, extract_strategy,
-                                               extract_strategy_list, outdir)
+    fmri_connectometry_wf = workflows.fmri_connectometry(
+        func_file, ID, atlas, subnet, node_radius, roi, thr, parcellation,
+        conn_model, dens_thresh, conf, plot_switch, parc, ref_txt, procmem,
+        multi_thr, multi_atlas, max_thr, min_thr, step_thr, k, clust_mask,
+        k_list, k_clustering, user_atlas_list, clust_mask_list,
+        node_size_list, conn_model_list, min_span_tree, use_AAL_naming,
+        smooth, smooth_list, disp_filt, prune, multi_nets, clust_type,
+        clust_type_list, plugin_type, mask, norm, binary, anat_file,
+        runtime_dict, execution_dict, hpass, hpass_list, template_name,
+        vox_size, local_corr, extract_strategy, extract_strategy_list, outdir)
     # print("%s%s%s" % ('fmri_connectometry (clust): ',
     #                   str(np.round(time.time() - start_time, 1)), 's'))
 
@@ -487,3 +502,5 @@ def test_func_clust(parc, parcellation, user_atlas_list, k, k_list, k_clustering
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
+
+    dir_path.cleanup()

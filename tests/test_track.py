@@ -3,6 +3,7 @@
 Created on Thur July 18 20:19:14 2019
 """
 import pytest
+import os
 try:
     import cPickle as pickle
 except ImportError:
@@ -29,11 +30,14 @@ def test_create_density_map():
 
     base_dir = str(Path(__file__).parent/"examples")
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi"
-    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_dwi.nii.gz"
+    dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
+               f"dwi.nii.gz"
     dwi_img = nib.load(dwi_file)
 
     # Load output from test_filter_streamlines: dictionary of streamline info
-    streamlines_trk = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
+    streamlines_trk = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
+                      f"nodetype-parc_tracktype-local_traversal-prob_" \
+                      f"minlength-0.trk"
     streamlines = nib.streamlines.load(streamlines_trk).streamlines
 
     # Remove streamlines with negative voxel indices
@@ -46,18 +50,21 @@ def test_create_density_map():
             streams_final_filt_final.append(sl)
 
     conn_model = 'csd'
-    target_samples = 10000
     node_radius = None
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     subnet = None
     roi = None
-    directget = 'prob'
+    traversal = 'prob'
     max_length = 0
 
-    [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path, streams_final_filt_final, conn_model,
-                                                   target_samples, node_radius, curv_thr_list, step_list,
-                                                   subnet, roi, directget, max_length, '/tmp')
+    [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path,
+                                                   streams_final_filt_final,
+                                                   conn_model,
+                                                   node_radius, curv_thr_list,
+                                                   step_list, subnet, roi,
+                                                   traversal, max_length,
+                                                   '/tmp')
 
     assert dir_path is not None
     assert dm_path is not None
@@ -77,8 +84,10 @@ def test_prep_tissues(tiss_class):
     wm_in_dwi = f"{base_dir}/003/dmri/wm_mask_dmri.nii.gz"
 
     tiss_classifier = track.prep_tissues(nib.load(t1w_mask),
-                                         nib.load(gm_in_dwi), nib.load(vent_csf_in_dwi),
-                                         nib.load(wm_in_dwi), tiss_class, nib.load(B0_mask),
+                                         nib.load(gm_in_dwi),
+                                         nib.load(vent_csf_in_dwi),
+                                         nib.load(wm_in_dwi), tiss_class,
+                                         nib.load(B0_mask),
                                          cmc_step_size=0.2)
     assert tiss_classifier is not None
 
@@ -107,10 +116,10 @@ def test_reconstruction(conn_model):
     assert mod is not None
 
 
-@pytest.mark.parametrize("directget", ['det', 'prob'])
+@pytest.mark.parametrize("traversal", ['det', 'prob'])
 @pytest.mark.parametrize("target_samples",
-                         [1000, pytest.param(0, marks=pytest.mark.xfail)])
-def test_track_ensemble(directget, target_samples):
+                         [300, pytest.param(0, marks=pytest.mark.xfail)])
+def test_track_ensemble(traversal, target_samples):
     """
     Test for ensemble tractography functionality
     """
@@ -149,8 +158,10 @@ def test_track_ensemble(directget, target_samples):
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    temp_dir = tempfile.TemporaryDirectory()
-    recon_path = temp_dir.name + '/model_file.hdf5'
+    tmp = tempfile.TemporaryDirectory()
+    temp_dir = str(tmp.name)
+    os.makedirs(temp_dir, exist_ok=True)
+    recon_path = f"{temp_dir}/model_file.hdf5"
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
 
     with h5py.File(recon_path, 'w') as hf:
@@ -160,12 +171,13 @@ def test_track_ensemble(directget, target_samples):
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
                                        labels_im_file,
-                   recon_path, sphere, directget, curv_thr_list, step_list,
+                   recon_path, sphere, traversal, curv_thr_list, step_list,
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                    wm_in_dwi, tiss_class)
 
     assert isinstance(streamlines, ArraySequence)
+    tmp.cleanup()
 
 
 def test_track_ensemble_particle():
@@ -204,7 +216,7 @@ def test_track_ensemble_particle():
     curv_thr_list = [40, 30]
     step_list = [0.1, 0.2, 0.3, 0.4, 0.5]
     sphere = get_sphere('repulsion724')
-    directget = 'prob'
+    traversal = 'prob'
     track_type = 'particle'
     target_samples = 1000
 
@@ -212,8 +224,9 @@ def test_track_ensemble_particle():
     dwi_data = dwi_img.get_fdata()
 
     model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
-    temp_dir = tempfile.TemporaryDirectory()
-    recon_path = temp_dir.name + '/model_file.hdf5'
+    tmp = tempfile.TemporaryDirectory()
+    temp_dir = str(tmp.name)
+    recon_path = f"{str(temp_dir)}/model_file.hdf5"
 
     with h5py.File(recon_path, 'w') as hf:
         hf.create_dataset("reconstruction",
@@ -222,16 +235,17 @@ def test_track_ensemble_particle():
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
                                        labels_im_file, recon_path, sphere,
-                                       directget, curv_thr_list, step_list,
+                                       traversal, curv_thr_list, step_list,
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                    wm_in_dwi, tiss_class)
 
     streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
-              f"nodetype-parc_samples-1000streams_tracktype-particle_" \
-              f"directget-prob_minlength-10.trk"
+              f"nodetype-parc_tracktype-particle_" \
+              f"traversal-prob_minlength-10.trk"
     save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
                                        space=Space.VOXMM, origin=Origin.NIFTI),
                     streams, bbox_valid_check=False)
 
     assert isinstance(streamlines, ArraySequence)
+    tmp.cleanup()

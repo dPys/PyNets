@@ -36,11 +36,10 @@ class _PlotStructInputSpec(BaseInterfaceInputSpec):
     edge_threshold = traits.Any(mandatory=True)
     prune = traits.Any(mandatory=True)
     parcellation = traits.Any(mandatory=False)
-    target_samples = traits.Any(mandatory=True)
     norm = traits.Any(mandatory=True)
     binary = traits.Bool(mandatory=True)
     track_type = traits.Any(mandatory=True)
-    directget = traits.Any(mandatory=True)
+    traversal = traits.Any(mandatory=True)
     min_length = traits.Any(mandatory=True)
     error_margin = traits.Any(mandatory=True)
 
@@ -86,11 +85,10 @@ class PlotStruct(SimpleInterface):
                 self.inputs.edge_threshold,
                 self.inputs.prune,
                 self.inputs.parcellation,
-                self.inputs.target_samples,
                 self.inputs.norm,
                 self.inputs.binary,
                 self.inputs.track_type,
-                self.inputs.directget,
+                self.inputs.traversal,
                 self.inputs.min_length,
                 self.inputs.error_margin
             )
@@ -121,7 +119,7 @@ class _PlotFuncInputSpec(BaseInterfaceInputSpec):
     norm = traits.Any(mandatory=True)
     binary = traits.Bool(mandatory=True)
     hpass = traits.Any(mandatory=True)
-    extract_strategy = traits.Any(mandatory=True)
+    signal = traits.Any(mandatory=True)
     edge_color_override = traits.Bool(mandatory=True)
 
 
@@ -171,7 +169,7 @@ class PlotFunc(SimpleInterface):
                 self.inputs.norm,
                 self.inputs.binary,
                 self.inputs.hpass,
-                self.inputs.extract_strategy,
+                self.inputs.signal,
                 self.inputs.edge_color_override,
             )
 
