@@ -436,7 +436,7 @@ def plot_all_func(
     from pynets.plotting import adjacency, connectogram
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -819,7 +819,7 @@ def plot_all_struct(
     plt.style.use("cyberpunk")
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1129,7 +1129,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     labels = metadata["labels"]
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:

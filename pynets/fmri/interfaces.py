@@ -608,7 +608,7 @@ class IndividualClustering(SimpleInterface):
         resource_tracker.warnings = None
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_brain_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
 

@@ -44,7 +44,8 @@ def test_normalize_grads(dmri_estimation_data):
     assert bvals_normed is not None
 
 
-def test_evaluate_streamline_plausibility():
+def test_evaluate_streamline_plausibility(dmri_estimation_data,
+                                          tractography_estimation_data):
     """
     Test evaluate_streamline_plausibility functionality
     """
@@ -54,29 +55,25 @@ def test_evaluate_streamline_plausibility():
     from dipy.io.streamline import load_tractogram
     from dipy.io import load_pickle
 
-    base_dir = str(Path(__file__).parent / "examples")
-    gtab_file = f"{base_dir}/miscellaneous/tractography/gtab.pkl"
-    dwi_path = f"{base_dir}/miscellaneous/tractography/sub-OAS31172_" \
-               f"ses-d0407_dwi_reor-RAS_res-2mm.nii.gz"
-    B0_mask = f"{base_dir}/miscellaneous/tractography/mean_B0_bet_mask.nii.gz"
-    streams = f"{base_dir}/miscellaneous/tractography/streamlines_csa_" \
-              f"20000_parc_curv-[40_30]_step-[0.1_0.2_0.3_0.4_0.5]_" \
-              f"traversal-prob_minlength-20.trk"
+    gtab_file = dmri_estimation_data['gtab_file']
+    dwi_path = dmri_estimation_data['dwi_file']
+    mask_file = tractography_estimation_data['mask']
+    streams = tractography_estimation_data['trk']
 
     gtab = load_pickle(gtab_file)
     dwi_img = nib.load(dwi_path)
     dwi_data = dwi_img.get_fdata()
-    B0_mask_img = nib.load(B0_mask)
-    B0_mask_data = B0_mask_img.get_fdata()
+    mask_img = nib.load(mask_file)
+    mask_data = mask_img.get_fdata()
     tractogram = load_tractogram(
         streams,
-        B0_mask_img,
+        mask_img,
         to_origin=Origin.NIFTI,
-        to_space=Space.VOXMM,
-        bbox_valid_check=False,
+        to_space=Space.RASMM,
+        bbox_valid_check=True,
     )
     streamlines = tractogram.streamlines
-    cleaned = evaluate_streamline_plausibility(dwi_data, gtab, B0_mask_data,
+    cleaned = evaluate_streamline_plausibility(dwi_data, gtab, mask_data,
                                                streamlines)
 
     assert len(cleaned) > 0

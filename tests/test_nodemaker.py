@@ -68,7 +68,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     """
     # Set example inputs
     template = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_" f"2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     dir_path = str(tempfile.TemporaryDirectory().name)
     parlistfile = pkg_resources.resource_filename(
@@ -154,7 +154,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     """
     # Set example inputs
     template = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     network = "Default"
     parc = False
@@ -197,7 +197,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     # Set example inputs
 
     template = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
 
     tmp = tempfile.TemporaryDirectory()
@@ -318,7 +318,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     # Set example inputs
     template = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_" f"2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
@@ -641,7 +641,7 @@ def test_create_spherical_roi_volumes():
     """
     node_size = 2
     template_mask = pkg_resources.resource_filename(
-        "pynets", "templates/MNI152_T1_" "brain_mask_2mm.nii.gz"
+        "pynets", "templates/standard/MNI152_T1_brain_mask_2mm.nii.gz"
     )
     [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(
         node_size, [(0, 0, 0), (5, 5, 5)], template_mask
@@ -654,7 +654,7 @@ def test_get_sphere():
     Test get_sphere functionality
     """
     img_file = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_" f"2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     img = nib.load(img_file)
     r = 4
@@ -773,7 +773,7 @@ def test_mask_roi():
     Test mask_roi functionality
     """
     mask = pkg_resources.resource_filename(
-        "pynets", "templates/MNI152_T1_brain_mask_" "2mm.nii.gz"
+        "pynets", "templates/standard/MNI152_T1_brain_mask_2mm.nii.gz"
     )
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
@@ -789,7 +789,6 @@ def test_drop_bad_ixs():
     parlistfile = pkg_resources.resource_filename(
         "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
     )
-
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
     shutil.copy2(parlistfile, f"{dir_path}/{os.path.basename(parlistfile)}")

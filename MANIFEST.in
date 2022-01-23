@@ -23,6 +23,8 @@ recursive-include pynets/fmri *
 recursive-include pynets/templates *
 recursive-include pynets/templates/atlases *
 recursive-include pynets/templates/rsnrefs *
+recursive-include pynets/templates/standard *
+recursive-include pynets/templates/rois *
 recursive-include pynets/dmri *
 recursive-include pynets/plotting *
 recursive-include pynets/statistics *

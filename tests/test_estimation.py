@@ -33,7 +33,8 @@ from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
 from nilearn.tests.test_signal import generate_signals
 from nilearn._utils.extmath import is_spd
 from numpy.testing import assert_array_almost_equal
-
+from nipype.utils.filemanip import fname_presuffix
+from nilearn.image import resample_to_img
 
 # fMRI
 @pytest.mark.parametrize("conn_model_in",
@@ -145,7 +146,7 @@ def test_fill_confound_nans():
 
 @pytest.mark.parametrize("conf",
                          [True, pytest.param(False, marks=pytest.mark.xfail)])
-@pytest.mark.parametrize("hpass", [None, 0.028, 0.080])
+@pytest.mark.parametrize("hpass", [0, 0.028, 0.080])
 @pytest.mark.parametrize("mask", [True, False])
 @pytest.mark.parametrize("func",
                          [True, pytest.param(False, marks=pytest.mark.xfail)])
@@ -180,7 +181,8 @@ def test_timseries_extraction(fmri_estimation_data, parcellation_data, conf,
     node_radius = 8
     signal = 'median'
     roi = None
-    net_parcels_map_nifti_file = parcellation_data['net_parcels_map_nifti_file']
+    net_parcels_map_nifti_file = \
+        parcellation_data['net_parcels_map_nifti_file']
     te = TimeseriesExtraction(
         net_parcels_nii_path=net_parcels_map_nifti_file,
         node_radius=node_radius, conf=conf,
@@ -271,13 +273,12 @@ def test_csd_mod_est(dmri_estimation_data):
     """Test CSD model estimation."""
 
     gtab = dmri_estimation_data['gtab']
-    dwi_file = dmri_estimation_data['dwi_file']
-    dwi_img = nib.load(dwi_file)
-    B0_mask_file = dmri_estimation_data['B0_mask']
+    dwi_file_small = dmri_estimation_data['dwi_file_small']
+    dwi_data_small = nib.load(dwi_file_small).get_fdata()
+    B0_mask_file_small = dmri_estimation_data['B0_mask_small']
 
-    dwi_data = dwi_img.get_fdata()
-
-    [csd_mod, model] = csd_mod_est(gtab, dwi_data, B0_mask_file, sh_order=0)
+    [csd_mod, model] = csd_mod_est(gtab, dwi_data_small,
+                                   B0_mask_file_small, sh_order=0)
 
     assert csd_mod is not None
     assert model is not None
@@ -287,32 +288,31 @@ def test_sfm_mod_est(dmri_estimation_data):
     """Test SFM model estimation."""
 
     gtab = dmri_estimation_data['gtab']
-    dwi_file = dmri_estimation_data['dwi_file']
-    dwi_img = nib.load(dwi_file)
-    B0_mask_file = dmri_estimation_data['B0_mask']
+    dwi_file = dmri_estimation_data['dwi_file_small']
+    dwi_data_small = nib.load(dwi_file).get_fdata()
+    B0_mask_file = dmri_estimation_data['B0_mask_small']
 
-    dwi_data = dwi_img.get_fdata()
-
-    [sf_odf, model] = sfm_mod_est(gtab, dwi_data, B0_mask_file)
+    [sf_odf, model] = sfm_mod_est(gtab, dwi_data_small, B0_mask_file)
 
     assert sf_odf is not None
     assert model is not None
 
-    B0_mask_file.close()
-
 
 @pytest.mark.parametrize("dsn", [False])
 @pytest.mark.parametrize("fa_wei", [True, False])
-def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
-    from pynets.registration.register import direct_streamline_norm
+def test_streams2graph(dmri_estimation_data, tractography_estimation_data,
+                       random_mni_roi_data, fa_wei, dsn):
+    from pynets.registration.register import direct_streamline_norm, regutils
     from dipy.core.gradients import gradient_table
     from dipy.io import save_pickle
     import random
     import pkg_resources
 
-    base_dir = str(Path(__file__).parent/"examples")
-    dwi_file = f"{base_dir}/003/test_out/003/dwi/sub-003_dwi_reor-RAS_" \
-               f"res-2mm.nii.gz"
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
+
+    dwi_file = dmri_estimation_data['dwi_file']
     conn_model = 'csd'
     min_length = 10
     error_margin = 2
@@ -333,16 +333,11 @@ def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
     parcellation = pkg_resources.resource_filename(
         "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
     )
-    atlas_dwi = f"{base_dir}/003/dmri/whole_brain_cluster_labels_PCA200_dwi_" \
-                f"track.nii.gz"
-    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
-              f"nodetype-parc_tracktype-particle_" \
-              f"traversal-prob_minlength-10.trk"
-    B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
-    dir_path = f"{base_dir}/003/dmri"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{base_dir}/003/test_out/003/dwi/bvecs_reor.bvec"
-    gtab_file = f"{base_dir}/gtab.pkl"
+    streams = tractography_estimation_data['trk']
+    B0_mask = dmri_estimation_data['B0_mask']
+    bvals = dmri_estimation_data['fbvals']
+    bvecs = dmri_estimation_data['fbvecs']
+    gtab_file = dmri_estimation_data['gtab_file']
     gtab = gradient_table(bvals, bvecs)
     gtab.b0_threshold = 50
     gtab_bvals = gtab.bvals.copy()
@@ -351,11 +346,18 @@ def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
     gtab.b0s_mask = gtab_bvals == 0
     save_pickle(gtab_file, gtab)
     fa_path = tens_mod_fa_est(gtab_file, dwi_file, B0_mask)[0]
-    ap_path = f"{base_dir}/003/anat/aniso_power_tmp.nii.gz"
-    t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
-    t1w_gm = f"{base_dir}/003/anat/t1w_gm.nii.gz"
+    ap_path = create_anisopowermap(gtab_file, dwi_file, B0_mask)[0]
+    t1w_brain = dmri_estimation_data['t1w_file']
+    t1w_gm = dmri_estimation_data['f_pve_gm']
+    atlas_in_dwi = fname_presuffix(ap_path,
+                                suffix="atlas_in_dwi", use_ext=True)
+    resample_to_img(
+        nib.load(parcellation), nib.load(ap_path), interpolation="nearest"
+    ).to_filename(atlas_in_dwi)
+
     coords = [(random.random()*2.0, random.random()*2.0, random.random()*2.0)
-              for _ in range(200)]
+              for _ in range(len(np.unique(nib.load(atlas_in_dwi).get_fdata()
+                                           ))-1)]
     labels = np.arange(len(coords) + 1)[np.arange(len(coords
                                                       ) + 1) != 0].tolist()
 
@@ -401,7 +403,7 @@ def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
             parc,
             prune,
             atlas,
-            atlas_dwi,
+            atlas_in_dwi,
             parcellation,
             labels,
             coords,
@@ -418,7 +420,7 @@ def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
         )
 
     conn_matrix = streams2graph(
-                    streams,
+                    atlas_in_dwi,
                     streams,
                     dir_path,
                     track_type,
@@ -433,7 +435,7 @@ def test_streams2graph(random_mni_roi_data, fa_wei, dsn):
                     parc,
                     prune,
                     atlas,
-                    atlas,
+                    atlas_in_dwi,
                     labels,
                     coords,
                     norm,

@@ -57,7 +57,7 @@ def test_applyxfm():
     ## First test: Apply xfm from test_align to orig anat img.
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)

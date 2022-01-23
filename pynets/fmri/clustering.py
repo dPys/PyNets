@@ -457,6 +457,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         # Convert index into 3D and calculate neighbors, then convert resulting
         # 3D indices into 1D
         ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
+        ndx1d = ndx1d[ndx1d<msk.shape[0]]
 
         # Convert 1D indices into masked versions
         ondx1d = msk[ndx1d].todense()
@@ -618,6 +619,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         # Calculate the voxels that are in the 3D neighborhood of the center
         # voxel
         ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
+        ndx1d = ndx1d[ndx1d<msk.shape[0]]
 
         # Restrict the neigborhood using the mask
         ondx1d = msk[ndx1d].todense()

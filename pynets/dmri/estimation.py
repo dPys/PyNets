@@ -351,8 +351,8 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
     import dipy.reconst.dti as dti
     from nilearn.image import math_img
     from dipy.reconst.csdeconv import auto_response
-    from dipy.reconst.mcsd import MultiShellDeconvModel
-    from dipy.sims.voxel import multi_shell_fiber_response
+    from dipy.reconst.mcsd import MultiShellDeconvModel, \
+        multi_shell_fiber_response
 
     print("Reconstructing using MCSD...")
     B0_mask_data = np.nan_to_num(np.asarray(
@@ -389,11 +389,10 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
 
     response, ratio = auto_response(gtab, data, roi_radius=10,
                                     fa_thr=0.7)
-    evals_d = response[0]
 
     response_mcsd = multi_shell_fiber_response(sh_order=sh_order,
                                                bvals=gtab.bvals,
-                                               evals=evals_d, csf_md=csf_md,
+                                               evals=response[0], csf_md=csf_md,
                                                gm_md=gm_md)
 
     model = MultiShellDeconvModel(gtab, response_mcsd)

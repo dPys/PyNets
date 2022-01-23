@@ -712,7 +712,7 @@ def parcel_masker(
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -864,7 +864,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1311,7 +1311,7 @@ def parcel_naming(coords, vox_size):
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:

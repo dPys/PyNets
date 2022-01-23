@@ -1432,7 +1432,7 @@ def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
     )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:

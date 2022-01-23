@@ -1424,10 +1424,10 @@ def dmri_connectometry(
     if template_name == "MNI152_T1" or template_name == "colin27" or \
             template_name == "CN200":
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
         )
         template_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
         utils.check_template_loads(template, template_mask, template_name)
     else:
@@ -3562,10 +3562,10 @@ def fmri_connectometry(
     if template_name == "MNI152_T1" or template_name == "colin27" or \
             template_name == "CN200":
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
         )
         template_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/{template_name}_brain_mask_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{template_name}_brain_mask_{vox_size}.nii.gz"
         )
         utils.check_template_loads(template, template_mask, template_name)
     else:

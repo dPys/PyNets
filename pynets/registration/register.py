@@ -534,18 +534,21 @@ class DmriReg(object):
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
             f"{'_vent_csf_in_dwi.nii.gz'}"
         )
-        self.mni_vent_loc = f"{self.reg_path_img}/LateralVentricles_" \
-                            f"{vox_size}.nii.gz"
+        self.mni_vent_loc = pkg_resources.resource_filename(
+            "pynets", f"templates/rois/LateralVentricles_{vox_size}.nii.gz"
+        )
         self.vent_mask_mni = f"{self.reg_path_img}{'/vent_mask_mni.nii.gz'}"
         self.vent_mask_t1w = f"{self.reg_path_img}{'/vent_mask_t1w.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{self.template_name}_"
+                      f"{vox_size}.nii.gz"
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_brain_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{self.template_name}_"
+                      f"brain_{vox_size}.nii.gz"
         )
         self.input_mni_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_"
+            "pynets", f"templates/standard/{self.template_name}_"
             f"brain_mask_{vox_size}.nii.gz")
         self.mni_atlas = pkg_resources.resource_filename(
             "pynets", f"templates/atlases/HarvardOxford-sub-prob-"
@@ -563,7 +566,7 @@ class DmriReg(object):
             f"{self.reg_path_img}/{self.t1w_name}_wm_gm_int_in_dwi_bin.nii.gz"
         )
         self.corpuscallosum = pkg_resources.resource_filename(
-            "pynets", f"templates/CorpusCallosum_{vox_size}.nii.gz"
+            "pynets", f"templates/rois/CorpusCallosum_{vox_size}.nii.gz"
         )
         self.corpuscallosum_mask_t1w = (
             f"{self.reg_path_img}{'/CorpusCallosum_t1wmask.nii.gz'}"
@@ -870,7 +873,7 @@ class DmriReg(object):
         tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
 
         fa_template_path = pkg_resources.resource_filename(
-            "pynets", f"templates/FA_{self.vox_size}.nii.gz"
+            "pynets", f"templates/standard/FA_{self.vox_size}.nii.gz"
         )
 
         if sys.platform.startswith('win') is False:
@@ -1177,14 +1180,15 @@ class FmriReg(object):
         self.wm_edge = f"{self.reg_path_img}{'/'}" \
                        f"{self.t1w_name}{'_wm_edge.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_{vox_size}.nii.gz"
+            "pynets", f"templates/standard/{self.template_name}_"
+                      f"{vox_size}.nii.gz"
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_"
+            "pynets", f"templates/standard/{self.template_name}_"
                       f"brain_{vox_size}.nii.gz"
         )
         self.input_mni_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.template_name}_"
+            "pynets", f"templates/standard/{self.template_name}_"
             f"brain_mask_{vox_size}.nii.gz")
 
         # Create empty tmp directories that do not yet exist

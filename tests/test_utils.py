@@ -23,23 +23,16 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_save_coords_and_labels_to_json():
+def test_save_coords_and_labels_to_json(connectivity_data):
     """
     Test save_RSN_coords_and_labels_to_json functionality
     """
 
-    base_dir = str(Path(__file__).parent/"examples")
-
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_" \
-                       f"wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
+    coords = connectivity_data['coords']
+    labels = connectivity_data['labels']
     subnet = 'Default'
     indices = np.arange(len(coords) + 1)[np.arange(len(coords) + 1)
                                          != 0].tolist()
@@ -99,32 +92,12 @@ def test_save_ts_to_file():
     tmp.cleanup()
 
 
-def test_check_est_path_existence():
+def test_check_est_path_existence(gen_mat_data):
     """
     Test check_est_path_existence functionality
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    est_path_iterlist = [f"{base_dir}/miscellaneous/sub-0021001_modality-dwi"
-                         f"_rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.09.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.08.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.07.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.06.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.1.npy",
-                         f"{base_dir}/miscellaneous/bad_path.npy"]
+
+    est_path_iterlist = gen_mat_data(n_graphs=10)['mat_file_list']
     [est_path_list_ex, _] = utils.check_est_path_existence(est_path_iterlist)
     assert est_path_list_ex is not None
 
@@ -178,6 +151,7 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
     assert est_path is not None
     tmp.cleanup()
 
+
 @pytest.mark.parametrize("node_size", [6, None])
 @pytest.mark.parametrize("parc", [True, False])
 def test_create_est_path_diff(node_size, parc):
@@ -206,6 +180,7 @@ def test_create_est_path_diff(node_size, parc):
                                           traversal, min_length, error_margin)
     assert est_path is not None
     tmp.cleanup()
+
 
 def test_create_csv_path():
     """
@@ -369,7 +344,7 @@ def test_merge_dicts():
     assert len(z) == dic_len
 
 
-def test_pass_meta_ins(random_mni_roi_data):
+def test_pass_meta_ins(gen_mat_data, random_mni_roi_data):
     """
     Test pass_meta_ins functionality
     """
@@ -378,12 +353,8 @@ def test_pass_meta_ins(random_mni_roi_data):
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
-    base_dir = str(Path(__file__).parent/"examples")
     conn_model = 'corr'
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-" \
-               f"Default_model-tensor_nodetype-parc_samples-100000streams_" \
-               f"tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_" \
-               f"thr-0.09.npy"
+    est_path = gen_mat_data()['mat_file_list'][0]
     subnet = 'Default'
     thr = 0.09
     prune = True
@@ -408,7 +379,7 @@ def test_pass_meta_ins(random_mni_roi_data):
     assert binary_iterlist is not None
     tmp.cleanup()
 
-def test_pass_meta_ins_multi(random_mni_roi_data):
+def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
     """
     Test pass_meta_ins_multi functionality
     """
@@ -416,14 +387,9 @@ def test_pass_meta_ins_multi(random_mni_roi_data):
 
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
-    est_path_func = f"{base_dir}/miscellaneous/002_modality-func_rsn" \
-                    f"-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm" \
-                    f"_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-" \
-                    f"0.95.npy"
-    est_path_struct = f"{base_dir}/miscellaneous/0025427_modality-dwi_model-" \
-                      f"csd_nodetype-parc_samples-10000streams_tt-particle_" \
-                      f"dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-" \
-                      f"1.0.npy"
+    est_path_func = gen_mat_data(
+        binary=True, mat_type='er')['mat_file_list'][0]
+    est_path_struct = gen_mat_data()['mat_file_list'][0]
     subnet_func = 'Default'
     subnet_struct = 'Default'
     thr_func = 0.95
@@ -489,30 +455,33 @@ def test_timeout(s):
 
 
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
-def test_build_mp_dict(modality):
+def test_build_mp_dict(gen_mat_data, modality):
     import tempfile
     from pynets.statistics.utils import build_mp_dict
 
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
-    base_dir = str(Path(__file__).parent / "examples")
 
     if modality == 'func':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_" \
-                       f"modality-func_rsn-Default_model-cov_template-" \
-                       f"MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_" \
-                       f"hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_" \
-                       f"thr-0.95.npy"
+        file_orig = gen_mat_data(
+        binary=True, mat_type='er')['mat_file_list'][0]
+        file_renamed = f"{os.path.dirname(file_orig)}/graph_sub-002_modality-" \
+                       f"func_rsn-Default_model-cov_template-MNI152_T1_" \
+                       f"nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_signal-" \
+                       f"mean_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
     elif modality == 'dwi':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-" \
-                       f"dwi_model-csd_nodetype-parc_samples-10000streams_" \
-                       f"tt-particle_dg-prob_ml-10_template-MNI152_T1_" \
+        file_orig = gen_mat_data()['mat_file_list'][0]
+        file_renamed = f"{os.path.dirname(file_orig)}/0025427_" \
+                       f"modality-dwi_model-csd_nodetype-parc_tt-particle_" \
+                       f"traversal-prob_ml-10_tol-10_template-MNI152_T1_" \
                        f"thrtype-PROP_thr-1.0.npy"
+
+    os.rename(file_orig, file_renamed)
+
     gen_metaparams = ['modality', 'model', 'nodetype', 'template']
 
     metaparam_dict = {}
-    file_renamed = file_renamed.split('graphs/')[1]
     metaparam_dict, metaparams = build_mp_dict(file_renamed,
                                                  modality,
                                                  metaparam_dict,
