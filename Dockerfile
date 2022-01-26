@@ -21,7 +21,7 @@ RUN apt-get update -qq \
         libxft2 \
         lib32ncurses5 \
         libxmu-dev \
-        vim \
+#        vim \
         wget \
         libgl1-mesa-glx \
         graphviz \
@@ -41,8 +41,8 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-        openssh-server \
-        jq \
+#        openssh-server \
+#        jq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -55,10 +55,10 @@ RUN apt-get update -qq \
         libquadmath0 \
         gcc-multilib \
     # Configure ssh
-    && mkdir /var/run/sshd \
-    && echo 'root:screencast' | chpasswd \
-    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+#    && mkdir /var/run/sshd \
+#    && echo 'root:screencast' | chpasswd \
+#    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+#    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
@@ -99,7 +99,7 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
 ENV PATH="/opt/conda/bin":$PATH
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
 
 WORKDIR /home/neuro
 
@@ -112,17 +112,13 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda install -yq python=3.6 ipython \
+#    && conda install -yq python=3.6 ipython \
+    && conda install -yq python=3.6 \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
     && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
     && cd /home/neuro/multinetx && \
-    pip install -r requirements.txt && \
-    python setup.py install \
-    # Install pynets
-    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
-    cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
     && conda install -yq \
@@ -131,7 +127,12 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         matplotlib \
         openblas \
         graph-tool \
-#        dask \
+#        dask
+    # Install pynets
+    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
+    cd /home/neuro/PyNets && \
+    pip install -r requirements.txt && \
+    python setup.py install \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
@@ -156,7 +157,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
 #    && chmod 777 /opt/conda/bin/pynets_bids \
-#    && chmod 777 /opt/conda/bin/pynets_collect \
 #    && chmod 777 /opt/conda/bin/pynets_cloud \
 #    && chmod 777 /opt/conda/bin/pynets_benchmark \
 #    && chmod 777 /opt/conda/bin/pynets_predict \
@@ -190,7 +190,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && rm -f /tmp/3G_heap.txt
 
 # ENV Config
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
@@ -207,6 +207,6 @@ ENV PATH="/opt/conda/bin":$PATH \
 
 EXPOSE 22
 
-RUN echo "PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH" >> /home/neuro/.bashrc \
+RUN echo "PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH" >> /home/neuro/.bashrc \
     && . /home/neuro/.bashrc
 
