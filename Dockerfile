@@ -86,9 +86,9 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R /usr/share/fsl/5.0/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=5G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=3G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && head -c 5G </dev/urandom > /tmp/5G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
+    && head -c 3G </dev/urandom > /tmp/3G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -99,6 +99,7 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
 ENV PATH="/opt/conda/bin":$PATH
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
 
 WORKDIR /home/neuro
 
@@ -134,7 +135,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
-    && pip install --upgrade --force-reinstall numpy \
+#    && pip install --upgrade --force-reinstall numpy \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
@@ -143,6 +144,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && pip uninstall -y pandas \
     && pip install pandas -U \
     && conda clean -tipsy \
+    && pip install --upgrade pyopenssl \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -185,13 +187,10 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     chmod -R 777 /outputs \
     && mkdir /working && \
     chmod -R 777 /working \
-    && rm -f /tmp/5G_heap.txt
+    && rm -f /tmp/3G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-
-EXPOSE 22
-
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
@@ -200,11 +199,14 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLTCLSH=/usr/bin/tclsh \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
-ENV PATH="/opt/conda/bin":$PATH
-ENV OPENBLAS_NUM_THREADS=4 \
+ENV PATH="/opt/conda/bin":$PATH \
+    OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
-    OMP_NUM_THREADS=4
-ENV QT_QPA_PLATFORM=offscreen
+    OMP_NUM_THREADS=4 \
+    QT_QPA_PLATFORM=offscreen
 
-RUN . /home/neuro/.bashrc
+EXPOSE 22
+
+RUN echo "PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH" >> /home/neuro/.bashrc \
+    && . /home/neuro/.bashrc
 

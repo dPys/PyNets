@@ -450,30 +450,30 @@ def get_node_membership(
     if subnet in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/BIGREF1mm.nii.gz"
+                "pynets", "templates/rsns/BIGREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/BIGREF2mm.nii.gz"
+                "pynets", "templates/rsns/BIGREF2mm.nii.gz"
             )
 
         # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "templates/rsnrefs/Schaefer2018_1000_17nets_ref.txt"
+            "pynets", "templates/rsns/Schaefer2018_1000_17nets_ref.txt"
         )
     elif subnet in seven_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/SMALLREF1mm.nii.gz"
+                "pynets", "templates/rsns/SMALLREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/SMALLREF2mm.nii.gz"
+                "pynets", "templates/rsns/SMALLREF2mm.nii.gz"
             )
 
         # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "templates/rsnrefs/Schaefer2018_1000_7nets_ref.txt"
+            "pynets", "templates/rsns/Schaefer2018_1000_7nets_ref.txt"
         )
     else:
         nets_ref_txt = None
@@ -1345,7 +1345,7 @@ def parcel_naming(coords, vox_size):
     for label_atlas in labeling_atlases:
         label_img_dict[label_atlas] = {}
         label_path = pkg_resources.resource_filename("pynets",
-                                                     f"/templates/labelcharts/"
+                                                     f"/templates/labels/"
                                                      f"{label_atlas}.txt")
         label_img_path = pkg_resources.resource_filename("pynets",
                                                          f"/templates/atlases/"
