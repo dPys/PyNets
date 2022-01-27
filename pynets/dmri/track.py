@@ -17,6 +17,7 @@ warnings.filterwarnings("ignore")
 def reconstruction(conn_model, gtab, dwi_data, B0_mask):
     """
     Estimate a tensor model from dwi data.
+
     Parameters
     ----------
     conn_model : str
@@ -35,6 +36,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         Fitted connectivity reconstruction model.
     mod : obj
         Connectivity reconstruction model.
+
     References
     ----------
     .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
@@ -78,6 +80,7 @@ def prep_tissues(
         cmc_step_size=0.2):
     """
     Estimate a tissue classifier for tractography.
+
     Parameters
     ----------
     t1_mask : Nifti1Image
@@ -97,6 +100,7 @@ def prep_tissues(
     -------
     tiss_classifier : obj
         Tissue classifier object.
+
     References
     ----------
     .. [1] Zhang, Y., Brady, M. and Smith, S. Segmentation of Brain MR Images
@@ -197,18 +201,18 @@ def create_density_map(
     dir_path,
     streamlines,
     conn_model,
-    target_samples,
     node_radius,
     curv_thr_list,
     step_list,
     subnet,
     roi,
-    directget,
+    traversal,
     min_length,
     namer_dir,
 ):
     """
     Create a density map of the list of streamlines.
+
     Parameters
     ----------
     fa_img : Nifti1Image
@@ -220,8 +224,6 @@ def create_density_map(
         DiPy list/array-like object of streamline points from tractography.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
@@ -234,7 +236,7 @@ def create_density_map(
         used to filter nodes in the study of brain subgraphs.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
@@ -273,15 +275,13 @@ def create_density_map(
     # Save density map
     dm_img = nib.Nifti1Image(dm.astype("float32"), fa_img.affine)
 
-    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
+    dm_path = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
         namer_dir,
         "/density_map_",
         "%s" % (subnet + "_" if subnet is not None else ""),
         "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None else
                 ""),
         conn_model,
-        "_",
-        target_samples,
         "_",
         "%s"
         % (
@@ -293,8 +293,8 @@ def create_density_map(
         str(curv_thr_list).replace(", ", "_"),
         "_step-",
         str(step_list).replace(", ", "_"),
-        "_directget-",
-        directget,
+        "_traversal-",
+        traversal,
         "_minlength-",
         min_length,
         ".nii.gz",
@@ -313,7 +313,7 @@ def track_ensemble(
     labels_im_file,
     recon_path,
     sphere,
-    directget,
+    traversal,
     curv_thr_list,
     step_list,
     track_type,
@@ -331,6 +331,9 @@ def track_ensemble(
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
     masks.
+
+    Parameters
+    ----------
     target_samples : int
         Total number of streamline samples specified to generate streams.
     atlas_data_wm_gm_int : str
@@ -345,7 +348,7 @@ def track_ensemble(
         Tissue classification method.
     sphere : obj
         DiPy object for modeling diffusion directions on a sphere.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), and prob (probabilistic).
     curv_thr_list : list
@@ -394,6 +397,7 @@ def track_ensemble(
     -------
     streamlines : ArraySequence
         DiPy list/array-like object of streamline points from tractography.
+
     References
     ----------
     .. [1] Takemura, H., Caiafa, C. F., Wandell, B. A., & Pestilli, F. (2016).
@@ -508,7 +512,7 @@ def track_ensemble(
 
                 out_streams = parallel(
                     delayed(run_tracking)(
-                        i, recon_shelved, n_seeds_per_iter, directget,
+                        i, recon_shelved, n_seeds_per_iter, traversal,
                         maxcrossing, max_length, pft_back_tracking_dist,
                         pft_front_tracking_dist, particle_count,
                         roi_neighborhood_tol, min_length,
@@ -602,7 +606,7 @@ def track_ensemble(
 
 
 def run_tracking(step_curv_combinations, recon_shelved,
-                 n_seeds_per_iter, directget, maxcrossing, max_length,
+                 n_seeds_per_iter, traversal, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
                  particle_count, roi_neighborhood_tol, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
@@ -668,21 +672,21 @@ def run_tracking(step_curv_combinations, recon_shelved,
         print("%s%s" % ("Curvature: ", step_curv_combinations[1]))
 
     # Instantiate DirectionGetter
-    if directget.lower() in ["probabilistic", "prob"]:
+    if traversal.lower() in ["probabilistic", "prob"]:
         dg = ProbabilisticDirectionGetter.from_shcoeff(
             recon_shelved.get(),
             max_angle=float(step_curv_combinations[1]),
             sphere=sphere,
             min_separation_angle=min_separation_angle,
         )
-    elif directget.lower() in ["closestpeaks", "cp"]:
+    elif traversal.lower() in ["closestpeaks", "cp"]:
         dg = ClosestPeakDirectionGetter.from_shcoeff(
             recon_shelved.get(),
             max_angle=float(step_curv_combinations[1]),
             sphere=sphere,
             min_separation_angle=min_separation_angle,
         )
-    elif directget.lower() in ["deterministic", "det"]:
+    elif traversal.lower() in ["deterministic", "det"]:
         maxcrossing = 1
         dg = DeterministicMaximumDirectionGetter.from_shcoeff(
             recon_shelved.get(),

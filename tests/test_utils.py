@@ -17,26 +17,22 @@ if sys.platform.startswith('win') is False:
 import pytest
 import logging
 import tempfile
+from nilearn._utils import data_gen
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_save_coords_and_labels_to_json():
+def test_save_coords_and_labels_to_json(connectivity_data):
     """
     Test save_RSN_coords_and_labels_to_json functionality
     """
 
-    base_dir = str(Path(__file__).parent/"examples")
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    coord_file_path = f"{base_dir}/miscellaneous/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{base_dir}/miscellaneous/Default_func_labelnames_" \
-                       f"wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
+    coords = connectivity_data['coords']
+    labels = connectivity_data['labels']
     subnet = 'Default'
     indices = np.arange(len(coords) + 1)[np.arange(len(coords) + 1)
                                          != 0].tolist()
@@ -46,6 +42,7 @@ def test_save_coords_and_labels_to_json():
                                                       indices)
 
     assert os.path.isfile(nodes_path) is True
+    tmp.cleanup()
 
 
 def test_save_nifti_parcels_map():
@@ -53,8 +50,9 @@ def test_save_nifti_parcels_map():
     Test save_nifti_parcels_map functionality
     """
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     ID = '002'
     vox_size = '2mm'
     subnet = None
@@ -67,6 +65,7 @@ def test_save_nifti_parcels_map():
                                                         net_parcels_map_nifti,
                                                         vox_size)
     assert os.path.isfile(net_parcels_nii_path) is True
+    tmp.cleanup()
 
 
 def test_save_ts_to_file():
@@ -74,50 +73,31 @@ def test_save_ts_to_file():
     Test save_ts_to_file functionality
     """
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    base_dir = str(Path(__file__).parent/"examples")
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     roi = None
     smooth = None
     hpass = None
     subnet = None
     node_size = 'parc'
-    extract_strategy = 'mean'
+    signal = 'mean'
     ID = '002'
-    ts_within_nodes = f"{base_dir}/miscellaneous/002_Default_rsn_net_ts.npy"
+    ts_within_nodes = data_gen.generate_timeseries(10, 10)
 
     out_path_ts = utils.save_ts_to_file(roi, subnet, ID, dir_path,
                                         ts_within_nodes, smooth, hpass,
-                                        node_size, extract_strategy)
+                                        node_size, signal)
     assert os.path.isfile(out_path_ts) is True
+    tmp.cleanup()
 
 
-def test_check_est_path_existence():
+def test_check_est_path_existence(gen_mat_data):
     """
     Test check_est_path_existence functionality
     """
-    base_dir = str(Path(__file__).parent/"examples")
-    est_path_iterlist = [f"{base_dir}/miscellaneous/sub-0021001_modality-dwi"
-                         f"_rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.09.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.08.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.07.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.06.npy",
-                         f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_"
-                         f"rsn-Default_model-csd_nodetype-parc_samples-"
-                         f"100000streams_tt-particle_dg-prob_ml-10_template-"
-                         f"MNI152_T1_thrtype-DENS_thr-0.1.npy",
-                         f"{base_dir}/miscellaneous/bad_path.npy"]
+
+    est_path_iterlist = gen_mat_data(n_graphs=10)['mat_file_list']
     [est_path_list_ex, _] = utils.check_est_path_existence(est_path_iterlist)
     assert est_path_list_ex is not None
 
@@ -153,21 +133,23 @@ def test_create_est_path_func(node_size, hpass, smooth, parc):
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     subnet = 'Default'
     ID = '002'
     conn_model = 'corr'
     roi = None
     thr_type = 'prop'
     thr = 0.75
-    extract_strategy = 'mean'
+    signal = 'mean'
 
     est_path = utils.create_est_path_func(ID, subnet, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
                                           thr_type, hpass, parc,
-                                          extract_strategy)
+                                          signal)
     assert est_path is not None
+    tmp.cleanup()
 
 
 @pytest.mark.parametrize("node_size", [6, None])
@@ -178,25 +160,26 @@ def test_create_est_path_diff(node_size, parc):
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     subnet = 'Default'
     ID = '002'
     roi = None
-    directget = 'prob'
+    traversal = 'prob'
     min_length = 20
     conn_model = 'corr'
     thr_type = 'prop'
-    target_samples = 10
     track_type = 'local'
     thr = 0.75
     error_margin = 6
 
     est_path = utils.create_est_path_diff(ID, subnet, conn_model, thr, roi,
-                                          dir_path, node_size, target_samples,
+                                          dir_path, node_size,
                                           track_type, thr_type, parc,
-                                          directget, min_length, error_margin)
+                                          traversal, min_length, error_margin)
     assert est_path is not None
+    tmp.cleanup()
 
 
 def test_create_csv_path():
@@ -205,8 +188,9 @@ def test_create_csv_path():
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     # fmri case
     subnet = 'Default'
@@ -219,15 +203,15 @@ def test_create_csv_path():
     parc = True
     thr = 0.75
     thr_type = 'prop'
-    extract_strategy = 'mean'
+    signal = 'mean'
 
     est_path = utils.create_est_path_func(ID, subnet, conn_model, thr, roi,
                                           dir_path, node_size, smooth,
                                           thr_type, hpass, parc,
-                                          extract_strategy)
+                                          signal)
     out_path = utils.create_csv_path(dir_path, est_path)
     assert out_path is not None
-
+    tmp.cleanup()
 
 @pytest.mark.parametrize("fmt", ['edgelist_csv', 'gpickle', 'graphml', 'txt',
                                  'npy', 'edgelist_ssv',
@@ -237,8 +221,9 @@ def test_save_mat(fmt):
     import glob as glob
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     est_path = f"{dir_path}/G_out"
     conn_matrix = np.random.rand(10, 10)
@@ -250,7 +235,7 @@ def test_save_mat(fmt):
 
 
 @pytest.mark.parametrize("node_size", [6, None])
-@pytest.mark.parametrize("hpass", [100, None])
+@pytest.mark.parametrize("hpass", [100, 0])
 @pytest.mark.parametrize("smooth", [6, None])
 @pytest.mark.parametrize("parc", [True, False])
 def test_create_unthr_path(node_size, hpass, smooth, parc):
@@ -259,35 +244,35 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     subnet = 'Default'
     ID = '002'
     conn_model = 'corr'
     roi = None
-    extract_strategy = 'mean'
+    signal = 'mean'
 
     unthr_path_func = utils.create_raw_path_func(ID, subnet, conn_model, roi,
                                                  dir_path, node_size, smooth,
-                                                 hpass, parc, extract_strategy)
+                                                 hpass, parc, signal)
     assert unthr_path_func is not None
 
     subnet = 'Default'
-    target_samples = 1000
     track_type = 'local'
     conn_model = 'csd'
     roi = None
-    directget = 'prob'
+    traversal = 'prob'
     min_length = 20
     error_margin = 6
 
     unthr_path_diff = utils.create_raw_path_diff(ID, subnet, conn_model, roi,
                                                  dir_path, node_size,
-                                                 target_samples, track_type,
-                                                 parc, directget, min_length,
+                                                 track_type,
+                                                 parc, traversal, min_length,
                                                  error_margin)
     assert unthr_path_diff is not None
-
+    tmp.cleanup()
 
 
 @pytest.mark.parametrize("atlas", ['Power', 'Shirer', 'Shen', 'Smith',
@@ -295,28 +280,26 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
                                                  marks=pytest.mark.xfail(
                                                      raises=ValueError))])
 @pytest.mark.parametrize("input", ['fmri', 'dmri'])
-def test_do_dir_path(atlas, input):
+def test_do_dir_path(dmri_estimation_data, fmri_estimation_data, atlas, input):
     """
     Test do_dir_path functionality
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    base_dir = str(Path(__file__).parent/"examples")
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     if input == 'fmri':
-        in_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1" \
-                  f"_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+        in_file = fmri_estimation_data['func_file']
     elif input == 'dmri':
-        in_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed" \
-                  f"_dwi.nii.gz"
+        in_file = dmri_estimation_data['dwi_file_small']
 
     # Delete existing atlas dirs in in_file parent
-    atlas_dir = os.path.dirname(os.path.realpath(in_file)) + '/' + str(atlas)
-
-    dir_path = utils.do_dir_path(atlas, atlas_dir)
+    dir_path = utils.do_dir_path(
+        atlas, f"{os.path.dirname(os.path.realpath(in_file))}")
     assert dir_path is not None
+    tmp.cleanup()
 
 
 def test_flatten():
@@ -361,25 +344,22 @@ def test_merge_dicts():
     assert len(z) == dic_len
 
 
-def test_pass_meta_ins():
+def test_pass_meta_ins(gen_mat_data, random_mni_roi_data):
     """
     Test pass_meta_ins functionality
     """
     import tempfile
 
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    base_dir = str(Path(__file__).parent/"examples")
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
     conn_model = 'corr'
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_modality-dwi_rsn-" \
-               f"Default_model-tensor_nodetype-parc_samples-100000streams_" \
-               f"tt-particle_dg-prob_ml-10_template-MNI152_T1_thrtype-DENS_" \
-               f"thr-0.09.npy"
+    est_path = gen_mat_data()['mat_file_list'][0]
     subnet = 'Default'
     thr = 0.09
     prune = True
     ID = 'sub-0021001'
-    roi = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi = random_mni_roi_data['roi_file']
     norm = 10
     binary = True
 
@@ -397,9 +377,9 @@ def test_pass_meta_ins():
     assert roi_iterlist is not None
     assert norm_iterlist is not None
     assert binary_iterlist is not None
+    tmp.cleanup()
 
-
-def test_pass_meta_ins_multi():
+def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
     """
     Test pass_meta_ins_multi functionality
     """
@@ -407,14 +387,9 @@ def test_pass_meta_ins_multi():
 
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
-    est_path_func = f"{base_dir}/miscellaneous/002_modality-func_rsn" \
-                    f"-Default_model-cov_nodetype-spheres-2mm_smooth-2fwhm" \
-                    f"_hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_thr-" \
-                    f"0.95.npy"
-    est_path_struct = f"{base_dir}/miscellaneous/0025427_modality-dwi_model-" \
-                      f"csd_nodetype-parc_samples-10000streams_tt-particle_" \
-                      f"dg-prob_ml-10_template-MNI152_T1_thrtype-PROP_thr-" \
-                      f"1.0.npy"
+    est_path_func = gen_mat_data(
+        binary=True, mat_type='er')['mat_file_list'][0]
+    est_path_struct = gen_mat_data()['mat_file_list'][0]
     subnet_func = 'Default'
     subnet_struct = 'Default'
     thr_func = 0.95
@@ -423,8 +398,8 @@ def test_pass_meta_ins_multi():
     prune_struct = False
     ID_func = '002'
     ID_struct = '25659'
-    roi_func = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
-    roi_struct = f"{base_dir}/miscellaneous/pDMN_3_bin.nii.gz"
+    roi_func = random_mni_roi_data['roi_file']
+    roi_struct = random_mni_roi_data['roi_file']
     norm_func = 1
     norm_struct = 2
     binary_func = False
@@ -480,42 +455,37 @@ def test_timeout(s):
 
 
 @pytest.mark.parametrize("modality", ['func', 'dwi'])
-def test_build_mp_dict(modality):
+def test_build_mp_dict(gen_mat_data, modality):
     import tempfile
     from pynets.statistics.utils import build_mp_dict
-    dir_path = str(tempfile.TemporaryDirectory().name)
-    os.makedirs(dir_path)
-    base_dir = str(Path(__file__).parent / "examples")
+
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     if modality == 'func':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/graph_sub-002_" \
-                       f"modality-func_rsn-Default_model-cov_template-" \
-                       f"MNI152_T1_nodetype-spheres-2mm_smooth-2fwhm_" \
-                       f"hpass-0.1Hz_template-MNI152_T1_thrtype-PROP_" \
-                       f"thr-0.95.npy"
+        file_orig = gen_mat_data(
+        binary=True, mat_type='er')['mat_file_list'][0]
+        file_renamed = f"{os.path.dirname(file_orig)}/graph_sub-002_modality-" \
+                       f"func_rsn-Default_model-cov_template-MNI152_T1_" \
+                       f"nodetype-spheres-2mm_tol-2fwhm_hpass-0.1Hz_signal-" \
+                       f"mean_template-MNI152_T1_thrtype-PROP_thr-0.95.npy"
     elif modality == 'dwi':
-        file_renamed = f"{base_dir}/miscellaneous/graphs/0025427_modality-" \
-                       f"dwi_model-csd_nodetype-parc_samples-10000streams_" \
-                       f"tt-particle_dg-prob_ml-10_template-MNI152_T1_" \
+        file_orig = gen_mat_data()['mat_file_list'][0]
+        file_renamed = f"{os.path.dirname(file_orig)}/0025427_" \
+                       f"modality-dwi_model-csd_nodetype-parc_tt-particle_" \
+                       f"traversal-prob_ml-10_tol-10_template-MNI152_T1_" \
                        f"thrtype-PROP_thr-1.0.npy"
+
+    os.rename(file_orig, file_renamed)
+
     gen_metaparams = ['modality', 'model', 'nodetype', 'template']
 
     metaparam_dict = {}
-    file_renamed = file_renamed.split('graphs/')[1]
     metaparam_dict, metaparams = build_mp_dict(file_renamed,
                                                  modality,
                                                  metaparam_dict,
                                                  gen_metaparams)
-
-    # test_build_sql_db
-    if modality == 'func':
-        import pandas as pd
-        ID = '002'
-        metaparams.append('atlas')
-        metaparams.append('AUC')
-        df_summary_auc = {'AUC': 0.8}
-        db = utils.build_sql_db(dir_path, ID)
-        db.create_modality_table('func')
-        db.add_hp_columns(metaparams)
-        db.add_row_from_df(pd.DataFrame([{'AUC': 0.8}], index=[0]),
-                           metaparam_dict)
+    assert metaparam_dict is not None
+    assert metaparams is not None
+    tmp.cleanup()

@@ -30,6 +30,7 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    import mplcyberpunk
     matplotlib.use('Agg')
     from matplotlib import pyplot as plt
     plt.style.use("cyberpunk")
@@ -102,6 +103,7 @@ def plot_community_conn_mat(
     import warnings
     warnings.filterwarnings("ignore")
     import matplotlib
+    import mplcyberpunk
     from matplotlib import pyplot as plt
     matplotlib.use("agg")
     plt.style.use("cyberpunk")
@@ -201,7 +203,7 @@ def plot_conn_mat_func(
     node_radius,
     smooth,
     hpass,
-    extract_strategy,
+    signal,
 ):
     """
     API for selecting among various functional connectivity matrix plotting
@@ -239,7 +241,7 @@ def plot_conn_mat_func(
         signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
     """
@@ -270,15 +272,15 @@ def plot_conn_mat_func(
                              "mm_") if (
              (node_radius != "parc") and (
                  node_radius is not None)) else "nodetype-parc_"),
-         "%s" % ("%s%s%s" % ("smooth-",
+         "%s" % ("%s%s%s" % ("tol-",
                              smooth,
                              "fwhm_") if float(smooth) > 0 else ""),
          "%s" % ("%s%s%s" % ("hpass-",
                              hpass,
                              "Hz_") if hpass is not None else ""),
          "%s" % ("%s%s%s" % ("extract-",
-                             extract_strategy,
-                             "") if extract_strategy is not None else ""),
+                             signal,
+                             "") if signal is not None else ""),
          "_thr-",
          thr,
          ".png",
@@ -326,15 +328,15 @@ def plot_conn_mat_func(
                                  "mm_") if (
                  (node_radius != "parc") and (
                      node_radius is not None)) else "nodetype-parc_"),
-             "%s" % ("%s%s%s" % ("smooth-",
+             "%s" % ("%s%s%s" % ("tol-",
                                  smooth,
                                  "fwhm_") if float(smooth) > 0 else ""),
              "%s" % ("%s%s%s" % ("hpass-",
                                  hpass,
                                  "Hz_") if hpass is not None else ""),
              "%s" % ("%s%s%s" % ("extract-",
-                                 extract_strategy,
-                                 "") if extract_strategy is not None else ""),
+                                 signal,
+                                 "") if signal is not None else ""),
              "_thr-",
              thr,
              ".png",
@@ -366,9 +368,8 @@ def plot_conn_mat_struct(
     roi,
     thr,
     node_radius,
-    target_samples,
     track_type,
-    directget,
+    traversal,
     min_length,
     error_margin
 ):
@@ -403,11 +404,9 @@ def plot_conn_mat_struct(
     node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped), and prob
         (probabilistic).
@@ -423,7 +422,7 @@ def plot_conn_mat_struct(
     import os.path as op
 
     out_path_fig = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
         (dir_path,
          "/adjacency_",
          ID,
@@ -442,14 +441,10 @@ def plot_conn_mat_struct(
                              "mm_") if (
              (node_radius != "parc") and (
                  node_radius is not None)) else "nodetype-parc_"),
-         "%s" % ("%s%s%s" % ("samples-",
-                             int(target_samples),
-                             "streams_") if float(target_samples) > 0
-                 else "_"),
-         "tracktype-",
+         "_tracktype-",
          track_type,
-         "_directget-",
-         directget,
+         "_traversal-",
+         traversal,
          "_minlength-",
          min_length,
          "_tol-",
@@ -482,7 +477,7 @@ def plot_conn_mat_struct(
         _, node_comm_aff_mat, resolution, num_comms = \
             community_resolution_selection(G)
         out_path_fig_comm = \
-            "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" \
+            "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" \
             % (dir_path,
                "/adjacency-communities_",
                ID,
@@ -501,14 +496,10 @@ def plot_conn_mat_struct(
                                    "mm_") if (
                    (node_radius != "parc") and (
                        node_radius is not None)) else "nodetype-parc_"),
-               "%s" % ("%s%s%s" % ("samples-",
-                                   int(target_samples),
-                                   "streams_") if float(target_samples) > 0
-                       else "_"),
-               "tracktype-",
+               "_tracktype-",
                track_type,
-               "_directget-",
-               directget,
+               "_traversal-",
+               traversal,
                "_minlength-",
                min_length,
                "_tol-",

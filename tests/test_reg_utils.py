@@ -57,7 +57,7 @@ def test_applyxfm():
     ## First test: Apply xfm from test_align to orig anat img.
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_2mm.nii.gz")
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz")
     xfm = f"{anat_dir}/highres2standard.mat"
     aligned = f"{anat_dir}/highres2standard_2.nii.gz"
     utils.applyxfm(ref, inp, xfm, aligned, interp='trilinear', dof=6)
@@ -388,9 +388,9 @@ def test_gen_mask(mask_type):
     base_dir = str(Path(__file__).parent/"examples")
     t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
-    if(mask_type == 'Normal'):
+    if mask_type == 'Normal':
         mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
-    elif(mask_type == 'Empty'):
+    elif mask_type == 'Empty':
         mask = None
     utils.gen_mask(t1w_head, t1w_brain, mask)
 
@@ -423,13 +423,10 @@ def test_wm_syn():
 
     base_dir = str(Path(__file__).parent/"examples")
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
-    fa_path = f"{base_dir}/003/anat/tensor_fa.nii.gz"
     ap_path = f"{base_dir}/003/anat/aniso_power_tmp.nii.gz"
 
     [mapping, affine_map, warped_fa] = utils.wm_syn(t1w_brain, ap_path,
-                                                    f"{base_dir}/003/dmri",
-                                                    fa_path,
-                                                    template_fa_path=None)
+                                                    f"{base_dir}/003/dmri")
     assert os.path.isfile(warped_fa) is True
     assert isinstance(mapping, imwarp.DiffeomorphicMap)
     assert isinstance(affine_map, imaffine.AffineMap) and \

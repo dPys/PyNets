@@ -437,7 +437,8 @@ def motif_matching(
     import pickle
     from pynets.core import thresholding
     from sklearn.metrics.pairwise import cosine_similarity
-    from pynets.statistics.individual.algorithms import community_resolution_selection
+    from pynets.statistics.individual.algorithms import \
+        community_resolution_selection
     from graspologic.utils import remove_loops, symmetrize
 
     [struct_graph_path, func_graph_path] = paths

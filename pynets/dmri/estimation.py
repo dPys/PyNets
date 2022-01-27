@@ -351,8 +351,8 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
     import dipy.reconst.dti as dti
     from nilearn.image import math_img
     from dipy.reconst.csdeconv import auto_response
-    from dipy.reconst.mcsd import MultiShellDeconvModel
-    from dipy.sims.voxel import multi_shell_fiber_response
+    from dipy.reconst.mcsd import MultiShellDeconvModel, \
+        multi_shell_fiber_response
 
     print("Reconstructing using MCSD...")
     B0_mask_data = np.nan_to_num(np.asarray(
@@ -389,11 +389,10 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
 
     response, ratio = auto_response(gtab, data, roi_radius=10,
                                     fa_thr=0.7)
-    evals_d = response[0]
 
     response_mcsd = multi_shell_fiber_response(sh_order=sh_order,
                                                bvals=gtab.bvals,
-                                               evals=evals_d, csf_md=csf_md,
+                                               evals=response[0], csf_md=csf_md,
                                                gm_md=gm_md)
 
     model = MultiShellDeconvModel(gtab, response_mcsd)
@@ -454,7 +453,6 @@ def streams2graph(
     streams,
     dir_path,
     track_type,
-    target_samples,
     conn_model,
     subnet,
     node_radius,
@@ -471,7 +469,7 @@ def streams2graph(
     coords,
     norm,
     binary,
-    directget,
+    traversal,
     warped_fa,
     min_length,
     error_margin
@@ -490,8 +488,6 @@ def streams2graph(
         pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
     subnet : str
@@ -531,7 +527,7 @@ def streams2graph(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -553,8 +549,6 @@ def streams2graph(
         Adjacency matrix stored as an m x n array of nodes and edges.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     conn_model : str
@@ -596,7 +590,7 @@ def streams2graph(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
@@ -898,10 +892,9 @@ def streams2graph(
             roi,
             dir_path,
             node_radius,
-            target_samples,
             track_type,
             parc,
-            directget,
+            traversal,
             min_length,
             error_margin
         ),
@@ -912,7 +905,6 @@ def streams2graph(
         streams,
         conn_matrix,
         track_type,
-        target_samples,
         dir_path,
         conn_model,
         subnet,
@@ -930,7 +922,7 @@ def streams2graph(
         coords,
         norm,
         binary,
-        directget,
+        traversal,
         min_length,
         error_margin
     )

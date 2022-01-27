@@ -323,7 +323,7 @@ def get_node_membership(
     coords : list
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
-         parcellation node.
+        parcellation node.
     labels : list
         List of string labels corresponding to ROI nodes.
     parc : bool
@@ -344,17 +344,17 @@ def get_node_membership(
     -------
     coords_mm : list
         Filtered list of (x, y, z) tuples in mm-space with a spatial affinity
-         for the specified subnet.
+        for the specified subnet.
     RSN_parcels : list
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images
-         corresponding to ROI masks with a spatial affinity for the
-         specified subnet.
+        corresponding to ROI masks with a spatial affinity for the
+        specified subnet.
     net_labels : list
         Filtered list of string labels corresponding to ROI nodes with a
         spatial affinity for the specified subnet.
     subnet : str
         Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
-         used to filter nodes in the study of brain subgraphs.
+        used to filter nodes in the study of brain subgraphs.
 
     References
     ----------
@@ -450,30 +450,30 @@ def get_node_membership(
     if subnet in seventeen_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/BIGREF1mm.nii.gz"
+                "pynets", "templates/rsns/BIGREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/BIGREF2mm.nii.gz"
+                "pynets", "templates/rsns/BIGREF2mm.nii.gz"
             )
 
         # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "templates/rsnrefs/Schaefer2018_1000_17nets_ref.txt"
+            "pynets", "templates/rsns/Schaefer2018_1000_17nets_ref.txt"
         )
     elif subnet in seven_nets:
         if x_vox <= 1 and y_vox <= 1 and z_vox <= 1:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/SMALLREF1mm.nii.gz"
+                "pynets", "templates/rsns/SMALLREF1mm.nii.gz"
             )
         else:
             par_file = pkg_resources.resource_filename(
-                "pynets", "templates/rsnrefs/SMALLREF2mm.nii.gz"
+                "pynets", "templates/rsns/SMALLREF2mm.nii.gz"
             )
 
         # Grab subnet reference file
         nets_ref_txt = pkg_resources.resource_filename(
-            "pynets", "templates/rsnrefs/Schaefer2018_1000_7nets_ref.txt"
+            "pynets", "templates/rsns/Schaefer2018_1000_7nets_ref.txt"
         )
     else:
         nets_ref_txt = None
@@ -509,8 +509,8 @@ def get_node_membership(
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
-            print(e, f"\nCannot load subnet reference image. Do you have git-lfs "
-                  f"installed?")
+            print(e, f"\nCannot load subnet reference image. "
+                     f"Do you have git-lfs installed?")
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
@@ -712,7 +712,7 @@ def parcel_masker(
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -864,7 +864,7 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1311,7 +1311,7 @@ def parcel_naming(coords, vox_size):
               )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1345,7 +1345,7 @@ def parcel_naming(coords, vox_size):
     for label_atlas in labeling_atlases:
         label_img_dict[label_atlas] = {}
         label_path = pkg_resources.resource_filename("pynets",
-                                                     f"/templates/labelcharts/"
+                                                     f"/templates/labels/"
                                                      f"{label_atlas}.txt")
         label_img_path = pkg_resources.resource_filename("pynets",
                                                          f"/templates/atlases/"

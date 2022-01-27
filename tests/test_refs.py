@@ -70,33 +70,37 @@ def test_atlases():
     assert whole_brain_cluster_labels_PCA100 is not None
 
 
+def test_rois():
+    """
+    Test rois files for existence and non-corruption
+    """
+    CorpusCallosum_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rois/CorpusCallosum_2mm.nii.gz"))
+    LateralVentricles_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rois/LateralVentricles_2mm.nii.gz"))
+    CorpusCallosum_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rois/CorpusCallosum_1mm.nii.gz"))
+    LateralVentricles_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rois/LateralVentricles_1mm.nii.gz"))
+
+    assert CorpusCallosum_2mm is not None
+    assert LateralVentricles_2mm is not None
+    assert CorpusCallosum_1mm is not None
+    assert LateralVentricles_1mm is not None
+
+
 def test_templates():
     """
     Test template files for existence and non-corruption
     """
-    ch2better = nib.load(pkg_resources.resource_filename("pynets", f"templates/ch2better.nii.gz"))
-
-    FA_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/FA_2mm.nii.gz"))
-    MNI152_T1_brain_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_2mm.nii.gz"))
-    CorpusCallosum_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/CorpusCallosum_2mm.nii.gz"))
-    LateralVentricles_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/LateralVentricles_2mm.nii.gz"))
-    MNI152_T1_brain_mask_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_mask_2mm.nii.gz"))
-
-    FA_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/FA_1mm.nii.gz"))
-    MNI152_T1_brain_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_1mm.nii.gz"))
-    CorpusCallosum_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/CorpusCallosum_1mm.nii.gz"))
-    LateralVentricles_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/LateralVentricles_1mm.nii.gz"))
-    MNI152_T1_brain_mask_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/MNI152_T1_brain_mask_1mm.nii.gz"))
+    ch2better = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/ch2better.nii.gz"))
+    FA_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/FA_2mm.nii.gz"))
+    MNI152_T1_brain_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"))
+    MNI152_T1_brain_mask_2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/MNI152_T1_brain_mask_2mm.nii.gz"))
+    FA_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/FA_1mm.nii.gz"))
+    MNI152_T1_brain_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/MNI152_T1_brain_1mm.nii.gz"))
+    MNI152_T1_brain_mask_1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/standard/MNI152_T1_brain_mask_1mm.nii.gz"))
 
     assert ch2better is not None
     assert FA_2mm is not None
     assert MNI152_T1_brain_2mm is not None
-    assert CorpusCallosum_2mm is not None
-    assert LateralVentricles_2mm is not None
     assert MNI152_T1_brain_mask_2mm is not None
-
     assert FA_1mm is not None
     assert MNI152_T1_brain_1mm is not None
-    assert CorpusCallosum_1mm is not None
-    assert LateralVentricles_1mm is not None
     assert MNI152_T1_brain_mask_1mm is not None

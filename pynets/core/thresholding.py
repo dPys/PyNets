@@ -883,7 +883,7 @@ def thresh_func(
     norm,
     binary,
     hpass,
-    extract_strategy,
+    signal,
     check_consistency=True,
 ):
     """
@@ -945,7 +945,7 @@ def thresh_func(
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -998,7 +998,7 @@ def thresh_func(
         unweighted graph.
     hpass : float
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -1037,7 +1037,7 @@ def thresh_func(
         thr_type,
         hpass,
         parc,
-        extract_strategy,
+        signal,
     )
 
     utils.save_mat(conn_matrix_thr, est_path)
@@ -1073,7 +1073,7 @@ def thresh_func(
         norm,
         binary,
         hpass,
-        extract_strategy,
+        signal,
     )
 
 
@@ -1097,11 +1097,10 @@ def thresh_struct(
     coords,
     norm,
     binary,
-    target_samples,
     track_type,
     atlas_for_streams,
     streams,
-    directget,
+    traversal,
     min_length,
     error_margin,
     check_consistency=True,
@@ -1160,8 +1159,6 @@ def thresh_struct(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     atlas_for_streams : str
@@ -1169,7 +1166,7 @@ def thresh_struct(
         space of the streamlines.
     streams : str
         File path to save streamline array sequence in .trk format.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -1220,8 +1217,6 @@ def thresh_struct(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     atlas_for_streams : str
@@ -1229,7 +1224,7 @@ def thresh_struct(
         space of the streamlines.
     streams : str
         File path to save streamline array sequence in .trk format.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -1270,11 +1265,10 @@ def thresh_struct(
         roi,
         dir_path,
         node_radius,
-        target_samples,
         track_type,
         thr_type,
         parc,
-        directget,
+        traversal,
         min_length,
         error_margin
     )
@@ -1310,11 +1304,10 @@ def thresh_struct(
         coords,
         norm,
         binary,
-        target_samples,
         track_type,
         atlas_for_streams,
         streams,
-        directget,
+        traversal,
         min_length,
         error_margin
     )

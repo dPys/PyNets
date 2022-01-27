@@ -366,7 +366,7 @@ class RegisterAtlasDWI(SimpleInterface):
         from pynets.core import utils
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_brain_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
 
@@ -790,7 +790,7 @@ class RegisterROIDWI(SimpleInterface):
         import pkg_resources
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_brain_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
 
@@ -1124,11 +1124,11 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_brain_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
         template_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_"
                       f"brain_mask_{self.inputs.vox_size}.nii.gz"
         )
 
@@ -1319,7 +1319,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 parcellation_tmp_path = None
             else:
                 parcellation_tmp_path = fname_presuffix(
-                    self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
+                    self.inputs.parcellation, suffix="_tmp",
+                    newpath=runtime.cwd
                 )
                 copyfile(
                     self.inputs.parcellation,
@@ -1527,7 +1528,7 @@ class RegisterROIEPI(SimpleInterface):
         import pkg_resources
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/{self.inputs.template_name}_brain_"
+            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
                       f"{self.inputs.vox_size}.nii.gz"
         )
         template_tmp_path = fname_presuffix(

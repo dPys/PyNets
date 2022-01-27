@@ -13,27 +13,20 @@ from nipype.interfaces.base import (
     traits,
     SimpleInterface,
 )
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, \
     cross_validate, StratifiedKFold
-from sklearn.feature_selection import VarianceThreshold, SelectKBest, \
-    f_regression, f_classif
+from sklearn.feature_selection import SelectKBest, f_regression, f_classif
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
 from sklearn import linear_model, decomposition
 from collections import OrderedDict
 from operator import itemgetter
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 from pynets.core.utils import flatten
-from sklearn.base import BaseEstimator, TransformerMixin, clone, \
-    ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import train_test_split
-from scipy import stats
-from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.linear_model import LinearRegression
-from sklearn.naive_bayes import GaussianNB
+from pynets.statistics.utils import bias_variance_decomp, \
+    split_df_to_dfs_by_prefix, make_param_grids, preprocess_x_y
 
 try:
     from sklearn.utils._testing import ignore_warnings
@@ -58,13 +51,14 @@ import_list = [
     "from sklearn.impute import SimpleImputer",
     "from sklearn.preprocessing import StandardScaler, MinMaxScaler",
     "from sklearn import linear_model, decomposition",
-    "from pynets.stats.benchmarking import build_hp_dict",
+    "from pynets.statistics.group.benchmarking import build_hp_dict",
     "import seaborn as sns",
     "import matplotlib",
     "matplotlib.use('Agg')",
     "import matplotlib.pyplot as plt",
     "from sklearn.base import BaseEstimator, TransformerMixin",
-    "from pynets.stats.embeddings import build_asetomes, _omni_embed",
+    "from pynets.statistics.individual.embeddings import "
+    "build_asetomes, _omni_embed",
     "from joblib import Parallel, delayed",
     "from pynets.core import utils",
     "from itertools import groupby",
@@ -81,45 +75,6 @@ import_list = [
     "from sklearn.model_selection._split import _BaseKFold",
     "from sklearn.utils import check_random_state"
 ]
-
-
-class ReduceVIF(BaseEstimator, TransformerMixin):
-    def __init__(self, thresh=10.0):
-        self.thresh = thresh
-
-    def fit(self, X, y=None):
-        self.X = X
-        self.y = y
-        return self
-
-    def transform(self, X):
-        return ReduceVIF.calculate_vif(X, self.thresh)
-
-    @staticmethod
-    def calculate_vif(X, thresh=10.0):
-        dropped = True
-        vif_cols = []
-        while dropped:
-            # Loop repeatedly until we find that all columns within our dataset
-            # have a VIF value less than the threshold
-            variables = X.columns
-            dropped = False
-            vif = []
-            new_vif = 0
-            for var in X.columns:
-                new_vif = variance_inflation_factor(X[variables].values,
-                                                    X.columns.get_loc(var))
-                vif.append(new_vif)
-                if np.isinf(new_vif):
-                    break
-            max_vif = max(vif)
-            if max_vif > thresh:
-                maxloc = vif.index(max_vif)
-                print(f'Dropping {X.columns[maxloc]} with vif={max_vif}')
-                vif_cols.append(X.columns.tolist()[maxloc])
-                X = X.drop([X.columns.tolist()[maxloc]], axis=1)
-                dropped = True
-        return X, vif_cols
 
 
 class RazorCV(object):
@@ -458,233 +413,6 @@ class RazorCV(object):
         )
 
 
-def _draw_bootstrap_sample(rng, X, y):
-    sample_indices = np.arange(X.shape[0])
-    bootstrap_indices = rng.choice(sample_indices,
-                                   size=sample_indices.shape[0],
-                                   replace=True)
-    return X.iloc[bootstrap_indices.tolist(), :], y.iloc[bootstrap_indices.tolist(), :]
-
-
-def bias_variance_decomp(estimator, X, y, loss='0-1_loss', num_rounds=200,
-                         random_seed=None, **fit_params):
-    """
-    # Nonparametric Permutation Test
-    # Author: Sebastian Raschka <sebastianraschka.com> from mlxtend
-    (soon to be replaced by a formal dependency)
-
-    Parameters
-    ----------
-    estimator : object
-        A classifier or regressor object or class implementing both a
-        `fit` and `predict` method similar to the scikit-learn API.
-    X_train : array-like, shape=(num_examples, num_features)
-        A training dataset for drawing the bootstrap samples to carry
-        out the bias-variance decomposition.
-    y_train : array-like, shape=(num_examples)
-        Targets (class labels, continuous values in case of regression)
-        associated with the `X_train` examples.
-    X_test : array-like, shape=(num_examples, num_features)
-        The test dataset for computing the average loss, bias,
-        and variance.
-    y_test : array-like, shape=(num_examples)
-        Targets (class labels, continuous values in case of regression)
-        associated with the `X_test` examples.
-    loss : str (default='0-1_loss')
-        Loss function for performing the bias-variance decomposition.
-        Currently allowed values are '0-1_loss' and 'mse'.
-    num_rounds : int (default=200)
-        Number of bootstrap rounds (sampling from the training set)
-        for performing the bias-variance decomposition. Each bootstrap
-        sample has the same size as the original training set.
-    random_seed : int (default=None)
-        Random seed for the bootstrap sampling used for the
-        bias-variance decomposition.
-    fit_params : additional parameters
-        Additional parameters to be passed to the .fit() function of the
-        estimator when it is fit to the bootstrap samples.
-
-    Returns
-    ----------
-    avg_expected_loss, avg_bias, avg_var : returns the average expected
-        average bias, and average bias (all floats), where the average
-        is computed over the data points in the test set.
-
-    Examples
-    -----------
-    For usage examples, please see
-    http://rasbt.github.io/mlxtend/user_guide/evaluate/bias_variance_decomp/
-
-    """
-    supported = ['0-1_loss', 'mse']
-    if loss not in supported:
-        raise NotImplementedError('loss must be one of the following: %s' %
-                                  supported)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        test_size=0.10,
-                                                        random_state=42,
-                                                        shuffle=True,
-                                                        stratify=y)
-
-    rng = np.random.RandomState(random_seed)
-
-    if loss == '0-1_loss':
-        dtype = np.int
-    elif loss == 'mse':
-        dtype = np.float
-
-    all_pred = np.zeros((num_rounds, y_test.shape[0]), dtype=dtype)
-
-    for i in range(num_rounds):
-        X_boot, y_boot = _draw_bootstrap_sample(rng, X_train, y_train)
-
-        # Keras support
-        if estimator.__class__.__name__ in ['Sequential', 'Functional']:
-
-            # reset model
-            for ix, layer in enumerate(estimator.layers):
-                if hasattr(estimator.layers[ix], 'kernel_initializer') and \
-                        hasattr(estimator.layers[ix], 'bias_initializer'):
-                    weight_initializer = \
-                        estimator.layers[ix].kernel_initializer
-                    bias_initializer = estimator.layers[ix].bias_initializer
-
-                    old_weights, old_biases = \
-                        estimator.layers[ix].get_weights()
-
-                    estimator.layers[ix].set_weights([
-                        weight_initializer(shape=old_weights.shape),
-                        bias_initializer(shape=len(old_biases))])
-
-            estimator.fit(X_boot, y_boot, **fit_params)
-            pred = estimator.predict(X_test).reshape(1, -1)
-        else:
-            pred = estimator.fit(
-                X_boot, y_boot, **fit_params).predict(X_test)
-        all_pred[i] = pred
-
-    if loss == '0-1_loss':
-        main_predictions = np.apply_along_axis(lambda x:
-                                               np.argmax(np.bincount(x)),
-                                               axis=0,
-                                               arr=all_pred)
-
-        avg_expected_loss = np.apply_along_axis(lambda x:
-                                                (x != y_test.values).mean(),
-                                                axis=1,
-                                                arr=all_pred).mean()
-
-        avg_bias = np.sum(main_predictions != y_test.values) / y_test.values.size
-
-        var = np.zeros(pred.shape)
-
-        for pred in all_pred:
-            var += (pred != main_predictions).astype(np.int)
-        var /= num_rounds
-
-        avg_var = var.sum()/y_test.shape[0]
-
-    else:
-        avg_expected_loss = np.apply_along_axis(
-            lambda x:
-            ((x - y_test.values)**2).mean(),
-            axis=1,
-            arr=all_pred).mean()
-
-        main_predictions = np.mean(all_pred, axis=0)
-
-        avg_bias = np.sum((main_predictions - y_test.values)**2) / y_test.values.size
-        avg_var = np.sum((main_predictions - all_pred)**2) / all_pred.size
-
-    return avg_expected_loss, avg_bias, avg_var
-
-
-class DeConfounder(BaseEstimator, TransformerMixin):
-    """ A transformer removing the effect of y on X using
-    sklearn.linear_model.LinearRegression.
-
-    References
-    ----------
-    D. Chyzhyk, G. Varoquaux, B. Thirion and M. Milham,
-        "Controlling a confound in predictive models with a test set minimizing
-        its effect," 2018 International Workshop on Pattern Recognition in
-        Neuroimaging (PRNI), Singapore, 2018,
-        pp. 1-4. doi: 10.1109/PRNI.2018.8423961
-    """
-
-    def __init__(self, confound_model=LinearRegression()):
-        self.confound_model = confound_model
-
-    def fit(self, X, z):
-        if z.ndim == 1:
-            z = z[:, np.newaxis]
-        confound_model = clone(self.confound_model)
-        confound_model.fit(z, X)
-        self.confound_model_ = confound_model
-
-        return self
-
-    def transform(self, X, z):
-        if z.ndim == 1:
-            z = z[:, np.newaxis]
-        X_confounds = self.confound_model_.predict(z)
-        return X - X_confounds
-
-
-def de_outlier(X, y, sd, deoutlier_type='IF'):
-    """
-    Remove any gross outlier row in X whose linear residual
-    when regressing y against X is > sd standard deviations
-    away from the mean residual. For classifiers, use a NaiveBayes estimator
-    since it does not require tuning, and for regressors, use simple
-    linear regression.
-
-    """
-    if deoutlier_type == 'IF':
-        model = IsolationForest(random_state=42,
-                                bootstrap=True, contamination='auto')
-        outlier_mask = model.fit_predict(X)
-        outlier_mask[outlier_mask == -1] = 0
-        outlier_mask = outlier_mask.astype('bool')
-    elif deoutlier_type == 'LOF':
-        mask = np.zeros(X.shape, dtype=np.bool)
-        model = LocalOutlierFactor(n_neighbors=10, metric='mahalanobis')
-        model.fit_predict(X)
-        X_scores = model.negative_outlier_factor_
-        X_scores = (X_scores.max() - X_scores) / (
-                X_scores.max() - X_scores.min())
-        median_score = np.median(X_scores)
-        outlier_mask = np.logical_or(
-            [X_scores[i] > median_score for i in range(len(X.shape[0]))], mask)
-        outlier_mask[outlier_mask == -1] = 0
-        outlier_mask = outlier_mask.astype('bool')
-    else:
-        if deoutlier_type == 'NB':
-            model = GaussianNB()
-        elif deoutlier_type == 'LR':
-            model = LinearRegression(normalize=True)
-        else:
-            raise ValueError('predict_type not recognized!')
-        model.fit(X, y)
-        predicted_y = model.predict(X)
-
-        resids = (y - predicted_y)**2
-
-        outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
-                        float(sd)).all(axis=1)
-
-    return X[outlier_mask], y[outlier_mask]
-
-
-def make_param_grids():
-    param_space = {}
-    param_space['Cs'] = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
-    param_space['l1_ratios'] = [0, 0.25, 0.50, 0.75, 1]
-    param_space['alphas'] = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
-    return param_space
-
-
 @ignore_warnings(category=ConvergenceWarning)
 def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                predict_type, search_method='grid', razor=False, n_jobs=1):
@@ -897,164 +625,6 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
     return reg, best_estimator
 
 
-def preprocess_x_y(X, y, nuisance_cols, nodrop_columns=[],
-                   var_thr=.85, remove_multi=True,
-                   remove_outliers=True, standardize=True,
-                   std_dev=3, vif_thr=10, missingness_thr=0.50,
-                   zero_thr=0.50, oversample=False):
-    from colorama import Fore, Style
-
-    # Replace all near-zero with zeros
-    # Drop excessively sparse columns with >zero_thr zeros
-    if zero_thr > 0:
-        X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
-        X_tmp = X.T.loc[(X == 0).sum() < (float(zero_thr)) * X.shape[0]].T
-
-        if len(nodrop_columns) > 0:
-            X = pd.concat([X_tmp, X[[i for i in X.columns if i in
-                                     nodrop_columns and i not in
-                                     X_tmp.columns]]], axis=1)
-        else:
-            X = X_tmp
-        del X_tmp
-
-        if X.empty or len(X.columns) < 5:
-            print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
-                  f"{X}{Style.RESET_ALL}\n\n")
-            return X, y
-
-    # Remove columns with excessive missing values
-    X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
-    if X.empty:
-        print(f"\n\n{Fore.RED}Empty feature-space (missingness): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return X, y
-
-    # Apply a simple imputer (note that this assumes extreme cases of
-    # missingness have already been addressed). The SimpleImputer is better
-    # for smaller datasets, whereas the IterativeImputer performs best on
-    # larger sets.
-
-    # from sklearn.experimental import enable_iterative_imputer
-    # from sklearn.impute import IterativeImputer
-    # imp = IterativeImputer(random_state=0, sample_posterior=True)
-    # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
-    imp1 = SimpleImputer()
-    X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
-                     columns=X.columns)
-
-    # Deconfound X by any non-connectome columns present, and then remove them
-    if len(nuisance_cols) > 0:
-        deconfounder = DeConfounder()
-        net_cols = [i for i in X.columns if i not in nuisance_cols]
-        z_cols = [i for i in X.columns if i in nuisance_cols]
-        if len(z_cols) > 0:
-            deconfounder.fit(X[net_cols].values, X[z_cols].values)
-            X[net_cols] = pd.DataFrame(deconfounder.transform(
-                X[net_cols].values, X[z_cols].values),
-                             columns=X[net_cols].columns)
-            print(f"Deconfounding with {z_cols}...")
-            X.drop(columns=z_cols, inplace=True)
-
-    # Standardize X
-    if standardize is True:
-        scaler = StandardScaler()
-        X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
-
-    # Remove low-variance columns
-    sel = VarianceThreshold(threshold=var_thr)
-    sel.fit(X)
-    if len(nodrop_columns) > 0:
-        good_var_cols = X.columns[np.concatenate([sel.get_support(indices=True),
-                                                 np.array([X.columns.get_loc(c)
-                                                           for c in
-                                                           nodrop_columns if
-                                                           c in X])])]
-    else:
-        good_var_cols = X.columns[sel.get_support(indices=True)]
-
-    low_var_cols = [i for i in X.columns if i not in list(good_var_cols)]
-    if len(low_var_cols) > 0:
-        print(f"Dropping {low_var_cols} for low variance...")
-    X = X[good_var_cols]
-
-    if X.empty:
-        print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
-              f"{X}{Style.RESET_ALL}\n\n")
-        return X, y
-
-    # Remove outliers
-    if remove_outliers is True:
-        X, y = de_outlier(X, y, std_dev, 'IF')
-        if X.empty and len(y) < 50:
-            print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
-                  f"{X}{Style.RESET_ALL}\n\n")
-            return X, y
-
-    # Remove missing y
-    # imp2 = SimpleImputer()
-    # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
-
-    # y_missing_mask = np.invert(np.isnan(y))
-    # X = X[y_missing_mask]
-    # y = y[y_missing_mask]
-    if X.empty or len(y) < 50:
-        print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
-              f"{X}, {y}{Style.RESET_ALL}\n\n")
-        return X, y
-
-    # Remove multicollinear columns
-    if remove_multi is True:
-        try:
-            rvif = ReduceVIF(thresh=vif_thr)
-            X = rvif.fit_transform(X)[0]
-            if X.empty or len(X.columns) < 5:
-                print(f"\n\n{Fore.RED}Empty feature-space "
-                      f"(multicollinearity): "
-                      f"{X}{Style.RESET_ALL}\n\n")
-                return X, y
-        except:
-            print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
-                  f"{X}{Style.RESET_ALL}\n\n")
-            return X, y
-
-    if oversample is True:
-        try:
-            from imblearn.over_sampling import SMOTE
-            sm = SMOTE(random_state=42, sampling_strategy='auto')
-            X, y = sm.fit_resample(X, y)
-        except:
-            pass
-
-    print(f"\nX: {X}\ny: {y}\n")
-    print(f"Features: {list(X.columns)}\n")
-    return X, y
-
-
-def get_scorer_ens(scorer_name):
-    import importlib
-    import sklearn.metrics
-    found = False
-
-    try:
-        scoring = sklearn.metrics.get_scorer(scorer_name)
-        found = True
-    except ValueError:
-        pass
-
-    if not found:
-        i = scorer_name.rfind('.')
-        if i < 0:
-            raise ValueError(
-                'Invalid scorer import path: {}'.format(scorer_name))
-        module_name, scorer_name_ = scorer_name[:i], scorer_name[i + 1:]
-        mod = importlib.import_module(module_name)
-        scoring = getattr(mod, scorer_name_)
-        found = True
-
-    return scoring
-
-
 class EnsembleClassifier(BaseEstimator, ClassifierMixin):
 
     def __init__(self, ensemble):
@@ -1252,20 +822,6 @@ def build_stacked_ensemble(X, y, base_estimators, boot, pca_reduce,
     final_est = Pipeline([(best_estimator,
                            ens_estimators[best_estimator]['model'])])
     return final_est, best_estimator
-
-
-def split_df_to_dfs_by_prefix(df, prefixes=[]):
-    from pynets.core.utils import flatten
-
-    df_splits = []
-    for p in prefixes:
-        df_splits.append(df[list(set(list(flatten([c for c in df.columns if
-                                                   c.startswith(p)]))))])
-    pref_selected = list(set(list(flatten([i.columns for i in df_splits]))))
-    # df_other = df[[j for j in df.columns if j not in pref_selected]]
-    #return df_splits + [df_other]
-
-    return df_splits
 
 
 def get_feature_imp(X, pca_reduce, fitted, best_estimator, predict_type,
@@ -2494,22 +2050,23 @@ def build_predict_workflow(args, retval, verbose=True):
     if modality == "func":
         for comb in grid_param_combos:
             try:
-                extract, hpass, model, res, atlas, smooth = comb
+                signal, hpass, model, granularity, atlas, tol = comb
             except:
                 try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
+                    signal, hpass, model, granularity, atlas = comb
+                    tol = "0"
                 except:
                     raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([extract, hpass, model, res, atlas, smooth])
+            grid_params_mod.append([signal, hpass, model, granularity, atlas,
+                                    tol])
     elif modality == "dwi":
         for comb in grid_param_combos:
             try:
-                directget, minlength, model, res, atlas, tol = comb
+                traversal, minlength, model, granularity, atlas, tol = comb
             except:
                 raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([directget, minlength, model, res, atlas,
-                                    tol])
+            grid_params_mod.append([traversal, minlength, model, granularity,
+                                    atlas, tol])
 
     meta_inputnode = pe.Node(
         niu.IdentityInterface(

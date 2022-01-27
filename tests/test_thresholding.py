@@ -14,6 +14,8 @@ from pathlib import Path
 from pynets.core import thresholding
 import networkx as nx
 import pytest
+import tempfile
+import pkg_resources
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,9 +27,9 @@ logger.setLevel(50)
                          [pytest.param(-0.2, marks=pytest.mark.xfail), 0.0,
                           0.2, 0.4, 0.6, 0.8, 1.0])
 @pytest.mark.parametrize("mat_size", [(10, 10), (100, 100)])
-def test_conn_mat_operations(cp, thr, mat_size):
-    """ Includes original tests using .npy and new tests from randomly generate arrays, as
-        well as additional assert statements.
+def test_conn_mat_operations(gen_mat_data, cp, thr, mat_size):
+    """ Includes original tests using .npy and new tests from randomly
+    generate arrays, as well as additional assert statements.
     """
 
     def test_binarize(x, thr, cp):
@@ -50,7 +52,7 @@ def test_conn_mat_operations(cp, thr, mat_size):
         assert np.round(np.sum(s), 4) == np.round(np.sum(s_test), 4)
 
     def test_invert(x, thr, cp):
-        x_cp = x.copy()  # invert modifies array in place and need orig to assert.
+        x_cp = x.copy()
         x_cp = thresholding.threshold_proportional(x_cp, thr, copy=cp)
         s = thresholding.invert(x_cp)
         x = x.flatten()  # flatten arrays to more easily check s > x.
@@ -148,10 +150,7 @@ def test_conn_mat_operations(cp, thr, mat_size):
         w = thresholding.standardize(x)
         assert isinstance(w, np.ndarray)
 
-    base_dir = str(Path(__file__).parent / "examples")
-    # base_dir = '/Users/derekpisner/Applications/PyNets/tests/examples'
-    W = np.load(
-        f"{base_dir}/miscellaneous/002_rsn-Default_model-cov_raw_mat.npy")
+    W = gen_mat_data(asfile=False)['mat_list'][0]
 
     x_orig = W.copy()
     x_rand = x = np.random.rand(mat_size[0], mat_size[1])
@@ -207,11 +206,10 @@ def test_conn_mat_operations(cp, thr, mat_size):
 
 @pytest.mark.parametrize("thr", [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 def test_edge_cases(thr):
-    # local_thresholding_prop: nng.number_of_edges() == 0 and number_before >= maximum_edges
+    # local_thresholding_prop: nng.number_of_edges() == 0 and
+    # number_before >= maximum_edges
     x = np.zeros((10, 10))
     x = nx.to_numpy_array(nx.from_numpy_matrix(x).to_directed())
-    coords = [idx for idx, val in enumerate(x)]
-    labels = ['ROI_' + str(idx) for idx, val in enumerate(x)]
 
     for idx, i in enumerate(range(0, 10)):
         if idx < 9:
@@ -236,10 +234,12 @@ def test_edge_cases(thr):
 @pytest.mark.parametrize("min_span_tree", [True, False])
 @pytest.mark.parametrize("disp_filt", [True, False])
 @pytest.mark.parametrize("dens_thresh", [True, False])
-def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
+def test_thresh_func(tractography_estimation_data,
+                     type, parc, all_zero, min_span_tree, disp_filt,
                      dens_thresh, frag_g):
-    base_dir = str(Path(__file__).parent / "examples")
-    dir_path = f"{base_dir}/miscellaneous"
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
 
     if all_zero == True and type == 'func':
         conn_matrix = np.zeros((10, 10))
@@ -253,38 +253,37 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
 
     ID = '002'
     subnet = 'Default'
-    conn_model = 'sps'
+    conn_model = 'corr'
     thr = 0.5
     node_radius = 6
     smooth = 2
-    roi = f"{dir_path}/002_parcels_resampled2roimask_pDMN_3_bin.nii.gz"
-    coord_file_path = f"{dir_path}/Default_func_coords_wb.pkl"
-    coord_file = open(coord_file_path, 'rb')
-    coords = pickle.load(coord_file)
-    labels_file_path = f"{dir_path}/Default_func_labelnames_wb.pkl"
-    labels_file = open(labels_file_path, 'rb')
-    labels = pickle.load(labels_file)
-    # The arguments below arr never used in the thresholding.tresh_func, but are returned.
-    prune = True
+    roi = pkg_resources.resource_filename(
+        "pynets", "templates/rois/pDMN_3_bin.nii.gz")
+    coords = ['Coord_' + str(idx) for idx, val in
+              enumerate(range(conn_matrix.shape[0]))]
+    labels = ['ROI_' + str(idx) for idx, val in
+              enumerate(range(conn_matrix.shape[0]))]
+
+    # The arguments below arr never used in the thresholding.tresh_func,
+    # but are returned.
+    prune = 0
     atlas = 'whole_brain_cluster_labels_PCA200'
     parcellation = None
     norm = 1
     binary = False
     hpass = False
-    extract_strategy = 'mean'
+    signal = 'mean'
 
-    edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, smooth, \
-    prune, ID, dir_path, atlas, parcellation, labels, coords, norm, binary, hpass, extract_strategy = \
-        thresholding.thresh_func(dens_thresh, thr, conn_matrix, conn_model,
-                                 subnet, ID, dir_path,
-                                 roi, node_radius, min_span_tree, smooth,
-                                 disp_filt, parc, prune,
-                                 atlas, parcellation, labels, coords, norm, binary,
-                                 hpass, extract_strategy,
-                                 check_consistency=False)
+    edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, \
+    smooth, prune, ID, dir_path, atlas, parcellation, labels, coords, norm, \
+    binary, hpass, signal = thresholding.thresh_func(
+        dens_thresh, thr, conn_matrix, conn_model, subnet, ID, dir_path,
+        roi, node_radius, min_span_tree, smooth, disp_filt, parc, prune,
+        atlas, parcellation, labels, coords, norm, binary, hpass, signal,
+        check_consistency=False)
 
     if min_span_tree is False and disp_filt is False and dens_thresh is True:
-        assert edge_threshold is None  # edge_threshold will be none in one case
+        assert edge_threshold is None
     else:
         assert isinstance(edge_threshold, str)
     assert os.path.isfile(est_path) is True
@@ -299,7 +298,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
         assert isinstance(roi, str)
         assert os.path.isfile(roi) is True
     assert isinstance(smooth, int)
-    assert isinstance(prune, bool)
     assert isinstance(ID, str)
     assert isinstance(dir_path, str)
     assert isinstance(atlas, str)
@@ -316,25 +314,26 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     if all_zero == True and type == 'struct':
         conn_matrix = np.zeros((10, 10))
 
-    target_samples = 2
     track_type = 'local'
-    atlas_for_streams = f"{base_dir}/miscellaneous/whole_brain_cluster_labels_PCA200.nii.gz"
-    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_nodetype-parc_samples-10000streams_tracktype-local_directget-prob_minlength-0.trk"
-    directget = 'prob'
+    atlas_for_streams = pkg_resources.resource_filename(
+        "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
+    )
+    streams = tractography_estimation_data['trk']
+    traversal = 'prob'
     min_length = 20
     error_margin = 6
 
     edge_threshold, est_path, thr, node_radius, subnet, conn_model, roi, prune, \
-    ID, dir_path, atlas, parcellation, labels, coords, norm, binary, target_samples, track_type, \
-    atlas_mni, streams, directget, min_length, error_margin = thresholding.thresh_struct(
+    ID, dir_path, atlas, parcellation, labels, coords, norm, binary, track_type, \
+    atlas_mni, streams, traversal, min_length, error_margin = thresholding.thresh_struct(
         dens_thresh, thr, conn_matrix,
         conn_model, subnet, ID,
         dir_path, roi, node_radius,
         min_span_tree, disp_filt, parc,
         prune, atlas, parcellation, labels,
         coords, norm, binary,
-        target_samples, track_type,
-        atlas_for_streams, streams, directget,
+        track_type,
+        atlas_for_streams, streams, traversal,
         min_length, error_margin, check_consistency=False)
 
     assert isinstance(dens_thresh, bool)
@@ -352,7 +351,6 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert isinstance(min_span_tree, bool)
     assert isinstance(disp_filt, bool)
     assert isinstance(parc, bool)
-    assert isinstance(prune, bool)
     assert isinstance(atlas, str)
     assert parcellation is None
     assert isinstance(labels, list)
@@ -360,14 +358,15 @@ def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
     assert isinstance(coords, list)
     assert isinstance(norm, int)
     assert isinstance(binary, bool)
-    assert isinstance(target_samples, int)
     assert isinstance(track_type, str)
     assert isinstance(atlas_mni, str)
     assert isinstance(streams, str)
-    assert isinstance(directget, str)
+    assert isinstance(traversal, str)
+
+    tmp.cleanup()
 
 
-def test_thresh_raw_graph():
+def test_thresh_raw_graph(gen_mat_data):
     from pynets.core import thresholding
 
     thr = 0.5
@@ -375,10 +374,8 @@ def test_thresh_raw_graph():
     min_span_tree = True
     dens_thresh = True
     disp_filt = True
-    base_dir = str(Path(__file__).parent / "examples")
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_" \
-               f"nodetype-parc_model-sps_template-MNI152_T1_thrtype-" \
-               f"DENS_thr-0.19.npy"
+
+    est_path = gen_mat_data()['mat_file_list'][0]
 
     [thr_type, edge_threshold, conn_matrix_thr, thr, est_path] = \
         thresholding.thresh_raw_graph(

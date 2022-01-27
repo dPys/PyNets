@@ -273,7 +273,7 @@ class FetchNodesLabels(SimpleInterface):
                 if atlas in local_atlases:
                     ref_txt = (
                         f"{str(Path(base_path).parent.parent)}/templates/"
-                        f"labelcharts/"
+                        f"labels/"
                         f"{atlas}.txt"
                     )
                 else:

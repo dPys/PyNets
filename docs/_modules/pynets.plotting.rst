@@ -4,22 +4,21 @@ pynets.plotting package
 Submodules
 ----------
 
-pynets.plotting.plot\_gen module
+pynets.plotting.adjacency module
 --------------------------------
 
-.. automodule:: pynets.plotting.plot_gen
+.. automodule:: pynets.plotting.adjacency
     :members:
     :undoc-members:
     :show-inheritance:
 
-pynets.plotting.plot\_graphs module
------------------------------------
+pynets.plotting.brain module
+----------------------------
 
-.. automodule:: pynets.plotting.plot_graphs
+.. automodule:: pynets.plotting.brain
     :members:
     :undoc-members:
     :show-inheritance:
-
 
 Module contents
 ---------------

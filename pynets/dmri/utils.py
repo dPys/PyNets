@@ -213,20 +213,20 @@ def extract_b0(in_file, b0_ixs, out_path=None):
 
     """
     if out_path is None:
-        out_path = fname_presuffix(in_file, suffix="_b0", use_ext=True)
+        out_path = fname_presuffix(in_file, suffix="_b0.nii.gz",
+                                   use_ext=False)
 
     img = nib.load(in_file)
 
-    b0 = np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs]
-
     hdr = img.header.copy()
-    hdr.set_data_shape(b0.shape)
+    hdr.set_data_shape(img.shape)
     hdr.set_xyzt_units("mm")
     nib.Nifti1Image(
-        b0.astype(
-            hdr.get_data_dtype()),
+        np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs],
         img.affine,
         hdr).to_filename(out_path)
+
+    img.uncache()
     return out_path
 
 

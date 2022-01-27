@@ -10,8 +10,234 @@ import numpy as np
 import itertools
 import warnings
 from collections import OrderedDict
+from scipy import stats
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.feature_selection import VarianceThreshold
 
 warnings.simplefilter("ignore")
+
+
+class ReduceVIF(BaseEstimator, TransformerMixin):
+
+    def __init__(self, thresh=10.0):
+        self.thresh = thresh
+
+    def fit(self, X, y=None):
+        self.X = X
+        self.y = y
+        return self
+
+    def transform(self, X):
+        return ReduceVIF.calculate_vif(X, self.thresh)
+
+    @staticmethod
+    def calculate_vif(X, thresh=10.0):
+        from statsmodels.stats.outliers_influence import \
+            variance_inflation_factor
+        dropped = True
+        vif_cols = []
+        while dropped:
+            # Loop repeatedly until we find that all columns within our dataset
+            # have a VIF value less than the threshold
+            variables = X.columns
+            dropped = False
+            vif = []
+            new_vif = 0
+            for var in X.columns:
+                new_vif = variance_inflation_factor(X[variables].values,
+                                                    X.columns.get_loc(var))
+                vif.append(new_vif)
+                if np.isinf(new_vif):
+                    break
+            max_vif = max(vif)
+            if max_vif > thresh:
+                maxloc = vif.index(max_vif)
+                print(f'Dropping {X.columns[maxloc]} with vif={max_vif}')
+                vif_cols.append(X.columns.tolist()[maxloc])
+                X = X.drop([X.columns.tolist()[maxloc]], axis=1)
+                dropped = True
+        return X, vif_cols
+
+
+def preprocess_x_y(X, y, nuisance_cols, nodrop_columns=[],
+                   var_thr=.85, remove_multi=True,
+                   remove_outliers=True, standardize=True,
+                   std_dev=3, vif_thr=10, missingness_thr=0.50,
+                   zero_thr=0.50, oversample=False):
+    from colorama import Fore, Style
+
+    # Replace all near-zero with zeros
+    # Drop excessively sparse columns with >zero_thr zeros
+    if zero_thr > 0:
+        X = X.apply(lambda x: np.where(np.abs(x) < 0.000001, 0, x))
+        X_tmp = X.T.loc[(X == 0).sum() < (float(zero_thr)) * X.shape[0]].T
+
+        if len(nodrop_columns) > 0:
+            X = pd.concat([X_tmp, X[[i for i in X.columns if i in
+                                     nodrop_columns and i not in
+                                     X_tmp.columns]]], axis=1)
+        else:
+            X = X_tmp
+        del X_tmp
+
+        if X.empty or len(X.columns) < 5:
+            print(f"\n\n{Fore.RED}Empty feature-space (Zero Columns): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
+
+    # Remove columns with excessive missing values
+    X = X.dropna(thresh=len(X) * (1 - missingness_thr), axis=1)
+    if X.empty:
+        print(f"\n\n{Fore.RED}Empty feature-space (missingness): "
+              f"{X}{Style.RESET_ALL}\n\n")
+        return X, y
+
+    # Apply a simple imputer (note that this assumes extreme cases of
+    # missingness have already been addressed). The SimpleImputer is better
+    # for smaller datasets, whereas the IterativeImputer performs best on
+    # larger sets.
+
+    # from sklearn.experimental import enable_iterative_imputer
+    # from sklearn.impute import IterativeImputer
+    # imp = IterativeImputer(random_state=0, sample_posterior=True)
+    # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
+    imp1 = SimpleImputer()
+    X = pd.DataFrame(imp1.fit_transform(X.astype('float32')),
+                     columns=X.columns)
+
+    # Deconfound X by any non-connectome columns present, and then remove them
+    if len(nuisance_cols) > 0:
+        deconfounder = DeConfounder()
+        net_cols = [i for i in X.columns if i not in nuisance_cols]
+        z_cols = [i for i in X.columns if i in nuisance_cols]
+        if len(z_cols) > 0:
+            deconfounder.fit(X[net_cols].values, X[z_cols].values)
+            X[net_cols] = pd.DataFrame(deconfounder.transform(
+                X[net_cols].values, X[z_cols].values),
+                             columns=X[net_cols].columns)
+            print(f"Deconfounding with {z_cols}...")
+            X.drop(columns=z_cols, inplace=True)
+
+    # Standardize X
+    if standardize is True:
+        scaler = StandardScaler()
+        X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+
+    # Remove low-variance columns
+    sel = VarianceThreshold(threshold=var_thr)
+    sel.fit(X)
+    if len(nodrop_columns) > 0:
+        good_var_cols = X.columns[np.concatenate(
+            [sel.get_support(indices=True), np.array([X.columns.get_loc(c)
+                                                      for c in
+                                                      nodrop_columns if
+                                                      c in X])])]
+    else:
+        good_var_cols = X.columns[sel.get_support(indices=True)]
+
+    low_var_cols = [i for i in X.columns if i not in list(good_var_cols)]
+    if len(low_var_cols) > 0:
+        print(f"Dropping {low_var_cols} for low variance...")
+    X = X[good_var_cols]
+
+    if X.empty:
+        print(f"\n\n{Fore.RED}Empty feature-space (low-variance): "
+              f"{X}{Style.RESET_ALL}\n\n")
+        return X, y
+
+    # Remove outliers
+    if remove_outliers is True:
+        X, y = de_outlier(X, y, std_dev, 'IF')
+        if X.empty and len(y) < 50:
+            print(f"\n\n{Fore.RED}Empty feature-space (outliers): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
+
+    # Remove missing y
+    # imp2 = SimpleImputer()
+    # y = imp2.fit_transform(np.array(y).reshape(-1, 1))
+
+    # y_missing_mask = np.invert(np.isnan(y))
+    # X = X[y_missing_mask]
+    # y = y[y_missing_mask]
+    if X.empty or len(y) < 50:
+        print(f"\n\n{Fore.RED}Empty feature-space (missing y): "
+              f"{X}, {y}{Style.RESET_ALL}\n\n")
+        return X, y
+
+    # Remove multicollinear columns
+    if remove_multi is True:
+        try:
+            rvif = ReduceVIF(thresh=vif_thr)
+            X = rvif.fit_transform(X)[0]
+            if X.empty or len(X.columns) < 5:
+                print(f"\n\n{Fore.RED}Empty feature-space "
+                      f"(multicollinearity): "
+                      f"{X}{Style.RESET_ALL}\n\n")
+                return X, y
+        except:
+            print(f"\n\n{Fore.RED}Empty feature-space (multicollinearity): "
+                  f"{X}{Style.RESET_ALL}\n\n")
+            return X, y
+
+    if oversample is True:
+        try:
+            from imblearn.over_sampling import SMOTE
+            sm = SMOTE(random_state=42, sampling_strategy='auto')
+            X, y = sm.fit_resample(X, y)
+        except:
+            pass
+
+    print(f"\nX: {X}\ny: {y}\n")
+    print(f"Features: {list(X.columns)}\n")
+    return X, y
+
+
+class DeConfounder(BaseEstimator, TransformerMixin):
+    """ A transformer removing the effect of y on X using
+    sklearn.linear_model.LinearRegression.
+
+    References
+    ----------
+    D. Chyzhyk, G. Varoquaux, B. Thirion and M. Milham,
+        "Controlling a confound in predictive models with a test set minimizing
+        its effect," 2018 International Workshop on Pattern Recognition in
+        Neuroimaging (PRNI), Singapore, 2018,
+        pp. 1-4. doi: 10.1109/PRNI.2018.8423961
+    """
+
+    def __init__(self, confound_model=LinearRegression()):
+        self.confound_model = confound_model
+
+    def fit(self, X, z):
+        if z.ndim == 1:
+            z = z[:, np.newaxis]
+        confound_model = clone(self.confound_model)
+        confound_model.fit(z, X)
+        self.confound_model_ = confound_model
+
+        return self
+
+    def transform(self, X, z):
+        if z.ndim == 1:
+            z = z[:, np.newaxis]
+        X_confounds = self.confound_model_.predict(z)
+        return X - X_confounds
+
+
+def make_param_grids():
+    param_space = {}
+    param_space['Cs'] = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
+    param_space['l1_ratios'] = [0, 0.25, 0.50, 0.75, 1]
+    param_space['alphas'] = [1e-8, 1e-4, 1e-2, 1e-1, 0.25, 0.5, 1]
+    return param_space
 
 
 def get_ensembles_embedding(modality, alg, base_dir):
@@ -22,7 +248,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     "subnet-"
                     + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
-                    + i.split('res-')[1].split("/")[0]
+                    + i.split('granularity-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".npy", "")
@@ -47,7 +273,7 @@ def get_ensembles_embedding(modality, alg, base_dir):
                     "subnet-"
                     + i.split('subnet-')[1].split("_")[0]
                     + "_res-"
-                    + i.split('res-')[1].split("/")[0]
+                    + i.split('granularity-')[1].split("/")[0]
                     + "_"
                     + os.path.basename(i).split(modality + "_")[1].replace(
                         ".csv", "")
@@ -138,28 +364,27 @@ def make_feature_space_dict(
     if target_modality == "func":
         for comb in grid_params:
             try:
-                extract, hpass, model, res, atlas, smooth = comb
-                grid_params_mod.append((extract, hpass, model, res, atlas,
-                                        str(smooth)))
+                signal, hpass, model, granularity, atlas, tol = comb
+                grid_params_mod.append((signal, hpass, model, granularity,
+                                        atlas, str(tol)))
             except:
                 try:
-                    extract, hpass, model, res, atlas = comb
-                    smooth = "0"
-                    grid_params_mod.append((extract, hpass, model, res, atlas,
-                                            str(smooth)))
+                    signal, hpass, model, granularity, atlas = comb
+                    tol = "0"
+                    grid_params_mod.append((signal, hpass, model, granularity,
+                                            atlas, str(tol)))
                 except:
                     print(f"Failed to parse: {comb}")
 
     elif target_modality == "dwi":
         for comb in grid_params:
             try:
-                directget, minlength, model, res, atlas, tol = comb
-                grid_params_mod.append((directget, minlength, model, res,
-                                        atlas, tol))
+                directget, minlength, model, granularity, atlas, tol = comb
+                grid_params_mod.append((directget, minlength, model,
+                                        granularity, atlas, tol))
             except:
                 print(f"Failed to parse: {comb}")
 
-    par_dict = subject_dict.copy()
 
     with Parallel(
         n_jobs=-1, backend='loky', verbose=10, temp_folder=cache_dir
@@ -169,7 +394,7 @@ def make_feature_space_dict(
                 base_dir,
                 df,
                 grid_param,
-                par_dict,
+                subject_dict.copy(),
                 ses,
                 target_modality,
                 target_embedding_type,
@@ -193,7 +418,7 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
 
     if "subnet" in hyperparam_dict.keys():
         hyperparam_dict["subnet"] = [i for i in
-                                     hyperparam_dict["subnet"] if "res"
+                                     hyperparam_dict["subnet"] if "granularity"
                                      not in i]
 
     hyperparam_dict = OrderedDict(sorted(hyperparam_dict.items(),
@@ -206,11 +431,12 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
     return hyperparam_dict, grid
 
 
-def get_index_labels(base_dir, ID, ses, modality, atlas, res, emb_shape):
+def get_index_labels(base_dir, ID, ses, modality, atlas, granularity,
+                     emb_shape):
 
     node_files = glob.glob(
         f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
-        f"{atlas}_res-{res}/nodes/*.json")
+        f"{atlas}_res-{granularity}/nodes/*.json")
 
     if len(node_files) > 0:
         ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
@@ -418,18 +644,21 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
                         df_lps = pd.DataFrame(rsn_arr,
                                               columns=[f"{i}_subnet-"
                                                        f"{grid_param[-2]}_"
-                                                       f"res-{grid_param[-3]}_"
+                                                       f"granularity-"
+                                                       f"{grid_param[-3]}_"
                                                        f"dim1" for i in ixs])
                     elif rsn_dict["data"].shape[1] == 3:
                         df_lps = pd.DataFrame(
                             rsn_arr,
                             columns=[f"{i}_subnet-{grid_param[-2]}_"
-                                     f"res-{grid_param[-3]}_dim1" for
+                                     f"granularity-{grid_param[-3]}_dim1" for
                                      i in ixs]
                             + [f"{i}_subnet-{grid_param[-2]}_"
-                               f"res-{grid_param[-3]}_dim2" for i in ixs]
+                               f"granularity-{grid_param[-3]}_dim2" for
+                               i in ixs]
                             + [f"{i}_subnet-{grid_param[-2]}_"
-                               f"res-{grid_param[-3]}_dim3" for i in ixs],
+                               f"granularity-{grid_param[-3]}_dim3" for
+                               i in ixs],
                         )
                     else:
                         df_lps = None
@@ -572,6 +801,233 @@ def graph_theory_prep(df, thr_type, drop_thr=0.50):
 
     return df, cols
 
+
+def split_df_to_dfs_by_prefix(df, prefixes=[]):
+    from pynets.core.utils import flatten
+
+    df_splits = []
+    for p in prefixes:
+        df_splits.append(df[list(set(list(flatten([c for c in df.columns if
+                                                   c.startswith(p)]))))])
+    pref_selected = list(set(list(flatten([i.columns for i in df_splits]))))
+    # df_other = df[[j for j in df.columns if j not in pref_selected]]
+    #return df_splits + [df_other]
+
+    return df_splits
+
+
+def de_outlier(X, y, sd, deoutlier_type='IF'):
+    """
+    Remove any gross outlier row in X whose linear residual
+    when regressing y against X is > sd standard deviations
+    away from the mean residual. For classifiers, use a NaiveBayes estimator
+    since it does not require tuning, and for regressors, use simple
+    linear regression.
+
+    """
+    if deoutlier_type == 'IF':
+        model = IsolationForest(random_state=42,
+                                bootstrap=True, contamination='auto')
+        outlier_mask = model.fit_predict(X)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
+    elif deoutlier_type == 'LOF':
+        mask = np.zeros(X.shape, dtype=np.bool)
+        model = LocalOutlierFactor(n_neighbors=10, metric='mahalanobis')
+        model.fit_predict(X)
+        X_scores = model.negative_outlier_factor_
+        X_scores = (X_scores.max() - X_scores) / (
+                X_scores.max() - X_scores.min())
+        median_score = np.median(X_scores)
+        outlier_mask = np.logical_or(
+            [X_scores[i] > median_score for i in range(len(X.shape[0]))], mask)
+        outlier_mask[outlier_mask == -1] = 0
+        outlier_mask = outlier_mask.astype('bool')
+    else:
+        if deoutlier_type == 'NB':
+            model = GaussianNB()
+        elif deoutlier_type == 'LR':
+            model = LinearRegression(normalize=True)
+        else:
+            raise ValueError('predict_type not recognized!')
+        model.fit(X, y)
+        predicted_y = model.predict(X)
+
+        resids = (y - predicted_y)**2
+
+        outlier_mask = (np.abs(stats.zscore(np.array(resids).reshape(-1, 1))) <
+                        float(sd)).all(axis=1)
+
+    return X[outlier_mask], y[outlier_mask]
+
+
+def get_scorer_ens(scorer_name):
+    import importlib
+    import sklearn.metrics
+    found = False
+
+    try:
+        scoring = sklearn.metrics.get_scorer(scorer_name)
+        found = True
+    except ValueError:
+        pass
+
+    if not found:
+        i = scorer_name.rfind('.')
+        if i < 0:
+            raise ValueError(
+                'Invalid scorer import path: {}'.format(scorer_name))
+        module_name, scorer_name_ = scorer_name[:i], scorer_name[i + 1:]
+        mod = importlib.import_module(module_name)
+        scoring = getattr(mod, scorer_name_)
+        found = True
+
+    return scoring
+
+
+def _draw_bootstrap_sample(rng, X, y):
+    sample_indices = np.arange(X.shape[0])
+    bootstrap_indices = rng.choice(sample_indices,
+                                   size=sample_indices.shape[0],
+                                   replace=True)
+    return X.iloc[bootstrap_indices.tolist(), :], \
+           y.iloc[bootstrap_indices.tolist(), :]
+
+
+def bias_variance_decomp(estimator, X, y, loss='0-1_loss', num_rounds=200,
+                         random_seed=None, **fit_params):
+    """
+    # Nonparametric Permutation Test
+    # Author: Sebastian Raschka <sebastianraschka.com> from mlxtend
+    (soon to be replaced by a formal dependency)
+
+    Parameters
+    ----------
+    estimator : object
+        A classifier or regressor object or class implementing both a
+        `fit` and `predict` method similar to the scikit-learn API.
+    X_train : array-like, shape=(num_examples, num_features)
+        A training dataset for drawing the bootstrap samples to carry
+        out the bias-variance decomposition.
+    y_train : array-like, shape=(num_examples)
+        Targets (class labels, continuous values in case of regression)
+        associated with the `X_train` examples.
+    X_test : array-like, shape=(num_examples, num_features)
+        The test dataset for computing the average loss, bias,
+        and variance.
+    y_test : array-like, shape=(num_examples)
+        Targets (class labels, continuous values in case of regression)
+        associated with the `X_test` examples.
+    loss : str (default='0-1_loss')
+        Loss function for performing the bias-variance decomposition.
+        Currently allowed values are '0-1_loss' and 'mse'.
+    num_rounds : int (default=200)
+        Number of bootstrap rounds (sampling from the training set)
+        for performing the bias-variance decomposition. Each bootstrap
+        sample has the same size as the original training set.
+    random_seed : int (default=None)
+        Random seed for the bootstrap sampling used for the
+        bias-variance decomposition.
+    fit_params : additional parameters
+        Additional parameters to be passed to the .fit() function of the
+        estimator when it is fit to the bootstrap samples.
+
+    Returns
+    ----------
+    avg_expected_loss, avg_bias, avg_var : returns the average expected
+        average bias, and average bias (all floats), where the average
+        is computed over the data points in the test set.
+
+    Examples
+    -----------
+    For usage examples, please see
+    http://rasbt.github.io/mlxtend/user_guide/evaluate/bias_variance_decomp/
+
+    """
+    supported = ['0-1_loss', 'mse']
+    if loss not in supported:
+        raise NotImplementedError('loss must be one of the following: %s' %
+                                  supported)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        test_size=0.10,
+                                                        random_state=42,
+                                                        shuffle=True,
+                                                        stratify=y)
+
+    rng = np.random.RandomState(random_seed)
+
+    if loss == '0-1_loss':
+        dtype = np.int
+    elif loss == 'mse':
+        dtype = np.float
+
+    all_pred = np.zeros((num_rounds, y_test.shape[0]), dtype=dtype)
+
+    for i in range(num_rounds):
+        X_boot, y_boot = _draw_bootstrap_sample(rng, X_train, y_train)
+
+        # Keras support
+        if estimator.__class__.__name__ in ['Sequential', 'Functional']:
+
+            # reset model
+            for ix, layer in enumerate(estimator.layers):
+                if hasattr(estimator.layers[ix], 'kernel_initializer') and \
+                        hasattr(estimator.layers[ix], 'bias_initializer'):
+                    weight_initializer = \
+                        estimator.layers[ix].kernel_initializer
+                    bias_initializer = estimator.layers[ix].bias_initializer
+
+                    old_weights, old_biases = \
+                        estimator.layers[ix].get_weights()
+
+                    estimator.layers[ix].set_weights([
+                        weight_initializer(shape=old_weights.shape),
+                        bias_initializer(shape=len(old_biases))])
+
+            estimator.fit(X_boot, y_boot, **fit_params)
+            pred = estimator.predict(X_test).reshape(1, -1)
+        else:
+            pred = estimator.fit(
+                X_boot, y_boot, **fit_params).predict(X_test)
+        all_pred[i] = pred
+
+    if loss == '0-1_loss':
+        main_predictions = np.apply_along_axis(lambda x:
+                                               np.argmax(np.bincount(x)),
+                                               axis=0,
+                                               arr=all_pred)
+
+        avg_expected_loss = np.apply_along_axis(lambda x:
+                                                (x != y_test.values).mean(),
+                                                axis=1,
+                                                arr=all_pred).mean()
+
+        avg_bias = np.sum(main_predictions != y_test.values) / \
+                   y_test.values.size
+
+        var = np.zeros(pred.shape)
+
+        for pred in all_pred:
+            var += (pred != main_predictions).astype(np.int)
+        var /= num_rounds
+
+        avg_var = var.sum()/y_test.shape[0]
+
+    else:
+        avg_expected_loss = np.apply_along_axis(
+            lambda x:
+            ((x - y_test.values)**2).mean(),
+            axis=1,
+            arr=all_pred).mean()
+
+        main_predictions = np.mean(all_pred, axis=0)
+
+        avg_bias = np.sum((main_predictions - y_test.values)**2) / \
+                   y_test.values.size
+        avg_var = np.sum((main_predictions - all_pred)**2) / all_pred.size
+
+    return avg_expected_loss, avg_bias, avg_var
 
 def make_subject_dict(
         modalities, base_dir, thr_type, mets, embedding_types, template,
@@ -795,27 +1251,28 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     from colorama import Fore, Style
 
     try:
-        directget, minlength, model, res, atlas, tol = comb
+        directget, minlength, model, granularity, atlas, tol = comb
     except BaseException:
         print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                           f"{comb}{Style.RESET_ALL}"))
         return subject_dict, missingness_frame
 
-    #comb_tuple = (atlas, directget, minlength, model, res, tol)
+    #comb_tuple = (atlas, directget, minlength, model, granularity, tol)
     comb_tuple = comb
 
     # print(comb_tuple)
     subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
-            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-{atlas}_res-"
-            f"{res}/"
+            f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
+            f"{atlas}_res-"
+            f"{granularity}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if (alg in i) and
-                          (f"res-{res}" in i) and
+                          (f"granularity-{granularity}" in i) and
                           (f"subnet-{atlas}" in i) and
                           (f"model-{model}" in i) and
                           (f"directget-{directget}" in i) and
@@ -823,7 +1280,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                           (f"tol-{tol}" in i) and ('_NULL' not in i)]
         else:
             embeddings = [i for i in embeddings if (alg in i) and
-                          (f"res-{res}" in i) and
+                          (f"granularity-{granularity}" in i) and
                           (f"subnet-{atlas}" in i) and
                           (f"template-{template}" in i) and
                           (f"model-{model}" in i) and
@@ -857,10 +1314,10 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                  (f"/subnet-{atlas}_res-{res}/"
+                                  (f"/subnet-{atlas}_res-{granularity}/"
                                             in i) and
                                   (atlas in os.path.basename(i)) and
-                                  (res in os.path.basename(i))]
+                                  (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=lambda x: int(
@@ -915,7 +1372,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       atlas, res, emb_shape)
+                                       atlas, granularity, emb_shape)
             except BaseException:
                 print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
                       f"{embedding}{Style.RESET_ALL}")
@@ -961,7 +1418,7 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
             f"minlength-{minlength}",
             f"directget-{directget}",
             f"model-{model}",
-            f"res-{res}",
+            f"granularity-{granularity}",
             f"subnet-{atlas}",
             f"tol-{tol}",
             f"thrtype-{thr_type}",
@@ -1037,16 +1494,16 @@ def func_grabber(comb, subject_dict, missingness_frame,
     from colorama import Fore, Style
 
     try:
-        extract, hpass, model, res, atlas, smooth = comb
+        signal, hpass, model, granularity, atlas, tol = comb
     except:
         try:
-            extract, hpass, model, res, atlas = comb
-            smooth = "0"
+            signal, hpass, model, granularity, atlas = comb
+            tol = "0"
         except BaseException:
             print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                               f"{comb}{Style.RESET_ALL}"))
             return subject_dict, missingness_frame
-    # comb_tuple = (atlas, extract, hpass, model, res, str(smooth))
+    # comb_tuple = (atlas, signal, hpass, model, granularity, str(tol))
     comb_tuple = comb
 
     # print(comb_tuple)
@@ -1054,39 +1511,50 @@ def func_grabber(comb, subject_dict, missingness_frame,
     if alg != "topology" and alg in embedding_methods:
         embeddings = glob.glob(
             f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/"
-            f"subnet-{atlas}_res-{res}/"
+            f"subnet-{atlas}_res-{granularity}/"
             f"embeddings/gradient-{alg}*"
         )
 
         if template == 'any':
             embeddings = [i for i in embeddings if ((alg in i) and
-                                                    (f"res-{res}" in i) and
-                                                    (f"subnet-{atlas}" in i) and
+                                                    (f"granularity-"
+                                                     f"{granularity}" in i)
+                                                    and
+                                                    (f"subnet-{atlas}" in i)
+                                                    and
                                                     (f"model-{model}" in i)
-                                                    and (f"hpass-{hpass}Hz" in i)
-                                                    and (f"extract-{extract}" in
-                                                         i)) and ('_NULL' not in i)]
+                                                    and (f"hpass-{hpass}Hz"
+                                                         in i)
+                                                    and (f"signal-{signal}" in
+                                                         i)) and ('_NULL' not
+                                                                  in i)]
         else:
             embeddings = [i for i in embeddings if ((alg in i) and
-                                                    (f"res-{res}" in i) and
-                                                    (f"subnet-{atlas}" in i) and
-                                                    (f"template-{template}" in i) and
+                                                    (f"granularity-"
+                                                     f"{granularity}" in i)
+                                                    and
+                                                    (f"subnet-{atlas}" in i)
+                                                    and
+                                                    (f"template-{template}"
+                                                     in i) and
                                                     (f"model-{model}" in i)
-                                                    and (f"hpass-{hpass}Hz" in i)
-                                                    and (f"extract-{extract}" in
-                                                         i)) and ('_NULL' not in i)]
+                                                    and (f"hpass-{hpass}Hz"
+                                                         in i)
+                                                    and (f"signal-{signal}" in
+                                                         i)) and ('_NULL' not
+                                                                  in i)]
 
-        if smooth == "0":
+        if tol == "0":
             embeddings = [
                 i
                 for i in embeddings
-                if "smooth" not in i
+                if "tol" not in i
             ]
         else:
             embeddings = [
                 i
                 for i in embeddings
-                if f"smooth-{smooth}fwhm" in i
+                if f"tol-{tol}fwhm" in i
             ]
 
         if len(embeddings) == 0:
@@ -1116,10 +1584,9 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                            f"/subnet-{atlas}_res-{res}/"
-                                            in i and
-                                            (atlas in os.path.basename(i))
-                                  and (res in os.path.basename(i))]
+                                  f"/subnet-{atlas}_res-{granularity}/"
+                                  in i and (atlas in os.path.basename(i))
+                                  and (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,
                                                key=os.path.getmtime)
@@ -1167,7 +1634,7 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 return subject_dict, missingness_frame
             try:
                 ixs = get_index_labels(base_dir, ID, ses, modality,
-                                       atlas, res, emb_shape)
+                                       atlas, granularity, emb_shape)
             except BaseException:
                 print(f"{Fore.LIGHTYELLOW_EX}Failed to load indices for "
                       f"{embedding} {Style.RESET_ALL}")
@@ -1209,23 +1676,23 @@ def func_grabber(comb, subject_dict, missingness_frame,
     elif alg == "topology":
         data = np.empty([len(mets), 1], dtype=np.float32)
         data[:] = np.nan
-        if smooth == '0':
+        if tol == '0':
             targets = [
-                f"extract-{extract}",
+                f"signal-{signal}",
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
-                f"res-{res}",
+                f"granularity-{granularity}",
                 f"subnet-{atlas}",
                 f"thrtype-{thr_type}",
             ]
         else:
             targets = [
-                f"extract-{extract}",
+                f"signal-{signal}",
                 f"hpass-{hpass}Hz",
                 f"model-{model}",
-                f"res-{res}",
+                f"granularity-{granularity}",
                 f"subnet-{atlas}",
-                f"smooth-{smooth}fwhm",
+                f"tol-{tol}fwhm",
                 f"thrtype-{thr_type}",
             ]
 
@@ -1341,7 +1808,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
 
     for hyperparam in metaparams:
         if (
-            hyperparam != "smooth"
+            hyperparam != "tol"
             and hyperparam != "hpass"
             and hyperparam != "track_type"
             and hyperparam != "directget"
@@ -1350,7 +1817,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
             and hyperparam != "samples"
             and hyperparam != "nodetype"
             and hyperparam != "template"
-            and hyperparam != "extract"
+            and hyperparam != "signal"
 
         ):
             if hyperparam not in hyperparam_dict.keys():
@@ -1363,18 +1830,18 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 )
 
     if modality == "func":
-        if "smooth-" in file_renamed:
-            if "smooth" not in hyperparam_dict.keys():
-                hyperparam_dict["smooth"] = [str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0])]
+        if "tol-" in file_renamed:
+            if "tol" not in hyperparam_dict.keys():
+                hyperparam_dict["tol"] = [str(file_renamed.split(
+                    "tol-")[1].split("_")[0].split("fwhm")[0])]
             else:
-                hyperparam_dict["smooth"].append(str(file_renamed.split(
-                    "smooth-")[1].split("_")[0].split("fwhm")[0]))
+                hyperparam_dict["tol"].append(str(file_renamed.split(
+                    "tol-")[1].split("_")[0].split("fwhm")[0]))
         else:
-            if 'smooth' not in hyperparam_dict.keys():
-                hyperparam_dict['smooth'] = [str(0)]
-            hyperparam_dict["smooth"].append(str(0))
-            metaparams.append("smooth")
+            if 'tol' not in hyperparam_dict.keys():
+                hyperparam_dict['tol'] = [str(0)]
+            hyperparam_dict["tol"].append(str(0))
+            metaparams.append("tol")
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
                 hyperparam_dict["hpass"] = [str(file_renamed.split(
@@ -1384,16 +1851,16 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                     str(file_renamed.split("hpass-"
                                            )[1].split("_")[0].split("Hz")[0]))
             metaparams.append("hpass")
-        if "extract-" in file_renamed:
-            if "extract" not in hyperparam_dict.keys():
-                hyperparam_dict["extract"] = [
-                    str(file_renamed.split("extract-")[1].split("_")[0])
+        if "signal-" in file_renamed:
+            if "signal" not in hyperparam_dict.keys():
+                hyperparam_dict["signal"] = [
+                    str(file_renamed.split("signal-")[1].split("_")[0])
                 ]
             else:
-                hyperparam_dict["extract"].append(
-                    str(file_renamed.split("extract-")[1].split("_")[0])
+                hyperparam_dict["signal"].append(
+                    str(file_renamed.split("signal-")[1].split("_")[0])
                 )
-            metaparams.append("extract")
+            metaparams.append("signal")
 
     elif modality == "dwi":
         if "directget-" in file_renamed:

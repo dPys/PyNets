@@ -24,9 +24,9 @@ coverage:
           - "smoketests"
   ignore:
     - "pynets/templates/*"
-    - "pynets/rsnrefs/*"
+    - "pynets/rsns/*"
     - "pynets/core/atlases/*"
-    - "pynets/core/labelcharts/*"
+    - "pynets/core/labels/*"
     - "pynets/runconfig.yaml"
     - "pynets/conftest.py"
     - "pynets/cloudconfig.json"

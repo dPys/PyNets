@@ -5,6 +5,9 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
 import os
+import pandas as pd
+import numpy as np
+import warnings
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
@@ -14,9 +17,6 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, SimpleImputer
-import pandas as pd
-import numpy as np
-import warnings
 from sklearn.preprocessing import StandardScaler
 from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
@@ -318,13 +318,15 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                             print(comb)
                                     elif isinstance(node_dict[0], list):
                                         try:
-                                            coords = [node_dict[i]['coord'] for i
-                                                      in range(len(node_dict))]
+                                            coords = \
+                                                [node_dict[i]['coord'] for i
+                                                 in range(len(node_dict))]
                                             try:
-                                                labels = [node_dict[i]['label'][
-                                                              'BrainnetomeAtlas' \
-                                                              'Fan2016'] for i
-                                                          in range(len(node_dict))]
+                                                labels = \
+                                                    [node_dict[i]['label']
+                                                     ['BrainnetomeAtlas' \
+                                                      'Fan2016'] for i
+                                                     in range(len(node_dict))]
                                             except:
                                                 labels = [node_dict[i][
                                                     'label'] for i in

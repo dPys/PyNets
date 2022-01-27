@@ -208,6 +208,7 @@ def create_gb_palette(
 
     """
     import matplotlib
+    import mplcyberpunk
     matplotlib.use('Agg')
     import warnings
     warnings.filterwarnings("ignore")
@@ -216,7 +217,6 @@ def create_gb_palette(
     import networkx as nx
     from pynets.core import thresholding
     import matplotlib.pyplot as plt
-    import mplcyberpunk
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.statistics.individual.algorithms import \
@@ -359,7 +359,7 @@ def plot_all_func(
     norm,
     binary,
     hpass,
-    extract_strategy,
+    signal,
     edge_color_override=False,
 ):
     """
@@ -413,7 +413,7 @@ def plot_all_func(
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
     edge_color_override : bool
@@ -436,7 +436,7 @@ def plot_all_func(
     from pynets.plotting import adjacency, connectogram
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -485,7 +485,7 @@ def plot_all_func(
 
         connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -548,7 +548,7 @@ def plot_all_func(
         if not node_radius or node_radius == "None":
             node_radius = "parc"
 
-        if adjacency is True:
+        if adj is True:
             adjacency.plot_conn_mat_func(
                 conn_matrix,
                 conn_model,
@@ -562,7 +562,7 @@ def plot_all_func(
                 node_radius,
                 smooth,
                 hpass,
-                extract_strategy,
+                signal,
             )
 
         if glassbrain is True:
@@ -588,14 +588,14 @@ def plot_all_func(
                                      "mm_") if (
                      (node_radius != "parc") and (
                          node_radius is not None)) else "nodetype-parc_"),
-                 "%s" % ("%s%s%s" % ("smooth-",
+                 "%s" % ("%s%s%s" % ("tol-",
                                      smooth,
                                      "fwhm_") if float(smooth) > 0 else ""),
                  "%s" % ("%s%s%s" % ("hpass-",
                                      hpass,
                                      "Hz_") if hpass is not None else ""),
                  "%s" % ("%s%s" % ("extract-",
-                                   extract_strategy) if extract_strategy is
+                                   signal) if signal is
                          not None else ""),
                  "_thr-",
                  thr,
@@ -737,11 +737,10 @@ def plot_all_struct(
     edge_threshold,
     prune,
     parcellation,
-    target_samples,
     norm,
     binary,
     track_type,
-    directget,
+    traversal,
     min_length,
     error_margin
 ):
@@ -786,8 +785,6 @@ def plot_all_struct(
         Indicates whether to prune final graph of disconnected nodes/isolates.
     parcellation : str
         File path to atlas parcellation Nifti1Image.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     norm : int
         Indicates method of normalizing resulting graph.
     binary : bool
@@ -795,7 +792,7 @@ def plot_all_struct(
         unweighted graph.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -804,6 +801,7 @@ def plot_all_struct(
 
     """
     import matplotlib
+    import mplcyberpunk
     matplotlib.use("agg")
     import os
     from pynets.core.utils import load_runconfig
@@ -821,7 +819,7 @@ def plot_all_struct(
     plt.style.use("cyberpunk")
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -845,7 +843,7 @@ def plot_all_struct(
             "glassbrain"]["color_theme"][0]
         connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -905,7 +903,7 @@ def plot_all_struct(
         if not node_radius or node_radius == "None":
             node_radius = "parc"
 
-        if adjacency is True:
+        if adj is True:
             adjacency.plot_conn_mat_struct(
                 conn_matrix,
                 conn_model,
@@ -917,9 +915,8 @@ def plot_all_struct(
                 roi,
                 thr,
                 node_radius,
-                target_samples,
                 track_type,
-                directget,
+                traversal,
                 min_length,
                 error_margin
             )
@@ -928,7 +925,7 @@ def plot_all_struct(
             views = ["x", "y", "z"]
             # Plot connectome
             out_path_fig = \
-                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
+                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
                 (namer_dir,
                  "/glassbrain_",
                  ID,
@@ -947,14 +944,10 @@ def plot_all_struct(
                                      "mm_") if (
                      (node_radius != "parc") and (
                          node_radius is not None)) else "nodetype-parc_"),
-                 "%s" % ("%s%s%s" % ("samples-",
-                                     int(target_samples),
-                                     "streams_") if float(target_samples) > 0
-                         else "_"),
-                 "tracktype-",
+                 "_tracktype-",
                  track_type,
                  "_directget-",
-                 directget,
+                 traversal,
                  "_minlength-",
                  min_length,
                  "_tol-",
@@ -1120,6 +1113,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
         import indexed_gzip
     import nibabel as nib
     import multinetx as mx
+    import mplcyberpunk
     import matplotlib
     matplotlib.use("agg")
     import pkg_resources
@@ -1129,14 +1123,13 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from matplotlib import pyplot as plt
     from nilearn import plotting as niplot
     from pynets.core import thresholding
-    import mplcyberpunk
     from scipy.spatial import distance
 
     coords = metadata["coords"]
     labels = metadata["labels"]
 
     ch2better_loc = pkg_resources.resource_filename(
-        "pynets", "templates/ch2better.nii.gz"
+        "pynets", "templates/standard/ch2better.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1162,7 +1155,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
             "glassbrain"
         ]["color_theme"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
-        adjacency = hardcoded_params["plotting"]["adjacency"][0]
+        adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
         labeling_atlas = hardcoded_params["plotting"]["labeling_atlas"][0]
     except KeyError as e:
@@ -1187,7 +1180,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     [struct_mat, func_mat] = [
         np.load(modality_paths[0]), np.load(modality_paths[1])]
 
-    if adjacency is True:
+    if adj is True:
         # Multiplex adjacency
         mG = nx.read_gpickle(mG_path)
 
