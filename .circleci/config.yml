@@ -224,13 +224,23 @@ jobs:
           no_output_timeout: 30m
           command: |
             python setup.py install
+      - run:
+          name: Dependency cleanup and configurations
+          no_output_timeout: 30m
+          command: |
+            python -m pip install --upgrade numpy
+            python -m pip install hyppo==0.1.3
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
+            mkdir -p ~/.dipy
+            mkdir -p ~/.nilearn
             echo "[monitoring]" > ~/.nipype/nipype.cfg
             echo "enabled = true" >> ~/.nipype/nipype.cfg
-            python -m pip install --upgrade numpy
-            python -m pip install hyppo==0.1.3
+            dipy_fetch stanford_hardi --out_dir ~/.dipy
+            dipy_fetch stanford_t1 --out_dir ~/.dipy
+            dipy_fetch stanford_pve_maps --out_dir ~/.dipy
+            dipy_fetch tissue_data --out_dir ~/.dipy
       - run:
           name: Install FSL
           no_output_timeout: 40m
