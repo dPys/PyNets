@@ -282,7 +282,7 @@ jobs:
             TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
             mkdir test-results
             export PYTHONUNBUFFERED=1
-            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --disable-warnings --store-durations --numprocesses=auto --circleci-parallelize --verbose --junitxml="test-results/junit.xml" $TEST_FILES
+            python -m coverage run -p --rcfile=.coveragerc -m pytest -s --disable-warnings --numprocesses=auto --circleci-parallelize --verbose --junitxml="test-results/junit.xml" $TEST_FILES
             sudo chmod 777 -R /usr/lib/python3/dist-packages
       - persist_to_workspace:
           root: /tmp/src/pynets
