@@ -16,10 +16,10 @@ def test_bigsmallref():
     """
     Test big and small ref files for existence and non-corruption
     """
-    bigref1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsnrefs/BIGREF1mm.nii.gz"))
-    bigref2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsnrefs/BIGREF2mm.nii.gz"))
-    smallref1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsnrefs/SMALLREF1mm.nii.gz"))
-    smallref2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsnrefs/SMALLREF2mm.nii.gz"))
+    bigref1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsns/BIGREF1mm.nii.gz"))
+    bigref2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsns/BIGREF2mm.nii.gz"))
+    smallref1mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsns/SMALLREF1mm.nii.gz"))
+    smallref2mm = nib.load(pkg_resources.resource_filename("pynets", f"templates/rsns/SMALLREF2mm.nii.gz"))
     assert bigref1mm is not None
     assert bigref2mm is not None
     assert smallref1mm is not None

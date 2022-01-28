@@ -86,19 +86,16 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
         parcel_list = [i for i in parcel_list]
 
     template_image = parcel_list[0]
+    template_affine = template_image.affine
 
-    parcel_list_exp = iter_img([
+    concatted_parcels = concat_imgs(iter_img([
         new_img_like(
             template_image,
             np.zeros(
                 template_image.shape,
-                dtype=bool))] + parcel_list)
-
+                dtype=bool))] + parcel_list), dtype=np.float16)
     del parcel_list
-    gc.collect()
-
-    concatted_parcels = concat_imgs(parcel_list_exp, dtype=np.float16)
-    del parcel_list_exp
+    template_image.uncache()
     gc.collect()
 
     if label_intensities is not None:
@@ -121,13 +118,11 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
 
     for out in outs:
         parcel_sum[parcel_sum == out] = 0
-    net_parcels_map_nifti = nib.Nifti1Image(
-        parcel_sum, affine=template_image.affine)
 
-    del parcel_sum
+    del outs
     gc.collect()
 
-    return net_parcels_map_nifti, parcel_values
+    return nib.Nifti1Image(parcel_sum, affine=template_affine), parcel_values
 
 
 def fetch_nilearn_atlas_coords(atlas):
@@ -516,8 +511,8 @@ def get_node_membership(
         rsn_img, template_img, interpolation="nearest"
     )
 
-    RSN_ix = list(ref_dict.keys())[list(ref_dict.values()).index(subnet)]
-    RSNmask = np.asarray(rsn_img_res.dataobj)[:, :, :, RSN_ix]
+    RSNmask = np.asarray(rsn_img_res.dataobj)[:, :, :,
+              list(ref_dict.keys())[list(ref_dict.values()).index(subnet)]]
 
     coords_vox = []
     for i in coords:
@@ -853,8 +848,6 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
     import sys
     from pynets.core.utils import load_runconfig
 
-    mask_img = math_img("img > 0", img=nib.load(roi))
-
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
@@ -882,11 +875,13 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
                   f"installed?")
 
     mask_img_res = resample_to_img(
-        mask_img, template_img, interpolation='nearest'
+        math_img("img > 0", img=nib.load(roi)), template_img,
+        interpolation='nearest'
     )
 
     mask_data = mask_img_res.get_fdata().astype('bool')
     mask_aff = mask_img_res.affine
+    mask_img_res.uncache()
 
     x_vox = np.diagonal(mask_aff[:3, 0:3])[0]
     y_vox = np.diagonal(mask_aff[:3, 0:3])[1]
@@ -979,16 +974,13 @@ def get_names_and_coords_of_parcels(parcellation, background_label=0):
             "\nUser-specified atlas input not found! Check that "
             "the file(s) specified with the -a flag exist(s)")
 
-    atlas = parcellation.split("/")[-1].split(".")[0]
-
     [coords, label_intensities] = find_parcellation_cut_coords(
         parcellation, background_label, return_label_names=True
     )
     print(f"Parcel intensities:\n{label_intensities}")
 
-    par_max = len(coords)
-
-    return coords, atlas, par_max, label_intensities
+    return coords, parcellation.split("/")[-1].split(".")[0], len(coords), \
+           label_intensities
 
 
 def gen_img_list(parcellation):
@@ -1032,19 +1024,11 @@ def gen_img_list(parcellation):
         roi_img = bna_data.astype("uint16") == \
             bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
-    img_stack = np.array(img_stack)
-    del bna_data
-
-    img_list = []
-    for idy in range(par_max):
-        img_list.append(new_img_like(bna_img, img_stack[idy]))
-
-    del img_stack
-
-    bna_img.uncache()
+    del bna_data, bna_data_for_coords_uniq
     gc.collect()
 
-    return iter_img(img_list)
+    return iter_img([new_img_like(bna_img, np.array(img_stack)[idy]) for idy in
+                     range(par_max)])
 
 
 def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
@@ -1078,9 +1062,11 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
     # Grab number of unique values in 3d image
     unique_labels = set(np.unique(labels_data)) - set([background_label])
     x, y, z = coord_transform(0, 0, 0, np.linalg.inv(labels_affine))
+
     new_labs = []
     if label_names is not None:
         new_lab_names = []
+
     ix = 0
     for lab in unique_labels:
         cur_dat = labels_data == lab
@@ -1351,11 +1337,9 @@ def parcel_naming(coords, vox_size):
                                                          f"/templates/atlases/"
                                                          f"{label_atlas}"
                                                          f".nii.gz")
-
-        label_img = nib.load(label_img_path)
-
         label_img_res = resample_to_img(
-            label_img, template_img, interpolation="nearest", copy=False
+            nib.load(label_img_path), template_img,
+            interpolation="nearest", copy=False
         )
         label_img_dict[label_atlas]['affine'] = label_img_res.affine
         label_img_dict[label_atlas]['data'] = np.asarray(
@@ -1598,7 +1582,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
         parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])])
+                                range(parcel_list_img.shape[-1])])
 
     if any(isinstance(sub, tuple) for sub in labels):
         label_intensities = [i[1] for i in labels]

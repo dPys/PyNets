@@ -26,8 +26,8 @@ tracking:
         - False
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'local'
-    tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 30,000 = 3 million streamlines!)
-        - 30000
+    tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines!)
+        - 20000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
@@ -80,26 +80,26 @@ graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former req
     - 'nx'
 embed:
     - 'ASE'
-    - 'OMNI'
+#    - 'OMNI'
 #    - 'MASE'
     - 'eigenvector'
 #    - 'degree'
     - 'betweenness'
 #    - 'clustering'
 metaparams_func:
-    - 'rsn'
-    - 'res'
+    - 'subnet'
+    - 'granularity'
     - 'model'
     - 'hpass'
-    - 'extract'
+    - 'signal'
     - 'smooth'
 metaparams_dwi:
-    - 'rsn'
-    - 'res'
+    - 'subnet'
+    - 'granularity'
     - 'model'
-    - 'directget'
+    - 'traversal'
     - 'minlength'
-    - 'tol'
+    - 'error_margin'
 nilearn_parc_atlases:
     - 'atlas_harvard_oxford'
     - 'atlas_aal'
@@ -214,29 +214,29 @@ plotting:
               - 'RdBu_r'
 resource_dict: # Nipype workflow resource settings
       - 'pass_meta_ins_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'pass_meta_outs_node':
         - (1, 2)
       - 'pass_meta_ins_multi_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'pass_meta_outs_multi_node':
         - (1, 2)
       - 'pass_meta_ins_func_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'pass_meta_outs_func_node':
         - (1, 2)
       - 'pass_meta_ins_struct_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'pass_meta_outs_struct_node':
         - (1, 2)
       - 'fetch_nodes_and_labels_node':
         - (4, 8)
       - 'save_nifti_parcels_node':
-        - (4, 4)
+        - (1, 2)
       - 'gtab_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'save_coords_and_labels_node':
-        - (1, 1)
+        - (0.5, 0.5)
       - 'orient_reslice_func_node':
         - (2, 4)
       - 'orient_reslice_mask_node':
@@ -254,11 +254,11 @@ resource_dict: # Nipype workflow resource settings
       - 'orient_reslice_dwi_node':
         - (2, 4)
       - 'get_anisopwr_node':
-        - (2, 2)
+        - (1.5, 1.5)
       - 'extract_ts_node':
         - (4, 8)
       - 'extract_ts_info_node':
-        - (1, 2)
+        - (1, 1)
       - 'clustering_node':
         - (4, 8)
       - 'get_conn_matrix_node':
@@ -276,11 +276,11 @@ resource_dict: # Nipype workflow resource settings
       - 'RegisterParcellation2MNIFunc_node':
         - (2, 4)
       - 'get_fa_node':
-        - (2, 2)
+        - (1.5, 1.5)
       - 'run_tracking_node':
         - (4, 8)
       - 'dsn_node':
-        - (1, 2)
+        - (1, 1)
       - 'plot_all_node':
         - (1, 2)
       - 'streams2graph_node':
@@ -324,7 +324,7 @@ resource_dict: # Nipype workflow resource settings
       - 'clust_join_node':
         - (1, 1)
       - 'NetworkAnalysis':
-        - (1, 4)
+        - (1, 3)
       - 'AggregateOutputs':
         - (1, 3)
       - 'load_mat_node':
@@ -359,7 +359,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.2
+        - 0.1
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

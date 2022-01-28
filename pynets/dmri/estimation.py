@@ -703,6 +703,7 @@ def streams2graph(
         total_streamlines = len(streamlines)
         sl = [generate_sl(i) for i in streamlines]
         del streamlines
+        gc.collect()
 
         # Instantiate empty networkX graph object & dictionary and create
         # voxel-affine mapping
@@ -785,7 +786,9 @@ def streams2graph(
                                        k, count in edge_dict.items()])
 
             del lab_arr, endlabels
+            gc.collect()
 
+        del sl
         gc.collect()
 
         # Add fiber density attributes for each edge

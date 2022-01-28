@@ -336,7 +336,7 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
 
     # TODO: Replace this band-aid solution with the real fix
     out_path = out_path.replace('subnet-subnet-', 'subnet-').replace(
-        'res-res-', 'res-')
+        'granularity-granularity', 'granularity-')
     #dump(ase, out_path_est)
 
     print("Saving...")
@@ -412,7 +412,8 @@ def build_asetomes(est_path_iterlist, ID):
                        f"{os.path.basename(file_)}_NULL"
             # TODO: Replace this band-aid solution with the real fix
             out_path = out_path.replace('subnet-subnet-',
-                                        'subnet-').replace('res-res-', 'res-')
+                                        'subnet-').replace(
+                'granularity-granularity-', 'granularity-')
             if not os.path.exists(out_path):
                 open(out_path, 'w').close()
             out_paths.append(out_path)

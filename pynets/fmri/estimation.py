@@ -13,10 +13,10 @@ if sys.platform.startswith('win') is False:
 warnings.filterwarnings("ignore")
 
 
-def get_optimal_cov_estimator(time_series):
+def get_optimal_cov_estimator(time_series, cv=5, max_iter=200):
     from sklearn.covariance import GraphicalLassoCV
 
-    estimator = GraphicalLassoCV(cv=5, assume_centered=True)
+    estimator = GraphicalLassoCV(cv=cv, assume_centered=True)
     print("\nSearching for best Lasso...\n")
     try:
         estimator.fit(time_series)
@@ -29,7 +29,7 @@ def get_optimal_cov_estimator(time_series):
                 not hasattr(estimator, 'precision_') and ix < 3:
             for t in [0.1, 0.01, 0.001, 0.0001]:
                 print(f"Tolerance={t}")
-                estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=t,
+                estimator = GraphicalLassoCV(cv=cv, max_iter=max_iter, tol=t,
                                              assume_centered=True)
                 try:
                     estimator.fit(time_series)

@@ -213,16 +213,16 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
 
     if modality == 'func':
         try:
-            extract, hpass, model, res, atlas, smooth = comb
+            signal, hpass, model, granularity, parcellation, smooth = comb
         except BaseException:
             print(f"Missing {comb}...")
-            extract, hpass, model, res, atlas = comb
+            signal, hpass, model, granularity, parcellation = comb
             smooth = '0'
-        # comb_tuple = (atlas, extract, hpass, model, res, smooth)
+        # comb_tuple = (parcellation, signal, hpass, model, granularity, smooth)
         comb_tuple = comb
     else:
-        directget, minlength, model, res, atlas, tol = comb
-        # comb_tuple = (atlas, directget, minlength, model, res, tol)
+        traversal, minlength, model, granularity, parcellation, error_margin = comb
+        # comb_tuple = (parcellation, traversal, minlength, model, granularity, error_margin)
         comb_tuple = comb
 
     df_summary.at[0, "grid"] = comb_tuple
@@ -286,7 +286,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     node_files = glob.glob(
                                         f"{base_dir}/pynets/sub-{ID}/ses-"
                                         f"{ses}/{modality}/subnet-"
-                                        f"{atlas}_res-{res}/nodes/*.json")
+                                        f"{parcellation}_granularity-{granularity}/nodes/*.json")
                                     emb_data = par_dict[ID][str(ses)][
                                         modality][alg][comb_tuple]['data']
 
@@ -342,8 +342,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                         [str(tuple(x)) for x in
                                          coords]).T
                                     df_coords.columns = [
-                                        f"subnet-{atlas}_res-"
-                                        f"{res}_{i}"
+                                        f"subnet-{parcellation}_granularity-"
+                                        f"{granularity}_{i}"
                                         for i in ixs]
                                     # labels = [
                                     #     list(i['label'])[7] for i
@@ -352,8 +352,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_labels = pd.DataFrame(
                                         labels).T
                                     df_labels.columns = [
-                                        f"subnet-{atlas}_res-"
-                                        f"{res}_{i}"
+                                        f"subnet-{parcellation}_granularity-"
+                                        f"{granularity}_{i}"
                                         for i in ixs]
                                     coords_frames.append(df_coords)
                                     labels_frames.append(df_labels)
@@ -370,8 +370,8 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     df_pref = pd.DataFrame(emb_data.T,
                                                            columns=[
                                                                f"{alg}_{i}_rsn"
-                                                               f"-{atlas}_res-"
-                                                               f"{res}"
+                                                               f"-{parcellation}_granularity-"
+                                                               f"{granularity}"
                                                                for i in ixs])
                                     df_pref['id'] = ID
                                     df_pref['ses'] = ses
