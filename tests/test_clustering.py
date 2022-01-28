@@ -92,7 +92,7 @@ def test_make_local_connectivity_scorr(fmri_estimation_data):
 
 
 @pytest.mark.parametrize("clust_type", ['rena', 'average',
-                                        'complete', 'ward', 'ncut',
+                                        'complete', 'ward',
                                         pytest.param('single',
                                                      marks=pytest.mark.xfail)])
 # 1 connected component
