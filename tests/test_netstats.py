@@ -290,13 +290,14 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
         out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
                                               est_path, roi, prune,
                                               norm, binary)
+        print("%s%s%s" % (
+        'finished: ',
+        str(np.round(time.time() - start_time, 1)), 's'))
+        assert out_path is not None
+
     except PermissionError:
         pass
 
-    print("%s%s%s" % (
-    'finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
-    assert out_path is not None
 
 
 @pytest.mark.parametrize("engine", ["GT", "NX"])
@@ -587,3 +588,4 @@ def test_collect_pandas_df_make(plot_switch, embed, create_summary, graph_num):
         create_summary=create_summary)
 
     assert combination_complete is True
+
