@@ -1431,7 +1431,7 @@ class CleanGraphs(object):
 
         hardcoded_params = load_runconfig()
 
-        if self.prune not in [0, 1, 2, 3]:
+        if int(self.prune) not in range(0, 4):
             raise ValueError(f"Pruning option {self.prune} invalid!")
 
         if self.prune != 0:

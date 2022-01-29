@@ -264,10 +264,10 @@ def test_most_important(gen_mat_data, method, engine):
 
 
 @pytest.mark.parametrize("binary", ['True', 'False'])
-@pytest.mark.parametrize("prune", ['0', '1', '2'])
+@pytest.mark.parametrize("prune", ['0', '1', '3'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
 @pytest.mark.parametrize("conn_model", ['corr', 'cov'])
-def test_extractnetstats(binary, prune, norm, conn_model):
+def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
     """
     Test extractnetstats functionality
     """
@@ -275,38 +275,25 @@ def test_extractnetstats(binary, prune, norm, conn_model):
     ID = '002'
     subnet = 'Default'
     thr = 0.95
-    # conn_model = 'cov'
-
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-" \
-               f"parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
-
-    # prune = 1
-    # norm = 1
-    # binary = False
-    roi = None
 
     start_time = time.time()
-    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                          est_path, roi, prune, norm, binary)
-    print("%s%s%s" % (
-    'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
-    assert out_path is not None
 
     f_temp = NamedTemporaryFile(mode='w+', suffix='.npy')
 
-    nan_array = np.empty((5, 5))
-    nan_array[:] = np.nan
+    in_mat = gen_mat_data(asfile=False)['mat_list'][0]
 
-    np.save(f_temp.name, nan_array)
+    np.save(f_temp.name, in_mat)
     est_path = f_temp.name
 
-    try:
-        out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                              est_path, roi, prune,
-                                              norm, binary)
-    except PermissionError:
-        pass
+    roi = None
+    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
+                                          est_path, roi, prune,
+                                          norm, binary)
+    print("%s%s%s" % (
+    'finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
+    assert out_path is not None
+
 
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_raw_mets(gen_mat_data, engine):
