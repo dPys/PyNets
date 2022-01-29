@@ -286,9 +286,13 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
     est_path = f_temp.name
 
     roi = None
-    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                          est_path, roi, prune,
-                                          norm, binary)
+    try:
+        out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
+                                              est_path, roi, prune,
+                                              norm, binary)
+    except PermissionError:
+        pass
+
     print("%s%s%s" % (
     'finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))

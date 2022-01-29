@@ -227,8 +227,8 @@ def create_gb_palette(
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
-        [G, pruned_nodes] = defragment(gu.remove_loops(gu.symmetrize(
-            nx.from_numpy_matrix(np.abs(mat)))))
+        [G, pruned_nodes] = defragment(
+            nx.from_numpy_matrix(gu.remove_loops(gu.symmetrize(np.abs(mat)))))
         pruned_nodes.sort(reverse=True)
         coords_pre = list(coords)
         labels_pre = list(labels)
