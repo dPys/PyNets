@@ -21,10 +21,10 @@ from dipy.io import save_pickle
 from nilearn.plotting import find_parcellation_cut_coords
 from nilearn.input_data import NiftiLabelsMasker
 from nilearn.connectome import ConnectivityMeasure
-from pynets.fmri.estimation import get_optimal_cov_estimator
 from pynets.core.nodemaker import get_names_and_coords_of_parcels
 from graspologic.simulations.simulations import er_nm, sbm
-from graspologic.utils import symmetrize, remove_loops
+from graspologic.utils import symmetrize, remove_loops, \
+    largest_connected_component
 from dipy.reconst.shm import CsaOdfModel
 from dipy.data import default_sphere
 from dipy.direction import peaks_from_model
@@ -282,17 +282,17 @@ def gen_mat_data():
         mat_file_list = []
         for nm in range(n_graphs):
             if mat_type == 'er':
-                mat = symmetrize(
+                mat = largest_connected_component(symmetrize(
                     remove_loops(er_nm(n, m, wt=np.random.uniform,
-                                       wtargs=dict(low=0, high=1))))
+                                       wtargs=dict(low=0, high=1)))))
             elif mat_type == 'sb':
                 if p is None:
                     raise ValueError(
                         f"for mat_type {mat_type}, p cannot be None")
-                mat = symmetrize(
+                mat = largest_connected_component(symmetrize(
                     remove_loops(sbm(np.array([n]), np.array([[p]]),
                                      wt=wt, wtargs=dict(low=0,
-                                                        high=1))))
+                                                        high=1)))))
             else:
                 raise ValueError(f"mat_type {mat_type} not recognized!")
 

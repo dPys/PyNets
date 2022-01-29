@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from pynets.statistics.individual import algorithms
 import logging
+from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -97,6 +98,7 @@ def test_average_shortest_path_length_for_all(gen_mat_data):
     np.round(time.time() - start_time, 1), 's'))
     assert avgest_path_len > 0
     assert type(avgest_path_len) == float
+
 
 @pytest.mark.parametrize("weight", ["weight", "not_weight"])
 def test_average_shortest_path_length_fast(gen_mat_data, weight):
@@ -230,32 +232,15 @@ def test_link_communities(gen_mat_data, clustering):
     assert np.sum(M) == 20
 
 
-@pytest.mark.parametrize("connected_case", [True, False])
-@pytest.mark.parametrize("fallback_lcc", [True, False])
-def test_prune_disconnected(gen_mat_data, connected_case, fallback_lcc):
-    """
-    Test pruning functionality
-    """
+# @pytest.mark.parametrize("min_nodes",
+#                          [0, 1, 10, pytest.param(30, marks=pytest.mark.xfail(
+#                                  raises=ValueError))])
+# def test_prune_small_components(gen_mat_data, min_nodes):
+#     """
+#     Test pruning functionality
+#     """
+#     return
 
-    if connected_case is True:
-        in_mat = gen_mat_data(asfile=False)['mat_list'][0]
-        G = nx.from_numpy_array(in_mat)
-    elif connected_case is False:
-        G = nx.Graph()
-        G.add_edge(1, 2)
-        G.add_node(3)
-    start_time = time.time()
-    [G_out, pruned_nodes] = algorithms.prune_disconnected(
-        G, fallback_lcc=fallback_lcc)
-    print("%s%s%s" % ('Pruning disconnected test --> finished: ',
-                      str(np.round(time.time() - start_time, 1)), 's'))
-    assert type(G_out) is nx.Graph
-    assert type(pruned_nodes) is list
-    if connected_case is True:
-        assert len(pruned_nodes) == 0
-    elif connected_case is False:
-        assert len(pruned_nodes) > 0
-        assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
 @pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness",
                                     "eigenvector"])
@@ -281,7 +266,7 @@ def test_most_important(gen_mat_data, method, engine):
 @pytest.mark.parametrize("binary", ['True', 'False'])
 @pytest.mark.parametrize("prune", ['0', '1', '2'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
-@pytest.mark.parametrize("conn_model", ['corr', 'cov', 'sps', 'partcorr'])
+@pytest.mark.parametrize("conn_model", ['corr', 'cov'])
 def test_extractnetstats(binary, prune, norm, conn_model):
     """
     Test extractnetstats functionality
@@ -291,8 +276,10 @@ def test_extractnetstats(binary, prune, norm, conn_model):
     subnet = 'Default'
     thr = 0.95
     # conn_model = 'cov'
+
     est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-" \
                f"parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
+
     # prune = 1
     # norm = 1
     # binary = False
@@ -306,10 +293,6 @@ def test_extractnetstats(binary, prune, norm, conn_model):
     str(np.round(time.time() - start_time, 1)), 's'))
     assert out_path is not None
 
-    # Cover exceptions. This can definiely be improved. It increases coverage,
-    # but not as throughly
-    # as I hoped.
-    from tempfile import NamedTemporaryFile
     f_temp = NamedTemporaryFile(mode='w+', suffix='.npy')
 
     nan_array = np.empty((5, 5))
@@ -339,7 +322,7 @@ def test_raw_mets(gen_mat_data, engine):
 
     in_mat = gen_mat_data(asfile=False)['mat_list'][0]
     G = nx.from_numpy_array(in_mat)
-    [G, _] = algorithms.prune_disconnected(G)
+
     metric_list_glob = [global_efficiency, average_local_efficiency,
                         degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length,

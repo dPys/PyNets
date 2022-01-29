@@ -433,15 +433,17 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=3,
+        default=1,
         nargs=1,
         choices=["0", "1", "2", "3"],
-        help="Include this flag to (1) prune the graph of any "
-             "isolated + fully disconnected nodes (i.e. anti-fragmentation),"
-             " (2) prune the graph of all but hubs as defined by any of a "
-             "variety of definitions (see ruconfig.yaml), or (3) retain only "
-             "the largest connected component subgraph. Default is no pruning."
-             " Include `-p 1` to enable fragmentation-protection.\n",
+        help="(Optional) Include this flag to (0) retain isolated nodes "
+             "(1) retain only connected components "
+             "of a minimal size. (2) prune the graph of "
+             "all but hubs as defined by any of a "
+             "variety of definitions (see advanced.yaml), or (3) retain only "
+             "the largest connected component subgraph. Default is (1), "
+             "which is equivalent to defragmenting only isolated nodes, "
+             "unless the minimum threshold is >1 (see advanced.yaml).\n",
     )
     parser.add_argument(
         "-df",

@@ -220,14 +220,15 @@ def create_gb_palette(
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.statistics.individual.algorithms import \
-        community_resolution_selection, prune_disconnected
+        community_resolution_selection, defragment
+    import graspologic.utils as gu
 
     plt.style.use("cyberpunk")
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
-        [G, pruned_nodes] = prune_disconnected(
-            nx.from_numpy_matrix(np.abs(mat)), fallback_lcc=False)
+        [G, pruned_nodes] = defragment(gu.remove_loops(gu.symmetrize(
+            nx.from_numpy_matrix(np.abs(mat)))))
         pruned_nodes.sort(reverse=True)
         coords_pre = list(coords)
         labels_pre = list(labels)

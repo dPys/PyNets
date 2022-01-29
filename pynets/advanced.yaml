@@ -74,6 +74,8 @@ template: # `MNI152_T1` is the default and, along with `colin27` is provided by 
 #    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality.
     - 'betweenness'
+min_nodes: # Minimum allowable number of nodes for any connected component subgraph
+    - 1
 graph_analysis_timeout: # Number of seconds before timing out a graph analysis algorithm
     - 240
 graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former requires an additional installation of graph_tool (See https://graph-tool.skewed.de/).

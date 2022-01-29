@@ -1043,14 +1043,16 @@ def weighted_transitivity(G):
     return 0 if triangles == 0 else triangles / contri
 
 
-def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
+def prune_small_components(G, min_nodes):
     """
-    Returns a copy of G with isolates pruned.
+    Returns a recomposed graph of all connected components of a minimum size
 
     Parameters
     ----------
     G : Obj
         NetworkX graph with isolated nodes present.
+    min_nodes: int
+        Minimum number of nodes permitted in a connected subgraph
 
     Returns
     -------
@@ -1070,42 +1072,31 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
       subnet Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
-    print("Pruning disconnected...")
 
     G_tmp = G.copy()
 
     # List because it returns a generator
     components = list(nx.connected_components(G_tmp))
+    del G_tmp
+
     components.sort(key=len, reverse=True)
-    components_connected = list(components[0])
-    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
+    print(f"{len(components)} connected component(s) detected...")
 
-    # if len(G_tmp.nodes()) - len(isolates) < min_nodes:
-    #     if fallback_lcc is True:
-    #         from graspologic.utils import largest_connected_component
-    #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'grabbing the largest connected component...'))
-    #
-    #         lcc, pruned_nodes = largest_connected_component(G_tmp,
-    #         return_inds=True)
-    #         return lcc, pruned_nodes.tolist()
-    #     else:
-    #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'skipping defragmentation.
-    #                           Consider fallback to lcc...'))
-    #         return G_tmp, []
+    # Iterate across cc subgraphs
+    good_components = []
+    c = 0
+    for comp in components:
+        print(f"Component {c}: {len(comp)} nodes")
+        if len(comp) > min_nodes:
+            good_components.append(nx.subgraph(G_tmp, comp))
+        c = c + 1
 
-    # Remove disconnected nodes
-    pruned_nodes = []
-    s = 0
-    for node in list(G_tmp.nodes()):
-        if node not in components_connected or node in isolates:
-            print(f"Removing {node}")
-            G_tmp.remove_node(node)
-            pruned_nodes.append(s)
-        s = s + 1
+    del components
 
-    return G_tmp, pruned_nodes
+    if len(good_components) == 0:
+        raise ValueError(f"No components with a minimum of {min_nodes} found")
+
+    return nx.compose_all(good_components)
 
 
 def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
@@ -1159,22 +1150,33 @@ def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
             pruned_nodes.append(i)
         i = i + 1
 
+    return defragment(G)
+
+
+def defragment(G):
+    G_tmp = G.copy()
+
     # List because it returns a generator
-    components = list(nx.connected_components(Gt))
+    components = list(nx.connected_components(G_tmp))
     components.sort(key=len, reverse=True)
     components_connected = list(components[0])
 
-    isolates = [n for (n, d) in Gt.degree() if d == 0]
+    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
 
     # Remove any lingering isolates
     s = 0
-    for node in list(Gt.nodes()):
+    pruned_nodes = []
+    for node in list(G_tmp.nodes()):
         if node not in components_connected or node in isolates:
-            Gt.remove_node(node)
+            G_tmp.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
 
-    return Gt, pruned_nodes
+    for edge in list(G_tmp.edges()):
+        if (str(edge[0]) in pruned_nodes) or (str(edge[1]) in pruned_nodes):
+            G_tmp.remove_edge(edge)
+
+    return G_tmp, pruned_nodes
 
 
 def raw_mets(G, i, engine=DEFAULT_ENGINE):
@@ -1344,8 +1346,10 @@ class CleanGraphs(object):
             est_path,
             prune,
             norm,
-            out_fmt="gpickle"):
+            out_fmt="gpickle",
+            remove_self_loops=True):
         from pynets.core import utils
+        import graspologic.utils as gu
 
         self.thr = thr
         self.conn_model = conn_model
@@ -1366,7 +1370,13 @@ class CleanGraphs(object):
                     np.array(np.abs(
                         self.in_mat_raw)))))
 
-        # Load numpy matrix as networkx graph
+        # Remove self-loops and ensure symmetry
+        if remove_self_loops is True:
+            self.in_mat = gu.remove_loops(gu.symmetrize(self.in_mat))
+        else:
+            self.in_mat = gu.symmetrize(self.in_mat)
+
+        # Create nx graph
         self.G = nx.from_numpy_array(self.in_mat)
 
     def normalize_graph(self):
@@ -1414,31 +1424,38 @@ class CleanGraphs(object):
 
         return self.G
 
-    def prune_graph(self, remove_self_loops=True):
+    def prune_graph(self):
         from pynets.core import utils
-        from graspologic.utils import largest_connected_component, \
-            remove_loops, symmetrize
+        import graspologic.utils as gu
+        from pynets.core.utils import load_runconfig
 
-        # Prune irrelevant nodes (i.e. nodes who are fully disconnected
-        # from the graph and/or those whose betweenness
-        # centrality are > 3 standard deviations below the mean)
+        hardcoded_params = load_runconfig()
+
+        if self.prune not in [0, 1, 2, 3]:
+            raise ValueError(f"Pruning option {self.prune} invalid!")
+
+        if self.prune != 0:
+            # Remove isolates
+            G_tmp = self.G.copy()
+            self.G = defragment(G_tmp)[0]
+            del G_tmp
+
         if int(self.prune) == 1:
-            if nx.is_connected(self.G) is False:
-                print("Graph fragmentation detected...\n")
             try:
-                [self.G, _] = prune_disconnected(self.G)
+                self.G = prune_small_components(self.G,
+                                                min_nodes=hardcoded_params[
+                                                    "min_nodes"][0])
             except BaseException:
-                print(UserWarning(f"Warning: Pruning failed for "
-                                  f"{self.est_path}"))
+                print(UserWarning(f"Warning: pruning {self.est_path} "
+                                  f"failed..."))
         elif int(self.prune) == 2:
-            print("Filtering for hubs...")
-            from pynets.core.utils import load_runconfig
-            hardcoded_params = load_runconfig()
             try:
-                hub_detection_method = hardcoded_params[
-                    "hub_detection_method"][0]
-                [self.G, _] = most_important(self.G,
-                                             method=hub_detection_method)
+                hub_detection_method = \
+                hardcoded_params["hub_detection_method"][0]
+                print(f"Filtering for hubs on the basis of "
+                      f"{hub_detection_method}...\n")
+                self.G = most_important(self.G,
+                                        method=hub_detection_method)[0]
             except FileNotFoundError as e:
                 import sys
                 print(e, "Failed to parse advanced.yaml")
@@ -1446,15 +1463,9 @@ class CleanGraphs(object):
         elif int(self.prune) == 3:
             print("Pruning all but the largest connected "
                   "component subgraph...")
-            #self.G = self.G.subgraph(largest_connected_component(self.G))
-            self.G = largest_connected_component(self.G)
+            self.G = gu.largest_connected_component(self.G)
         else:
-            print("No graph anti-fragmentation applied...")
-
-        if remove_self_loops is True:
-            self.in_mat = remove_loops(symmetrize(self.in_mat))
-        else:
-            self.in_mat = symmetrize(self.in_mat)
+            print("No graph defragmentation applied...")
 
         self.G = nx.from_numpy_array(self.in_mat)
 
@@ -1470,12 +1481,6 @@ class CleanGraphs(object):
             final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned'}"
             utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
             print(f"{'Source File: '}{final_mat_path}")
-        elif self.prune == 0:
-            final_mat_path = f"{self.est_path.split('.npy')[0]}"
-            utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
-            print(f"{'Source File: '}{final_mat_path}")
-        else:
-            raise ValueError(f"Pruning option {self.prune} invalid!")
 
         return self.in_mat, final_mat_path
 
@@ -2108,7 +2113,7 @@ def extractnetstats(
 
         tmp_graph_path = None
         if float(prune) >= 1:
-            [_, tmp_graph_path] = cg.prune_graph()
+            tmp_graph_path = cg.prune_graph()[1]
 
         if float(norm) >= 1:
             try:
