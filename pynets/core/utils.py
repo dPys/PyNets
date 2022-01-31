@@ -1243,23 +1243,20 @@ def check_est_path_existence(est_path_list):
 
 
 def load_runconfig(location=None):
-    import pkg_resources
+    import aiofiles
+    import asyncio
     import yaml
-    import tempfile
-    import shutil
-    import os
-
-    fd, temp_path = tempfile.mkstemp()
+    import pkg_resources
 
     if not location:
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
-    shutil.copy2(location, temp_path)
-    with open(temp_path, mode='r+') as stream:
+    async with aiofiles.open(location, mode='r+') as f:
+        stream = await f.read()
         hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-    stream.close()
-    os.remove(temp_path)
+    f.close()
     del stream
+
     return hardcoded_params
 
 
