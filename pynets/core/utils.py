@@ -4,6 +4,7 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+import asyncio
 import warnings
 import os
 import sys
@@ -1242,9 +1243,8 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def load_runconfig(location=None):
+async def load_runconfig(location=None):
     import aiofiles
-    import asyncio
     import yaml
     import pkg_resources
 
