@@ -1253,7 +1253,9 @@ def load_runconfig(location=None):
 
     # asynchronous config parsing
     while sum(list(flatten([[location == f for f in p.open_files()] for p in
-         psutil.process_iter(attrs=['name']) if 'python' in p.info['name']]))
+         psutil.process_iter(attrs=['name']) if 'python' in p.info['name'] and
+                                                p.is_running() and
+                                                p.username() != 'root']))
               ) > 0:
         time.sleep(1)
 
