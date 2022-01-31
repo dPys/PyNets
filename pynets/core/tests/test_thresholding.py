@@ -5,7 +5,7 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import os
 import numpy as np
-
+from ...conftest import gen_mat_data, tractography_estimation_data
 try:
     import cPickle as pickle
 except ImportError:

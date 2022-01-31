@@ -4,6 +4,7 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import numpy as np
 import os
+import pkg_resources
 try:
     import cPickle as pickle
 except ImportError:
@@ -12,6 +13,7 @@ from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
 import sys
+from ...conftest import connectivity_data, gen_mat_data, random_mni_roi_data
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 import pytest
@@ -109,7 +111,8 @@ def test_collect_pandas_df(plot_switch, embed):
     Test collect_pandas_df_make functionality
     """
     import glob
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     multi_nets = None
     multimodal = False
     subnet = None
@@ -280,26 +283,23 @@ def test_create_unthr_path(node_size, hpass, smooth, parc):
                                                  marks=pytest.mark.xfail(
                                                      raises=ValueError))])
 @pytest.mark.parametrize("input", ['fmri', 'dmri'])
-def test_do_dir_path(dmri_estimation_data, fmri_estimation_data, atlas, input):
+def test_do_dir_path(atlas, input):
     """
     Test do_dir_path functionality
     """
-    import tempfile
 
-    tmp = tempfile.TemporaryDirectory()
-    dir_path = str(tmp.name)
-    os.makedirs(dir_path, exist_ok=True)
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
 
     if input == 'fmri':
-        in_file = fmri_estimation_data['func_file']
+        in_file = f"{base_dir}/003/func/sub-003_ses-01_task-rest_bold.nii.gz"
     elif input == 'dmri':
-        in_file = dmri_estimation_data['dwi_file_small']
+        in_file = f"{base_dir}/003/dmri/sub-003_dwi.nii.gz"
 
     # Delete existing atlas dirs in in_file parent
     dir_path = utils.do_dir_path(
         atlas, f"{os.path.dirname(os.path.realpath(in_file))}")
     assert dir_path is not None
-    tmp.cleanup()
 
 
 def test_flatten():
@@ -383,7 +383,8 @@ def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
     """
     Test pass_meta_ins_multi functionality
     """
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
 
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
@@ -426,7 +427,8 @@ def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
 
 
 def test_collectpandasjoin():
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     net_mets_csv = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_" \
                    f"model-cov_template-MNI152_T1_thrtype-PROP_thr-0.95_" \
                    f"net_metrics.csv"

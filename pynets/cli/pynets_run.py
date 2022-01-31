@@ -2168,6 +2168,11 @@ def build_workflow(args, retval):
                       f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
+
+    # Force Fisher's normalization for correlation-like models
+    if (conn_model == "corr") or (conn_model == "partcorr"):
+        norm = 7
+
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"
@@ -2581,11 +2586,7 @@ def build_workflow(args, retval):
             name="NetworkAnalysis",
             iterfield=[
                 "ID",
-                "subnet",
-                "thr",
-                "conn_model",
                 "est_path",
-                "roi",
                 "prune",
                 "norm",
                 "binary",
@@ -2691,11 +2692,7 @@ def build_workflow(args, retval):
                         net_mets_node,
                         [
                             ("est_path_iterlist", "est_path"),
-                            ("network_iterlist", "subnet"),
-                            ("thr_iterlist", "thr"),
                             ("ID_iterlist", "ID"),
-                            ("conn_model_iterlist", "conn_model"),
-                            ("roi_iterlist", "roi"),
                             ("prune_iterlist", "prune"),
                             ("norm_iterlist", "norm"),
                             ("binary_iterlist", "binary"),

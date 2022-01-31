@@ -44,8 +44,7 @@ htmlcov/
 nosetests.xml
 *,cover
 .hypothesis/
-tests/examples*
-tests/summary*
+data/*
 pynets/.idea/*
 .idea/*
 

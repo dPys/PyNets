@@ -9,6 +9,7 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
+import pkg_resources
 import nibabel as nib
 import sys
 if sys.platform.startswith('win') is False:
@@ -28,7 +29,8 @@ def test_create_density_map():
     from pynets.dmri import track
     from dipy.tracking._utils import _mapping_to_voxel
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi"
     dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
                f"dwi.nii.gz"
@@ -76,7 +78,8 @@ def test_prep_tissues(tiss_class):
     Test for prep_tissues functionality
     """
     from pynets.dmri import track
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     t1w_mask = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
     B0_mask = f"{base_dir}/003/dmri/sub-003_b0_brain_mask.nii.gz"
     gm_in_dwi = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
@@ -99,7 +102,8 @@ def test_reconstruction(conn_model):
     """
     from pynets.dmri import track
     from dipy.core.gradients import gradient_table
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
 
     dir_path = f"{base_dir}/003/dmri"
     bvals = f"{dir_path}/sub-003_dwi.bval"
@@ -129,7 +133,8 @@ def test_track_ensemble(traversal, target_samples):
     from dipy.data import get_sphere
     from nibabel.streamlines.array_sequence import ArraySequence
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
@@ -192,7 +197,8 @@ def test_track_ensemble_particle():
     from dipy.io.streamline import save_tractogram
     from nibabel.streamlines.array_sequence import ArraySequence
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"

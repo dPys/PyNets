@@ -21,7 +21,7 @@ import os
 import logging
 from nipype.utils.filemanip import fname_presuffix
 from nilearn.image import resample_to_img
-
+from ...conftest import fmri_estimation_data, random_mni_roi_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

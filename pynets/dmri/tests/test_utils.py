@@ -14,6 +14,7 @@ except ImportError:
 from pathlib import Path
 from pynets.dmri import utils as dmriutils
 import logging
+from ...conftest import dmri_estimation_data, tractography_estimation_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

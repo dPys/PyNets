@@ -450,6 +450,30 @@ def get_index_labels(base_dir, ID, ses, modality, parcellation, granularity,
         return [None]
 
 
+def save_netmets(
+        dir_path,
+        est_path,
+        metric_list_names,
+        net_met_val_list_final):
+    from pynets.core import utils
+    import os
+    # And save results to csv
+    out_path_neat = (
+        f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}"
+        f"{'_neat.csv'}"
+    )
+    zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
+    df = pd.DataFrame.from_dict(
+        zipped_dict, orient="index", dtype="float32"
+    ).transpose()
+    if os.path.isfile(out_path_neat):
+        os.remove(out_path_neat)
+    df.to_csv(out_path_neat, index=False)
+    del df, zipped_dict, net_met_val_list_final, metric_list_names
+
+    return out_path_neat
+
+
 def get_ixs_from_node_dict(node_dict):
     import ast
     if isinstance(node_dict, list):
@@ -632,7 +656,8 @@ def flatten_latent_positions(base_dir, subject_dict, ID, ses, modality,
             if len(ixs) != emb_shape:
                 node_files = glob.glob(
                     f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
-                    f"{grid_param[-2]}_granularity-{grid_param[-3]}/nodes/*.json")
+                    f"{grid_param[-2]}_granularity-{grid_param[-3]}/nodes/"
+                    f"*.json")
                 ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
             if len(ixs) > 0:
@@ -1252,7 +1277,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
     from colorama import Fore, Style
 
     try:
-        traversal, minlength, model, granularity, parcellation, error_margin = comb
+        traversal, minlength, model, granularity, parcellation, \
+        error_margin = comb
     except BaseException:
         print(UserWarning(f"{Fore.YELLOW}Failed to parse: "
                           f"{comb}{Style.RESET_ALL}"))
@@ -1315,8 +1341,8 @@ def dwi_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                  (f"/subnet-{parcellation}_granularity-{granularity}/"
-                                            in i) and
+                                  (f"/subnet-{parcellation}_"
+                                   f"granularity-{granularity}/" in i) and
                                   (parcellation in os.path.basename(i)) and
                                   (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
@@ -1521,8 +1547,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                                     (f"granularity-"
                                                      f"{granularity}" in i)
                                                     and
-                                                    (f"subnet-{parcellation}" in i)
-                                                    and
+                                                    (f"subnet-{parcellation}"
+                                                     in i) and
                                                     (f"model-{model}" in i)
                                                     and (f"hpass-{hpass}Hz"
                                                          in i)
@@ -1534,8 +1560,8 @@ def func_grabber(comb, subject_dict, missingness_frame,
                                                     (f"granularity-"
                                                      f"{granularity}" in i)
                                                     and
-                                                    (f"subnet-{parcellation}" in i)
-                                                    and
+                                                    (f"subnet-{parcellation}"
+                                                     in i) and
                                                     (f"template-{template}"
                                                      in i) and
                                                     (f"model-{model}" in i)
@@ -1585,8 +1611,10 @@ def func_grabber(comb, subject_dict, missingness_frame,
                 embedding = embeddings_raw[0]
             else:
                 embeddings_raw = [i for i in embeddings_raw if
-                                  f"/subnet-{parcellation}_granularity-{granularity}/"
-                                  in i and (parcellation in os.path.basename(i))
+                                  f"/subnet-{parcellation}_" \
+                                  f"granularity-{granularity}/"
+                                  in i and (parcellation in
+                                            os.path.basename(i))
                                   and (granularity in os.path.basename(i))]
                 if len(embeddings_raw) > 0:
                     sorted_embeddings = sorted(embeddings_raw,

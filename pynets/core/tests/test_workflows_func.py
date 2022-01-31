@@ -11,14 +11,17 @@ except ImportError:
 import pytest
 import logging
 import tempfile
+import pkg_resources
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
+from ...conftest import fmri_estimation_data, random_mni_roi_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
-base_dir = str(Path(__file__).parent/"examples")
+base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
 
 # Test that each possible combination of inputs creates a workflow.
 @pytest.mark.parametrize("hpass", [0.08, None])

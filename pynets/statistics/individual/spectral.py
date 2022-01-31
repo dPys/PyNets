@@ -71,22 +71,16 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     clean_mats = []
     i = 0
     for graph_path in graph_path_list:
-        if 'thr-' in graph_path:
-            thr = float(graph_path.split('thr-'
-                                         )[1].split('_')[0].split('.npy')[0])
-        else:
-            thr = 1.0
-        cg = CleanGraphs(thr,
-                         graph_path.split('model-')[1].split('_')[
-                             0], graph_path, prune, norm, pop_array[i])
+        cg = CleanGraphs(graph_path, prune, norm)
 
         if float(norm) >= 1:
-            G = cg.normalize_graph()
-            mat_clean = nx.to_numpy_array(G)
+            mat_clean = nx.to_numpy_array(cg.normalize_graph())
         else:
             mat_clean = pop_array[i]
 
-        mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
+        if float(prune) >= 1:
+            mat_clean = cg.prune_graph()[0]
+
         if np.isnan(np.sum(mat_clean)) == False:
             clean_mats.append(mat_clean)
         i += 1
@@ -292,29 +286,15 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     )
     ase = AdjacencySpectralEmbed(n_components=n_components)
 
-    if 'thr-' in graph_path:
-        thr = float(graph_path.split('thr-')[1].split('_')[0].split('.npy')[0])
-    else:
-        thr = 1.0
-
-    cg = CleanGraphs(thr,
-                     graph_path.split('model-')[1].split('-')[1].split('_')[0],
-                     graph_path, prune, norm, mat)
+    cg = CleanGraphs(graph_path, prune, norm)
 
     if float(norm) >= 1:
-        G = cg.normalize_graph()
-        mat_clean = nx.to_numpy_array(G)
+        mat_clean = nx.to_numpy_array(cg.normalize_graph())
     else:
         mat_clean = mat
 
     if float(prune) >= 1:
-        graph_path_tmp = cg.prune_graph()[1]
-        with open(f"{graph_path_tmp}.pkl", "rb") as input_file:
-            G_pruned = pickle.load(input_file)
-        input_file.close()
-        mat_clean = nx.to_numpy_matrix(G_pruned)
-
-    mat_clean[np.where(np.isnan(mat_clean) | np.isinf(mat_clean))] = 0
+        mat_clean = cg.prune_graph()[0]
 
     if (np.abs(mat_clean) < 0.0000001).all() or np.isnan(np.sum(mat_clean)):
         return None

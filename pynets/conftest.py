@@ -126,61 +126,6 @@ def dmri_estimation_data():
            'f_pve_csf': f_pve_csf, 'f_pve_wm': f_pve_wm, 'f_pve_gm': f_pve_gm}
     gtab_file_tmp.close()
 
-@pytest.fixture(scope="session")
-def tractography_estimation_data(dmri_estimation_data):
-    tmp = tempfile.TemporaryDirectory()
-    dir_path = str(tmp.name)
-    os.makedirs(dir_path, exist_ok=True)
-
-    gtab = dmri_estimation_data['gtab']
-    wm_img = nib.load(dmri_estimation_data['f_pve_wm'])
-    dwi_img = nib.load(dmri_estimation_data['dwi_file'])
-    dwi_data = dwi_img.get_fdata()
-    B0_mask_img = nib.load(dmri_estimation_data['B0_mask'])
-    mask_img = intersect_masks(
-        [
-            nib.Nifti1Image(np.asarray(wm_img.dataobj).astype('bool'
-                                                              ).astype('int'),
-                            affine=wm_img.affine),
-            nib.Nifti1Image(np.asarray(B0_mask_img.dataobj).astype(
-                'bool').astype('int'),
-                            affine=B0_mask_img.affine)
-        ],
-        threshold=1,
-        connected=False,
-    )
-
-    mask_data = mask_img.get_fdata()
-    mask_file = fname_presuffix(dmri_estimation_data['B0_mask'],
-                                suffix="tracking_mask", use_ext=True)
-    mask_img.to_filename(mask_file)
-    csa_model = CsaOdfModel(gtab, sh_order=6)
-    csa_peaks = peaks_from_model(csa_model, dwi_data, default_sphere,
-                                 relative_peak_threshold=.8,
-                                 min_separation_angle=45,
-                                 mask=mask_data)
-
-    stopping_criterion = BinaryStoppingCriterion(mask_data)
-
-    seed_mask = (mask_data == 1)
-    seeds = utils.seeds_from_mask(seed_mask, dwi_img.affine, density=[1, 1, 1])
-
-    streamlines_generator = LocalTracking(csa_peaks, stopping_criterion, seeds,
-                                          affine=dwi_img.affine, step_size=.5)
-    streamlines = Streamlines(streamlines_generator)
-    sft = StatefulTractogram(streamlines, dwi_img, origin=Origin.NIFTI,
-                    space=Space.RASMM)
-    trk = f"{dir_path}/tractogram.trk"
-    save_trk(sft, trk, streamlines)
-    del streamlines, sft, streamlines_generator, seeds, seed_mask, csa_peaks, \
-        csa_model, dwi_data, mask_data
-    dwi_img.uncache()
-    gc.collect()
-
-    yield {'trk': trk, 'mask': mask_file}
-
-    tmp.cleanup()
-
 
 @pytest.fixture(scope="session")
 def fmri_estimation_data():
@@ -309,6 +254,62 @@ def gen_mat_data():
         return {'mat_list': mat_list, 'mat_file_list': mat_file_list}
 
     return _gen_mat_data
+
+
+@pytest.fixture(scope="session")
+def tractography_estimation_data(dmri_estimation_data):
+    tmp = tempfile.TemporaryDirectory()
+    dir_path = str(tmp.name)
+    os.makedirs(dir_path, exist_ok=True)
+
+    gtab = dmri_estimation_data['gtab']
+    wm_img = nib.load(dmri_estimation_data['f_pve_wm'])
+    dwi_img = nib.load(dmri_estimation_data['dwi_file'])
+    dwi_data = dwi_img.get_fdata()
+    B0_mask_img = nib.load(dmri_estimation_data['B0_mask'])
+    mask_img = intersect_masks(
+        [
+            nib.Nifti1Image(np.asarray(wm_img.dataobj).astype('bool'
+                                                              ).astype('int'),
+                            affine=wm_img.affine),
+            nib.Nifti1Image(np.asarray(B0_mask_img.dataobj).astype(
+                'bool').astype('int'),
+                            affine=B0_mask_img.affine)
+        ],
+        threshold=1,
+        connected=False,
+    )
+
+    mask_data = mask_img.get_fdata()
+    mask_file = fname_presuffix(dmri_estimation_data['B0_mask'],
+                                suffix="tracking_mask", use_ext=True)
+    mask_img.to_filename(mask_file)
+    csa_model = CsaOdfModel(gtab, sh_order=6)
+    csa_peaks = peaks_from_model(csa_model, dwi_data, default_sphere,
+                                 relative_peak_threshold=.8,
+                                 min_separation_angle=45,
+                                 mask=mask_data)
+
+    stopping_criterion = BinaryStoppingCriterion(mask_data)
+
+    seed_mask = (mask_data == 1)
+    seeds = utils.seeds_from_mask(seed_mask, dwi_img.affine, density=[1, 1, 1])
+
+    streamlines_generator = LocalTracking(csa_peaks, stopping_criterion, seeds,
+                                          affine=dwi_img.affine, step_size=.5)
+    streamlines = Streamlines(streamlines_generator)
+    sft = StatefulTractogram(streamlines, dwi_img, origin=Origin.NIFTI,
+                    space=Space.RASMM)
+    trk = f"{dir_path}/tractogram.trk"
+    save_trk(sft, trk, streamlines)
+    del streamlines, sft, streamlines_generator, seeds, seed_mask, csa_peaks, \
+        csa_model, dwi_data, mask_data
+    dwi_img.uncache()
+    gc.collect()
+
+    yield {'trk': trk, 'mask': mask_file}
+
+    tmp.cleanup()
 
 
 @pytest.fixture(scope="session")

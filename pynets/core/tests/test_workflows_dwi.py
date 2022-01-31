@@ -10,15 +10,18 @@ except ImportError:
     import _pickle as pickle
 import pytest
 import logging
+import pkg_resources
 import tempfile
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
+from ...conftest import dmri_estimation_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
-base_dir = str(Path(__file__).parent/"examples")
+base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../tests/examples"))
 
 # Test that each possible combination of inputs creates a workflow.
 
