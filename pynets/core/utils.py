@@ -1242,27 +1242,23 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-async def read_runconfig(location):
-    import aiofiles
-    async with aiofiles.open(location, mode='r+') as f:
-        stream = await f.read()
-    f.close()
-    return stream
-
-
 def load_runconfig(location=None):
-    import asyncio
+    import time
+    import psutil
     import yaml
     import pkg_resources
-    from pynets.core.utils import read_runconfig
 
     if not location:
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
-    hardcoded_params = yaml.load(asyncio.run(read_runconfig(location)),
-                                 Loader=yaml.FullLoader)
+    # asynchronous config parsing
+    while sum(list(flatten([[location == f for f in p.open_files()] for p in
+         psutil.process_iter(attrs=['name']) if 'python' in p.info['name']]))
+              ) > 0:
+        time.sleep(1)
 
-    return hardcoded_params
+    with open(location, mode='r') as f:
+        yield yaml.load(f, Loader=yaml.FullLoader)
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,

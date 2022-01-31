@@ -501,4 +501,3 @@ def test_func_clust(parc, parcellation,
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-

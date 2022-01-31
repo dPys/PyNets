@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
 import warnings
-
 warnings.filterwarnings("ignore")
 
 
@@ -3547,7 +3546,8 @@ def main():
     mp.set_start_method("forkserver")
     with mp.Manager() as mgr:
         retval = mgr.dict()
-        p = mp.Process(target=build_workflow, args=(args, retval))
+        p = mp.Process(target=build_workflow,
+                       args=(args, retval))
         p.start()
         p.join()
 

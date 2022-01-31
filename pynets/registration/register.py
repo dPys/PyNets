@@ -916,14 +916,17 @@ class DmriReg(object):
                             self.input_mni_brain),
                         interpolation='nearest').to_filename(self.mni_roi_ref)
 
-        out = gen_img_list(self.mni_roi_ref)
-        roi_parcels = [i for j, i in enumerate(out)]
+        roi_parcels = [i for j, i in enumerate(gen_img_list(self.mni_roi_ref))]
 
         ventricle_roi = math_img("img1 + img2", img1=roi_parcels[2],
                                  img2=roi_parcels[13])
 
+        self.mni_vent_loc = fname_presuffix(
+            self.mni_vent_loc, suffix="_tmp",
+            newpath=op.dirname(self.reg_path_img)
+        )
         ventricle_roi.to_filename(self.mni_vent_loc)
-        del roi_parcels, out, ventricle_roi
+        del roi_parcels, ventricle_roi
 
         # Create transform from the HarvardOxford atlas in MNI to T1w.
         # This will be used to transform the ventricles to dwi space.
