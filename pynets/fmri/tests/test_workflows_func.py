@@ -22,11 +22,6 @@ logger.setLevel(50)
 base_dir = os.path.abspath(pkg_resources.resource_filename(
         "pynets", "../data/examples"))
 
-dir_path = tempfile.TemporaryDirectory()
-dir_path = str(dir_path.name)
-if not os.path.isdir(dir_path):
-    os.makedirs(dir_path)
-
 # Test that each possible combination of inputs creates a workflow.
 @pytest.mark.parametrize("hpass", [0.08, None])
 @pytest.mark.parametrize("smooth", [2, [0, 4], None])
@@ -297,7 +292,6 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-    dir_path.cleanup()
 
 
 @pytest.mark.parametrize("k,k_list,k_clustering,clust_mask,clust_mask_list,clust_type,clust_type_list",
@@ -508,4 +502,3 @@ def test_func_clust(parc, parcellation,
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
 
-    dir_path.cleanup()
