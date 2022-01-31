@@ -462,4 +462,3 @@ def test_get_metrics(gen_mat_data, metric, engine):
             nx.algorithms.rich_club_coefficient(G)) + 1
         assert len(net_met_val_list_final) == len(
             nx.algorithms.rich_club_coefficient(G)) + 1
-
