@@ -4,7 +4,6 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
-import asyncio
 import warnings
 import os
 import sys
@@ -1252,8 +1251,10 @@ async def read_runconfig(location):
 
 
 def load_runconfig(location=None):
+    import asyncio
     import yaml
     import pkg_resources
+    from pynets.core.utils import read_runconfig
 
     if not location:
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
