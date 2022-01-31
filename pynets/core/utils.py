@@ -1258,7 +1258,10 @@ def load_runconfig(location=None):
         time.sleep(1)
 
     with open(location, mode='r') as f:
-        yield yaml.load(f, Loader=yaml.FullLoader)
+        stream = f.read()
+    f.close()
+
+    return yaml.load(stream, Loader=yaml.FullLoader)
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,
