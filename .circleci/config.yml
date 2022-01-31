@@ -149,7 +149,7 @@ jobs:
           name: Download OSF test data
           command: |
             mkdir -p /tmp/src/pynets/tests
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/tests
+            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
@@ -279,9 +279,10 @@ jobs:
           no_output_timeout: 6h
           command: |
             set -e
-            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
+            TEST_FILES=$(circleci tests glob "pynets/*/tests/test_*.py" | circleci tests split --split-by=timings)
             mkdir test-results
             export PYTHONUNBUFFERED=1
+            ulimit -s unlimited
             python -m coverage run -p --rcfile=.coveragerc -m pytest -s --disable-warnings --numprocesses=auto --circleci-parallelize --verbose --junitxml="test-results/junit.xml" $TEST_FILES
             sudo chmod 777 -R /usr/lib/python3/dist-packages
       - persist_to_workspace:

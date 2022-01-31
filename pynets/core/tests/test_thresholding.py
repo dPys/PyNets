@@ -5,7 +5,6 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import os
 import numpy as np
-from ...conftest import gen_mat_data, tractography_estimation_data
 try:
     import cPickle as pickle
 except ImportError:
@@ -234,12 +233,13 @@ def test_edge_cases(thr):
 @pytest.mark.parametrize("min_span_tree", [True, False])
 @pytest.mark.parametrize("disp_filt", [True, False])
 @pytest.mark.parametrize("dens_thresh", [True, False])
-def test_thresh_func(tractography_estimation_data,
-                     type, parc, all_zero, min_span_tree, disp_filt,
+def test_thresh_func(type, parc, all_zero, min_span_tree, disp_filt,
                      dens_thresh, frag_g):
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
 
     if all_zero == True and type == 'func':
         conn_matrix = np.zeros((10, 10))
@@ -318,7 +318,9 @@ def test_thresh_func(tractography_estimation_data,
     atlas_for_streams = pkg_resources.resource_filename(
         "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
     )
-    streams = tractography_estimation_data['trk']
+    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
+              f"nodetype-parc_tracktype-particle_" \
+              f"traversal-prob_minlength-10.trk"
     traversal = 'prob'
     min_length = 20
     error_margin = 6

@@ -9,11 +9,12 @@ import os
 import numpy as np
 import networkx as nx
 import time
+import pkg_resources
 from pathlib import Path
 from pynets.statistics.individual import algorithms
+from pynets.statistics import interfaces
 import logging
 from tempfile import NamedTemporaryFile
-from ...conftest import gen_mat_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -36,7 +37,7 @@ def test_clean_graphs(gen_mat_data, conn_model, prune, norm):
     in_mat = gen_mat_data()['mat_list'][0]
     est_path = gen_mat_data()['mat_file_list'][0]
 
-    clean = algorithms.CleanGraphs(0.5, conn_model, est_path, prune, norm)
+    clean = interfaces.CleanGraphs(est_path, prune, norm)
     clean.normalize_graph()
     clean.print_summary()
     clean.create_length_matrix()
@@ -49,18 +50,16 @@ def test_clean_graphs(gen_mat_data, conn_model, prune, norm):
     assert len(clean.G) <= len(G)
 
 
-@pytest.mark.parametrize("binary", ['True', 'False'])
+@pytest.mark.parametrize("binary", [True, False])
 @pytest.mark.parametrize("prune", ['0', '1', '3'])
 @pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
 @pytest.mark.parametrize("conn_model", ['corr', 'cov'])
-def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
+def test_extractnetstats(gen_mat_data, binary, prune, norm,
+                         conn_model):
     """
     Test extractnetstats functionality
     """
-    base_dir = str(Path(__file__).parent / "examples")
     ID = '002'
-    subnet = 'Default'
-    thr = 0.95
 
     start_time = time.time()
 
@@ -73,9 +72,14 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
 
     roi = None
     try:
-        out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                              est_path, roi, prune,
-                                              norm, binary)
+        extractnetstats = interfaces.NetworkAnalysis()
+        extractnetstats.inputs.ID = ID
+        extractnetstats.inputs.est_path = est_path
+        extractnetstats.inputs.prune = prune
+        extractnetstats.inputs.norm = norm
+        extractnetstats.inputs.binary = binary
+        out_path = extractnetstats.run()
+
         print("%s%s%s" % (
         'finished: ',
         str(np.round(time.time() - start_time, 1)), 's'))
@@ -83,6 +87,7 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
 
     except PermissionError:
         pass
+    f_temp.close()
 
 
 @pytest.mark.parametrize("plot_switch", [True, False])
@@ -93,11 +98,14 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm, conn_model):
     pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
     1,
     2])
-def test_collect_pandas_df_make(plot_switch, embed, create_summary, graph_num):
+def test_collect_pandas_df_make(plot_switch, embed,
+                                create_summary, graph_num):
     """
     Test for collect_pandas_df_make() functionality
     """
-    base_dir = str(Path(__file__).parent / "examples")
+
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
     subnet = None
     ID = '002'
 

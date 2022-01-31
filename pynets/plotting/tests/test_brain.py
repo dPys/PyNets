@@ -3,6 +3,7 @@
 """
 Created on Wed Dec 27 16:19:14 2017
 """
+import pytest
 import os
 import numpy as np
 import time
@@ -20,10 +21,10 @@ import networkx as nx
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
-from ...conftest import random_mni_roi_data, connectivity_data, gen_mat_data
 
 
-def test_plot_all_nonet_no_mask(random_mni_roi_data, connectivity_data):
+def test_plot_all_nonet_no_mask(close_all, matplotlib_config,
+                                random_mni_roi_data, connectivity_data):
     """
     Test plot_all_nonet_no_mask functionality
     """
@@ -60,7 +61,8 @@ def test_plot_all_nonet_no_mask(random_mni_roi_data, connectivity_data):
                       str(np.round(time.time() - start_time, 1)), 's'))
 
 
-def test_plot_all_nonet_with_mask(connectivity_data):
+def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
+                                  connectivity_data):
     """
     Test plot_all_nonet_with_mask functionality
     """
@@ -108,7 +110,8 @@ def test_plot_all_nonet_with_mask(connectivity_data):
 
 
 @pytest.mark.parametrize("subnet", ["Default", None])
-def test_plot_timeseries(connectivity_data, subnet):
+def test_plot_timeseries(close_all, matplotlib_config, connectivity_data,
+                         subnet):
     """
     Test plot_timeseries functionality
     """
@@ -129,7 +132,8 @@ def test_plot_timeseries(connectivity_data, subnet):
     tmp.cleanup()
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
-def test_plot_network_clusters(connectivity_data, plot_overlaps):
+def test_plot_network_clusters(close_all, matplotlib_config,
+                               connectivity_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
     from pynets.statistics.individual.algorithms import \
@@ -178,7 +182,8 @@ def test_create_gb_palette(connectivity_data, prune, node_cmap):
         assert param is not None
 
 
-def test_plot_conn_mat_rois_gt_100(connectivity_data):
+def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
+                                   connectivity_data):
     """
     Test plot_conn_mat_rois_gt_100 functionality
     """
@@ -197,7 +202,8 @@ def test_plot_conn_mat_rois_gt_100(connectivity_data):
     tmp.cleanup()
 
 @pytest.mark.parametrize("roi", [True, False])
-def test_plot_all_struct(connectivity_data, gen_mat_data, roi):
+def test_plot_all_struct(close_all, matplotlib_config, connectivity_data,
+                         gen_mat_data, roi):
     """Test structural plotting."""
 
     tmp = tempfile.TemporaryDirectory()

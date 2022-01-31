@@ -30,7 +30,7 @@ def test_align():
 
     # Linear registration
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename("pynets",
@@ -54,7 +54,7 @@ def test_applyxfm():
     import pkg_resources
 
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
 
     ## First test: Apply xfm from test_align to orig anat img.
@@ -88,6 +88,7 @@ def test_applyxfm():
     assert test_out is not None
 
 
+@pytest.mark.slowtest
 def test_align_nonlinear():
     """
     Test align_nonlinear functionality
@@ -96,7 +97,7 @@ def test_align_nonlinear():
 
     # Nonlinear normalization
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
     ref = pkg_resources.resource_filename("pynets",
@@ -120,7 +121,7 @@ def test_combine_xfms():
     """
     # Combine func2anat and anat2std to create func2std mat
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     xfm1 = f"{anat_dir}/example_func2highres.mat"
     xfm2 = f"{anat_dir}/highres2standard.mat"
@@ -133,7 +134,7 @@ def test_combine_xfms():
 
 def test_invwarp():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     ref = f"{anat_dir}/sub-003_T1w.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp"
@@ -148,7 +149,7 @@ def test_apply_warp():
     # Warp original anat to standard space using warp img (had to
     # invwarp first) and linear mats
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     ref = pkg_resources.resource_filename("pynets",
                                           f"templates/MNI152_T1_brain_"
@@ -177,7 +178,7 @@ def test_segment_t1w():
     Test segment_t1w functionality
     """
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
     t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
     basename = f"test_segment_t1w"
@@ -191,7 +192,7 @@ def test_match_target_vox_res():
     Test match_target_vox_res functionality
     """
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     test_out = f"{base_dir}/003/test_out/test_match_target_vox_res"
 
     # Orig anat input has isotropic (1x1x1mm) dimensions.
@@ -234,7 +235,7 @@ def test_reorient_dwi():
     Test reorient_dwi functionality
     """
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     test_dir = f"{base_dir}/003/test_out/test_reorient_dwi"
 
     # iso_eddy_corrected_data_denoised_LAS.nii.gz was the original image in
@@ -268,7 +269,7 @@ def test_reorient_img():
     Test reorient_img functionality
     """
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     test_dir = f"{base_dir}/003/test_out/test_reorient_img"
 
     # X axis increasing right to left (Radiological)
@@ -312,7 +313,7 @@ def test_orient_reslice():
     # This test has a bak folder in its test_dir.
     # To replicate test rm data in test_dir and cp from bak
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     test_dir = f"{base_dir}/003/test_out/test_check_orient_and_dims"
 
     # Antomical: 1x1x1mm
@@ -389,17 +390,18 @@ def test_orient_reslice():
 
 def test_make_median_b0():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
                f"dwi.nii.gz"
     mean_file_out = utils.median(dwi_file)
 
     assert os.path.isfile(mean_file_out)
 
+
 @pytest.mark.parametrize("mask_type", ['Normal', 'Empty'])
 def test_gen_mask(mask_type):
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
     if mask_type == 'Normal':
@@ -408,9 +410,10 @@ def test_gen_mask(mask_type):
         mask = None
     utils.gen_mask(t1w_head, t1w_brain, mask)
 
+
 def test_deep_skull_strip():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     t1w_head = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
     img = nib.load(t1w_head)
     t1w_brain_mask = f"{base_dir}/003/anat/t1w_brain_mask.nii.gz"
@@ -422,7 +425,7 @@ def test_deep_skull_strip():
 
 def test_rescale_affine_to_center():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
 
     input_affine = nib.load(f"{base_dir}/003/anat/sub-003_T1w.nii.gz").affine
 
@@ -434,11 +437,12 @@ def test_rescale_affine_to_center():
     assert np.allclose(out_aff, input_affine* np.array([2, 2, 2, 1]))
 
 
+@pytest.mark.slowtest
 def test_wm_syn():
     from dipy.align import imwarp, imaffine
 
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     t1w_brain = f"{base_dir}/003/anat/t1w_brain.nii.gz"
     ap_path = f"{base_dir}/003/anat/aniso_power_tmp.nii.gz"
 

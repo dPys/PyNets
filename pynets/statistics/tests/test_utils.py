@@ -6,9 +6,6 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import os
-import numpy as np
-import networkx as nx
-import time
 from pathlib import Path
 from pynets.statistics import utils
 import logging
@@ -34,6 +31,6 @@ def test_save_netmets():
     net_met_val_list_final = [1, 2, 3]
 
     utils.save_netmets(dir_path, str(est_path.name), metric_list_names,
-                            net_met_val_list_final)
+                       net_met_val_list_final)
     tmp.cleanup()
     est_path.close()

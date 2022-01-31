@@ -15,13 +15,17 @@ import tempfile
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
-from ...conftest import dmri_estimation_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
+
+dir_path = tempfile.TemporaryDirectory()
+dir_path = str(dir_path.name)
+if not os.path.isdir(dir_path):
+    os.makedirs(dir_path)
 
 # Test that each possible combination of inputs creates a workflow.
 
@@ -86,23 +90,19 @@ base_dir = os.path.abspath(pkg_resources.resource_filename(
                                                           f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
-def test_struct_all(dmri_estimation_data, node_radius, parc, conn_model,
-                    conn_model_list, thr, max_thr, min_thr, step_thr,
+def test_struct_all(dir_path, base_dir, node_radius, parc,
+                    conn_model, conn_model_list, thr, max_thr, min_thr, step_thr,
                     multi_thr, thr_type, tiss_class, traversal, min_length,
                     track_type, node_size_list, atlas, multi_atlas,
                     parcellation, user_atlas_list, subnet, plot_switch, mask):
     """
     Test structural connectometry
     """
-    dir_path = tempfile.TemporaryDirectory()
-    base_dir = str(dir_path.name)
-    if not os.path.isdir(base_dir):
-        os.makedirs(base_dir)
 
-    dwi_file = dmri_estimation_data['dwi_file']
-    fbval = dmri_estimation_data['fbvals']
-    fbvec = dmri_estimation_data['fbvecs']
-    anat_file = dmri_estimation_data['t1w_file']
+    anat_file = f"{base_dir}/003/anat/sub-003_T1w.nii.gz"
+    fbval = f"{base_dir}/003/dmri/sub-003_dwi.bval"
+    fbvec = f"{base_dir}/003/dmri/sub-003_dwi.bvec"
+    dwi_file = f"{base_dir}/003/dmri/sub-003_dwi.nii.gz"
 
     roi = None
     ID = '25659_1'

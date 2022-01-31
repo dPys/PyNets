@@ -13,7 +13,6 @@ from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
 import sys
-from ...conftest import connectivity_data, gen_mat_data, random_mni_roi_data
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 import pytest
@@ -112,7 +111,7 @@ def test_collect_pandas_df(plot_switch, embed):
     """
     import glob
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     multi_nets = None
     multimodal = False
     subnet = None
@@ -289,7 +288,7 @@ def test_do_dir_path(atlas, input):
     """
 
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
 
     if input == 'fmri':
         in_file = f"{base_dir}/003/func/sub-003_ses-01_task-rest_bold.nii.gz"
@@ -384,7 +383,7 @@ def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
     Test pass_meta_ins_multi functionality
     """
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
 
     conn_model_func = 'cor'
     conn_model_struct = 'cov'
@@ -428,7 +427,7 @@ def test_pass_meta_ins_multi(gen_mat_data, random_mni_roi_data):
 
 def test_collectpandasjoin():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
     net_mets_csv = f"{base_dir}/miscellaneous/002_rsn-Default_nodetype-parc_" \
                    f"model-cov_template-MNI152_T1_thrtype-PROP_thr-0.95_" \
                    f"net_metrics.csv"

@@ -15,13 +15,17 @@ import pkg_resources
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
-from ...conftest import fmri_estimation_data, random_mni_roi_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../tests/examples"))
+        "pynets", "../data/examples"))
+
+dir_path = tempfile.TemporaryDirectory()
+dir_path = str(dir_path.name)
+if not os.path.isdir(dir_path):
+    os.makedirs(dir_path)
 
 # Test that each possible combination of inputs creates a workflow.
 @pytest.mark.parametrize("hpass", [0.08, None])
@@ -115,25 +119,22 @@ base_dir = os.path.abspath(pkg_resources.resource_filename(
                       f"bin.nii.gz"])
     ]
 )
-def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
-                  parc, conn_model, parcellation,
+def test_func_all(dir_path, base_dir, hpass,
+                  smooth, parc, conn_model, parcellation,
                   user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
                   min_thr, step_thr, multi_thr, thr_type, node_radius,
                   node_size_list, plot_switch):
     """
     Test functional connectometry
     """
-    dir_path = tempfile.TemporaryDirectory()
-    base_dir = str(dir_path.name)
-    if not os.path.isdir(base_dir):
-        os.makedirs(base_dir)
 
-    func_file = fmri_estimation_data['func_file']
-    mask = fmri_estimation_data['mask_file']
-    conf = fmri_estimation_data['conf_file']
-    anat_file = fmri_estimation_data['t1w_file']
-
-    roi = random_mni_roi_data['roi_file']
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    roi = pkg_resources.resource_filename(
+        "pynets", "templates/rois/pDMN_3_bin.nii.gz")
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
 
     ID = '25659_1'
     ref_txt = None
@@ -298,6 +299,7 @@ def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
     dir_path.cleanup()
 
+
 @pytest.mark.parametrize("k,k_list,k_clustering,clust_mask,clust_mask_list,clust_type,clust_type_list",
     [
         pytest.param(None, None, 0, None, None, None, None),
@@ -341,21 +343,20 @@ def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-def test_func_clust(fmri_estimation_data, parc, parcellation, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
-                    clust_type, clust_type_list, plot_switch, roi, mask, subnet, node_radius, node_size_list, atlas,
+def test_func_clust(dir_path, base_dir, parc, parcellation,
+                    user_atlas_list, k, k_list, k_clustering, clust_mask,
+                    clust_mask_list, clust_type, clust_type_list, plot_switch,
+                    roi, mask, subnet, node_radius, node_size_list, atlas,
                     multi_atlas):
     """
     Test functional connectometry with clustering
     """
-    dir_path = tempfile.TemporaryDirectory()
-    base_dir = str(dir_path.name)
-    if not os.path.isdir(base_dir):
-        os.makedirs(base_dir)
 
-    func_file = fmri_estimation_data['func_file']
-    mask = fmri_estimation_data['mask_file']
-    conf = fmri_estimation_data['conf_file']
-    anat_file = fmri_estimation_data['t1w_file']
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
 
     ID = '25659_1'
     parc = parc

@@ -1,1 +1,1 @@
-pytest -vvv --disable-warnings --store-durations --numprocesses=auto tests/test_*
+pytest -vvv --disable-warnings --store-durations --dist loadscope --numprocesses=4 pynets/core/tests/test_* pynets/dmri/tests/test_* pynets/fmri/tests/test_* pynets/plotting/tests/test_* pynets/registration/tests/test_* pynets/statistics/tests/test_*

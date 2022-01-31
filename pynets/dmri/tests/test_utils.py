@@ -5,6 +5,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import pytest
 import os
 import numpy as np
 try:
@@ -14,7 +15,6 @@ except ImportError:
 from pathlib import Path
 from pynets.dmri import utils as dmriutils
 import logging
-from ...conftest import dmri_estimation_data, tractography_estimation_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -45,6 +45,7 @@ def test_normalize_grads(dmri_estimation_data):
     assert bvals_normed is not None
 
 
+@pytest.mark.slowtest
 def test_evaluate_streamline_plausibility(dmri_estimation_data,
                                           tractography_estimation_data):
     """

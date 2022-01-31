@@ -3,6 +3,7 @@
 """
 Created on Wed Dec 27 16:19:14 2017
 """
+import pytest
 import os
 import numpy as np
 import time
@@ -11,19 +12,16 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
-import pytest
-import pkg_resources
-from pynets.plotting import brain, adjacency
+from pynets.plotting import adjacency
 import tempfile
 import logging
-import networkx as nx
-from ...conftest import connectivity_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_plot_conn_mat_nonet_no_mask(connectivity_data):
+def test_plot_conn_mat_nonet_no_mask(close_all, matplotlib_config,
+                                     connectivity_data):
     """
     Test plot_conn_mat_nonet_no_mask functionality
     """
@@ -55,7 +53,8 @@ def test_plot_conn_mat_nonet_no_mask(connectivity_data):
     tmp.cleanup()
 
 
-def test_plot_conn_mat_nonet_mask(connectivity_data):
+def test_plot_conn_mat_nonet_mask(close_all, matplotlib_config,
+                                  connectivity_data):
     """
     Test plot_conn_mat_nonet_mask functionality
     """

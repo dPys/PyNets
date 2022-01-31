@@ -514,7 +514,7 @@ class NetworkAnalysis(BaseInterface):
 
                     for i in ["local_efficiency", "local_clustering",
                               "degree_centrality",
-                              "eigenvector_centrality",
+                              "eigen_centrality",
                               "communicability_centrality",
                               "rich_club_coefficient"]:
                         if i in metric_list_nodal:

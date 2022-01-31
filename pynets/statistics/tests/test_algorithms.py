@@ -12,8 +12,6 @@ import time
 from pathlib import Path
 from pynets.statistics.individual import algorithms
 import logging
-from tempfile import NamedTemporaryFile
-from ...conftest import gen_mat_data
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

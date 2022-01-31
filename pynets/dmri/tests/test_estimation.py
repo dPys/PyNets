@@ -12,24 +12,21 @@ import numpy as np
 import nibabel as nib
 import os
 import tempfile
-import pandas as pd
 import logging
 # from inspect import getargspec
 try:
     import cPickle as pickle
 except ImportError:
     import _pickle as pickle
-from ...conftest import dmri_estimation_data, tractography_estimation_data, \
-    random_mni_roi_data
 from pathlib import Path
-
-logger = logging.getLogger(__name__)
-logger.setLevel(50)
 from pynets.dmri.estimation import (create_anisopowermap, tens_mod_fa_est,
                                     tens_mod_est, csa_mod_est, csd_mod_est,
                                     streams2graph, sfm_mod_est)
 from nipype.utils.filemanip import fname_presuffix
 from nilearn.image import resample_to_img
+
+logger = logging.getLogger(__name__)
+logger.setLevel(50)
 
 
 def test_create_anisopowermap(dmri_estimation_data):
@@ -117,7 +114,8 @@ def test_sfm_mod_est(dmri_estimation_data):
 
 @pytest.mark.parametrize("dsn", [False])
 @pytest.mark.parametrize("fa_wei", [True, False])
-def test_streams2graph(dmri_estimation_data, tractography_estimation_data,
+def test_streams2graph(dmri_estimation_data,
+                       tractography_estimation_data,
                        random_mni_roi_data, fa_wei, dsn):
     from pynets.registration.register import direct_streamline_norm
     from dipy.core.gradients import gradient_table

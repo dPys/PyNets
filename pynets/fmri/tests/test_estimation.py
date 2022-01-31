@@ -30,7 +30,6 @@ from pynets.fmri.interfaces import TimeseriesExtraction
 from nilearn.tests.test_signal import generate_signals
 from nilearn._utils.extmath import is_spd
 from numpy.testing import assert_array_almost_equal
-from ...conftest import fmri_estimation_data, parcellation_data
 
 # fMRI
 @pytest.mark.parametrize("conn_model_in",
