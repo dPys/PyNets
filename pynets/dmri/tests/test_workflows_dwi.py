@@ -91,8 +91,7 @@ if not os.path.isdir(dir_path):
     ]
 )
 @pytest.mark.anyio
-def test_struct_all(dir_path, base_dir, node_radius, parc,
-                    conn_model, conn_model_list, thr, max_thr, min_thr, step_thr,
+def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr, min_thr, step_thr,
                     multi_thr, thr_type, tiss_class, traversal, min_length,
                     track_type, node_size_list, atlas, multi_atlas,
                     parcellation, user_atlas_list, subnet, plot_switch, mask):
