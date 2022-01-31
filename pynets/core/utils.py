@@ -1252,7 +1252,17 @@ def load_runconfig(location=None):
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
     # asynchronous config parsing
-    while sum(list(flatten([[location == f for f in p.open_files()] for p in
+    def proc_access(location, proc):
+        try:
+            return [location == f for f in proc.open_files()]
+        except psutil.NoSuchProcess as e:
+            # Catches race condition
+            return [False]
+        except psutil.AccessDenied as e:
+            # If we're not root/admin sometimes we can't query processes
+            return [False]
+
+    while sum(list(flatten([proc_access(location, p) for p in
          psutil.process_iter(attrs=['name']) if 'python' in p.info['name'] and
                                                 p.is_running() and
                                                 p.username() != 'root']))
