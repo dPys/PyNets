@@ -1243,19 +1243,23 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-async def load_runconfig(location=None):
+async def read_runconfig(location):
     import aiofiles
+    async with aiofiles.open(location, mode='r+') as f:
+        stream = await f.read()
+    f.close()
+    return stream
+
+
+def load_runconfig(location=None):
     import yaml
     import pkg_resources
 
     if not location:
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
-    async with aiofiles.open(location, mode='r+') as f:
-        stream = await f.read()
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-    f.close()
-    del stream
+    hardcoded_params = yaml.load(asyncio.run(read_runconfig(location)),
+                                 Loader=yaml.FullLoader)
 
     return hardcoded_params
 
