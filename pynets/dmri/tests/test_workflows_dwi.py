@@ -90,6 +90,7 @@ if not os.path.isdir(dir_path):
                                                           f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
+@pytest.mark.anyio
 def test_struct_all(dir_path, base_dir, node_radius, parc,
                     conn_model, conn_model_list, thr, max_thr, min_thr, step_thr,
                     multi_thr, thr_type, tiss_class, traversal, min_length,

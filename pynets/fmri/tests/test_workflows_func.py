@@ -119,6 +119,7 @@ if not os.path.isdir(dir_path):
                       f"bin.nii.gz"])
     ]
 )
+@pytest.mark.anyio
 def test_func_all(dir_path, base_dir, hpass,
                   smooth, parc, conn_model, parcellation,
                   user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
@@ -343,6 +344,7 @@ def test_func_all(dir_path, base_dir, hpass,
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
+@pytest.mark.anyio
 def test_func_clust(dir_path, base_dir, parc, parcellation,
                     user_atlas_list, k, k_list, k_clustering, clust_mask,
                     clust_mask_list, clust_type, clust_type_list, plot_switch,
