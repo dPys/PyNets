@@ -297,15 +297,8 @@ def direct_streamline_norm(
         warped_fa_affine = warped_fa_img.affine
         warped_fa_shape = warped_fa_img.shape
 
-        adjusted_affine = affine_map.affine.copy()
-        adjusted_affine[0][3] = -adjusted_affine[0][3]
-        adjusted_affine[1][3] = -adjusted_affine[1][3]
-        adjusted_affine[2][3] = -adjusted_affine[2][3]
-        # adjusted_affine[..., 3] = np.dot(adjusted_affine,
-        #                                  np.array([0.5, 0.5, 0.5, 1]))
-
         streams_in_curr_grid = transform_streamlines(
-            streamlines, adjusted_affine)
+            streamlines, affine_map.affine_inv)
 
         streams_final_filt = regutils.warp_streamlines(t1w_brain_img.affine,
                                                        fa_img.affine,
@@ -326,7 +319,7 @@ def direct_streamline_norm(
         # Save streamlines
         stf = StatefulTractogram(
             streams_final_filt_final,
-            reference=atlas_t1w_img,
+            reference=t1w_brain_img,
             space=Space.VOXMM,
             origin=Origin.NIFTI,
         )

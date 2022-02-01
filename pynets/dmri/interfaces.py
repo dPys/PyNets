@@ -239,7 +239,6 @@ class Tracking(SimpleInterface):
                     dir_path,
                     streamlines,
                     self.inputs.conn_model,
-                    target_samples,
                     self.inputs.node_radius,
                     self.inputs.curv_thr_list,
                     self.inputs.step_list,
@@ -303,12 +302,12 @@ class Tracking(SimpleInterface):
             # Only re-run the reconstruction if we have to
             if not os.path.isfile(f"{namer_dir}/{op.basename(recon_path)}"):
                 import h5py
-                model, _ = reconstruction(
+                model = reconstruction(
                     self.inputs.conn_model,
                     gtab,
                     dwi_data,
                     B0_mask_tmp_path,
-                )
+                )[0]
                 with h5py.File(recon_path, 'w') as hf:
                     hf.create_dataset("reconstruction",
                                       data=model.astype('float32'), dtype='f4')
@@ -335,12 +334,12 @@ class Tracking(SimpleInterface):
                 time.sleep(5)
             else:
                 import h5py
-                model, _ = reconstruction(
+                model = reconstruction(
                     self.inputs.conn_model,
                     gtab,
                     dwi_data,
                     B0_mask_tmp_path,
-                )
+                )[0]
                 with h5py.File(recon_path, 'w') as hf:
                     hf.create_dataset("reconstruction",
                                       data=model.astype('float32'), dtype='f4')
@@ -549,7 +548,6 @@ class Tracking(SimpleInterface):
                         dir_path,
                         streamlines,
                         self.inputs.conn_model,
-                        target_samples,
                         self.inputs.node_radius,
                         self.inputs.curv_thr_list,
                         self.inputs.step_list,

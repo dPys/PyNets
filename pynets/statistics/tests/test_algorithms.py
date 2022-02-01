@@ -414,7 +414,14 @@ def test_get_metrics(gen_mat_data, metric, engine):
     Test various wrappers for getting nx graph metrics
     """
 
-    in_mat = gen_mat_data(asfile=False, mat_type='sb')['mat_list'][0]
+    binary = False
+
+    if metric == 'rich_club_coeff':
+        binary = True
+
+    in_mat = gen_mat_data(asfile=False, mat_type='sb',
+                          binary=binary)['mat_list'][0]
+
     G = nx.from_numpy_array(in_mat)
     ci = np.ones(in_mat.shape[0])
     metric_list_names = []

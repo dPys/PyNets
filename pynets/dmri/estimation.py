@@ -311,7 +311,8 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     return csd_mod.astype("float32"), model
 
 
-def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
+def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                 sh_order=8, roi_radii=10):
     """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -350,56 +351,78 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
     """
     import dipy.reconst.dti as dti
     from nilearn.image import math_img
-    from dipy.reconst.csdeconv import auto_response
-    from dipy.reconst.mcsd import MultiShellDeconvModel, \
-        multi_shell_fiber_response
+    from dipy.core.gradients import unique_bvals_tolerance
+    from dipy.reconst.mcsd import (mask_for_response_msmt,
+                                   response_from_mask_msmt,
+                                   multi_shell_fiber_response,
+                                   MultiShellDeconvModel)
 
     print("Reconstructing using MCSD...")
+
     B0_mask_data = np.nan_to_num(np.asarray(
         nib.load(B0_mask).dataobj)).astype("bool")
 
-    # Construct the  DTI model
-    tenmodel = dti.TensorModel(gtab)
-
-    # fit the denoised data with DTI model
-    tenfit = tenmodel.fit(data)
-
-    # obtain the FA and MD metrics
-    FA = tenfit.fa
-    MD = tenfit.md
-
     # Load tissue maps and prepare tissue classifier
-    gm_mask_img = math_img("img > 0.95", img=gm_in_dwi)
+    gm_mask_img = math_img("img > 0.10", img=gm_in_dwi)
     gm_data = np.asarray(gm_mask_img.dataobj, dtype=np.float32)
-    vent_csf_in_dwi_img = math_img("img > 0.01", img=vent_csf_in_dwi)
+
+    wm_mask_img = math_img("img > 0.15", img=wm_in_dwi)
+    wm_data = np.asarray(wm_mask_img.dataobj, dtype=np.float32)
+
+    vent_csf_in_dwi_img = math_img("img > 0.50", img=vent_csf_in_dwi)
     vent_csf_in_dwi_data = np.asarray(vent_csf_in_dwi_img.dataobj,
                                       dtype=np.float32)
 
-    indices_csf = np.where(((FA < 0.2) & (vent_csf_in_dwi_data > 0.95)))
-    indices_gm = np.where(((FA < 0.2) & (gm_data > 0.95)))
+    # Fit a simple DTI model
+    tenfit = dti.TensorModel(gtab).fit(data)
+
+    # Obtain the FA and MD metrics
+    FA = tenfit.fa
+    MD = tenfit.md
+
+    indices_csf = np.where(((FA < 0.2) & (vent_csf_in_dwi_data > 0.50)))
+    indices_gm = np.where(((FA < 0.2) & (gm_data > 0.10)))
+    indices_wm = np.where(((FA >= 0.2) & (wm_data > 0.15)))
 
     selected_csf = np.zeros(FA.shape, dtype='bool')
     selected_gm = np.zeros(FA.shape, dtype='bool')
+    selected_wm = np.zeros(FA.shape, dtype='bool')
 
     selected_csf[indices_csf] = True
     selected_gm[indices_gm] = True
+    selected_wm[indices_wm] = True
 
-    csf_md = np.nanmean(MD[selected_csf])
-    gm_md = np.nanmean(MD[selected_gm])
+    mask_wm, mask_gm, mask_csf = mask_for_response_msmt(
+        gtab, data, roi_radii=roi_radii,
+        wm_fa_thr=np.nanmean(FA[selected_wm]),
+        gm_fa_thr=np.nanmean(FA[selected_gm]),
+        csf_fa_thr=np.nanmean(FA[selected_csf]),
+        gm_md_thr=np.nanmean(MD[selected_gm]),
+        csf_md_thr=np.nanmean(MD[selected_csf]))
 
-    response, ratio = auto_response(gtab, data, roi_radius=10,
-                                    fa_thr=0.7)
+    mask_wm *= wm_data.astype('int64')
+    mask_gm *= gm_data.astype('int64')
+    mask_csf *= vent_csf_in_dwi_data.astype('int64')
 
-    response_mcsd = multi_shell_fiber_response(sh_order=sh_order,
-                                               bvals=gtab.bvals,
-                                               evals=response[0], csf_md=csf_md,
-                                               gm_md=gm_md)
+    # nvoxels_wm = np.sum(mask_wm)
+    # nvoxels_gm = np.sum(mask_gm)
+    # nvoxels_csf = np.sum(mask_csf)
 
-    model = MultiShellDeconvModel(gtab, response_mcsd)
+    response_wm, response_gm, response_csf = response_from_mask_msmt(
+        gtab, data, mask_wm, mask_gm, mask_csf)
 
+    response_mcsd = multi_shell_fiber_response(sh_order=8,
+                                               bvals=unique_bvals_tolerance(
+                                                   gtab.bvals),
+                                               wm_rf=response_wm,
+                                               gm_rf=response_gm,
+                                               csf_rf=response_csf)
+
+    model = MultiShellDeconvModel(gtab, response_mcsd, sh_order=sh_order)
     mcsd_mod = model.fit(data, B0_mask_data).shm_coeff
+
     mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
-    del response, B0_mask_data
+    del response_mcsd, B0_mask_data
     return mcsd_mod.astype("float32"), model
 
 

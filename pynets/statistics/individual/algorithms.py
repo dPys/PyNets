@@ -1156,18 +1156,13 @@ def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
 def defragment(G):
     G_tmp = G.copy()
 
-    # List because it returns a generator
-    components = list(nx.connected_components(G_tmp))
-    components.sort(key=len, reverse=True)
-    components_connected = list(components[0])
-
     isolates = [n for (n, d) in G_tmp.degree() if d == 0]
 
     # Remove any lingering isolates
     s = 0
     pruned_nodes = []
     for node in list(G_tmp.nodes()):
-        if node not in components_connected or node in isolates:
+        if node in isolates:
             G_tmp.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1

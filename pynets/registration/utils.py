@@ -908,19 +908,20 @@ def warp_streamlines(
             streams_in_curr_grid,
         )
     ]
-    streams_final_filt = Streamlines(
-        utils.target_line_based(
-            transform_streamlines(
-                transform_streamlines(
-                    streams_in_brain,
-                    np.linalg.inv(adjusted_affine)),
-                np.linalg.inv(
-                    warped_fa_img.affine),
-            ),
-            np.eye(4),
-            brain_mask,
-            include=True,
-        ))
+    streams_final_filt = streams_in_brain
+    # streams_final_filt = Streamlines(
+    #     utils.target_line_based(
+    #         transform_streamlines(
+    #             transform_streamlines(
+    #                 streams_in_brain,
+    #                 np.linalg.inv(adjusted_affine)),
+    #             np.linalg.inv(
+    #                 warped_fa_img.affine),
+    #         ),
+    #         np.eye(4),
+    #         brain_mask,
+    #         include=True,
+    #     ))
 
     return streams_final_filt
 
