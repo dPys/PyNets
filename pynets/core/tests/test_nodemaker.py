@@ -77,11 +77,11 @@ def test_nodemaker_tools_parlistfile_RSN():
     os.makedirs(dir_path, exist_ok=True)
     shutil.copy2(parlistfile, f"{dir_path}/{os.path.basename(parlistfile)}")
     parlistfile = f"{dir_path}/{os.path.basename(parlistfile)}"
-    network = "Default"
+    subnet = "Default"
     parc = True
 
     start_time = time.time()
-    [coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    coords = nodemaker.get_names_and_coords_of_parcels(parlistfile)[0]
     print(
         "%s%s%s"
         % (
@@ -98,8 +98,8 @@ def test_nodemaker_tools_parlistfile_RSN():
 
     parcel_list = nodemaker.gen_img_list(parlistfile)
 
-    [net_coords, net_parcel_list, net_labels, network] = \
-        nodemaker.get_node_membership(network, template, coords, labels,
+    [net_coords, net_parcel_list, net_labels, subnet] = \
+        nodemaker.get_node_membership(subnet, template, coords, labels,
                                       parc, parcel_list
     )
     print(
@@ -125,7 +125,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     )
 
     start_time = time.time()
-    out_path = nodemaker.gen_network_parcels(parlistfile, network, net_labels,
+    out_path = nodemaker.gen_network_parcels(parlistfile, subnet, net_labels,
                                              dir_path)
     print(
         "%s%s%s"
@@ -143,7 +143,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     assert out_path is not None
     assert net_parcels_map_nifti is not None
     assert parcel_list_exp is not None
-    assert network is not None
+    assert subnet is not None
 
 
 @pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",
@@ -156,7 +156,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     template = pkg_resources.resource_filename(
         "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
-    network = "Default"
+    subnet = "Default"
     parc = False
     parcel_list = None
     start_time = time.time()
@@ -171,8 +171,8 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     )
 
     start_time = time.time()
-    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(
-        network, template, coords, labels, parc, parcel_list
+    [net_coords, _, net_labels, subnet] = nodemaker.get_node_membership(
+        subnet, template, coords, labels, parc, parcel_list
     )
     print(
         "%s%s%s"
@@ -187,7 +187,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     assert labels is not None
     assert net_coords is not None
     assert net_labels is not None
-    assert network is not None
+    assert subnet is not None
 
 
 def test_nodemaker_tools_masking_parlistfile_RSN():
@@ -212,7 +212,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     roi = tempfile.NamedTemporaryFile(mode="w+", suffix=".nii.gz").name
     data_gen.generate_mni_space_img()[1].to_filename(roi)
 
-    network = "Default"
+    subnet = "Default"
     ID = "002"
     perc_overlap = 0.10
     parc = True
@@ -233,9 +233,9 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     start_time = time.time()
     parcel_list = nodemaker.gen_img_list(parlistfile)
-    [net_coords, net_parcel_list, net_labels, network] = \
+    [net_coords, net_parcel_list, net_labels, subnet] = \
         nodemaker.get_node_membership(
-        network, template, coords, labels, parc, parcel_list
+        subnet, template, coords, labels, parc, parcel_list
     )
     print(
         "%s%s%s"
@@ -285,7 +285,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     start_time = time.time()
     out_path = nodemaker.gen_network_parcels(
-        parlistfile, network, net_labels_masked, dir_path
+        parlistfile, subnet, net_labels_masked, dir_path
     )
     print(
         "%s%s%s"
@@ -306,7 +306,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     assert out_path is not None
     assert net_parcels_map_nifti is not None
     assert parcel_list_exp is not None
-    assert network is not None
+    assert subnet is not None
     tmp.cleanup()
 
 
@@ -325,7 +325,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     roi = tempfile.NamedTemporaryFile(mode="w+", suffix=".nii.gz").name
     data_gen.generate_mni_space_img()[1].to_filename(roi)
 
-    network = "Default"
+    subnet = "Default"
     parc = False
     parcel_list = None
     error = 2
@@ -342,8 +342,8 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     )
 
     start_time = time.time()
-    [net_coords, _, net_labels, network] = nodemaker.get_node_membership(
-        network, template, coords, labels, parc, parcel_list
+    [net_coords, _, net_labels, subnet] = nodemaker.get_node_membership(
+        subnet, template, coords, labels, parc, parcel_list
     )
     print(
         "%s%s%s"
@@ -372,7 +372,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
     assert net_coords_masked is not None
     assert net_labels is not None
     assert net_labels_masked is not None
-    assert network is not None
+    assert subnet is not None
 
 
 def test_nodemaker_tools_parlistfile_WB():

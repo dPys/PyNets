@@ -1024,10 +1024,11 @@ def gen_img_list(parcellation):
         roi_img = bna_data.astype("uint16") == \
             bna_data_for_coords_uniq[idx].astype("uint16")
         img_stack.append(roi_img.astype("uint16"))
+    img_stack = np.array(img_stack)
     del bna_data, bna_data_for_coords_uniq
     gc.collect()
 
-    return iter_img([new_img_like(bna_img, np.array(img_stack)[idy]) for idy in
+    return iter_img([new_img_like(bna_img, img_stack[idy]) for idy in
                      range(par_max)])
 
 

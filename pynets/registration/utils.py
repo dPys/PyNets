@@ -543,7 +543,7 @@ def atlas2t1w_align(
     return aligned_atlas_gm, aligned_atlas_skull
 
 
-def segment_t1w(t1w, basename, nclass=3, beta=0.1):
+def segment_t1w(t1w, basename, nclass=3, beta=0.1, max_iter=100):
     """
     A function to use FSL's FAST to segment an anatomical
     image into GM, WM, and CSF prob maps.
@@ -569,7 +569,8 @@ def segment_t1w(t1w, basename, nclass=3, beta=0.1):
 
     t1w_img = nib.load(t1w)
     hmrf = TissueClassifierHMRF()
-    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta)[2]
+    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta,
+                        max_iter=max_iter)[2]
 
     new_img_like(t1w_img, PVE[..., 2]).to_filename(
         f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}")

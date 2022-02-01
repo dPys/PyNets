@@ -99,7 +99,7 @@ def test_align_nonlinear():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
         "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
-    inp = f"{anat_dir}/sub-003_T1w.nii.gz"
+    inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename("pynets",
                                           f"templates/"
                                           f"MNI152_T1_brain_2mm.nii.gz")
@@ -180,9 +180,9 @@ def test_segment_t1w():
     base_dir = os.path.abspath(pkg_resources.resource_filename(
         "pynets", "../data/examples"))
     anat_dir = f"{base_dir}/003/anat"
-    t1w = f"{anat_dir}/sub-003_T1w.nii.gz"
+    t1w = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     basename = f"test_segment_t1w"
-    out = utils.segment_t1w(t1w, basename)
+    out = utils.segment_t1w(t1w, basename, max_iter=10)
     print(out)
     assert out is not None
 
