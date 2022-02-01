@@ -53,8 +53,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     math_img("img > 0.0001", img=nib.load(t1w_brain_mask)
              ).to_filename(t1w_brain_mask)
 
-    t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask,
-                                             t1w_brain)
+    t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask, t1w_brain)
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)

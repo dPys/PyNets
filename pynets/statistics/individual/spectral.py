@@ -60,7 +60,7 @@ def _omni_embed(pop_array, atlas, graph_path_list,
     import numpy as np
     from graspologic.embed.omni import OmnibusEmbed
     from graspologic.embed.mds import ClassicalMDS
-    from pynets.statistics.individual.algorithms import CleanGraphs
+    from pynets.statistics.interfaces import CleanGraphs
 
     dir_path = str(Path(os.path.dirname(graph_path_list[0])).parent)
 
@@ -277,7 +277,7 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     import networkx as nx
     import numpy as np
     from graspologic.embed.ase import AdjacencySpectralEmbed
-    from pynets.statistics.individual.algorithms import CleanGraphs
+    from pynets.statistics.interfaces import CleanGraphs
 
     # Adjacency Spectral embedding
     print(
