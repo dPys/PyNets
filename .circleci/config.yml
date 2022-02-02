@@ -148,7 +148,7 @@ jobs:
       - run:
           name: Download OSF test data
           command: |
-            mkdir -p /tmp/src/pynets/tests
+            mkdir -p /tmp/src/pynets/data
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
       - persist_to_workspace:
           root: /tmp/src/pynets

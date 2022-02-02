@@ -152,9 +152,9 @@ def test_track_ensemble(traversal, target_samples):
     labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_" \
                      f"track.nii.gz"
     conn_model = 'csa'
-    tiss_class = 'wm'
-    min_length = 10
-    maxcrossing = 2
+    tiss_class = 'wb'
+    min_length = 2
+    maxcrossing = 3
     roi_neighborhood_tol = 6
     waymask = None
     curv_thr_list = [40, 30]
@@ -169,7 +169,7 @@ def test_track_ensemble(traversal, target_samples):
     temp_dir = str(tmp.name)
     os.makedirs(temp_dir, exist_ok=True)
     recon_path = f"{temp_dir}/model_file.hdf5"
-    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    model = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
 
     with h5py.File(recon_path, 'w') as hf:
         hf.create_dataset("reconstruction",
@@ -217,8 +217,8 @@ def test_track_ensemble_particle():
                      f"_track.nii.gz"
     conn_model = 'csd'
     tiss_class = 'cmc'
-    min_length = 10
-    maxcrossing = 2
+    min_length = 2
+    maxcrossing = 3
     roi_neighborhood_tol = 6
     waymask = None
     curv_thr_list = [40, 30]
@@ -231,7 +231,7 @@ def test_track_ensemble_particle():
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    model = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
     tmp = tempfile.TemporaryDirectory()
     temp_dir = str(tmp.name)
     recon_path = f"{str(temp_dir)}/model_file.hdf5"

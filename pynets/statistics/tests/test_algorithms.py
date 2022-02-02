@@ -241,7 +241,7 @@ def test_link_communities(gen_mat_data, clustering):
 #     return
 
 
-@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness",
+@pytest.mark.parametrize("method", ["betweenness", "coreness",
                                     "eigenvector"])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_most_important(gen_mat_data, method, engine):
