@@ -178,6 +178,7 @@ available_models:
       - 'AdaptiveQuicGraphicalLasso'
     struct_models:
       - 'csa'
+      - 'mcsd'
       - 'csd'
       - 'ten'
       - 'sfm'

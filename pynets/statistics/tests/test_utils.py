@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 from pynets.statistics import utils
 import logging
-from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

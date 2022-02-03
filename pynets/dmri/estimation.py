@@ -471,6 +471,66 @@ def sfm_mod_est(gtab, data, B0_mask):
     return sf_odf.astype("float32"), model
 
 
+def reconstruction(conn_model, gtab, dwi_data, B0_mask):
+    """
+    Estimate a tensor model from dwi data.
+
+    Parameters
+    ----------
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
+        'sfm').
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    dwi_data : array
+        4D array of dwi data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    mod_fit : ndarray
+        Fitted connectivity reconstruction model.
+    mod : obj
+        Connectivity reconstruction model.
+
+    References
+    ----------
+    .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
+      A hitchhiker’s guide to diffusion tensor imaging.
+      Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
+    """
+    from pynets.dmri.estimation import (
+        csa_mod_est,
+        csd_mod_est,
+        sfm_mod_est,
+        tens_mod_est,
+        mcsd_mod_est
+    )
+
+    if conn_model == "csa" or conn_model == "CSA":
+        [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
+    # elif conn_model == "mcsd" or conn_model == "MCSD":
+    #     [mod_fit, mod] = mcsd_mod_est(gtab, dwi_data, B0_mask, wm_in_dwi,
+    #                                   gm_in_dwi, vent_csf_in_dwi)
+    elif conn_model == "csd" or conn_model == "CSD":
+        [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "sfm" or conn_model == "SFM":
+        [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "ten" or conn_model == "tensor" or \
+            conn_model == "TEN":
+        [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
+    else:
+        raise ValueError(
+            "Error: No valid reconstruction model specified. See the "
+            "`-mod` flag."
+        )
+
+    del dwi_data
+
+    return mod_fit, mod
+
+
 def streams2graph(
     atlas_for_streams,
     streams,

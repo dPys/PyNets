@@ -154,7 +154,7 @@ def crawl_bucket(bucket, path, jobdir):
         all_seshs = [re.findall(sesh_pattern, obj) for obj in all_seshfiles]
         sesh = list(set([i for i in flatten(all_seshs)]))
 
-        if sesh != []:
+        if not isinstance(sesh, list):
             seshs[subj] = sesh
             print(f"{subj} added to sessions.")
         else:

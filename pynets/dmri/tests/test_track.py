@@ -95,32 +95,6 @@ def test_prep_tissues(tiss_class):
     assert tiss_classifier is not None
 
 
-@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'ten'])
-@pytest.mark.slowtest
-def test_reconstruction(conn_model):
-    """
-    Test for reconstruction functionality
-    """
-    from pynets.dmri import track
-    from dipy.core.gradients import gradient_table
-    base_dir = os.path.abspath(pkg_resources.resource_filename(
-        "pynets", "../data/examples"))
-
-    dir_path = f"{base_dir}/003/dmri"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{dir_path}/sub-003_dwi.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    dwi_file = f"{dir_path}/sub-003_dwi.nii.gz"
-    wm_in_dwi = f"{dir_path}/wm_mask_dmri.nii.gz"
-
-    dwi_img = nib.load(dwi_file)
-    dwi_data = dwi_img.get_fdata()
-
-    model, mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
-    assert model is not None
-    assert mod is not None
-
-
 @pytest.mark.parametrize("traversal", ['det', 'prob'])
 @pytest.mark.parametrize("target_samples",
                          [300, pytest.param(0, marks=pytest.mark.xfail)])
@@ -130,7 +104,7 @@ def test_track_ensemble(traversal, target_samples):
     Test for ensemble tractography functionality
     """
     import tempfile
-    from pynets.dmri import track
+    from pynets.dmri import track, estimation
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
     from nibabel.streamlines.array_sequence import ArraySequence
@@ -169,7 +143,7 @@ def test_track_ensemble(traversal, target_samples):
     temp_dir = str(tmp.name)
     os.makedirs(temp_dir, exist_ok=True)
     recon_path = f"{temp_dir}/model_file.hdf5"
-    model = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
+    model = estimation.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
 
     with h5py.File(recon_path, 'w') as hf:
         hf.create_dataset("reconstruction",
@@ -192,7 +166,7 @@ def test_track_ensemble_particle():
     Test for ensemble tractography functionality
     """
     import tempfile
-    from pynets.dmri import track
+    from pynets.dmri import track, estimation
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
     from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
@@ -231,7 +205,7 @@ def test_track_ensemble_particle():
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    model = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
+    model = estimation.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
     tmp = tempfile.TemporaryDirectory()
     temp_dir = str(tmp.name)
     recon_path = f"{str(temp_dir)}/model_file.hdf5"

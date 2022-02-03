@@ -185,6 +185,7 @@ def get_parser():
             "csa",
             "csd",
             "sfm",
+            "mcsd",
         ],
         help="(hyperparameter): Specify connectivity estimation model. "
              "For fMRI, possible models include: corr for correlation, "
@@ -193,7 +194,8 @@ def get_parser():
              "installed (https://github.com/skggm/skggm), then "
              "QuicGraphicalLasso, QuicGraphicalLassoCV, "
              "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For "
-             "dMRI, current models include csa, csd, and sfm.\n",
+             "dMRI, current models include csa, csd, sfm, and mcsd (for "
+             "multishell data).\n",
     )
     parser.add_argument(
         "-a",

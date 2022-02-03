@@ -11,6 +11,7 @@ import numpy as np
 # import time
 import nibabel as nib
 import os
+import pkg_resources
 import tempfile
 import logging
 # from inspect import getargspec
@@ -110,6 +111,32 @@ def test_sfm_mod_est(dmri_estimation_data):
 
     assert sf_odf is not None
     assert model is not None
+
+
+@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'ten'])
+@pytest.mark.slowtest
+def test_reconstruction(conn_model):
+    """
+    Test for reconstruction functionality
+    """
+    from pynets.dmri.estimation import reconstruction
+    from dipy.core.gradients import gradient_table
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
+
+    dir_path = f"{base_dir}/003/dmri"
+    bvals = f"{dir_path}/sub-003_dwi.bval"
+    bvecs = f"{dir_path}/sub-003_dwi.bvec"
+    gtab = gradient_table(bvals, bvecs)
+    dwi_file = f"{dir_path}/sub-003_dwi.nii.gz"
+    wm_in_dwi = f"{dir_path}/wm_mask_dmri.nii.gz"
+
+    dwi_img = nib.load(dwi_file)
+    dwi_data = dwi_img.get_fdata()
+
+    model, mod = reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    assert model is not None
+    assert mod is not None
 
 
 @pytest.mark.parametrize("dsn", [False])

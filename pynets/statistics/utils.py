@@ -382,7 +382,8 @@ def make_feature_space_dict(
                 traversal, minlength, model, granularity, parcellation, \
                 error_margin = comb
                 grid_params_mod.append((traversal, minlength, model,
-                                        granularity, parcellation, error_margin))
+                                        granularity, parcellation,
+                                        error_margin))
             except:
                 print(f"Failed to parse: {comb}")
 
@@ -835,7 +836,7 @@ def split_df_to_dfs_by_prefix(df, prefixes=[]):
     for p in prefixes:
         df_splits.append(df[list(set(list(flatten([c for c in df.columns if
                                                    c.startswith(p)]))))])
-    pref_selected = list(set(list(flatten([i.columns for i in df_splits]))))
+    # pref_selected = list(set(list(flatten([i.columns for i in df_splits]))))
     # df_other = df[[j for j in df.columns if j not in pref_selected]]
     #return df_splits + [df_other]
 

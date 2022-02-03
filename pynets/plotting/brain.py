@@ -130,9 +130,9 @@ def plot_network_clusters(
 
     partition = [
         getIndexPositions(
-            communities.tolist(),
+            list(communities),
             i) for i in set(
-            communities.tolist())]
+            list(communities))]
 
     n_communities = min(len(partition), len(COLOR))
     fig = plt.figure(figsize=figsize)

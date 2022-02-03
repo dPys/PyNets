@@ -110,8 +110,8 @@ class Tracking(SimpleInterface):
         from dipy.data import get_sphere
         from pynets.core import utils
         from pynets.core.utils import load_runconfig
+        from pynets.dmri.estimation import reconstruction
         from pynets.dmri.track import (
-            reconstruction,
             create_density_map,
             track_ensemble,
         )
