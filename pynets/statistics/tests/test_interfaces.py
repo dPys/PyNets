@@ -14,7 +14,6 @@ from pathlib import Path
 from pynets.statistics.individual import algorithms
 from pynets.statistics import interfaces
 import logging
-from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
@@ -63,14 +62,8 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
 
     start_time = time.time()
 
-    f_temp = NamedTemporaryFile(mode='w+', suffix='.npy')
+    est_path = gen_mat_data(asfile=True)['mat_list'][0]
 
-    in_mat = gen_mat_data(asfile=False)['mat_list'][0]
-
-    np.save(f_temp.name, in_mat)
-    est_path = f_temp.name
-
-    roi = None
     try:
         extractnetstats = interfaces.NetworkAnalysis()
         extractnetstats.inputs.ID = ID
@@ -83,11 +76,10 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
         print("%s%s%s" % (
         'finished: ',
         str(np.round(time.time() - start_time, 1)), 's'))
-        assert out_path is not None
+        assert out_path.outputs.get()['out_path_neat'] is not None
 
     except PermissionError:
         pass
-    f_temp.close()
 
 
 @pytest.mark.parametrize("plot_switch", [True, False])

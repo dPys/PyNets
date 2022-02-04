@@ -62,11 +62,10 @@ def test_create_density_map():
 
     [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path,
                                                    streams_final_filt_final,
-                                                   conn_model,
-                                                   node_radius, curv_thr_list,
-                                                   step_list, subnet, roi,
-                                                   traversal, max_length,
-                                                   '/tmp')
+                                                   conn_model, node_radius,
+                                                   curv_thr_list, step_list,
+                                                   subnet, roi, traversal,
+                                                   max_length, '/tmp')
 
     assert dir_path is not None
     assert dm_path is not None
@@ -151,14 +150,16 @@ def test_track_ensemble(traversal, target_samples):
     hf.close()
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
-                                       labels_im_file,
-                   recon_path, sphere, traversal, curv_thr_list, step_list,
-                   track_type, maxcrossing, roi_neighborhood_tol, min_length,
-                   waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                   wm_in_dwi, tiss_class)
+                                       labels_im_file, recon_path, sphere,
+                                       traversal, curv_thr_list, step_list,
+                                       track_type, maxcrossing,
+                                       roi_neighborhood_tol, min_length,
+                                       waymask, B0_mask, gm_in_dwi, gm_in_dwi,
+                                       vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     assert isinstance(streamlines, ArraySequence)
     tmp.cleanup()
+
 
 @pytest.mark.slowtest
 def test_track_ensemble_particle():
@@ -221,13 +222,6 @@ def test_track_ensemble_particle():
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                    wm_in_dwi, tiss_class)
-
-    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
-              f"nodetype-parc_tracktype-particle_" \
-              f"traversal-prob_minlength-10.trk"
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
-                                       space=Space.VOXMM, origin=Origin.NIFTI),
-                    streams, bbox_valid_check=False)
 
     assert isinstance(streamlines, ArraySequence)
     tmp.cleanup()
