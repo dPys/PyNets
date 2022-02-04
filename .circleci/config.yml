@@ -153,7 +153,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
-            - tests/*
+            - data/*
 
   unit_and_integration_tests:
     machine:
