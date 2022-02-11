@@ -1082,7 +1082,7 @@ def workflow_selector(
             if 'OMNI' in embedding_methods:
                 omni_embedding_node_func = pe.Node(
                     niu.Function(
-                        input_names=["est_path_iterlist", "ID"],
+                        input_names=["est_path_iterlist"],
                         output_names=["out_paths_dwi", "out_paths_func"],
                         function=spectral.build_omnetome,
                     ),
@@ -1096,14 +1096,12 @@ def workflow_selector(
                             omni_embedding_node_func,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode,
-                         omni_embedding_node_func, [("ID", "ID")])
                     ]
                 )
             if 'ASE' in embedding_methods:
                 ase_embedding_node_func = pe.Node(
                     niu.Function(
-                        input_names=["est_path_iterlist", "ID"],
+                        input_names=["est_path_iterlist"],
                         output_names=["out_paths"],
                         function=spectral.build_asetomes,
                     ),
@@ -1117,8 +1115,6 @@ def workflow_selector(
                             ase_embedding_node_func,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, ase_embedding_node_func,
-                         [("ID", "ID")]),
                     ]
                 )
     if dwi_file and not func_file:
@@ -1145,7 +1141,7 @@ def workflow_selector(
             if 'OMNI' in embedding_methods:
                 omni_embedding_node_struct = pe.Node(
                     niu.Function(
-                        input_names=["est_path_iterlist", "ID"],
+                        input_names=["est_path_iterlist"],
                         output_names=["out_paths_dwi", "out_paths_func"],
                         function=spectral.build_omnetome,
                     ),
@@ -1159,14 +1155,12 @@ def workflow_selector(
                             omni_embedding_node_struct,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, omni_embedding_node_struct,
-                         [("ID", "ID")])
                     ]
                 )
             if 'ASE' in embedding_methods:
                 ase_embedding_node_struct = pe.Node(
                     niu.Function(
-                        input_names=["est_path_iterlist", "ID"],
+                        input_names=["est_path_iterlist"],
                         output_names=["out_paths"],
                         function=spectral.build_asetomes,
                     ),
@@ -1180,15 +1174,13 @@ def workflow_selector(
                             ase_embedding_node_struct,
                             [("est_path_iterlist", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, ase_embedding_node_struct,
-                         [("ID", "ID")]),
                     ]
                 )
     if multimodal is True:
         # print("Multiplex connectome modeling is temporarily unsupported.")
         mase_embedding_node = pe.Node(
             niu.Function(
-                input_names=["est_path_iterlist", "ID"],
+                input_names=["est_path_iterlist"],
                 output_names=["out_paths"],
                 function=spectral.build_masetome,
             ),
@@ -1222,7 +1214,7 @@ def workflow_selector(
                 build_multigraphs
             build_multigraphs_node = pe.Node(
                 niu.Function(
-                    input_names=["est_path_iterlist", "ID"],
+                    input_names=["est_path_iterlist"],
                     output_names=[
                         "multigraph_list_all",
                         "graph_path_list_top",
@@ -1242,7 +1234,6 @@ def workflow_selector(
                         build_multigraphs_node,
                         [("est_path_iterlist", "est_path_iterlist")],
                     ),
-                    (meta_inputnode, build_multigraphs_node, [("ID", "ID")]),
                 ]
             )
 
@@ -1294,7 +1285,6 @@ def workflow_selector(
                             mase_embedding_node,
                             [("graph_path_list_top", "est_path_iterlist")],
                         ),
-                        (meta_inputnode, mase_embedding_node, [("ID", "ID")]),
                     ]
                 )
 

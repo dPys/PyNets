@@ -97,13 +97,9 @@ def _omni_embed(pop_array, atlas, graph_path_list,
         mds = ClassicalMDS(n_components=n_components)
         omni_fit = omni.fit_transform(clean_mats)
 
-        # Transform omnibus tensor into dissimilarity feature
-        mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
-                                                     omni_fit.shape[2],
-                                                     omni_fit.shape[0]))
-
         out_path = (
-            f"{namer_dir}/gradient-OMNI_subnet-{atlas}_res-{subgraph_name}_"
+            f"{namer_dir}/gradient-OMNI_subnet-{atlas}_"
+            f"granularity-{subgraph_name}_"
             f"{os.path.basename(graph_path_list[0]).split('_thrtype')[0]}.npy"
         )
 
@@ -121,17 +117,24 @@ def _omni_embed(pop_array, atlas, graph_path_list,
         # dump(omni, out_path_est_omni)
         # dump(omni, out_path_est_mds)
 
+        # Transform omnibus tensor into dissimilarity feature
+        mds_fit = mds.fit_transform(omni_fit.reshape(omni_fit.shape[1],
+                                                     omni_fit.shape[2],
+                                                     omni_fit.shape[0]))
+
         print("Saving...")
         np.save(out_path, mds_fit)
-        del mds, mds_fit, omni, omni_fit
+        #np.save(out_path, omni_fit)
+        del mds, omni, omni_fit
     else:
         # Add a null tmp file to prevent pool from breaking
         out_path = f"{namer_dir}/gradient-OMNI" \
-                   f"_subnet-{atlas}_res-{subgraph_name}_" \
+                   f"_subnet-{atlas}_granularity-{subgraph_name}_" \
                    f"{os.path.basename(graph_path_list[0])}_NULL"
         # TODO: Replace this band-aid solution with the real fix
         out_path = out_path.replace('subnet-subnet-',
-                                    'subnet-').replace('res-res-', 'res-')
+                                    'subnet-').replace(
+            'granularity-granularity-', 'granularity-')
         if not os.path.exists(out_path):
             open(out_path, 'w').close()
     return out_path
@@ -308,7 +311,7 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
         os.makedirs(namer_dir, exist_ok=True)
 
     out_path = f"{namer_dir}/gradient-ASE" \
-               f"_subnet-{atlas}_res-{subgraph_name}_" \
+               f"_subnet-{atlas}_granularity-{subgraph_name}_" \
                f"{os.path.basename(graph_path)}"
     # out_path_est = f"{namer_dir}/gradient-ASE_{atlas}" \
     #                f"_{subgraph_name}" \
@@ -326,7 +329,7 @@ def _ase_embed(mat, atlas, graph_path, subgraph_name="all_nodes",
     return out_path
 
 
-def build_asetomes(est_path_iterlist, ID):
+def build_asetomes(est_path_iterlist):
     """
     Embeds single graphs using the ASE algorithm.
 
@@ -334,8 +337,6 @@ def build_asetomes(est_path_iterlist, ID):
     ----------
     est_path_iterlist : list
         List of file paths to .npy files, each containing a graph.
-    ID : str
-        A subject id or other unique identifier.
 
     """
     from pathlib import Path
@@ -388,7 +389,7 @@ def build_asetomes(est_path_iterlist, ID):
             if os.path.isdir(namer_dir) is False:
                 os.makedirs(namer_dir, exist_ok=True)
             out_path = f"{namer_dir}/gradient-ASE" \
-                       f"_subnet-{atlas}_res-{subgraph}_" \
+                       f"_subnet-{atlas}_granularity-{subgraph}_" \
                        f"{os.path.basename(file_)}_NULL"
             # TODO: Replace this band-aid solution with the real fix
             out_path = out_path.replace('subnet-subnet-',
@@ -401,7 +402,7 @@ def build_asetomes(est_path_iterlist, ID):
     return out_paths
 
 
-def build_masetome(est_path_iterlist, ID):
+def build_masetome(est_path_iterlist):
     """
     Embeds structural-functional graph pairs into a common invariant subspace.
 
@@ -411,8 +412,6 @@ def build_masetome(est_path_iterlist, ID):
         List of list of pairs of file paths (.npy) corresponding to
         structural and functional connectomes matched at a given node
         resolution.
-    ID : str
-        A subject id or other unique identifier.
 
     References
     ----------
@@ -484,7 +483,7 @@ def build_masetome(est_path_iterlist, ID):
     return out_paths
 
 
-def build_omnetome(est_path_iterlist, ID):
+def build_omnetome(est_path_iterlist):
     """
     Embeds ensemble population of graphs into an embedded ensemble feature
     vector.
@@ -493,8 +492,6 @@ def build_omnetome(est_path_iterlist, ID):
     ----------
     est_path_iterlist : list
         List of file paths to .npy file containing graph.
-    ID : str
-        A subject id or other unique identifier.
 
     References
     ----------

@@ -1,9 +1,10 @@
 """Configuration file for pytest for pynets."""
-
+import os
 from pathlib import Path
 import sys
 import pytest
 import tempfile
+import random
 import numpy as np
 if sys.platform.startswith('win') is False:
     import indexed_gzip
@@ -18,7 +19,7 @@ def gen_mat_data():
     def _gen_mat_data(n: int=20, m: int=20, p: int=0.50,
                       mat_type: str='sb', binary: bool=False,
                       asfile: bool=True, n_graphs: int=1,
-                      lcc: bool=False):
+                      lcc: bool=False, modality: str='func'):
         if binary is True:
             wt = 1
         else:
@@ -26,35 +27,52 @@ def gen_mat_data():
 
         mat_list = []
         mat_file_list = []
-        for nm in range(n_graphs):
-            if mat_type == 'er':
-                mat = symmetrize(
-                    remove_loops(er_nm(n, m, wt=np.random.uniform,
-                                       wtargs=dict(low=0, high=1))))
-            elif mat_type == 'sb':
-                if p is None:
-                    raise ValueError(
-                        f"for mat_type {mat_type}, p cannot be None")
-                mat = symmetrize(
-                    remove_loops(sbm(np.array([n]), np.array([[p]]),
-                                     wt=wt, wtargs=dict(low=0,
-                                                        high=1))))
-            else:
-                raise ValueError(f"mat_type {mat_type} not recognized!")
 
-            if lcc is True:
-                mat = largest_connected_component(mat)
+        tmp = tempfile.TemporaryDirectory()
+        dir_path = str(tmp.name)
+        os.makedirs(dir_path, exist_ok=True)
 
-            mat_list.append(autofix(mat))
+        if n_graphs > 0:
+            for nm in range(n_graphs):
+                if mat_type == 'er':
+                    mat = symmetrize(
+                        remove_loops(er_nm(n, m, wt=np.random.uniform,
+                                           wtargs=dict(low=0, high=1))))
+                elif mat_type == 'sb':
+                    if p is None:
+                        raise ValueError(
+                            f"for mat_type {mat_type}, p cannot be None")
+                    mat = symmetrize(
+                        remove_loops(sbm(np.array([n]), np.array([[p]]),
+                                         wt=wt, wtargs=dict(low=0,
+                                                            high=1))))
+                else:
+                    raise ValueError(f"mat_type {mat_type} not recognized!")
 
-            if asfile is True:
-                mat_path_tmp = tempfile.NamedTemporaryFile(mode='w+',
-                                                           suffix='.npy',
-                                                           delete=False)
-                mat_path = str(mat_path_tmp.name)
-                np.save(mat_path, mat)
-                mat_file_list.append(mat_path)
-                mat_path_tmp.close()
+                if lcc is True:
+                    mat = largest_connected_component(mat)
+
+                mat_list.append(autofix(mat))
+
+                if asfile is True:
+                    if modality == 'func':
+                        mat_path = f"{dir_path}/graph_sub-999_modality-func_" \
+                        f"model-corr_template-" \
+                        f"MNI152_2mm_" \
+                        f"parc_tol-6fwhm_hpass-" \
+                        f"0Hz_" \
+                        f"signal-mean_thrtype-prop_thr-" \
+                        f"{round(random.uniform(0, 1),2)}.npy"
+                    elif modality == 'dwi':
+                        mat_path = f"{dir_path}/graph_sub-999_modality-func_" \
+                        f"model-csa_template-" \
+                        f"MNI152_2mm_tracktype-local_" \
+                        f"traversal-det_minlength-30_" \
+                        f"tol-5_thrtype-prop_thr-" \
+                        f"{round(random.uniform(0, 1),2)}.npy"
+
+                    np.save(mat_path, mat)
+                    mat_file_list.append(mat_path)
 
         return {'mat_list': mat_list, 'mat_file_list': mat_file_list}
 

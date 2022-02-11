@@ -554,13 +554,13 @@ def run_tracking(step_curv_combinations, recon_shelved,
                  particle_count, roi_neighborhood_tol, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
                  tissue_shelved, verbose=False):
-   """
+    """
     Create a density map of the list of streamlines.
 
     Parameters
     ----------
     step_curv_combinations : list
-        List of tuples representing all pair combinations of step sizes and 
+        List of tuples representing all pair combinations of step sizes and
         curvature thresholds from which to sample streamlines.
     recon_path : str
         File path to diffusion reconstruction model.
@@ -607,7 +607,7 @@ def run_tracking(step_curv_combinations, recon_shelved,
         Tissue classification method.
     tissue_shelved : str
         File path to joblib-shelved 4D T1w tissue segmentations in native diffusion space.
-    
+
     Returns
     -------
     streamlines : ArraySequence
