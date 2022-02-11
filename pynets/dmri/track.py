@@ -548,14 +548,71 @@ def track_ensemble(
         print(Style.RESET_ALL)
         #return None
 
-
 def run_tracking(step_curv_combinations, recon_shelved,
                  n_seeds_per_iter, traversal, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
                  particle_count, roi_neighborhood_tol, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
                  tissue_shelved, verbose=False):
+   """
+    Create a density map of the list of streamlines.
 
+    Parameters
+    ----------
+    step_curv_combinations : list
+        List of tuples representing all pair combinations of step sizes and 
+        curvature thresholds from which to sample streamlines.
+    recon_path : str
+        File path to diffusion reconstruction model.
+    n_seeds_per_iter : int
+        Number of seeds from which to initiate tracking for each unique
+        ensemble combination. By default this is set to 250.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
+    maxcrossing : int
+        Maximum number if diffusion directions that can be assumed per voxel
+        while tracking.
+    max_length : int
+        Maximum number of steps to restrict tracking.
+    pft_back_tracking_dist : float
+        Distance in mm to back track before starting the particle filtering
+        tractography. The total particle filtering tractography distance is
+        equal to back_tracking_dist + front_tracking_dist. By default this is
+        set to 2 mm.
+    pft_front_tracking_dist : float
+        Distance in mm to run the particle filtering tractography after the
+        the back track distance. The total particle filtering tractography
+        distance is equal to back_tracking_dist + front_tracking_dist. By
+        default this is set to 1 mm.
+    particle_count : int
+        Number of particles to use in the particle filter.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
+    waymask_data : ndarray
+        Tractography constraint mask array in native diffusion space.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    min_separation_angle : float
+        The minimum angle between directions [0, 90].
+    sphere : obj
+        DiPy object for modeling diffusion directions on a sphere.
+    tiss_class : str
+        Tissue classification method.
+    tissue_shelved : str
+        File path to joblib-shelved 4D T1w tissue segmentations in native diffusion space.
+    
+    Returns
+    -------
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+    """
     import gc
     import time
     import numpy as np
