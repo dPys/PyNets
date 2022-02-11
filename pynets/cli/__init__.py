@@ -9,7 +9,7 @@ from ..__about__ import (
     __packagename__,
 )
 
-from ..stats import *
+from ..statistics import *
 from ..registration import *
 from ..dmri import *
 from ..fmri import *

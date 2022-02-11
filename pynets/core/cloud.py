@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 from configparser import ConfigParser
 import os

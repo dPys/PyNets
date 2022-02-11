@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import warnings
 import numpy as np
@@ -14,10 +13,10 @@ if sys.platform.startswith('win') is False:
 warnings.filterwarnings("ignore")
 
 
-def get_optimal_cov_estimator(time_series):
+def get_optimal_cov_estimator(time_series, cv=5, max_iter=200):
     from sklearn.covariance import GraphicalLassoCV
 
-    estimator = GraphicalLassoCV(cv=5, assume_centered=True)
+    estimator = GraphicalLassoCV(cv=cv, assume_centered=True)
     print("\nSearching for best Lasso...\n")
     try:
         estimator.fit(time_series)
@@ -28,9 +27,9 @@ def get_optimal_cov_estimator(time_series):
               "Varying tolerance...\n")
         while not hasattr(estimator, 'covariance_') and \
                 not hasattr(estimator, 'precision_') and ix < 3:
-            for tol in [0.1, 0.01, 0.001, 0.0001]:
-                print(f"Tolerance={tol}")
-                estimator = GraphicalLassoCV(cv=5, max_iter=200, tol=tol,
+            for t in [0.1, 0.01, 0.001, 0.0001]:
+                print(f"Tolerance={t}")
+                estimator = GraphicalLassoCV(cv=cv, max_iter=max_iter, tol=t,
                                              assume_centered=True)
                 try:
                     estimator.fit(time_series)
@@ -75,10 +74,10 @@ def get_conn_matrix(
     time_series,
     conn_model,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     dens_thresh,
-    network,
+    subnet,
     ID,
     roi,
     min_span_tree,
@@ -86,13 +85,13 @@ def get_conn_matrix(
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
     binary,
     hpass,
-    extract_strategy,
+    signal,
 ):
     """
     Computes a functional connectivity matrix based on a node-extracted
@@ -110,7 +109,7 @@ def get_conn_matrix(
        correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -119,8 +118,8 @@ def get_conn_matrix(
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -131,14 +130,14 @@ def get_conn_matrix(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to ROI nodes.
@@ -152,7 +151,7 @@ def get_conn_matrix(
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -166,7 +165,7 @@ def get_conn_matrix(
        correlation). sps type is used by default.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     smooth : int
@@ -175,8 +174,8 @@ def get_conn_matrix(
     dens_thresh : bool
         Indicates whether a target graph density is to be used as the basis for
         thresholding.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -187,14 +186,14 @@ def get_conn_matrix(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -208,7 +207,7 @@ def get_conn_matrix(
         unweighted graph.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -289,8 +288,8 @@ def get_conn_matrix(
             kind = "covariance"
         else:
             raise ValueError(
-                "\nERROR! No connectivity model specified at runtime. Select a"
-                " valid estimator using the -mod flag.")
+                "\nERROR! No connectivity model specified at runtime. "
+                "Select a valid estimator using the -mod flag.")
 
         # Try with the best-fitting Lasso estimator
         if estimator:
@@ -307,7 +306,8 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLasso
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLasso. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLasso
             # credit: skggm
@@ -322,26 +322,28 @@ def get_conn_matrix(
             try:
                 from inverse_covariance import QuicGraphicalLassoCV
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoCV. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoCV. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoCV
             # credit: skggm
             model = QuicGraphicalLassoCV(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoCV precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoCV precision "
+                  "matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "QuicGraphicalLassoEBIC":
             try:
                 from inverse_covariance import QuicGraphicalLassoEBIC
             except ImportError as e:
-                print(e, "Cannot run QuicGraphLassoEBIC. Skggm not installed!")
+                print(e, "Cannot run QuicGraphLassoEBIC. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via QuicGraphLassoEBIC
             # credit: skggm
             model = QuicGraphicalLassoEBIC(init_method="cov", verbose=1)
-            print("\nCalculating QuicGraphLassoEBIC precision matrix using"
-                  " skggm...\n")
+            print("\nCalculating QuicGraphLassoEBIC "
+                  "precision matrix using skggm...\n")
             model.fit(time_series)
             conn_matrix = model.precision_
         elif conn_model == "AdaptiveQuicGraphicalLasso":
@@ -351,7 +353,8 @@ def get_conn_matrix(
                     QuicGraphicalLassoEBIC,
                 )
             except ImportError as e:
-                print(e, "Cannot run AdaptiveGraphLasso. Skggm not installed!")
+                print(e, "Cannot run AdaptiveGraphLasso. "
+                         "Skggm not installed!")
 
             # Compute the sparse inverse covariance via
             # AdaptiveGraphLasso + QuicGraphLassoEBIC + method='binary'
@@ -372,33 +375,34 @@ def get_conn_matrix(
     conn_matrix = np.nan_to_num(np.maximum(conn_matrix, conn_matrix.T))
 
     if parc is True:
-        node_size = "parc"
+        node_radius = "parc"
 
     # Save unthresholded
     utils.save_mat(
         conn_matrix,
         utils.create_raw_path_func(
             ID,
-            network,
+            subnet,
             conn_model,
             roi,
             dir_path,
-            node_size,
+            node_radius,
             smooth,
             hpass,
             parc,
-            extract_strategy,
+            signal,
         ),
     )
 
     if conn_matrix.shape < (2, 2):
         raise RuntimeError(
-            "\nMatrix estimation selection yielded an empty or"
-            " 1-dimensional graph. "
-            "Check time-series for errors or try using a different atlas")
+            "\nMatrix estimation selection yielded an "
+            "empty or 1-dimensional graph. "
+            "Check time-series for errors or try using a "
+            "different atlas")
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-rawgraph"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-rawgraph"
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
@@ -416,10 +420,10 @@ def get_conn_matrix(
         conn_matrix,
         conn_model,
         dir_path,
-        node_size,
+        node_radius,
         smooth,
         dens_thresh,
-        network,
+        subnet,
         ID,
         roi,
         min_span_tree,
@@ -427,13 +431,13 @@ def get_conn_matrix(
         parc,
         prune,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,
         binary,
         hpass,
-        extract_strategy,
+        signal,
     )
 
 
@@ -493,257 +497,3 @@ def fill_confound_nans(confounds, dir_path, drop_thr=0.50):
     confounds_nonan.to_csv(conf_corr, sep="\t", index=False)
     return conf_corr
 
-
-class TimeseriesExtraction(object):
-    """
-    Class for implementing various time-series extracting routines.
-    """
-
-    def __init__(
-        self,
-        net_parcels_nii_path,
-        node_size,
-        conf,
-        func_file,
-        roi,
-        dir_path,
-        ID,
-        network,
-        smooth,
-        hpass,
-        mask,
-        extract_strategy,
-    ):
-        import sys
-        import yaml
-        import pkg_resources
-        self.net_parcels_nii_path = net_parcels_nii_path
-        self.node_size = node_size
-        self.conf = conf
-        self.func_file = func_file
-        self.roi = roi
-        self.dir_path = dir_path
-        self.ID = ID
-        self.network = network
-        self.smooth = smooth
-        self.mask = mask
-        self.hpass = hpass
-        self.extract_strategy = extract_strategy
-        self.ts_within_nodes = None
-        self._mask_img = None
-        self._mask_path = None
-        self._func_img = None
-        self._t_r = None
-        self._detrending = True
-        self._net_parcels_nii_temp_path = None
-        self._net_parcels_map_nifti = None
-        self._parcel_masker = None
-
-        from pynets.core.utils import load_runconfig
-        hardcoded_params = load_runconfig()
-        try:
-            self.low_pass = hardcoded_params["low_pass"][0]
-        except KeyError as e:
-            print(e,
-                  "ERROR: Plotting configuration not successfully extracted "
-                  "from runconfig.yaml"
-                  )
-
-    def prepare_inputs(self, num_std_dev=1.5):
-        """Helper function to creating temporary nii's and prepare inputs from
-         time-series extraction"""
-        import os.path as op
-        import nibabel as nib
-        from nilearn.image import math_img, index_img, resample_to_img
-        from nilearn.masking import intersect_masks
-        from nilearn.image import new_img_like
-
-        if not op.isfile(self.func_file):
-            raise FileNotFoundError(
-                "\nFunctional data input not found! Check that the"
-                " file(s) specified with the -i "
-                "flag exist(s)")
-
-        if self.conf:
-            if not op.isfile(self.conf):
-                raise FileNotFoundError(
-                    "\nConfound regressor file not found! Check "
-                    "that the file(s) specified with the -conf flag "
-                    "exist(s)")
-
-        self._func_img = nib.load(self.func_file)
-        self._func_img.set_data_dtype(np.float32)
-
-        func_vol_img = index_img(self._func_img, 1)
-        func_vol_img.set_data_dtype(np.uint16)
-        func_data = np.asarray(func_vol_img.dataobj, dtype=np.float32)
-        func_int_thr = np.round(
-            np.mean(func_data[func_data > 0])
-            - np.std(func_data[func_data > 0]) * num_std_dev,
-            3,
-        )
-        hdr = self._func_img.header
-
-        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path,
-                                               mmap=True)
-        self._net_parcels_map_nifti.set_data_dtype(np.int16)
-
-        if self.hpass:
-            if len(hdr.get_zooms()) == 4:
-                self._t_r = float(hdr.get_zooms()[-1])
-            else:
-                self._t_r = None
-        else:
-            self._t_r = None
-
-        if self.hpass is not None:
-            if float(self.hpass) > 0:
-                self.hpass = float(self.hpass)
-                self._detrending = False
-            else:
-                self.hpass = None
-                self._detrending = True
-        else:
-            self.hpass = None
-            self._detrending = True
-
-        if self.mask is not None:
-            # Ensure mask is binary and contains only voxels that also
-            # overlap with the parcellation and first functional volume
-            self._mask_img = intersect_masks(
-                [
-                    math_img(f"img > {func_int_thr}", img=func_vol_img),
-                    math_img("img > 0.0001",
-                             img=resample_to_img(nib.load(self.mask),
-                                                 func_vol_img))
-                ],
-                threshold=1,
-                connected=False,
-            )
-            self._mask_img.set_data_dtype(np.uint16)
-        else:
-            print("Warning: Proceeding to extract time-series without a "
-                  "brain mask...")
-            self._mask_img = None
-
-        if self.smooth:
-            if float(self.smooth) > 0:
-                print(f"Smoothing FWHM: {self.smooth} mm\n")
-
-        if self.hpass:
-            print(f"Applying high-pass filter: {self.hpass} Hz\n")
-
-        return
-
-    def extract_ts_parc(self):
-        """
-        API for employing Nilearn's NiftiLabelsMasker to extract fMRI
-        time-series data from spherical ROI's based on a given 3D atlas image
-        of integer-based voxel intensities. The resulting time-series can then
-        optionally be resampled using circular-block bootrapping. The final 2D
-        m x n array is ultimately saved to file in .npy format.
-        """
-        import pandas as pd
-        from nilearn import input_data
-        from pynets.fmri.estimation import fill_confound_nans
-
-        self._parcel_masker = input_data.NiftiLabelsMasker(
-            labels_img=self._net_parcels_map_nifti,
-            background_label=0,
-            standardize=True,
-            smoothing_fwhm=float(self.smooth),
-            low_pass=self.low_pass,
-            high_pass=self.hpass,
-            detrend=self._detrending,
-            t_r=self._t_r,
-            verbose=2,
-            resampling_target="labels",
-            dtype="auto",
-            mask_img=self._mask_img,
-            strategy=self.extract_strategy
-        )
-
-        if self.conf is not None:
-            import os
-
-            confounds = pd.read_csv(self.conf, sep="\t")
-
-            cols = [i for i in confounds.columns if 'motion_outlier' in i
-                    or i == 'framewise_displacement'
-                    or i == 'white_matter' or i == 'csf'
-                    or i == 'std_dvars' or i == 'rot_z'
-                    or i == 'rot_y' or i == 'rot_x' or i == 'trans_z'
-                    or i == 'trans_y' or i == 'trans_x'
-                    or 'non_steady_state_outlier' in i]
-
-            if len(confounds.index) == self._func_img.shape[-1]:
-                if confounds.isnull().values.any():
-                    conf_corr = fill_confound_nans(confounds, self.dir_path)
-                    conf_corr_df = pd.read_csv(conf_corr, sep="\t")
-                    cols = [i for i in cols if i in conf_corr_df.columns]
-                    self.ts_within_nodes = self._parcel_masker.fit_transform(
-                        self._func_img.slicer[:,:,:,5:],
-                        confounds=conf_corr_df.loc[5:][cols].values
-                    )
-                    os.remove(conf_corr)
-                else:
-                    self.ts_within_nodes = self._parcel_masker.fit_transform(
-                        self._func_img.slicer[:,:,:,5:],
-                        confounds=pd.read_csv(self.conf,
-                                              sep="\t").loc[5:][cols].values
-                    )
-            else:
-                from nilearn.image import high_variance_confounds
-                print(f"Shape of confounds ({len(confounds.index)}) does not"
-                      f" equal the number of volumes "
-                      f"({self._func_img.shape[-1]}) in the time-series")
-                self.ts_within_nodes = self._parcel_masker.fit_transform(
-                    self._func_img.slicer[:,:,:,5:],
-                    confounds=pd.DataFrame(
-                        high_variance_confounds(
-                            self._func_img,
-                            percentile=1)).loc[5:].values)
-        else:
-            from nilearn.image import high_variance_confounds
-            self.ts_within_nodes = self._parcel_masker.fit_transform(
-                self._func_img.slicer[:,:,:,5:],
-                confounds=pd.DataFrame(
-                    high_variance_confounds(self._func_img,
-                                            percentile=1)).loc[5:].values)
-
-        self._func_img.uncache()
-
-        if self.ts_within_nodes is None:
-            raise RuntimeError("\nTime-series extraction failed!")
-
-        else:
-            self.node_size = "parc"
-
-        return
-
-    def save_and_cleanup(self):
-        """Save the extracted time-series and clean cache"""
-        import gc
-        from pynets.core import utils
-
-        # Save time series as file
-        utils.save_ts_to_file(
-            self.roi,
-            self.network,
-            self.ID,
-            self.dir_path,
-            self.ts_within_nodes,
-            self.smooth,
-            self.hpass,
-            self.node_size,
-            self.extract_strategy,
-        )
-
-        if self._mask_path is not None:
-            self._mask_img.uncache()
-
-        if self._parcel_masker is not None:
-            del self._parcel_masker
-            self._net_parcels_map_nifti.uncache()
-        gc.collect()
-        return

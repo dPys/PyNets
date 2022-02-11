@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import warnings
 import numpy as np
@@ -50,7 +49,7 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
 
     data = nib.load(dwi_file, mmap=False).get_fdata(dtype=np.float32)
 
-    print("Generating tensor FA image to use for registrations...")
+    print("Reconstructing tensors...")
     nodif_B0_img = nib.load(B0_mask, mmap=False)
     nodif_B0_mask_data = nodif_B0_img.get_fdata().astype("bool")
     model = TensorModel(gtab)
@@ -142,7 +141,7 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     if os.path.isfile(anisopwr_path):
         pass
     else:
-        print("Generating anisotropic power map to use for registrations...")
+        print("Reconstructing anisotropic power map...")
         nodif_B0_img = nib.load(B0_mask)
         dwi_data = img.get_fdata(dtype=np.float32)
         for b0 in sorted(list(np.where(gtab.b0s_mask)[0]), reverse=True):
@@ -197,14 +196,14 @@ def tens_mod_est(gtab, data, B0_mask):
     from dipy.reconst.dti import TensorModel
     from dipy.data import get_sphere
 
-    sphere = get_sphere("repulsion724")
-    B0_mask_data = np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool")
-    print("Generating tensor model...")
+    print("Reconstructing tensors...")
     model = TensorModel(gtab)
-    mod = model.fit(data, B0_mask_data)
-    mod_odf = mod.odf(sphere)
-    del B0_mask_data
+    mod = model.fit(data,
+                    np.nan_to_num(
+                        np.asarray(
+                            nib.load(B0_mask).dataobj)
+                    ).astype("bool"))
+    mod_odf = mod.odf(get_sphere("repulsion724"))
     return mod_odf, model
 
 
@@ -238,15 +237,13 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     """
     from dipy.reconst.shm import CsaOdfModel
 
-    print("Fitting CSA model...")
+    print("Reconstructing using CSA...")
     model = CsaOdfModel(gtab, sh_order=sh_order)
-    B0_mask_data = np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool")
-    csa_mod = model.fit(data, B0_mask_data).shm_coeff
+    csa_mod = model.fit(data, np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj)).astype("bool")).shm_coeff
     # Clip any negative values
     csa_mod = np.clip(csa_mod, 0, np.max(csa_mod, -1)[..., None])
-    del B0_mask_data
-    return csa_mod, model
+    return csa_mod.astype("float32"), model
 
 
 def csd_mod_est(gtab, data, B0_mask, sh_order=8):
@@ -291,10 +288,9 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         recursive_response,
     )
 
-    print("Fitting CSD model...")
+    print("Reconstructing using CSD...")
     B0_mask_data = np.nan_to_num(np.asarray(
         nib.load(B0_mask).dataobj)).astype("bool")
-    print("Reconstructing...")
     response = recursive_response(
         gtab,
         data,
@@ -307,11 +303,127 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         convergence=0.001,
         parallel=False
     )
-    print(f"CSD Reponse: {response}")
+    # print(f"CSD Reponse: {response}")
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
+    csd_mod = np.clip(csd_mod, 0, np.max(csd_mod, -1)[..., None])
     del response, B0_mask_data
-    return csd_mod, model
+    return csd_mod.astype("float32"), model
+
+
+def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                 sh_order=8, roi_radii=10):
+    """
+    Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
+
+    Parameters
+    ----------
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    data : array
+        4D numpy array of diffusion image data.
+    B0_mask : str
+        File path to B0 brain mask.
+    sh_order : int
+        The order of the SH model. Default is 8.
+
+    Returns
+    -------
+    csd_mod : ndarray
+        Coefficients of the csd reconstruction.
+    model : obj
+        Fitted csd model.
+
+    References
+    ----------
+    .. [1] Tournier, J.D., et al. NeuroImage 2007. Robust determination of
+      the fibre orientation distribution in diffusion MRI:
+      Non-negativity constrained super-resolved spherical
+      deconvolution
+    .. [2] Descoteaux, M., et al. IEEE TMI 2009. Deterministic and
+      Probabilistic Tractography Based on Complex Fibre Orientation
+      Distributions
+    .. [3] Côté, M-A., et al. Medical Image Analysis 2013. Tractometer:
+      Towards validation of tractography pipelines
+    .. [4] Tournier, J.D, et al. Imaging Systems and Technology
+      2012. MRtrix: Diffusion Tractography in Crossing Fiber Regions
+
+    """
+    import dipy.reconst.dti as dti
+    from nilearn.image import math_img
+    from dipy.core.gradients import unique_bvals_tolerance
+    from dipy.reconst.mcsd import (mask_for_response_msmt,
+                                   response_from_mask_msmt,
+                                   multi_shell_fiber_response,
+                                   MultiShellDeconvModel)
+
+    print("Reconstructing using MCSD...")
+
+    B0_mask_data = np.nan_to_num(np.asarray(
+        nib.load(B0_mask).dataobj)).astype("bool")
+
+    # Load tissue maps and prepare tissue classifier
+    gm_mask_img = math_img("img > 0.10", img=gm_in_dwi)
+    gm_data = np.asarray(gm_mask_img.dataobj, dtype=np.float32)
+
+    wm_mask_img = math_img("img > 0.15", img=wm_in_dwi)
+    wm_data = np.asarray(wm_mask_img.dataobj, dtype=np.float32)
+
+    vent_csf_in_dwi_img = math_img("img > 0.50", img=vent_csf_in_dwi)
+    vent_csf_in_dwi_data = np.asarray(vent_csf_in_dwi_img.dataobj,
+                                      dtype=np.float32)
+
+    # Fit a simple DTI model
+    tenfit = dti.TensorModel(gtab).fit(data)
+
+    # Obtain the FA and MD metrics
+    FA = tenfit.fa
+    MD = tenfit.md
+
+    indices_csf = np.where(((FA < 0.2) & (vent_csf_in_dwi_data > 0.50)))
+    indices_gm = np.where(((FA < 0.2) & (gm_data > 0.10)))
+    indices_wm = np.where(((FA >= 0.2) & (wm_data > 0.15)))
+
+    selected_csf = np.zeros(FA.shape, dtype='bool')
+    selected_gm = np.zeros(FA.shape, dtype='bool')
+    selected_wm = np.zeros(FA.shape, dtype='bool')
+
+    selected_csf[indices_csf] = True
+    selected_gm[indices_gm] = True
+    selected_wm[indices_wm] = True
+
+    mask_wm, mask_gm, mask_csf = mask_for_response_msmt(
+        gtab, data, roi_radii=roi_radii,
+        wm_fa_thr=np.nanmean(FA[selected_wm]),
+        gm_fa_thr=np.nanmean(FA[selected_gm]),
+        csf_fa_thr=np.nanmean(FA[selected_csf]),
+        gm_md_thr=np.nanmean(MD[selected_gm]),
+        csf_md_thr=np.nanmean(MD[selected_csf]))
+
+    mask_wm *= wm_data.astype('int64')
+    mask_gm *= gm_data.astype('int64')
+    mask_csf *= vent_csf_in_dwi_data.astype('int64')
+
+    # nvoxels_wm = np.sum(mask_wm)
+    # nvoxels_gm = np.sum(mask_gm)
+    # nvoxels_csf = np.sum(mask_csf)
+
+    response_wm, response_gm, response_csf = response_from_mask_msmt(
+        gtab, data, mask_wm, mask_gm, mask_csf)
+
+    response_mcsd = multi_shell_fiber_response(sh_order=8,
+                                               bvals=unique_bvals_tolerance(
+                                                   gtab.bvals),
+                                               wm_rf=response_wm,
+                                               gm_rf=response_gm,
+                                               csf_rf=response_csf)
+
+    model = MultiShellDeconvModel(gtab, response_mcsd, sh_order=sh_order)
+    mcsd_mod = model.fit(data, B0_mask_data).shm_coeff
+
+    mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
+    del response_mcsd, B0_mask_data
+    return mcsd_mod.astype("float32"), model
 
 
 def sfm_mod_est(gtab, data, B0_mask):
@@ -349,17 +461,74 @@ def sfm_mod_est(gtab, data, B0_mask):
     import dipy.reconst.sfm as sfm
 
     sphere = get_sphere("repulsion724")
-    print("Fitting SF model...")
-    B0_mask_data = np.nan_to_num(np.asarray(nib.load(
-        B0_mask).dataobj)).astype("bool")
-    print("Reconstructing...")
+    print("Reconstructing using SFM...")
     model = sfm.SparseFascicleModel(
         gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
-    sf_mod = model.fit(data, mask=B0_mask_data)
+    sf_mod = model.fit(data, mask=np.nan_to_num(np.asarray(nib.load(
+        B0_mask).dataobj)).astype("bool"))
     sf_odf = sf_mod.odf(sphere)
+    sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])
+    return sf_odf.astype("float32"), model
 
-    del B0_mask_data
-    return sf_odf, model
+
+def reconstruction(conn_model, gtab, dwi_data, B0_mask):
+    """
+    Estimate a tensor model from dwi data.
+
+    Parameters
+    ----------
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
+        'sfm').
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    dwi_data : array
+        4D array of dwi data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    mod_fit : ndarray
+        Fitted connectivity reconstruction model.
+    mod : obj
+        Connectivity reconstruction model.
+
+    References
+    ----------
+    .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
+      A hitchhiker’s guide to diffusion tensor imaging.
+      Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
+    """
+    from pynets.dmri.estimation import (
+        csa_mod_est,
+        csd_mod_est,
+        sfm_mod_est,
+        tens_mod_est,
+        mcsd_mod_est
+    )
+
+    if conn_model == "csa" or conn_model == "CSA":
+        [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
+    # elif conn_model == "mcsd" or conn_model == "MCSD":
+    #     [mod_fit, mod] = mcsd_mod_est(gtab, dwi_data, B0_mask, wm_in_dwi,
+    #                                   gm_in_dwi, vent_csf_in_dwi)
+    elif conn_model == "csd" or conn_model == "CSD":
+        [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "sfm" or conn_model == "SFM":
+        [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "ten" or conn_model == "tensor" or \
+            conn_model == "TEN":
+        [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
+    else:
+        raise ValueError(
+            "Error: No valid reconstruction model specified. See the "
+            "`-mod` flag."
+        )
+
+    del dwi_data
+
+    return mod_fit, mod
 
 
 def streams2graph(
@@ -367,10 +536,9 @@ def streams2graph(
     streams,
     dir_path,
     track_type,
-    target_samples,
     conn_model,
-    network,
-    node_size,
+    subnet,
+    node_radius,
     dens_thresh,
     ID,
     roi,
@@ -379,12 +547,12 @@ def streams2graph(
     parc,
     prune,
     atlas,
-    uatlas,
+    parcellation,
     labels,
     coords,
     norm,
     binary,
-    directget,
+    traversal,
     warped_fa,
     min_length,
     error_margin
@@ -403,14 +571,12 @@ def streams2graph(
         pynets run.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -425,14 +591,14 @@ def streams2graph(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -444,7 +610,7 @@ def streams2graph(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -466,16 +632,14 @@ def streams2graph(
         Adjacency matrix stored as an m x n array of nodes and edges.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     dir_path : str
         Path to directory containing subject derivative data for given run.
     conn_model : str
         Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd').
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for tracking.
     dens_thresh : bool
@@ -490,14 +654,14 @@ def streams2graph(
         should be used.
     disp_filt : bool
         Indicates whether local thresholding using a disparity filter and
-        'backbone network' should be used.
+        'backbone subnet' should be used.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
     prune : bool
         Indicates whether to prune final graph of disconnected nodes/isolates.
     atlas : str
         Name of atlas parcellation used.
-    uatlas : str
+    parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
     labels : list
         List of string labels corresponding to graph nodes.
@@ -509,7 +673,7 @@ def streams2graph(
     binary : bool
         Indicates whether to binarize resulting graph edges to form an
         unweighted graph.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are: det (deterministic),
         closest (clos), boot (bootstrapped), and prob (probabilistic).
     min_length : int
@@ -527,7 +691,7 @@ def streams2graph(
       using diffusion MRI: why, how and but. NMR in Biomedicine.
       https://doi.org/10.1002/nbm.3752
     .. [3] Chung, M. K., Hanson, J. L., Adluru, N., Alexander, A. L., Davidson,
-      R. J., & Pollak, S. D. (2017). Integrative Structural Brain Network
+      R. J., & Pollak, S. D. (2017). Integrative Structural Brain subnet
       Analysis in Diffusion Tensor Imaging. Brain Connectivity.
       https://doi.org/10.1089/brain.2016.0481
     """
@@ -587,18 +751,18 @@ def streams2graph(
             )
         ]
 
-        # from fury import actor, window
+        # from fury import actor, window, colormap
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
         #                                         color=(50, 50, 50),
-        #                                         opacity=0.05)
+        #                                         opacity=1)
         # renderer.add(template_actor)
-        # lines_actor = actor.streamtube(streamlines, window.colors.orange,
-        #                                linewidth=0.3)
+        # lines_actor = actor.line(streamlines,
+        #                                colormap.line_colors(streamlines))
         # renderer.add(lines_actor)
         # window.show(renderer)
-
-        roi_img.uncache()
+        #
+        # roi_img.uncache()
 
         if fa_wei is True:
             fa_weights = values_from_volume(
@@ -622,6 +786,7 @@ def streams2graph(
         total_streamlines = len(streamlines)
         sl = [generate_sl(i) for i in streamlines]
         del streamlines
+        gc.collect()
 
         # Instantiate empty networkX graph object & dictionary and create
         # voxel-affine mapping
@@ -653,13 +818,15 @@ def streams2graph(
 
             # Map the streamlines coordinates to voxel coordinates and get
             # labels for label_volume
-            vox_coords = _to_voxel_coordinates(Streamlines(s), lin_T, offset)
+            s = Streamlines(s)
+            if s.data.shape[0] == 0:
+                continue
+            vox_coords = _to_voxel_coordinates(s, lin_T, offset)
 
-            lab_coords = [
+            [i, j, k] = np.vstack(np.array([
                 nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape)
                 for coord in vox_coords
-            ]
-            [i, j, k] = np.vstack(np.array(lab_coords)).T
+            ])).T
 
             # get labels for label_volume
             lab_arr = atlas_data[i, j, k]
@@ -676,8 +843,7 @@ def streams2graph(
                             f"registration and ensure valid input "
                             f"parcellation file.")
 
-            edges = combinations(endlabels, 2)
-            for edge in edges:
+            for edge in combinations(endlabels, 2):
                 # Get fiber lengths along edge
                 if fiber_density is True:
                     if not (edge[0], edge[1]) in fiberlengths.keys():
@@ -695,15 +861,17 @@ def streams2graph(
                         fa_weights_dict[(edge[0],
                                          edge[1])].append(fa_weights_norm[ix])
 
-                lst = tuple([int(node) for node in edge])
-                edge_dict[tuple(sorted(lst))] += 1
+                edge_dict[tuple(sorted(tuple([int(node) for node in
+                                              edge])))] += 1
 
-            edge_list = [(k[0], k[1], count) for k, count in edge_dict.items()]
+            g.add_weighted_edges_from([(k[0],
+                                        k[1], count) for
+                                       k, count in edge_dict.items()])
 
-            g.add_weighted_edges_from(edge_list)
+            del lab_arr, endlabels
+            gc.collect()
 
-            del lab_coords, lab_arr, endlabels, edges, edge_list
-
+        del sl
         gc.collect()
 
         # Add fiber density attributes for each edge
@@ -724,10 +892,10 @@ def streams2graph(
             ix = 0
             for u, v, d in g.edges(data=True):
                 if d['weight'] > 0:
-                    edge_fiberlength_mean = np.nanmean(fiberlengths[(u, v)])
                     fiber_density = (float(((float(d['weight']) /
                                              float(total_fibers)) /
-                                            float(edge_fiberlength_mean)) *
+                                            float(np.nanmean(fiberlengths[
+                                                                 (u, v)]))) *
                                            ((2.0 * float(total_volume)) /
                                             (g.nodes[int(u)]['roi_volume'] +
                                                g.nodes[int(v)]['roi_volume']))
@@ -738,7 +906,8 @@ def streams2graph(
                 ix += 1
 
         if fa_wei is True:
-            print("Re-weighting edges by FA...")
+            print("Re-weighting edges by mean FA along each edge's associated "
+                  "bundles...")
             # Add FA attributes for each edge
             ix = 0
             for u, v, d in g.edges(data=True):
@@ -785,8 +954,8 @@ def streams2graph(
 
     assert len(coords) == len(labels) == conn_matrix.shape[0]
 
-    if network is not None:
-        atlas_name = f"{atlas}_{network}_stage-rawgraph"
+    if subnet is not None:
+        atlas_name = f"{atlas}_{subnet}_stage-rawgraph"
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
@@ -797,22 +966,21 @@ def streams2graph(
     labels = np.array(labels)
 
     if parc is True:
-        node_size = "parc"
+        node_radius = "parc"
 
     # Save unthresholded
     utils.save_mat(
         conn_matrix,
         utils.create_raw_path_diff(
             ID,
-            network,
+            subnet,
             conn_model,
             roi,
             dir_path,
-            node_size,
-            target_samples,
+            node_radius,
             track_type,
             parc,
-            directget,
+            traversal,
             min_length,
             error_margin
         ),
@@ -823,11 +991,10 @@ def streams2graph(
         streams,
         conn_matrix,
         track_type,
-        target_samples,
         dir_path,
         conn_model,
-        network,
-        node_size,
+        subnet,
+        node_radius,
         dens_thresh,
         ID,
         roi,
@@ -836,12 +1003,12 @@ def streams2graph(
         parc,
         prune,
         atlas,
-        uatlas,
+        parcellation,
         labels,
         coords,
         norm,
         binary,
-        directget,
+        traversal,
         min_length,
         error_margin
     )

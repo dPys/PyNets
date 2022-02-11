@@ -1,0 +1,44 @@
+PyNets®: A Reproducible Workflow for Structural and Functional Connectome
+Ensemble Learning
+
+Copyright (C) 2017 Derek Pisner
+dpisner@utexas.edu
+
+*Since its conception in 2017 this product was provided in open-source under a
+GNU GPL Version 2 (GPLv2) license. Beginning in December 2021, however, this
+product was approved for relicensing in open-source under a GNU Affero GPL
+Version 3 (AGPLv3) license, the terms of which can be found verbatim in
+licenses/AGPL-3.0.txt, will apply retroactively to all previous released
+versions, and which are summarized briefly herein:
+
+    This product is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This product is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+*This product includes software that depends on open-source libraries
+developed by the SciPy (https://scipy.org/), Scikit-Learn
+(https://scikit-learn.org/), and NiPy (https://nipy.org/) Communities.
+See `licenses/THIRDPARTY.txt` for details.
+
+*Portions of this product were developed while the author was a graduate
+student at the Department of Psychology at the University of Texas at Austin,
+Austin, TX, US. However, since no portions of this product were developed
+using any form of federal funding or assistance. Furthermore, the University
+of Texas at Austin, on behalf of the Board of Regents of the University of
+Texas System, has confirmed that it does not assert any ownership interest in
+this product in any form, its embodying U.S. Patent 11,188,850, Application
+16/372,367, or any patents or patent applications that claim priority to that
+application.
+
+*This product redistributes the versioneer Python package, which is
+Public domain source code.
+
+*This product is also distributed as a Docker container image.
+The bootstraping file for the image ("Dockerfile") is licensed
+under the MIT License.

@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import warnings
-
 warnings.filterwarnings("ignore")
 
 
@@ -111,7 +109,7 @@ def get_parser():
              "brain mask Nifti images in the case of running multiple "
              "participants, in which case paths should be separated by "
              "a space. If no brain mask is supplied, the template mask will "
-             "be used (see runconfig.yaml).\n",
+             "be used (see advanced.yaml).\n",
     )
     parser.add_argument(
         "-conf",
@@ -169,7 +167,7 @@ def get_parser():
              "constrain tractography in the case of dmri connectome "
              "estimation.\n",
     )
-    # Modality-pervasive metaparameters
+    # Modality-pervasive hyperparameters
     parser.add_argument(
         "-mod",
         metavar="Connectivity estimation/reconstruction method",
@@ -187,22 +185,24 @@ def get_parser():
             "csa",
             "csd",
             "sfm",
+            "mcsd",
         ],
-        help="(metaparameter): Specify connectivity estimation model. "
+        help="(hyperparameter): Specify connectivity estimation model. "
              "For fMRI, possible models include: corr for correlation, "
              "cov for covariance, sps for precision covariance, partcorr for "
              "partial correlation. If skgmm is "
              "installed (https://github.com/skggm/skggm), then "
              "QuicGraphicalLasso, QuicGraphicalLassoCV, "
              "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For "
-             "dMRI, current models include csa, csd, and sfm.\n",
+             "dMRI, current models include csa, csd, sfm, and mcsd (for "
+             "multishell data).\n",
     )
     parser.add_argument(
         "-a",
         metavar="Atlas",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify an atlas name from nilearn or "
+        help="(hyperparameter): Specify an atlas name from nilearn or "
              "local (pynets) library, and/or specify a path to a custom "
              "parcellation/atlas Nifti1Image file in MNI space. Labels should"
              "be spatially distinct across hemispheres and ordered with "
@@ -236,7 +236,7 @@ def get_parser():
         metavar="Spherical centroid node size",
         default=4,
         nargs="+",
-        help="(metaparameter): Optionally specify coordinate-based node "
+        help="(hyperparameter): Optionally specify coordinate-based node "
              "radius size(s). Default is 4 "
         "mm for fMRI and 8mm for dMRI. If you wish to iterate the pipeline "
              "across multiple node sizes, separate the list "
@@ -255,39 +255,29 @@ def get_parser():
         "-min_thr",
         metavar="Multi-thresholding minimum threshold",
         default=None,
-        help="(metaparameter): Minimum threshold for multi-thresholding.\n",
+        help="(hyperparameter): Minimum threshold for multi-thresholding.\n",
     )
     parser.add_argument(
         "-max_thr",
         metavar="Multi-thresholding maximum threshold",
         default=None,
-        help="(metaparameter): Maximum threshold for multi-thresholding.",
+        help="(hyperparameter): Maximum threshold for multi-thresholding.",
     )
     parser.add_argument(
         "-step_thr",
         metavar="Multi-thresholding step size",
         default=None,
-        help="(metaparameter): Threshold step value for multi-thresholding. "
+        help="(hyperparameter): Threshold step value for multi-thresholding. "
              "Default is 0.01.\n",
     )
 
-    # fMRI metaparameters
-    parser.add_argument(
-        "-sm",
-        metavar="Smoothing value (mm fwhm)",
-        default=0,
-        nargs="+",
-        help="(metaparameter): Optionally specify smoothing width(s). "
-             "Default is 0 / no smoothing. If you wish to iterate the pipeline"
-             " across multiple smoothing separate the list "
-             "by space (e.g. 2 4 6). Safe range: [0-8]\n",
-    )
+    # fMRI hyperparameters
     parser.add_argument(
         "-hp",
         metavar="High-pass filter (Hz)",
         default=None,
         nargs="+",
-        help="(metaparameter): Optionally specify high-pass filter values "
+        help="(hyperparameter): Optionally specify high-pass filter values "
              "to apply to node-extracted time-series for fMRI. "
              "Default is None. If you wish to iterate the pipeline across "
              "multiple values, separate the list by space (e.g. 0 0.02 0.1). "
@@ -295,7 +285,7 @@ def get_parser():
     )
     parser.add_argument(
         "-es",
-        metavar="Node extraction strategy",
+        metavar="Node signal extraction strategy",
         default="mean",
         nargs="+",
         choices=[
@@ -308,7 +298,7 @@ def get_parser():
             "standard_deviation",
         ],
         help="Include this flag if you are running functional connectometry "
-             "using parcel labels and wish to specify the name of a specific "
+             "and wish to specify the name of a specific "
              "function (i.e. other than the mean) to reduce the region's "
              "time-series. Options are: `sum`, `mean`, `median`, `mininum`, "
              "`maximum`, `variance`, `standard_deviation`.\n",
@@ -318,7 +308,7 @@ def get_parser():
         metavar="Number of k clusters",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify a number of clusters to produce. "
+        help="(hyperparameter): Specify a number of clusters to produce. "
              "If you wish to iterate the pipeline across multiple values of k,"
              " separate the list by space (e.g. 200, 400, 600, 800).\n",
     )
@@ -329,7 +319,7 @@ def get_parser():
         nargs="+",
         choices=["ward", "rena", "kmeans", "complete", "average", "single",
                  "ncut"],
-        help="(metaparameter): Specify the types of clustering to use. "
+        help="(hyperparameter): Specify the types of clustering to use. "
              "Recommended options are: ward, rena, kmeans, or ncut. Note that "
              "imposing spatial constraints with a mask consisting of "
              "disconnected components will leading to clustering instability "
@@ -341,18 +331,32 @@ def get_parser():
         metavar="Cluster mask",
         default=None,
         nargs="+",
-        help="(metaparameter): Specify the path to a Nifti1Image mask file"
+        help="(hyperparameter): Specify the path to a Nifti1Image mask file"
              " to constrained functional clustering. If specifying a list of "
              "paths to multiple cluster masks, separate them by space.\n",
     )
+    parser.add_argument(
+        "-sm",
+        metavar="Error margin (mm FWHM)",
+        default=0,
+        nargs="+",
+        help="(hyperparameter): "
+             "Intersection distance in mm of a node to an edge."
+             "Corresponds to the magnitude of smoothing to be "
+             "applied to the node-extracted time-series. "
+             "Default is 0 mm FWHM. "
+             "Safe range for fMRI is: [0-9]."
+             "If you wish to iterate the pipeline across multiple smoothing "
+             "delimit the list by space (e.g. 2 4 6)\n",
+    )
 
-    # dMRI metaparameters
+    # dMRI hyperparameters
     parser.add_argument(
         "-ml",
         metavar="Minimum fiber length for tracking",
         default=10,
         nargs="+",
-        help="(metaparameter): Include this flag to manually specify a "
+        help="(hyperparameter): Include this flag to manually specify a "
              "minimum tract length (mm) for dmri connectome tracking. Default "
              "is 10. If you wish to iterate the pipeline across multiple "
              "minimums, separate the list by space (e.g. 10 30 50). "
@@ -361,30 +365,34 @@ def get_parser():
              " values >60mm may fail.\n",
     )
     parser.add_argument(
-        "-tol",
-        metavar="Error margin",
-        default=5,
-        nargs="+",
-        help="(metaparameter): Distance (in the units of the streamlines, "
-             "usually mm). If any coordinate in the streamline is within this "
-             "distance from the center of any voxel in the ROI, the filtering "
-             "criterion is set to True for this streamline, otherwise False. "
-             "Defaults to the distance between the center of each voxel and "
-             "the corner of the voxel. Default is 5. Safe range: [0-15].\n",
-    )
-    parser.add_argument(
         "-dg",
-        metavar="Direction getter",
+        metavar="Traversal strategy",
         default="det",
         nargs="+",
         choices=["det", "prob", "clos"],
-        help="(metaparameter): Include this flag to manually specify the "
+        help="(hyperparameter): Include this flag to manually specify the "
              "statistical approach to tracking for dmri connectome estimation."
              " Options are: det (deterministic), closest (clos), and "
              "prob (probabilistic). Default is det. If you wish to iterate the"
-             " pipeline across multiple direction-getting methods, separate "
+             " pipeline across multiple traversal methods, delimit "
              "the list by space (e.g. 'det', 'prob', 'clos').\n",
     )
+    parser.add_argument(
+        "-em",
+        metavar="Error margin (mm)",
+        default=5,
+        nargs="+",
+        help="(hyperparameter): "
+             "Intersection distance in mm of a node to an edge."
+             "Corresponds to the extent of parcel-streamline overlap "
+             "in tractography. If any coordinate in the streamline is within "
+             "this distance from the center of any voxel in the node. "
+             "Default is 5 mm. "
+             "Safe range for dMRI is: [0-15]. "
+             "If you wish to iterate the pipeline across multiple smoothing "
+             "delimit the list by space (e.g. 2 4 6)\n",
+    )
+
     # General settings
     parser.add_argument(
         "-norm",
@@ -426,15 +434,17 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=0,
+        default=1,
         nargs=1,
         choices=["0", "1", "2", "3"],
-        help="Include this flag to (1) prune the graph of any "
-             "isolated + fully disconnected nodes (i.e. anti-fragmentation),"
-             " (2) prune the graph of all but hubs as defined by any of a "
-             "variety of definitions (see ruconfig.yaml), or (3) retain only "
-             "the largest connected component subgraph. Default is no pruning."
-             " Include `-p 1` to enable fragmentation-protection.\n",
+        help="(Optional) Include this flag to (0) retain isolated nodes "
+             "(1) retain only connected components "
+             "of a minimal size. (2) prune the graph of "
+             "all but hubs as defined by any of a "
+             "variety of definitions (see advanced.yaml), or (3) retain only "
+             "the largest connected component subgraph. Default is (1), "
+             "which is equivalent to defragmenting only isolated nodes, "
+             "unless the minimum threshold is >1 (see advanced.yaml).\n",
     )
     parser.add_argument(
         "-df",
@@ -473,7 +483,7 @@ def get_parser():
     )
     parser.add_argument(
         "-n",
-        metavar="Resting-state network",
+        metavar="Resting-state subnet",
         default=None,
         nargs="+",
         choices=[
@@ -503,7 +513,7 @@ def get_parser():
             "TempPar",
         ],
         help="Optionally specify the name of any of the 2017 Yeo-Schaefer RSNs"
-             " (7-network or 17-network): Vis, SomMot, DorsAttn, SalVentAttn,"
+             " (7-subnet or 17-subnet): Vis, SomMot, DorsAttn, SalVentAttn,"
              " Limbic, Cont, Default, VisCent, VisPeri, SomMotA, SomMotB, "
              "DorsAttnA, DorsAttnB, SalVentAttnA, SalVentAttnB, LimbicOFC, "
              "LimbicTempPole, ContA, ContB, ContC, DefaultA, DefaultB, "
@@ -531,10 +541,10 @@ def get_parser():
         "-pm",
         metavar="Cores,memory",
         default="auto",
-        help="Number of cores to use, number of GB of memory to use for single"
-             " subject run, entered as two integers seperated by comma. "
-             "Otherwise, default is `auto`, which uses all resources "
-             "detected on the current compute node.\n",
+        help="Maximum number of cores and GB of memory, stated as two integers "
+             "seperated by comma. Otherwise, default is `auto`, which uses all "
+             "available resources detected on the compute node(s) used for "
+             "execution.\n",
     )
     parser.add_argument(
         "-plug",
@@ -566,6 +576,13 @@ def get_parser():
         help="Disable post-workflow clean-up of temporary runtime metadata.\n",
     )
     parser.add_argument(
+        "-config",
+        metavar="Advanced configuration file",
+        default="advanced.yaml",
+        help="Optionally override advanced configuration parameters. "
+             "Default is advanced.yaml.\n",
+    )
+    parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
@@ -583,6 +600,7 @@ def build_workflow(args, retval):
     import os
     import glob
     import ast
+    import pkg_resources
     import os.path as op
     import timeit
     from datetime import timedelta
@@ -628,11 +646,15 @@ def build_workflow(args, retval):
             return retval
 
     # Start timer
-    now = datetime.datetime.now()
-    timestamp = str(now.strftime("%Y-%m-%d %H:%M:%S"))
+    timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(f"{Fore.MAGENTA}{timestamp}")
     start_time = timeit.default_timer()
     print(Style.RESET_ALL)
+
+    adv_config = args.config
+    if adv_config != 'advanced.yaml':
+        os.replace(adv_config,
+                   pkg_resources.resource_filename("pynets", "advanced.yaml"))
 
     # Hard-coded:
     hardcoded_params = load_runconfig()
@@ -664,6 +686,7 @@ def build_workflow(args, retval):
     graph = args.g
 
     if graph is not None:
+        include_str_matches = ['ventral']
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []
@@ -687,32 +710,22 @@ def build_workflow(args, retval):
         else:
             graph = graph[0]
             if os.path.isdir(graph):
-                # modality = 'func'
                 graph_iter = Path(graph).rglob('rawgraph*.npy')
                 if isinstance(ID, list):
                     if len(ID) > 1:
                         multi_graph = None
                         multi_subject_multigraph = []
                         for id in ID:
-                            # multi_subject_multigraph.append(
-                            #     [str(g) for g in graph_iter if id in str(g)
-                            #     and modality in str(g)])
                             multi_subject_multigraph.append(
                                 [str(g) for g in graph_iter if id in str(g)])
                     else:
                         multi_subject_multigraph = None
                         ID = ID[0]
-                        # multi_graph = [str(g) for g in
-                        #                graph_iter if
-                        #                ID in str(g) and modality in str(g)]
                         multi_graph = [str(g) for g in
                                        graph_iter if
                                        ID in str(g)]
                 else:
                     multi_subject_multigraph = None
-                    # multi_graph = [str(g) for g in
-                    #                graph_iter if
-                    #                ID in str(g) and modality in str(g)]
                     multi_graph = [str(g) for g in
                                    graph_iter if
                                    ID in str(g)]
@@ -725,18 +738,32 @@ def build_workflow(args, retval):
                     multi_graph = None
                 multi_subject_graph = None
                 multi_subject_multigraph = None
+
+        if len(include_str_matches) > 0:
+            if multi_graph is not None:
+                multi_graph = [i for
+                               i in multi_graph
+                               if any(i for j in include_str_matches if
+                                      str(j) in i)]
+            if multi_subject_graph is not None:
+                multi_subject_graph = [i for
+                                       i in multi_subject_graph if
+                                       any(i for j in include_str_matches if
+                                           str(j) in i)]
+            if multi_subject_multigraph is not None:
+                multi_subject_multigraph = [i for i in
+                                            multi_subject_multigraph if
+                                            any(i for j in
+                                                include_str_matches if
+                                                str(j) in i)]
     else:
         multi_graph = None
         multi_subject_graph = None
         multi_subject_multigraph = None
 
-    if (ID is None) and (
-        graph is None
-        and multi_graph is None
-        and multi_subject_graph is None
-        and multi_subject_multigraph is None
-    ):
-        print("\nERROR: You must include a subject ID in your command "
+    if not ID and not graph and not multi_graph and not multi_subject_graph \
+        and not multi_subject_multigraph:
+        print("\nERROR: You must include a subject ID in a command "
               "line call.")
         retval["return_code"] = 1
         return retval
@@ -772,9 +799,9 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         import psutil
-        nthreads = psutil.cpu_count()
-        procmem = [int(nthreads),
-                   int(list(psutil.virtual_memory())[4]/1000000000) - 1]
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
+        procmem = [int(psutil.cpu_count()),
+                   [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
         procmem[1] = procmem[1] - 1
@@ -782,22 +809,22 @@ def build_workflow(args, retval):
         thr = float(1.0)
     else:
         thr = float(args.thr)
-    node_size = args.ns
-    if node_size:
-        if (isinstance(node_size, list)) and (len(node_size) > 1):
-            node_size_list = node_size
-            node_size = None
-        elif node_size == ["None"]:
-            node_size = None
-            node_size_list = None
-        elif isinstance(node_size, list):
-            node_size = node_size[0]
-            node_size_list = None
+    node_radius = args.ns
+    if node_radius:
+        if (isinstance(node_radius, list)) and (len(node_radius) > 1):
+            node_radii_list = node_radius
+            node_radius = None
+        elif node_radius == ["None"]:
+            node_radius = None
+            node_radii_list = None
+        elif isinstance(node_radius, list):
+            node_radius = node_radius[0]
+            node_radii_list = None
         else:
-            node_size = None
-            node_size_list = None
+            node_radius = None
+            node_radii_list = None
     else:
-        node_size_list = None
+        node_radii_list = None
     smooth = args.sm
     if smooth:
         if (isinstance(smooth, list)) and (len(smooth) > 1):
@@ -830,23 +857,23 @@ def build_workflow(args, retval):
             hpass_list = None
     else:
         hpass_list = None
-    extract_strategy = args.es
-    if extract_strategy:
-        if (isinstance(extract_strategy, list)) and (
-                len(extract_strategy) > 1):
-            extract_strategy_list = extract_strategy
-            extract_strategy = "mean"
-        elif extract_strategy == ["None"]:
-            extract_strategy = "mean"
-            extract_strategy_list = None
-        elif isinstance(extract_strategy, list):
-            extract_strategy = extract_strategy[0]
-            extract_strategy_list = None
+    signal = args.es
+    if signal:
+        if (isinstance(signal, list)) and (
+                len(signal) > 1):
+            signal_list = signal
+            signal = "mean"
+        elif signal == ["None"]:
+            signal = "mean"
+            signal_list = None
+        elif isinstance(signal, list):
+            signal = signal[0]
+            signal_list = None
         else:
-            extract_strategy = "mean"
-            extract_strategy_list = None
+            signal = "mean"
+            signal_list = None
     else:
-        extract_strategy_list = None
+        signal_list = None
     roi = args.roi
     if isinstance(roi, list):
         roi = roi[0]
@@ -895,15 +922,15 @@ def build_workflow(args, retval):
         parc = True
 
     if parc is True:
-        node_size = None
-        node_size_list = None
+        node_radius = None
+        node_radii_list = None
     else:
-        if node_size:
-            if node_size is None:
+        if node_radius:
+            if node_radius is None:
                 if (func_file is not None) and (dwi_file is None):
-                    node_size = 4
+                    node_radius = 4
                 elif (func_file is None) and (dwi_file is not None):
-                    node_size = 8
+                    node_radius = 8
     ref_txt = args.ref
     k = args.k
     if k:
@@ -944,27 +971,27 @@ def build_workflow(args, retval):
     waymask = args.way
     if isinstance(waymask, list):
         waymask = waymask[0]
-    network = args.n
-    if network:
-        if (isinstance(network, list)) and (len(network) > 1):
-            multi_nets = network
-            network = None
-        elif network == ["None"]:
-            network = None
+    subnet = args.n
+    if subnet:
+        if (isinstance(subnet, list)) and (len(subnet) > 1):
+            multi_nets = subnet
+            subnet = None
+        elif subnet == ["None"]:
+            subnet = None
             multi_nets = None
-        elif isinstance(network, list):
-            network = network[0]
+        elif isinstance(subnet, list):
+            subnet = subnet[0]
             multi_nets = None
         else:
-            network = None
+            subnet = None
             multi_nets = None
     else:
         multi_nets = None
 
     atlas_ins = args.a
     if atlas_ins is not None:
-        # Parse uatlas files from atlas names
-        uatlas = []
+        # Parse parcellation files from atlas names
+        parcellation = []
         atlas = []
 
         for atl in atlas_ins:
@@ -972,7 +999,7 @@ def build_workflow(args, retval):
                     atl in nilearn_prob_atlases or atl in local_atlases:
                 atlas.append(atl)
             elif '/' in atl:
-                uatlas.append(atl)
+                parcellation.append(atl)
                 if not os.path.isfile(atl):
                     print(f"{atl} may not be an existing file path. "
                           f"You can safely ignore this warning if you are "
@@ -985,18 +1012,18 @@ def build_workflow(args, retval):
         if len(atlas) == 0:
             atlas = None
 
-        if len(uatlas) == 0:
-            uatlas = None
+        if len(parcellation) == 0:
+            parcellation = None
 
-        if uatlas:
-            if len(uatlas) > 1:
-                user_atlas_list = uatlas
-                uatlas = None
-            elif uatlas == ["None"]:
-                uatlas = None
+        if parcellation:
+            if len(parcellation) > 1:
+                user_atlas_list = parcellation
+                parcellation = None
+            elif parcellation == ["None"]:
+                parcellation = None
                 user_atlas_list = None
             else:
-                uatlas = uatlas[0]
+                parcellation = parcellation[0]
                 user_atlas_list = None
         else:
             user_atlas_list = None
@@ -1017,7 +1044,7 @@ def build_workflow(args, retval):
         else:
             multi_atlas = None
     else:
-        uatlas = None
+        parcellation = None
         atlas = None
         multi_atlas = None
         user_atlas_list = None
@@ -1036,7 +1063,7 @@ def build_workflow(args, retval):
             min_length_list = None
     else:
         min_length_list = None
-    error_margin = args.tol
+    error_margin = args.em
     if error_margin:
         if (isinstance(error_margin, list)) and (len(error_margin) > 1):
             error_margin_list = error_margin
@@ -1050,20 +1077,20 @@ def build_workflow(args, retval):
             error_margin_list = None
     else:
         error_margin_list = None
-    directget = args.dg
-    if directget:
-        if (isinstance(directget, list)) and (len(directget) > 1):
-            multi_directget = directget
-            directget = None
-        elif directget == ["None"]:
-            multi_directget = None
-        elif isinstance(directget, list):
-            directget = directget[0]
-            multi_directget = None
+    traversal = args.dg
+    if traversal:
+        if (isinstance(traversal, list)) and (len(traversal) > 1):
+            multi_traversal = traversal
+            traversal = None
+        elif traversal == ["None"]:
+            multi_traversal = None
+        elif isinstance(traversal, list):
+            traversal = traversal[0]
+            multi_traversal = None
         else:
-            multi_directget = None
+            multi_traversal = None
     else:
-        multi_directget = None
+        multi_traversal = None
     embed = args.embed
     multiplex = args.mplx
     if isinstance(multiplex, list):
@@ -1108,14 +1135,9 @@ def build_workflow(args, retval):
         multi_thr = False
 
     # Check required inputs for existence, and configure run
-    if (
-        (func_file is None)
-        and (dwi_file is None)
-        and (graph is None)
-        and (multi_graph is None)
-        and (multi_subject_graph is None)
-        and (multi_subject_multigraph is None)
-    ):
+    if func_file is None and dwi_file is None and graph is None \
+        and multi_graph is None and multi_subject_graph is None \
+        and multi_subject_multigraph is None:
         print(
             "\nERROR: You must include a file path to either a 4d BOLD EPI"
             " image in T1w space"
@@ -1166,7 +1188,7 @@ def build_workflow(args, retval):
         dwi_file_list = None
         track_type = None
         tiss_class = None
-        directget = None
+        traversal = None
 
     if (ID is None) and (func_file_list is None):
         print("\nERROR: You must include a subject ID in your command line "
@@ -1447,33 +1469,33 @@ def build_workflow(args, retval):
         and multi_subject_graph is None
         and multi_subject_multigraph is None
     ):
-        if network is not None:
-            print(f"{Fore.GREEN}Selecting one RSN subgraph: "
-                  f"{Fore.BLUE}{network}")
+        if subnet is not None:
+            print(f"{Fore.GREEN}Selecting one subnetwork: "
+                  f"{Fore.BLUE}{subnet}")
         elif multi_nets is not None:
-            network = None
+            subnet = None
             print(
                 f"{Fore.GREEN}Iterating pipeline across "
-                f"{Fore.BLUE}{len(multi_nets)} RSN subgraphs:"
+                f"{Fore.BLUE}{len(multi_nets)} subnetwork:"
             )
             print(
                 f"{Fore.BLUE}{str(', '.join(str(n) for n in multi_nets))}"
             )
         else:
             print(f"{Fore.GREEN}Using whole-brain pipeline...")
-        if node_size_list:
+        if node_radii_list:
             print(
                 f"{Fore.GREEN}Growing spherical nodes across multiple radius "
                 f"sizes:"
             )
-            print(f"{str(', '.join(str(n) for n in node_size_list))}")
-            node_size = None
+            print(f"{str(', '.join(str(n) for n in node_radii_list))}")
+            node_radius = None
         elif parc is True:
             print(f"{Fore.GREEN}Using parcels as nodes...")
         else:
-            if node_size is None:
-                node_size = 4
-            print(f"{Fore.BLUE}Using node size of {Fore.BLUE}{node_size}mm:")
+            if node_radius is None:
+                node_radius = 4
+            print(f"{Fore.BLUE}Using node size of {Fore.BLUE}{node_radius}mm:")
         if func_file or func_file_list:
             if smooth_list:
                 print(
@@ -1504,19 +1526,19 @@ def build_workflow(args, retval):
             else:
                 hpass = None
 
-            if extract_strategy_list:
+            if signal_list:
                 print(
                     f"{Fore.GREEN}Extracting node signal using multiple"
                     f" strategies:"
                 )
                 print(
                     f"{Fore.BLUE}"
-                    f"{str(', '.join(str(n) for n in extract_strategy_list))}"
+                    f"{str(', '.join(str(n) for n in signal_list))}"
                 )
             else:
                 print(
                     f"{Fore.GREEN}Extracting node signal using a "
-                    f"{Fore.BLUE}{extract_strategy} {Fore.GREEN}strategy..."
+                    f"{Fore.BLUE}{signal} {Fore.GREEN}strategy..."
                 )
 
         if conn_model_list:
@@ -1536,33 +1558,33 @@ def build_workflow(args, retval):
             multi_subject_multigraph:
         from pynets.core.utils import do_dir_path
 
-        network = "custom_graph"
+        subnet = "custom_graph"
         roi = "None"
         k_clustering = 0
-        node_size = "None"
+        node_radius = "None"
         hpass = "None"
         if not conn_model:
             conn_model = "None"
 
     if func_file or func_file_list:
-        if (uatlas is not None) and (
+        if (parcellation is not None) and (
                 k_clustering == 0) and (user_atlas_list is None):
-            atlas_par = uatlas.split("/")[-1].split(".")[0]
+            atlas_par = parcellation.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
-        elif (uatlas is not None) and (user_atlas_list is None) and \
+        elif (parcellation is not None) and (user_atlas_list is None) and \
                 (k_clustering == 0):
-            atlas_par = uatlas.split("/")[-1].split(".")[0]
+            atlas_par = parcellation.split("/")[-1].split(".")[0]
             print(f"{Fore.GREEN}User atlas: {Fore.BLUE}{atlas_par}")
         elif user_atlas_list is not None:
             print(f"{Fore.GREEN}Iterating functional connectometry across "
                   f"multiple parcellations:")
             if func_file_list:
-                for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
+                for _parcellation in user_atlas_list:
+                    atlas_par = _parcellation.split("/")[-1].split(".")[0]
                     print(f"{Fore.BLUE}{atlas_par}")
             else:
-                for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
+                for _parcellation in user_atlas_list:
+                    atlas_par = _parcellation.split("/")[-1].split(".")[0]
                     print(f"{Fore.BLUE}{atlas_par}")
         if k_clustering == 1:
             cl_mask_name = op.basename(clust_mask).split(".nii")[0]
@@ -1697,7 +1719,7 @@ def build_workflow(args, retval):
             clust_type = None
             k = None
         elif (
-            (user_atlas_list is not None or uatlas is not None)
+            (user_atlas_list is not None or parcellation is not None)
             and (
                 k_clustering == 4
                 or k_clustering == 3
@@ -1719,7 +1741,7 @@ def build_workflow(args, retval):
                 f" multiple predefined atlases:"
             )
             if func_file_list:
-                for _func_file in func_file_list:
+                for _ in func_file_list:
                     for _atlas in multi_atlas:
                         if (parc is True) and (
                             _atlas in nilearn_coord_atlases
@@ -1761,7 +1783,7 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
         else:
             if (
-                (uatlas is None)
+                (parcellation is None)
                 and (k == 0)
                 and (user_atlas_list is None)
                 and (k_list is None)
@@ -1775,7 +1797,7 @@ def build_workflow(args, retval):
                 pass
 
     if dwi_file or dwi_file_list:
-        if (conn_model == "ten") and (directget == "prob"):
+        if (conn_model == "ten") and (traversal == "prob"):
             print(
                 "\nERROR: Cannot perform probabilistic tracking with tensor "
                 "model estimation..."
@@ -1798,20 +1820,20 @@ def build_workflow(args, retval):
                   f"multiple parcellations:")
             if dwi_file_list:
                 for _dwi_file in dwi_file_list:
-                    for _uatlas in user_atlas_list:
-                        atlas_par = _uatlas.split("/")[-1].split(".")[0]
+                    for _parcellation in user_atlas_list:
+                        atlas_par = _parcellation.split("/")[-1].split(".")[0]
                         print(f"{Fore.BLUE}{atlas_par}")
             else:
-                for _uatlas in user_atlas_list:
-                    atlas_par = _uatlas.split("/")[-1].split(".")[0]
+                for _parcellation in user_atlas_list:
+                    atlas_par = _parcellation.split("/")[-1].split(".")[0]
                     print(f"{Fore.BLUE}{atlas_par}")
-        if multi_atlas:
+        if multi_atlas is not None:
             print(
                 f"{Fore.GREEN}Iterating structural connectometry across"
                 f" multiple predefined atlases:"
             )
             if dwi_file_list:
-                for _dwi_file in dwi_file_list:
+                for _ in dwi_file_list:
                     for _atlas in multi_atlas:
                         if (parc is True) and (
                                 _atlas in nilearn_coord_atlases):
@@ -1821,7 +1843,7 @@ def build_workflow(args, retval):
                             )
                             retval["return_code"] = 1
                             return retval
-                        else:
+                        elif not func_file and not func_file_list:
                             print(f"{Fore.BLUE}{_atlas}")
             else:
                 for _atlas in multi_atlas:
@@ -1832,7 +1854,7 @@ def build_workflow(args, retval):
                         )
                         retval["return_code"] = 1
                         return retval
-                    else:
+                    elif not func_file and not func_file_list:
                         print(f"{Fore.BLUE}{_atlas}")
         elif atlas:
             if (parc is True) and (atlas in nilearn_coord_atlases):
@@ -1845,12 +1867,12 @@ def build_workflow(args, retval):
             else:
                 print(f"{Fore.GREEN}Using curated atlas: {Fore.BLUE}{atlas}")
 
-        if directget:
-            print(f"{Fore.GREEN}Using {Fore.BLUE}{directget} "
+        if traversal:
+            print(f"{Fore.GREEN}Using {Fore.BLUE}{traversal} "
                   f"{Fore.GREEN}direction getting...")
         else:
             print(f"{Fore.GREEN}Iterating direction getting:")
-            print(f"{Fore.BLUE}{', '.join(multi_directget)}")
+            print(f"{Fore.BLUE}{', '.join(multi_traversal)}")
         if min_length:
             print(f"{Fore.GREEN}Using {Fore.BLUE}{min_length}mm{Fore.GREEN} "
                   f"minimum streamline length...")
@@ -1956,7 +1978,7 @@ def build_workflow(args, retval):
         clust_mask_list = None
         hpass = None
         smooth = None
-        extract_strategy = None
+        signal = None
         clust_type = None
         local_corr = None
         clust_type_list = None
@@ -2147,6 +2169,11 @@ def build_workflow(args, retval):
                       f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
+
+    # Force Fisher's normalization for correlation-like models
+    if (conn_model == "corr") or (conn_model == "partcorr"):
+        norm = 7
+
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"
@@ -2157,18 +2184,18 @@ def build_workflow(args, retval):
     retval["ID"] = ID
     retval["outdir"] = outdir
     retval["atlas"] = atlas
-    retval["network"] = network
-    retval["node_size"] = node_size
-    retval["node_size_list"] = node_size_list
+    retval["subnet"] = subnet
+    retval["node_radius"] = node_radius
+    retval["node_radii_list"] = node_radii_list
     retval["smooth"] = smooth
     retval["smooth_list"] = smooth_list
     retval["hpass"] = hpass
     retval["hpass_list"] = hpass_list
-    retval["extract_strategy"] = extract_strategy
-    retval["extract_strategy_list"] = extract_strategy_list
+    retval["signal"] = signal
+    retval["signal_list"] = signal_list
     retval["roi"] = roi
     retval["thr"] = thr
-    retval["uatlas"] = uatlas
+    retval["parcellation"] = parcellation
     retval["conn_model"] = conn_model
     retval["dens_thresh"] = dens_thresh
     retval["conf"] = conf
@@ -2199,8 +2226,8 @@ def build_workflow(args, retval):
     retval["multiplex"] = multiplex
     retval["track_type"] = track_type
     retval["tiss_class"] = tiss_class
-    retval["directget"] = directget
-    retval["multi_directget"] = multi_directget
+    retval["traversal"] = traversal
+    retval["multi_traversal"] = multi_traversal
     retval["func_file"] = func_file
     retval["dwi_file"] = dwi_file
     retval["fbval"] = fbval
@@ -2218,14 +2245,14 @@ def build_workflow(args, retval):
     # print("%s%s" % ('ID: ', ID))
     # print("%s%s" % ('outdir: ', outdir))
     # print("%s%s" % ('atlas: ', atlas))
-    # print("%s%s" % ('network: ', network))
-    # print("%s%s" % ('node_size: ', node_size))
+    # print("%s%s" % ('subnet: ', subnet))
+    # print("%s%s" % ('node_radius: ', node_radius))
     # print("%s%s" % ('smooth: ', smooth))
     # print("%s%s" % ('hpass: ', hpass))
     # print("%s%s" % ('hpass_list: ', hpass_list))
     # print("%s%s" % ('roi: ', roi))
     # print("%s%s" % ('thr: ', thr))
-    # print("%s%s" % ('uatlas: ', uatlas))
+    # print("%s%s" % ('parcellation: ', parcellation))
     # print("%s%s" % ('conn_model: ', conn_model))
     # print("%s%s" % ('dens_thresh: ', dens_thresh))
     # print("%s%s" % ('conf: ', conf))
@@ -2249,7 +2276,7 @@ def build_workflow(args, retval):
     # print("%s%s" % ('local_corr: ', local_corr))
     # print("%s%s" % ('clust_type_list: ', clust_type_list))
     # print("%s%s" % ('prune: ', prune))
-    # print("%s%s" % ('node_size_list: ', node_size_list))
+    # print("%s%s" % ('node_radii_list: ', node_radii_list))
     # print("%s%s" % ('smooth_list: ', smooth_list))
     # print("%s%s" % ('mask: ', mask))
     # print("%s%s" % ('norm: ', norm))
@@ -2258,8 +2285,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('multiplex: ', multiplex))
     # print("%s%s" % ('track_type: ', track_type))
     # print("%s%s" % ('tiss_class: ', tiss_class))
-    # print("%s%s" % ('directget: ', directget))
-    # print("%s%s" % ('multi_directget: ', multi_directget))
+    # print("%s%s" % ('traversal: ', traversal))
+    # print("%s%s" % ('multi_traversal: ', multi_traversal))
     # print("%s%s" % ('func_file: ', func_file))
     # print("%s%s" % ('dwi_file: ', dwi_file))
     # print("%s%s" % ('fbval: ', fbval))
@@ -2272,8 +2299,8 @@ def build_workflow(args, retval):
     # print("%s%s" % ('fbval_list: ', fbval_list))
     # print("%s%s" % ('conf_list: ', conf_list))
     # print("%s%s" % ('anat_file_list: ', anat_file_list))
-    # print("%s%s" % ('extract_strategy: ', extract_strategy))
-    # print("%s%s" % ('extract_strategy_list: ', extract_strategy_list))
+    # print("%s%s" % ('signal: ', signal))
+    # print("%s%s" % ('signal_list: ', signal_list))
     # print('\n\n\n\n\n')
     # import sys
     # sys.exit(0)
@@ -2283,7 +2310,8 @@ def build_workflow(args, retval):
 
     warnings.filterwarnings("ignore")
     from pynets.core.utils import collectpandasjoin
-    from pynets.core.interfaces import CombineOutputs, NetworkAnalysis
+    from pynets.core.interfaces import CombineOutputs
+    from pynets.statistics.interfaces import NetworkAnalysis
     from nipype.pipeline import engine as pe
     from nipype.interfaces import utility as niu
     from pynets.core.workflows import workflow_selector
@@ -2292,11 +2320,11 @@ def build_workflow(args, retval):
         ID,
         func_file,
         atlas,
-        network,
-        node_size,
+        subnet,
+        node_radius,
         roi,
         thr,
-        uatlas,
+        parcellation,
         multi_nets,
         conn_model,
         dens_thresh,
@@ -2319,7 +2347,7 @@ def build_workflow(args, retval):
         user_atlas_list,
         clust_mask_list,
         prune,
-        node_size_list,
+        node_radii_list,
         graph,
         conn_model_list,
         min_span_tree,
@@ -2337,19 +2365,18 @@ def build_workflow(args, retval):
         binary,
         fbval,
         fbvec,
-        target_samples,
         curv_thr_list,
         step_list,
         track_type,
         min_length,
         maxcrossing,
         error_margin,
-        directget,
+        traversal,
         tiss_class,
         runtime_dict,
         execution_dict,
         embed,
-        multi_directget,
+        multi_traversal,
         multimodal,
         hpass,
         hpass_list,
@@ -2359,8 +2386,8 @@ def build_workflow(args, retval):
         local_corr,
         min_length_list,
         error_margin_list,
-        extract_strategy,
-        extract_strategy_list,
+        signal,
+        signal_list,
         outdir,
     ):
         """A function interface for generating a single-subject workflow"""
@@ -2369,37 +2396,16 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        if (func_file is not None) and (dwi_file is None):
-            wf = pe.Workflow(
-                name=f"wf_single_sub_{ID}_fmri_{strftime('%Y%m%d_%H%M%S')}"
-            )
-        elif (dwi_file is not None) and (func_file is None):
-            wf = pe.Workflow(
-                name=f"wf_single_sub_{ID}_dmri_{strftime('%Y%m%d_%H%M%S')}"
-            )
-        else:
-            wf = pe.Workflow(
-                name=f"wf_single_sub_{ID}_{strftime('%Y%m%d_%H%M%S')}")
-        import_list = [
-            "import sys",
-            "import os",
-            "import numpy as np",
-            "import networkx as nx",
-            "import nibabel as nib",
-            "import warnings",
-            'warnings.filterwarnings("ignore")',
-            'np.warnings.filterwarnings("ignore")',
-            'warnings.simplefilter("ignore")',
-            "from pathlib import Path",
-            "import yaml",
-        ]
+        wf = pe.Workflow(
+            name=f"{ID}_{strftime('%Y%m%d_%H%M%S')}")
+
         inputnode = pe.Node(
             niu.IdentityInterface(
                 fields=[
                     "ID",
-                    "network",
+                    "subnet",
                     "thr",
-                    "node_size",
+                    "node_radius",
                     "roi",
                     "multi_nets",
                     "conn_model",
@@ -2412,8 +2418,7 @@ def build_workflow(args, retval):
                     "embed",
                 ]
             ),
-            name="inputnode",
-            imports=import_list,
+            name="inputnode"
         )
         if verbose is True:
             from nipype import config, logging
@@ -2439,9 +2444,9 @@ def build_workflow(args, retval):
                 wf.config[key][setting] = value
 
         inputnode.inputs.ID = ID
-        inputnode.inputs.network = network
+        inputnode.inputs.subnet = subnet
         inputnode.inputs.thr = thr
-        inputnode.inputs.node_size = node_size
+        inputnode.inputs.node_radius = node_radius
         inputnode.inputs.roi = roi
         inputnode.inputs.multi_nets = multi_nets
         inputnode.inputs.conn_model = conn_model
@@ -2458,11 +2463,11 @@ def build_workflow(args, retval):
                 func_file,
                 ID,
                 atlas,
-                network,
-                node_size,
+                subnet,
+                node_radius,
                 roi,
                 thr,
-                uatlas,
+                parcellation,
                 multi_nets,
                 conn_model,
                 dens_thresh,
@@ -2485,7 +2490,7 @@ def build_workflow(args, retval):
                 user_atlas_list,
                 clust_mask_list,
                 prune,
-                node_size_list,
+                node_radii_list,
                 conn_model_list,
                 min_span_tree,
                 verbose,
@@ -2501,19 +2506,18 @@ def build_workflow(args, retval):
                 binary,
                 fbval,
                 fbvec,
-                target_samples,
                 curv_thr_list,
                 step_list,
                 track_type,
                 min_length,
                 maxcrossing,
                 error_margin,
-                directget,
+                traversal,
                 tiss_class,
                 runtime_dict,
                 execution_dict,
                 embed,
-                multi_directget,
+                multi_traversal,
                 multimodal,
                 hpass,
                 hpass_list,
@@ -2523,31 +2527,36 @@ def build_workflow(args, retval):
                 local_corr,
                 min_length_list,
                 error_margin_list,
-                extract_strategy,
-                extract_strategy_list,
+                signal,
+                signal_list,
                 outdir,
             )
-            meta_wf._n_procs = procmem[0]
-            meta_wf._mem_gb = procmem[1]
+            try:
+                meta_wf._n_procs = procmem[0]
+                meta_wf._mem_gb = procmem[1]
+            except:
+                pass
             meta_wf.n_procs = procmem[0]
             meta_wf.mem_gb = procmem[1]
             wf.add_nodes([meta_wf])
 
         # Set resource restrictions at level of the meta-meta wf
         if func_file:
-            wf_selected = f"fmri_connectometry_{ID}"
+            wf_selected = 'fmri'
             for node_name in (wf.get_node(meta_wf.name).get_node(
                     wf_selected).list_node_names()):
                 if node_name in runtime_dict:
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                    wf.get_node(meta_wf.name).get_node(wf_selected
+                                                       ).get_node(
                         node_name
                     )._n_procs = runtime_dict[node_name][0]
-                    wf.get_node(meta_wf.name).get_node(wf_selected).get_node(
+                    wf.get_node(meta_wf.name).get_node(wf_selected
+                                                       ).get_node(
                         node_name
                     )._mem_gb = runtime_dict[node_name][1]
 
         if dwi_file:
-            wf_selected = f"dmri_connectometry_{ID}"
+            wf_selected = 'dmri'
             for node_name in (wf.get_node(meta_wf.name).get_node(
                     wf_selected).list_node_names()):
                 if node_name in runtime_dict:
@@ -2569,7 +2578,8 @@ def build_workflow(args, retval):
                 wf_selected)._mem_gb = procmem[1]
             wf.get_node(meta_wf.name).get_node(
                 wf_selected).n_procs = procmem[0]
-            wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected
+                                               ).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
         net_mets_node = pe.MapNode(
@@ -2577,17 +2587,12 @@ def build_workflow(args, retval):
             name="NetworkAnalysis",
             iterfield=[
                 "ID",
-                "network",
-                "thr",
-                "conn_model",
                 "est_path",
-                "roi",
                 "prune",
                 "norm",
                 "binary",
             ],
             nested=True,
-            imports=import_list,
         )
         net_mets_node.synchronize = True
         net_mets_node._n_procs = runtime_dict["NetworkAnalysis"][0]
@@ -2600,7 +2605,6 @@ def build_workflow(args, retval):
                 function=collectpandasjoin,
             ),
             name="AggregateOutputs",
-            imports=import_list,
         )
         collect_pd_list_net_csv_node._n_procs = \
             runtime_dict["AggregateOutputs"][0]
@@ -2610,8 +2614,7 @@ def build_workflow(args, retval):
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
             interface=CombineOutputs(),
-            name="CombineOutputs",
-            imports=import_list)
+            name="CombineOutputs")
         combine_pandas_dfs_node._n_procs = runtime_dict["CombineOutputs"][0]
         combine_pandas_dfs_node._mem_gb = runtime_dict["CombineOutputs"][1]
 
@@ -2666,7 +2669,7 @@ def build_workflow(args, retval):
                 multi_graph,
                 graph,
                 ID,
-                network,
+                subnet,
                 conn_model,
                 roi,
                 prune,
@@ -2690,11 +2693,7 @@ def build_workflow(args, retval):
                         net_mets_node,
                         [
                             ("est_path_iterlist", "est_path"),
-                            ("network_iterlist", "network"),
-                            ("thr_iterlist", "thr"),
                             ("ID_iterlist", "ID"),
-                            ("conn_model_iterlist", "conn_model"),
-                            ("roi_iterlist", "roi"),
                             ("prune_iterlist", "prune"),
                             ("norm_iterlist", "norm"),
                             ("binary_iterlist", "binary"),
@@ -2709,7 +2708,7 @@ def build_workflow(args, retval):
                     inputnode,
                     combine_pandas_dfs_node,
                     [
-                        ("network", "network"),
+                        ("subnet", "subnet"),
                         ("ID", "ID"),
                         ("plot_switch", "plot_switch"),
                         ("multi_nets", "multi_nets"),
@@ -2747,11 +2746,11 @@ def build_workflow(args, retval):
         conf_list,
         anat_file_list,
         atlas,
-        network,
-        node_size,
+        subnet,
+        node_radius,
         roi,
         thr,
-        uatlas,
+        parcellation,
         multi_nets,
         conn_model,
         dens_thresh,
@@ -2774,7 +2773,7 @@ def build_workflow(args, retval):
         user_atlas_list,
         clust_mask_list,
         prune,
-        node_size_list,
+        node_radii_list,
         conn_model_list,
         min_span_tree,
         verbose,
@@ -2792,19 +2791,18 @@ def build_workflow(args, retval):
         binary,
         fbval,
         fbvec,
-        target_samples,
         curv_thr_list,
         step_list,
         track_type,
         min_length,
         maxcrossing,
         error_margin,
-        directget,
+        traversal,
         tiss_class,
         runtime_dict,
         execution_dict,
         embed,
-        multi_directget,
+        multi_traversal,
         multimodal,
         hpass,
         hpass_list,
@@ -2814,8 +2812,8 @@ def build_workflow(args, retval):
         local_corr,
         min_length_list,
         error_margin_list,
-        extract_strategy,
-        extract_strategy_list,
+        signal,
+        signal_list,
         outdir,
     ):
         """A function interface for generating multiple single-subject
@@ -2825,7 +2823,7 @@ def build_workflow(args, retval):
         warnings.filterwarnings("ignore")
         from time import strftime
 
-        wf_multi = pe.Workflow(name=f"wf_multisub_{strftime('%Y%m%d_%H%M%S')}")
+        wf_multi = pe.Workflow(name=f"group_{strftime('%Y%m%d_%H%M%S')}")
 
         if not multi_subject_graph and not multi_subject_multigraph:
             if (func_file_list is None) and dwi_file_list:
@@ -2875,11 +2873,11 @@ def build_workflow(args, retval):
                     ID=ID[i],
                     func_file=func_file,
                     atlas=atlas,
-                    network=network,
-                    node_size=node_size,
+                    subnet=subnet,
+                    node_radius=node_radius,
                     roi=roi,
                     thr=thr,
-                    uatlas=uatlas,
+                    parcellation=parcellation,
                     multi_nets=multi_nets,
                     conn_model=conn_model,
                     dens_thresh=dens_thresh,
@@ -2902,7 +2900,7 @@ def build_workflow(args, retval):
                     user_atlas_list=user_atlas_list,
                     clust_mask_list=clust_mask_list,
                     prune=prune,
-                    node_size_list=node_size_list,
+                    node_radii_list=node_radii_list,
                     graph=None,
                     conn_model_list=conn_model_list,
                     min_span_tree=min_span_tree,
@@ -2920,19 +2918,18 @@ def build_workflow(args, retval):
                     binary=binary,
                     fbval=fbval_sub,
                     fbvec=fbvec_sub,
-                    target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
                     error_margin=error_margin,
-                    directget=directget,
+                    traversal=traversal,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
                     embed=embed,
-                    multi_directget=multi_directget,
+                    multi_traversal=multi_traversal,
                     multimodal=multimodal,
                     hpass=hpass,
                     hpass_list=hpass_list,
@@ -2942,8 +2939,8 @@ def build_workflow(args, retval):
                     local_corr=local_corr,
                     min_length_list=min_length_list,
                     error_margin_list=error_margin_list,
-                    extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list,
+                    signal=signal,
+                    signal_list=signal_list,
                     outdir=subj_dir,
                 )
                 wf_single_subject._n_procs = procmem[0]
@@ -2994,11 +2991,11 @@ def build_workflow(args, retval):
                     ID=ID[i],
                     func_file=func_file,
                     atlas=atlas,
-                    network=network,
-                    node_size=node_size,
+                    subnet=subnet,
+                    node_radius=node_radius,
                     roi=roi,
                     thr=thr,
-                    uatlas=uatlas,
+                    parcellation=parcellation,
                     multi_nets=multi_nets,
                     conn_model=conn_model,
                     dens_thresh=dens_thresh,
@@ -3021,7 +3018,7 @@ def build_workflow(args, retval):
                     user_atlas_list=user_atlas_list,
                     clust_mask_list=clust_mask_list,
                     prune=prune,
-                    node_size_list=node_size_list,
+                    node_radii_list=node_radii_list,
                     graph=graph,
                     conn_model_list=conn_model_list,
                     min_span_tree=min_span_tree,
@@ -3039,19 +3036,18 @@ def build_workflow(args, retval):
                     binary=binary,
                     fbval=fbval_sub,
                     fbvec=fbvec_sub,
-                    target_samples=target_samples,
                     curv_thr_list=curv_thr_list,
                     step_list=step_list,
                     track_type=track_type,
                     min_length=min_length,
                     maxcrossing=maxcrossing,
                     error_margin=error_margin,
-                    directget=directget,
+                    traversal=traversal,
                     tiss_class=tiss_class,
                     runtime_dict=runtime_dict,
                     execution_dict=execution_dict,
                     embed=embed,
-                    multi_directget=multi_directget,
+                    multi_traversal=multi_traversal,
                     multimodal=multimodal,
                     hpass=hpass,
                     hpass_list=hpass_list,
@@ -3061,8 +3057,8 @@ def build_workflow(args, retval):
                     local_corr=local_corr,
                     min_length_list=min_length_list,
                     error_margin_list=error_margin_list,
-                    extract_strategy=extract_strategy,
-                    extract_strategy_list=extract_strategy_list,
+                    signal=signal,
+                    signal_list=signal_list,
                     outdir=subj_dir,
                 )
                 wf_single_subject._n_procs = procmem[0]
@@ -3111,11 +3107,11 @@ def build_workflow(args, retval):
             conf_list,
             anat_file_list,
             atlas,
-            network,
-            node_size,
+            subnet,
+            node_radius,
             roi,
             thr,
-            uatlas,
+            parcellation,
             multi_nets,
             conn_model,
             dens_thresh,
@@ -3138,7 +3134,7 @@ def build_workflow(args, retval):
             user_atlas_list,
             clust_mask_list,
             prune,
-            node_size_list,
+            node_radii_list,
             conn_model_list,
             min_span_tree,
             verbose,
@@ -3156,19 +3152,18 @@ def build_workflow(args, retval):
             binary,
             fbval,
             fbvec,
-            target_samples,
             curv_thr_list,
             step_list,
             track_type,
             min_length,
             maxcrossing,
             error_margin,
-            directget,
+            traversal,
             tiss_class,
             runtime_dict,
             execution_dict,
             embed,
-            multi_directget,
+            multi_traversal,
             multimodal,
             hpass,
             hpass_list,
@@ -3178,8 +3173,8 @@ def build_workflow(args, retval):
             local_corr,
             min_length_list,
             error_margin_list,
-            extract_strategy,
-            extract_strategy_list,
+            signal,
+            signal_list,
             outdir,
         )
 
@@ -3201,7 +3196,7 @@ def build_workflow(args, retval):
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf_multi.base_dir),
-                    "log_to_file": True,
+                    "log_to_file": False,
                 },
                 monitoring={
                     "enabled": True,
@@ -3300,11 +3295,11 @@ def build_workflow(args, retval):
             ID,
             func_file,
             atlas,
-            network,
-            node_size,
+            subnet,
+            node_radius,
             roi,
             thr,
-            uatlas,
+            parcellation,
             multi_nets,
             conn_model,
             dens_thresh,
@@ -3327,7 +3322,7 @@ def build_workflow(args, retval):
             user_atlas_list,
             clust_mask_list,
             prune,
-            node_size_list,
+            node_radii_list,
             graph,
             conn_model_list,
             min_span_tree,
@@ -3345,19 +3340,18 @@ def build_workflow(args, retval):
             binary,
             fbval,
             fbvec,
-            target_samples,
             curv_thr_list,
             step_list,
             track_type,
             min_length,
             maxcrossing,
             error_margin,
-            directget,
+            traversal,
             tiss_class,
             runtime_dict,
             execution_dict,
             embed,
-            multi_directget,
+            multi_traversal,
             multimodal,
             hpass,
             hpass_list,
@@ -3367,8 +3361,8 @@ def build_workflow(args, retval):
             local_corr,
             min_length_list,
             error_margin_list,
-            extract_strategy,
-            extract_strategy_list,
+            signal,
+            signal_list,
             subj_dir,
         )
         import warnings
@@ -3380,11 +3374,11 @@ def build_workflow(args, retval):
         from time import strftime
 
         if (func_file is not None) and (dwi_file is None):
-            base_dirname = f"wf_single_subject_fmri_{str(ID)}"
+            base_dirname = f"fmri_wf"
         elif (dwi_file is not None) and (func_file is None):
-            base_dirname = f"wf_single_subject_dmri_{str(ID)}"
+            base_dirname = f"dmri_wf"
         else:
-            base_dirname = f"wf_single_subject_{str(ID)}"
+            base_dirname = 'wf'
 
         run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
         retval["run_uuid"] = run_uuid
@@ -3406,7 +3400,7 @@ def build_workflow(args, retval):
                     "interface_level": "DEBUG",
                     "filemanip_level": "DEBUG",
                     "log_directory": str(wf.base_dir),
-                    "log_to_file": True,
+                    "log_to_file": False,
                 },
                 monitoring={
                     "enabled": True,
@@ -3483,12 +3477,34 @@ def build_workflow(args, retval):
                     except BaseException:
                         continue
         if dwi_file:
+
+            remove_recons = True
+            remove_trk = True
+
             for file_ in [i for i in glob.glob(
                     f"{subj_dir}/dwi/*") if os.path.isfile(i)] + \
                 [i for i in glob.glob(
                     f"{subj_dir}/dwi/*/*") if os.path.isfile(i)]:
                 if ("reor-RAS" in file_) or ("res-" in file_) or \
                    ("_bvecs_reor.bvec" in file_):
+                    try:
+                        os.remove(file_)
+                    except BaseException:
+                        continue
+
+            if remove_recons is True:
+                for file_ in [i for i in glob.glob(f"{subj_dir}/dwi/*/*/"
+                                                   f"tractography/*.hdf5") if
+                              os.path.isfile(i)]:
+                    try:
+                        os.remove(file_)
+                    except BaseException:
+                        continue
+
+            if remove_trk is True:
+                for file_ in [i for i in glob.glob(f"{subj_dir}/dwi/*/*/"
+                                                   f"tractography/*.trk") if
+                              os.path.isfile(i)]:
                     try:
                         os.remove(file_)
                     except BaseException:
@@ -3532,7 +3548,8 @@ def main():
     mp.set_start_method("forkserver")
     with mp.Manager() as mgr:
         retval = mgr.dict()
-        p = mp.Process(target=build_workflow, args=(args, retval))
+        p = mp.Process(target=build_workflow,
+                       args=(args, retval))
         p.start()
         p.join()
 

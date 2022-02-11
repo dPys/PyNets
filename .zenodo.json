@@ -1,22 +1,10 @@
 {
   "title": "A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning",
-  "description": "<p>PyNets harnesses the power of Nipype, Nilearn, Dipy, and Networkx packages to automatically generate graphical ensembles on a subject-by-subject basis, using any combination of graph-generating hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to facilitate complete reproducibility of executions.</p>",
-  "creators": [
-    {
-      "name": "Pisner, Derek",
-      "affiliation": "Department of Psychology, University of Texas at Austin, TX, USA",
-      "orcid": "0000-0002-1228-0201"
-    }
-  ],
+  "description": "<p>PyNets harnesses the flexibility of Nipype, Nilearn, Dipy, and Networkx packages to automatically generate graphical ensembles on a subject-by-subject basis, using any combination of graph-generating hyperparameters. PyNets utilities can be integrated with any existing preprocessing workflow, and a docker container is provided to facilitate complete reproducibility of executions.</p>",
   "maintainers": [
     {
       "name": "Pisner, Derek",
-      "affiliation": "Department of Psychology, University of Texas at Austin, TX, USA",
       "orcid": "0000-0002-1228-0201"
-    },
-    {
-      "name": "Hammonds, Ryan",
-      "affiliation": "University of Texas at Austin, TX, USA"
     }
   ],
   "keywords": [
@@ -45,6 +33,6 @@
       "scheme": "url"
     }
   ],
-  "license": "GNU GENERAL PUBLIC LICENSE",
+  "license": "GNU AFFERO GENERAL PUBLIC LICENSE",
   "upload_type": "software"
 }

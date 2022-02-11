@@ -1,24 +1,8 @@
 pynets.core package
 ===================
 
-Subpackages
------------
-
-.. toctree::
-
-    pynets.core.atlases
-    pynets.core.labelcharts
-
 Submodules
 ----------
-
-pynets.core.cloud\_utils module
--------------------------------
-
-.. automodule:: pynets.core.cloud_utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 pynets.core.nodemaker module
 ----------------------------

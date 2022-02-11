@@ -1,0 +1,119 @@
+===============================================================================
+                    REFERENCES TO THIRD-PARTY LICENSES
+===============================================================================
+
+A. Incorporated Brain Templates and Atlases
+===========================================
+
+    i. The MNI templates
+
+    Copyright (C) 1993-2004 Louis Collins, McConnell Brain Imaging Centre,
+    Montreal Neurological Institute, McGill University.
+
+    ----------------------------------------------------------------------------
+
+    ii. The Standard Space Atlases
+
+    The Harvard-Oxford, JHU, Juelich, atlases, whilst not being the property
+    of the Licensor, are released at the request of their owners.
+    For commercial use, please contact the primary coordinator for the
+    relevant atlas to receive permissions:
+
+    Harvard-Oxford: steve@fmrib.ox.ac.uk
+    JHU: susumu@mri.jhu.edu
+    Juelich: S.Eickhoff@fz-juelich.de
+
+    ----------------------------------------------------------------------------
+    iii. The Neuromorphometrics atlas
+
+    Maximum probability tissue labels derived from the ``MICCAI 2012 Grand
+    Challenge and Workshop on Multi-Atlas Labeling’’
+    (https://masi.vuse.vanderbilt.edu/workshop2012/index.php/
+    Challenge_Details). These data were released under the Creative Commons
+    Attribution Non-Commercial (CC BY-NC) with no end date. Users should
+    credit the MRI scans as originating from the OASIS project
+    (http://www.oasis-brains.org/) and the labeled data as “provided by
+    Neuromorphometrics, Inc. (http://Neuromorphometrics.com/) under academic
+    subscription”. These references should be included in all workshop and
+    final publications.
+
+B. Incorporated Software
+========================
+
+    i. nipype, boto3, requests
+
+    nipype: Copyright (c) 2009-2016, Nipype developers
+    boto3: Copyright 2013-2017 Amazon.com, Inc. or its affiliates
+    requests: Copyright 2019 Kenneth Reitz
+
+    Apache 2.0 License
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    ----------------------------------------------------------------------------
+
+    ii. nilearn, dipy, sphinxext, python-Louvain, scikit-image, scikit-learn,
+    networkx, seaborn, scipy, numpy, joblib, psutil, pandas, statsmodels, dill,
+    colorama, h5py
+
+    nilearn: Copyright (c) 2007 - 2015 Nilearn developers.
+    dipy: Copyright (c) 2008-2021, Dipy developers.
+    Sphinxext: Copyright (c) 2007-2015 by the Sphinx team.
+    python-Louvain: Copyright (c) 2009-2018, Thomas Aynaud <thomas.aynaud@lip6.fr>
+    scikit-image: Copyright (C) 2019, the scikit-image team
+    scikit-learn: Copyright (c) 2007-2021 The scikit-learn developers.
+    networkx: Copyright (C) 2004-2021, NetworkX Developers
+              Aric Hagberg <hagberg@lanl.gov>
+              Dan Schult <dschult@colgate.edu>
+              Pieter Swart <swart@lanl.gov>
+    seaborn: Copyright (c) 2012-2021, Michael L. Waskom
+    scipy: Copyright (c) 1999-2010 SciPy Developers <scipy-dev@scipy.org>
+    numpy: Copyright (c) 2005-2021, NumPy Developers.
+    joblib: Copyright (c) 2008-2021, The joblib developers.
+    psutil: Copyright (c) 2009, Jay Loden, Dave Daeschler, Giampaolo Rodola
+    pandas: Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team.
+            Copyright (c) 2011-2021, Open source contributors.
+    statsmodels: Copyright (C) 2006, Jonathan E. Taylor
+                 Copyright (c) 2006-2008 Scipy Developers.
+                 Copyright (c) 2009-2018 statsmodels Developers.
+    dill: Copyright (c) 2004-2016 California Institute of Technology.
+          Copyright (c) 2016-2021 The Uncertainty Quantification Foundation.
+    colorama: Copyright (c) 2010 Jonathan Hartley
+    h5py: Copyright (c) 2008 Andrew Collette and contributors
+
+    BSD 3-Clause License
+    https://opensource.org/licenses/BSD-3-Clause
+
+    ----------------------------------------------------------------------------
+
+    iii. graspologic, mplcyberpunk, pybids, nibabel, sqlalchemy, six, pyyaml, urllib3
+
+    Graspologic: Copyright (c) Microsoft Corporation
+    mplcyberpunk: Copyright (c) 2020 Dominik Haitz
+    pybids: Copyright (c) 2015-2016, Ariel Rokem, The University of Washington eScience Institute.
+    pybids: Copyright (c) 2016--, PyBIDS developers
+    nibabel: Copyright (c) 2006--, Nibabel developers
+             Michael Hanke <michael.hanke@gmail.com>
+             Matthew Brett <matthew.brett@gmail.com>
+             Stephan Gerhard <git@unidesign.ch>
+             Christian Haselgrove <christian.haselgrove@umassmed.edu>
+             Jarrod Millman <jarrod.millman@gmail.com>
+             Yaroslav Halchenko <debian@onerussian.com>
+             Chris Markiewicz <effigies@gmail.com>
+    sqlalchemy: Copyright 2005-2021 SQLAlchemy authors and contributors
+    six: Copyright (c) 2010-2020 Benjamin Peterson
+    pyyaml: Copyright (c) 2017-2021 Ingy döt Net
+            Copyright (c) 2006-2016 Kirill Simonov
+    urllib3: Copyright (c) 2008-2020 Andrey Petrov and contributors
+
+    MIT License
+    https://opensource.org/licenses/MIT
+
+    ----------------------------------------------------------------------------
+
+    iv. matplotlib
+
+    matplotlib: Copyright (c) 2003-2013, John Hunter
+                Copyright (c) 2013--, Matplotlib Development Team
+
+    PSF License
+    https://opensource.org/licenses/Python-2.0

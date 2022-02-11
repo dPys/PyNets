@@ -69,13 +69,13 @@ Required
     :`-g`: A path to a raw graph can alternatively be specified, in which case the initial stages of the pipeline will be skipped. In this case, the graph should be in .txt, .npy, .csv, .tsv, or .ssv format.
 
     .. note::
-        Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the runconfig.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
+        Prior normalization of the `anat`, `func`, or `dwi` inputs to PyNets is not (yet) supported. This is because PyNets relies on the inverse transform from an MNI-template to conform a template-resampled version of the atlas(es) specified (i.e. to define nodes) into native T1w anatomical space. PyNets uses the MNI152 template by default to accomplish this, but you can specify alternative templates in the advanced.yml advanced settings to override MNI152 (e.g. a Pediatric template), following the naming spec of `templateflow` (See: <https://github.com/templateflow/templateflow>).
 
     .. note::
         If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`.
 
     .. note::
-        Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the runconfig.yml default or resolution override using the `-vox` flag.
+        Input image orientation and voxel resolution are not relevant, as PyNets will create necessary working copies with standardized RAS+ orientations and either 1mm or 2mm voxel resolution reslicing, depending on the advanced.yml default or resolution override using the `-vox` flag.
 
     .. note::
         All file formats are assumed to be Nifti1Image (i.e. .nii or .nii.gz file suffix), and **absolute** file paths should always be specified to the CLI's.
@@ -120,13 +120,13 @@ Command-Line Arguments
 
 .. argparse::
     :module: pynets.cli.pynets_run
-    :func: get_bids_parser
+    :func: get_parser
     :prog: pynets
 
 .. argparse::
     :module: pynets.cli.pynets_bids
-    :func: get_parser
-    :prog: pynets
+    :func: get_bids_parser
+    :prog: pynets_bids
 
 **********
 Quickstart
@@ -138,7 +138,7 @@ Execution on BIDS derivative datasets using the `pynets_bids` CLI
 PyNets now includes an API for running single-subject and group workflows on BIDS derivatives (e.g. produced using popular BIDS apps like fmriprep/cpac and dmriprep/qsiprep).
 In this scenarioo, the input dataset should follow the derivatives specification of the `BIDS (Brain Imaging Data Structure)` format (<https://bids-specification.readthedocs.io/en/derivatives/05-derivatives/01-introduction.html>), which must include at least one subject's fMRI image or dMRI image (in T1w space), along with a T1w anatomical image.
 
-The `runconfig.yml` file in the base directory includes parameter presets, but all file input options that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
+The `advanced.yml` file in the base directory includes parameter presets, but all file input options that are included with the `pynets` cli are also exposed to the `pynets_bids` cli.
 
 The common parts of the command follow the `BIDS-Apps <https://github.com/BIDS-Apps>`_ definition.
 Example: ::
@@ -333,16 +333,8 @@ If you intend to run ``pynets`` on a remote system, you will need to make your d
 Alternatively, more comprehensive solutions such as `Datalad <http://www.datalad.org/>`_ will handle data transfers with the appropriate settings and commands. Datalad also performs version control over your data.
 
 
-********************
-Interpreting outputs
-********************
+**************
+Group Analysis
+**************
 
-To collect the graph topological outputs from one or more completed pynets
-runs, you can use the `pynets_collect` CLI: ::
-
-    pynets_collect -basedir '/Users/dPys/outputs/pynets' -modality 'func'
-
-which will generate a group summary dataframe in `basedir`, all_subs_neat.csv, where each row is a
-given subject session and/or run, and each column is a graph topological
-metric the was calculated, with the prefix indicating correspondence to a
-given connectome ensemble of interest.
+COMING SOON

@@ -11,7 +11,9 @@ Subpackages
     pynets.fmri
     pynets.plotting
     pynets.registration
-    pynets.stats
+    pynets.statistics
+    pynets.statistics.group
+    pynets.statistics.individual
 
 Submodules
 ----------

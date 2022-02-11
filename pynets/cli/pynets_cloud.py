@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import subprocess
 import re
@@ -27,7 +26,7 @@ def batch_submit(
     modality,
     participant_label,
     session_label,
-    user_atlas,
+    parcellation,
     cluster_mask,
     roi,
     ref,
@@ -41,7 +40,41 @@ def batch_submit(
 ):
     """Searches through an S3 bucket, gets all subject-ids, creates json
     files for each, submits batch jobs, and returns list of job ids to query
-    status upon later."""
+    status upon later.
+
+    Parameters
+    __________
+    bucket : str
+        s3 bucket
+    dataset,
+    push_dir,
+    modality,
+    participant_label,
+    session_label,
+    parcellation,
+    cluster_mask,
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file
+    ref : str
+        File path to reference Nifti1Image to use as the target for alignment.
+    way : str
+        File path to tractography constraint mask array in native diffusion
+        space.
+    plugin: plugin name or object
+        Plugin to use for execution. You can create your own plugins for
+        execution.
+    resources : str
+        Maximum number of cores and GB of memory, stated as two integers
+        seperated by comma. Otherwise, default is `auto`, which uses all
+        available resources detected on the compute node(s) used for
+        execution.
+    working_dir : str
+        Path to the working directory to perform SyN and save outputs
+    verbose : bool
+        Verbose print for debugging
+    jobdir : str
+        Directory of batch jobs to generate/check up on credentials
+    """
 
     print(f"Getting list from s3://{bucket}/{dataset}/...")
     seshs = crawl_bucket(bucket, dataset, jobdir)
@@ -59,7 +92,7 @@ def batch_submit(
         push_dir,
         modality,
         seshs,
-        user_atlas,
+        parcellation,
         cluster_mask,
         roi,
         ref,
@@ -78,6 +111,7 @@ def batch_submit(
 
 def crawl_bucket(bucket, path, jobdir):
     """Gets subject list for a given s3 bucket and path
+
     Parameters
     ----------
     bucket : str
@@ -86,6 +120,7 @@ def crawl_bucket(bucket, path, jobdir):
         The directory where the dataset is stored on the S3 bucket
     jobdir : str
         Directory of batch jobs to generate/check up on
+
     Returns
     -------
     OrderedDict
@@ -119,7 +154,7 @@ def crawl_bucket(bucket, path, jobdir):
         all_seshs = [re.findall(sesh_pattern, obj) for obj in all_seshfiles]
         sesh = list(set([i for i in flatten(all_seshs)]))
 
-        if sesh != []:
+        if not isinstance(sesh, list):
             seshs[subj] = sesh
             print(f"{subj} added to sessions.")
         else:
@@ -152,7 +187,7 @@ def create_json(
     push_dir,
     modality,
     seshs,
-    user_atlas,
+    parcellation,
     cluster_mask,
     roi,
     ref,
@@ -204,9 +239,9 @@ def create_json(
     co["vcpus"] = int(procmem[0])
     co["memory"] = int(1000 * float(procmem[1]))
 
-    if user_atlas is not None:
+    if parcellation is not None:
         cmd.append("-ua")
-        for i in user_atlas:
+        for i in parcellation:
             cmd.append(i)
     if cluster_mask is not None:
         cmd.append("-cm")
@@ -276,12 +311,14 @@ def create_json(
 
 def submit_jobs(jobs, jobdir):
     """Give list of jobs to submit, submits them to AWS Batch
+
     Parameters
     ----------
     jobs : list
         Name of the json files for all jobs to submit
     jobdir : str
         Directory of batch jobs to generate/check up on
+
     Returns
     -------
     int
@@ -307,6 +344,7 @@ def submit_jobs(jobs, jobdir):
 
 def kill_jobs(jobdir, reason='"Killing job"'):
     """Given a list of jobs, kills them all
+
     Parameters
     ----------
     jobdir : str
@@ -503,7 +541,7 @@ def main():
     session_label = result.session_label
     verbose = result.v
     working_dir = result.work
-    user_atlas = result.ua
+    parcellation = result.ua
     cluster_mask = result.cm
     roi = result.roi
     ref = result.ref
@@ -524,7 +562,7 @@ def main():
         modality=modality,
         participant_label=participant_label,
         session_label=session_label,
-        user_atlas=user_atlas,
+        parcellation=parcellation,
         cluster_mask=cluster_mask,
         roi=roi,
         ref=ref,

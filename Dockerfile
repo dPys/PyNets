@@ -7,8 +7,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG miniconda_version="4.3.27"
 
 ENV LANG="C.UTF-8" \
-    LC_ALL="C.UTF-8" \
-    PIP_DEFAULT_TIMEOUT=100
+    LC_ALL="C.UTF-8"
 
 RUN apt-get update -qq \
     && apt-get install -y --no-install-recommends software-properties-common \
@@ -22,7 +21,7 @@ RUN apt-get update -qq \
         libxft2 \
         lib32ncurses5 \
         libxmu-dev \
-        vim \
+#        vim \
         wget \
         libgl1-mesa-glx \
         graphviz \
@@ -42,8 +41,8 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-        openssh-server \
-        jq \
+#        openssh-server \
+#        jq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -56,10 +55,10 @@ RUN apt-get update -qq \
         libquadmath0 \
         gcc-multilib \
     # Configure ssh
-    && mkdir /var/run/sshd \
-    && echo 'root:screencast' | chpasswd \
-    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+#    && mkdir /var/run/sshd \
+#    && echo 'root:screencast' | chpasswd \
+#    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+#    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
@@ -83,12 +82,13 @@ RUN apt-get update -qq \
     apt-get clean && cd /tmp \
     && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
-    && cp fsl/bin/* $FSLDIR/bin/ \
+    && cp fsl/bin/* /usr/share/fsl/5.0/bin \
     && rm -r fsl* \
-    && chmod 777 -R $FSLDIR/bin \
+    && chmod 777 -R /usr/share/fsl/5.0/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=10G          0  0" >> /etc/fstab \
-    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=3G          0  0" >> /etc/fstab \
+    && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
+    && head -c 3G </dev/urandom > /tmp/3G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -99,6 +99,7 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
 ENV PATH="/opt/conda/bin":$PATH
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
 
 WORKDIR /home/neuro
 
@@ -111,29 +112,32 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda clean -tipsy \
-    && conda install -yq python=3.6 ipython \
+#    && conda install -yq python=3.6 ipython \
+    && conda install -yq python=3.6 \
     && pip install --upgrade pip \
-    && conda clean -tipsy \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
-    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest \
-    # Install pynets
-    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
-    cd /home/neuro/PyNets && \
+    && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
+    && pip install --upgrade pyopenssl \
+    && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
+    && cd /home/neuro/multinetx && \
     pip install -r requirements.txt && \
     python setup.py install \
-    # Install skggm
     && conda install -yq \
         cython \
         libgfortran \
         matplotlib \
         openblas \
         graph-tool \
-#        dask \
+#        dask
+    # Install pynets
+    && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
+    cd /home/neuro/PyNets && \
+    pip install -r requirements.txt && \
+    python setup.py install \
     && pip install certifi -U --ignore-installed \
     && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
-    && pip install --upgrade --force-reinstall numpy \
+#    && pip install --upgrade --force-reinstall numpy \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
     && echo "[monitoring]" > ~/.nipype/nipype.cfg \
@@ -141,6 +145,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 #    && pip install dask[dataframe] --upgrade \
     && pip uninstall -y pandas \
     && pip install pandas -U \
+    && conda clean -tipsy \
+    && pip install --upgrade pyopenssl \
     && cd / \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
@@ -152,26 +158,28 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && chmod 777 -R /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
 #    && chmod 777 /opt/conda/bin/pynets_bids \
-#    && chmod 777 /opt/conda/bin/pynets_collect \
 #    && chmod 777 /opt/conda/bin/pynets_cloud \
 #    && chmod 777 /opt/conda/bin/pynets_benchmark \
 #    && chmod 777 /opt/conda/bin/pynets_predict \
     && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
+    && apt-get clean autoclean \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \
 	wget \
 	curl \
+#	openssl \
 	build-essential \
 	ca-certificates \
+	libc6-dev \
 	gnupg \
 	g++ \
-	openssl \
 	git-lfs \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
     && conda clean -tipsy \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && rm -rf /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
     && find /opt/conda/ -type f,l -name '*.pyc' -delete \
     && mkdir /inputs && \
@@ -179,13 +187,11 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && mkdir /outputs && \
     chmod -R 777 /outputs \
     && mkdir /working && \
-    chmod -R 777 /working
+    chmod -R 777 /working \
+    && rm -f /tmp/3G_heap.txt
 
 # ENV Config
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets":$PATH
-
-EXPOSE 22
-
+ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
@@ -194,15 +200,14 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLTCLSH=/usr/bin/tclsh \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
-ENV PATH="/opt/conda/bin":$PATH
-ENV OPENBLAS_NUM_THREADS=4 \
+ENV PATH="/opt/conda/bin":$PATH \
+    OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
-    OMP_NUM_THREADS=4
-ENV QT_QPA_PLATFORM=offscreen
+    OMP_NUM_THREADS=4 \
+    QT_QPA_PLATFORM=offscreen
 
-#SHELL ["/bin/bash", "-c"]
+EXPOSE 22
 
-RUN . /home/neuro/.bashrc
+RUN echo "PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH" >> /home/neuro/.bashrc \
+    && . /home/neuro/.bashrc
 
-# and add it as an entrypoint
-#ENTRYPOINT ["/bin/bash"]

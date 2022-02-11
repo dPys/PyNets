@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import warnings
-import os
 import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
@@ -18,14 +16,15 @@ warnings.filterwarnings("ignore")
 
 
 def normalize_gradients(
-    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True
+    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1,
+    b_scale=True
 ):
     """
     Normalize b-vectors and b-values.
 
-    The resulting b-vectors will be of unit length for the non-zero b-values.
-    The resultinb b-values will be normalized by the square of the
-    corresponding vector amplitude.
+    The resulting b-vectors will be of unit length for the non-zero
+    b-values. The resulting b-values will be normalized by the
+    square of the corresponding vector amplitude.
 
     Parameters
     ----------
@@ -34,7 +33,8 @@ def normalize_gradients(
     bvals : 1d array
         Raw b-values float array.
     b0_threshold : float
-        Gradient threshold below which volumes and vectors are considered B0's.
+        Gradient threshold below which volumes and vectors are
+        considered B0's.
 
     Returns
     -------
@@ -91,14 +91,106 @@ def generate_sl(streamlines):
     ----------
     streamlines : sequence
         Usually, this would be a list of 2D arrays, representing streamlines
+    Returns
+    -------
+    generator
+    """
+
+    for sl in streamlines:
+        yield sl.astype("float32")
+
+
+def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
+    """Create randomly placed seeds for fiber tracking from a binary mask.
+    Seeds points are placed randomly distributed in voxels of ``mask``
+    which are ``True``.
+    If ``seed_count_per_voxel`` is ``True``, this function is
+    similar to ``seeds_from_mask()``, with the difference that instead of
+    evenly distributing the seeds, it randomly places the seeds within the
+    voxels specified by the ``mask``.
+
+    Parameters
+    ----------
+    mask : binary 3d array_like
+        A binary array specifying where to place the seeds for fiber tracking.
+    affine : array, (4, 4)
+        The mapping between voxel indices and the point space for seeds.
+        The voxel_to_rasmm matrix, typically from a NIFTI file.
+        A seed point at the center the voxel ``[i, j, k]``
+        will be represented as ``[x, y, z]`` where
+        ``[x, y, z, 1] == np.dot(affine, [i, j, k , 1])``.
+    seeds_count : int
+        The number of seeds to generate. If ``seed_count_per_voxel`` is True,
+        specifies the number of seeds to place in each voxel. Otherwise,
+        specifies the total number of seeds to place in the mask.
+    random_seed : int
+        The seed for the random seed generator (numpy.random.seed).
+
+    See Also
+    --------
+    seeds_from_mask
+    Raises
+    ------
+    ValueError
+        When ``mask`` is not a three-dimensional array
+    """
+
+    mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
+    if mask.ndim != 3:
+        raise ValueError('mask cannot be more than 3d')
+
+    # Randomize the voxels
+    np.random.seed(random_seed)
+    shape = mask.shape
+    mask = mask.flatten()
+    indices = np.arange(len(mask))
+    np.random.shuffle(indices)
+
+    # Unravel_index accepts > 1 index value as of numpy v1.6 :-)
+    # TODO: PR this into Dipy
+    where = list(map(tuple,
+                     np.dstack(np.unravel_index(indices[mask[indices]==1],
+                                                shape))[-1, :]))
+
+    num_voxels = len(where)
+    seeds_per_voxel = seeds_count // num_voxels + 1
+
+    def sample_rand_seed(s, i, random_seed):
+        if random_seed is not None:
+            s_random_seed = hash((np.sum(s) + 1) * i + random_seed) \
+                            % (2 ** 32 - 1)
+            np.random.seed(s_random_seed)
+        return s + np.random.random(3) - .5
+
+    seeds = np.asarray([[sample_rand_seed(s, i, random_seed) for s in
+                         where] for i in
+             range(1, seeds_per_voxel + 1)])[-1, :][:seeds_count]
+
+    # Apply the spatial transform
+    if seeds.any():
+        # Use affine to move seeds into real world coordinates
+        seeds = np.dot(seeds, affine[:3, :3].T)
+        seeds += affine[:3, 3]
+
+    return seeds
+
+
+def generate_seeds(seeds):
+    """
+    Helper function that takes a sequence and returns a generator
+
+    Parameters
+    ----------
+    seeds : sequence
+        Usually, this would be a list of 2D arrays, representing seeds
 
     Returns
     -------
     generator
-
     """
-    for sl in streamlines:
-        yield sl
+
+    for seed in seeds:
+        yield seed.astype('float32')
 
 
 def extract_b0(in_file, b0_ixs, out_path=None):
@@ -121,20 +213,20 @@ def extract_b0(in_file, b0_ixs, out_path=None):
 
     """
     if out_path is None:
-        out_path = fname_presuffix(in_file, suffix="_b0", use_ext=True)
+        out_path = fname_presuffix(in_file, suffix="_b0.nii.gz",
+                                   use_ext=False)
 
     img = nib.load(in_file)
 
-    b0 = np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs]
-
     hdr = img.header.copy()
-    hdr.set_data_shape(b0.shape)
+    hdr.set_data_shape(img.shape)
     hdr.set_xyzt_units("mm")
     nib.Nifti1Image(
-        b0.astype(
-            hdr.get_data_dtype()),
+        np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs],
         img.affine,
         hdr).to_filename(out_path)
+
+    img.uncache()
     return out_path
 
 

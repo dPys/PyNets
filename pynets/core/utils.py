@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2016
-@author: Derek Pisner (dPys)
+Copyright (C) 2017
 """
 import warnings
 import os
@@ -119,17 +118,17 @@ def as_directory(dir_, remove=False, return_as_path=False):
 
 def create_est_path_func(
     ID,
-    network,
+    subnet,
     conn_model,
     thr,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     thr_type,
     hpass,
     parc,
-    extract_strategy,
+    signal,
 ):
     """
     Name the thresholded functional connectivity matrix file based on
@@ -139,8 +138,8 @@ def create_est_path_func(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -153,7 +152,7 @@ def create_est_path_func(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -165,7 +164,7 @@ def create_est_path_func(
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -177,7 +176,6 @@ def create_est_path_func(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -185,11 +183,8 @@ def create_est_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
-
-    if (node_size is None) and (parc is True):
-        node_size = "_parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -201,61 +196,31 @@ def create_est_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/graph_sub-",
-        ID,
-        "_modality-func_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
-                         "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                         smooth,
-                         "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                         hpass,
-                         "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s%s" % ("extract-",
-                         extract_strategy,
-                         "_") if extract_strategy is not None else ""),
-        "thrtype-",
-        thr_type,
-        "_thr-",
-        thr,
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
 
-    return est_path
+    return f"{namer_dir}/graph_sub-{ID}_modality-func{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
+           f"signal-{signal}_thrtype-{thr_type}_thr-{thr}.npy"
 
 
 def create_est_path_diff(
     ID,
-    network,
+    subnet,
     conn_model,
     thr,
     roi,
     dir_path,
-    node_size,
-    target_samples,
+    node_radius,
     track_type,
     thr_type,
     parc,
-    directget,
+    traversal,
     min_length,
     error_margin,
 ):
@@ -267,8 +232,8 @@ def create_est_path_diff(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -281,18 +246,16 @@ def create_est_path_diff(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     thr_type : str
         Type of thresholding performed (e.g. prop, abs, dens, mst, disp)
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -306,7 +269,6 @@ def create_est_path_diff(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -314,71 +276,38 @@ def create_est_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
-
-    if (node_size is None) and (parc is True):
-        node_size = "parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/graph_sub-",
-        ID,
-        "_modality-dwi_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
-                         "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("samples-",
-                         int(
-                             target_samples),
-                         "streams_") if float(target_samples) > 0 else "_"),
-        "tracktype-",
-        track_type,
-        "_directget-",
-        directget,
-        "_minlength-",
-        min_length,
-        "_tol-",
-        error_margin,
-        "_thrtype-",
-        thr_type,
-        "_thr-",
-        thr,
-        ".npy",
-        )
-    return est_path
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    return f"{namer_dir}/graph_sub-{ID}_modality-dwi{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tracktype-{track_type}_" \
+           f"traversal-{traversal}_minlength-{min_length}_" \
+           f"tol-{error_margin}_thrtype-{thr_type}_thr-{thr}.npy"
 
 
 def create_raw_path_func(
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     dir_path,
-    node_size,
+    node_radius,
     smooth,
     hpass,
     parc,
-    extract_strategy,
+    signal,
 ):
     """
     Name the raw functional connectivity matrix file based on relevant
@@ -388,8 +317,8 @@ def create_raw_path_func(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -399,7 +328,7 @@ def create_raw_path_func(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
     smooth : int
@@ -409,7 +338,7 @@ def create_raw_path_func(
         High-pass filter values (Hz) to apply to node-extracted time-series.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -421,7 +350,6 @@ def create_raw_path_func(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -429,11 +357,8 @@ def create_raw_path_func(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
-
-    if (node_size is None) and (parc is True):
-        node_size = "parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -445,55 +370,29 @@ def create_raw_path_func(
     if smooth is None:
         smooth = 0
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/rawgraph_sub-",
-        ID,
-        "_modality-func_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
-                         "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                         smooth,
-                         "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                         hpass,
-                         "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s" % ("extract-",
-                       extract_strategy) if extract_strategy is not None
-                else ""),
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
 
-    return est_path
+    return f"{namer_dir}/rawgraph_sub-{ID}_modality-func{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
+           f"signal-{signal}.npy"
 
 
 def create_raw_path_diff(
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     dir_path,
-    node_size,
-    target_samples,
+    node_radius,
     track_type,
     parc,
-    directget,
+    traversal,
     min_length,
     error_margin
 ):
@@ -505,8 +404,8 @@ def create_raw_path_diff(
     ----------
     ID : str
         A subject id or other unique identifier.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     conn_model : str
        Connectivity estimation model (e.g. corr for correlation, cov for
@@ -516,16 +415,14 @@ def create_raw_path_diff(
         File path to binarized/boolean region-of-interest Nifti1Image file.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's.
-    target_samples : int
-        Total number of streamline samples specified to generate streams.
     track_type : str
         Tracking algorithm used (e.g. 'local' or 'particle').
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    directget : str
+    traversal : str
         The statistical approach to tracking. Options are:
         det (deterministic), closest (clos), boot (bootstrapped),
         and prob (probabilistic).
@@ -539,7 +436,6 @@ def create_raw_path_diff(
 
     """
     import os
-    import sys
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -547,54 +443,25 @@ def create_raw_path_diff(
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
-
-    if (node_size is None) and (parc is True):
-        node_size = "_parc"
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    est_path = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/rawgraph_sub-",
-        ID,
-        "_modality-dwi_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                         network,
-                         "_") if network is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                         op.basename(
-                             roi).split(".")[0],
-                         "_") if roi is not None else ""),
-        "model-",
-        conn_model,
-        "_template-",
-        template_name,
-        "_",
-        "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                         node_size,
-                         "mm_") if (
-         (node_size != "parc") and (
-             node_size is not None)) else "nodetype-parc_"),
-        "%s" % ("%s%s%s" % ("samples-",
-                         int(
-                             target_samples),
-                         "streams_") if float(target_samples) > 0 else ""),
-        "tracktype-",
-        track_type,
-        "_directget-",
-        directget,
-        "_minlength-",
-        min_length,
-        "_tol-",
-        error_margin,
-        ".npy",
-        )
-    return est_path
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    return f"{namer_dir}/rawgraph_sub-{ID}_modality-dwi{subnet_suff}" \
+           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
+           f"{nodetype_suff}_tracktype-{track_type}_" \
+           f"traversal-{traversal}_minlength-{min_length}_" \
+           f"tol-{error_margin}.npy"
 
 
 def create_csv_path(dir_path, est_path):
@@ -622,10 +489,8 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    out_path = f"{namer_dir}/metrics_" \
-               f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
-
-    return out_path
+    return f"{namer_dir}/metrics_" \
+           f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
 
 
 def load_mat(est_path):
@@ -674,7 +539,7 @@ def load_mat(est_path):
 def load_mat_ext(
     est_path,
     ID,
-    network,
+    subnet,
     conn_model,
     roi,
     prune,
@@ -684,14 +549,12 @@ def load_mat_ext(
     dens_thresh,
     disp_filt,
 ):
-    from pynets.core.utils import load_mat
 
-    conn_matrix = load_mat(est_path)
     return (
-        conn_matrix,
+        load_mat(est_path),
         est_path,
         ID,
-        network,
+        subnet,
         conn_model,
         roi,
         prune,
@@ -720,9 +583,9 @@ def save_mat(conn_matrix, est_path, fmt=None):
     """
     import numpy as np
     import networkx as nx
+    from pynets.core.utils import load_runconfig
 
     if fmt is None:
-        from pynets.core.utils import load_runconfig
         hardcoded_params = load_runconfig()
         fmt = hardcoded_params["graph_file_format"][0]
 
@@ -772,14 +635,14 @@ def mergedicts(dict1, dict2):
         if k in dict1 and k in dict2:
             if isinstance(dict1[k], dict) and \
                     isinstance(dict2[k], dict):
-                yield (k, dict(mergedicts(dict1[k],
-                                          dict2[k])))
+                yield k, dict(mergedicts(dict1[k],
+                                          dict2[k]))
             else:
-                yield (k, dict2[k])
+                yield k, dict2[k]
         elif k in dict1:
-            yield (k, dict1[k])
+            yield k, dict1[k]
         else:
-            yield (k, dict2[k])
+            yield k, dict2[k]
 
 
 def save_mat_thresholded(
@@ -787,7 +650,7 @@ def save_mat_thresholded(
     est_path_orig,
     thr_type,
     ID,
-    network,
+    subnet,
     thr,
     conn_model,
     roi,
@@ -796,7 +659,6 @@ def save_mat_thresholded(
     binary,
 ):
     import numpy as np
-    from pynets.core.utils import save_mat
     from nipype.utils.filemanip import fname_presuffix
 
     est_path = fname_presuffix(est_path_orig,
@@ -807,7 +669,7 @@ def save_mat_thresholded(
 
     save_mat(conn_matrix, est_path, fmt="npy")
 
-    return est_path, ID, network, thr, conn_model, roi, prune, norm, binary
+    return est_path, ID, subnet, thr, conn_model, roi, prune, norm, binary
 
 
 def pass_meta_outs(
@@ -905,7 +767,7 @@ def pass_meta_outs(
 def pass_meta_ins(
         conn_model,
         est_path,
-        network,
+        subnet,
         thr,
         prune,
         ID,
@@ -918,13 +780,13 @@ def pass_meta_ins(
     Parameters
     ----------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Connectivity estimation model (e.g. corr for correlation, cov for
+        covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
@@ -944,13 +806,13 @@ def pass_meta_ins(
     Returns
     -------
     conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Connectivity estimation model (e.g. corr for correlation, cov for
+        covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path : str
         File path to .npy file containing graph with thresholding applied.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming (e.g. 'Default')
         used to filter nodes in the study of brain subgraphs.
     thr : float
         A value, between 0 and 1, to threshold the graph using any variety of
@@ -969,7 +831,7 @@ def pass_meta_ins(
     """
     est_path_iterlist = est_path
     conn_model_iterlist = conn_model
-    network_iterlist = network
+    network_iterlist = subnet
     thr_iterlist = thr
     prune_iterlist = prune
     ID_iterlist = ID
@@ -1026,14 +888,14 @@ def pass_meta_ins_multi(
     Parameters
     ----------
     conn_model_func : str
-       Functional connectivity estimation model (e.g. corr for correlation, cov
-       for covariance, sps for precision covariance, partcorr for partial
-       correlation). sps type is used by default.
+        Functional connectivity estimation model (e.g. corr for correlation, cov
+        for covariance, sps for precision covariance, partcorr for partial
+        correlation). sps type is used by default.
     est_path_func : str
         File path to .npy file containing functional graph with thresholding
         applied.
     network_func : str
-        Functional resting-state network based on Yeo-7 and Yeo-17 naming
+        Functional resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     thr_func : float
         A value, between 0 and 1, to threshold the functional graph using any
@@ -1052,14 +914,14 @@ def pass_meta_ins_multi(
         Indicates whether to binarize resulting graph edges to form an
         unweighted functional graph.
     conn_model_struct : str
-       Diffusion structural connectivity estimation model (e.g. corr for
-       correlation, cov for covariance, sps for precision covariance, partcorr
+        Diffusion structural connectivity estimation model (e.g. corr for
+        correlation, cov for covariance, sps for precision covariance, partcorr
         for partial correlation). sps type is used by default.
     est_path_struct : str
         File path to .npy file containing diffusion structural graph with
         thresholding applied.
     network_struct : str
-        Diffusion structural resting-state network based on Yeo-7 and Yeo-17
+        Diffusion structural resting-state subnet based on Yeo-7 and Yeo-17
         naming (e.g. 'Default') used to filter nodes in the study of brain
         subgraphs.
     thr_struct : float
@@ -1083,9 +945,9 @@ def pass_meta_ins_multi(
     Returns
     -------
     conn_model_iterlist : list
-       List of connectivity estimation model parameters (e.g. corr for
-       correlation, cov for covariance, sps for precision covariance, partcorr
-       for partial correlation). sps type is used by default.
+        List of connectivity estimation model parameters (e.g. corr for
+        correlation, cov for covariance, sps for precision covariance, partcorr
+        for partial correlation). sps type is used by default.
     est_path_iterlist : list
         List of file paths to .npy file containing graph with thresholding
         applied.
@@ -1206,28 +1068,8 @@ def decompress_nifti(infile):
     return out_file.name
 
 
-def proportional(k, voxels_list):
-    """Hagenbach-Bischoff Quota"""
-    quota = sum(voxels_list) / (1.0 + k)
-    frac = [voxels / quota for voxels in voxels_list]
-    res = [int(f) for f in frac]
-    n = k - sum(res)
-    if n == 0:
-        return res
-    if n < 0:
-        return [min(x, k) for x in res]
-    remainders = [ai - bi for ai, bi in zip(frac, res)]
-    limit = sorted(remainders, reverse=True)[n - 1]
-    for i, r in enumerate(remainders):
-        if r >= limit:
-            res[i] += 1
-            n -= 1
-            if n == 0:
-                return res
-
-
 def collect_pandas_df(
-    network, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
+    subnet, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
 ):
     """
     API for summarizing independent lists of pickled pandas dataframes of
@@ -1235,8 +1077,8 @@ def collect_pandas_df(
 
     Parameters
     ----------
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -1256,10 +1098,9 @@ def collect_pandas_df(
         If True, then collect_pandas_df completed successfully.
 
     """
-    import sys
     from pathlib import Path
-    from pynets.core.utils import flatten, load_runconfig
-    from pynets.stats.netstats import collect_pandas_df_make
+    from pynets.statistics.individual.algorithms import collect_pandas_df_make
+    from pynets.core.utils import load_runconfig
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
@@ -1268,7 +1109,7 @@ def collect_pandas_df(
     except KeyError as e:
         print(e,
               "available functional models not sucessfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
     try:
         struct_models = hardcoded_params["available_models"][
@@ -1276,16 +1117,16 @@ def collect_pandas_df(
     except KeyError as e:
         print(e,
               "available structural models not sucessfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
     if multi_nets is not None:
         net_mets_csv_list_nets = net_mets_csv_list
-        for network in multi_nets:
+        for subnet in multi_nets:
             net_mets_csv_list = list(
-                set([i for i in net_mets_csv_list_nets if network in i])
+                set([i for i in net_mets_csv_list_nets if subnet in i])
             )
             if multimodal is True:
                 net_mets_csv_list_dwi = list(
@@ -1299,7 +1140,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_dwi = collect_pandas_df_make(
-                    net_mets_csv_list_dwi, ID, network, plot_switch, embed
+                    net_mets_csv_list_dwi, ID, subnet, plot_switch, embed
                 )
                 net_mets_csv_list_func = list(
                     set(
@@ -1312,7 +1153,7 @@ def collect_pandas_df(
                     )
                 )
                 combination_complete_func = collect_pandas_df_make(
-                    net_mets_csv_list_func, ID, network, plot_switch, embed
+                    net_mets_csv_list_func, ID, subnet, plot_switch, embed
                 )
 
                 if (
@@ -1324,7 +1165,7 @@ def collect_pandas_df(
                     combination_complete = False
             else:
                 combination_complete = collect_pandas_df_make(
-                    net_mets_csv_list, ID, network, plot_switch, embed
+                    net_mets_csv_list, ID, subnet, plot_switch, embed
                 )
     else:
         if multimodal is True:
@@ -1338,7 +1179,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_dwi = collect_pandas_df_make(
-                net_mets_csv_list_dwi, ID, network, plot_switch, embed
+                net_mets_csv_list_dwi, ID, subnet, plot_switch, embed
             )
             net_mets_csv_list_func = list(
                 set(
@@ -1350,7 +1191,7 @@ def collect_pandas_df(
                 )
             )
             combination_complete_func = collect_pandas_df_make(
-                net_mets_csv_list_func, ID, network, plot_switch, embed
+                net_mets_csv_list_func, ID, subnet, plot_switch, embed
             )
 
             if combination_complete_dwi is \
@@ -1360,7 +1201,7 @@ def collect_pandas_df(
                 combination_complete = False
         else:
             combination_complete = collect_pandas_df_make(
-                net_mets_csv_list, ID, network, plot_switch, embed
+                net_mets_csv_list, ID, subnet, plot_switch, embed
             )
 
     return combination_complete
@@ -1401,26 +1242,42 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def load_runconfig():
-    import pkg_resources
+def load_runconfig(location=None):
+    import time
+    import psutil
     import yaml
-    import tempfile
-    import shutil
-    import os
+    import pkg_resources
 
-    fd, temp_path = tempfile.mkstemp()
-    shutil.copy2(pkg_resources.resource_filename("pynets", "runconfig.yaml"),
-                 temp_path)
-    with open(temp_path, mode='r+') as stream:
-        hardcoded_params = yaml.load(stream)
-    stream.close()
-    os.remove(temp_path)
-    del stream
-    return hardcoded_params
+    if not location:
+        location = pkg_resources.resource_filename("pynets", "advanced.yaml")
+
+    # asynchronous config parsing
+    def proc_access(location, proc):
+        try:
+            return [location == f for f in proc.open_files()]
+        except psutil.NoSuchProcess as e:
+            # Catches race condition
+            return [False]
+        except psutil.AccessDenied as e:
+            # If we're not root/admin sometimes we can't query processes
+            return [False]
+
+    while sum(list(flatten([proc_access(location, p) for p in
+         psutil.process_iter(attrs=['name']) if ('python' in p.info['name'])
+                                                and p.is_running() and
+                                                p.username() != 'root']))
+              ) > 0:
+        time.sleep(1)
+
+    with open(location, mode='r') as f:
+        stream = f.read()
+    f.close()
+
+    return yaml.load(stream, Loader=yaml.FullLoader)
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,
-                                   network='all_nodes', indices=None):
+                                   subnet='all_nodes', indices=None):
     """
     Save coordinates and labels to json.
 
@@ -1433,8 +1290,8 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         List of string labels corresponding to ROI nodes.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    network : str
-        Restricted sub-network name.
+    subnet : str
+        Restricted sub-subnet name.
 
     Returns
     -------
@@ -1481,7 +1338,7 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_list.append(node_dict)
         i += 1
 
-    nodes_path = f"{namer_dir}/nodes-{prune_suffices(network)}_" \
+    nodes_path = f"{namer_dir}/nodes-{prune_suffices(subnet)}_" \
                  f"count-{len(labels)}.json"
 
     with open(nodes_path, 'w') as f:
@@ -1533,7 +1390,7 @@ def get_template_tf(template_name, vox_size):
     return template, template_mask, templateflow_home
 
 
-def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
+def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
                            vox_size):
     """
     This function takes a Nifti1Image parcellation object resulting from some
@@ -1545,8 +1402,8 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         A subject id or other unique identifier.
     dir_path : str
         Path to directory containing subject derivative data for given run.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     net_parcels_map_nifti : Nifti1Image
         A nibabel-based nifti image consisting of a 3D array with integer
@@ -1564,15 +1421,15 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
     import os
     import pkg_resources
     import sys
-    from nilearn.image import resample_to_img
     from pynets.core.utils import load_runconfig
+    from nilearn.image import resample_to_img
 
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
         print(e,
-              "No template specified in runconfig.yaml"
+              "No template specified in advanced.yaml"
               )
 
     namer_dir = f"{dir_path}/parcellations"
@@ -1583,12 +1440,12 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
         namer_dir,
         "/parcellation_space-",
         template_name,
-        "%s" % ("%s%s" % ("_rsn-", network) if network is not None else ""),
+        "%s" % ("%s%s" % ("_rsn-", subnet) if subnet is not None else ""),
         ".nii.gz",
     )
 
     template_brain = pkg_resources.resource_filename(
-        "pynets", f"templates/{template_name}_brain_{vox_size}.nii.gz"
+        "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
     if sys.platform.startswith('win') is False:
@@ -1615,14 +1472,14 @@ def save_nifti_parcels_map(ID, dir_path, network, net_parcels_map_nifti,
 
 def save_ts_to_file(
     roi,
-    network,
+    subnet,
     ID,
     dir_path,
     ts_within_nodes,
     smooth,
     hpass,
-    node_size,
-    extract_strategy,
+    node_radius,
+    signal,
 ):
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
@@ -1631,8 +1488,8 @@ def save_ts_to_file(
     ----------
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file.
-    network : str
-        Resting-state network based on Yeo-7 and Yeo-17 naming
+    subnet : str
+        Resting-state subnet based on Yeo-7 and Yeo-17 naming
         (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
     ID : str
         A subject id or other unique identifier.
@@ -1647,10 +1504,10 @@ def save_ts_to_file(
         signal from ROI's.
     hpass : bool
         High-pass filter values (Hz) to apply to node-extracted time-series.
-    node_size : int
+    node_radius : int
         Spherical centroid node size in the case that coordinate-based
         centroids are used as ROI's for time-series extraction.
-    extract_strategy : str
+    signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
 
@@ -1673,36 +1530,17 @@ def save_ts_to_file(
     if smooth is None:
         smooth = 0
 
-    # Save time series as npy file
-    out_path_ts = \
-        "%s%s%s%s%s%s%s%s%s%s%s" % \
-        (namer_dir,
-        "/nodetimeseries_sub-",
-        ID,
-        "_",
-        "%s" % ("%s%s%s" % ("rsn-",
-                          network,
-                          "_") if network is not None else ""),
-        "%s" % ("%s%s%s" % ("roi-",
-                          op.basename(
-                              roi).split(".")[0],
-                          "_") if roi is not None else ""),
-        "%s" % ("%s%s%s" % ("spheres-",
-                          node_size,
-                          "mm_") if (
-          (node_size != "parc") and (
-              node_size is not None)) else "parc_"),
-        "%s" % ("%s%s%s" % ("smooth-",
-                          smooth,
-                          "fwhm_") if float(smooth) > 0 else ""),
-        "%s" % ("%s%s%s" % ("hpass-",
-                          hpass,
-                          "Hz_") if hpass is not None else ""),
-        "%s" % ("%s%s" % ("extract-",
-                        extract_strategy) if extract_strategy is not None
-                else ""),
-        ".npy",
-        )
+    subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
+    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
+        else ""
+    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
+        ((node_radius is not None) and (node_radius != 'parc')) \
+        else "_nodetype-parc"
+
+    out_path_ts = f"{namer_dir}/nodetimeseries_sub-{ID}_" \
+                  f"modality-func{subnet_suff}" \
+                  f"{roi_suff}{nodetype_suff}_tol-{smooth}fwhm_hpass-" \
+                  f"{hpass}Hz_signal-{signal}.npy"
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1761,70 +1599,6 @@ def timeout(seconds):
     return decorator
 
 
-class build_sql_db(object):
-    """
-    A SQL exporter for AUC metrics.
-    """
-
-    def __init__(self, dir_path, ID):
-        from sqlalchemy import create_engine
-
-        self.ID = ID
-        db_file = dir_path + "/" + self.ID + "_auc_db.sql"
-        self.engine = create_engine(
-            "sqlite:///" + db_file, echo=False, encoding="utf-8"
-        )
-        self.hyperparams = None
-        self.modality = None
-        return
-
-    def create_modality_table(self, modality):
-        from sqlalchemy.sql import text
-
-        self.modality = modality
-        statement = """CREATE TABLE IF NOT EXISTS """ + \
-            self.modality + """(id TEXT);"""
-        self.engine.execute(text(statement.replace("'", "")))
-
-    def add_hp_columns(self, hyperparams):
-        from sqlalchemy.sql import text
-
-        self.hyperparams = hyperparams
-        for hp in self.hyperparams:
-            try:
-                statement = (
-                    """ALTER TABLE """
-                    + self.modality
-                    + """ ADD COLUMN """
-                    + hp
-                    + """;"""
-                )
-                self.engine.execute(text(statement.replace("'", "")))
-            except BaseException:
-                continue
-        return
-
-    def add_row_from_df(self, df_summary_auc, hyperparam_dict):
-        import pandas as pd
-
-        df_summary_auc_ext = pd.concat(
-            [
-                pd.DataFrame.from_dict(hyperparam_dict,
-                                       orient="index").transpose(),
-                df_summary_auc,
-            ],
-            axis=1,
-        )
-        df_summary_auc_ext.to_sql(
-            self.modality,
-            con=self.engine,
-            index=False,
-            chunksize=1000,
-            if_exists="replace",
-        )
-        return
-
-
 def filter_cols_from_targets(df, targets):
     base = r'^{}'
     expr = '(?=.*{})'
@@ -1851,7 +1625,7 @@ def build_args_from_config(modality, arg_dict):
     except KeyError as e:
         print(e,
               "available functional models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
     try:
         struct_models = hardcoded_params["available_models"][
@@ -1859,7 +1633,7 @@ def build_args_from_config(modality, arg_dict):
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
-              " from runconfig.yaml"
+              " from advanced.yaml"
               )
 
     arg_list = []

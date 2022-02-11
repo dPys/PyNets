@@ -4,10 +4,10 @@ pynets.fmri package
 Submodules
 ----------
 
-pynets.fmri.clustools module
-----------------------------
+pynets.fmri.clustering module
+-----------------------------
 
-.. automodule:: pynets.fmri.clustools
+.. automodule:: pynets.fmri.clustering
     :members:
     :undoc-members:
     :show-inheritance:
@@ -19,7 +19,6 @@ pynets.fmri.estimation module
     :members:
     :undoc-members:
     :show-inheritance:
-
 
 Module contents
 ---------------

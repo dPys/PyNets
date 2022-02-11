@@ -11,4 +11,6 @@ API
    ../_modules/pynets.plotting.rst
    ../_modules/pynets.registration.rst
    ../_modules/pynets.rst
-   ../_modules/pynets.stats.rst
+   ../_modules/pynets.statistics.rst
+   ../_modules/pynets.statistics.individual.rst
+   ../_modules/pynets.statistics.group.rst

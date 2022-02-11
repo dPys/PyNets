@@ -1,0 +1,10 @@
+metric_list_nodal:
+#    - 'participation_coefficient'
+#    - 'diversity_coefficient'
+#    - 'local_efficiency'
+#    - 'local_clustering'
+#    - 'degree_centrality'
+    - 'betweenness_centrality'
+    - 'eigenvector_centrality'
+#    - 'communicability_centrality'
+#    - 'rich_club_coefficient'

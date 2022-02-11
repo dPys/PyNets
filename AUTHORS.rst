@@ -2,12 +2,12 @@
 Credits
 =======
 
-Development Lead
-----------------
+Creator
+-------
 Derek Pisner <dpisner@utexas.edu>
 
-Contributors
-------------
+Testing
+-------
 Ryan Hammonds, Alex Ayala, Landry J. Luker, Isabella McConley, Kaelen Saythongkham, Aki Nikolaidis, Kamil Bonna, Miriam Kosik, James Kunert-Graf, Andrew Reineberg
 
 Consultants
