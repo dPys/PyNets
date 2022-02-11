@@ -138,11 +138,11 @@ def test_reconstruction(conn_model):
     assert mod is not None
 
 
-@pytest.mark.parametrize("dsn", [False])
+#@pytest.mark.parametrize("dsn", [False])
 @pytest.mark.parametrize("fa_wei", [True, False])
 def test_streams2graph(dmri_estimation_data,
                        tractography_estimation_data,
-                       random_mni_roi_data, fa_wei, dsn):
+                       random_mni_roi_data, fa_wei, dsn=False):
     from pynets.registration.register import direct_streamline_norm
     from dipy.core.gradients import gradient_table
     from dipy.io import save_pickle
@@ -156,10 +156,10 @@ def test_streams2graph(dmri_estimation_data,
     dwi_file = dmri_estimation_data['dwi_file']
     conn_model = 'csd'
     min_length = 10
-    error_margin = 2
+    error_margin = 1
     traversal = 'prob'
-    track_type = 'particle'
-    min_span_tree = True
+    track_type = 'local'
+    min_span_tree = False
     prune = 3
     norm = 6
     binary = False
