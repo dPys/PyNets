@@ -62,7 +62,7 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
 
     start_time = time.time()
 
-    est_path = gen_mat_data(asfile=True)['mat_list'][0]
+    est_path = gen_mat_data(asfile=True)['mat_file_list'][0]
 
     try:
         extractnetstats = interfaces.NetworkAnalysis()
