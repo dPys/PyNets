@@ -1263,8 +1263,8 @@ def load_runconfig(location=None):
             return [False]
 
     while sum(list(flatten([proc_access(location, p) for p in
-         psutil.process_iter(attrs=['name']) if 'python' in p.info['name'] and
-                                                p.is_running() and
+         psutil.process_iter(attrs=['name']) if ('python' in p.info['name'])
+                                                and p.is_running() and
                                                 p.username() != 'root']))
               ) > 0:
         time.sleep(1)

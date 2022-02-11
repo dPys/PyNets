@@ -114,7 +114,6 @@ base_dir = os.path.abspath(pkg_resources.resource_filename(
                       f"bin.nii.gz"])
     ]
 )
-@pytest.mark.anyio
 def test_func_all(hpass, smooth, parc, conn_model, parcellation,
                   user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
                   min_thr, step_thr, multi_thr, thr_type, node_radius,
@@ -337,7 +336,6 @@ def test_func_all(hpass, smooth, parc, conn_model, parcellation,
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.anyio
 def test_func_clust(parc, parcellation,
                     user_atlas_list, k, k_list, k_clustering, clust_mask,
                     clust_mask_list, clust_type, clust_type_list, plot_switch,

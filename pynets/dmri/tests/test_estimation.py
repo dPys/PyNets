@@ -114,7 +114,6 @@ def test_sfm_mod_est(dmri_estimation_data):
 
 
 @pytest.mark.parametrize("conn_model", ['csa', 'csd', 'ten'])
-@pytest.mark.slowtest
 def test_reconstruction(conn_model):
     """
     Test for reconstruction functionality
