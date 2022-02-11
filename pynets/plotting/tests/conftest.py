@@ -28,13 +28,12 @@ def random_mni_roi_data():
     roi_file_tmp.close()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope='session')
 def close_all():
     """Close all matplotlib plots, regardless of test status."""
     # This adds < 1 µS in local testing, and we have ~2500 tests, so ~2 ms max
     import matplotlib.pyplot as plt
-    yield
-    plt.close('all')
+    yield plt.close('all')
 
 
 @pytest.fixture(scope='session')

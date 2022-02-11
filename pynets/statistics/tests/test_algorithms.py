@@ -116,6 +116,7 @@ def test_average_shortest_path_length_fast(gen_mat_data, weight):
     assert avgest_path_len > 0
     assert type(avgest_path_len) == np.float64
 
+
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_average_local_efficiency(gen_mat_data, engine):
     """
@@ -405,9 +406,10 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert num_comms == sim_num_comms
     assert resolution is not None
 
+
 @pytest.mark.parametrize("metric", ['participation', 'diversity',
                                     'local_efficiency',
-                                    'comm_centrality', 'rich_club_coeff'])
+                                    'comm_centrality'])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_get_metrics(gen_mat_data, metric, engine):
     """
@@ -415,9 +417,6 @@ def test_get_metrics(gen_mat_data, metric, engine):
     """
 
     binary = False
-
-    if metric == 'rich_club_coeff':
-        binary = True
 
     in_mat = gen_mat_data(asfile=False, mat_type='sb',
                           binary=binary)['mat_list'][0]
@@ -459,11 +458,11 @@ def test_get_metrics(gen_mat_data, metric, engine):
             nx.algorithms.communicability_betweenness_centrality(G)) + 1
         assert len(net_met_val_list_final) == len(
             nx.algorithms.communicability_betweenness_centrality(G)) + 1
-    elif metric == 'rich_club_coeff':
-        metric_list_names, net_met_val_list_final = \
-            algorithms.get_rich_club_coeff(G, metric_list_names,
-                                           net_met_val_list_final)
-        assert len(metric_list_names) == len(
-            nx.algorithms.rich_club_coefficient(G)) + 1
-        assert len(net_met_val_list_final) == len(
-            nx.algorithms.rich_club_coefficient(G)) + 1
+    # elif metric == 'rich_club_coeff':
+    #     metric_list_names, net_met_val_list_final = \
+    #         algorithms.get_rich_club_coeff(G, metric_list_names,
+    #                                        net_met_val_list_final)
+    #     assert len(metric_list_names) == len(
+    #         nx.algorithms.rich_club_coefficient(G)) + 1
+    #     assert len(net_met_val_list_final) == len(
+    #         nx.algorithms.rich_club_coefficient(G)) + 1

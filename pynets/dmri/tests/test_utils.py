@@ -45,7 +45,6 @@ def test_normalize_grads(dmri_estimation_data):
     assert bvals_normed is not None
 
 
-@pytest.mark.slowtest
 def test_evaluate_streamline_plausibility(dmri_estimation_data,
                                           tractography_estimation_data):
     """

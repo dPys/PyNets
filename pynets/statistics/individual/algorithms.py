@@ -6,17 +6,15 @@ Copyright (C) 2017
 @author: Derek Pisner
 """
 from pynets.core.utils import load_runconfig
-import pandas as pd
 import numpy as np
 import warnings
 import networkx as nx
-from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
 
-hardcoded_params = load_runconfig()
 try:
+    hardcoded_params = load_runconfig()
     DEFAULT_TIMEOUT = hardcoded_params["graph_analysis_timeout"][0]
     DEFAULT_ENGINE = hardcoded_params["graph_analysis_engine"][0]
 except FileNotFoundError as e:

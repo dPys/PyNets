@@ -198,7 +198,7 @@ jobs:
             python -m pip install --upgrade pip setuptools
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] anyio pytest-timeout pytest-forked coverage
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked coverage
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m

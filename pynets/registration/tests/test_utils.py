@@ -88,7 +88,6 @@ def test_applyxfm():
     assert test_out is not None
 
 
-@pytest.mark.slowtest
 def test_align_nonlinear():
     """
     Test align_nonlinear functionality
@@ -437,7 +436,6 @@ def test_rescale_affine_to_center():
     assert np.allclose(out_aff, input_affine* np.array([2, 2, 2, 1]))
 
 
-@pytest.mark.slowtest
 def test_wm_syn():
     from dipy.align import imwarp, imaffine
 

@@ -85,7 +85,6 @@ base_dir = os.path.abspath(pkg_resources.resource_filename(
                                                           f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_bin.nii.gz"])
     ]
 )
-@pytest.mark.anyio
 def test_struct_all(node_radius, parc, conn_model, conn_model_list, thr, max_thr, min_thr, step_thr,
                     multi_thr, thr_type, tiss_class, traversal, min_length,
                     track_type, node_size_list, atlas, multi_atlas,

@@ -97,7 +97,6 @@ def test_prep_tissues(tiss_class):
 @pytest.mark.parametrize("traversal", ['det', 'prob'])
 @pytest.mark.parametrize("target_samples",
                          [300, pytest.param(0, marks=pytest.mark.xfail)])
-@pytest.mark.slowtest
 def test_track_ensemble(traversal, target_samples):
     """
     Test for ensemble tractography functionality
@@ -161,7 +160,6 @@ def test_track_ensemble(traversal, target_samples):
     tmp.cleanup()
 
 
-@pytest.mark.slowtest
 def test_track_ensemble_particle():
     """
     Test for ensemble tractography functionality
@@ -170,8 +168,8 @@ def test_track_ensemble_particle():
     from pynets.dmri import track, estimation
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
-    from dipy.io.streamline import save_tractogram
+    # from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+    # from dipy.io.streamline import save_tractogram
     from nibabel.streamlines.array_sequence import ArraySequence
 
     base_dir = os.path.abspath(pkg_resources.resource_filename(
