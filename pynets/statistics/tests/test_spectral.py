@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 
+import itertools
 import pytest
 from pathlib import Path
 import numpy as np
-import networkx as nx
 import logging
 from pynets.statistics.individual import spectral
 
@@ -39,7 +39,7 @@ def test_omni(gen_mat_data, granularity, n_graphs, modality):
     emb_mat = np.load(output_file)
 
     assert Path(output_file).is_file() and output_file.endswith(".npy") and \
-           emb_mat.shape[0] == granularity and emb_mat.shape[1] == n_graphs*3
+           emb_mat.shape[0] == granularity
 
     output_paths = spectral.build_omnetome(mat_dat['mat_file_list'])
 
@@ -49,7 +49,7 @@ def test_omni(gen_mat_data, granularity, n_graphs, modality):
         output_path = output_paths[0][0]
 
     emb_mat = np.load(output_path)
-    assert Path(output_file).is_file() and output_file.endswith(".npy") \
+    assert Path(output_path).is_file() and output_path.endswith(".npy") \
            and emb_mat.shape[0] == granularity and emb_mat.shape[1] == 1
 
 
@@ -63,29 +63,33 @@ def test_omni(gen_mat_data, granularity, n_graphs, modality):
     pytest.param(0, marks=pytest.mark.xfail),
 ])
 def test_MASE(gen_mat_data, granularity, n_graphs):
-    mat_dat_func = gen_mat_data(m=granularity, n=granularity, n_graphs=n_graphs,
-                           asfile=True, mat_type='sb', modality='func')
+    mat_dat_func = gen_mat_data(m=granularity, n=granularity,
+                                n_graphs=n_graphs, asfile=True,
+                                mat_type='sb', modality='func')
     pop_array_func = mat_dat_func['mat_list']
     pop_file_list_func = mat_dat_func['mat_file_list']
 
-    mat_dat_dwi = gen_mat_data(m=granularity, n=granularity, n_graphs=n_graphs,
-                           asfile=True, mat_type='sb', modality='dwi')
+    mat_dat_dwi = gen_mat_data(m=granularity, n=granularity,
+                               n_graphs=n_graphs, asfile=True,
+                               mat_type='sb', modality='dwi')
     pop_array_dwi = mat_dat_dwi['mat_list']
     pop_file_list_dwi = mat_dat_dwi['mat_file_list']
 
     atlas = 'tmp'
-    output_file = spectral._mase_embed(pop_array_func + pop_array_dwi, atlas,
-                                       pop_file_list_func + pop_file_list_dwi)
+    output_file = spectral._mase_embed([pop_array_func[0], pop_array_dwi[0]],
+                                       atlas,
+                                       pop_file_list_func[0])
 
     emb_mat = np.load(output_file)
 
     assert Path(output_file).is_file() and output_file.endswith(".npy") and \
-           emb_mat.shape[0] == granularity and emb_mat.shape[1] == n_graphs
+           emb_mat.shape[0] == granularity and emb_mat.shape[1] == 2
 
-    output_path = spectral.build_masetome(pop_file_list_func + pop_file_list_dwi)
+    output_path = spectral.build_masetome([list(itertools.product([
+    pop_file_list_func, pop_file_list_dwi]))[0][0]])[0]
     emb_mat = np.load(output_path)
-    assert Path(output_file).is_file() and output_file.endswith(".npy") \
-           and emb_mat.shape[0] == granularity and emb_mat.shape[1] == n_graphs
+    assert Path(output_path).is_file() and output_path.endswith(".npy") \
+           and emb_mat.shape[0] == granularity and emb_mat.shape[1] == 1
 
 
 @pytest.mark.parametrize("granularity", [
@@ -128,7 +132,7 @@ def test_ASE(gen_mat_data, granularity, n_graphs, modality):
     'func',
     'dwi',
 ])
-def test_ASE(gen_mat_data, granularity, n_graphs, modality):
+def test_build_asetomes(gen_mat_data, granularity, n_graphs, modality):
     mat_dat = gen_mat_data(m=granularity, n=granularity, n_graphs=n_graphs,
                            asfile=True, mat_type='sb', modality=modality)
 

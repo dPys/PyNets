@@ -28,10 +28,6 @@ def gen_mat_data():
         mat_list = []
         mat_file_list = []
 
-        tmp = tempfile.TemporaryDirectory()
-        dir_path = str(tmp.name)
-        os.makedirs(dir_path, exist_ok=True)
-
         if n_graphs > 0:
             for nm in range(n_graphs):
                 if mat_type == 'er':
@@ -55,6 +51,12 @@ def gen_mat_data():
                 mat_list.append(autofix(mat))
 
                 if asfile is True:
+                    path_tmp = tempfile.NamedTemporaryFile(mode='w+',
+                                                           suffix='.npy',
+                                                           delete=False)
+                    mat_path_tmp = str(path_tmp.name)
+                    dir_path = os.path.dirname(mat_path_tmp)
+
                     if modality == 'func':
                         mat_path = f"{dir_path}/graph_sub-999_modality-func_" \
                         f"model-corr_template-" \
@@ -71,8 +73,10 @@ def gen_mat_data():
                         f"tol-5_thrtype-prop_thr-" \
                         f"{round(random.uniform(0, 1),2)}.npy"
 
+                    os.rename(mat_path_tmp, mat_path)
                     np.save(mat_path, mat)
                     mat_file_list.append(mat_path)
+                    path_tmp.close()
 
         return {'mat_list': mat_list, 'mat_file_list': mat_file_list}
 
