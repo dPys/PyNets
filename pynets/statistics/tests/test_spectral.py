@@ -58,7 +58,7 @@ def test_omni(gen_mat_data, granularity, n_graphs, modality):
     pytest.param(1, marks=pytest.mark.xfail),
 ])
 @pytest.mark.parametrize("n_graphs", [
-    1,
+    pytest.param(1, marks=pytest.mark.xfail),
     2,
     pytest.param(0, marks=pytest.mark.xfail),
 ])
