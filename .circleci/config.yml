@@ -537,7 +537,7 @@ workflows:
             branches:
               ignore:
                 - /docs?\/.*/
-                - /tests?\/.*/
+                - /licenses?\/.*/
                 - /docker\/.*/
             tags:
               only: /.*/
@@ -548,6 +548,8 @@ workflows:
             branches:
               ignore:
                 - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
             tags:
               only: /.*/
       - coverage:
@@ -558,6 +560,10 @@ workflows:
             branches:
               ignore:
                 - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
+              only:
+                - master
             tags:
               only: /.*/
       - build:
@@ -568,6 +574,8 @@ workflows:
             branches:
               ignore:
                 - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
             tags:
               only: /.*/
 
@@ -578,8 +586,11 @@ workflows:
           filters:
             branches:
               ignore:
-                - /docs\/.*/
+                - /docs?\/.*/
+                - /licenses?\/.*/
                 - /docker\/.*/
+              only:
+                - master
             tags:
               only: /.*/
 
@@ -589,8 +600,12 @@ workflows:
             - test_deploy_pypi
           filters:
             branches:
-              only: /docker\/.*/
-
+              ignore:
+                - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
+              only:
+                - master
       - deployable:
           requires:
             - build
@@ -616,5 +631,7 @@ workflows:
           filters:
             branches:
               ignore: /.*/
+              only:
+                - master
             tags:
               only: /.*/

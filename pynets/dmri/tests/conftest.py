@@ -19,11 +19,11 @@ from dipy.reconst.shm import CsaOdfModel
 from dipy.data import default_sphere
 from dipy.direction import peaks_from_model
 from dipy.tracking.stopping_criterion import BinaryStoppingCriterion
-from dipy.tracking import utils
+from dipy.tracking.utils import seeds_from_mask
 from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.streamline import Streamlines
 from dipy.io.stateful_tractogram import Space, Origin, StatefulTractogram
-from dipy.io.streamline import save_trk
+from dipy.io.streamline import save_tractogram
 from nilearn.masking import intersect_masks
 from nilearn._utils import data_gen
 
@@ -118,9 +118,11 @@ def dmri_estimation_data():
 
 @pytest.fixture(scope='package')
 def tractography_estimation_data(dmri_estimation_data):
-    tmp = tempfile.TemporaryDirectory()
-    dir_path = str(tmp.name)
-    os.makedirs(dir_path, exist_ok=True)
+    path_tmp = tempfile.NamedTemporaryFile(mode='w+',
+                                           suffix='.trk',
+                                           delete=False)
+    trk_path_tmp = str(path_tmp.name)
+    dir_path = os.path.dirname(trk_path_tmp)
 
     gtab = dmri_estimation_data['gtab']
     wm_img = nib.load(dmri_estimation_data['f_pve_wm'])
@@ -153,15 +155,17 @@ def tractography_estimation_data(dmri_estimation_data):
     stopping_criterion = BinaryStoppingCriterion(mask_data)
 
     seed_mask = (mask_data == 1)
-    seeds = utils.seeds_from_mask(seed_mask, dwi_img.affine, density=[1, 1, 1])
+    seeds = seeds_from_mask(seed_mask, dwi_img.affine, density=[1, 1, 1])
 
     streamlines_generator = LocalTracking(csa_peaks, stopping_criterion, seeds,
                                           affine=dwi_img.affine, step_size=.5)
     streamlines = Streamlines(streamlines_generator)
-    sft = StatefulTractogram(streamlines, dwi_img, origin=Origin.NIFTI,
-                    space=Space.RASMM)
+    sft = StatefulTractogram(streamlines, B0_mask_img, origin=Origin.NIFTI,
+                             space=Space.VOXMM)
+    sft.remove_invalid_streamlines()
     trk = f"{dir_path}/tractogram.trk"
-    save_trk(sft, trk, streamlines)
+    os.rename(trk_path_tmp, trk)
+    save_tractogram(sft, trk, bbox_valid_check=False)
     del streamlines, sft, streamlines_generator, seeds, seed_mask, csa_peaks, \
         csa_model, dwi_data, mask_data
     dwi_img.uncache()
@@ -169,5 +173,3 @@ def tractography_estimation_data(dmri_estimation_data):
     gc.collect()
 
     yield {'trk': trk, 'mask': mask_file}
-
-    tmp.cleanup()
