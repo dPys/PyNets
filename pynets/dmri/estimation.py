@@ -751,6 +751,24 @@ def streams2graph(
             )
         ]
 
+        # Remove streamlines with negative voxel indices
+        lin_T, offset = _mapping_to_voxel(np.eye(4))
+        streams_filtered = []
+        neg_vox = False
+        for sl in streamlines:
+            inds = np.dot(sl, lin_T)
+            inds += offset
+            if not inds.min().round(decimals=6) < 0:
+                streams_filtered.append(sl)
+            else:
+                neg_vox = True
+
+        if neg_vox is True:
+            print(UserWarning("Negative voxel indices detected! "
+                              "Check FOV"))
+
+        streamlines = streams_filtered
+        del streams_filtered
         # from fury import actor, window, colormap
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),

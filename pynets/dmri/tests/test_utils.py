@@ -70,7 +70,7 @@ def test_evaluate_streamline_plausibility(dmri_estimation_data,
         streams,
         mask_img,
         to_origin=Origin.NIFTI,
-        to_space=Space.RASMM,
+        to_space=Space.VOXMM,
         bbox_valid_check=True,
     )
     streamlines = tractogram.streamlines
