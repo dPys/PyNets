@@ -35,5 +35,3 @@ git+https://github.com/dPys/deepbrain.git@master
 urllib3>=1.25.4
 mplcyberpunk>=0.1.11
 numba>=0.51.2
-#asyncio>=3.4.3
-#aiofiles>=0.8.0

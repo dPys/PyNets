@@ -663,6 +663,7 @@ def plot_all_func(
                     line.set_lw(edge_size)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+                connectome.axes[view].ax.patches = []
 
             zorder = 10000
             for view in views:
@@ -1018,6 +1019,7 @@ def plot_all_struct(
                     line.set_lw(edge_size * 0.20)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+                connectome.axes[view].ax.patches = []
                 mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
                                              n_glow_lines=10,
                                              diff_linewidth=0.80,
