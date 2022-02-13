@@ -583,6 +583,7 @@ workflows:
             - unit_and_integration_tests
           filters:
             branches:
+#              only: master
               ignore:
                 - /docs?\/.*/
                 - /licenses?\/.*/
@@ -590,16 +591,6 @@ workflows:
             tags:
               only: /.*/
 
-      - deploy_docker_patches:
-          requires:
-            - build
-            - test_deploy_pypi
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
       - deployable:
           requires:
             - build
