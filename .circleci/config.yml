@@ -562,8 +562,6 @@ workflows:
                 - /docs?\/.*/
                 - /licenses?\/.*/
                 - /docker\/.*/
-              only:
-                - master
             tags:
               only: /.*/
       - build:
@@ -589,8 +587,6 @@ workflows:
                 - /docs?\/.*/
                 - /licenses?\/.*/
                 - /docker\/.*/
-              only:
-                - master
             tags:
               only: /.*/
 
@@ -604,8 +600,6 @@ workflows:
                 - /docs?\/.*/
                 - /licenses?\/.*/
                 - /docker\/.*/
-              only:
-                - master
       - deployable:
           requires:
             - build
@@ -631,7 +625,5 @@ workflows:
           filters:
             branches:
               ignore: /.*/
-              only:
-                - master
             tags:
               only: /.*/
