@@ -6,6 +6,7 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import os
+import shutil
 import numpy as np
 import networkx as nx
 import time
@@ -62,24 +63,24 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
 
     start_time = time.time()
 
-    est_path = gen_mat_data(asfile=True)['mat_file_list'][0]
+    est_path_tmp = gen_mat_data(asfile=True)['mat_file_list'][0]
+    out_folder = f"{str(Path.home())}/test_folder"
+    os.makedirs(out_folder, exist_ok=True)
+    est_path = f"{out_folder}/{os.path.basename(est_path_tmp)}"
+    shutil.copyfile(est_path_tmp, est_path)
 
-    try:
-        extractnetstats = interfaces.NetworkAnalysis()
-        extractnetstats.inputs.ID = ID
-        extractnetstats.inputs.est_path = est_path
-        extractnetstats.inputs.prune = prune
-        extractnetstats.inputs.norm = norm
-        extractnetstats.inputs.binary = binary
-        out_path = extractnetstats.run()
+    extractnetstats = interfaces.NetworkAnalysis()
+    extractnetstats.inputs.ID = ID
+    extractnetstats.inputs.est_path = est_path
+    extractnetstats.inputs.prune = prune
+    extractnetstats.inputs.norm = norm
+    extractnetstats.inputs.binary = binary
+    out_path = extractnetstats.run(cwd=str(Path.home()))
 
-        print("%s%s%s" % (
-        'finished: ',
-        str(np.round(time.time() - start_time, 1)), 's'))
-        assert out_path.outputs.get()['out_path_neat'] is not None
-
-    except PermissionError:
-        pass
+    print("%s%s%s" % (
+    'finished: ',
+    str(np.round(time.time() - start_time, 1)), 's'))
+    assert out_path.outputs.get()['out_path_neat'] is not None
 
 
 @pytest.mark.parametrize("plot_switch", [True, False])

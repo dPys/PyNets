@@ -195,7 +195,7 @@ def test_create_gb_palette(close_all, matplotlib_config,
     for param in palette:
         assert param is not None
     close_all()
-    
+
 
 def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
                                    connectivity_data):
