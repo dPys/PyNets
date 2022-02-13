@@ -75,7 +75,7 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
     extractnetstats.inputs.prune = prune
     extractnetstats.inputs.norm = norm
     extractnetstats.inputs.binary = binary
-    out_path = extractnetstats.run(cwd=str(Path.home()))
+    out_path = extractnetstats.run()
 
     print("%s%s%s" % (
     'finished: ',
