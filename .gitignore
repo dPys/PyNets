@@ -41,9 +41,10 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.pytest_cache
+__pycache__
 nosetests.xml
 *,cover
-.hypothesis/
 data/*
 pynets/.idea/*
 .idea/*
