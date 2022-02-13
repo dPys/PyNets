@@ -228,8 +228,6 @@ jobs:
           name: Dependency cleanup and configurations
           no_output_timeout: 30m
           command: |
-            python -m pip install --upgrade numpy
-            python -m pip install hyppo==0.1.3
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
