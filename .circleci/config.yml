@@ -195,7 +195,7 @@ jobs:
           command: |
             which python
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
       - run:
           name: Install pytest
           command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked coverage
@@ -333,7 +333,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
       - run:
           name: Install graph_tool
           no_output_timeout: 30m
