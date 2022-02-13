@@ -4,6 +4,8 @@ import sys
 import pytest
 import tempfile
 import pkg_resources
+import matplotlib
+matplotlib.use("agg")
 import numpy as np
 import nibabel as nib
 if sys.platform.startswith('win') is False:

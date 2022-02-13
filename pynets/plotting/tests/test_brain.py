@@ -4,6 +4,8 @@
 Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
+import matplotlib
+matplotlib.use("agg")
 import os
 import numpy as np
 import time
