@@ -28,6 +28,7 @@ def test_plot_conn_mat_nonet_no_mask(close_all, matplotlib_config,
     Test plot_conn_mat_nonet_no_mask functionality
     """
 
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -53,6 +54,7 @@ def test_plot_conn_mat_nonet_no_mask(close_all, matplotlib_config,
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
+    close_all()
 
 
 def test_plot_conn_mat_nonet_mask(close_all, matplotlib_config,
@@ -61,6 +63,7 @@ def test_plot_conn_mat_nonet_mask(close_all, matplotlib_config,
     Test plot_conn_mat_nonet_mask functionality
     """
 
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -86,5 +89,6 @@ def test_plot_conn_mat_nonet_mask(close_all, matplotlib_config,
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
+    close_all()
 
 

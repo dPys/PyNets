@@ -19,34 +19,6 @@ from graspologic.utils import symmetrize, remove_loops, \
 from nilearn._utils import data_gen
 
 
-@pytest.fixture(scope='session')
-def matplotlib_config():
-    """Configure matplotlib for viz tests."""
-    import warnings
-    import matplotlib
-    from matplotlib import cbook
-    want = 'agg'  # don't pop up windows
-    with warnings.catch_warnings(record=True):  # ignore warning
-        warnings.filterwarnings('ignore')
-        matplotlib.use(want, force=True)
-    import matplotlib.pyplot as plt
-    assert plt.get_backend() == want
-    # overwrite some params that can horribly slow down tests that
-    # users might have changed locally (but should not otherwise affect
-    # functionality)
-    plt.ioff()
-    plt.rcParams['figure.dpi'] = 100
-
-    # Make sure that we always reraise exceptions in handlers
-    orig = cbook.CallbackRegistry
-
-    class CallbackRegistryReraise(orig):
-        def __init__(self, exception_handler=None):
-            super(CallbackRegistryReraise, self).__init__(exception_handler)
-
-    cbook.CallbackRegistry = CallbackRegistryReraise
-
-    
 @pytest.fixture(scope='package')
 def random_mni_roi_data():
     roi_img = data_gen.generate_mni_space_img(res=2)[1]

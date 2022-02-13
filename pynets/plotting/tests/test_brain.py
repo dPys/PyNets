@@ -31,6 +31,7 @@ def test_plot_all_nonet_no_mask(close_all, matplotlib_config,
     Test plot_all_nonet_no_mask functionality
     """
 
+    matplotlib_config()
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
 
@@ -61,6 +62,7 @@ def test_plot_all_nonet_no_mask(close_all, matplotlib_config,
                         signal)
     print("%s%s%s" % ('plot_all --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
+    close_all()
 
 
 def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
@@ -69,6 +71,7 @@ def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
     Test plot_all_nonet_with_mask functionality
     """
 
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -109,6 +112,7 @@ def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
+    close_all()
 
 
 @pytest.mark.parametrize("subnet", ["Default", None])
@@ -118,6 +122,7 @@ def test_plot_timeseries(close_all, matplotlib_config, connectivity_data,
     Test plot_timeseries functionality
     """
 
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -132,6 +137,8 @@ def test_plot_timeseries(close_all, matplotlib_config, connectivity_data,
     print("%s%s%s" % ('plot_timeseries --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
+    close_all()
+
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
 def test_plot_network_clusters(close_all, matplotlib_config,
@@ -141,6 +148,7 @@ def test_plot_network_clusters(close_all, matplotlib_config,
     from pynets.statistics.individual.algorithms import \
         community_resolution_selection
 
+    matplotlib_config()
     temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure',
                                             suffix='.png')
     fname = str(temp_file.name)
@@ -158,6 +166,7 @@ def test_plot_network_clusters(close_all, matplotlib_config,
     assert os.path.isfile(fname)
 
     temp_file.close()
+    close_all()
 
 
 @pytest.mark.parametrize("prune, node_cmap",
@@ -166,8 +175,11 @@ def test_plot_network_clusters(close_all, matplotlib_config,
         pytest.param(False, "Set2")
     ]
 )
-def test_create_gb_palette(connectivity_data, prune, node_cmap):
+def test_create_gb_palette(close_all, matplotlib_config,
+                           connectivity_data, prune, node_cmap):
     """Test palette creation."""
+    matplotlib_config()
+
     conn_matrix = connectivity_data['conn_matrix']
     labels = connectivity_data['labels']
     coords = connectivity_data['coords']
@@ -182,14 +194,15 @@ def test_create_gb_palette(connectivity_data, prune, node_cmap):
                                       prune=prune, node_cmap=node_cmap)
     for param in palette:
         assert param is not None
-
+    close_all()
+    
 
 def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
                                    connectivity_data):
     """
     Test plot_conn_mat_rois_gt_100 functionality
     """
-
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -202,12 +215,14 @@ def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
     print("%s%s%s" % ('plot_timeseries --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
+    close_all()
+
 
 @pytest.mark.parametrize("roi", [True, False])
 def test_plot_all_struct(close_all, matplotlib_config, connectivity_data,
                          gen_mat_data, roi):
     """Test structural plotting."""
-
+    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -247,4 +262,4 @@ def test_plot_all_struct(close_all, matplotlib_config, connectivity_data,
                           edge_threshold, prune, parcellation, norm, binary,
                           track_type, traversal, min_length, error_margin)
     tmp.cleanup()
-
+    close_all()
