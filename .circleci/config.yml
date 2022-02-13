@@ -101,7 +101,7 @@ jobs:
 
   build_docs:
     docker:
-      - image: python:3.7.4
+      - image: python:3.8.4
     working_directory: /tmp/src/pynets
     environment:
       - FSLOUTPUTTYPE: 'NIFTI'
@@ -171,11 +171,11 @@ jobs:
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
-          name: "Switch to Python v3.7"
+          name: "Switch to Python v3.8"
           no_output_timeout: 30m
           command: |
             pyenv local --unset
-            pyenv uninstall -f 3.7.0 || true
+            pyenv uninstall -f 3.8.0 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
@@ -184,9 +184,9 @@ jobs:
             sudo apt-get clean
             sudo apt-get update -qq
             sudo apt-get upgrade -y
-            pyenv install -f 3.7.0 || true
+            pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
-            pyenv global 3.7.0
+            pyenv global 3.8.0
             echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
@@ -195,7 +195,7 @@ jobs:
           command: |
             which python
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
+            python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
       - run:
           name: Install pytest
           command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked coverage
@@ -257,7 +257,7 @@ jobs:
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update -qq
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.7.0/lib/python3.7/site-packages/graph_tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.8.0/lib/python3.8/site-packages/graph_tool
             python -c "import graph_tool.all as gt"
       - run:
           name: Update PATH and Define Environment Variable at Runtime
@@ -312,20 +312,20 @@ jobs:
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
-          name: "Switch to Python v3.6"
+          name: "Switch to Python v3.8"
           no_output_timeout: 30m
           command: |
             pyenv local --unset
-            pyenv uninstall -f 3.7.0 || true
+            pyenv uninstall -f 3.8.0 || true
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
             sudo apt-get update -qq
             sudo apt-get upgrade -y
             sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
-            pyenv install -f 3.7.0 || true
+            pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
-            pyenv global 3.7.0
+            pyenv global 3.8.0
             echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
@@ -333,7 +333,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
       - run:
           name: Install graph_tool
           no_output_timeout: 30m
@@ -342,7 +342,7 @@ jobs:
             curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
             sudo apt-get update -qq
             sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.7.0/lib/python3.7/site-packages/graph_tool
+            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.8.0/lib/python3.8/site-packages/graph_tool
             python -c "import graph_tool.all as gt"
       - run:
           name: Update codecov
@@ -437,7 +437,7 @@ jobs:
       - run:
           name: Build pynets
           command: |
-            pyenv local 3.7.0
+            pyenv local 3.8.0
             pip install --upgrade "pip>=19.1"
             pip install setuptools_rust twine
             THISVERSION=$( python get_version.py )
@@ -454,7 +454,7 @@ jobs:
       - run:
           name: Check sdist distribution
           command: |
-            pyenv local 3.7.0
+            pyenv local 3.8.0
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -474,7 +474,7 @@ jobs:
       - run:
           name: Check wheel distribution
           command: |
-            pyenv local 3.7.0
+            pyenv local 3.8.0
             THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
@@ -505,16 +505,16 @@ jobs:
           command: |
             sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
             sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
-            pyenv local 3.7.0
+            pyenv local 3.8.0
             THISVERSION=$( python get_version.py )
             echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
-            docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.6.9 -c "pip install numpy && python setup.py sdist"
+            docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.8 -c "pip install numpy && python setup.py sdist"
             docker run --rm=false -e PLAT='manylinux1_x86_64' -e PKGNAME='pynets' -v `pwd`:/io \
                 quay.io/pypa/manylinux1_x86_64 /io/.circleci/pypi_wheel/build-wheels.sh
       - run:
           name: Upload packages to PyPI
           command: |
-            pyenv local 3.7.0
+            pyenv local 3.8.0
             pip install twine
             INSTALLED_VERSION=$(pynets --version)
             THISVERSION=$( python get_version.py )
