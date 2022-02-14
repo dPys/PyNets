@@ -28,8 +28,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_plot_all_nonet_no_mask(close_all, random_mni_roi_data,
-                                connectivity_data):
+def test_plot_all_nonet_no_mask(random_mni_roi_data, connectivity_data):
     """
     Test plot_all_nonet_no_mask functionality
     """
@@ -63,10 +62,9 @@ def test_plot_all_nonet_no_mask(close_all, random_mni_roi_data,
                         signal)
     print("%s%s%s" % ('plot_all --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
-    close_all()
 
 
-def test_plot_all_nonet_with_mask(close_all, connectivity_data):
+def test_plot_all_nonet_with_mask(connectivity_data):
     """
     Test plot_all_nonet_with_mask functionality
     """
@@ -111,11 +109,10 @@ def test_plot_all_nonet_with_mask(close_all, connectivity_data):
     print("%s%s%s" % ('plot_all (Masking version) --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
-    close_all()
 
 
 @pytest.mark.parametrize("subnet", ["Default", None])
-def test_plot_timeseries(close_all, connectivity_data, subnet):
+def test_plot_timeseries(connectivity_data, subnet):
     """
     Test plot_timeseries functionality
     """
@@ -133,11 +130,10 @@ def test_plot_timeseries(close_all, connectivity_data, subnet):
     print("%s%s%s" % ('plot_timeseries --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
-    close_all()
 
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
-def test_plot_network_clusters(close_all, connectivity_data, plot_overlaps):
+def test_plot_network_clusters(connectivity_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
     from pynets.statistics.individual.algorithms import \
@@ -160,7 +156,6 @@ def test_plot_network_clusters(close_all, connectivity_data, plot_overlaps):
     assert os.path.isfile(fname)
 
     temp_file.close()
-    close_all()
 
 
 @pytest.mark.parametrize("prune, node_cmap",
@@ -169,7 +164,7 @@ def test_plot_network_clusters(close_all, connectivity_data, plot_overlaps):
         pytest.param(False, "Set2")
     ]
 )
-def test_create_gb_palette(close_all, connectivity_data, prune, node_cmap):
+def test_create_gb_palette(connectivity_data, prune, node_cmap):
     """Test palette creation."""
 
     conn_matrix = connectivity_data['conn_matrix']
@@ -186,10 +181,9 @@ def test_create_gb_palette(close_all, connectivity_data, prune, node_cmap):
                                       prune=prune, node_cmap=node_cmap)
     for param in palette:
         assert param is not None
-    close_all()
 
 
-def test_plot_conn_mat_rois_gt_100(close_all, connectivity_data):
+def test_plot_conn_mat_rois_gt_100(connectivity_data):
     """
     Test plot_conn_mat_rois_gt_100 functionality
     """
@@ -205,12 +199,10 @@ def test_plot_conn_mat_rois_gt_100(close_all, connectivity_data):
     print("%s%s%s" % ('plot_timeseries --> finished: ',
                       str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
-    close_all()
 
 
 @pytest.mark.parametrize("roi", [True, False])
-def test_plot_all_struct(close_all, connectivity_data,
-                         gen_mat_data, roi):
+def test_plot_all_struct(connectivity_data, gen_mat_data, roi):
     """Test structural plotting."""
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
@@ -251,4 +243,3 @@ def test_plot_all_struct(close_all, connectivity_data,
                           edge_threshold, prune, parcellation, norm, binary,
                           track_type, traversal, min_length, error_margin)
     tmp.cleanup()
-    close_all()

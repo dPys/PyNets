@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_plot_conn_mat_nonet_no_mask(close_all,
-                                     connectivity_data):
+def test_plot_conn_mat_nonet_no_mask(connectivity_data):
     """
     Test plot_conn_mat_nonet_no_mask functionality
     """
@@ -56,10 +55,9 @@ def test_plot_conn_mat_nonet_no_mask(close_all,
     print("%s%s%s" % ('plot_conn_mat_func --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
-    close_all()
 
 
-def test_plot_conn_mat_nonet_mask(close_all, connectivity_data):
+def test_plot_conn_mat_nonet_mask(connectivity_data):
     """
     Test plot_conn_mat_nonet_mask functionality
     """
@@ -89,6 +87,3 @@ def test_plot_conn_mat_nonet_mask(close_all, connectivity_data):
     print("%s%s%s" % ('plot_conn_mat_func (Masking version) --> finished: ',
     str(np.round(time.time() - start_time, 1)), 's'))
     tmp.cleanup()
-    close_all()
-
-
