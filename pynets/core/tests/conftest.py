@@ -76,6 +76,7 @@ def gen_mat_data():
 
     return _gen_mat_data
 
+
 @pytest.fixture(scope='package')
 def connectivity_data():
     """Fixture for connectivity tests."""

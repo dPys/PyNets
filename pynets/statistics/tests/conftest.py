@@ -5,6 +5,7 @@ import sys
 import pytest
 import tempfile
 import random
+import shutil
 import numpy as np
 if sys.platform.startswith('win') is False:
     import indexed_gzip
@@ -55,10 +56,11 @@ def gen_mat_data():
                                                            suffix='.npy',
                                                            delete=False)
                     mat_path_tmp = str(path_tmp.name)
-                    dir_path = os.path.dirname(mat_path_tmp)
+                    out_folder = f"{str(Path.home())}/test_mats"
+                    os.makedirs(out_folder, exist_ok=True)
 
                     if modality == 'func':
-                        mat_path = f"{dir_path}/graph_sub-999_modality-func_" \
+                        mat_path = f"{out_folder}/graph_sub-999_modality-func_" \
                         f"model-corr_template-" \
                         f"MNI152_2mm_" \
                         f"parc_tol-6fwhm_hpass-" \
@@ -66,14 +68,14 @@ def gen_mat_data():
                         f"signal-mean_thrtype-prop_thr-" \
                         f"{round(random.uniform(0, 1),2)}.npy"
                     elif modality == 'dwi':
-                        mat_path = f"{dir_path}/graph_sub-999_modality-func_" \
+                        mat_path = f"{out_folder}/graph_sub-999_modality-func_" \
                         f"model-csa_template-" \
                         f"MNI152_2mm_tracktype-local_" \
                         f"traversal-det_minlength-30_" \
                         f"tol-5_thrtype-prop_thr-" \
                         f"{round(random.uniform(0, 1),2)}.npy"
 
-                    os.rename(mat_path_tmp, mat_path)
+                    shutil.copyfile(mat_path_tmp, mat_path)
                     np.save(mat_path, mat)
                     mat_file_list.append(mat_path)
                     path_tmp.close()

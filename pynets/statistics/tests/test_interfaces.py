@@ -6,7 +6,6 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import os
-import shutil
 import numpy as np
 import networkx as nx
 import time
@@ -63,11 +62,7 @@ def test_extractnetstats(gen_mat_data, binary, prune, norm,
 
     start_time = time.time()
 
-    est_path_tmp = gen_mat_data(asfile=True)['mat_file_list'][0]
-    out_folder = f"{str(Path.home())}/test_folder"
-    os.makedirs(out_folder, exist_ok=True)
-    est_path = f"{out_folder}/{os.path.basename(est_path_tmp)}"
-    shutil.copyfile(est_path_tmp, est_path)
+    est_path = gen_mat_data(asfile=True)['mat_file_list'][0]
 
     extractnetstats = interfaces.NetworkAnalysis()
     extractnetstats.inputs.ID = ID
