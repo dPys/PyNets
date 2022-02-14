@@ -5,7 +5,10 @@ import pytest
 import tempfile
 import pkg_resources
 import matplotlib
-matplotlib.use("agg")
+matplotlib.use('agg', force=True)
+import matplotlib.pyplot as plt
+plt.ioff()
+plt.rcParams['figure.dpi'] = 100
 import numpy as np
 import nibabel as nib
 if sys.platform.startswith('win') is False:
@@ -36,34 +39,6 @@ def close_all():
     # This adds < 1 µS in local testing, and we have ~2500 tests, so ~2 ms max
     import matplotlib.pyplot as plt
     yield plt.close('all')
-
-
-@pytest.fixture(scope='session')
-def matplotlib_config():
-    """Configure matplotlib for viz tests."""
-    import warnings
-    import matplotlib
-    from matplotlib import cbook
-    want = 'agg'  # don't pop up windows
-    with warnings.catch_warnings(record=True):  # ignore warning
-        warnings.filterwarnings('ignore')
-        matplotlib.use(want, force=True)
-    import matplotlib.pyplot as plt
-    assert plt.get_backend() == want
-    # overwrite some params that can horribly slow down tests that
-    # users might have changed locally (but should not otherwise affect
-    # functionality)
-    plt.ioff()
-    plt.rcParams['figure.dpi'] = 100
-
-    # Make sure that we always reraise exceptions in handlers
-    orig = cbook.CallbackRegistry
-
-    class CallbackRegistryReraise(orig):
-        def __init__(self, exception_handler=None):
-            super(CallbackRegistryReraise, self).__init__(exception_handler)
-
-    cbook.CallbackRegistry = CallbackRegistryReraise
 
 
 @pytest.fixture(scope='package')

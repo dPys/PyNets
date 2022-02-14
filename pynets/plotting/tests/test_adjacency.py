@@ -5,7 +5,10 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import matplotlib
-matplotlib.use("agg")
+matplotlib.use('agg', force=True)
+import matplotlib.pyplot as plt
+plt.ioff()
+plt.rcParams['figure.dpi'] = 100
 import os
 import numpy as np
 import time
@@ -22,13 +25,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_plot_conn_mat_nonet_no_mask(close_all, matplotlib_config,
+def test_plot_conn_mat_nonet_no_mask(close_all,
                                      connectivity_data):
     """
     Test plot_conn_mat_nonet_no_mask functionality
     """
 
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -57,13 +59,11 @@ def test_plot_conn_mat_nonet_no_mask(close_all, matplotlib_config,
     close_all()
 
 
-def test_plot_conn_mat_nonet_mask(close_all, matplotlib_config,
-                                  connectivity_data):
+def test_plot_conn_mat_nonet_mask(close_all, connectivity_data):
     """
     Test plot_conn_mat_nonet_mask functionality
     """
 
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)

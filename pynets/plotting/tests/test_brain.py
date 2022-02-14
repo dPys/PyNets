@@ -5,7 +5,10 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import matplotlib
-matplotlib.use("agg")
+matplotlib.use('agg', force=True)
+import matplotlib.pyplot as plt
+plt.ioff()
+plt.rcParams['figure.dpi'] = 100
 import os
 import numpy as np
 import time
@@ -25,13 +28,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
 
-def test_plot_all_nonet_no_mask(close_all, matplotlib_config,
-                                random_mni_roi_data, connectivity_data):
+def test_plot_all_nonet_no_mask(close_all, random_mni_roi_data,
+                                connectivity_data):
     """
     Test plot_all_nonet_no_mask functionality
     """
-
-    matplotlib_config()
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
 
@@ -65,13 +66,11 @@ def test_plot_all_nonet_no_mask(close_all, matplotlib_config,
     close_all()
 
 
-def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
-                                  connectivity_data):
+def test_plot_all_nonet_with_mask(close_all, connectivity_data):
     """
     Test plot_all_nonet_with_mask functionality
     """
 
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -116,13 +115,10 @@ def test_plot_all_nonet_with_mask(close_all, matplotlib_config,
 
 
 @pytest.mark.parametrize("subnet", ["Default", None])
-def test_plot_timeseries(close_all, matplotlib_config, connectivity_data,
-                         subnet):
+def test_plot_timeseries(close_all, connectivity_data, subnet):
     """
     Test plot_timeseries functionality
     """
-
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -141,14 +137,12 @@ def test_plot_timeseries(close_all, matplotlib_config, connectivity_data,
 
 
 @pytest.mark.parametrize("plot_overlaps", [True, False])
-def test_plot_network_clusters(close_all, matplotlib_config,
-                               connectivity_data, plot_overlaps):
+def test_plot_network_clusters(close_all, connectivity_data, plot_overlaps):
     """ Test plotting subnet clusters"""
 
     from pynets.statistics.individual.algorithms import \
         community_resolution_selection
 
-    matplotlib_config()
     temp_file = tempfile.NamedTemporaryFile(mode='w+', prefix='figure',
                                             suffix='.png')
     fname = str(temp_file.name)
@@ -175,10 +169,8 @@ def test_plot_network_clusters(close_all, matplotlib_config,
         pytest.param(False, "Set2")
     ]
 )
-def test_create_gb_palette(close_all, matplotlib_config,
-                           connectivity_data, prune, node_cmap):
+def test_create_gb_palette(close_all, connectivity_data, prune, node_cmap):
     """Test palette creation."""
-    matplotlib_config()
 
     conn_matrix = connectivity_data['conn_matrix']
     labels = connectivity_data['labels']
@@ -197,12 +189,10 @@ def test_create_gb_palette(close_all, matplotlib_config,
     close_all()
 
 
-def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
-                                   connectivity_data):
+def test_plot_conn_mat_rois_gt_100(close_all, connectivity_data):
     """
     Test plot_conn_mat_rois_gt_100 functionality
     """
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)
@@ -219,10 +209,9 @@ def test_plot_conn_mat_rois_gt_100(close_all, matplotlib_config,
 
 
 @pytest.mark.parametrize("roi", [True, False])
-def test_plot_all_struct(close_all, matplotlib_config, connectivity_data,
+def test_plot_all_struct(close_all, connectivity_data,
                          gen_mat_data, roi):
     """Test structural plotting."""
-    matplotlib_config()
     tmp = tempfile.TemporaryDirectory()
     dir_path = str(tmp.name)
     os.makedirs(dir_path, exist_ok=True)

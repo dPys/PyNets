@@ -5,7 +5,10 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import matplotlib
-matplotlib.use("agg")
+matplotlib.use('agg', force=True)
+import matplotlib.pyplot as plt
+plt.ioff()
+plt.rcParams['figure.dpi'] = 100
 import numpy as np
 import time
 import nibabel as nib

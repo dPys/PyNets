@@ -3,7 +3,10 @@ import os
 import sys
 import pytest
 import matplotlib
-matplotlib.use("agg")
+matplotlib.use('agg', force=True)
+import matplotlib.pyplot as plt
+plt.ioff()
+plt.rcParams['figure.dpi'] = 100
 import tempfile
 import pkg_resources
 import numpy as np
