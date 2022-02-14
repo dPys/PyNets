@@ -98,6 +98,7 @@ def test_average_shortest_path_length_for_all(gen_mat_data):
     assert avgest_path_len > 0
     assert type(avgest_path_len) == float
 
+
 @pytest.mark.parametrize("weight", ["weight", "not_weight"])
 def test_average_shortest_path_length_fast(gen_mat_data, weight):
     """
@@ -114,6 +115,7 @@ def test_average_shortest_path_length_fast(gen_mat_data, weight):
                       np.round(time.time() - start_time, 1), 's'))
     assert avgest_path_len > 0
     assert type(avgest_path_len) == np.float64
+
 
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_average_local_efficiency(gen_mat_data, engine):
@@ -230,34 +232,17 @@ def test_link_communities(gen_mat_data, clustering):
     assert np.sum(M) == 20
 
 
-@pytest.mark.parametrize("connected_case", [True, False])
-@pytest.mark.parametrize("fallback_lcc", [True, False])
-def test_prune_disconnected(gen_mat_data, connected_case, fallback_lcc):
-    """
-    Test pruning functionality
-    """
+# @pytest.mark.parametrize("min_nodes",
+#                          [0, 1, 10, pytest.param(30, marks=pytest.mark.xfail(
+#                                  raises=ValueError))])
+# def test_prune_small_components(gen_mat_data, min_nodes):
+#     """
+#     Test pruning functionality
+#     """
+#     return
 
-    if connected_case is True:
-        in_mat = gen_mat_data(asfile=False)['mat_list'][0]
-        G = nx.from_numpy_array(in_mat)
-    elif connected_case is False:
-        G = nx.Graph()
-        G.add_edge(1, 2)
-        G.add_node(3)
-    start_time = time.time()
-    [G_out, pruned_nodes] = algorithms.prune_disconnected(
-        G, fallback_lcc=fallback_lcc)
-    print("%s%s%s" % ('Pruning disconnected test --> finished: ',
-                      str(np.round(time.time() - start_time, 1)), 's'))
-    assert type(G_out) is nx.Graph
-    assert type(pruned_nodes) is list
-    if connected_case is True:
-        assert len(pruned_nodes) == 0
-    elif connected_case is False:
-        assert len(pruned_nodes) > 0
-        assert len(list(G_out.nodes())) < len(list(G.nodes()))
 
-@pytest.mark.parametrize("method", ["betweenness", "richclub", "coreness",
+@pytest.mark.parametrize("method", ["betweenness", "coreness",
                                     "eigenvector"])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_most_important(gen_mat_data, method, engine):
@@ -278,53 +263,6 @@ def test_most_important(gen_mat_data, method, engine):
     assert pruned_nodes is not None
 
 
-@pytest.mark.parametrize("binary", ['True', 'False'])
-@pytest.mark.parametrize("prune", ['0', '1', '2'])
-@pytest.mark.parametrize("norm", ['0', '1', '2', '3', '4', '5', '6'])
-@pytest.mark.parametrize("conn_model", ['corr', 'cov', 'sps', 'partcorr'])
-def test_extractnetstats(binary, prune, norm, conn_model):
-    """
-    Test extractnetstats functionality
-    """
-    base_dir = str(Path(__file__).parent / "examples")
-    ID = '002'
-    subnet = 'Default'
-    thr = 0.95
-    # conn_model = 'cov'
-    est_path = f"{base_dir}/miscellaneous/sub-0021001_rsn-Default_nodetype-" \
-               f"parc_model-sps_template-MNI152_T1_thrtype-DENS_thr-0.19.npy"
-    # prune = 1
-    # norm = 1
-    # binary = False
-    roi = None
-
-    start_time = time.time()
-    out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                          est_path, roi, prune, norm, binary)
-    print("%s%s%s" % (
-    'thresh_and_fit (Functional, proportional thresholding) --> finished: ',
-    str(np.round(time.time() - start_time, 1)), 's'))
-    assert out_path is not None
-
-    # Cover exceptions. This can definiely be improved. It increases coverage,
-    # but not as throughly
-    # as I hoped.
-    from tempfile import NamedTemporaryFile
-    f_temp = NamedTemporaryFile(mode='w+', suffix='.npy')
-
-    nan_array = np.empty((5, 5))
-    nan_array[:] = np.nan
-
-    np.save(f_temp.name, nan_array)
-    est_path = f_temp.name
-
-    try:
-        out_path = algorithms.extractnetstats(ID, subnet, thr, conn_model,
-                                              est_path, roi, prune,
-                                              norm, binary)
-    except PermissionError:
-        pass
-
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_raw_mets(gen_mat_data, engine):
     """
@@ -339,7 +277,7 @@ def test_raw_mets(gen_mat_data, engine):
 
     in_mat = gen_mat_data(asfile=False)['mat_list'][0]
     G = nx.from_numpy_array(in_mat)
-    [G, _] = algorithms.prune_disconnected(G)
+
     metric_list_glob = [global_efficiency, average_local_efficiency,
                         degree_assortativity_coefficient,
                         average_clustering, average_shortest_path_length,
@@ -436,57 +374,6 @@ def test_weighted_transitivity(gen_mat_data, binarize):
     assert transitivity <= 3 and transitivity >= 0
 
 
-@pytest.mark.parametrize("conn_model",
-                         ['corr', 'partcorr', 'cov', 'sps'])
-@pytest.mark.parametrize("prune",
-                         [pytest.param(0,
-                                       marks=pytest.mark.xfail(
-                                           raises=UnboundLocalError)), 1, 2,
-                          3])
-@pytest.mark.parametrize("norm", [i for i in range(1, 7)])
-def test_clean_graphs(gen_mat_data, conn_model, prune, norm):
-    # test_CleanGraphs
-    """
-    Test all combination of parameters for the CleanGraphs class
-    """
-
-    in_mat = gen_mat_data()['mat_list'][0]
-    est_path = gen_mat_data()['mat_file_list'][0]
-
-    clean = algorithms.CleanGraphs(0.5, conn_model, est_path, prune, norm)
-    clean.normalize_graph()
-    clean.print_summary()
-    clean.create_length_matrix()
-    clean.binarize_graph()
-
-    clean.prune_graph()
-
-    G = nx.from_numpy_array(in_mat)
-    assert len(clean.G) >= 0
-    assert len(clean.G) <= len(G)
-
-
-def test_save_netmets():
-    """ Test save netmets functionality using dummy metrics
-    """
-    import tempfile
-
-    tmp = tempfile.TemporaryDirectory()
-    dir_path = str(tmp.name)
-    os.makedirs(dir_path, exist_ok=True)
-
-    est_path = tempfile.NamedTemporaryFile(mode='w+', suffix='.npy',
-                                           delete=False)
-
-    metric_list_names = ['metric_a', 'metric_b', 'metric_c']
-    net_met_val_list_final = [1, 2, 3]
-
-    algorithms.save_netmets(dir_path, str(est_path.name), metric_list_names,
-                            net_met_val_list_final)
-    tmp.cleanup()
-    est_path.close()
-
-
 @pytest.mark.parametrize("true_metric", [True, False])
 def test_iterate_nx_global_measures(gen_mat_data, true_metric):
     """ Test iterating over net metric list
@@ -519,16 +406,21 @@ def test_community_resolution_selection(sim_num_comms, sim_size):
     assert num_comms == sim_num_comms
     assert resolution is not None
 
+
 @pytest.mark.parametrize("metric", ['participation', 'diversity',
                                     'local_efficiency',
-                                    'comm_centrality', 'rich_club_coeff'])
+                                    'comm_centrality'])
 @pytest.mark.parametrize("engine", ["GT", "NX"])
 def test_get_metrics(gen_mat_data, metric, engine):
     """
     Test various wrappers for getting nx graph metrics
     """
 
-    in_mat = gen_mat_data(asfile=False, mat_type='sb')['mat_list'][0]
+    binary = False
+
+    in_mat = gen_mat_data(asfile=False, mat_type='sb',
+                          binary=binary)['mat_list'][0]
+
     G = nx.from_numpy_array(in_mat)
     ci = np.ones(in_mat.shape[0])
     metric_list_names = []
@@ -566,50 +458,11 @@ def test_get_metrics(gen_mat_data, metric, engine):
             nx.algorithms.communicability_betweenness_centrality(G)) + 1
         assert len(net_met_val_list_final) == len(
             nx.algorithms.communicability_betweenness_centrality(G)) + 1
-    elif metric == 'rich_club_coeff':
-        metric_list_names, net_met_val_list_final = \
-            algorithms.get_rich_club_coeff(G, metric_list_names,
-                                           net_met_val_list_final)
-        assert len(metric_list_names) == len(
-            nx.algorithms.rich_club_coefficient(G)) + 1
-        assert len(net_met_val_list_final) == len(
-            nx.algorithms.rich_club_coefficient(G)) + 1
-
-
-@pytest.mark.parametrize("plot_switch", [True, False])
-@pytest.mark.parametrize("embed", [True, False])
-@pytest.mark.parametrize("create_summary", [True, False])
-@pytest.mark.parametrize("graph_num", [
-    pytest.param(-1, marks=pytest.mark.xfail(raises=UserWarning)),
-    pytest.param(0, marks=pytest.mark.xfail(raises=IndexError)),
-    1,
-    2])
-def test_collect_pandas_df_make(plot_switch, embed, create_summary, graph_num):
-    """
-    Test for collect_pandas_df_make() functionality
-    """
-    base_dir = str(Path(__file__).parent / "examples")
-    subnet = None
-    ID = '002'
-
-    if graph_num == -1:
-        net_mets_csv_list = [
-            f"{base_dir}/miscellaneous/002_parcels_Default.nii.gz"]
-    elif graph_num == 0:
-        net_mets_csv_list = []
-    elif graph_num == 1:
-        net_mets_csv_list = [
-            f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_"
-            f"nodetype-parc_model-csa_thrtype-PROP_thr-0.2.csv"]
-    else:
-        net_mets_csv_list = [
-            f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_"
-            f"nodetype-parc_model-csa_thrtype-PROP_thr-0.2.csv",
-            f"{base_dir}/topology/metrics_sub-0021001_modality-dwi_"
-            f"nodetype-parc_model-csa_thrtype-PROP_thr-0.3.csv"]
-
-    combination_complete = algorithms.collect_pandas_df_make(
-        net_mets_csv_list, ID, subnet, plot_switch=plot_switch, embed=embed,
-        create_summary=create_summary)
-
-    assert combination_complete is True
+    # elif metric == 'rich_club_coeff':
+    #     metric_list_names, net_met_val_list_final = \
+    #         algorithms.get_rich_club_coeff(G, metric_list_names,
+    #                                        net_met_val_list_final)
+    #     assert len(metric_list_names) == len(
+    #         nx.algorithms.rich_club_coefficient(G)) + 1
+    #     assert len(net_met_val_list_final) == len(
+    #         nx.algorithms.rich_club_coefficient(G)) + 1

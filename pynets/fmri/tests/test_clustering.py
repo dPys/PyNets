@@ -22,7 +22,6 @@ import logging
 from nipype.utils.filemanip import fname_presuffix
 from nilearn.image import resample_to_img
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
@@ -92,16 +91,17 @@ def test_make_local_connectivity_scorr(fmri_estimation_data):
 
 
 @pytest.mark.parametrize("clust_type", ['rena', 'average',
-                                        'complete', 'ward', 'ncut',
+                                        'complete', 'ward',
                                         pytest.param('single',
                                                      marks=pytest.mark.xfail)])
 # 1 connected component
-def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data, clust_type):
+def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data,
+                       clust_type):
     """
     Test for ni_parcellate
     """
 
-    k = 20
+    k = 10
     tmp = tempfile.TemporaryDirectory()
 
     tmpdir = str(tmp.name)
@@ -116,7 +116,8 @@ def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data, clust_type):
     roi_file = random_mni_roi_data['roi_file']
 
     clust_mask_file = fname_presuffix(mask_file,
-                                suffix="clust_mask_file", use_ext=True)
+                                      suffix="clust_mask_file",
+                                      use_ext=True)
     resample_to_img(
         nib.load(roi_file), nib.load(mask_file), interpolation="nearest"
     ).to_filename(clust_mask_file)
@@ -125,7 +126,7 @@ def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data, clust_type):
                        k=k, clust_type=clust_type, local_corr=local_corr,
                        outdir=tmpdir)
     atlas = nip.create_clean_mask()
-    nip.create_local_clustering(overwrite=True, r_thresh=0.4)
+    nip.create_local_clustering(overwrite=True, r_thresh=0.5)
     out_path = f"{tmpdir}/parc_tmp.nii.gz"
     parcellation = clustering.parcellate(func_img, local_corr,
                                          clust_type, nip._local_conn_mat_path,
@@ -157,7 +158,7 @@ def test_ni_parcellate_mult_conn_comps(fmri_estimation_data, clust_type):
     tmpdir = str(tmp.name)
     os.makedirs(tmpdir, exist_ok=True)
 
-    k = 150
+    k = 100
     if clust_type != 'ncut':
         local_corr = 'allcorr'
     else:

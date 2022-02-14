@@ -6,17 +6,15 @@ Copyright (C) 2017
 @author: Derek Pisner
 """
 from pynets.core.utils import load_runconfig
-import pandas as pd
 import numpy as np
 import warnings
 import networkx as nx
-from pynets.core import thresholding
 from pynets.core.utils import timeout
 warnings.filterwarnings("ignore")
 
 
-hardcoded_params = load_runconfig()
 try:
+    hardcoded_params = load_runconfig()
     DEFAULT_TIMEOUT = hardcoded_params["graph_analysis_timeout"][0]
     DEFAULT_ENGINE = hardcoded_params["graph_analysis_engine"][0]
 except FileNotFoundError as e:
@@ -1043,14 +1041,16 @@ def weighted_transitivity(G):
     return 0 if triangles == 0 else triangles / contri
 
 
-def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
+def prune_small_components(G, min_nodes):
     """
-    Returns a copy of G with isolates pruned.
+    Returns a recomposed graph of all connected components of a minimum size
 
     Parameters
     ----------
     G : Obj
         NetworkX graph with isolated nodes present.
+    min_nodes: int
+        Minimum number of nodes permitted in a connected subgraph
 
     Returns
     -------
@@ -1070,42 +1070,31 @@ def prune_disconnected(G, min_nodes=10, fallback_lcc=True):
       subnet Analysis. https://doi.org/10.1016/C2012-0-06036-X
 
     """
-    print("Pruning disconnected...")
 
     G_tmp = G.copy()
 
     # List because it returns a generator
     components = list(nx.connected_components(G_tmp))
+    del G_tmp
+
     components.sort(key=len, reverse=True)
-    components_connected = list(components[0])
-    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
+    print(f"{len(components)} connected component(s) detected...")
 
-    # if len(G_tmp.nodes()) - len(isolates) < min_nodes:
-    #     if fallback_lcc is True:
-    #         from graspologic.utils import largest_connected_component
-    #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'grabbing the largest connected component...'))
-    #
-    #         lcc, pruned_nodes = largest_connected_component(G_tmp,
-    #         return_inds=True)
-    #         return lcc, pruned_nodes.tolist()
-    #     else:
-    #         print(UserWarning('Warning: Too many isolates to defragment, '
-    #                           'skipping defragmentation.
-    #                           Consider fallback to lcc...'))
-    #         return G_tmp, []
+    # Iterate across cc subgraphs
+    good_components = []
+    c = 0
+    for comp in components:
+        print(f"Component {c}: {len(comp)} nodes")
+        if len(comp) > min_nodes:
+            good_components.append(nx.subgraph(G_tmp, comp))
+        c = c + 1
 
-    # Remove disconnected nodes
-    pruned_nodes = []
-    s = 0
-    for node in list(G_tmp.nodes()):
-        if node not in components_connected or node in isolates:
-            print(f"Removing {node}")
-            G_tmp.remove_node(node)
-            pruned_nodes.append(s)
-        s = s + 1
+    del components
 
-    return G_tmp, pruned_nodes
+    if len(good_components) == 0:
+        raise ValueError(f"No components with a minimum of {min_nodes} found")
+
+    return nx.compose_all(good_components)
 
 
 def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
@@ -1159,22 +1148,28 @@ def most_important(G, method="betweenness", sd=1, engine=DEFAULT_ENGINE):
             pruned_nodes.append(i)
         i = i + 1
 
-    # List because it returns a generator
-    components = list(nx.connected_components(Gt))
-    components.sort(key=len, reverse=True)
-    components_connected = list(components[0])
+    return defragment(G)
 
-    isolates = [n for (n, d) in Gt.degree() if d == 0]
+
+def defragment(G):
+    G_tmp = G.copy()
+
+    isolates = [n for (n, d) in G_tmp.degree() if d == 0]
 
     # Remove any lingering isolates
     s = 0
-    for node in list(Gt.nodes()):
-        if node not in components_connected or node in isolates:
-            Gt.remove_node(node)
+    pruned_nodes = []
+    for node in list(G_tmp.nodes()):
+        if node in isolates:
+            G_tmp.remove_node(node)
             pruned_nodes.append(s)
         s = s + 1
 
-    return Gt, pruned_nodes
+    for edge in list(G_tmp.edges()):
+        if (str(edge[0]) in pruned_nodes) or (str(edge[1]) in pruned_nodes):
+            G_tmp.remove_edge(edge)
+
+    return G_tmp, pruned_nodes
 
 
 def raw_mets(G, i, engine=DEFAULT_ENGINE):
@@ -1298,234 +1293,6 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
             net_met_val = np.nan
 
     return net_met_val
-
-
-class CleanGraphs(object):
-    """
-    A Class for cleaning graphs in preparation for subnet analysis.
-
-    Parameters
-    ----------
-    thr : float
-        The value, between 0 and 1, used to threshold the graph using any
-        variety of methods triggered through other options.
-    conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
-    est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
-        array in .npy format.
-    prune : int
-        Indicates whether to prune final graph of disconnected nodes/isolates.
-    norm : int
-        Indicates method of normalizing resulting graph.
-
-    Returns
-    -------
-    out_path : str
-        Path to .csv file where graph analysis results are saved.
-
-    References
-    ----------
-    .. [1] Qin, Tai, and Karl Rohe. "Regularized spectral clustering
-      under the degree-corrected stochastic blockmodel." In Advances
-      in Neural Information Processing Systems, pp. 3120-3128. 2013
-    .. [2] Rohe, Karl, Tai Qin, and Bin Yu. "Co-clustering directed graphs to
-      discover asymmetries and directional communities." Proceedings of the
-      National Academy of Sciences 113.45 (2016): 12679-12684.
-
-    """
-
-    def __init__(
-            self,
-            thr,
-            conn_model,
-            est_path,
-            prune,
-            norm,
-            out_fmt="gpickle"):
-        from pynets.core import utils
-
-        self.thr = thr
-        self.conn_model = conn_model
-        self.est_path = est_path
-        self.prune = prune
-        self.norm = norm
-        self.out_fmt = out_fmt
-        self.in_mat = None
-
-        # Load and threshold matrix
-        self.in_mat_raw = utils.load_mat(self.est_path)
-
-        # De-diagnal and remove nan's and inf's, ensure edge weights are
-        # positive
-        self.in_mat = np.array(
-            np.array(
-                thresholding.autofix(
-                    np.array(np.abs(
-                        self.in_mat_raw)))))
-
-        # Load numpy matrix as networkx graph
-        self.G = nx.from_numpy_array(self.in_mat)
-
-    def normalize_graph(self):
-
-        # Get hyperbolic tangent (i.e. fischer r-to-z transform) of matrix if
-        # non-covariance
-        if (self.conn_model == "corr") or (self.conn_model == "partcorr"):
-            self.in_mat = np.arctanh(self.in_mat)
-
-        # Normalize connectivity matrix
-        if self.norm == 3 or self.norm == 4 or self.norm == 5:
-            from graspologic.utils.ptr import pass_to_ranks
-
-        # By maximum edge weight
-        if self.norm == 1:
-            self.in_mat = thresholding.normalize(np.nan_to_num(self.in_mat))
-        # Apply log10
-        elif self.norm == 2:
-            self.in_mat = np.log10(np.nan_to_num(self.in_mat))
-        # Apply PTR simple-nonzero
-        elif self.norm == 3:
-            self.in_mat = pass_to_ranks(
-                np.nan_to_num(self.in_mat), method="simple-nonzero"
-            )
-        # Apply PTR simple-all
-        elif self.norm == 4:
-            self.in_mat = pass_to_ranks(
-                np.nan_to_num(
-                    self.in_mat),
-                method="simple-all")
-        # Apply PTR zero-boost
-        elif self.norm == 5:
-            self.in_mat = pass_to_ranks(
-                np.nan_to_num(
-                    self.in_mat),
-                method="zero-boost")
-        # Apply standardization [0, 1]
-        elif self.norm == 6:
-            self.in_mat = thresholding.standardize(np.nan_to_num(self.in_mat))
-        else:
-            pass
-
-        self.in_mat = thresholding.autofix(self.in_mat)
-        self.G = nx.from_numpy_array(self.in_mat)
-
-        return self.G
-
-    def prune_graph(self, remove_self_loops=True):
-        from pynets.core import utils
-        from graspologic.utils import largest_connected_component, \
-            remove_loops, symmetrize
-
-        # Prune irrelevant nodes (i.e. nodes who are fully disconnected
-        # from the graph and/or those whose betweenness
-        # centrality are > 3 standard deviations below the mean)
-        if int(self.prune) == 1:
-            if nx.is_connected(self.G) is False:
-                print("Graph fragmentation detected...\n")
-            try:
-                [self.G, _] = prune_disconnected(self.G)
-            except BaseException:
-                print(UserWarning(f"Warning: Pruning failed for "
-                                  f"{self.est_path}"))
-        elif int(self.prune) == 2:
-            print("Filtering for hubs...")
-            from pynets.core.utils import load_runconfig
-            hardcoded_params = load_runconfig()
-            try:
-                hub_detection_method = hardcoded_params[
-                    "hub_detection_method"][0]
-                [self.G, _] = most_important(self.G,
-                                             method=hub_detection_method)
-            except FileNotFoundError as e:
-                import sys
-                print(e, "Failed to parse advanced.yaml")
-
-        elif int(self.prune) == 3:
-            print("Pruning all but the largest connected "
-                  "component subgraph...")
-            #self.G = self.G.subgraph(largest_connected_component(self.G))
-            self.G = largest_connected_component(self.G)
-        else:
-            print("No graph anti-fragmentation applied...")
-
-        if remove_self_loops is True:
-            self.in_mat = remove_loops(symmetrize(self.in_mat))
-        else:
-            self.in_mat = symmetrize(self.in_mat)
-
-        self.G = nx.from_numpy_array(self.in_mat)
-
-        if nx.is_empty(self.G) is True or \
-            (np.abs(self.in_mat) < 0.0000001).all() or \
-                self.G.number_of_edges() == 0:
-            print(UserWarning(f"Warning: {self.est_path} "
-                              f"empty after pruning!"))
-            return self.in_mat, None
-
-        # Saved pruned
-        if (self.prune != 0) and (self.prune is not None):
-            final_mat_path = f"{self.est_path.split('.npy')[0]}{'_pruned'}"
-            utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
-            print(f"{'Source File: '}{final_mat_path}")
-        elif self.prune == 0:
-            final_mat_path = f"{self.est_path.split('.npy')[0]}"
-            utils.save_mat(self.in_mat, final_mat_path, self.out_fmt)
-            print(f"{'Source File: '}{final_mat_path}")
-        else:
-            raise ValueError(f"Pruning option {self.prune} invalid!")
-
-        return self.in_mat, final_mat_path
-
-    def print_summary(self):
-        print(f"\n\nThreshold: {100 * float(self.thr):.2f}%")
-
-        info_list = list(nx.info(self.G).split("\n"))[2:]
-        for i in info_list:
-            print(i)
-        return
-
-    def binarize_graph(self):
-        from pynets.core import thresholding
-
-        in_mat_bin = thresholding.binarize(self.in_mat)
-
-        # Load numpy matrix as networkx graph
-        G_bin = nx.from_numpy_array(in_mat_bin)
-        return in_mat_bin, G_bin
-
-    def create_length_matrix(self):
-        in_mat_len = thresholding.weight_conversion(self.in_mat, "lengths")
-
-        # Load numpy matrix as networkx graph
-        G_len = nx.from_numpy_array(in_mat_len)
-        return in_mat_len, G_len
-
-
-def save_netmets(
-        dir_path,
-        est_path,
-        metric_list_names,
-        net_met_val_list_final):
-    from pynets.core import utils
-    import os
-    # And save results to csv
-    out_path_neat = (
-        f"{utils.create_csv_path(dir_path, est_path).split('.csv')[0]}"
-        f"{'_neat.csv'}"
-    )
-    zipped_dict = dict(zip(metric_list_names, net_met_val_list_final))
-    df = pd.DataFrame.from_dict(
-        zipped_dict, orient="index", dtype="float32"
-    ).transpose()
-    if os.path.isfile(out_path_neat):
-        os.remove(out_path_neat)
-    df.to_csv(out_path_neat, index=False)
-    del df, zipped_dict, net_met_val_list_final, metric_list_names
-
-    return out_path_neat
 
 
 def iterate_nx_global_measures(G, metric_list_glob):
@@ -1960,444 +1727,6 @@ def get_rich_club_coeff(G, metric_list_names, net_met_val_list_final,
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(rc_arr[:, 1])
     return metric_list_names, net_met_val_list_final
-
-
-def extractnetstats(
-        ID,
-        subnet,
-        thr,
-        conn_model,
-        est_path,
-        roi,
-        prune,
-        norm,
-        binary):
-    """
-    Function interface for performing fully-automated graph analysis.
-
-    Parameters
-    ----------
-    ID : str
-        A subject id or other unique identifier.
-    subnet : str
-        Resting-state subnet based on Yeo-7 and Yeo-17 naming
-        (e.g. 'Default') used to filter nodes in the study of brain subgraphs.
-    thr : float
-        The value, between 0 and 1, used to threshold the graph using any
-        variety of methods triggered through other options.
-    conn_model : str
-       Connectivity estimation model (e.g. corr for correlation, cov for
-       covariance, sps for precision covariance,
-       partcorr for partial correlation). sps type is used by default.
-    est_path : str
-        File path to the thresholded graph, conn_matrix_thr, saved as a numpy
-        array in .npy format.
-    roi : str
-        File path to binarized/boolean region-of-interest Nifti1Image file.
-    prune : int
-        Indicates whether to prune final graph of disconnected nodes/isolates.
-    norm : int
-        Indicates method of normalizing resulting graph.
-    binary : bool
-        Indicates whether to binarize resulting graph edges to form an
-        unweighted graph.
-
-    Returns
-    -------
-    out_path : str
-        Path to .csv file where graph analysis results are saved.
-
-    References
-    ----------
-    .. [1] Fornito, A., Zalesky, A., & Bullmore, E. T. (2016).
-      Fundamentals of Brain subnet Analysis. In Fundamentals of Brain subnet
-      Analysis. https://doi.org/10.1016/C2012-0-06036-X
-    .. [2] Aric A. Hagberg, Daniel A. Schult and Pieter J. Swart,
-      “Exploring subnet structure, dynamics, and function using NetworkX”,
-      in Proceedings of the 7th Python in Science Conference (SciPy2008),
-      Gäel Varoquaux, Travis Vaught, and Jarrod Millman (Eds),
-      (Pasadena, CA USA), pp. 11–15, Aug 2008
-
-    """
-    import time
-    import gc
-    import os
-    import os.path as op
-    import yaml
-
-    # import random
-    import pkg_resources
-    import networkx
-    from pathlib import Path
-    from pynets.statistics.individual import algorithms
-
-    # Load netstats config and parse graph algorithms as objects
-    with open(
-        pkg_resources.resource_filename("pynets",
-                                        "statistics/individual/global.yaml"),
-        "r",
-    ) as stream:
-        try:
-            nx_algs = [
-                "degree_assortativity_coefficient",
-                "average_clustering",
-                "average_shortest_path_length",
-                "graph_number_of_cliques",
-            ]
-            pynets_algs = [
-                "average_local_efficiency",
-                "global_efficiency",
-                "smallworldness",
-                "weighted_transitivity",
-            ]
-            metric_dict_global = yaml.load(stream, Loader=yaml.FullLoader)
-            metric_list_global = metric_dict_global["metric_list_global"]
-            if metric_list_global is not None:
-                metric_list_global = [
-                    getattr(networkx.algorithms, i)
-                    for i in metric_list_global
-                    if i in nx_algs
-                ] + [
-                    getattr(algorithms, i)
-                    for i in metric_list_global
-                    if i in pynets_algs
-                ]
-                metric_list_global_names = [
-                    str(i).split("<function ")[1].split(" at")[0]
-                    for i in metric_list_global
-                ]
-                if binary is False:
-                    from functools import partial
-
-                    metric_list_global = [
-                        partial(i, weight="weight")
-                        if "weight" in i.__code__.co_varnames
-                        else i
-                        for i in metric_list_global
-                    ]
-                print(
-                    f"\n\nGlobal Topographic Metrics:"
-                    f"\n{metric_list_global_names}\n")
-            else:
-                print("No global topographic metrics selected!")
-                metric_list_global = []
-                metric_list_global_names = []
-        except FileNotFoundError as e:
-            import sys
-            print(e, "Failed to parse global.yaml")
-
-    with open(
-        pkg_resources.resource_filename("pynets",
-                                        "statistics/individual/local.yaml"),
-        "r",
-    ) as stream:
-        try:
-            metric_dict_nodal = yaml.load(stream, Loader=yaml.FullLoader)
-            metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
-            if metric_list_nodal is not None:
-                print(f"\nNodal Topographic Metrics:\n{metric_list_nodal}\n\n")
-            else:
-                print("No nodal topographic metrics selected!")
-                metric_list_nodal = []
-        except FileNotFoundError as e:
-            import sys
-            print(e, "Failed to parse local.yaml")
-
-    if os.path.isfile(est_path):
-        cg = CleanGraphs(thr, conn_model, est_path, prune, norm)
-
-        tmp_graph_path = None
-        if float(prune) >= 1:
-            [_, tmp_graph_path] = cg.prune_graph()
-
-        if float(norm) >= 1:
-            try:
-                cg.normalize_graph()
-            except ValueError as e:
-                print(e, f"Graph normalization failed for {est_path}.")
-
-        if 'modality-func' in est_path and 'model-sps' not in est_path:
-            binary = True
-
-        if binary is True:
-            try:
-                in_mat, G = cg.binarize_graph()
-            except ValueError as e:
-                print(e, f"Graph binarization failed for {est_path}.")
-                in_mat = np.zeros(1, 1)
-                G = nx.Graph()
-        else:
-            in_mat, G = cg.in_mat, cg.G
-
-        cg.print_summary()
-
-        dir_path = op.dirname(op.realpath(est_path))
-
-        # Deal with empty graphs
-        if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() or \
-                G.number_of_edges() == 0 or len(G) < 3:
-            out_path_neat = save_netmets(
-                dir_path, est_path, [""], [np.nan])
-            print(UserWarning(f"Warning: Empty graph detected for {ID}: "
-                              f"{est_path}..."))
-        else:
-            try:
-                in_mat_len, G_len = cg.create_length_matrix()
-            except ValueError as e:
-                print(e, f"Failed to create length matrix for {est_path}.")
-                G_len = None
-
-            if len(metric_list_global) > 0:
-                # Iteratively run functions from above metric list that
-                # generate single scalar output
-                net_met_val_list_final, metric_list_names = \
-                    iterate_nx_global_measures(G, metric_list_global)
-
-                # Run miscellaneous functions that generate multiple outputs
-                # Calculate modularity using the Louvain algorithm
-                if "louvain_modularity" in metric_list_global:
-                    try:
-                        start_time = time.time()
-                        net_met_val_list_final, metric_list_names, ci = \
-                            get_community(G, net_met_val_list_final,
-                                          metric_list_names)
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Louvain modularity calculation is undefined for"
-                              " G")
-                        # np.save("%s%s%s" % ('/tmp/community_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        ci = None
-                        pass
-                else:
-                    ci = None
-            else:
-                metric_list_names = []
-                net_met_val_list_final = []
-                ci = None
-
-            if len(metric_list_nodal) > 0:
-                # Participation Coefficient by louvain community
-                if ci and "participation_coefficient" in metric_list_nodal:
-                    try:
-                        if not ci:
-                            raise KeyError(
-                                "Participation coefficient cannot be "
-                                "calculated for G in the absence of a "
-                                "community affiliation vector")
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_participation(in_mat, ci, metric_list_names,
-                                              net_met_val_list_final)
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Participation coefficient cannot be calculated "
-                              "for G")
-                        # np.save("%s%s%s" % ('/tmp/partic_coeff_failure',
-                        # random.randint(1, 400), '.npy'), in_mat)
-                        pass
-                else:
-                    if not ci and "participation_coefficient" in \
-                            metric_list_nodal:
-                        print(UserWarning("Skipping participation coefficient "
-                                          "because community affiliation is "
-                                          "empty for G..."))
-
-                # Diversity Coefficient by louvain community
-                if ci and "diversity_coefficient" in metric_list_nodal:
-                    try:
-                        if not ci:
-                            raise KeyError(
-                                "Diversity coefficient cannot be calculated "
-                                "for G in the absence of a community "
-                                "affiliation vector")
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_diversity(in_mat, ci, metric_list_names,
-                                          net_met_val_list_final
-                                          )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Diversity coefficient cannot be calculated for "
-                              "G")
-                        # np.save("%s%s%s" % ('/tmp/div_coeff_failure',
-                        # random.randint(1, 400), '.npy'), in_mat)
-                        pass
-                else:
-                    if not ci and "diversity_coefficient" in \
-                            metric_list_nodal:
-                        print(UserWarning("Skipping diversity coefficient "
-                                          "because community affiliation is "
-                                          "empty for G..."))
-
-                # # Link communities
-                # if "link_communities" in metric_list_nodal:
-                #     try:
-                #         if ci is None:
-                #             raise KeyError(
-                #                 "Link communities cannot be calculated for
-                #                 G in the absence of a community affiliation
-                #                 vector")
-                #         start_time = time.time()
-                #         metric_list_names, net_met_val_list_final =
-                #         get_link_communities(
-                #             in_mat, ci, metric_list_names,
-                #             net_met_val_list_final
-                #         )
-                #         print(f"{np.round(time.time() - start_time, 3)}s")
-                #     except BaseException:
-                #         print("Link communities cannot be calculated for G")
-                #         # np.save("%s%s%s" % ('/tmp/link_comms_failure',
-                #         random.randint(1, 400), '.npy'), in_mat)
-                #         pass
-
-                # Local Efficiency
-                if "local_efficiency" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_local_efficiency(G, metric_list_names,
-                                                 net_met_val_list_final)
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Local efficiency cannot be calculated for G")
-                        # np.save("%s%s%s" % ('/tmp/local_eff_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-
-                # Local Clustering
-                if "local_clustering" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_clustering(
-                                G, metric_list_names, net_met_val_list_final
-                            )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Local clustering cannot be calculated for G")
-                        # np.save("%s%s%s" % ('/tmp/local_clust_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-
-                # Degree centrality
-                if "degree_centrality" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_degree_centrality(
-                                G, metric_list_names, net_met_val_list_final
-                            )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Degree centrality cannot be calculated for G")
-                        # np.save("%s%s%s" % ('/tmp/degree_cent_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-
-                # Betweenness Centrality
-                if "betweenness_centrality" in metric_list_nodal and \
-                        G_len is not None:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_betweenness_centrality(
-                                G_len, metric_list_names,
-                                net_met_val_list_final)
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Betweenness centrality cannot be calculated for"
-                              " G")
-                        # np.save("%s%s%s" % ('/tmp/betw_cent_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G_len)))
-                        pass
-                else:
-                    if G_len is None and "betweenness_centrality" in \
-                            metric_list_nodal:
-                        print(UserWarning("Skipping betweenness centrality "
-                                          "because length matrix is empty for "
-                                          "G..."))
-
-                # Eigenvector Centrality
-                if "eigenvector_centrality" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_eigen_centrality(
-                                G, metric_list_names, net_met_val_list_final
-                            )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Eigenvector centrality cannot be calculated for"
-                              " G")
-                        # np.save("%s%s%s" % ('/tmp/eig_cent_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-
-                # Communicability Centrality
-                if "communicability_centrality" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_comm_centrality(
-                                G, metric_list_names, net_met_val_list_final
-                            )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Communicability centrality cannot be "
-                              "calculated for G")
-                        # np.save("%s%s%s" % ('/tmp/comm_cent_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-
-                # Rich club coefficient
-                if "rich_club_coefficient" in metric_list_nodal:
-                    try:
-                        start_time = time.time()
-                        metric_list_names, net_met_val_list_final = \
-                            get_rich_club_coeff(
-                                G, metric_list_names, net_met_val_list_final
-                            )
-                        print(f"{np.round(time.time() - start_time, 3)}{'s'}")
-                    except BaseException:
-                        print("Rich club coefficient cannot be calculated for "
-                              "G")
-                        # np.save("%s%s%s" % ('/tmp/rich_club_failure',
-                        # random.randint(1, 400), '.npy'),
-                        #         np.array(nx.to_numpy_matrix(G)))
-                        pass
-            if len(metric_list_nodal) > 0 or len(metric_list_global) > 0:
-                out_path_neat = save_netmets(
-                    dir_path, est_path, metric_list_names,
-                    net_met_val_list_final
-                )
-                # Cleanup
-                if tmp_graph_path:
-                    if os.path.isfile(tmp_graph_path):
-                        os.remove(tmp_graph_path)
-
-                del net_met_val_list_final, metric_list_names, \
-                    metric_list_global
-                gc.collect()
-            else:
-                out_path_neat = save_netmets(
-                    dir_path, est_path, [""], [np.nan],
-                )
-    else:
-        print(UserWarning(f"Warning: Empty graph detected for {ID}: "
-                          f"{est_path}..."))
-        dir_path = op.dirname(op.realpath(est_path))
-        out_path_neat = save_netmets(
-            dir_path, est_path, [""], [np.nan],
-        )
-    return out_path_neat
 
 
 def collect_pandas_df_make(

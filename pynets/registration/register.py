@@ -297,15 +297,8 @@ def direct_streamline_norm(
         warped_fa_affine = warped_fa_img.affine
         warped_fa_shape = warped_fa_img.shape
 
-        adjusted_affine = affine_map.affine.copy()
-        adjusted_affine[0][3] = -adjusted_affine[0][3]
-        adjusted_affine[1][3] = -adjusted_affine[1][3]
-        adjusted_affine[2][3] = -adjusted_affine[2][3]
-        # adjusted_affine[..., 3] = np.dot(adjusted_affine,
-        #                                  np.array([0.5, 0.5, 0.5, 1]))
-
         streams_in_curr_grid = transform_streamlines(
-            streamlines, adjusted_affine)
+            streamlines, affine_map.affine_inv)
 
         streams_final_filt = regutils.warp_streamlines(t1w_brain_img.affine,
                                                        fa_img.affine,
@@ -326,7 +319,7 @@ def direct_streamline_norm(
         # Save streamlines
         stf = StatefulTractogram(
             streams_final_filt_final,
-            reference=atlas_t1w_img,
+            reference=t1w_brain_img,
             space=Space.VOXMM,
             origin=Origin.NIFTI,
         )
@@ -595,12 +588,10 @@ class DmriReg(object):
 
         if op.isfile(self.t1w_brain) is False:
             import shutil
-
             shutil.copyfile(self.t1w, self.t1w_head)
-
-        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
-            self.t1w_head, self.t1w_brain, mask
-        )
+            [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
+                self.t1w_head, self.t1w_brain, mask
+            )
         return
 
     def gen_tissue(
@@ -916,14 +907,17 @@ class DmriReg(object):
                             self.input_mni_brain),
                         interpolation='nearest').to_filename(self.mni_roi_ref)
 
-        out = gen_img_list(self.mni_roi_ref)
-        roi_parcels = [i for j, i in enumerate(out)]
+        roi_parcels = [i for j, i in enumerate(gen_img_list(self.mni_roi_ref))]
 
         ventricle_roi = math_img("img1 + img2", img1=roi_parcels[2],
                                  img2=roi_parcels[13])
 
+        self.mni_vent_loc = fname_presuffix(
+            self.mni_vent_loc, suffix="_tmp",
+            newpath=op.dirname(self.reg_path_img)
+        )
         ventricle_roi.to_filename(self.mni_vent_loc)
-        del roi_parcels, out, ventricle_roi
+        del roi_parcels, ventricle_roi
 
         # Create transform from the HarvardOxford atlas in MNI to T1w.
         # This will be used to transform the ventricles to dwi space.
@@ -1208,9 +1202,9 @@ class FmriReg(object):
         if op.isfile(self.t1w_brain) is False:
             import shutil
             shutil.copyfile(self.t1w, self.t1w_head)
-        [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
-            self.t1w_head, self.t1w_brain, mask
-        )
+            [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
+                self.t1w_head, self.t1w_brain, mask
+            )
         return
 
     def gen_tissue(self, wm_mask_existing, gm_mask_existing, overwrite):

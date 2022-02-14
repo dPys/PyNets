@@ -9,6 +9,7 @@ try:
 except ImportError:
     import _pickle as pickle
 from pathlib import Path
+import pkg_resources
 import nibabel as nib
 import sys
 if sys.platform.startswith('win') is False:
@@ -28,7 +29,8 @@ def test_create_density_map():
     from pynets.dmri import track
     from dipy.tracking._utils import _mapping_to_voxel
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
     dir_path = f"{base_dir}/BIDS/sub-25659/ses-1/dwi"
     dwi_file = f"{base_dir}/BIDS/sub-25659/ses-1/dwi/final_preprocessed_" \
                f"dwi.nii.gz"
@@ -60,11 +62,10 @@ def test_create_density_map():
 
     [dir_path, dm_path] = track.create_density_map(dwi_img, dir_path,
                                                    streams_final_filt_final,
-                                                   conn_model,
-                                                   node_radius, curv_thr_list,
-                                                   step_list, subnet, roi,
-                                                   traversal, max_length,
-                                                   '/tmp')
+                                                   conn_model, node_radius,
+                                                   curv_thr_list, step_list,
+                                                   subnet, roi, traversal,
+                                                   max_length, '/tmp')
 
     assert dir_path is not None
     assert dm_path is not None
@@ -76,7 +77,8 @@ def test_prep_tissues(tiss_class):
     Test for prep_tissues functionality
     """
     from pynets.dmri import track
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
     t1w_mask = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
     B0_mask = f"{base_dir}/003/dmri/sub-003_b0_brain_mask.nii.gz"
     gm_in_dwi = f"{base_dir}/003/dmri/gm_mask_dmri.nii.gz"
@@ -92,30 +94,6 @@ def test_prep_tissues(tiss_class):
     assert tiss_classifier is not None
 
 
-@pytest.mark.parametrize("conn_model", ['csa', 'csd', 'ten'])
-def test_reconstruction(conn_model):
-    """
-    Test for reconstruction functionality
-    """
-    from pynets.dmri import track
-    from dipy.core.gradients import gradient_table
-    base_dir = str(Path(__file__).parent/"examples")
-
-    dir_path = f"{base_dir}/003/dmri"
-    bvals = f"{dir_path}/sub-003_dwi.bval"
-    bvecs = f"{dir_path}/sub-003_dwi.bvec"
-    gtab = gradient_table(bvals, bvecs)
-    dwi_file = f"{dir_path}/sub-003_dwi.nii.gz"
-    wm_in_dwi = f"{dir_path}/wm_mask_dmri.nii.gz"
-
-    dwi_img = nib.load(dwi_file)
-    dwi_data = dwi_img.get_fdata()
-
-    model, mod = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
-    assert model is not None
-    assert mod is not None
-
-
 @pytest.mark.parametrize("traversal", ['det', 'prob'])
 @pytest.mark.parametrize("target_samples",
                          [300, pytest.param(0, marks=pytest.mark.xfail)])
@@ -124,12 +102,13 @@ def test_track_ensemble(traversal, target_samples):
     Test for ensemble tractography functionality
     """
     import tempfile
-    from pynets.dmri import track
+    from pynets.dmri import track, estimation
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
     from nibabel.streamlines.array_sequence import ArraySequence
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
@@ -145,9 +124,9 @@ def test_track_ensemble(traversal, target_samples):
     labels_im_file = f"{dir_path}/whole_brain_cluster_labels_PCA200_dwi_" \
                      f"track.nii.gz"
     conn_model = 'csa'
-    tiss_class = 'wm'
-    min_length = 10
-    maxcrossing = 2
+    tiss_class = 'wb'
+    min_length = 2
+    maxcrossing = 3
     roi_neighborhood_tol = 6
     waymask = None
     curv_thr_list = [40, 30]
@@ -162,7 +141,7 @@ def test_track_ensemble(traversal, target_samples):
     temp_dir = str(tmp.name)
     os.makedirs(temp_dir, exist_ok=True)
     recon_path = f"{temp_dir}/model_file.hdf5"
-    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    model = estimation.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
 
     with h5py.File(recon_path, 'w') as hf:
         hf.create_dataset("reconstruction",
@@ -170,11 +149,12 @@ def test_track_ensemble(traversal, target_samples):
     hf.close()
 
     streamlines = track.track_ensemble(target_samples, atlas_data_wm_gm_int,
-                                       labels_im_file,
-                   recon_path, sphere, traversal, curv_thr_list, step_list,
-                   track_type, maxcrossing, roi_neighborhood_tol, min_length,
-                   waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                   wm_in_dwi, tiss_class)
+                                       labels_im_file, recon_path, sphere,
+                                       traversal, curv_thr_list, step_list,
+                                       track_type, maxcrossing,
+                                       roi_neighborhood_tol, min_length,
+                                       waymask, B0_mask, gm_in_dwi, gm_in_dwi,
+                                       vent_csf_in_dwi, wm_in_dwi, tiss_class)
 
     assert isinstance(streamlines, ArraySequence)
     tmp.cleanup()
@@ -185,14 +165,15 @@ def test_track_ensemble_particle():
     Test for ensemble tractography functionality
     """
     import tempfile
-    from pynets.dmri import track
+    from pynets.dmri import track, estimation
     from dipy.core.gradients import gradient_table
     from dipy.data import get_sphere
-    from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
-    from dipy.io.streamline import save_tractogram
+    # from dipy.io.stateful_tractogram import Space, StatefulTractogram, Origin
+    # from dipy.io.streamline import save_tractogram
     from nibabel.streamlines.array_sequence import ArraySequence
 
-    base_dir = str(Path(__file__).parent/"examples")
+    base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
     B0_mask = f"{base_dir}/003/anat/mean_B0_bet_mask_tmp.nii.gz"
     gm_in_dwi = f"{base_dir}/003/anat/t1w_gm_in_dwi.nii.gz"
     vent_csf_in_dwi = f"{base_dir}/003/anat/t1w_vent_csf_in_dwi.nii.gz"
@@ -209,8 +190,8 @@ def test_track_ensemble_particle():
                      f"_track.nii.gz"
     conn_model = 'csd'
     tiss_class = 'cmc'
-    min_length = 10
-    maxcrossing = 2
+    min_length = 2
+    maxcrossing = 3
     roi_neighborhood_tol = 6
     waymask = None
     curv_thr_list = [40, 30]
@@ -223,7 +204,7 @@ def test_track_ensemble_particle():
     dwi_img = nib.load(dwi_file)
     dwi_data = dwi_img.get_fdata()
 
-    model, _ = track.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)
+    model = estimation.reconstruction(conn_model, gtab, dwi_data, wm_in_dwi)[0]
     tmp = tempfile.TemporaryDirectory()
     temp_dir = str(tmp.name)
     recon_path = f"{str(temp_dir)}/model_file.hdf5"
@@ -239,13 +220,6 @@ def test_track_ensemble_particle():
                    track_type, maxcrossing, roi_neighborhood_tol, min_length,
                    waymask, B0_mask, gm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
                    wm_in_dwi, tiss_class)
-
-    streams = f"{base_dir}/miscellaneous/streamlines_model-csd_" \
-              f"nodetype-parc_tracktype-particle_" \
-              f"traversal-prob_minlength-10.trk"
-    save_tractogram(StatefulTractogram(streamlines, reference=dwi_img,
-                                       space=Space.VOXMM, origin=Origin.NIFTI),
-                    streams, bbox_valid_check=False)
 
     assert isinstance(streamlines, ArraySequence)
     tmp.cleanup()

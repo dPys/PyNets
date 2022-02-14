@@ -4,8 +4,9 @@ PyNets®
 [![codecov](https://codecov.io/gh/dPys/PyNets/branch/master/graph/badge.svg)](https://codecov.io/gh/dPys/PyNets?branch=master)
 [![PyPI - Version](https://img.shields.io/pypi/v/omniduct.svg)](https://pypi.org/project/pynets/)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pynets.svg)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/5228)
+[![Docker](https://badgen.net/badge/icon/docker?icon=docker&label)](https://https://docker.com/)
 [![brainlife.io/app](https://img.shields.io/badge/brainlife.io-app-green.svg)](https://brainlife.io/app/6041f75166d5ce1daf6efb55)
 
 About
@@ -20,8 +21,8 @@ docker pull dpys/pynets
 ```
 
 ## Manual
-(REQUIRES a local dependency install of [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9, as well as an
-installation of [Python3.6+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
+A local dependency install of [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9
+An installation of [Python3.8+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter)
 ```
 [sudo] pip install pynets [--user]
 ```
@@ -89,10 +90,10 @@ where the `-config` flag specifies that path to a .json configuration spec that 
             "es": "['mean', 'median']" # Indicates the method(s) of nodal time-series signal extraction.
         },
     "dwi": { # dMRI options. If you only have structural (i.e. DWI) data, set each of the `func` options to "None"
-            "dg": "det", # The directional assumptions of tractography (e.g. deterministic, probabilistic)
+            "dg": "det", # The traversal method of tractography (e.g. deterministic, probabilistic)
             "ml": "40", # The minimum length criterion for streamlines in tractography
             "mod": "csd", # The diffusion model type
-            "tol": "8" # The tolerance distance (in the units of the streamlines, usually mm). If any node in the streamline is within this distance from the center of any voxel in the ROI, then the connection is counted as an edge"
+            "em": "8" # The tolerance distance (in the units of the streamlines, usually mm). If any node in the streamline is within this distance from the center of any voxel in the ROI, then the connection is counted as an edge"
         },
     "gen": { # These are general options that apply to all modalities
             "a":  "['BrainnetomeAtlasFan2016', 'atlas_harvard_oxford', 'destrieux2009_rois']", # Anatomical atlases to define nodes.
@@ -136,12 +137,13 @@ No problem-- you can still run pynets manually:
     -anat '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/anat/ANAT_PREPROCESSED_NATIVE.nii.gz' \ # The T1w anatomical image.
     -a '/Users/dPys/.atlases/MyCustomParcellation-scale1.nii.gz' '/Users/dPys/.atlases/MyCustomParcellation-scale2.nii.gz' \ # The parcellations.
     -mod 'csd' 'csa' 'sfm' \ # The (diffusion) connectivity model(s).
-    -dg 'prob' 'det'  \ # The tractography direction-getting method.
+    -dg 'prob' 'det'  \ # The tractography traversal method.
     -mst -min_thr 0.20 -max_thr 0.80 -step_thr 0.10 # Multi-thresholding from the Minimum-Spanning Tree, with AUC graph analysis.
     -n 'Default' # The resting-state network definition to restrict node-making.
 ```
 
 ![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
 ![Multiplex Glass](docs/_static/glassbrain_mplx.png)
+![Ensemble Connectome](docs/_static/omnetome.png)
 ![Yeo7](docs/_static/yeo7_mosaic.png)
-![Workflow DAG](docs/_static/graph.png)
+![Workflow DAG](docs/_static/OHBM_Poster_2020.pdf)

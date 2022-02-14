@@ -5,6 +5,7 @@ Created on Wed Dec 27 16:19:14 2017
 @authors: Derek Pisner & Ryan Hammonds
 
 """
+import pytest
 import os
 import numpy as np
 try:
@@ -69,7 +70,7 @@ def test_evaluate_streamline_plausibility(dmri_estimation_data,
         streams,
         mask_img,
         to_origin=Origin.NIFTI,
-        to_space=Space.RASMM,
+        to_space=Space.VOXMM,
         bbox_valid_check=True,
     )
     streamlines = tractogram.streamlines

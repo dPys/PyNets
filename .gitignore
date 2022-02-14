@@ -41,11 +41,11 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.pytest_cache
+__pycache__
 nosetests.xml
 *,cover
-.hypothesis/
-tests/examples*
-tests/summary*
+data/*
 pynets/.idea/*
 .idea/*
 

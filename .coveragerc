@@ -2,45 +2,55 @@
 omit =
 	*__init__*
 	*__pycache__*
-	tests/*
 	docs/*
 	*.json
+	*.circleci/*
+	*.github/*
+	*.test_durations
+	*.gitignore
+	*.gitattributes
 	setup.py
 	setup.cfg
 	tox.ini
 	requirements.txt
+	optional-requirements.txt
+	pytest.ini
 	README.rst
 	README.md
+	NOTICE
 	MANIFEST.ini
 	Makefile
 	Dockerfile
 	CONTRIBUTING.rst
 	AUTHORS.rst
 	docker/*
-	pynets/__about__.py
-	pynets/cli/*
-	pynets/_version.py
+	licenses/*
+	data/*
 	get_version.py
 	versioneer.py
-	pynets/plotting/connectogram.js
-	pynets/plotting/FD_graph.json
-	pynets/plotting/fdg.js
-	pynets/plotting/index.html
-	pynets/templates/*
-	pynets/rsnrefs/*
-	pynets/core/atlases/*
-	pynets/core/labelcharts/*
-	pynets/runconfig.yaml
-	pynets/stats/nodal_graph_measures.yaml
-	pynets/stats/global_graph_measures.yaml
-	pynets/stats/netmotifs.py
-	pynets/stats/benchmarking.py
-	pynets/stats/embeddings.py
-	pynets/stats/prediction.py
-    pynets/stats/utils.py
-	pynets/registration/register.py
-	pynets/core/interfaces.py
-	pynets/core/cloud_utils.py
+	pynets/__about__.py
+	pynets/_version.py
+	pynets/__init__.py
+	pynets/advanced.yaml
+	pynets/citations.py
+	pynets/cli/*
+    pynets/core/tests/*
+    pynets/core/__init__.py
+    pynets/dmri/tests/*
+    pynets/dmri/__init__.py
+    pynets/fmri/tests/*
+    pynets/fmri/__init__.py
+    pynets/plotting/tests/*
+    pynets/plotting/__init__.py
+    pynets/registration/tests/*
+    pynets/registration/__init__.py
+    pynets/statistics/tests/*
+    pynets/statistics/individual/*.yaml
+    pynets/statistics/individual/__init__.py
+    pynets/statistics/group/__init__.py
+    pynets/statistics/__init__.py
+    pynets/templates/__init__.py
+    pynets/templates/*/*
 
 [report]
 # Regexes for lines to exclude from consideration

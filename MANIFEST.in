@@ -14,6 +14,7 @@ recursive-include * *.html
 recursive-include * *.js
 recursive-include * *.txt
 recursive-include * *.csv
+recursive-include data *
 recursive-include pynets/cli *
 recursive-include pynets/core *
 recursive-include pynets/initializers *
@@ -30,7 +31,6 @@ recursive-include pynets/plotting *
 recursive-include pynets/statistics *
 recursive-include pynets/statistics/individual *
 recursive-include pynets/statistics/group *
-recursive-exclude tests *
 recursive-exclude * *__pycache__
 recursive-exclude * *.py[co]
 recursive-include * *.yaml

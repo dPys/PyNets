@@ -67,7 +67,8 @@ def indx_3dto1d(idx, sz):
     return idx1
 
 
-def ncut(W, nbEigenValues):
+def ncut(W, nbEigenValues, offset=0.5, maxiterations=100,
+         eigsErrorTolerence=1e-6, eps=2.2204e-16):
     """
     This function performs the first step of normalized cut spectral
     clustering. The normalized LaPlacian is calculated on the similarity
@@ -107,32 +108,27 @@ def ncut(W, nbEigenValues):
       Ieee. doi: 10.1109/ICCV.2003.1238361
 
     """
-    from scipy.sparse.linalg import eigsh
-    from scipy.sparse import spdiags
-    from numpy.linalg import norm
-
-    # Parameters
-    offset = 0.5
-    maxiterations = 100
-    eigsErrorTolerence = 1e-6
-    eps = 2.2204e-16
+    import gc
+    import scipy.sparse as sps
 
     m = np.shape(W)[1]
 
-    d = abs(W).sum(0)
-    dr = 0.5 * (d - W.sum(0))
-    d = d + offset * 2
-    dr = dr + offset
+    d = abs(W).sum(0) + offset * 2
+    dr = 0.5 * (d - W.sum(0)) + offset
 
     # Calculation of the normalized LaPlacian
-    W = W + spdiags(dr, [0], m, m, "csc")
-    Dinvsqrt = spdiags((1.0 / np.sqrt(d + eps)), [0], m, m, "csc")
-    P = Dinvsqrt * (W * Dinvsqrt)
+    Dinvsqrt = sps.spdiags((1.0 / np.sqrt(d + eps)), [0], m, m, "csc")
 
     # Perform the eigen decomposition
-    eigen_val, eigen_vec = eigsh(
-        P, nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence,
+    eigen_val, eigen_vec = sps.linalg.eigsh(
+        Dinvsqrt * ((W + sps.spdiags(dr, [0], m, m, "csc")) * Dinvsqrt),
+        nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence,
         which="LA")
+
+    norm_ones = np.linalg.norm(np.ones((m, 1)))
+
+    del d, dr, W, m
+    gc.collect()
 
     # Sort the eigen_vals so that the first is the largest
     i = np.argsort(-eigen_val)
@@ -141,16 +137,17 @@ def ncut(W, nbEigenValues):
 
     # Normalize the returned eigenvectors
     eigen_vec = Dinvsqrt * np.array(eigen_vec)
-    norm_ones = norm(np.ones((m, 1)))
+
     for i in range(0, np.shape(eigen_vec)[1]):
-        eigen_vec[:, i] = (eigen_vec[:, i] / norm(eigen_vec[:, i])) * norm_ones
+        eigen_vec[:, i] = (eigen_vec[:, i] / np.linalg.norm(
+            eigen_vec[:, i])) * norm_ones
         if eigen_vec[0, i] != 0:
             eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
 
     return eigen_val, eigen_vec
 
 
-def discretisation(eigen_vec):
+def discretisation(eigen_vec, eps=2.2204e-16):
     """
     This function performs the second step of normalized cut clustering which
     assigns features to clusters based on the eigen vectors from the LaPlacian
@@ -198,21 +195,18 @@ def discretisation(eigen_vec):
       (1), 313-319 vol.1. Ieee. doi: 10.1109/ICCV.2003.1238361
 
     """
+    import gc
     import scipy as sp
-    from scipy.sparse import csc_matrix
-    from scipy.linalg import LinAlgError, svd
-
-    eps = 2.2204e-16
+    import scipy.sparse as sps
 
     # normalize the eigenvectors
     [n, k] = np.shape(eigen_vec)
-    vm = np.kron(
+
+    eigen_vec = np.divide(eigen_vec, np.reshape(np.kron(
         np.ones(
             (1, k)), np.sqrt(
             np.multiply(
-                eigen_vec, eigen_vec).sum(1)))
-    out_vec = np.reshape(vm, eigen_vec.shape)
-    eigen_vec = np.divide(eigen_vec, out_vec)
+                eigen_vec, eigen_vec).sum(1))), eigen_vec.shape))
 
     svd_restarts = 0
     exitLoop = 0
@@ -249,7 +243,7 @@ def discretisation(eigen_vec):
             # Discretise the result by setting the max of each row=1 and other
             # values to 0
             j = np.reshape(np.asarray(tDiscrete.argmax(1)), n)
-            eigenvec_discrete = csc_matrix(
+            eigenvec_discrete = sps.csc_matrix(
                 (np.ones(
                     len(j)), (list(
                         range(
@@ -257,13 +251,12 @@ def discretisation(eigen_vec):
                     n, k))
 
             # Calculate a rotation to bring the discrete eigenvectors cluster
-            # to the original eigenvectors
-            tSVD = eigenvec_discrete.transpose() * eigen_vec
-
-            # Catch a SVD convergence error and restart
+            # to the original eigenvectors and catch a SVD convergence error
+            # and restart
             try:
-                [U, S, Vh] = svd(tSVD)
-            except LinAlgError as e:
+                [U, S, Vh] = sp.linalg.svd(
+                    eigenvec_discrete.transpose() * eigen_vec)
+            except sp.linalg.LinAlgError as e:
                 # Catch exception and go back to the beginning of the loop
                 print(e, "SVD did not converge. "
                          "Randomizing and trying again...")
@@ -312,13 +305,14 @@ def parcellate_ncut(W, k, mask_img):
       https://doi.org/10.1002/hbm.21333
 
     """
+    import gc
+
     # We only have to calculate the eigendecomposition of the LaPlacian once,
     # for the largest number of clusters provided. This provides a significant
     # speedup, without any difference to the results.
-    [_, eigenvec] = ncut(W, k)
 
     # Calculate each desired clustering result
-    eigenvec_discrete = discretisation(eigenvec[:, :k])
+    eigenvec_discrete = discretisation(ncut(W, k)[1][:, :k])
 
     # Transform the discretised eigenvectors into a single vector where the
     # value corresponds to the cluster # of the corresponding ROI
@@ -326,6 +320,9 @@ def parcellate_ncut(W, k, mask_img):
 
     for i in range(1, k):
         a = a + (i + 1) * eigenvec_discrete[:, i]
+
+    del eigenvec_discrete
+    gc.collect()
 
     unique_a = sorted(set(np.array(a.flatten().tolist()[0])))
 
@@ -335,13 +332,17 @@ def parcellate_ncut(W, k, mask_img):
         b[a == unique_a[i]] = i + 1
 
     imdat = mask_img.get_fdata()
+    mask_aff = mask_img.get_affine()
+    mask_hdr = mask_img.get_header()
     imdat[imdat > 0] = 1
     imdat[imdat > 0] = np.short(b[0: int(np.sum(imdat))].flatten())
 
     del a, b, W
+    mask_img.uncache()
+    gc.collect()
 
     return nib.Nifti1Image(
-        imdat.astype("uint16"), mask_img.get_affine(), mask_img.get_header()
+        imdat.astype("uint16"), mask_aff, mask_hdr
     )
 
 
@@ -379,6 +380,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
       https://doi.org/10.1002/hbm.21333
 
     """
+    import gc
     from scipy.sparse import csc_matrix
     from itertools import product
 
@@ -413,6 +415,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     # Reshape fmri data to a num_voxels x num_timepoints array
     func_data = func_img.get_fdata(dtype=np.float32)
     imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
+    func_img.uncache()
     del func_data
 
     # Mask the datset to only the in-mask voxels
@@ -430,6 +433,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Set values with no variance to zero
     imdat[imdat_s == 0] = 0
+    del imdat_s, imdat_sz, imdat_m
+
     imdat[np.isnan(imdat)] = 0
 
     # Remove voxels with zero variance, do this here
@@ -524,6 +529,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     )
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
+    gc.collect()
 
     return W
 
@@ -561,6 +567,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
       https://doi.org/10.1002/hbm.21333
 
     """
+    import gc
     from scipy.sparse import csc_matrix
     from itertools import product
 
@@ -597,6 +604,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     # Reshape fmri data to a num_voxels x num_timepoints array
     func_data = func_img.get_fdata(dtype=np.float32)
     imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
+    func_img.uncache()
     del func_data
 
     # Construct a sparse matrix from the mask
@@ -686,6 +694,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     )
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
+    gc.collect()
 
     return W
 
@@ -710,11 +719,10 @@ def ensemble_parcellate(infiles, k):
             W = conn
         else:
             W = W + conn
+        del img_data, shape, conn
 
     # compute the average
-    W = W / len(infiles)
-
-    out_img = parcellate_ncut(W, k, img)
+    out_img = parcellate_ncut(W / len(infiles), k, img)
     out_img.set_data_dtype(np.uint16)
 
     return out_img
@@ -794,7 +802,6 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             memory_level=0,
             n_jobs=1,
         )
-
 
         if conf is not None:
             import pandas as pd

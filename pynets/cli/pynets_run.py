@@ -5,7 +5,6 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
 import warnings
-
 warnings.filterwarnings("ignore")
 
 
@@ -186,6 +185,7 @@ def get_parser():
             "csa",
             "csd",
             "sfm",
+            "mcsd",
         ],
         help="(hyperparameter): Specify connectivity estimation model. "
              "For fMRI, possible models include: corr for correlation, "
@@ -194,7 +194,8 @@ def get_parser():
              "installed (https://github.com/skggm/skggm), then "
              "QuicGraphicalLasso, QuicGraphicalLassoCV, "
              "QuicGraphicalLassoEBIC, and AdaptiveQuicGraphicalLasso. For "
-             "dMRI, current models include csa, csd, and sfm.\n",
+             "dMRI, current models include csa, csd, sfm, and mcsd (for "
+             "multishell data).\n",
     )
     parser.add_argument(
         "-a",
@@ -433,15 +434,17 @@ def get_parser():
     parser.add_argument(
         "-p",
         metavar="Pruning Strategy",
-        default=3,
+        default=1,
         nargs=1,
         choices=["0", "1", "2", "3"],
-        help="Include this flag to (1) prune the graph of any "
-             "isolated + fully disconnected nodes (i.e. anti-fragmentation),"
-             " (2) prune the graph of all but hubs as defined by any of a "
-             "variety of definitions (see ruconfig.yaml), or (3) retain only "
-             "the largest connected component subgraph. Default is no pruning."
-             " Include `-p 1` to enable fragmentation-protection.\n",
+        help="(Optional) Include this flag to (0) retain isolated nodes "
+             "(1) retain only connected components "
+             "of a minimal size. (2) prune the graph of "
+             "all but hubs as defined by any of a "
+             "variety of definitions (see advanced.yaml), or (3) retain only "
+             "the largest connected component subgraph. Default is (1), "
+             "which is equivalent to defragmenting only isolated nodes, "
+             "unless the minimum threshold is >1 (see advanced.yaml).\n",
     )
     parser.add_argument(
         "-df",
@@ -2166,6 +2169,11 @@ def build_workflow(args, retval):
                       f"absolute paths.")
                 retval["return_code"] = 1
                 return retval
+
+    # Force Fisher's normalization for correlation-like models
+    if (conn_model == "corr") or (conn_model == "partcorr"):
+        norm = 7
+
     print(Style.RESET_ALL)
     print(
         "\n-------------------------------------------------------------------"
@@ -2382,7 +2390,149 @@ def build_workflow(args, retval):
         signal_list,
         outdir,
     ):
-        """A function interface for generating a single-subject workflow"""
+        """
+        A function interface for generating a single-subject workflow
+
+        Parameters
+        ----------
+        ID : str
+            A subject ID or other unique identifier
+        func_file : str
+            File path to a 4D Nifti1Image containing fMRI data
+        atlas : str
+            Name of atlas parcellation used
+        subnet : str
+            Resting-state network based on Yeo-7 and Yeo-17 naming
+            (e.g. 'Default') used to filter nodes in the study of brain
+            subgraphs
+        node_radius : int
+            spherical centroid node size in the case that coordinate-based
+            centroids are used as ROI's
+        roi : str
+            File path to binarized/boolean region-of-interest Nifti1Image file
+        thr : float
+            A value, between 0 and 1, to threshold the graph using any variety
+            of methods triggered through other options.
+        parcellation : str
+            File path to atlas parcellation Nifti1Image in MNI template space.
+        multi_nets  list
+            List of Yeo RSN's specified in workflow(s)
+        conn_model : str
+            Connectivity estimation model (e.g. corr for correlation, cov for
+            covariance, sps for precision covariance, partcorr for partial
+            correlation). sps type is used by default.
+        dens_thresh : bool
+            Indicates whether a target graph density is to be used as the basis
+            for thresholding.
+        conf : str
+            File path to a confound regressor file for reduce noise in the
+            time-series when extracting from ROI's.
+        plot_switch : bool
+            Activate summary plotting (histograms, ROC curves, etc.)
+        dwi_file : str
+            File path to diffusion weighted image.
+        multi_thr :
+        multi_atlas :
+        min_thr : int
+            If performing multi-thresholding, a minimum threshold
+        max_thr : int
+            If performing multi-thresholding, a maximum threshold
+        step_thr : int
+            If performing multi-thresholding, a threshold interval size
+        anat_file :
+        parc : bool
+            Indicates whether to use parcels instead of coordinates as ROI nodes
+        ref_txt :
+        procmem :
+        k : int
+            Number of clusters that will be generated
+        clust_mask : str
+            File path to a 3D NIFTI file containing a mask, which restricts the
+            voxels used in the clustering
+        k_list :
+        k_clustering :
+        user_atlas_list :
+        clust_mask_list :
+        prune : bool
+            Indicates whether to prune final graph of disconnected
+            nodes/isolates.
+        node_radius_list :
+        graph :
+        conn_model_list :
+        min_span_tree : bool
+             Indicates whether local thresholding from the Minimum Spanning
+             Tree should be used.
+        verbose :
+        plugin_type :
+        use_parcel_naming :
+        multi_graph :
+        smooth : int
+            Smoothing width (mm fwhm) to apply to time-series when extracting
+            signal from ROI's.
+        smooth_list :
+        disp_filt : bool
+            Indicates whether local thresholding using a disparity filter and
+            'backbone network' should be used.
+        clust_type : str
+            Type of clustering to be performed (e.g. 'ward', 'kmeans',
+            'complete', 'average')
+        clust_type_list :
+        mask : str
+             File path to a 3D NIFTI file containing a mask, which restricts
+             the voxels used in the analysis.
+        norm : int
+            Indicates method of normalizing resulting graph.
+        binary : bool
+            Indicates whether to binarize resulting graph edges to form an
+            unweighted graph.
+        fbval :
+        fbvec :
+        curv_thr_list : list
+            List of integer curvature thresholds used to perform ensemble
+            tracking
+        step_list : list
+            List of float step-sizes used to perform ensemble tracking
+        track_type : str
+            Tracking algorithm used (e.g. 'local' or 'particle').
+        min_length : int
+            Minimum fiber length threshold in mm to restrict tracking.
+        maxcrossing : int
+            Maximum number if diffusion directions that can be assumed per voxel
+        error_margin : int
+            Euclidean margin of error for classifying a streamline as a
+            connection to an ROI. Default is 2 voxels.
+        traversal : str
+            The statistical approach to tracking. Options are:
+            det (deterministic), closest (clos), boot (bootstrapped), and
+            prob (probabilistic)
+        tiss_class : str
+            Tissue classification method
+        runtime_dict :
+        execution_dict :
+            Nipype workflow global settings
+        embed :
+        multi_traversal :
+        multimodal : bool
+            Indicates whether multiple modalities of input data have been
+            specified.
+        hpass : bool
+             High-pass filter values (Hz) to apply to node-extracted time-series
+        hpass_list :
+        vox_size :
+        multiplex :
+        waymask :
+        local_corr : str
+             Type of local connectivity to use as the basis for clustering
+             methods. Options are tcorr or scorr. Default is tcorr
+        min_length_list :
+        error_margin_list :
+        signal : str
+            The name of a valid function used to reduce the time-series region
+            extraction
+        signal_list :
+        outdir : str
+            Path to base derivatives directory
+        """
         import warnings
 
         warnings.filterwarnings("ignore")
@@ -2579,11 +2729,7 @@ def build_workflow(args, retval):
             name="NetworkAnalysis",
             iterfield=[
                 "ID",
-                "subnet",
-                "thr",
-                "conn_model",
                 "est_path",
-                "roi",
                 "prune",
                 "norm",
                 "binary",
@@ -2689,11 +2835,7 @@ def build_workflow(args, retval):
                         net_mets_node,
                         [
                             ("est_path_iterlist", "est_path"),
-                            ("network_iterlist", "subnet"),
-                            ("thr_iterlist", "thr"),
                             ("ID_iterlist", "ID"),
-                            ("conn_model_iterlist", "conn_model"),
-                            ("roi_iterlist", "roi"),
                             ("prune_iterlist", "prune"),
                             ("norm_iterlist", "norm"),
                             ("binary_iterlist", "binary"),
@@ -2816,8 +2958,152 @@ def build_workflow(args, retval):
         signal_list,
         outdir,
     ):
-        """A function interface for generating multiple single-subject
-        workflows -- i.e. a 'multi-subject' workflow"""
+        """
+        A function interface for generating multiple single-subject
+        workflows -- i.e. a 'multi-subject' workflow
+
+        Parameters
+        ----------
+        ID : str
+            A subject ID or other unique identifier
+        func_file_list : str
+            List of file paths to 4D Nifti1Images containing fMRI data
+        dwi_file_list
+        mask_list
+        fbvec_list
+        fbval_list
+        conf_list
+        anat_file_list
+        atlas : str
+            name of atlas parcellation used
+        network : str
+            Resting-state network based on Yeo-7 and Yeo-17 naming
+            (e.g. 'Default') used to filter nodes in the study of brain subgraphs
+        node_radius : int
+            spherical centroid node size in the case that coordinate-based
+            centroids are used as ROI's
+        roi : str
+            File path to binarized/boolean region-of-interest Nifti1Image file
+        thr : float
+            A value, between 0 and 1, to threshold the graph using any variety
+            of methods triggered through other options
+        parcellation : str
+        multi_nets : list
+            List of Yeo RSN's specified in workflow(s)
+        conn_model : str
+            Connectivity estimation model (e.g. corr for correlation, cov for
+            covariance, sps for precision covariance, partcorr for partial
+            correlation). sps type is used by default
+        dens_thresh : bool
+            Indicates whether a target graph density is to be used as the basis
+            for thresholding
+        conf : str
+            File path to a confound regressor file for reduce noise in the
+            time-series when extracting from ROI's
+        plot_switch : bool
+            Activate summary plotting (histograms, ROC curves, etc.)
+        dwi_file : str
+            File path to diffusion weighted image
+        multi_thr
+        multi_atlas
+        min_thr
+        max_thr
+        step_thr
+        anat_file
+        parc : bool
+            Indicates whether to use parcels instead of coordinates as ROI nodes
+        ref_txt
+        procmem
+        k : int
+            Number of clusters that will be generated
+        clust_mask : str
+            File path to a 3D NIFTI file containing a mask, which restricts the
+            voxels used in the clustering
+        k_list
+        k_clustering
+        user_atlas_list
+        clust_mask_list
+        prune : bool
+            Indicates whether to prune final graph of disconnected
+            nodes/isolates
+        node_radius_list
+        conn_model_list
+        min_span_tree : bool
+             Indicates whether local thresholding from the Minimum Spanning
+             Tree should be used
+        verbose
+        plugin_type
+        use_parcel_naming
+        multi_subject_graph
+        multi_subject_multigraph
+        smooth : int
+            Smoothing width (mm fwhm) to apply to time-series when extracting
+            signal from ROI's
+        smooth_list
+        disp_filt : bool
+            Indicates whether local thresholding using a disparity filter and
+            'backbone network' should be used
+        clust_type : str
+            Type of clustering to be performed (e.g. 'ward', 'kmeans',
+            'complete', 'average')
+        clust_type_list
+        mask : str
+             File path to a 3D NIFTI file containing a mask, which restricts
+             the voxels used in the analysis
+        norm : int
+            Indicates method of normalizing resulting graph
+        binary : bool
+            Indicates whether to binarize resulting graph edges to form an
+            unweighted graph
+        fbval
+        fbvec
+        curv_thr_list : list
+            List of integer curvature thresholds used to perform ensemble
+            tracking
+        step_list : list
+            List of float step-sizes used to perform ensemble tracking
+        track_type : str
+            Tracking algorithm used (e.g. 'local' or 'particle'
+        min_length : int
+            Minimum fiber length threshold in mm to restrict tracking
+        maxcrossing : int
+            Maximum number if diffusion directions that can be assumed per voxel
+        error_margin : int
+            Euclidean margin of error for classifying a streamline as a
+            connection to an ROI. Default is 2 voxels
+        traversal : str
+            The statistical approach to tracking. Options are:
+            det (deterministic), closest (clos), boot (bootstrapped), and
+            prob (probabilistic)
+        tiss_class : str
+            Tissue classification method
+        runtime_dict
+        execution_dict :
+            Nipype workflow global settings
+        embed
+        multi_traversal
+        multimodal : bool
+            Indicates whether multiple modalities of input data have been
+            specified
+        hpass : bool
+             High-pass filter values (Hz) to apply to node-extracted time-series
+        hpass_list
+        vox_size
+        multiplex
+        waymask
+        local_corr : str
+             Type of local connectivity to use as the basis for clustering
+             methods. Options are tcorr or scorr. Default is tcorr
+        min_length_list
+        error_margin_list
+        signal : str
+            The name of a valid function used to reduce the time-series region
+            extraction
+        signal_list
+        outdir : str
+            Path to base derivatives directory
+
+        """
         import warnings
 
         warnings.filterwarnings("ignore")
@@ -3548,7 +3834,8 @@ def main():
     mp.set_start_method("forkserver")
     with mp.Manager() as mgr:
         retval = mgr.dict()
-        p = mp.Process(target=build_workflow, args=(args, retval))
+        p = mp.Process(target=build_workflow,
+                       args=(args, retval))
         p.start()
         p.join()
 

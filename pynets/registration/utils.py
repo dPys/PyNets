@@ -53,8 +53,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
     math_img("img > 0.0001", img=nib.load(t1w_brain_mask)
              ).to_filename(t1w_brain_mask)
 
-    t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask,
-                                             t1w_brain)
+    t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask, t1w_brain)
 
     assert op.isfile(t1w_brain)
     assert op.isfile(t1w_brain_mask)
@@ -544,7 +543,7 @@ def atlas2t1w_align(
     return aligned_atlas_gm, aligned_atlas_skull
 
 
-def segment_t1w(t1w, basename, nclass=3, beta=0.1):
+def segment_t1w(t1w, basename, nclass=3, beta=0.1, max_iter=100):
     """
     A function to use FSL's FAST to segment an anatomical
     image into GM, WM, and CSF prob maps.
@@ -570,7 +569,8 @@ def segment_t1w(t1w, basename, nclass=3, beta=0.1):
 
     t1w_img = nib.load(t1w)
     hmrf = TissueClassifierHMRF()
-    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta)[2]
+    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta,
+                        max_iter=max_iter)[2]
 
     new_img_like(t1w_img, PVE[..., 2]).to_filename(
         f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}")
@@ -909,19 +909,20 @@ def warp_streamlines(
             streams_in_curr_grid,
         )
     ]
-    streams_final_filt = Streamlines(
-        utils.target_line_based(
-            transform_streamlines(
-                transform_streamlines(
-                    streams_in_brain,
-                    np.linalg.inv(adjusted_affine)),
-                np.linalg.inv(
-                    warped_fa_img.affine),
-            ),
-            np.eye(4),
-            brain_mask,
-            include=True,
-        ))
+    streams_final_filt = streams_in_brain
+    # streams_final_filt = Streamlines(
+    #     utils.target_line_based(
+    #         transform_streamlines(
+    #             transform_streamlines(
+    #                 streams_in_brain,
+    #                 np.linalg.inv(adjusted_affine)),
+    #             np.linalg.inv(
+    #                 warped_fa_img.affine),
+    #         ),
+    #         np.eye(4),
+    #         brain_mask,
+    #         include=True,
+    #     ))
 
     return streams_final_filt
 

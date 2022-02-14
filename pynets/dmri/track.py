@@ -14,62 +14,6 @@ if sys.platform.startswith('win') is False:
 warnings.filterwarnings("ignore")
 
 
-def reconstruction(conn_model, gtab, dwi_data, B0_mask):
-    """
-    Estimate a tensor model from dwi data.
-
-    Parameters
-    ----------
-    conn_model : str
-        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
-        'sfm').
-    gtab : Obj
-        DiPy object storing diffusion gradient information.
-    dwi_data : array
-        4D array of dwi data.
-    B0_mask : str
-        File path to B0 brain mask.
-
-    Returns
-    -------
-    mod_fit : ndarray
-        Fitted connectivity reconstruction model.
-    mod : obj
-        Connectivity reconstruction model.
-
-    References
-    ----------
-    .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
-      A hitchhiker’s guide to diffusion tensor imaging.
-      Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
-    """
-    from pynets.dmri.estimation import (
-        csa_mod_est,
-        csd_mod_est,
-        sfm_mod_est,
-        tens_mod_est,
-    )
-
-    if conn_model == "csa" or conn_model == "CSA":
-        [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "csd" or conn_model == "CSD":
-        [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "sfm" or conn_model == "SFM":
-        [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "ten" or conn_model == "tensor" or \
-            conn_model == "TEN":
-        [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
-    else:
-        raise ValueError(
-            "Error: No valid reconstruction model specified. See the "
-            "`-mod` flag."
-        )
-
-    del dwi_data
-
-    return mod_fit, mod
-
-
 def prep_tissues(
         t1_mask,
         gm_in_dwi,
@@ -604,14 +548,71 @@ def track_ensemble(
         print(Style.RESET_ALL)
         #return None
 
-
 def run_tracking(step_curv_combinations, recon_shelved,
                  n_seeds_per_iter, traversal, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
                  particle_count, roi_neighborhood_tol, min_length,
                  track_type, min_separation_angle, sphere, tiss_class,
                  tissue_shelved, verbose=False):
+    """
+    Create a density map of the list of streamlines.
 
+    Parameters
+    ----------
+    step_curv_combinations : list
+        List of tuples representing all pair combinations of step sizes and
+        curvature thresholds from which to sample streamlines.
+    recon_path : str
+        File path to diffusion reconstruction model.
+    n_seeds_per_iter : int
+        Number of seeds from which to initiate tracking for each unique
+        ensemble combination. By default this is set to 250.
+    directget : str
+        The statistical approach to tracking. Options are: det (deterministic),
+        closest (clos), boot (bootstrapped), and prob (probabilistic).
+    maxcrossing : int
+        Maximum number if diffusion directions that can be assumed per voxel
+        while tracking.
+    max_length : int
+        Maximum number of steps to restrict tracking.
+    pft_back_tracking_dist : float
+        Distance in mm to back track before starting the particle filtering
+        tractography. The total particle filtering tractography distance is
+        equal to back_tracking_dist + front_tracking_dist. By default this is
+        set to 2 mm.
+    pft_front_tracking_dist : float
+        Distance in mm to run the particle filtering tractography after the
+        the back track distance. The total particle filtering tractography
+        distance is equal to back_tracking_dist + front_tracking_dist. By
+        default this is set to 1 mm.
+    particle_count : int
+        Number of particles to use in the particle filter.
+    roi_neighborhood_tol : float
+        Distance (in the units of the streamlines, usually mm). If any
+        coordinate in the streamline is within this distance from the center
+        of any voxel in the ROI, the filtering criterion is set to True for
+        this streamline, otherwise False. Defaults to the distance between
+        the center of each voxel and the corner of the voxel.
+    waymask_data : ndarray
+        Tractography constraint mask array in native diffusion space.
+    min_length : int
+        Minimum fiber length threshold in mm to restrict tracking.
+    track_type : str
+        Tracking algorithm used (e.g. 'local' or 'particle').
+    min_separation_angle : float
+        The minimum angle between directions [0, 90].
+    sphere : obj
+        DiPy object for modeling diffusion directions on a sphere.
+    tiss_class : str
+        Tissue classification method.
+    tissue_shelved : str
+        File path to joblib-shelved 4D T1w tissue segmentations in native diffusion space.
+
+    Returns
+    -------
+    streamlines : ArraySequence
+        DiPy list/array-like object of streamline points from tractography.
+    """
     import gc
     import time
     import numpy as np

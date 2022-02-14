@@ -311,7 +311,8 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     return csd_mod.astype("float32"), model
 
 
-def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
+def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
+                 sh_order=8, roi_radii=10):
     """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -350,56 +351,78 @@ def mcsd_mod_est(gtab, data, B0_mask, gm_in_dwi, vent_csf_in_dwi, sh_order=8):
     """
     import dipy.reconst.dti as dti
     from nilearn.image import math_img
-    from dipy.reconst.csdeconv import auto_response
-    from dipy.reconst.mcsd import MultiShellDeconvModel, \
-        multi_shell_fiber_response
+    from dipy.core.gradients import unique_bvals_tolerance
+    from dipy.reconst.mcsd import (mask_for_response_msmt,
+                                   response_from_mask_msmt,
+                                   multi_shell_fiber_response,
+                                   MultiShellDeconvModel)
 
     print("Reconstructing using MCSD...")
+
     B0_mask_data = np.nan_to_num(np.asarray(
         nib.load(B0_mask).dataobj)).astype("bool")
 
-    # Construct the  DTI model
-    tenmodel = dti.TensorModel(gtab)
-
-    # fit the denoised data with DTI model
-    tenfit = tenmodel.fit(data)
-
-    # obtain the FA and MD metrics
-    FA = tenfit.fa
-    MD = tenfit.md
-
     # Load tissue maps and prepare tissue classifier
-    gm_mask_img = math_img("img > 0.95", img=gm_in_dwi)
+    gm_mask_img = math_img("img > 0.10", img=gm_in_dwi)
     gm_data = np.asarray(gm_mask_img.dataobj, dtype=np.float32)
-    vent_csf_in_dwi_img = math_img("img > 0.01", img=vent_csf_in_dwi)
+
+    wm_mask_img = math_img("img > 0.15", img=wm_in_dwi)
+    wm_data = np.asarray(wm_mask_img.dataobj, dtype=np.float32)
+
+    vent_csf_in_dwi_img = math_img("img > 0.50", img=vent_csf_in_dwi)
     vent_csf_in_dwi_data = np.asarray(vent_csf_in_dwi_img.dataobj,
                                       dtype=np.float32)
 
-    indices_csf = np.where(((FA < 0.2) & (vent_csf_in_dwi_data > 0.95)))
-    indices_gm = np.where(((FA < 0.2) & (gm_data > 0.95)))
+    # Fit a simple DTI model
+    tenfit = dti.TensorModel(gtab).fit(data)
+
+    # Obtain the FA and MD metrics
+    FA = tenfit.fa
+    MD = tenfit.md
+
+    indices_csf = np.where(((FA < 0.2) & (vent_csf_in_dwi_data > 0.50)))
+    indices_gm = np.where(((FA < 0.2) & (gm_data > 0.10)))
+    indices_wm = np.where(((FA >= 0.2) & (wm_data > 0.15)))
 
     selected_csf = np.zeros(FA.shape, dtype='bool')
     selected_gm = np.zeros(FA.shape, dtype='bool')
+    selected_wm = np.zeros(FA.shape, dtype='bool')
 
     selected_csf[indices_csf] = True
     selected_gm[indices_gm] = True
+    selected_wm[indices_wm] = True
 
-    csf_md = np.nanmean(MD[selected_csf])
-    gm_md = np.nanmean(MD[selected_gm])
+    mask_wm, mask_gm, mask_csf = mask_for_response_msmt(
+        gtab, data, roi_radii=roi_radii,
+        wm_fa_thr=np.nanmean(FA[selected_wm]),
+        gm_fa_thr=np.nanmean(FA[selected_gm]),
+        csf_fa_thr=np.nanmean(FA[selected_csf]),
+        gm_md_thr=np.nanmean(MD[selected_gm]),
+        csf_md_thr=np.nanmean(MD[selected_csf]))
 
-    response, ratio = auto_response(gtab, data, roi_radius=10,
-                                    fa_thr=0.7)
+    mask_wm *= wm_data.astype('int64')
+    mask_gm *= gm_data.astype('int64')
+    mask_csf *= vent_csf_in_dwi_data.astype('int64')
 
-    response_mcsd = multi_shell_fiber_response(sh_order=sh_order,
-                                               bvals=gtab.bvals,
-                                               evals=response[0], csf_md=csf_md,
-                                               gm_md=gm_md)
+    # nvoxels_wm = np.sum(mask_wm)
+    # nvoxels_gm = np.sum(mask_gm)
+    # nvoxels_csf = np.sum(mask_csf)
 
-    model = MultiShellDeconvModel(gtab, response_mcsd)
+    response_wm, response_gm, response_csf = response_from_mask_msmt(
+        gtab, data, mask_wm, mask_gm, mask_csf)
 
+    response_mcsd = multi_shell_fiber_response(sh_order=8,
+                                               bvals=unique_bvals_tolerance(
+                                                   gtab.bvals),
+                                               wm_rf=response_wm,
+                                               gm_rf=response_gm,
+                                               csf_rf=response_csf)
+
+    model = MultiShellDeconvModel(gtab, response_mcsd, sh_order=sh_order)
     mcsd_mod = model.fit(data, B0_mask_data).shm_coeff
+
     mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
-    del response, B0_mask_data
+    del response_mcsd, B0_mask_data
     return mcsd_mod.astype("float32"), model
 
 
@@ -446,6 +469,66 @@ def sfm_mod_est(gtab, data, B0_mask):
     sf_odf = sf_mod.odf(sphere)
     sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])
     return sf_odf.astype("float32"), model
+
+
+def reconstruction(conn_model, gtab, dwi_data, B0_mask):
+    """
+    Estimate a tensor model from dwi data.
+
+    Parameters
+    ----------
+    conn_model : str
+        Connectivity reconstruction method (e.g. 'csa', 'tensor', 'csd',
+        'sfm').
+    gtab : Obj
+        DiPy object storing diffusion gradient information.
+    dwi_data : array
+        4D array of dwi data.
+    B0_mask : str
+        File path to B0 brain mask.
+
+    Returns
+    -------
+    mod_fit : ndarray
+        Fitted connectivity reconstruction model.
+    mod : obj
+        Connectivity reconstruction model.
+
+    References
+    ----------
+    .. [1] Soares, J. M., Marques, P., Alves, V., & Sousa, N. (2013).
+      A hitchhiker’s guide to diffusion tensor imaging.
+      Frontiers in Neuroscience. https://doi.org/10.3389/fnins.2013.00031
+    """
+    from pynets.dmri.estimation import (
+        csa_mod_est,
+        csd_mod_est,
+        sfm_mod_est,
+        tens_mod_est,
+        mcsd_mod_est
+    )
+
+    if conn_model == "csa" or conn_model == "CSA":
+        [mod_fit, mod] = csa_mod_est(gtab, dwi_data, B0_mask)
+    # elif conn_model == "mcsd" or conn_model == "MCSD":
+    #     [mod_fit, mod] = mcsd_mod_est(gtab, dwi_data, B0_mask, wm_in_dwi,
+    #                                   gm_in_dwi, vent_csf_in_dwi)
+    elif conn_model == "csd" or conn_model == "CSD":
+        [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "sfm" or conn_model == "SFM":
+        [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
+    elif conn_model == "ten" or conn_model == "tensor" or \
+            conn_model == "TEN":
+        [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
+    else:
+        raise ValueError(
+            "Error: No valid reconstruction model specified. See the "
+            "`-mod` flag."
+        )
+
+    del dwi_data
+
+    return mod_fit, mod
 
 
 def streams2graph(
@@ -668,6 +751,24 @@ def streams2graph(
             )
         ]
 
+        # Remove streamlines with negative voxel indices
+        lin_T, offset = _mapping_to_voxel(np.eye(4))
+        streams_filtered = []
+        neg_vox = False
+        for sl in streamlines:
+            inds = np.dot(sl, lin_T)
+            inds += offset
+            if not inds.min().round(decimals=6) < 0:
+                streams_filtered.append(sl)
+            else:
+                neg_vox = True
+
+        if neg_vox is True:
+            print(UserWarning("Negative voxel indices detected! "
+                              "Check FOV"))
+
+        streamlines = streams_filtered
+        del streams_filtered
         # from fury import actor, window, colormap
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
@@ -703,6 +804,7 @@ def streams2graph(
         total_streamlines = len(streamlines)
         sl = [generate_sl(i) for i in streamlines]
         del streamlines
+        gc.collect()
 
         # Instantiate empty networkX graph object & dictionary and create
         # voxel-affine mapping
@@ -785,7 +887,9 @@ def streams2graph(
                                        k, count in edge_dict.items()])
 
             del lab_arr, endlabels
+            gc.collect()
 
+        del sl
         gc.collect()
 
         # Add fiber density attributes for each edge

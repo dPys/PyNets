@@ -130,9 +130,9 @@ def plot_network_clusters(
 
     partition = [
         getIndexPositions(
-            communities.tolist(),
+            list(communities),
             i) for i in set(
-            communities.tolist())]
+            list(communities))]
 
     n_communities = min(len(partition), len(COLOR))
     fig = plt.figure(figsize=figsize)
@@ -220,14 +220,15 @@ def create_gb_palette(
     from matplotlib import colors
     from sklearn.preprocessing import minmax_scale
     from pynets.statistics.individual.algorithms import \
-        community_resolution_selection, prune_disconnected
+        community_resolution_selection, defragment
+    import graspologic.utils as gu
 
     plt.style.use("cyberpunk")
 
     mat = np.array(np.array(thresholding.autofix(mat)))
     if prune is True:
-        [G, pruned_nodes] = prune_disconnected(
-            nx.from_numpy_matrix(np.abs(mat)), fallback_lcc=False)
+        [G, pruned_nodes] = defragment(
+            nx.from_numpy_matrix(gu.remove_loops(gu.symmetrize(np.abs(mat)))))
         pruned_nodes.sort(reverse=True)
         coords_pre = list(coords)
         labels_pre = list(labels)
@@ -662,6 +663,7 @@ def plot_all_func(
                     line.set_lw(edge_size)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+                connectome.axes[view].ax.patches = []
 
             zorder = 10000
             for view in views:
@@ -1017,6 +1019,7 @@ def plot_all_struct(
                     line.set_lw(edge_size * 0.20)
                     mod_lines.append(line)
                 connectome.axes[view].ax.lines = mod_lines
+                connectome.axes[view].ax.patches = []
                 mplcyberpunk.make_lines_glow(connectome.axes[view].ax,
                                              n_glow_lines=10,
                                              diff_linewidth=0.80,

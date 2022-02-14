@@ -1243,24 +1243,37 @@ def check_est_path_existence(est_path_list):
 
 
 def load_runconfig(location=None):
-    import pkg_resources
+    import time
+    import psutil
     import yaml
-    import tempfile
-    import shutil
-    import os
-
-    fd, temp_path = tempfile.mkstemp()
+    import pkg_resources
 
     if not location:
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
-    shutil.copy2(location, temp_path)
-    with open(temp_path, mode='r+') as stream:
-        hardcoded_params = yaml.load(stream, Loader=yaml.FullLoader)
-    stream.close()
-    os.remove(temp_path)
-    del stream
-    return hardcoded_params
+    # asynchronous config parsing
+    def proc_access(location, proc):
+        try:
+            return [location == f for f in proc.open_files()]
+        except psutil.NoSuchProcess as e:
+            # Catches race condition
+            return [False]
+        except psutil.AccessDenied as e:
+            # If we're not root/admin sometimes we can't query processes
+            return [False]
+
+    while sum(list(flatten([proc_access(location, p) for p in
+         psutil.process_iter(attrs=['name']) if ('python' in p.info['name'])
+                                                and p.is_running() and
+                                                p.username() != 'root']))
+              ) > 0:
+        time.sleep(1)
+
+    with open(location, mode='r') as f:
+        stream = f.read()
+    f.close()
+
+    return yaml.load(stream, Loader=yaml.FullLoader)
 
 
 def save_coords_and_labels_to_json(coords, labels, dir_path,

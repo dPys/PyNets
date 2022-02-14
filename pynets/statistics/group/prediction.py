@@ -2050,23 +2050,24 @@ def build_predict_workflow(args, retval, verbose=True):
     if modality == "func":
         for comb in grid_param_combos:
             try:
-                signal, hpass, model, granularity, atlas, tol = comb
+                signal, hpass, model, granularity, parcellation, smooth = comb
             except:
                 try:
-                    signal, hpass, model, granularity, atlas = comb
-                    tol = "0"
+                    signal, hpass, model, granularity, parcellation = comb
+                    smooth = "0"
                 except:
                     raise ValueError(f"Failed to parse recipe: {comb}")
-            grid_params_mod.append([signal, hpass, model, granularity, atlas,
-                                    tol])
+            grid_params_mod.append([signal, hpass, model, granularity,
+                                    parcellation, smooth])
     elif modality == "dwi":
         for comb in grid_param_combos:
             try:
-                traversal, minlength, model, granularity, atlas, tol = comb
+                traversal, minlength, model, granularity, parcellation, \
+                error_margin = comb
             except:
                 raise ValueError(f"Failed to parse recipe: {comb}")
             grid_params_mod.append([traversal, minlength, model, granularity,
-                                    atlas, tol])
+                                    parcellation, error_margin])
 
     meta_inputnode = pe.Node(
         niu.IdentityInterface(

@@ -114,7 +114,8 @@ class RegisterDWI(SimpleInterface):
             for i in glob.glob(f"{self.inputs.in_dir}"
                                f"/*_desc-brain_mask.nii.gz")
             if "MNI" not in i
-        ]
+        ] + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_brain_mask.nii.gz")
 
         # Copy T1w mask, if provided, else use existing, if detected, else
         # compute a fresh one
@@ -147,8 +148,8 @@ class RegisterDWI(SimpleInterface):
                 mask_tmp_path = None
 
         gm_mask_existing = glob.glob(
-            self.inputs.in_dir +
-            "/*_label-GM_probseg.nii.gz")
+            f"{self.inputs.in_dir}/*_label-GM_probseg.nii.gz") + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz")
         if len(gm_mask_existing) > 0:
             gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
@@ -163,8 +164,8 @@ class RegisterDWI(SimpleInterface):
             gm_mask = None
 
         wm_mask_existing = glob.glob(
-            self.inputs.in_dir +
-            "/*_label-WM_probseg.nii.gz")
+            f"{self.inputs.in_dir}/*_label-WM_probseg.nii.gz") + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz")
         if len(wm_mask_existing) > 0:
             wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
@@ -179,8 +180,9 @@ class RegisterDWI(SimpleInterface):
             wm_mask = None
 
         csf_mask_existing = glob.glob(
-            self.inputs.in_dir + "/*_label-CSF_probseg.nii.gz"
-        )
+            f"{self.inputs.in_dir}/*_label-CSF_probseg.nii.gz"
+        ) + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_2.nii.gz")
         if len(csf_mask_existing) > 0:
             csf_mask = fname_presuffix(
                 csf_mask_existing[0], newpath=runtime.cwd)
@@ -971,7 +973,9 @@ class RegisterFunc(SimpleInterface):
             for i in glob.glob(self.inputs.in_dir +
                                "/*_desc-brain_mask.nii.gz")
             if "MNI" not in i
-        ]
+        ] + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/"
+            f"t1w_brain_mask.nii.gz")
 
         # Copy T1w mask, if provided, else use existing, if detected, else
         # compute a fresh one
@@ -1006,7 +1010,8 @@ class RegisterFunc(SimpleInterface):
 
         gm_mask_existing = glob.glob(
             self.inputs.in_dir +
-            "/*_label-GM_probseg.nii.gz")
+            "/*_label-GM_probseg.nii.gz") + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz")
         if len(gm_mask_existing) > 0:
             gm_mask = fname_presuffix(gm_mask_existing[0],
                                       newpath=runtime.cwd)
@@ -1023,7 +1028,8 @@ class RegisterFunc(SimpleInterface):
 
         wm_mask_existing = glob.glob(
             self.inputs.in_dir +
-            "/*_label-WM_probseg.nii.gz")
+            "/*_label-WM_probseg.nii.gz") + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz")
         if len(wm_mask_existing) > 0:
             wm_mask = fname_presuffix(wm_mask_existing[0],
                                       newpath=runtime.cwd)

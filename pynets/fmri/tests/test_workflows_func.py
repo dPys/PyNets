@@ -11,6 +11,7 @@ except ImportError:
 import pytest
 import logging
 import tempfile
+import pkg_resources
 import networkx as nx
 from pynets.core import workflows
 from multiprocessing import cpu_count
@@ -18,7 +19,8 @@ from multiprocessing import cpu_count
 logger = logging.getLogger(__name__)
 logger.setLevel(50)
 
-base_dir = str(Path(__file__).parent/"examples")
+base_dir = os.path.abspath(pkg_resources.resource_filename(
+        "pynets", "../data/examples"))
 
 # Test that each possible combination of inputs creates a workflow.
 @pytest.mark.parametrize("hpass", [0.08, None])
@@ -35,76 +37,76 @@ base_dir = str(Path(__file__).parent/"examples")
 @pytest.mark.parametrize("parc,node_radius,node_size_list,atlas,multi_atlas,"
                          "parcellation,user_atlas_list",
     [
-        # pytest.param(False, None, [4, 8], None, None, None, None,
-        #              marks=pytest.mark.xfail),
-        # pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
-        #              None),
-        # pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
-        #                                          'coords_power_2011'], None,
-        #              None),
-        # pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
-        #              None),
-        # pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
-        #                                     'coords_power_2011'], None, None),
-        # pytest.param(False, 4, None, None, None, None, None,
-        #              marks=pytest.mark.xfail),
+        pytest.param(False, None, [4, 8], None, None, None, None,
+                     marks=pytest.mark.xfail),
+        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
+                     None),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'], None,
+                     None),
+        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
+                     None),
+        pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
+                                            'coords_power_2011'], None, None),
+        pytest.param(False, 4, None, None, None, None, None,
+                     marks=pytest.mark.xfail),
         pytest.param(True, None, None, None, None, None, None),
-        # pytest.param(False, None, [4, 8], None, None,
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz",
-        #              None),
-        # pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None,
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz", None),
-        # pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
-        #                                          'coords_power_2011'],
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz", None),
-        # pytest.param(False, 4, None, 'coords_dosenbach_2010', None,
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz", None),
-        # pytest.param(False, 4, None, None,
-        #              ['coords_dosenbach_2010', 'coords_power_2011'],
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz", None),
-        # pytest.param(False, 4, None, None, None,
-        #              f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #              f"bin.nii.gz", None),
+        pytest.param(False, None, [4, 8], None, None,
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz",
+                     None),
+        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None,
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'],
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
+        pytest.param(False, 4, None, 'coords_dosenbach_2010', None,
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
+        pytest.param(False, 4, None, None,
+                     ['coords_dosenbach_2010', 'coords_power_2011'],
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
+        pytest.param(False, 4, None, None, None,
+                     f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                     f"bin.nii.gz", None),
         pytest.param(True, None, None, None, None,
                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
                      f"bin.nii.gz", None),
-        # pytest.param(False, None, [4, 8], None, None, None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
-        # pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
-        # pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
-        #                                          'coords_power_2011'], None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
-        # pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
-        # pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
-        #                                     'coords_power_2011'], None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
-        # pytest.param(False, 4, None, None, None, None,
-        #              [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz",
-        #               f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
-        #               f"bin.nii.gz"]),
+        pytest.param(False, None, [4, 8], None, None, None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, None, [4, 8], 'coords_dosenbach_2010', None, None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, None, [4, 8], None, ['coords_dosenbach_2010',
+                                                 'coords_power_2011'], None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, 4, None, 'coords_dosenbach_2010', None, None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, 4, None, None, ['coords_dosenbach_2010',
+                                            'coords_power_2011'], None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
+        pytest.param(False, 4, None, None, None, None,
+                     [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz",
+                      f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
+                      f"bin.nii.gz"]),
         pytest.param(True, None, None, None, None, None,
                      [f"{base_dir}/miscellaneous/triple_net_ICA_overlap_3_sig_"
                       f"bin.nii.gz",
@@ -112,25 +114,21 @@ base_dir = str(Path(__file__).parent/"examples")
                       f"bin.nii.gz"])
     ]
 )
-def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
-                  parc, conn_model, parcellation,
+def test_func_all(hpass, smooth, parc, conn_model, parcellation,
                   user_atlas_list, atlas, multi_atlas, subnet, thr, max_thr,
                   min_thr, step_thr, multi_thr, thr_type, node_radius,
                   node_size_list, plot_switch):
     """
     Test functional connectometry
     """
-    dir_path = tempfile.TemporaryDirectory()
-    base_dir = str(dir_path.name)
-    if not os.path.isdir(base_dir):
-        os.makedirs(base_dir)
 
-    func_file = fmri_estimation_data['func_file']
-    mask = fmri_estimation_data['mask_file']
-    conf = fmri_estimation_data['conf_file']
-    anat_file = fmri_estimation_data['t1w_file']
-
-    roi = random_mni_roi_data['roi_file']
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    roi = pkg_resources.resource_filename(
+        "pynets", "templates/rois/pDMN_3_bin.nii.gz")
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
 
     ID = '25659_1'
     ref_txt = None
@@ -293,7 +291,7 @@ def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-    dir_path.cleanup()
+
 
 @pytest.mark.parametrize("k,k_list,k_clustering,clust_mask,clust_mask_list,clust_type,clust_type_list",
     [
@@ -338,21 +336,20 @@ def test_func_all(fmri_estimation_data, random_mni_roi_data, hpass, smooth,
     ]
 )
 @pytest.mark.parametrize("plot_switch", [True, False])
-def test_func_clust(fmri_estimation_data, parc, parcellation, user_atlas_list, k, k_list, k_clustering, clust_mask, clust_mask_list,
-                    clust_type, clust_type_list, plot_switch, roi, mask, subnet, node_radius, node_size_list, atlas,
+def test_func_clust(parc, parcellation,
+                    user_atlas_list, k, k_list, k_clustering, clust_mask,
+                    clust_mask_list, clust_type, clust_type_list, plot_switch,
+                    roi, mask, subnet, node_radius, node_size_list, atlas,
                     multi_atlas):
     """
     Test functional connectometry with clustering
     """
-    dir_path = tempfile.TemporaryDirectory()
-    base_dir = str(dir_path.name)
-    if not os.path.isdir(base_dir):
-        os.makedirs(base_dir)
 
-    func_file = fmri_estimation_data['func_file']
-    mask = fmri_estimation_data['mask_file']
-    conf = fmri_estimation_data['conf_file']
-    anat_file = fmri_estimation_data['t1w_file']
+    conf = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_desc-confounds_regressors.tsv"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
+    anat_file = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-preproc_T1w.nii.gz"
+    mask = f"{base_dir}/BIDS/sub-25659/ses-1/anat/sub-25659_desc-brain_" \
+           f"mask.nii.gz"
 
     ID = '25659_1'
     parc = parc
@@ -502,5 +499,3 @@ def test_func_clust(fmri_estimation_data, parc, parcellation, user_atlas_list, k
     assert nx.is_directed_acyclic_graph(fmri_connectometry_wf._graph) is True
     # plugin_args = {'n_procs': int(procmem[0]), 'memory_gb': int(procmem[1]), 'scheduler': 'mem_thread'}
     # out = fmri_connectometry_wf.run(plugin=plugin_type, plugin_args=plugin_args)
-
-    dir_path.cleanup()
