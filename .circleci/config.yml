@@ -602,6 +602,20 @@ workflows:
             tags:
               only: /.*/
 
+      - build_docs:
+          requires:
+            - get_data
+            - unit_and_integration_tests
+            - coverage
+          filters:
+            branches:
+              only: master
+              ignore:
+                - /licenses?\/.*/
+                - /docker\/.*/
+            tags:
+              only: /.*/
+
       - test_deploy_pypi:
           requires:
             - get_data

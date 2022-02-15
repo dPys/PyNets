@@ -24,6 +24,52 @@ from sklearn.feature_selection import VarianceThreshold
 warnings.simplefilter("ignore")
 
 
+def mahalanobis_distances(X, y=None):
+    """
+    Compute the Mahalanobis distances between the training samples and the
+    test samples.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_train_samples, n_features)
+        Training data.
+
+    y : array-like, shape (n_test_samples, n_features)
+        Test data.
+
+    Returns
+    -------
+    distances : array, shape (n_test_samples, n_train_samples)
+        Mahalanobis distances between the test samples and the training samples.
+    """
+    from sklearn.metrics.pairwise import check_pairwise_arrays
+    X, Y = check_pairwise_arrays(X, y)
+    if y is None:
+        y = X
+
+    n_samples = X.shape[0]
+    if y.shape[0] != n_samples:
+        raise ValueError("Different number of samples in X and y")
+    X_train = X
+    X_test = y
+    # Subtract mean
+    X_mean = np.mean(X_train, axis=0)
+    X_train = X_train - X_mean
+    X_test = X_test - X_mean
+    # Compute the inverse of the covariance matrix
+    # If the covariance matrix is singular, use the pseudo-inverse instead
+    try:
+        inv_cov = np.linalg.inv(np.cov(X_train.T))
+    except np.linalg.LinAlgError:
+        inv_cov = np.linalg.pinv(np.cov(X_train.T))
+    # Compute the dissimilarity matrix of the squared Mahalanobis distances
+    sq_mahal_dist = np.zeros((X_test.shape[0], X_test.shape[0]))
+    for i in range(n_samples):
+        sq_mahal_dist[i, :] = np.sum(
+            (np.dot(X_test, inv_cov) * X_test[i, :]) ** 2, axis=1)
+    return np.sqrt(sq_mahal_dist)
+
+
 class ReduceVIF(BaseEstimator, TransformerMixin):
 
     def __init__(self, thresh=10.0):
