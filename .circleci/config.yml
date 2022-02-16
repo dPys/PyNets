@@ -2,12 +2,12 @@ version: 2
 
 jobs:
   build:
-    environment:
-      TZ: "/usr/share/zoneinfo/America/Chicago"
-      SCRATCH: "/scratch"
-    docker:
-      - image: circleci/python:3.8.12-buster-node-browsers-legacy
+    machine:
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
+    environment:
+      TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+      SCRATCH: "/scratch"
     steps:
       - checkout
       - run:
@@ -17,34 +17,54 @@ jobs:
               echo "Only docs build"
               circleci step halt
             fi
-
-      - run:
-          name: Install parallel gzip
-          command: |
-            apk add --no-cache pigz
       - restore_cache:
           keys:
-            - docker-v0-{{ .Branch }}-{{ .Revision }}
-            - docker-v0-{{ .Branch }}-
-            - docker-v0-master-
-            - docker-v0-
+            - build-v1-{{ .Branch }}-{{ .Revision }}
+            - build-v1--{{ .Revision }}
+            - build-v1-{{ .Branch }}-
+            - build-v1-master-
+            - build-v1-
           paths:
-            - /tmp/cache/docker.tar.gz
-      - setup_remote_docker
+            - /tmp/docker
+      - docker/install-docker-credential-helper
       - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
+          name: Login into Docker Hub
           command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
+            if [[ -n "$DOCKER_PAT" ]]; then
+              echo "$DOCKER_PAT" | docker login -u $DOCKER_USER --password-stdin
+            fi
+      - run:
+          name: Set-up a Docker registry
+          command: |
+            docker run -d -p 5000:5000 --restart=always --name=registry \
+                -v /tmp/docker:/var/lib/registry registry:2
+      - run:
+          name: Pull images
+          command: |
+            set +e
+            docker pull localhost:5000/ubuntu
+            success=$?
+            set -e
+            if [[ "$success" = "0" ]]; then
+                echo "Pulling from local registry"
+                docker tag localhost:5000/ubuntu debian:stretch-slim
+                docker pull localhost:5000/pynets
+                docker tag localhost:5000/pynets dpys/pynets:latest
+                docker tag localhost:5000/pynets dpys/pynets
+            else
+                echo "Pulling from Docker Hub"
+                docker pull debian:stretch-slim
+                docker tag debian:stretch-slim localhost:5000/ubuntu
+                docker push localhost:5000/ubuntu
+                docker pull dpys/pynets:latest
             fi
       - run:
           name: Build Docker image
           no_output_timeout: 60m
           command: |
+            export PY3=$(pyenv versions | grep '3\.' |
+                         sed -e 's/.* 3\./3./' -e 's/ .*//')
+            pyenv local $PY3
             # Get version, update files.
             THISVERSION=$( python3 get_version.py )
             if [[ ${THISVERSION:0:2} == "0+" ]] ; then
@@ -55,45 +75,29 @@ jobs:
             fi
             # Build docker image
             e=1 && for i in {1..5}; do
-              docker build \
-                --cache-from=pynets \
-                --rm=false \
-                -t dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
+              docker build --rm \
+                --cache-from=dpys/pynets \
+                -t dpys/pynets:latest \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
               && e=0 && break || sleep 15
             done && [ "$e" -eq "0" ]
-            # test if development image should be built
-            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
-              echo "building development container"
-              docker tag dpys/pynets pynets:unstable
-              docker build \
-                --rm=false \
-                -t pynets \
-                -f Dockerfile .
-            fi
-
       - run:
-          name: Smoke test Docker image
-          command: |
-            THISVERSION=$( python3 get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            DOCKERVERSION=$(docker run --rm -it dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` pynets --version)
-            DOCKERVERSION=${DOCKERVERSION%$'\r'}
-            DOCKERVERSION=${DOCKERVERSION#*"PyNets v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "DOCKERVERSION: \"${DOCKERVERSION}\""
-            test "$DOCKERVERSION" = "$THISVERSION"
-      - run:
-          name: Docker save
+          name: Docker push to local registry
           no_output_timeout: 40m
           command: |
-            mkdir -p /tmp/cache
-            docker save debian:stretch-slim dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
-            | pigz -3 > /tmp/cache/docker.tar.gz
-
+            docker tag dpys/pynets:latest localhost:5000/pynets
+            docker push localhost:5000/pynets
+      - run:
+          name: Docker registry garbage collection
+          command: |
+            docker exec -it registry /bin/registry garbage-collect --delete-untagged \
+                /etc/docker/registry/config.yml
+      - save_cache:
+         key: build-v1-{{ .Branch }}-{{ .Revision }}
+         paths:
+            - /tmp/docker
       - persist_to_workspace:
           root: /tmp
           paths:
