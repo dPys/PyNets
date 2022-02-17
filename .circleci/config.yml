@@ -2,8 +2,11 @@ version: 2
 
 jobs:
   build:
-    machine:
-      image: ubuntu-2004:202010-01
+    environment:
+      TZ: "/usr/share/zoneinfo/America/Chicago"
+      SCRATCH: "/scratch"
+    docker:
+      - image: docker:18.01.0-ce-git
     working_directory: /tmp/src/pynets
     steps:
       - checkout
@@ -14,10 +17,11 @@ jobs:
               echo "Only docs build"
               circleci step halt
             fi
+
       - run:
-          name: Install parallel gzip
+          name: Install parallel gzip and python3
           command: |
-            sudo apt install -y pigz
+            apk add --no-cache pigz python3-dev
       - restore_cache:
           keys:
             - docker-v0-{{ .Branch }}-{{ .Revision }}
@@ -69,6 +73,7 @@ jobs:
                 -t pynets \
                 -f Dockerfile .
             fi
+
       - run:
           name: Smoke test Docker image
           command: |
@@ -88,6 +93,7 @@ jobs:
             mkdir -p /tmp/cache
             docker save debian:stretch-slim dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
             | pigz -3 > /tmp/cache/docker.tar.gz
+
       - persist_to_workspace:
           root: /tmp
           paths:
