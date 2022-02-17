@@ -49,7 +49,7 @@ def test_plot_all_nonet_no_mask(random_mni_roi_data, connectivity_data):
     hpass = 0.1
     binary = False
     signal = 'mean'
-    edge_threshold = '99%'
+    edge_threshold = '50%'
 
     conn_matrix = connectivity_data['conn_matrix']
     labels = connectivity_data['labels']
@@ -87,7 +87,7 @@ def test_plot_all_nonet_with_mask(connectivity_data):
     parlistfile = None
     roi = None
     signal = 'mean'
-    edge_threshold = '99%'
+    edge_threshold = '50%'
 
     conn_matrix = connectivity_data['conn_matrix']
     labels = connectivity_data['labels']
