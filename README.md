@@ -60,7 +60,7 @@ Citing
 A manuscript is in preparation, but for now, please cite all uses with the following entry:
 ```
 @misc{PyNets,
-    title = {PyNets\: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
+    title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
     author = {Pisner, Derek A and Hammonds, Ryan B.},
     publisher = {Poster session presented at: Annual Meeting of the Organization for Human Brain Mapping},
     url = {https://github.com/dPys/PyNets},
