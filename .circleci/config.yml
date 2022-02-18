@@ -576,24 +576,12 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
+
       - unit_and_integration_tests:
           requires:
             - get_data
           filters:
             branches:
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
-      - coverage:
-          requires:
-            - get_data
-            - unit_and_integration_tests
-          filters:
-            branches:
-              only: master
               ignore:
                 - /docs?\/.*/
                 - /licenses?\/.*/
@@ -629,13 +617,23 @@ workflows:
             tags:
               only: /.*/
 
-      - test_deploy_pypi:
+      - coverage:
           requires:
             - get_data
             - unit_and_integration_tests
-            - build
+          filters:
+            branches:
+              only: master
+              ignore:
+                - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
+            tags:
+              only: /.*/
+
+      - test_deploy_pypi:
+          requires:
             - build_docs
-            - coverage
           filters:
             branches:
               only: master
