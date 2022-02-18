@@ -635,7 +635,6 @@ workflows:
 
       - deployable:
           requires:
-            - build
             - test_deploy_pypi
           filters:
             branches:

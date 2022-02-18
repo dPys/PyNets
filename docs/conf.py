@@ -342,5 +342,3 @@ suppress_warnings = ["image.nonlocal_uri"]
 
 def setup(app):
     app.add_css_file('theme_overrides.css')
-    # We need this for the boilerplate script
-    app.add_javascript("https://cdn.rawgit.com/dpys/zenodo.js/v0.1/zenodo.js")
