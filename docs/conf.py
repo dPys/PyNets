@@ -78,7 +78,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'PyNets'
 author = 'The PyNets developers'
-copyright = '2016-%s, %s' % (datetime.now().year, author)
+copyright = '2017-%s, %s' % (datetime.now().year, author)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -341,6 +341,6 @@ suppress_warnings = ["image.nonlocal_uri"]
 
 
 def setup(app):
-    app.add_stylesheet('theme_overrides.css')
+    app.add_css_file('theme_overrides.css')
     # We need this for the boilerplate script
-    app.add_javascript("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
+    app.add_javascript("https://cdn.rawgit.com/dpys/zenodo.js/v0.1/zenodo.js")

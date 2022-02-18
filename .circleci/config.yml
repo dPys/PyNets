@@ -621,6 +621,7 @@ workflows:
             - get_data
             - unit_and_integration_tests
             - build
+            - build_docs
             - coverage
           filters:
             branches:
