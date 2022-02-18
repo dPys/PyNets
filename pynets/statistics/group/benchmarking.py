@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 import warnings
+from sklearn.neighbors import DistanceMetric
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
@@ -18,6 +19,7 @@ from sklearn.utils import check_X_y
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, SimpleImputer
 from sklearn.preprocessing import StandardScaler
+from pynets.statistics.utils import mahalanobis_distances
 from pynets.core.utils import flatten
 warnings.filterwarnings("ignore")
 
@@ -25,7 +27,7 @@ warnings.filterwarnings("ignore")
 def discr_stat(
         X,
         Y,
-        dissimilarity="euclidean",
+        dissimilarity='mahalanobis',
         remove_isolates=True,
         return_rdfs=True):
     """
@@ -82,11 +84,13 @@ def discr_stat(
         dissimilarities = haversine_distances(X)
     elif dissimilarity == "manhattan":
         dissimilarities = manhattan_distances(X)
+    elif dissimilarity == "mahalanobis":
+        dissimilarities = mahalanobis_distances(X)
     else:
         dissimilarities = X
 
     rdfs = _discr_rdf(dissimilarities, labels)
-    rdfs[rdfs < 0.5] = np.nan
+    # rdfs[rdfs < 0.5] = np.nan
     stat = np.nanmean(rdfs)
 
     if return_rdfs:
@@ -136,60 +140,6 @@ def _discr_rdf(dissimilarities, labels):
         out[i, : len(rdf)] = rdf
 
     return out
-
-
-def beta_lin_comb(beta, GVDAT, meta):
-    """
-    This function calculates linear combinations of graph vectors stored in
-    GVDAT for all subjects and all sessions given the weights vector beta.
-    This was adapted from a function of the same name, written by Kamil Bonna
-    and Miriam Kosik 10.09.2018.
-
-    Parameters
-    ----------
-    beta : list
-        List of metaparameter weights.
-    GVDAT : ndarray
-        5d data structure storing graph vectors.
-
-    Returns
-    -------
-    gv_array : ndarray
-        2d array of aggregated graph vectors for all sessions, all subjects.
-    """
-    import numpy as np
-    import math
-
-    def normalize_beta(beta):
-        sum_weight = sum([b1 * b2 * b3 for b1 in beta[:N_atl] for b2 in
-                          beta[N_atl:N_atl + N_mod] for b3 in beta[-N_thr:]])
-        return [b / math.pow(sum_weight, 1 / 3) for b in beta]
-
-    # Dataset dimensionality
-    N_sub = meta['N_sub']
-    N_ses = meta['N_ses']
-    N_gvm = meta['N_gvm']
-    N_thr = len(meta['thr'])
-    N_atl = len(meta['atl'])
-    N_mod = len(meta['mod'])
-
-    # Normalize and split full beta vector
-    beta = normalize_beta(beta)
-    beta_atl = beta[:N_atl]
-    beta_mod = beta[N_atl:N_atl + N_mod]
-    beta_thr = beta[-N_thr:]
-
-    # Calculate linear combinations
-    gv_array = np.zeros((N_sub * N_ses, N_gvm), dtype='float')
-    for sesh in range(N_sub * N_ses):
-        gvlc = 0  # Graph-Vector Linear Combination (GVLC)
-        for atl in range(N_atl):
-            for mod in range(N_mod):
-                for thr in range(N_thr):
-                    gvlc += GVDAT[sesh][atl][mod][thr] * beta_atl[atl] * \
-                            beta_mod[mod] * beta_thr[thr]
-        gv_array[sesh] = gvlc
-    return gv_array
 
 
 def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,

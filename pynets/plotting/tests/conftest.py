@@ -91,11 +91,11 @@ def connectivity_data():
 
     base_dir = os.path.abspath(pkg_resources.resource_filename(
         "pynets", "../data/examples"))
-    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/" \
-                f"sub-25659_ses-1_task-rest_space-T1w_desc-preproc_bold.nii.gz"
-    mask_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/" \
-                f"sub-25659_ses-1_task-rest_space-T1w_desc-preproc_" \
-                f"bold_mask.nii.gz"
+    func_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-" \
+                f"rest_space-MNI152NLin6Asym_desc-smoothAROMAnonaggr_bold_" \
+                f"short.nii.gz"
+    mask_file = f"{base_dir}/BIDS/sub-25659/ses-1/func/sub-25659_ses-1_task-" \
+                f"rest_space-MNI152NLin6Asym_desc-brain_mask.nii.gz"
 
     parcellation = pkg_resources.resource_filename(
         "pynets", "templates/atlases/DesikanKlein2012.nii.gz"

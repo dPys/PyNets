@@ -6,7 +6,7 @@ jobs:
       TZ: "/usr/share/zoneinfo/America/Chicago"
       SCRATCH: "/scratch"
     docker:
-      - image: circleci/python:3.8.12-buster-node-browsers-legacy
+      - image: docker:18.01.0-ce-git
     working_directory: /tmp/src/pynets
     steps:
       - checkout
@@ -19,9 +19,9 @@ jobs:
             fi
 
       - run:
-          name: Install parallel gzip
+          name: Install parallel gzip and python3
           command: |
-            apk add --no-cache pigz
+            apk add --no-cache pigz python3-dev
       - restore_cache:
           keys:
             - docker-v0-{{ .Branch }}-{{ .Revision }}
@@ -597,6 +597,20 @@ workflows:
             branches:
               ignore:
                 - /docs?\/.*/
+                - /licenses?\/.*/
+                - /docker\/.*/
+            tags:
+              only: /.*/
+
+      - build_docs:
+          requires:
+            - get_data
+            - unit_and_integration_tests
+            - coverage
+          filters:
+            branches:
+              only: master
+              ignore:
                 - /licenses?\/.*/
                 - /docker\/.*/
             tags:
