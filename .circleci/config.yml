@@ -117,14 +117,36 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
-            python --version
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+      - run:
+          name: Install FSL
+          no_output_timeout: 40m
+          command: |
+            sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
+            sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
+            sudo apt-get update -qq
+            sudo chmod 777 /usr/local
+            sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
+            sudo chmod 777 -R /usr/local/fsl/bin
       - run:
           name: Install graphviz
           command: |
               apt-get update
               apt-get install -y graphviz
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+             echo '# Path to FSL' >> $BASH_ENV
+             echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
+             echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
+             echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
+             echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
+             echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
+             echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
+             echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
+             echo 'export FSLDIR PATH' >> $BASH_ENV
+             source $BASH_ENV
       - run:
           name: Install Requirements (may contain pinned versions)
           command: python -m pip install -r requirements.txt
@@ -334,16 +356,6 @@ jobs:
           command: |
             python -m pip install -U pip
             python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
-      - run:
-          name: Install graph_tool
-          no_output_timeout: 30m
-          command: |
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
-            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update -qq
-            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.8.0/lib/python3.8/site-packages/graph_tool
-            python -c "import graph_tool.all as gt"
       - run:
           name: Update codecov
           command: |
