@@ -368,7 +368,7 @@ jobs:
 
   deploy_docker_patches:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
       - restore_cache:
@@ -397,7 +397,7 @@ jobs:
 
   deploy_docker:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout:
@@ -441,7 +441,7 @@ jobs:
 
   test_deploy_pypi:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout
@@ -533,7 +533,7 @@ jobs:
 
   deploy_pypi:
     machine:
-      image: circleci/classic:201808-01
+      image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
       - checkout
