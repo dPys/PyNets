@@ -476,7 +476,7 @@ jobs:
           name: Check Python version and upgrade pip
           command: |
             python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel virtualenv
       - run:
           name: Build pynets
           command: |
