@@ -443,8 +443,17 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
+    environment:
+      - FSLDIR: /usr/local/fsl
+      - FSLOUTPUTTYPE: 'NIFTI'
+      - PYTHONUNBUFFERED: 1
+      - DEBIAN_FRONTEND: noninteractive
     steps:
       - checkout
+      - restore_cache:
+          key: unit&integrationtests-{{ arch}}
+      - attach_workspace:
+          at: /tmp/src/pynets
       - run:
           name: "Switch to Python v3.8"
           no_output_timeout: 30m
@@ -454,9 +463,9 @@ jobs:
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
             sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update -yq
-            sudo apt-get install -yq -y make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
-            sudo apt-get clean
+            sudo apt-get update -qq
+            sudo apt-get upgrade -y
+            sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
             pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
             pyenv global 3.8.0
@@ -466,9 +475,8 @@ jobs:
       - run:
           name: Check Python version and upgrade pip
           command: |
-            which python
             python -m pip install -U pip
-            python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
       - run:
           name: Build pynets
           command: |
@@ -485,7 +493,7 @@ jobs:
             python setup.py sdist
             pip wheel --no-deps -w dist/ .
       - store_artifacts:
-          path: /tmp/src/pynets/dist
+          path: /tmp/src/pynets/build
       - run:
           name: Check sdist distribution
           command: |
