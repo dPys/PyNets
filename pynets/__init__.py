@@ -5,6 +5,10 @@
 __author__ = """Derek Pisner"""
 __email__ = "dpisner@utexas.edu"
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 from .__about__ import (
     __version__,
     __copyright__,
@@ -12,7 +16,10 @@ from .__about__ import (
     __packagename__,
 )
 
-from . import *
-import warnings
+__all__ = [
+    '__copyright__',
+    '__credits__',
+    '__packagename__',
+    '__version__',
+]
 
-warnings.filterwarnings("ignore")

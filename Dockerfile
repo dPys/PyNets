@@ -130,6 +130,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         graph-tool \
 #        dask
     # Install pynets
+    && git config --global http.postBuffer 1048576000 \
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \

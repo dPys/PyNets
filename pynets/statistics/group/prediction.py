@@ -77,42 +77,46 @@ import_list = [
 ]
 
 
-class RazorCV(object):
+class Razors(object):
     """
-    PR to SKlearn by @dPys 2019
-
-    RazorCV is a callable refit option for CV whose aim is to balance model
-    complexity and cross-validated score in the spirit of the
-    "one standard error" rule of Breiman et al. (1984), which demonstrated that
-    the tuning parameter associated with the best performance may be prone to
-    overfit. To ensure model parsimony, we can instead pick the simplest model
-    within one standard error (or some percentile/alpha-level tolerance) of
-    the empirically optimal model. This assumes that the models can be easily
-    ordered from simplest to most complex based on some user-defined target
-    parameter. Greater values of this parameter are to be defined as
-    'more complex', and a target scoring metric (i.e. in the case of
-    multi-metric scoring), the `RazorCV` function can be called directly by
-    `refit` (e.g. in GridSearchCV).
+    Razors is a callable refit option for `GridSearchCV` whose aim is to
+    balance model complexity and cross-validated score in the spirit of the
+    "one standard error" rule of Breiman et al. (1984), which showed that
+    the tuning hyperparameter associated with the best performing model may be
+    prone to overfit. To help mitigate this risk, we can instead instruct
+    gridsearch to refit the highest performing 'parsimonious' model, as defined
+    using simple statistical rules (e.g. standard error (`sigma`),
+    percentile (`eta`), or significance level (`alpha`)) to compare
+    distributions of model performance across folds. Importantly, this
+    strategy assumes that the grid of multiple cross-validated models
+    can be principly ordered from simplest to most complex with respect to some
+    target hyperparameter of interest. To use the razors suite, supply
+    the `simplify` function partial of the `Razors` class as a callable
+    directly to the `refit` argument of `GridSearchCV`.
 
     Parameters
     ----------
     cv_results : dict of numpy(masked) ndarrays
         See attribute cv_results_ of `GridSearchCV`.
-    param : str
-        Parameter with the largest influence on model complexity.
-    greater_is_complex : bool
-        Whether complexity increases as `param` increases. Default is True.
     scoring : str
         Refit scoring metric.
-    method : str
-        Method for balancing model complexity with performance.
-        Options are 'onese', 'percentile', and 'ranksum'. Default is 'onese'.
-    tol : float
-        Acceptable percent tolerance in the case that a percentile threshold
-        is used. Required if `method`=='percentile'. Default is 0.25.
+    param : str
+        Parameter whose complexity will be optimized.
+    rule : str
+        Rule for balancing model complexity with performance.
+        Options are 'se', 'percentile', and 'ranksum'. Default is 'se'.
+    sigma : int
+        Number of standard errors tolerance in the case that a standard error
+        threshold is used to filter outlying scores across folds. Required if
+        `rule`=='se'. Default is 1.
+    eta : float
+        Percentile tolerance in the case that a percentile threshold
+        is used to filter outlier scores across folds. Required if
+        `rule`=='percentile'. Default is 0.68.
     alpha : float
-        Alpha-level to use for wilcoxon rank sum hypothesis testing. Required
-        if `method`=='ranksum'. Default is 0.01.
+        An alpha significance level in the case that wilcoxon rank sum
+        hypothesis testing is used to filter outlying scores across folds.
+        Required if `rule`=='ranksum'. Default is 0.05.
 
     References
     ----------
@@ -125,291 +129,291 @@ class RazorCV(object):
     some user-defined target parameter (e.g. number of components, number of
     estimators, polynomial degree, cost, scale, number hidden units, weight
     decay, number of nearest neighbors, L1/L2 penalty, etc.).
+
+    The callable API accordingly assumes that the `params` attribute of
+    `cv_results_` 1) contains the indicated hyperparameter (`param`) of
+    interest, and 2) contains a sequence of values (numeric, boolean, or
+    categorical) that are ordered from least to most complex.
     """
+    __slots__ = ('cv_results', 'param', 'param_complexity', 'scoring',
+                 'rule', 'greater_is_better',
+                 '_scoring_funcs', '_scoring_dict',
+                 '_n_folds', '_splits', '_score_grid',
+                 '_cv_means', '_sigma', '_eta', '_alpha')
 
     def __init__(
-        self,
-        cv_results,
-        param,
-        greater_is_complex,
-        scoring,
-        method,
-        tol=0.25,
-        alpha=0.01,
+            self,
+            cv_results_,
+            param,
+            scoring,
+            rule,
+            sigma=1,
+            eta=0.95,
+            alpha=0.01,
     ):
         import sklearn.metrics
 
-        self.cv_results = cv_results
+        self.cv_results = cv_results_
         self.param = param
-        self.greater_is_complex = greater_is_complex
         self.scoring = scoring
-        self.method = method
-        self.scoring_funcs = [
+        self.rule = rule
+        self._scoring_funcs = [
             met
             for met in sklearn.metrics.__all__
             if (met.endswith("_score")) or (met.endswith("_error"))
         ]
         # Set _score metrics to True and _error metrics to False
-        self.scoring_dict = dict(
+        self._scoring_dict = dict(
             zip(
-                self.scoring_funcs,
-                [met.endswith("_score") for met in self.scoring_funcs],
+                self._scoring_funcs,
+                [met.endswith("_score") for met in self._scoring_funcs],
             )
         )
         self.greater_is_better = self._check_scorer()
-        self.tol = tol
-        self.alpha = alpha
+        self._n_folds = len(list(set([i.split('_')[0] for i in
+                                     list(self.cv_results.keys()) if
+                                     i.startswith('split')])))
+        # Extract subgrid corresponding to the scoring metric of interest
+        self._splits = [i for i in list(self.cv_results.keys()) if
+                        i.endswith(f"test_{self.scoring}") and
+                        i.startswith('split')]
+        self._score_grid = np.vstack([self.cv_results[cv] for cv in
+                                      self._splits]).T
+        self._cv_means = np.array(np.nanmean(self._score_grid, axis=1))
+        self._sigma = sigma
+        self._eta = eta
+        self._alpha = alpha
 
     def _check_scorer(self):
         """
-        Check whether the target refit scorer is negated. If so, adjusted
+        Check whether the target refit scorer is negated. If so, adjust
         greater_is_better accordingly.
         """
+
         if (
-            self.scoring not in self.scoring_dict.keys()
-            and f"{self.scoring}_score" not in self.scoring_dict.keys()
+                self.scoring not in self._scoring_dict.keys()
+                and f"{self.scoring}_score" not in self._scoring_dict.keys()
         ):
             if self.scoring.startswith("neg_"):
                 self.greater_is_better = True
             else:
-                raise KeyError(f"Scoring metric {self.scoring} not "
-                               f"recognized.")
+                raise NotImplementedError(f"Scoring metric {self.scoring} not "
+                                          f"recognized.")
         else:
             self.greater_is_better = [
-                value for key, value in self.scoring_dict.items() if
+                value for key, value in self._scoring_dict.items() if
                 self.scoring in key][0]
         return self.greater_is_better
 
     def _best_low_complexity(self):
         """
         Balance model complexity with cross-validated score.
+
+        Return
+        ------
+        int
+            Index of a model that has the lowest complexity but its test score
+            is the highest on average across folds as compared to other models
+            that are equally likely to occur.
         """
-        # Check parameter whose complexity we seek to restrict
+
+        # Check parameter(s) whose complexity we seek to restrict
         if not any(self.param in x for x in
                    self.cv_results["params"][0].keys()):
-            raise KeyError("Parameter not found in cv grid.")
+            raise KeyError(f"Parameter {self.param} not found in cv grid.")
         else:
-            self.param = [
+            hyperparam = [
                 i for i in self.cv_results["params"][0].keys() if
                 i.endswith(self.param)][0]
 
-        if self.method == "onese":
-            threshold = self.call_standard_error()
-        elif self.method == "percentile":
-            if self.tol is None:
+        # Select low complexity threshold based on specified evaluation rule
+        if self.rule == "se":
+            if not self._sigma:
                 raise ValueError(
-                    "For percentile method, the tolerance "
-                    "(i.e. `tol`) parameter cannot be null."
+                    "For `se` rule, the tolerance "
+                    "(i.e. `_sigma`) parameter cannot be null."
                 )
-            threshold = self.call_percentile(tol=self.tol)
-        elif self.method == "ranksum":
-            if self.alpha is None:
+            l_cutoff, h_cutoff = self.call_standard_error()
+        elif self.rule == "percentile":
+            if not self._eta:
                 raise ValueError(
-                    "For ranksum method, the alpha-level "
-                    "(i.e. `alpha`) parameter cannot be null."
+                    "For `percentile` rule, the tolerance "
+                    "(i.e. `_eta`) parameter cannot be null."
                 )
-            threshold = self.call_rank_sum_test(alpha=self.alpha)
+            l_cutoff, h_cutoff = self.call_percentile()
+        elif self.rule == "ranksum":
+            if not self._alpha:
+                raise ValueError(
+                    "For `ranksum` rule, the alpha-level "
+                    "(i.e. `_alpha`) parameter cannot be null."
+                )
+            l_cutoff, h_cutoff = self.call_rank_sum_test()
         else:
-            raise ValueError("Method " + self.method + " is not valid.")
+            raise NotImplementedError(f"{self.rule} is not a valid "
+                                      f"rule of RazorCV.")
 
-        if self.greater_is_complex is True:
-            candidate_idx = np.flatnonzero(
-                self.cv_results["mean_test_" + self.scoring] >= threshold
-            )
-        else:
-            candidate_idx = np.flatnonzero(
-                self.cv_results["mean_test_" + self.scoring] <= threshold
-            )
+        self.cv_results[f"param_{hyperparam}"].mask = np.where(
+            (self._cv_means >= float(l_cutoff)) &
+            (self._cv_means <= float(h_cutoff)),
+            True, False)
 
-        best_idx = candidate_idx[
-            np.nanargmin(self.cv_results["param_" + self.param][candidate_idx])
-        ]
-        return best_idx
+        if np.sum(self.cv_results[f"param_{hyperparam}"].mask) == 0:
+            print(f"\nLow: {l_cutoff}")
+            print(f"High: {h_cutoff}")
+            print(f"{self._cv_means}")
+            print(f"hyperparam: {hyperparam}\n")
+            raise ValueError("No valid grid columns remain within the "
+                             "boundaries of the specified razor")
+
+        highest_surviving_rank = np.nanmin(
+            self.cv_results[f"rank_test_{self.scoring}"][
+                self.cv_results[f"param_{hyperparam}"].mask])
+
+        # print(f"Highest surviving rank: {highest_surviving_rank}\n")
+
+        return np.flatnonzero(np.isin(
+            self.cv_results[f"rank_test_{self.scoring}"],
+            highest_surviving_rank))[0]
 
     def call_standard_error(self):
         """
-        Calculate the upper/lower bound within 1 standard deviation
-        of the best `mean_test_scores`.
+        Returns the simplest model whose performance is within `sigma`
+        standard errors of the average highest performing model.
         """
-        best_mean_score = self.cv_results["mean_test_" + self.scoring]
-        best_std_score = self.cv_results["std_test_" + self.scoring]
-        if self.greater_is_better is True:
-            best_score_idx = np.nanargmax(best_mean_score)
-            outstandard_error = (
-                best_mean_score[best_score_idx] -
-                best_std_score[best_score_idx]
-            )
-        else:
-            best_score_idx = np.nanargmin(best_mean_score)
-            outstandard_error = (
-                best_mean_score[best_score_idx] +
-                best_std_score[best_score_idx]
-            )
-        return outstandard_error
 
-    def call_rank_sum_test(self, alpha):
+        # Estimate the standard error across folds for each column of the grid
+        cv_se = np.array(np.nanstd(self._score_grid, axis=1) /
+                         np.sqrt(self._n_folds))
+
+        # Determine confidence interval
+        if self.greater_is_better:
+            best_score_idx = np.nanargmax(self._cv_means)
+            h_cutoff = self._cv_means[best_score_idx] + cv_se[best_score_idx]
+            l_cutoff = self._cv_means[best_score_idx] - cv_se[best_score_idx]
+        else:
+            best_score_idx = np.nanargmin(self._cv_means)
+            h_cutoff = self._cv_means[best_score_idx] - cv_se[best_score_idx]
+            l_cutoff = self._cv_means[best_score_idx] + cv_se[best_score_idx]
+
+        return l_cutoff, h_cutoff
+
+    def call_rank_sum_test(self):
         """
-        Returns the performance of the simplest model whose performance is not
-        significantly different across folds.
+        Returns the simplest model whose paired performance across folds is
+        insignificantly different from the average highest performing,
+        at a predefined `alpha` level of significance.
         """
+
         from scipy.stats import wilcoxon
         import itertools
 
-        folds = np.vstack(
-            [
-                self.cv_results[fold]
-                for fold in [
-                    i
-                    for i in self.cv_results.keys()
-                    if ("split" in i) and (self.scoring in i)
-                ]
-            ]
-        )
-        tests = np.array(list(itertools.combinations(range(folds.shape[1]),
-                                                     2)))
+        if self.greater_is_better:
+            best_score_idx = np.nanargmax(self._cv_means)
+        else:
+            best_score_idx = np.nanargmin(self._cv_means)
+
+        # Perform signed Wilcoxon rank sum test for each pair combination of
+        # columns against the best average score column
+        tests = [pair for pair in list(itertools.combinations(range(
+            self._score_grid.shape[0]), 2)) if best_score_idx in pair]
 
         p_dict = {}
-        i = 0
-        for test in tests:
-            p_dict[i] = wilcoxon(folds[:, test[0]], folds[:, test[1]])[1]
-            i = i + 1
+        for i, test in enumerate(tests):
+            p_dict[i] = wilcoxon(self._score_grid[test[0], :],
+                                 self._score_grid[test[1], :])[1]
 
-        p_dict_filt = {key: val for key, val in p_dict.items() if val > alpha}
-        unq_cols = np.unique(np.hstack([tests[i] for i in p_dict_filt.keys()]))
+        # Sort and prune away significant tests
+        p_dict = {k: v for k, v in sorted(p_dict.items(),
+                                          key=lambda item: item[1]) if
+                  v > self._alpha}
 
-        if len(unq_cols) == 0:
-            raise ValueError(
-                "Models are all significantly different from one" " another"
-            )
-        best_mean_score = self.cv_results["mean_test_" +
-                                          self.scoring][unq_cols]
-        if self.greater_is_better is True:
-            best_score_idx = np.nanargmax(best_mean_score)
+        # Flatten list of tuples, remove best score index, and take the
+        # lowest and highest remaining bounds
+        tests = [j for j in list(set(list(sum([tests[i] for i in
+                                               list(p_dict.keys())],
+                                              ())))) if j != best_score_idx]
+        if self.greater_is_better:
+            h_cutoff = self._cv_means[
+                np.nanargmin(self.cv_results[
+                                 f"rank_test_{self.scoring}"][tests])]
+            l_cutoff = self._cv_means[
+                np.nanargmax(self.cv_results[
+                                 f"rank_test_{self.scoring}"][tests])]
         else:
-            best_score_idx = np.nanargmin(best_mean_score)
+            h_cutoff = self._cv_means[
+                np.nanargmax(self.cv_results[
+                                 f"rank_test_{self.scoring}"][tests])]
+            l_cutoff = self._cv_means[
+                np.nanargmin(self.cv_results[
+                                 f"rank_test_{self.scoring}"][tests])]
 
-        outstandard_error = best_mean_score[best_score_idx]
-        return outstandard_error
+        return l_cutoff, h_cutoff
 
-    def call_percentile(self, tol):
+
+    def call_percentile(self):
         """
-        Returns the simplest model that is within a percent tolerance of the
-        empirically optimal model with the best `mean_test_scores`.
+        Returns the simplest model whose performance is within the `eta`
+        percentile of the average highest performing model.
         """
-        best_mean_score = self.cv_results["mean_test_" + self.scoring]
-        if self.greater_is_better is True:
-            best_score_idx = np.nanargmax(best_mean_score)
+
+        # Estimate the indicated percentile, and its inverse, across folds for
+        # each column of the grid
+        perc_cutoff = np.nanpercentile(self._score_grid,
+                                       [100 * self._eta,
+                                        100 - 100 * self._eta], axis=1)
+
+        # Determine bounds of the percentile interval
+        if self.greater_is_better:
+            best_score_idx = np.nanargmax(self._cv_means)
+            h_cutoff = perc_cutoff[0, best_score_idx]
+            l_cutoff = perc_cutoff[1, best_score_idx]
         else:
-            best_score_idx = np.nanargmin(best_mean_score)
+            best_score_idx = np.nanargmin(self._cv_means)
+            h_cutoff = perc_cutoff[0, best_score_idx]
+            l_cutoff = perc_cutoff[1, best_score_idx]
 
-        outstandard_error = (np.abs(best_mean_score[best_score_idx]) -
-                             tol) / tol
-        return outstandard_error
+        return l_cutoff, h_cutoff
 
-    def standard_error(param, greater_is_complex, scoring):
+    @staticmethod
+    def simplify(param, scoring, rule='se', sigma=1, eta=0.68, alpha=0.01):
         """
-        Standard error callable
+        Callable to be run as `refit` argument of `GridsearchCV`.
 
         Parameters
         ----------
         param : str
             Parameter with the largest influence on model complexity.
-        greater_is_complex : bool
-            Whether complexity increases as `param` increases. Default is True.
         scoring : str
             Refit scoring metric.
-        """
-        from functools import partial
-
-        def razor_pass(cv_results, param, greater_is_complex, scoring,
-                       method="onese"):
-            # from sklearn.model_selection._search import RazorCV
-
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
-                          method)
-            best_idx = rcv._best_low_complexity()
-            return best_idx
-
-        return partial(
-            razor_pass,
-            param=param,
-            greater_is_complex=greater_is_complex,
-            scoring=scoring,
-        )
-
-    def ranksum(param, greater_is_complex, scoring, alpha):
-        """
-        Rank sum test (Wilcoxon) callable
-
-        Parameters
-        ----------
-        param : str
-            Parameter with the largest influence on model complexity.
-        greater_is_complex : bool
-            Whether complexity increases as `param` increases. Default is True.
-        scoring : str
-            Refit scoring metric.
-        alpha : float
-            Alpha-level to use for wilcoxon rank sum hypothesis testing.
-            Required if `method`=='ranksum'. Default is 0.01.
-        """
-        from functools import partial
-
-        def razor_pass(
-            cv_results, param, greater_is_complex, scoring, alpha,
-            method="ranksum"
-        ):
-            # from sklearn.model_selection._search import RazorCV
-
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
-                          method, alpha)
-            best_idx = rcv._best_low_complexity()
-            return best_idx
-
-        return partial(
-            razor_pass,
-            param=param,
-            greater_is_complex=greater_is_complex,
-            scoring=scoring,
-            alpha=alpha,
-        )
-
-    def percentile(param, greater_is_complex, scoring, tol):
-        """
-        Percentile callable
-
-        Parameters
-        ----------
-        param : str
-            Parameter with the largest influence on model complexity.
-        greater_is_complex : bool
-            Whether complexity increases as `param` increases. Default is True.
-        scoring : str
-            Refit scoring metric.
-        tol : float
+        sigma : int
+            Number of standard errors tolerance in the case that a standard
+            error threshold is used to filter outlying scores across folds.
+            Only applicable if `rule`=='se'. Default is 1.
+        eta : float
             Acceptable percent tolerance in the case that a percentile
-            threshold is used. Required if `method`=='percentile'.
-            Default is 0.25.
+            threshold is used. Only applicable if `rule`=='percentile'.
+            Default is 0.68.
+        alpha : float
+            Alpha-level to use for signed wilcoxon rank sum testing.
+            Only applicable if `rule`=='ranksum'. Default is 0.01.
         """
         from functools import partial
 
         def razor_pass(
-            cv_results, param, greater_is_complex, scoring, tol,
-            method="percentile"
+                cv_results_, param, scoring, rule, sigma, alpha, eta
         ):
-            # from sklearn.model_selection._search import RazorCV
-
-            rcv = RazorCV(cv_results, param, greater_is_complex, scoring,
-                          method, tol)
-            best_idx = rcv._best_low_complexity()
-            return best_idx
+            rcv = Razors(cv_results_, param, scoring, rule=rule,
+                         sigma=sigma, alpha=alpha, eta=eta)
+            return rcv._best_low_complexity()
 
         return partial(
             razor_pass,
             param=param,
-            greater_is_complex=greater_is_complex,
             scoring=scoring,
-            tol=tol,
+            rule=rule,
+            sigma=sigma,
+            alpha=alpha,
+            eta=eta,
         )
 
 
@@ -461,8 +465,9 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                 ]
             )
             if razor is True:
-                refit = RazorCV.standard_error("n_components", True,
-                                               refit_score)
+                refit = Razors.simplify(param='n_components',
+                                        scoring=refit_score,
+                                        rule='se', sigma=1)
             else:
                 refit = refit_score
         else:
@@ -484,7 +489,9 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
                     ]
                 )
                 if razor is True:
-                    refit = RazorCV.standard_error("k", True, refit_score)
+                    refit = Razors.simplify(param='k',
+                                            scoring=refit_score,
+                                            rule='se', sigma=1)
                 else:
                     refit = refit_score
 
@@ -545,19 +552,19 @@ def nested_fit(X, y, estimators, boot, pca_reduce, k_folds,
             if 'svm' in estimator_name or 'en' in estimator_name or 'l1' in \
                 estimator_name or 'l2' in estimator_name:
                 c_best = pipe_grid_cv.best_estimator_.get_params()[
-                    estimator_name + '__C']
+                    f"{estimator_name}__C"]
                 hyperparam_space = \
                     f"C-{c_best}"
         elif predict_type == 'regressor':
             alpha_best = pipe_grid_cv.best_estimator_.get_params()[
-                estimator_name + '__alpha']
+                 f"{estimator_name}__alpha"]
             hyperparam_space = f"_alpha-{alpha_best}"
         else:
             raise ValueError('Prediction method not recognized')
 
         if 'en' in estimator_name:
             best_l1 = pipe_grid_cv.best_estimator_.get_params()[
-                estimator_name + '__l1_ratio']
+                 f"{estimator_name}__l1_ratio"]
             hyperparam_space = hyperparam_space + f"_l1ratio-{best_l1}"
         ## Model-specific naming chunk 2
 
