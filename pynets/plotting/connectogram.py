@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import numpy as np
 import sys
@@ -11,10 +12,9 @@ if sys.platform.startswith('win') is False:
     import indexed_gzip
 import networkx as nx
 import tkinter
-import matplotlib
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
-matplotlib.use("agg")
 
 
 def plot_connectogram(

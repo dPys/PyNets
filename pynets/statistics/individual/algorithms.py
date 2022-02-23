@@ -5,11 +5,14 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 @author: Derek Pisner
 """
+import matplotlib
 from pynets.core.utils import load_runconfig
 import numpy as np
 import warnings
 import networkx as nx
 from pynets.core.utils import timeout
+
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

@@ -3,6 +3,7 @@
 """
 Copyright (C) 2017
 """
+import matplotlib
 import pandas as pd
 import os
 import glob
@@ -21,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import VarianceThreshold
 
+matplotlib.use('Agg')
 warnings.simplefilter("ignore")
 
 

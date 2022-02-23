@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import os
 import pandas as pd
 import numpy as np
@@ -21,6 +22,8 @@ from sklearn.impute import IterativeImputer, SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from pynets.statistics.utils import mahalanobis_distances
 from pynets.core.utils import flatten
+
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

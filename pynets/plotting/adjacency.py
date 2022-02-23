@@ -4,14 +4,12 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-import warnings
-
 import matplotlib
+import warnings
 import numpy as np
 
 warnings.filterwarnings("ignore")
 matplotlib.use("agg")
-
 
 def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
                   dpi_resolution=300):

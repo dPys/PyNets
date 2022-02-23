@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import numpy as np
 import sys
@@ -12,6 +13,7 @@ if sys.platform.startswith('win') is False:
 import nibabel as nib
 from pathlib import Path
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

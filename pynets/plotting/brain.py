@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import numpy as np
 import nibabel as nib
@@ -12,7 +13,6 @@ if sys.platform.startswith('win') is False:
     import indexed_gzip
 import networkx as nx
 import tkinter
-import matplotlib
 import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore")

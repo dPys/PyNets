@@ -4,6 +4,7 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+import matplotlib
 import numpy as np
 import networkx as nx
 import warnings
@@ -26,6 +27,7 @@ from pathlib import Path
 import graspologic.utils as gu
 from pynets.core import utils, thresholding
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

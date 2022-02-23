@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import os
 import nibabel as nib
 import warnings
@@ -14,6 +15,7 @@ import numpy as np
 from pynets.registration import utils as regutils
 from nilearn.image import math_img
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]

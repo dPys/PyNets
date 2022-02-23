@@ -5,9 +5,11 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 @author: Derek Pisner
 """
+import matplotlib
 from pathlib import Path
 import warnings
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

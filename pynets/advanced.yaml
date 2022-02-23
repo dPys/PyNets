@@ -245,7 +245,7 @@ resource_dict: # Nipype workflow resource settings
       - 'orient_reslice_mask_node':
         - (1, 1)
       - 'orient_reslice_uatlas_node':
-        - (1, 1)
+        - (1, 2)
       - 'orient_reslice_anat_node':
         - (1, 1)
       - 'node_gen_node':

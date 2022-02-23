@@ -5,6 +5,7 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
 @author: Derek Pisner & James Kunert-Graf
 """
+import matplotlib
 import numpy as np
 import warnings
 import os
@@ -13,6 +14,7 @@ from copy import copy
 from pathlib import Path
 from collections import Counter
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 
@@ -422,7 +424,6 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
 
 def motif_matching(
     paths,
-    ID,
     atlas,
     namer_dir,
     name_list,
@@ -593,7 +594,7 @@ def motif_matching(
         struct_name = struct_graph_path.split("/rawgraph_"
                                               )[-1].split(".npy")[0]
         func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-        name = f"sub-{ID}_{atlas}_mplx_Layer-1_{struct_name}_" \
+        name = f"{atlas}_mplx_Layer-1_{struct_name}_" \
                f"Layer-2_{func_name}"
         name_list.append(name)
         struct_mat = np.maximum(struct_mat, struct_mat.T)
@@ -629,7 +630,7 @@ def motif_matching(
     return name_list, metadata_list, multigraph_list_all, graph_path_list_all
 
 
-def build_multigraphs(est_path_iterlist, ID):
+def build_multigraphs(est_path_iterlist):
     """
     Constructs a multimodal multigraph for each available resolution of
     vertices.
@@ -638,8 +639,6 @@ def build_multigraphs(est_path_iterlist, ID):
     ----------
     est_path_iterlist : list
         List of file paths to .npy file containing graph.
-    ID : str
-        A subject id or other unique identifier.
 
     Returns
     -------
@@ -800,7 +799,6 @@ def build_multigraphs(est_path_iterlist, ID):
                         graph_path_list_all,
                     ] = motif_matching(
                         paths,
-                        ID,
                         atlas,
                         namer_dir,
                         name_list,
@@ -820,7 +818,6 @@ def build_multigraphs(est_path_iterlist, ID):
                     graph_path_list_all,
                 ] = motif_matching(
                     paths,
-                    ID,
                     atlas,
                     namer_dir,
                     name_list,
