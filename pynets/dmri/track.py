@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import os
 import matplotlib
 import warnings
 import numpy as np
@@ -375,6 +376,8 @@ def track_ensemble(
 
     hardcoded_params = load_runconfig()
     nthreads = hardcoded_params["omp_threads"][0]
+    os.environ['MKL_NUM_THREADS'] = str(nthreads)
+    os.environ['OPENBLAS_NUM_THREADS'] = str(nthreads)
     n_seeds_per_iter = \
         hardcoded_params['tracking']["n_seeds_per_iter"][0]
     max_length = \

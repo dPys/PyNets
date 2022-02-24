@@ -82,22 +82,21 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     """
     import gc
     import types
-    from nilearn.image import new_img_like, concat_imgs, iter_img
+    from nilearn.image import new_img_like, iter_img
+    from nibabel.funcs import concat_images
 
     if isinstance(parcel_list, types.GeneratorType):
         parcel_list = [i for i in parcel_list]
 
     template_image = parcel_list[0]
     template_affine = template_image.affine
-
-    concatted_parcels = concat_imgs(iter_img([
-        new_img_like(
-            template_image,
-            np.zeros(
-                template_image.shape,
-                dtype=bool))] + parcel_list), dtype=np.float16)
-    del parcel_list
+    template_shape = template_image.shape
+    parcel_list = iter_img([new_img_like(
+        template_image, np.zeros(template_shape, dtype=bool))
+                            ] + parcel_list)
     template_image.uncache()
+    concatted_parcels = concat_images(parcel_list)
+    del parcel_list
     gc.collect()
 
     if label_intensities is not None:
@@ -1013,21 +1012,18 @@ def gen_img_list(parcellation):
             "\nUser-specified atlas input not found! Check that the"
             " file(s) specified with the -a flag exist(s)")
 
-    bna_img = nib.load(parcellation)
-    bna_data = np.around(np.asarray(bna_img.dataobj)).astype("uint16")
+    bna_img = nib.load(parcellation, mmap=True)
+    bna_data = np.around(bna_img.get_fdata(caching='fill',
+                                           dtype=np.float16).astype('uint16'))
 
-    # Get an array of unique parcels
-    bna_data_for_coords_uniq = np.unique(bna_data)
+    # Get array of unique parcel indices
+    uniq_indices = np.unique(bna_data)
 
     # Number of parcels:
-    par_max = len(bna_data_for_coords_uniq) - 1
-    img_stack = []
-    for idx in range(1, par_max + 1):
-        roi_img = bna_data.astype("uint16") == \
-            bna_data_for_coords_uniq[idx].astype("uint16")
-        img_stack.append(roi_img.astype("uint16"))
-    img_stack = np.array(img_stack)
-    del bna_data, bna_data_for_coords_uniq
+    par_max = len(uniq_indices) - 1
+    img_stack = np.array([bna_data == uniq_indices[idx] for idx in
+                          range(1, par_max + 1)])
+    del bna_data, uniq_indices
     gc.collect()
 
     return iter_img([new_img_like(bna_img, img_stack[idy]) for idy in
@@ -1496,7 +1492,7 @@ def node_gen_masking(
     if isinstance(parcel_list, str):
         parcel_list_img = nib.load(parcel_list)
         parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])])
+                                range(parcel_list_img.shape[-1])])
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcel_list_masked] = parcel_masker(

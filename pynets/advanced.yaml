@@ -249,7 +249,7 @@ resource_dict: # Nipype workflow resource settings
       - 'orient_reslice_anat_node':
         - (1, 1)
       - 'node_gen_node':
-        - (6, 8)
+        - (4, 8)
       - 'prep_spherical_nodes_node':
         - (4, 8)
       - 'get_node_membership_node':

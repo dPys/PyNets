@@ -4,6 +4,7 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+import os
 import matplotlib
 import warnings
 import numpy as np
