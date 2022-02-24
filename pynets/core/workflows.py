@@ -118,9 +118,11 @@ def workflow_selector(
         "import networkx as nx",
         "import nibabel as nib",
         "import warnings",
+        "import matplotlib",
         'warnings.filterwarnings("ignore")',
         'np.warnings.filterwarnings("ignore")',
         'warnings.simplefilter("ignore")',
+        'matplotlib.use("Agg")',
         "from pathlib import Path",
         "from nipype.pipeline import engine as pe",
         "from nipype.interfaces import utility as niu",
@@ -1402,13 +1404,15 @@ def dmri_connectometry(
         print(e, "Failed to parse runconfig.yaml")
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")'
     ]
     base_dirname = f"dmri"
     dmri_wf = pe.Workflow(name=base_dirname)
@@ -3542,13 +3546,15 @@ def fmri_connectometry(
     from pynets import fmri, registration
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")',
     ]
     base_dirname = f"fmri"
     fmri_wf = pe.Workflow(name=base_dirname)
@@ -5748,13 +5754,15 @@ def raw_graph_workflow(
     from pynets.core.thresholding import thresh_raw_graph
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")',
     ]
 
     if multi_thr is True or float(thr) != 1.0:

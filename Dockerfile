@@ -106,7 +106,8 @@ WORKDIR /home/neuro
 RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0" >> /home/neuro/.bashrc && \
     echo ". $FSLDIR/etc/fslconf/fsl.sh" >> /home/neuro/.bashrc && \
-    echo "export FSLDIR PATH" >> /home/neuro/.bashrc \
+    echo "export FSLDIR PATH" >> /home/neuro/.bashrc && \
+    echo "export DISPLAY=:0" >> /home/neuro/.bashrc \
     && curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
     && conda config --system --prepend channels conda-forge \
@@ -193,6 +194,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
+
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
