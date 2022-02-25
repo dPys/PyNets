@@ -4,6 +4,8 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import os
+import matplotlib
 import warnings
 import numpy as np
 import nibabel as nib
@@ -11,6 +13,7 @@ import sys
 if sys.platform.startswith('win') is False:
     import indexed_gzip
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 
@@ -373,6 +376,8 @@ def track_ensemble(
 
     hardcoded_params = load_runconfig()
     nthreads = hardcoded_params["omp_threads"][0]
+    os.environ['MKL_NUM_THREADS'] = str(nthreads)
+    os.environ['OPENBLAS_NUM_THREADS'] = str(nthreads)
     n_seeds_per_iter = \
         hardcoded_params['tracking']["n_seeds_per_iter"][0]
     max_length = \
@@ -451,7 +456,7 @@ def track_ensemble(
     try:
         while float(stream_counter) < float(target_samples) and \
                 float(ix) < 0.50*float(len(all_combs)):
-            with Parallel(n_jobs=nthreads, backend='threading',
+            with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', verbose=0) as parallel:
 
                 out_streams = parallel(

@@ -4,6 +4,7 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import os
 import sys
@@ -18,6 +19,7 @@ import threading
 import traceback
 import signal
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 log = logging.getLogger(__name__)

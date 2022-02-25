@@ -4,6 +4,7 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import sys
 if sys.platform.startswith('win') is False:
@@ -12,6 +13,7 @@ import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 

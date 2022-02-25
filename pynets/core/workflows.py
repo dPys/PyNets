@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import warnings
 import sys
 import gc
@@ -19,6 +20,7 @@ from nipype.interfaces import utility as niu
 if sys.platform.startswith('win') is False:
     pass
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 
@@ -116,9 +118,11 @@ def workflow_selector(
         "import networkx as nx",
         "import nibabel as nib",
         "import warnings",
+        "import matplotlib",
         'warnings.filterwarnings("ignore")',
         'np.warnings.filterwarnings("ignore")',
         'warnings.simplefilter("ignore")',
+        'matplotlib.use("Agg")',
         "from pathlib import Path",
         "from nipype.pipeline import engine as pe",
         "from nipype.interfaces import utility as niu",
@@ -1217,10 +1221,9 @@ def workflow_selector(
                     input_names=["est_path_iterlist"],
                     output_names=[
                         "multigraph_list_all",
-                        "graph_path_list_top",
+                        "graph_path_list_all",
                         "namer_dir",
                         "name_list",
-                        "metadata_list",
                     ],
                     function=build_multigraphs,
                 ),
@@ -1243,7 +1246,7 @@ def workflow_selector(
                 plot_all_struct_func_node = pe.MapNode(
                     niu.Function(
                         input_names=[
-                            "mG_path",
+                            "mG_paths",
                             "namer_dir",
                             "name",
                             "modality_paths",
@@ -1252,7 +1255,7 @@ def workflow_selector(
                         function=plot_all_struct_func,
                     ),
                     iterfield=[
-                        "mG_path",
+                        "mG_paths",
                         "namer_dir",
                         "name",
                         "modality_paths",
@@ -1269,9 +1272,8 @@ def workflow_selector(
                             [
                                 ("name_list", "name"),
                                 ("namer_dir", "namer_dir"),
-                                ("multigraph_list_all", "mG_path"),
-                                ("graph_path_list_top", "modality_paths"),
-                                ("metadata_list", "metadata"),
+                                ("multigraph_list_all", "mG_paths"),
+                                ("graph_path_list_all", "modality_paths"),
                             ],
                         )
                     ]
@@ -1283,7 +1285,7 @@ def workflow_selector(
                         (
                             build_multigraphs_node,
                             mase_embedding_node,
-                            [("graph_path_list_top", "est_path_iterlist")],
+                            [("graph_path_list_all", "est_path_iterlist")],
                         ),
                     ]
                 )
@@ -1400,13 +1402,15 @@ def dmri_connectometry(
         print(e, "Failed to parse runconfig.yaml")
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")'
     ]
     base_dirname = f"dmri"
     dmri_wf = pe.Workflow(name=base_dirname)
@@ -3540,13 +3544,15 @@ def fmri_connectometry(
     from pynets import fmri, registration
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")',
     ]
     base_dirname = f"fmri"
     fmri_wf = pe.Workflow(name=base_dirname)
@@ -5746,13 +5752,15 @@ def raw_graph_workflow(
     from pynets.core.thresholding import thresh_raw_graph
 
     import_list = [
+        "import matplotlib"
         "import warnings",
-        'warnings.filterwarnings("ignore")',
         "import sys",
         "import os",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",
+        'matplotlib.use("Agg")',
+        'warnings.filterwarnings("ignore")',
     ]
 
     if multi_thr is True or float(thr) != 1.0:

@@ -99,21 +99,22 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
 ENV PATH="/opt/conda/bin":$PATH
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
+ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH
 
 WORKDIR /home/neuro
 
 RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0" >> /home/neuro/.bashrc && \
     echo ". $FSLDIR/etc/fslconf/fsl.sh" >> /home/neuro/.bashrc && \
-    echo "export FSLDIR PATH" >> /home/neuro/.bashrc \
+    echo "export FSLDIR PATH" >> /home/neuro/.bashrc && \
+    echo "export DISPLAY=:0" >> /home/neuro/.bashrc \
     && curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && bash Miniconda3-${miniconda_version}-Linux-x86_64.sh -b -p /opt/conda \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
 #    && conda install -yq python=3.6 ipython \
-    && conda install -yq python=3.6 \
+    && conda install -yq python=3.8 \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
@@ -152,7 +153,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && rm -rf /home/neuro/PyNets \
     && rm -rf /home/neuro/.cache \
     && chmod a+s -R /opt \
-    && chown -R neuro /opt/conda/lib/python3.6/site-packages \
+    && chown -R neuro /opt/conda/lib/python3.8/site-packages \
     && mkdir -p /home/neuro/.pynets \
     && chown -R neuro /home/neuro/.pynets \
     && chmod 777 /opt/conda/bin/pynets \
@@ -162,7 +163,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 #    && chmod 777 /opt/conda/bin/pynets_cloud \
 #    && chmod 777 /opt/conda/bin/pynets_benchmark \
 #    && chmod 777 /opt/conda/bin/pynets_predict \
-    && find /opt/conda/lib/python3.6/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
+    && find /opt/conda/lib/python3.8/site-packages -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.py" -exec chmod 777 {} \; \
     && find /opt -type f -iname "*.yaml" -exec chmod 777 {} \; \
     && apt-get clean autoclean \
@@ -192,7 +193,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && rm -f /tmp/3G_heap.txt
 
 # ENV Config
-ENV PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH
+ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH
+
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
     FSLMULTIFILEQUIT=TRUE \
@@ -209,6 +211,6 @@ ENV PATH="/opt/conda/bin":$PATH \
 
 EXPOSE 22
 
-RUN echo "PATH="/opt/conda/lib/python3.6/site-packages/pynets/cli":$PATH" >> /home/neuro/.bashrc \
+RUN echo "PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH" >> /home/neuro/.bashrc \
     && . /home/neuro/.bashrc
 

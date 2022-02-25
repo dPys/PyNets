@@ -3,6 +3,7 @@
 """
 Copyright (C) 2017
 """
+import matplotlib
 import pandas as pd
 import os
 import glob
@@ -21,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.feature_selection import VarianceThreshold
 
+matplotlib.use('Agg')
 warnings.simplefilter("ignore")
 
 
@@ -598,8 +600,7 @@ def node_files_search(node_files, emb_shape):
 
         ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
 
-        while len(ixs_corr) != emb_shape and j < len(
-                node_files):
+        while len(ixs_corr) != emb_shape and j < len(node_files):
             try:
                 with open(node_files[j],
                           'r+') as f:

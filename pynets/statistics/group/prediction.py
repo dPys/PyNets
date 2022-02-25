@@ -3,6 +3,7 @@
 """
 Copyright (C) 2017
 """
+import matplotlib
 import pandas as pd
 import os
 import numpy as np
@@ -34,6 +35,7 @@ except:
     from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 
+matplotlib.use('Agg')
 warnings.simplefilter("ignore")
 
 import_list = [

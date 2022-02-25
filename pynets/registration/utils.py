@@ -4,6 +4,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import matplotlib
 import os
 import numpy as np
 import sys
@@ -12,6 +13,7 @@ import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]

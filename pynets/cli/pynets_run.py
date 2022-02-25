@@ -337,7 +337,7 @@ def get_parser():
     )
     parser.add_argument(
         "-sm",
-        metavar="Error margin (mm FWHM)",
+        metavar="Smoothing margin (mm FWHM)",
         default=0,
         nargs="+",
         help="(hyperparameter): "
@@ -3829,7 +3829,7 @@ def main():
               " flag.\n")
         return 1
 
-    args = get_parser().parse_args()
+    args, unknown = get_parser().parse_known_args()
 
     mp.set_start_method("forkserver")
     with mp.Manager() as mgr:
