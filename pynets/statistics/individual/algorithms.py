@@ -139,6 +139,63 @@ def np2gt(adj):
     return g
 
 
+def countmotifs(A, N=4):
+    """
+    Counts number of motifs with size N from A.
+
+    Parameters
+    ----------
+    A : ndarray
+        M x M Connectivity matrix
+    N : int
+        Size of motif type. Default is N=4, only 3 or 4 supported.
+
+    Returns
+    -------
+    umotifs : int
+        Total count of size N motifs for graph A.
+
+    References
+    ----------
+    .. [1] Sporns, O., & Kötter, R. (2004). Motifs in Brain Networks.
+      PLoS Biology. https://doi.org/10.1371/journal.pbio.0020369
+
+    """
+    from copy import copy
+    from collections import Counter
+    
+    assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
+    X2 = np.array([[k] for k in range(A.shape[0] - 1)])
+    for n in range(N - 1):
+        X = copy(X2)
+        X2 = []
+        for vsub in X:
+            # in_matind list of nodes neighboring vsub with a larger index than
+            # root v
+            idx = np.where(np.any(A[(vsub[0] + 1):, vsub], 1))[0] + vsub[0] + 1
+            # Only keep node indices not in vsub
+            idx = idx[[k not in vsub for k in idx]]
+            if len(idx) > 0:
+                # If new neighbors found, add all new vsubs to list
+                X2.append([np.append(vsub, ik) for ik in idx])
+        if len(X2) > 0:
+            X2 = np.vstack(X2)
+        else:
+            return 0
+
+    X2 = np.sort(X2, 1)
+    X2 = X2[
+        np.unique(
+            np.ascontiguousarray(X2).view(
+                np.dtype((np.void, X2.dtype.itemsize * X2.shape[1]))
+            ),
+            return_index=True,
+        )[1]
+    ]
+    return Counter(["".join(np.sort(np.sum(A[x, :][:, x], 1)
+                                    ).astype(int).astype(str)) for x in X2])
+
+
 def average_shortest_path_length_fast(G, weight="weight"):
     try:
         import graph_tool.all as gt

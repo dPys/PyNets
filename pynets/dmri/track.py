@@ -456,7 +456,7 @@ def track_ensemble(
     try:
         while float(stream_counter) < float(target_samples) and \
                 float(ix) < 0.50*float(len(all_combs)):
-            with Parallel(n_jobs=nthreads, backend='threading',
+            with Parallel(n_jobs=nthreads, backend='loky',
                           mmap_mode='r+', verbose=0) as parallel:
 
                 out_streams = parallel(

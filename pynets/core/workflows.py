@@ -1221,10 +1221,9 @@ def workflow_selector(
                     input_names=["est_path_iterlist"],
                     output_names=[
                         "multigraph_list_all",
-                        "graph_path_list_top",
+                        "graph_path_list_all",
                         "namer_dir",
                         "name_list",
-                        "metadata_list",
                     ],
                     function=build_multigraphs,
                 ),
@@ -1247,7 +1246,7 @@ def workflow_selector(
                 plot_all_struct_func_node = pe.MapNode(
                     niu.Function(
                         input_names=[
-                            "mG_path",
+                            "mG_paths",
                             "namer_dir",
                             "name",
                             "modality_paths",
@@ -1256,7 +1255,7 @@ def workflow_selector(
                         function=plot_all_struct_func,
                     ),
                     iterfield=[
-                        "mG_path",
+                        "mG_paths",
                         "namer_dir",
                         "name",
                         "modality_paths",
@@ -1273,9 +1272,8 @@ def workflow_selector(
                             [
                                 ("name_list", "name"),
                                 ("namer_dir", "namer_dir"),
-                                ("multigraph_list_all", "mG_path"),
-                                ("graph_path_list_top", "modality_paths"),
-                                ("metadata_list", "metadata"),
+                                ("multigraph_list_all", "mG_paths"),
+                                ("graph_path_list_all", "modality_paths"),
                             ],
                         )
                     ]
@@ -1287,7 +1285,7 @@ def workflow_selector(
                         (
                             build_multigraphs_node,
                             mase_embedding_node,
-                            [("graph_path_list_top", "est_path_iterlist")],
+                            [("graph_path_list_all", "est_path_iterlist")],
                         ),
                     ]
                 )

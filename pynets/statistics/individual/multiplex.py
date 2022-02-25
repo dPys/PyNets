@@ -10,354 +10,50 @@ import numpy as np
 import warnings
 import os
 import gc
-from copy import copy
 from pathlib import Path
-from collections import Counter
 
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 
-def countmotifs(A, N=4):
-    """
-    Counts number of motifs with size N from A.
-
-    Parameters
-    ----------
-    A : ndarray
-        M x M Connectivity matrix
-    N : int
-        Size of motif type. Default is N=4, only 3 or 4 supported.
-
-    Returns
-    -------
-    umotifs : int
-        Total count of size N motifs for graph A.
-
-    References
-    ----------
-    .. [1] Sporns, O., & Kötter, R. (2004). Motifs in Brain Networks.
-      PLoS Biology. https://doi.org/10.1371/journal.pbio.0020369
-
+def optimize_mutual_info(dwi_mat, func_mat, bins=20):
     """
 
-    assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
-    X2 = np.array([[k] for k in range(A.shape[0] - 1)])
-    for n in range(N - 1):
-        X = copy(X2)
-        X2 = []
-        for vsub in X:
-            # in_matind list of nodes neighboring vsub with a larger index than
-            # root v
-            idx = np.where(np.any(A[(vsub[0] + 1):, vsub], 1))[0] + vsub[0] + 1
-            # Only keep node indices not in vsub
-            idx = idx[[k not in vsub for k in idx]]
-            if len(idx) > 0:
-                # If new neighbors found, add all new vsubs to list
-                X2.append([np.append(vsub, ik) for ik in idx])
-        if len(X2) > 0:
-            X2 = np.vstack(X2)
-        else:
-            umotifs = 0
-            return umotifs
-
-    X2 = np.sort(X2, 1)
-    X2 = X2[
-        np.unique(
-            np.ascontiguousarray(X2).view(
-                np.dtype((np.void, X2.dtype.itemsize * X2.shape[1]))
-            ),
-            return_index=True,
-        )[1]
-    ]
-    umotifs = Counter(
-        ["".join(np.sort(np.sum(A[x, :][:, x], 1)).astype(int).astype(str))
-         for x in X2]
-    )
-    del X2
-    gc.collect()
-    return umotifs
-
-
-def adaptivethresh(in_mat, thr, mlib, N):
     """
-    Counts number of motifs with a given absolute threshold.
-
-    Parameters
-    ----------
-    in_mat : ndarray
-        M x M Connectivity matrix
-    thr : float
-        Absolute threshold [0, 1].
-    mlib : list
-        List of motif classes.
-
-    Returns
-    -------
-    mf : ndarray
-        1D vector listing the total motifs of size N for each
-        class of mlib.
-
-    References
-    ----------
-    .. [1] Battiston, F., Nicosia, V., Chavez, M., & Latora, V. (2017).
-      Multilayer motif analysis of brain networks. Chaos.
-      https://doi.org/10.1063/1.4979282
-
-    """
-
-    mf = countmotifs((in_mat > thr).astype(int), N=N)
-    try:
-        mf = np.array([mf[k] for k in mlib])
-    except BaseException:
-        print('Zero motifs detected...')
-        mf = np.zeros(len(mlib))
-    return mf
-
-
-def compare_motifs(struct_mat, func_mat, name, namer_dir, bins=20, N=4):
-    """
-    Compare motif structure and population across structural and functional
-    graphs to achieve a homeostatic absolute threshold of each that optimizes
-    multiplex community detection and analysis.
-
-    Parameters
-    ----------
-    in_mat : ndarray
-        M x M Connectivity matrix
-    thr : float
-        Absolute threshold [0, 1].
-    mlib : list
-        List of motif classes.
-
-    Returns
-    -------
-    mf : ndarray
-        1D vector listing the total motifs of size N for each
-        class of mlib.
-
-    References
-    ----------
-    .. [1] Battiston, F., Nicosia, V., Chavez, M., & Latora, V. (2017).
-      Multilayer motif analysis of brain networks. Chaos.
-      https://doi.org/10.1063/1.4979282
-
-    """
+    import itertools
     from pynets.core.thresholding import threshold_absolute
-    from pynets.core.thresholding import standardize
-    from scipy import spatial
-    from nilearn.connectome import sym_matrix_to_vec
     import pandas as pd
 
-    mlib = ["1113", "1122", "1223", "2222", "2233", "3333"]
-
-    # Standardize structural graph
-    struct_mat = standardize(struct_mat)
-    dims_struct = struct_mat.shape[0]
-    struct_mat[range(dims_struct), range(dims_struct)] = 0
-    at_struct = adaptivethresh(struct_mat, float(0.0), mlib, N)
-    print(
-        "%s%s%s" %
-        ("Layer 1 (structural) has: ",
-         np.sum(at_struct),
-         " total motifs"))
+    # Functional graph threshold window
+    threshes_dwi = np.linspace(dwi_mat.min(), dwi_mat.max(), bins)
 
     # Functional graph threshold window
-    func_mat = standardize(func_mat)
-    dims_func = func_mat.shape[0]
-    func_mat[range(dims_func), range(dims_func)] = 0
-    tmin_func = func_mat.min()
-    tmax_func = func_mat.max()
-    threshes_func = np.linspace(tmin_func, tmax_func, bins)
+    threshes_func = np.linspace(func_mat.min(), func_mat.max(), bins)
 
-    assert np.all(
-        struct_mat == struct_mat.T), "Structural Matrix must be symmetric"
-    assert np.all(
-        func_mat == func_mat.T), "Functional Matrix must be symmetric"
+    mutual_info_dict = {}
 
-    # Count motifs
-    print("%s%s%s%s" % ("Mining ", N, "-node motifs: ", mlib))
-    motif_dict = {}
-    motif_dict["struct"] = {}
-    motif_dict["func"] = {}
+    all_thr_combos = list(itertools.product(threshes_func, threshes_dwi))
+    for thr_func, thr_dwi in all_thr_combos:
+        X = threshold_absolute(dwi_mat, thr_dwi)
+        Y = threshold_absolute(func_mat, thr_func)
+        mutual_info_dict[f"func-{round(thr_func, 2)}_" \
+                         f"dwi-{round(thr_dwi, 2)}"] = mutual_information_2d(
+            X.ravel(), Y.ravel())
 
-    mat_dict = {}
-    mat_dict["struct"] = sym_matrix_to_vec(struct_mat, discard_diagonal=True)
-    mat_dict["funcs"] = {}
-    for thr_func in threshes_func:
-        # Count
-        at_func = adaptivethresh(func_mat, float(thr_func), mlib, N)
-        motif_dict["struct"]["%s%s" %
-                             ("thr-", np.round(thr_func, 4))] = at_struct
-        motif_dict["func"]["%s%s" % ("thr-", np.round(thr_func, 4))] = at_func
-        mat_dict["funcs"]["%s%s" %
-                          ("thr-", np.round(thr_func, 4))] = sym_matrix_to_vec(
-            threshold_absolute(func_mat, thr_func), discard_diagonal=True)
+    df = pd.DataFrame(mutual_info_dict, index=range(1))
+    df = df.loc[:, (df > 0.01).any(axis=0)]
+    df = df.T.sort_values(by=0, ascending=False)
+    best_thresh_combo = list(df.index)[0]
 
-        print(
-            "%s%s%s%s%s"
-            % (
-                "Layer 2 (functional) with absolute threshold of: ",
-                np.round(thr_func, 2),
-                " yields ",
-                np.sum(at_func),
-                " total motifs",
-            )
-        )
-        gc.collect()
+    best_dwi_thr = float(best_thresh_combo.split("-")[1].split('_')[0])
+    best_func_thr = float(best_thresh_combo.split("-")[2].split('_')[0])
 
-    df = pd.DataFrame(motif_dict)
-
-    for idx in range(len(df)):
-        df.at[
-            df.index[idx],
-            "motif_dist"] = spatial.distance.cosine(df["struct"][idx],
-                                                      df["func"][idx])
-
-    df = df[pd.notnull(df["motif_dist"])]
-
-    for idx in range(len(df)):
-        df.at[
-            df.index[idx],
-            "graph_dist_cosine"] = spatial.distance.cosine(
-                mat_dict["struct"].reshape(-1, 1),
-                mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            )
-        df.at[
-            df.index[idx],
-            "graph_dist_correlation"] = spatial.distance.correlation(
-                mat_dict["struct"].reshape(-1, 1),
-                mat_dict["funcs"][df.index[idx]].reshape(-1, 1),
-            )
-
-    df["struct_func_3333"] = np.zeros(len(df))
-    df["struct_func_2233"] = np.zeros(len(df))
-    df["struct_func_2222"] = np.zeros(len(df))
-    df["struct_func_1223"] = np.zeros(len(df))
-    df["struct_func_1122"] = np.zeros(len(df))
-    df["struct_func_1113"] = np.zeros(len(df))
-    df["struct_3333"] = np.zeros(len(df))
-    df["func_3333"] = np.zeros(len(df))
-    df["struct_2233"] = np.zeros(len(df))
-    df["func_2233"] = np.zeros(len(df))
-    df["struct_2222"] = np.zeros(len(df))
-    df["func_2222"] = np.zeros(len(df))
-    df["struct_1223"] = np.zeros(len(df))
-    df["func_1223"] = np.zeros(len(df))
-    df["struct_1122"] = np.zeros(len(df))
-    df["func_1122"] = np.zeros(len(df))
-    df["struct_1113"] = np.zeros(len(df))
-    df["func_1113"] = np.zeros(len(df))
-
-    for idx in range(len(df)):
-        df.at[df.index[idx], "struct_3333"] = df["struct"][idx][-1]
-        df.at[df.index[idx], "func_3333"] = df["func"][idx][-1]
-
-        df.at[df.index[idx], "struct_2233"] = df["struct"][idx][-2]
-        df.at[df.index[idx], "func_2233"] = df["func"][idx][-2]
-
-        df.at[df.index[idx], "struct_2222"] = df["struct"][idx][-3]
-        df.at[df.index[idx], "func_2222"] = df["func"][idx][-3]
-
-        df.at[df.index[idx], "struct_1223"] = df["struct"][idx][-4]
-        df.at[df.index[idx], "func_1223"] = df["func"][idx][-4]
-
-        df.at[df.index[idx], "struct_1122"] = df["struct"][idx][-5]
-        df.at[df.index[idx], "func_1122"] = df["func"][idx][-5]
-
-        df.at[df.index[idx], "struct_1113"] = df["struct"][idx][-6]
-        df.at[df.index[idx], "func_1113"] = df["func"][idx][-6]
-
-    df["struct_func_3333"] = np.abs(df["struct_3333"] - df["func_3333"])
-    df["struct_func_2233"] = np.abs(df["struct_2233"] - df["func_2233"])
-    df["struct_func_2222"] = np.abs(df["struct_2222"] - df["func_2222"])
-    df["struct_func_1223"] = np.abs(df["struct_1223"] - df["func_1223"])
-    df["struct_func_1122"] = np.abs(df["struct_1122"] - df["func_1122"])
-    df["struct_func_1113"] = np.abs(df["struct_1113"] - df["func_1113"])
-
-    df = df.drop(columns=["struct", "func"])
-
-    df = df.loc[~(df == 0).all(axis=1)]
-
-    df = df.sort_values(
-        by=[
-            "motif_dist",
-            "graph_dist_cosine",
-            "graph_dist_correlation",
-            "struct_func_3333",
-            "struct_func_2233",
-            "struct_func_2222",
-            "struct_func_1223",
-            "struct_func_1122",
-            "struct_func_1113",
-            "struct_3333",
-            "func_3333",
-            "struct_2233",
-            "func_2233",
-            "struct_2222",
-            "func_2222",
-            "struct_1223",
-            "func_1223",
-            "struct_1122",
-            "func_1122",
-            "struct_1113",
-            "func_1113",
-        ],
-        ascending=[
-            True,
-            True,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-            False,
-        ],
-    )
-
-    # Take the top 25th percentile
-    df = df.head(int(0.25 * len(df)))
-    best_threshes = []
-    best_mats = []
-    best_multigraphs = []
-    for key in list(df.index):
-        func_mat_tmp = func_mat.copy()
-        struct_mat_tmp = struct_mat.copy()
-        struct_thr = float(key.split("-")[-1])
-        func_thr = float(key.split("-")[-1])
-        best_threshes.append(str(func_thr))
-
-        func_mat_tmp[func_mat_tmp < func_thr] = 0
-        struct_mat_tmp[struct_mat_tmp < struct_thr] = 0
-        best_mats.append((func_mat_tmp, struct_mat_tmp))
-
-        mG = build_mx_multigraph(
-            func_mat,
-            struct_mat,
-            f"{name}_{key}",
-            namer_dir)
-        best_multigraphs.append(mG)
-
-    mg_dict = dict(zip(best_threshes, best_multigraphs))
-    g_dict = dict(zip(best_threshes, best_mats))
-
-    return mg_dict, g_dict
+    return {best_dwi_thr: threshold_absolute(dwi_mat, best_dwi_thr)}, \
+           {best_func_thr: threshold_absolute(func_mat, best_func_thr)}, \
+           df.head(1)[0].values[0]
 
 
-def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
+def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
     """
     It creates a symmetric (undirected) MultilayerGraph object from
     vertex-aligned structural and functional connectivity matrices.
@@ -366,7 +62,7 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     -----------
     func_mat : ndarray
         Functional adjacency matrix of size N x N.
-    struct_mat : ndarray
+    dwi_mat : ndarray
         Structural adjacency matrix of size N x N.
     name : str
         Intended name of the multiplex object.
@@ -401,13 +97,13 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
         import _pickle as pickle
 
     mg = mx.MultilayerGraph()
-    N = struct_mat.shape[0]
+    N = dwi_mat.shape[0]
     adj_block = mx.lil_matrix(np.zeros((N * 2, N * 2)))
     adj_block[0:N, N: 2 * N] = np.identity(N)
     adj_block += adj_block.T
-    G_struct = nx.from_numpy_matrix(struct_mat)
+    G_dwi = nx.from_numpy_matrix(dwi_mat)
     G_func = nx.from_numpy_matrix(func_mat)
-    mg.add_layer(G_struct)
+    mg.add_layer(G_dwi)
     mg.add_layer(G_func)
     mg.layers_interconnect(inter_adjacency_matrix=adj_block)
     mg.name = name
@@ -422,212 +118,139 @@ def build_mx_multigraph(func_mat, struct_mat, name, namer_dir):
     return mG_path
 
 
-def motif_matching(
+def mutual_information_2d(x, y, sigma=1, normalized=True):
+    """
+    Computes (normalized) mutual information between two 1D variate from a
+    joint histogram.
+    Parameters
+    ----------
+    x : 1D array
+        first variable
+    y : 1D array
+        second variable
+    sigma: float
+        sigma for Gaussian smoothing of the joint histogram
+    Returns
+    -------
+    nmi: float
+        the computed similariy measure
+    """
+    from scipy import ndimage
+    bins = (256, 256)
+
+    jh = np.histogram2d(x, y, bins=bins)[0]
+
+    # smooth the jh with a gaussian filter of given sigma
+    ndimage.gaussian_filter(jh, sigma=sigma, mode='constant', output=jh)
+
+    # compute marginal histograms
+    jh = jh + np.finfo(float).eps
+    sh = np.sum(jh)
+    jh = jh / sh
+    s1 = np.sum(jh, axis=0).reshape((-1, jh.shape[0]))
+    s2 = np.sum(jh, axis=1).reshape((jh.shape[1], -1))
+
+    # Normalised Mutual Information of:
+    # Studholme,  jhill & jhawkes (1998).
+    # "A normalized entropy measure of 3-D medical image alignment".
+    # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
+    if normalized:
+        mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
+                / np.sum(jh * np.log(jh))) - 1
+    else:
+        mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1))
+               - np.sum(s2 * np.log(s2)))
+
+    return mi
+
+
+def matching(
     paths,
     atlas,
     namer_dir,
     name_list,
-    metadata_list,
-    multigraph_list_all,
-    graph_path_list_all,
-    rsn=None,
 ):
     import networkx as nx
     import numpy as np
     import glob
-    import pickle
     from pynets.core import thresholding
-    from sklearn.metrics.pairwise import cosine_similarity
-    from pynets.statistics.individual.algorithms import \
-        community_resolution_selection
-    from graspologic.utils import remove_loops, symmetrize
+    from pynets.statistics.utils import parse_closest_ixs
+    from graspologic.utils import remove_loops, symmetrize, \
+        multigraph_lcc_intersection
 
-    [struct_graph_path, func_graph_path] = paths
-    struct_mat = np.load(struct_graph_path)
+    [dwi_graph_path, func_graph_path] = paths
+    dwi_mat = np.load(dwi_graph_path)
     func_mat = np.load(func_graph_path)
-
-    if rsn is not None:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_coords_rsn.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/nodes/"
-            f"{rsn}_mni_labels_rsn.pkl"
-        )[0]
-    else:
-        struct_coords_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        func_coords_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_coords.pkl"
-        )[0]
-        struct_labels_path = glob.glob(
-            f"{str(Path(struct_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
-        func_labels_path = glob.glob(
-            f"{str(Path(func_graph_path).parent.parent)}/"
-            f"nodes/all_mni_labels.pkl"
-        )[0]
-
-    with open(struct_coords_path, "rb") as file_:
-        struct_coords = pickle.load(file_)
-    with open(func_coords_path, "rb") as file_:
-        func_coords = pickle.load(file_)
-    with open(struct_labels_path, "rb") as file_:
-        struct_labels = pickle.load(file_)
-    with open(func_labels_path, "rb") as file_:
-        func_labels = pickle.load(file_)
-
-    # Find intersecting nodes across modalities (i.e. assuming the same
-    # parcellation, but accomodating for the possibility of dropped nodes)
-    func_label_intensities = [i[1] for i in func_labels]
-    struct_label_intensities = [i[1] for i in struct_labels]
-    diff1 = list(set(struct_label_intensities) - set(func_label_intensities))
-    diff2 = list(set(func_label_intensities) - set(struct_label_intensities))
-    G_struct = nx.from_numpy_array(struct_mat)
-    G_func = nx.from_numpy_array(func_mat)
-
-    bad_idxs = []
-    for val in diff1:
-        bad_idxs.append(struct_label_intensities.index(val))
-        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-        if type(struct_coords) is np.ndarray:
-            struct_coords = list(tuple(x) for x in struct_coords)
-    for j in bad_idxs:
-        G_struct.remove_node(j)
-        print(f"Removing: {(struct_labels[j], struct_coords[j])}...")
-        del struct_labels[j], struct_coords[j]
-
-    bad_idxs = []
-    for val in diff2:
-        bad_idxs.append(func_label_intensities.index(val))
-        bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
-        if type(func_coords) is np.ndarray:
-            func_coords = list(tuple(x) for x in func_coords)
-    for j in bad_idxs:
-        G_func.remove_node(j)
-        print(f"Removing: {(func_labels[j], func_coords[j])}...")
-        del func_labels[j], func_coords[j]
-
-    struct_mat = nx.to_numpy_array(G_struct)
-    func_mat = nx.to_numpy_array(G_func)
-
-    struct_mat = thresholding.autofix(symmetrize(remove_loops(struct_mat)))
-
+    dwi_mat = thresholding.autofix(symmetrize(remove_loops(dwi_mat)))
     func_mat = thresholding.autofix(symmetrize(remove_loops(func_mat)))
+    dwi_mat = thresholding.standardize(dwi_mat)
+    func_mat = thresholding.standardize(func_mat)
 
-    if func_mat.shape == struct_mat.shape:
-        func_mat[~struct_mat.astype("bool")] = 0
-        struct_mat[~func_mat.astype("bool")] = 0
-        print(
-            "Number of edge disagreements after matching: ",
-            sum(sum(abs(func_mat - struct_mat))),
-        )
+    node_dict_dwi = parse_closest_ixs(
+        glob.glob(f"{str(Path(dwi_graph_path).parent.parent)}"
+                  f"/nodes/*"), dwi_mat.shape[0])[1]
 
-        metadata = {}
-        assert (
-            len(struct_coords)
-            == len(struct_labels)
-            == len(func_coords)
-            == len(func_labels)
-            == func_mat.shape[0]
-        )
-        metadata["coords"] = struct_coords
-        metadata["labels"] = struct_labels
-        metadata_list.append(metadata)
+    node_dict_func = parse_closest_ixs(
+        glob.glob(f"{str(Path(func_graph_path).parent.parent)}"
+                  f"/nodes/*"), func_mat.shape[0])[1]
 
-        struct_mat = np.maximum(struct_mat, struct_mat.T)
-        func_mat = np.maximum(func_mat, func_mat.T)
-        struct_mat = thresholding.standardize(struct_mat)
-        func_mat = thresholding.standardize(func_mat)
+    G_dwi = nx.from_numpy_array(dwi_mat)
+    nx.set_edge_attributes(G_dwi, 'structural',
+                            nx.get_edge_attributes(G_dwi, 'weight').values())
+    nx.set_node_attributes(G_dwi, dict(node_dict_dwi), name='dwi')
 
-        struct_node_comm_aff_mat = community_resolution_selection(
-            nx.from_numpy_matrix(np.abs(struct_mat))
-        )[1]
+    #G_dwi.nodes(data=True)
 
-        func_node_comm_aff_mat = community_resolution_selection(
-            nx.from_numpy_matrix(np.abs(func_mat))
-        )[1]
+    G_func = nx.from_numpy_array(func_mat)
+    nx.set_edge_attributes(G_func, 'functional',
+                           nx.get_edge_attributes(G_func, 'weight').values())
+    nx.set_node_attributes(G_func, dict(node_dict_func), name='func')
+    #G_func.nodes(data=True)
 
-        struct_comms = []
-        for i in np.unique(struct_node_comm_aff_mat):
-            struct_comms.append(struct_node_comm_aff_mat == i)
+    R = G_dwi.copy()
+    R.remove_nodes_from(n for n in G_dwi if n not in G_func)
+    R.remove_edges_from(e for e in G_dwi.edges if e not in G_func.edges)
+    G_dwi = R.copy()
 
-        func_comms = []
-        for i in np.unique(func_node_comm_aff_mat):
-            func_comms.append(func_node_comm_aff_mat == i)
+    R = G_func.copy()
+    R.remove_nodes_from(n for n in G_func if n not in G_dwi)
+    R.remove_edges_from(e for e in G_func.edges if e not in G_dwi.edges)
+    G_func = R.copy()
 
-        sims = cosine_similarity(struct_comms, func_comms)
-        try:
-            struct_comm = struct_comms[np.argmax(sims, axis=0)[0]]
-        except BaseException:
-            print('Matching by structural communities failed...')
-            struct_comm = struct_mat
-        try:
-            func_comm = func_comms[np.argmax(sims, axis=0)[0]]
-        except BaseException:
-            print('Matching by functional communities failed...')
-            func_comm = func_mat
+    [G_dwi, G_func] = multigraph_lcc_intersection([G_dwi, G_func])
 
-        comm_mask = np.equal.outer(struct_comm, func_comm).astype(bool)
+    dwi_name = dwi_graph_path.split("/rawgraph_"
+                                          )[-1].split(".npy")[0]
+    func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
+    name = f"{atlas}_mplx_Layer-1_{dwi_name}_" \
+           f"Layer-2_{func_name}"
 
-        try:
-            assert comm_mask.shape == struct_mat.shape == func_mat.shape
-        except AssertionError as e:
-            e.args += (comm_mask, comm_mask.shape, struct_mat,
-                       struct_mat.shape, func_mat, func_mat.shape)
+    dwi_opt, func_opt, best_mi = optimize_mutual_info(
+        nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
 
-        struct_mat[~comm_mask] = 0
-        func_mat[~comm_mask] = 0
-        struct_name = struct_graph_path.split("/rawgraph_"
-                                              )[-1].split(".npy")[0]
-        func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-        name = f"{atlas}_mplx_Layer-1_{struct_name}_" \
-               f"Layer-2_{func_name}"
-        name_list.append(name)
-        struct_mat = np.maximum(struct_mat, struct_mat.T)
-        func_mat = np.maximum(func_mat, func_mat.T)
-        try:
-            [mldict, g_dict] = compare_motifs(
-                struct_mat, func_mat, name, namer_dir)
-        except BaseException:
-            print(f"Adaptive thresholding by motif comparisons failed "
-                  f"for {name}. This usually happens when no motifs are found")
-            return [], [], [], []
+    func_mat_final = list(func_opt.values())[0]
+    dwi_mat_final = list(dwi_opt.values())[0]
+    G_dwi_final = nx.from_numpy_array(dwi_mat_final)
+    G_func_final = nx.from_numpy_array(func_mat_final)
 
-        multigraph_list_all.append(list(mldict.values())[0])
-        graph_path_list = []
-        for thr in list(g_dict.keys()):
-            multigraph_path_list_dict = {}
-            [struct, func] = g_dict[thr]
-            struct_out = f"{namer_dir}/struct_{atlas}_{struct_name}.npy"
-            func_out = f"{namer_dir}/struct_{atlas}_{func_name}_" \
-                       f"motif-{thr}.npy"
-            np.save(struct_out, struct)
-            np.save(func_out, func)
-            multigraph_path_list_dict[f"struct_{atlas}_{thr}"] = struct_out
-            multigraph_path_list_dict[f"func_{atlas}_{thr}"] = func_out
-            graph_path_list.append(multigraph_path_list_dict)
-        graph_path_list_all.append(graph_path_list)
-    else:
-        print(
-            f"Skipping {rsn} rsn, since structural and functional graphs are "
-            f"not identical shapes."
-        )
+    G_multi = nx.OrderedMultiGraph(nx.compose(G_dwi_final, G_func_final))
 
-    return name_list, metadata_list, multigraph_list_all, graph_path_list_all
+    mG = build_mx_multigraph(
+        G_dwi_final,
+        G_func_final,
+        f"{name}_{list(dwi_opt.keys())[0]}_{list(func_opt.keys())[0]}",
+        namer_dir)
+
+    mG_nx = f"{namer_dir}/{name}_{list(dwi_opt.keys())[0]}_" \
+            f"{list(func_opt.keys())[0]}.gpickle"
+    nx.write_gpickle(G_multi, mG_nx)
+
+    out_dwi_mat = f"{namer_dir}/dwi-{name[0:30]}_{list(dwi_opt.keys())[0]}.npy"
+    out_func_mat = f"{namer_dir}/func-{name[0:30]}_" \
+                   f"{list(func_opt.keys())[0]}.npy"
+    np.save(out_dwi_mat, dwi_mat_final)
+    np.save(out_func_mat, func_mat_final)
+    return name_list, mG_nx, mG, out_dwi_mat, out_func_mat
 
 
 def build_multigraphs(est_path_iterlist):
@@ -658,13 +281,11 @@ def build_multigraphs(est_path_iterlist):
       Journal of Nonlinear Science. https://doi.org/10.1007/s00332-017-9436-8
 
     """
-    import pkg_resources
-    import yaml
     import os
     import itertools
     import numpy as np
     from pathlib import Path
-    from pynets.core.utils import flatten
+    from pynets.core.utils import flatten, load_runconfig
 
     raw_est_path_iterlist = list(
         set(
@@ -677,26 +298,22 @@ def build_multigraphs(est_path_iterlist):
     )
 
     # Available functional and structural connectivity models
-    with open(
-        pkg_resources.resource_filename("pynets", "advanced.yaml"), "r"
-    ) as stream:
-        hardcoded_params = yaml.load(stream)
-        try:
-            func_models = hardcoded_params["available_models"]["func_models"]
-        except KeyError:
-            print(
-                "ERROR: available functional models not sucessfully extracted"
-                " from advanced.yaml"
-            )
-        try:
-            struct_models = hardcoded_params["available_models"][
-                "struct_models"]
-        except KeyError:
-            print(
-                "ERROR: available structural models not sucessfully extracted"
-                " from advanced.yaml"
-            )
-    stream.close()
+    hardcoded_params = load_runconfig()
+    try:
+        func_models = hardcoded_params["available_models"]["func_models"]
+    except KeyError:
+        print(
+            "ERROR: available functional models not sucessfully extracted"
+            " from advanced.yaml"
+        )
+    try:
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
+    except KeyError:
+        print(
+            "ERROR: available structural models not sucessfully extracted"
+            " from advanced.yaml"
+        )
 
     atlases = list(set([x.split("/")[-3].split("/")[0]
                         for x in raw_est_path_iterlist]))
@@ -707,7 +324,7 @@ def build_multigraphs(est_path_iterlist):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("model-")[1].split("_")[0] in struct_models
+                if i.split("model-")[1].split("_")[0] in dwi_models
             ]
         )
     )
@@ -721,16 +338,16 @@ def build_multigraphs(est_path_iterlist):
         )
     )
 
-    if "_rsn" in ";".join(est_path_iterlist_func):
+    if "_subnet" in ";".join(est_path_iterlist_func):
         func_subnets = list(
-            set([i.split("_rsn-")[1].split("_")[0] for i in
+            set([i.split("_subnet-")[1].split("_")[0] for i in
                  est_path_iterlist_func])
         )
     else:
         func_subnets = []
-    if "_rsn" in ";".join(est_path_iterlist_dwi):
+    if "_subnet" in ";".join(est_path_iterlist_dwi):
         dwi_subnets = list(
-            set([i.split("_rsn-")[1].split("_")[0] for i in
+            set([i.split("_subnet-")[1].split("_")[0] for i in
                  est_path_iterlist_dwi])
         )
     else:
@@ -745,7 +362,6 @@ def build_multigraphs(est_path_iterlist):
         os.mkdir(namer_dir)
 
     name_list = []
-    metadata_list = []
     multigraph_list_all = []
     graph_path_list_all = []
     for atlas in atlases:
@@ -786,26 +402,23 @@ def build_multigraphs(est_path_iterlist):
         # graphs for each unique resolution of vertices
         if len(dwi_subnets) >= 1 and len(func_subnets) >= 1:
             parcel_dict[atlas] = {}
-            rsns = np.intersect1d(dwi_subnets, func_subnets).tolist()
-            for rsn in rsns:
-                parcel_dict[atlas][rsn] = list(set(itertools.product(
-                    parcel_dict_dwi[atlas][rsn],
-                    parcel_dict_func[atlas][rsn])))
-                for paths in list(parcel_dict[atlas][rsn]):
+            subnets = np.intersect1d(dwi_subnets, func_subnets).tolist()
+            for subnet in subnets:
+                parcel_dict[atlas][subnet] = list(set(itertools.product(
+                    parcel_dict_dwi[atlas][subnet],
+                    parcel_dict_func[atlas][subnet])))
+                for paths in list(parcel_dict[atlas][subnet]):
                     [
                         name_list,
-                        metadata_list,
-                        multigraph_list_all,
-                        graph_path_list_all,
-                    ] = motif_matching(
+                        mG_nx,
+                        mG,
+                        out_dwi_mat,
+                        out_func_mat
+                    ] = matching(
                         paths,
                         atlas,
                         namer_dir,
                         name_list,
-                        metadata_list,
-                        multigraph_list_all,
-                        graph_path_list_all,
-                        rsn=rsn,
                     )
         else:
             parcel_dict[atlas] = list(set(itertools.product(
@@ -813,26 +426,23 @@ def build_multigraphs(est_path_iterlist):
             for paths in list(parcel_dict[atlas]):
                 [
                     name_list,
-                    metadata_list,
-                    multigraph_list_all,
-                    graph_path_list_all,
-                ] = motif_matching(
+                    mG_nx,
+                    mG,
+                    out_dwi_mat,
+                    out_func_mat
+                ] = matching(
                     paths,
                     atlas,
                     namer_dir,
                     name_list,
-                    metadata_list,
-                    multigraph_list_all,
-                    graph_path_list_all,
                 )
-
-    graph_path_list_top = [list(i[0].values()) for i in graph_path_list_all]
-    assert len(multigraph_list_all) == len(name_list) == len(metadata_list)
+        multigraph_list_all.append((mG_nx, mG))
+        graph_path_list_all((out_dwi_mat, out_func_mat))
+    assert len(multigraph_list_all) == len(name_list)
 
     return (
         multigraph_list_all,
-        graph_path_list_top,
+        graph_path_list_all,
         len(name_list) * [namer_dir],
         name_list,
-        metadata_list,
     )

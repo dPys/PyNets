@@ -1086,15 +1086,16 @@ def plot_all_struct(
     return
 
 
-def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
+def plot_all_struct_func(mG_paths, namer_dir, name, modality_paths):
     """
     Plot adjacency matrix and glass brain for structural-functional multiplex
     connectome.
 
     Parameters
     ----------
-    mG_path : str
-        A gpickle file containing a a MultilayerGraph object
+    mG_paths : tuple
+        A tuple of two gpickle file paths containing a NetworkX
+        OrderedMultiGraph object and a MultilayerGraph object
         (See https://github.com/nkoub/multinetx).
     namer_dir : str
         Path to output directory for multiplex data.
@@ -1103,9 +1104,6 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     modality_paths : tuple
         A tuple of filepath strings to the raw structural and raw functional
         connectome graph files (.npy).
-    metadata : dict
-        Dictionary coontaining coords and labels shared by each layer of the
-        multilayer graph.
 
     """
     import warnings
@@ -1128,8 +1126,7 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
     from pynets.core import thresholding
     from scipy.spatial import distance
 
-    coords = metadata["coords"]
-    labels = metadata["labels"]
+    mG_nx_path, mG_path = mG_paths
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/standard/ch2better.nii.gz"
@@ -1167,18 +1164,10 @@ def plot_all_struct_func(mG_path, namer_dir, name, modality_paths, metadata):
               " runconfig.yaml"
               )
 
-    if any(isinstance(sub, dict) for sub in labels):
-        labels = [lab[labeling_atlas] for lab in labels]
-    elif isinstance(labels, str):
-        import ast
-        if any(isinstance(sub, dict) for sub in ast.literal_eval(labels)):
-            labels = [lab[labeling_atlas] for lab in labels]
-    elif isinstance(labels, list):
-        if isinstance(labels[0], list):
-            labels = [lab[0][labeling_atlas] for lab in labels]
-    else:
-        if not isinstance(labels, list):
-            labels = list(labels)
+    mG_nx = nx.read_gpickle(mG_nx_path)
+    node_dict_multi = [j for i, j in list(mG_nx.nodes(data=True))]
+    labels = [i['dwi']['label'][labeling_atlas] for i in node_dict_multi]
+    coords = [i['dwi']['coord'] for i in node_dict_multi]
 
     [struct_mat, func_mat] = [
         np.load(modality_paths[0]), np.load(modality_paths[1])]
