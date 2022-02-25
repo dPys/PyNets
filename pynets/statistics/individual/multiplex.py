@@ -122,6 +122,7 @@ def mutual_information_2d(x, y, sigma=1, normalized=True):
     """
     Computes (normalized) mutual information between two 1D variate from a
     joint histogram.
+
     Parameters
     ----------
     x : 1D array
@@ -130,6 +131,7 @@ def mutual_information_2d(x, y, sigma=1, normalized=True):
         second variable
     sigma: float
         sigma for Gaussian smoothing of the joint histogram
+
     Returns
     -------
     nmi: float

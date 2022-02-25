@@ -163,7 +163,7 @@ def countmotifs(A, N=4):
     """
     from copy import copy
     from collections import Counter
-    
+
     assert N in [3, 4], "Only motifs of size N=3,4 currently supported"
     X2 = np.array([[k] for k in range(A.shape[0] - 1)])
     for n in range(N - 1):
