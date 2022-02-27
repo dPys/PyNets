@@ -167,6 +167,7 @@ jobs:
       image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
     steps:
+      - checkout
       - run:
           name: "Switch to Python v3.8"
           no_output_timeout: 30m
@@ -186,17 +187,17 @@ jobs:
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
       - run:
-          name: Check Python version and upgrade pip
+          name: "Check Python version and upgrade pip"
           command: |
             which python
             python -m pip install -U pip
       - run:
-          name: Download OSF test data
+          name: "Download OSF test data"
           command: |
             mkdir -p /tmp/src/pynets/data
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
       - run:
-          name: Install dipy and download dipy data
+          name: "Install dipy and download dipy data"
           command: |
             python -m pip install dipy
             mkdir -p ~/.dipy
