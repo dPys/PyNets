@@ -166,6 +166,7 @@ jobs:
     machine:
       image: ubuntu-2004:202010-01
     working_directory: /tmp/src/pynets
+    parallelism: 2
     steps:
       - checkout
       - run:
@@ -243,8 +244,6 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
             sudo apt-get clean
-#            sudo apt-get update -qq
-#            sudo apt-get upgrade -y
             pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
             pyenv global 3.8.0
@@ -379,6 +378,7 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get upgrade -y
             sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
+            sudo apt-get clean
             pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
             pyenv global 3.8.0
@@ -500,6 +500,7 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get upgrade -y
             sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev python-tk python3-tk tk-dev
+            sudo apt-get clean
             pyenv install -f 3.8.0 || true
             eval "$(pyenv init -)"
             pyenv global 3.8.0
