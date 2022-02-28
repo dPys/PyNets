@@ -141,8 +141,8 @@ def workflow_selector(
               " from advanced.yaml"
               )
     try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
@@ -159,7 +159,7 @@ def workflow_selector(
                 if conn_model in func_models:
                     func_model_list.append(conn_model)
                     conn_model_func = None
-                if conn_model in struct_models:
+                if conn_model in dwi_models:
                     dwi_model_list.append(conn_model)
                     conn_model_dwi = None
             if len(func_model_list) == 1:

@@ -176,7 +176,7 @@ available_models:
       - 'QuicGraphicalLassoCV'
       - 'QuicGraphicalLassoEBIC'
       - 'AdaptiveQuicGraphicalLasso'
-    struct_models:
+    dwi_models:
       - 'csa'
       - 'mcsd'
       - 'csd'

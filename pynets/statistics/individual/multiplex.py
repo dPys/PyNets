@@ -224,8 +224,8 @@ def matching(
     dwi_name = dwi_graph_path.split("/rawgraph_"
                                           )[-1].split(".npy")[0]
     func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-    name = f"{atlas}_mplx_Layer-1_{dwi_name}_" \
-           f"Layer-2_{func_name}"
+    name = f"{atlas}_mplx_Layer-1_{dwi_name[0:30]}_" \
+           f"Layer-2_{func_name[0:30]}"
 
     dwi_opt, func_opt, best_mi = optimize_mutual_info(
         nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
@@ -238,17 +238,18 @@ def matching(
     G_multi = nx.OrderedMultiGraph(nx.compose(G_dwi_final, G_func_final))
 
     mG = build_mx_multigraph(
-        G_dwi_final,
-        G_func_final,
+        nx.to_numpy_array(G_func_final),
+        nx.to_numpy_array(G_dwi_final),
         f"{name}_{list(dwi_opt.keys())[0]}_{list(func_opt.keys())[0]}",
         namer_dir)
 
-    mG_nx = f"{namer_dir}/{name}_{list(dwi_opt.keys())[0]}_" \
-            f"{list(func_opt.keys())[0]}.gpickle"
+    mG_nx = f"{namer_dir}/{name}_dwiThr-{list(dwi_opt.keys())[0]}_" \
+            f"funcThr-{list(func_opt.keys())[0]}.gpickle"
     nx.write_gpickle(G_multi, mG_nx)
 
-    out_dwi_mat = f"{namer_dir}/dwi-{name[0:30]}_{list(dwi_opt.keys())[0]}.npy"
-    out_func_mat = f"{namer_dir}/func-{name[0:30]}_" \
+    out_dwi_mat = f"{namer_dir}/dwi-{name[0:30]}thr-" \
+                  f"{list(dwi_opt.keys())[0]}.npy"
+    out_func_mat = f"{namer_dir}/func-{name[0:30]}thr-" \
                    f"{list(func_opt.keys())[0]}.npy"
     np.save(out_dwi_mat, dwi_mat_final)
     np.save(out_func_mat, func_mat_final)

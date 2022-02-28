@@ -198,6 +198,7 @@ jobs:
             python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions dipy
       - run:
           name: Download dipy data
+          command: |
             mkdir -p ~/.dipy
             dipy_fetch stanford_hardi --out_dir ~/.dipy
             dipy_fetch stanford_t1 --out_dir ~/.dipy

@@ -1114,8 +1114,8 @@ def collect_pandas_df(
               " from advanced.yaml"
               )
     try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
     except KeyError as e:
         print(e,
               "available structural models not sucessfully extracted"
@@ -1137,7 +1137,7 @@ def collect_pandas_df(
                             i
                             for i in net_mets_csv_list
                             if i.split("model-")[1].split("_")[0] in
-                            struct_models
+                            dwi_models
                         ]
                     )
                 )
@@ -1176,7 +1176,7 @@ def collect_pandas_df(
                     [
                         i
                         for i in net_mets_csv_list
-                        if i.split("model-")[1].split("_")[0] in struct_models
+                        if i.split("model-")[1].split("_")[0] in dwi_models
                     ]
                 )
             )
@@ -1630,8 +1630,8 @@ def build_args_from_config(modality, arg_dict):
               " from advanced.yaml"
               )
     try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
@@ -1657,11 +1657,11 @@ def build_args_from_config(modality, arg_dict):
                        func_models) and ("dwi" in modality):
                     del d["mod"]
                 elif any(x in d["mod"] for x in
-                         struct_models) and ("func" in modality):
+                         dwi_models) and ("func" in modality):
                     del d["mod"]
             else:
                 if any(x in d["mod"] for x in func_models) or any(
-                    x in d["mod"] for x in struct_models
+                    x in d["mod"] for x in dwi_models
                 ):
                     models.append(ast.literal_eval(d["mod"]))
         args_dict_all.update(d)
