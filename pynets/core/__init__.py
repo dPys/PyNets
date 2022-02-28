@@ -4,8 +4,8 @@ __author__ = """Derek Pisner"""
 __email__ = "dpisner@utexas.edu"
 
 import matplotlib
-matplotlib.use('Agg')
 from . import cloud, interfaces, nodemaker, thresholding, utils, workflows
 import warnings
 
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")

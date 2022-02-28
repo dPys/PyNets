@@ -1613,6 +1613,7 @@ class RegisterROIEPI(SimpleInterface):
             roi_file_tmp_path,
             template_tmp_path
         ]
+
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):

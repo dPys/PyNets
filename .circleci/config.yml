@@ -172,10 +172,46 @@ jobs:
           command: |
             mkdir -p /tmp/src/pynets/data
             wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
+      - run:
+          name: "Switch to Python v3.8"
+          no_output_timeout: 30m
+          command: |
+            pyenv local --unset
+            pyenv uninstall -f 3.8.0 || true
+            sudo add-apt-repository ppa:deadsnakes/ppa
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+            sudo apt-get update -qq
+            sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+            sudo apt-get clean
+            pyenv install -f 3.8.0 || true
+            eval "$(pyenv init -)"
+            pyenv global 3.8.0
+            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Check Python version and upgrade pip
+          command: |
+            which python
+            python -m pip install -U pip
+            python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions dipy
+      - run:
+          name: Download dipy data
+          command: |
+            mkdir -p ~/.dipy
+            dipy_fetch stanford_hardi --out_dir ~/.dipy
+            dipy_fetch stanford_t1 --out_dir ~/.dipy
+            dipy_fetch stanford_pve_maps --out_dir ~/.dipy
+            dipy_fetch tissue_data --out_dir ~/.dipy
       - persist_to_workspace:
           root: /tmp/src/pynets
           paths:
             - data/*
+      - save_cache:
+          key: dipy_data
+          paths:
+            - ~/.dipy
 
   unit_and_integration_tests:
     machine:
@@ -190,6 +226,8 @@ jobs:
     parallelism: 4
     steps:
       - checkout
+      - restore_cache:
+          key: dipy_data
       - attach_workspace:
           at: /tmp/src/pynets
       - run:
@@ -251,14 +289,9 @@ jobs:
             python -c "from matplotlib import font_manager"
             sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
             mkdir -p ~/.nipype
-            mkdir -p ~/.dipy
             mkdir -p ~/.nilearn
             echo "[monitoring]" > ~/.nipype/nipype.cfg
             echo "enabled = true" >> ~/.nipype/nipype.cfg
-            dipy_fetch stanford_hardi --out_dir ~/.dipy
-            dipy_fetch stanford_t1 --out_dir ~/.dipy
-            dipy_fetch stanford_pve_maps --out_dir ~/.dipy
-            dipy_fetch tissue_data --out_dir ~/.dipy
       - run:
           name: Install FSL
           no_output_timeout: 40m
@@ -350,11 +383,6 @@ jobs:
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
       - run:
-          name: Check Python version and upgrade pip
-          command: |
-            python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
-      - run:
           name: Update codecov
           command: |
             python -m pip install codecov coverage
@@ -362,7 +390,8 @@ jobs:
             python -m coverage report -i --rcfile=.coveragerc --omit=_*,*.local*
             python -m coverage html -i --rcfile=.coveragerc --omit=_*,*.local*
             python -m coverage xml -i --rcfile=.coveragerc --omit=_*,*.local*
-            bash <(curl https://codecov.io/bash) -f coverage.xml
+            commit=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+            bash <(curl https://codecov.io/bash) -C $commit -f coverage.xml
 
   deploy_docker_patches:
     machine:

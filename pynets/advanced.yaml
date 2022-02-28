@@ -176,7 +176,7 @@ available_models:
       - 'QuicGraphicalLassoCV'
       - 'QuicGraphicalLassoEBIC'
       - 'AdaptiveQuicGraphicalLasso'
-    struct_models:
+    dwi_models:
       - 'csa'
       - 'mcsd'
       - 'csd'
@@ -323,6 +323,8 @@ resource_dict: # Nipype workflow resource settings
       - 'join_iters_get_conn_matrix_node':
         - (1, 1)
       - 'join_iters_run_track_node':
+        - (1, 1)
+      - 'join_iters_node_em':
         - (1, 1)
       - 'clust_join_node':
         - (1, 1)

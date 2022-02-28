@@ -1158,9 +1158,9 @@ def orient_reslice(
         is a dwi.
 
     """
+    import time
     from pynets.registration.utils import reorient_img, reorient_dwi, \
         match_target_vox_res
-    import time
 
     img = nib.load(infile)
     vols = img.shape[-1]

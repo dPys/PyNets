@@ -33,7 +33,6 @@ omit =
 	pynets/__init__.py
 	pynets/advanced.yaml
 	pynets/citations.py
-	pynets/cli/*
     pynets/core/tests/*
     pynets/core/__init__.py
     pynets/dmri/tests/*
@@ -51,6 +50,8 @@ omit =
     pynets/statistics/__init__.py
     pynets/templates/__init__.py
     pynets/templates/*/*
+    pynets/cli/*
+    pynets/core/cloud.py
 
 [report]
 # Regexes for lines to exclude from consideration

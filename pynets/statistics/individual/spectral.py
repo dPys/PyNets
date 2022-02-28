@@ -524,8 +524,8 @@ def build_omnetome(est_path_iterlist):
         )
         sys.exit(1)
     try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
     except KeyError:
         print(
             "ERROR: available structural models not sucessfully extracted"
@@ -558,7 +558,7 @@ def build_omnetome(est_path_iterlist):
                 [
                     i
                     for i in est_path_iterlist
-                    if i.split("model-")[1].split("_")[0] in struct_models
+                    if i.split("model-")[1].split("_")[0] in dwi_models
                 ]
             )
         )

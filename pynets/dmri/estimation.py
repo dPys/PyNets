@@ -699,7 +699,6 @@ def streams2graph(
       https://doi.org/10.1089/brain.2016.0481
     """
     import gc
-    import os
     import time
     from dipy.tracking.streamline import Streamlines, values_from_volume
     from dipy.tracking._utils import _mapping_to_voxel, _to_voxel_coordinates

@@ -141,8 +141,8 @@ def workflow_selector(
               " from advanced.yaml"
               )
     try:
-        struct_models = hardcoded_params["available_models"][
-            "struct_models"]
+        dwi_models = hardcoded_params["available_models"][
+            "dwi_models"]
     except KeyError as e:
         print(e,
               "available structural models not successfully extracted"
@@ -159,7 +159,7 @@ def workflow_selector(
                 if conn_model in func_models:
                     func_model_list.append(conn_model)
                     conn_model_func = None
-                if conn_model in struct_models:
+                if conn_model in dwi_models:
                     dwi_model_list.append(conn_model)
                     conn_model_dwi = None
             if len(func_model_list) == 1:
@@ -1223,7 +1223,6 @@ def workflow_selector(
                         "multigraph_list_all",
                         "graph_path_list_all",
                         "namer_dir",
-                        "name_list",
                     ],
                     function=build_multigraphs,
                 ),
@@ -1270,7 +1269,6 @@ def workflow_selector(
                             build_multigraphs_node,
                             plot_all_struct_func_node,
                             [
-                                ("name_list", "name"),
                                 ("namer_dir", "namer_dir"),
                                 ("multigraph_list_all", "mG_paths"),
                                 ("graph_path_list_all", "modality_paths"),
@@ -1402,7 +1400,7 @@ def dmri_connectometry(
         print(e, "Failed to parse runconfig.yaml")
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",
@@ -3544,7 +3542,7 @@ def fmri_connectometry(
     from pynets import fmri, registration
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",
@@ -5752,7 +5750,7 @@ def raw_graph_workflow(
     from pynets.core.thresholding import thresh_raw_graph
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",

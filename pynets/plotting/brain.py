@@ -1086,7 +1086,7 @@ def plot_all_struct(
     return
 
 
-def plot_all_struct_func(mG_paths, namer_dir, name, modality_paths):
+def plot_all_struct_func(mG_paths, namer_dir, modality_paths):
     """
     Plot adjacency matrix and glass brain for structural-functional multiplex
     connectome.
@@ -1099,13 +1099,12 @@ def plot_all_struct_func(mG_paths, namer_dir, name, modality_paths):
         (See https://github.com/nkoub/multinetx).
     namer_dir : str
         Path to output directory for multiplex data.
-    name : str
-        Concatenation of multimodal graph filenames.
     modality_paths : tuple
         A tuple of filepath strings to the raw structural and raw functional
         connectome graph files (.npy).
 
     """
+    import os
     import warnings
     warnings.filterwarnings("ignore")
     import numpy as np
@@ -1233,7 +1232,8 @@ def plot_all_struct_func(mG_paths, namer_dir, name, modality_paths):
             cmap=plt.cm.RdBu,
         )
         plt.savefig(
-            f"{namer_dir}/adjacency-supra_{name[:200]}.png",
+            f"{namer_dir}/adjacency-supra_"
+            f"{os.path.basename(mG).split('.pkl')[0][:200]}.png",
             dpi=dpi_resolution)
 
     if glassbrain is True:
@@ -1373,7 +1373,9 @@ def plot_all_struct_func(mG_paths, namer_dir, name, modality_paths):
                 zorder += 100
 
         connectome.savefig(
-            f"{namer_dir}/glassbrain-mplx_{name[:200]}.png", dpi=dpi_resolution
+            f"{namer_dir}/glassbrain-mplx_"
+            f"{os.path.basename(mG).split('.pkl')[0][:200]}.png",
+            dpi=dpi_resolution
         )
 
     return
