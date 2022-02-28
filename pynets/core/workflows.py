@@ -1402,7 +1402,7 @@ def dmri_connectometry(
         print(e, "Failed to parse runconfig.yaml")
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",
@@ -3544,7 +3544,7 @@ def fmri_connectometry(
     from pynets import fmri, registration
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",
@@ -5752,7 +5752,7 @@ def raw_graph_workflow(
     from pynets.core.thresholding import thresh_raw_graph
 
     import_list = [
-        "import matplotlib"
+        "import matplotlib",
         "import warnings",
         "import sys",
         "import os",

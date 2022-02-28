@@ -553,6 +553,7 @@ def track_ensemble(
         print(Style.RESET_ALL)
         #return None
 
+
 def run_tracking(step_curv_combinations, recon_shelved,
                  n_seeds_per_iter, traversal, maxcrossing, max_length,
                  pft_back_tracking_dist, pft_front_tracking_dist,
@@ -611,7 +612,8 @@ def run_tracking(step_curv_combinations, recon_shelved,
     tiss_class : str
         Tissue classification method.
     tissue_shelved : str
-        File path to joblib-shelved 4D T1w tissue segmentations in native diffusion space.
+        File path to joblib-shelved 4D T1w tissue segmentations in native
+        diffusion space.
 
     Returns
     -------
