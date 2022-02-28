@@ -170,7 +170,6 @@ def matching(
     paths,
     atlas,
     namer_dir,
-    name_list,
 ):
     import networkx as nx
     import numpy as np
@@ -253,7 +252,7 @@ def matching(
                    f"{list(func_opt.keys())[0]}.npy"
     np.save(out_dwi_mat, dwi_mat_final)
     np.save(out_func_mat, func_mat_final)
-    return name_list, mG_nx, mG, out_dwi_mat, out_func_mat
+    return mG_nx, mG, out_dwi_mat, out_func_mat
 
 
 def build_multigraphs(est_path_iterlist):
@@ -364,7 +363,6 @@ def build_multigraphs(est_path_iterlist):
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
-    name_list = []
     multigraph_list_all = []
     graph_path_list_all = []
     for atlas in atlases:
@@ -412,7 +410,6 @@ def build_multigraphs(est_path_iterlist):
                     parcel_dict_func[atlas][subnet])))
                 for paths in list(parcel_dict[atlas][subnet]):
                     [
-                        name_list,
                         mG_nx,
                         mG,
                         out_dwi_mat,
@@ -421,14 +418,12 @@ def build_multigraphs(est_path_iterlist):
                         paths,
                         atlas,
                         namer_dir,
-                        name_list,
                     )
         else:
             parcel_dict[atlas] = list(set(itertools.product(
                 parcel_dict_dwi[atlas], parcel_dict_func[atlas])))
             for paths in list(parcel_dict[atlas]):
                 [
-                    name_list,
                     mG_nx,
                     mG,
                     out_dwi_mat,
@@ -437,15 +432,12 @@ def build_multigraphs(est_path_iterlist):
                     paths,
                     atlas,
                     namer_dir,
-                    name_list,
                 )
         multigraph_list_all.append((mG_nx, mG))
-        graph_path_list_all((out_dwi_mat, out_func_mat))
-    assert len(multigraph_list_all) == len(name_list)
+        graph_path_list_all.append((out_dwi_mat, out_func_mat))
 
     return (
         multigraph_list_all,
         graph_path_list_all,
-        len(name_list) * [namer_dir],
-        name_list,
+        len(multigraph_list_all) * [namer_dir],
     )

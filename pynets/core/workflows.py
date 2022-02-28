@@ -1223,7 +1223,6 @@ def workflow_selector(
                         "multigraph_list_all",
                         "graph_path_list_all",
                         "namer_dir",
-                        "name_list",
                     ],
                     function=build_multigraphs,
                 ),
@@ -1270,7 +1269,6 @@ def workflow_selector(
                             build_multigraphs_node,
                             plot_all_struct_func_node,
                             [
-                                ("name_list", "name"),
                                 ("namer_dir", "namer_dir"),
                                 ("multigraph_list_all", "mG_paths"),
                                 ("graph_path_list_all", "modality_paths"),
