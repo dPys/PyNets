@@ -77,12 +77,12 @@ jobs:
       - run:
           name: Smoke test Docker image
           command: |
-            THISVERSION=$( python3 get_version.py )
+            THISVERSION=$( python get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
             DOCKERVERSION=$(docker run --rm -it dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` pynets --version)
             DOCKERVERSION=${DOCKERVERSION%$'\r'}
-            DOCKERVERSION=${DOCKERVERSION#*"PyNets v"}
+            DOCKERVERSION=${DOCKERVERSION#*"v"}
             echo "VERSION: \"$THISVERSION\""
             echo "DOCKERVERSION: \"${DOCKERVERSION}\""
             test "$DOCKERVERSION" = "$THISVERSION"
