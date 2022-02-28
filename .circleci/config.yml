@@ -390,8 +390,7 @@ jobs:
             python -m coverage report -i --rcfile=.coveragerc --omit=_*,*.local*
             python -m coverage html -i --rcfile=.coveragerc --omit=_*,*.local*
             python -m coverage xml -i --rcfile=.coveragerc --omit=_*,*.local*
-            commit=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
-            bash <(curl https://codecov.io/bash) -C $commit -f coverage.xml
+            bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:
     machine:

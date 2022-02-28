@@ -120,7 +120,7 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
 
 def mutual_information_2d(x, y, sigma=1, normalized=True):
     """
-    Computes (normalized) mutual information between two 1D variate from a
+    Computes (normalized) mutual information between two 2D variate from a
     joint histogram.
 
     Parameters
