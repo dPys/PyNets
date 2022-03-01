@@ -256,7 +256,7 @@ jobs:
             python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
       - run:
           name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked coverage
+          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked
       - run:
           name: Install system dependencies and LFS
           no_output_timeout: 30m
@@ -335,12 +335,7 @@ jobs:
             export PYTHONUNBUFFERED=1
             ulimit -s unlimited
             python -m pytest --circleci-parallelize --junitxml="test-results/junit.xml" $TEST_FILES
-#            python -m coverage run -p --rcfile=.coveragerc -m pytest --circleci-parallelize --junitxml="test-results/junit.xml" $TEST_FILES
             sudo chmod 777 -R /usr/lib/python3/dist-packages
-#      - persist_to_workspace:
-#          root: /tmp/src/pynets
-#          paths:
-#            - .coverage*
       - save_cache:
           key: unit&integrationtests-{{ arch}}
           paths:
@@ -349,54 +344,6 @@ jobs:
           path: test-results
       - store_artifacts:
           path: test-results
-
-#  coverage:
-#    machine:
-#      image: ubuntu-2004:202010-01
-#    working_directory: /tmp/src/pynets
-#    environment:
-#      - FSLDIR: /usr/local/fsl
-#      - FSLOUTPUTTYPE: 'NIFTI'
-#      - PYTHONUNBUFFERED: 1
-#      - DEBIAN_FRONTEND: noninteractive
-#    steps:
-#      - checkout
-#      - restore_cache:
-#          key: unit&integrationtests-{{ arch}}
-#      - attach_workspace:
-#          at: /tmp/src/pynets
-#      - run:
-#          name: Switch to Python v3.8
-#          no_output_timeout: 30m
-#          command: |
-#            pyenv local --unset
-#            pyenv uninstall -f 3.8.0 || true
-#            sudo add-apt-repository ppa:deadsnakes/ppa
-#            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-#            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-#            sudo apt-get update -qq
-#            sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev
-#            sudo apt-get clean
-#            pyenv install -f 3.8.0 || true
-#            eval "$(pyenv init -)"
-#            pyenv global 3.8.0
-#            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-#            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-#            source $BASH_ENV
-#      - run:
-#          name: Check Python version and upgrade pip
-#          command: |
-#            python -m pip install -U pip
-#            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
-#      - run:
-#          name: Update codecov
-#          command: |
-#            python -m pip install codecov coverage
-#            python -m coverage combine --rcfile=.coveragerc
-#            python -m coverage report -i --rcfile=.coveragerc --omit=_*,*.local*
-#            python -m coverage html -i --rcfile=.coveragerc --omit=_*,*.local*
-#            python -m coverage xml -i --rcfile=.coveragerc --omit=_*,*.local*
-#            bash <(curl https://codecov.io/bash) -f coverage.xml
 
   deploy_docker_patches:
     machine:
@@ -630,7 +577,6 @@ workflows:
           requires:
             - get_data
             - unit_and_integration_tests
-#            - coverage
           filters:
             branches:
               ignore:
@@ -644,7 +590,6 @@ workflows:
           requires:
             - get_data
             - unit_and_integration_tests
-#            - coverage
             - build
           filters:
             branches:
@@ -654,20 +599,6 @@ workflows:
                 - /docker\/.*/
             tags:
               only: /.*/
-
-#      - coverage:
-#          requires:
-#            - get_data
-#            - unit_and_integration_tests
-#          filters:
-#            branches:
-#              only: master
-#              ignore:
-#                - /docs?\/.*/
-#                - /licenses?\/.*/
-#                - /docker\/.*/
-#            tags:
-#              only: /.*/
 
       - test_deploy_pypi:
           requires:
