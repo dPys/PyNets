@@ -383,6 +383,11 @@ jobs:
             echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
             source $BASH_ENV
       - run:
+          name: Check Python version and upgrade pip
+          command: |
+            python -m pip install -U pip
+            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+      - run:
           name: Update codecov
           command: |
             python -m pip install codecov coverage
