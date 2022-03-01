@@ -24,7 +24,6 @@ from nipype.interfaces.base import (
     traits,
 )
 from pathlib import Path
-import graspologic.utils as gu
 from pynets.core import utils, thresholding
 
 matplotlib.use('Agg')
@@ -68,6 +67,7 @@ class CleanGraphs(object):
             norm,
             out_fmt="gpickle",
             remove_self_loops=True):
+        import graspologic.utils as gu
 
         self.est_path = est_path
         self.prune = prune
@@ -100,6 +100,8 @@ class CleanGraphs(object):
 
     # Normalize connectivity matrix
     def normalize_graph(self):
+        import graspologic.utils as gu
+
         # By maximum edge weight
         if self.norm == 1:
             self.in_mat = thresholding.normalize(np.nan_to_num(self.in_mat))
@@ -139,6 +141,7 @@ class CleanGraphs(object):
         return self.G
 
     def prune_graph(self):
+        import graspologic.utils as gu
         from pynets.statistics.individual.algorithms import defragment, \
             prune_small_components, most_important
 
