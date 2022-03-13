@@ -27,7 +27,7 @@ tracking:
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'local'
     tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines!)
-        - 20000
+        - 10000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
@@ -70,8 +70,8 @@ parcel_naming: # Whether to use multi-atlas lookup to label nodes. Default is Tr
     - True
 template: # `MNI152_T1` is the default and, along with `colin27` is provided by PyNets already. Other templates can be specified from templateflow (<https://github.com/templateflow/templateflow>), which will be fetched automatically: `MNI152Lin`, `MNI152NLin2009cAsym`, `MNI152NLin2009cSym`, `MNI152NLin6Asym`, `MNI152NLin6Sym`, `MNIInfant`, `MNIPediatricAsym`, `NKI`, `OASIS30ANTs` Any custom templates provided by the user should reside in the pynets/templates directory and be accompanied by two additional versions with _brain.nii.gz and brain_mask.nii.gz, followed by _1mm/_2mm suffices.
 #    - 'colin27'
-    - 'MNI152_T1'
-#    - 'CN200'
+#    - 'MNI152_T1'
+    - 'CN200'
 hub_detection_method: # Valid inputs are richclub, eigenvector centrality, betweenness centrality.
     - 'betweenness'
 min_nodes: # Minimum allowable number of nodes for any connected component subgraph

@@ -3,11 +3,11 @@
 """
 Copyright (C) 2017
 """
-import matplotlib
 import pandas as pd
+import numpy as np
+import matplotlib
 import os
 import glob
-import numpy as np
 import itertools
 import warnings
 from collections import OrderedDict
@@ -1102,6 +1102,7 @@ def bias_variance_decomp(estimator, X, y, loss='0-1_loss', num_rounds=200,
         avg_var = np.sum((main_predictions - all_pred)**2) / all_pred.size
 
     return avg_expected_loss, avg_bias, avg_var
+
 
 def make_subject_dict(
         modalities, base_dir, thr_type, mets, embedding_types, template,

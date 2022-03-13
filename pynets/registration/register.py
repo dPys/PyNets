@@ -1041,7 +1041,7 @@ class DmriReg(object):
 
         if tiss_class == 'wb' or tiss_class == 'cmc':
             csf_thr = 0.50
-            wm_thr = 0.15
+            wm_thr = 0.10
             gm_thr = 0.10
         else:
             csf_thr = 0.99

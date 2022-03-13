@@ -6,7 +6,7 @@ Copyright (C) 2017
 """
 import warnings
 warnings.filterwarnings("ignore")
-
+f
 
 def get_parser():
     """Parse command-line inputs"""
@@ -464,9 +464,10 @@ def get_parser():
         choices=["0", "1", "2"],
         help="Include this flag to perform multiplex graph analysis across "
              "structural-functional connectome modalities. Options include "
-             "level (1) Create multiplex graphs using motif-matched adaptive "
-             "thresholding; (2) Additionally perform multiplex graph embedding"
-             " and analysis. Default is (0) which is no multiplex analysis.\n",
+             "level (1) Create multiplex graphs using mutual information and "
+             "adaptive thresholding; (2) Additionally perform multiplex graph "
+             "embedding and analysis. Default is (0) which is no multiplex "
+             "analysis.\n",
     )
     parser.add_argument(
         "-embed",
