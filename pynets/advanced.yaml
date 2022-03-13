@@ -364,7 +364,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.1
+        - 1
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':
