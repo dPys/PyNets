@@ -1613,7 +1613,7 @@ def dmri_connectometry(
         interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
 
-    fetch_nodes_and_labels_node.synchronize = True
+    fetch_nodes_and_labels_node.synchronize = False
 
     if parc is False:
         prep_spherical_nodes_node = pe.Node(
@@ -1713,6 +1713,7 @@ def dmri_connectometry(
         )
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
+    node_gen_node.synchronize = False
 
     gtab_node = pe.Node(dmri.interfaces.MakeGtabBmask(), name="gtab_node")
 
@@ -3974,7 +3975,7 @@ def fmri_connectometry(
     fetch_nodes_and_labels_node = pe.Node(
         interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
-    fetch_nodes_and_labels_node.synchronize = True
+    fetch_nodes_and_labels_node.synchronize = False
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
@@ -4360,6 +4361,7 @@ def fmri_connectometry(
         )
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
+    node_gen_node.synchronize = False
 
     # Extract time-series from nodes
     extract_ts_info_iters = []
@@ -4416,7 +4418,7 @@ def fmri_connectometry(
                 ]
             )
 
-        prep_spherical_nodes_node.synchronize = True
+        prep_spherical_nodes_node.synchronize = False
 
         # Coordinate case
         extract_ts_node.inputs.parc = False

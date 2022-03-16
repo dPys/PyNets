@@ -462,11 +462,18 @@ def sfm_mod_est(gtab, data, B0_mask):
     """
     from dipy.data import get_sphere
     import dipy.reconst.sfm as sfm
+    from pynets.core.utils import load_runconfig
 
     sphere = get_sphere("repulsion724")
     print("Reconstructing using SFM...")
+
+    hardcoded_params = load_runconfig()
+    nthreads = hardcoded_params["omp_threads"][0]
+
     model = sfm.SparseFascicleModel(
-        gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
+        gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001, num_processes=nthreads,
+        parallel_backend='loky')
+
     sf_mod = model.fit(data, mask=np.nan_to_num(np.asarray(nib.load(
         B0_mask).dataobj)).astype("bool"))
     sf_odf = sf_mod.odf(sphere)

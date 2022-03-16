@@ -1039,14 +1039,9 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
-        if tiss_class == 'wb' or tiss_class == 'cmc':
-            csf_thr = 0.50
-            wm_thr = 0.10
-            gm_thr = 0.10
-        else:
-            csf_thr = 0.99
-            wm_thr = 0.10
-            gm_thr = 0.075
+        csf_thr = 0.80
+        wm_thr = 0.05
+        gm_thr = 0.05
 
         # Threshold WM to binary in dwi space
         nib.save(math_img(f"img > {wm_thr}",

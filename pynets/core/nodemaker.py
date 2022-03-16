@@ -1390,7 +1390,7 @@ def parcel_naming(coords, vox_size):
 
 
 def get_node_attributes(node_files, emb_shape,
-                                    atlas='BrainnetomeAtlasFan2016'):
+                        atlas='BrainnetomeAtlasFan2016'):
     import ast
     import re
     from pynets.statistics.utils import parse_closest_ixs
@@ -1508,8 +1508,8 @@ def node_gen_masking(
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = create_parcel_atlas(
-        parcel_list_masked, label_intensities)
+    net_parcels_map_nifti = create_parcel_atlas(
+        parcel_list_masked, label_intensities)[0]
 
     del parcel_list_masked
     gc.collect()
@@ -1590,8 +1590,8 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = create_parcel_atlas(parcel_list,
-                                                     label_intensities)
+    net_parcels_map_nifti = create_parcel_atlas(parcel_list,
+                                                label_intensities)[0]
     del parcel_list
     gc.collect()
 

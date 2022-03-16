@@ -632,10 +632,9 @@ def run_tracking(step_curv_combinations, recon_shelved,
         ClosestPeakDirectionGetter,
         DeterministicMaximumDirectionGetter
     )
-    from nilearn.image import index_img
+    from nilearn.image import index_img, math_img
     from pynets.dmri.utils import generate_seeds, random_seeds_from_mask
     from nibabel.streamlines.array_sequence import ArraySequence
-    from nilearn.image import math_img
 
     start_time = time.time()
 
