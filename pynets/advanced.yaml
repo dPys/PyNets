@@ -83,7 +83,7 @@ graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former req
 embed:
     - 'ASE'
 #    - 'OMNI'
-#    - 'MASE'
+    - 'MASE'
     - 'eigenvector'
 #    - 'degree'
     - 'betweenness'
@@ -233,7 +233,7 @@ resource_dict: # Nipype workflow resource settings
       - 'pass_meta_outs_struct_node':
         - (1, 2)
       - 'fetch_nodes_and_labels_node':
-        - (4, 8)
+        - (8, 14)
       - 'save_nifti_parcels_node':
         - (1, 2)
       - 'gtab_node':
@@ -249,7 +249,7 @@ resource_dict: # Nipype workflow resource settings
       - 'orient_reslice_anat_node':
         - (1, 1)
       - 'node_gen_node':
-        - (4, 8)
+        - (8, 14)
       - 'prep_spherical_nodes_node':
         - (4, 8)
       - 'get_node_membership_node':
@@ -364,7 +364,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 1
+        - 0.2
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':
