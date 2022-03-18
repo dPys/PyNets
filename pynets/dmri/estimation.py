@@ -429,7 +429,7 @@ def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
     return mcsd_mod.astype("float32"), model
 
 
-def sfm_mod_est(gtab, data, B0_mask):
+def sfm_mod_est(gtab, data, B0_mask, BACKEND='threading'):
     """
     Estimate a Sparse Fascicle Model (SFM) from dwi data.
 
@@ -472,7 +472,7 @@ def sfm_mod_est(gtab, data, B0_mask):
 
     model = sfm.SparseFascicleModel(
         gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001, num_processes=nthreads,
-        parallel_backend='loky')
+        parallel_backend=BACKEND)
 
     sf_mod = model.fit(data, mask=np.nan_to_num(np.asarray(nib.load(
         B0_mask).dataobj)).astype("bool"))

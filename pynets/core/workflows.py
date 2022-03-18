@@ -1613,13 +1613,13 @@ def dmri_connectometry(
         interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
 
-    fetch_nodes_and_labels_node.synchronize = False
+    fetch_nodes_and_labels_node.synchronize = True
 
     if parc is False:
         prep_spherical_nodes_node = pe.Node(
             niu.Function(
                 input_names=["coords", "node_radius", "template_mask"],
-                output_names=["parcel_list", "par_max", "node_radius", "parc"],
+                output_names=["parcels_4d", "par_max", "node_radius", "parc"],
                 function=nodemaker.create_spherical_roi_volumes,
                 imports=import_list
             ),
@@ -1657,7 +1657,7 @@ def dmri_connectometry(
                 input_names=[
                     "roi",
                     "coords",
-                    "parcel_list",
+                    "parcels_4d",
                     "labels",
                     "dir_path",
                     "ID",
@@ -1690,7 +1690,7 @@ def dmri_connectometry(
             niu.Function(
                 input_names=[
                     "coords",
-                    "parcel_list",
+                    "parcels_4d",
                     "labels",
                     "dir_path",
                     "ID",
@@ -1713,7 +1713,7 @@ def dmri_connectometry(
         )
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
-    node_gen_node.synchronize = False
+    node_gen_node.synchronize = True
 
     gtab_node = pe.Node(dmri.interfaces.MakeGtabBmask(), name="gtab_node")
 
@@ -2169,13 +2169,13 @@ def dmri_connectometry(
                     "coords",
                     "labels",
                     "parc",
-                    "parcel_list",
+                    "parcels_4d",
                     "perc_overlap",
                     "error",
                 ],
                 output_names=[
                     "net_coords",
-                    "net_parcel_list",
+                    "net_parcels_4d",
                     "net_labels",
                     "subnet"],
                 function=nodemaker.get_node_membership,
@@ -2242,13 +2242,13 @@ def dmri_connectometry(
                             ("coords", "coords"),
                             ("labels", "labels"),
                             ("networks_list", "networks_list"),
-                            ("parcel_list", "parcel_list"),
+                            ("parcels_4d", "parcels_4d"),
                         ],
                     ),
                     (
                         prep_spherical_nodes_node,
                         node_gen_node,
-                        [("parc", "parc"), ("parcel_list", "parcel_list")],
+                        [("parc", "parc"), ("parcels_4d", "parcels_4d")],
                     ),
                     (
                         get_node_membership_node,
@@ -2266,7 +2266,7 @@ def dmri_connectometry(
                         [
                             ("coords", "coords"),
                             ("labels", "labels"),
-                            ("parcel_list", "parcel_list"),
+                            ("parcels_4d", "parcels_4d"),
                             ("par_max", "par_max"),
                             ("networks_list", "networks_list"),
                         ],
@@ -2277,7 +2277,7 @@ def dmri_connectometry(
                         [
                             ("net_coords", "coords"),
                             ("net_labels", "labels"),
-                            ("net_parcel_list", "parcel_list"),
+                            ("net_parcels_4d", "parcels_4d"),
                         ],
                     ),
                 ]
@@ -2304,7 +2304,7 @@ def dmri_connectometry(
                     (
                         prep_spherical_nodes_node,
                         node_gen_node,
-                        [("parcel_list", "parcel_list"), ("parc", "parc")],
+                        [("parcels_4d", "parcels_4d"), ("parc", "parc")],
                     ),
                     (
                         fetch_nodes_and_labels_node,
@@ -2319,7 +2319,7 @@ def dmri_connectometry(
                     (
                         fetch_nodes_and_labels_node,
                         node_gen_node,
-                        [("parcel_list", "parcel_list")],
+                        [("parcels_4d", "parcels_4d")],
                     ),
                 ]
             )
@@ -3975,7 +3975,7 @@ def fmri_connectometry(
     fetch_nodes_and_labels_node = pe.Node(
         interfaces.FetchNodesLabels(), name="fetch_nodes_and_labels_node"
     )
-    fetch_nodes_and_labels_node.synchronize = False
+    fetch_nodes_and_labels_node.synchronize = True
 
     # Connect clustering solutions to node definition Node
     if float(k_clustering) > 0:
@@ -4305,7 +4305,7 @@ def fmri_connectometry(
                 input_names=[
                     "roi",
                     "coords",
-                    "parcel_list",
+                    "parcels_4d",
                     "labels",
                     "dir_path",
                     "ID",
@@ -4338,7 +4338,7 @@ def fmri_connectometry(
             niu.Function(
                 input_names=[
                     "coords",
-                    "parcel_list",
+                    "parcels_4d",
                     "labels",
                     "dir_path",
                     "ID",
@@ -4361,7 +4361,7 @@ def fmri_connectometry(
         )
     node_gen_node._n_procs = runtime_dict["node_gen_node"][0]
     node_gen_node._mem_gb = runtime_dict["node_gen_node"][1]
-    node_gen_node.synchronize = False
+    node_gen_node.synchronize = True
 
     # Extract time-series from nodes
     extract_ts_info_iters = []
@@ -4391,7 +4391,7 @@ def fmri_connectometry(
         prep_spherical_nodes_node = pe.Node(
             niu.Function(
                 input_names=["coords", "node_radius", "template_mask"],
-                output_names=["parcel_list", "par_max", "node_radius", "parc"],
+                output_names=["parcels_4d", "par_max", "node_radius", "parc"],
                 function=nodemaker.create_spherical_roi_volumes,
                 imports=import_list
             ),
@@ -4647,13 +4647,13 @@ def fmri_connectometry(
                     "coords",
                     "labels",
                     "parc",
-                    "parcel_list",
+                    "parcels_4d",
                     "perc_overlap",
                     "error",
                 ],
                 output_names=[
                     "net_coords",
-                    "net_parcel_list",
+                    "net_parcels_4d",
                     "net_labels",
                     "subnet"],
                 function=nodemaker.get_node_membership,
@@ -4720,13 +4720,13 @@ def fmri_connectometry(
                             ("coords", "coords"),
                             ("labels", "labels"),
                             ("networks_list", "networks_list"),
-                            ("parcel_list", "parcel_list"),
+                            ("parcels_4d", "parcels_4d"),
                         ],
                     ),
                     (
                         prep_spherical_nodes_node,
                         node_gen_node,
-                        [("parc", "parc"), ("parcel_list", "parcel_list")],
+                        [("parc", "parc"), ("parcels_4d", "parcels_4d")],
                     ),
                     (
                         get_node_membership_node,
@@ -4744,7 +4744,7 @@ def fmri_connectometry(
                         [
                             ("coords", "coords"),
                             ("labels", "labels"),
-                            ("parcel_list", "parcel_list"),
+                            ("parcels_4d", "parcels_4d"),
                             ("par_max", "par_max"),
                             ("networks_list", "networks_list"),
                         ],
@@ -4755,7 +4755,7 @@ def fmri_connectometry(
                         [
                             ("net_coords", "coords"),
                             ("net_labels", "labels"),
-                            ("net_parcel_list", "parcel_list"),
+                            ("net_parcels_4d", "parcels_4d"),
                         ],
                     ),
                     (inputnode, node_gen_node, [("parc", "parc")]),
@@ -4781,7 +4781,7 @@ def fmri_connectometry(
                     (
                         prep_spherical_nodes_node,
                         node_gen_node,
-                        [("parcel_list", "parcel_list"), ("parc", "parc")],
+                        [("parcels_4d", "parcels_4d"), ("parc", "parc")],
                     ),
                     (
                         fetch_nodes_and_labels_node,
@@ -4796,7 +4796,7 @@ def fmri_connectometry(
                     (
                         fetch_nodes_and_labels_node,
                         node_gen_node,
-                        [("parcel_list", "parcel_list")],
+                        [("parcels_4d", "parcels_4d")],
                     ),
                     (inputnode, node_gen_node, [("parc", "parc")]),
                 ]

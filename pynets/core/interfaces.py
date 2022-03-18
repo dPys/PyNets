@@ -43,7 +43,7 @@ class _FetchNodesLabelsOutputSpec(TraitedSpec):
     coords = traits.Any(mandatory=True)
     atlas = traits.Any()
     networks_list = traits.Any()
-    parcel_list = traits.Any()
+    parcels_4d = traits.Any()
     par_max = traits.Any()
     parcellation = traits.Any()
     dir_path = traits.Any()
@@ -107,9 +107,10 @@ class FetchNodesLabels(SimpleInterface):
                 [coords, atlas, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(parcellation)
+                    parcels_4d_img = nodemaker.three_to_four_parcellation(
+                        parcellation)
                 else:
-                    parcel_list = None
+                    parcels_4d_img = None
             else:
                 raise FileNotFoundError(
                     f"\nAtlas file for {self.inputs.atlas} not found!"
@@ -129,7 +130,7 @@ class FetchNodesLabels(SimpleInterface):
             [coords, _, networks_list,
              labels] = nodemaker.fetch_nilearn_atlas_coords(
                 self.inputs.atlas)
-            parcel_list = None
+            parcels_4d = None
             par_max = None
             atlas = self.inputs.atlas
             parcellation = None
@@ -166,9 +167,10 @@ class FetchNodesLabels(SimpleInterface):
                         nodemaker.enforce_hem_distinct_consecutive_labels(
                         parcellation, label_names=labels)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(parcellation)
+                    parcels_4d_img = nodemaker.three_to_four_parcellation(
+                        parcellation)
                 else:
-                    parcel_list = None
+                    parcels_4d_img = None
             else:
                 raise FileNotFoundError(
                     f"\nAtlas file for {self.inputs.atlas} not found!")
@@ -202,9 +204,10 @@ class FetchNodesLabels(SimpleInterface):
                 [coords, _, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(parcellation)
+                    parcels_4d_img = nodemaker.three_to_four_parcellation(
+                        parcellation)
                 else:
-                    parcel_list = None
+                    parcels_4d_img = None
                 # Describe user atlas coords
                 print(f"\n{self.inputs.atlas} comes with {par_max} parcels\n")
             except ValueError as e:
@@ -243,9 +246,10 @@ class FetchNodesLabels(SimpleInterface):
                 [coords, atlas, par_max, label_intensities] = \
                     nodemaker.get_names_and_coords_of_parcels(parcellation)
                 if self.inputs.parc is True:
-                    parcel_list = nodemaker.gen_img_list(parcellation)
+                    parcels_4d_img = nodemaker.three_to_four_parcellation(
+                        parcellation)
                 else:
-                    parcel_list = None
+                    parcels_4d_img = None
 
                 atlas = utils.prune_suffices(atlas)
 
@@ -356,11 +360,9 @@ class FetchNodesLabels(SimpleInterface):
         self._results["networks_list"] = networks_list
         # TODO: Optimize this with 4d array concatenation and .npyz
 
-        parcel_list_4d = concat_imgs([i for i in parcel_list])
-        del parcel_list
-        out_path = f"{runtime.cwd}/parcel_list.nii.gz"
-        nib.save(parcel_list_4d, out_path)
-        self._results["parcel_list"] = out_path
+        out_path = f"{runtime.cwd}/parcels_4d.nii.gz"
+        nib.save(parcels_4d_img, out_path)
+        self._results["parcels_4d"] = out_path
         self._results["par_max"] = par_max
         self._results["parcellation"] = parcellation
         self._results["dir_path"] = dir_path

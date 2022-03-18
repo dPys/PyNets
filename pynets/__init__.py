@@ -6,6 +6,8 @@ __author__ = """Derek Pisner"""
 __email__ = "dpisner@utexas.edu"
 
 import warnings
+import pickle5 as pickle
+pickle.HIGHEST_PROTOCOL = 5
 
 warnings.filterwarnings("ignore")
 

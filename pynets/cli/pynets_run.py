@@ -6,7 +6,6 @@ Copyright (C) 2017
 """
 import warnings
 warnings.filterwarnings("ignore")
-f
 
 def get_parser():
     """Parse command-line inputs"""
@@ -676,7 +675,8 @@ def build_workflow(args, retval):
         hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     # Set Arguments to global variables
-    ID = args.id
+    ID = [i.replace('sub-sub-', 'sub-').replace('ses-ses-', 'ses-') for i in
+          args.id]
     outdir = f"{args.output_dir}/pynets"
     os.makedirs(outdir, exist_ok=True)
     func_file = args.func

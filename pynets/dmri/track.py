@@ -273,7 +273,8 @@ def track_ensemble(
     gm_in_dwi,
     vent_csf_in_dwi,
     wm_in_dwi,
-    tiss_class
+    tiss_class,
+    BACKEND='threading'
 ):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
@@ -359,6 +360,7 @@ def track_ensemble(
     import tempfile
     from joblib import Parallel, delayed, Memory
     import itertools
+    import pickle5 as pickle
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
     from pynets.dmri.utils import generate_sl
@@ -371,6 +373,7 @@ def track_ensemble(
 
     warnings.filterwarnings("ignore")
 
+    pickle.HIGHEST_PROTOCOL = 5
     joblib_dir = tempfile.mkdtemp()
     os.makedirs(joblib_dir, exist_ok=True)
 
@@ -456,7 +459,7 @@ def track_ensemble(
     try:
         while float(stream_counter) < float(target_samples) and \
                 float(ix) < 0.50*float(len(all_combs)):
-            with Parallel(n_jobs=nthreads, backend='loky',
+            with Parallel(n_jobs=nthreads, backend=BACKEND,
                           mmap_mode='r+', verbose=0) as parallel:
 
                 out_streams = parallel(
