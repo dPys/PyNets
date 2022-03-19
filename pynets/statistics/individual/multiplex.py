@@ -52,8 +52,8 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
     best_dwi_thr = float(best_thresh_combo.split("-")[1].split('_')[0])
     best_func_thr = float(best_thresh_combo.split("-")[2].split('_')[0])
 
-    return {best_dwi_thr: threshold_absolute(dwi_mat, best_dwi_thr)}, \
-           {best_func_thr: threshold_absolute(func_mat, best_func_thr)}, \
+    return {best_dwi_thr: threshold_proportional(dwi_mat, best_dwi_thr)}, \
+           {best_func_thr: threshold_proportional(func_mat, best_func_thr)}, \
            df.head(1)[0].values[0]
 
 
@@ -171,9 +171,9 @@ def matching(
     atlas,
     namer_dir,
 ):
+    import glob
     import networkx as nx
     import numpy as np
-    import glob
     from pynets.core import thresholding
     from pynets.statistics.utils import parse_closest_ixs
     from graspologic.utils import remove_loops, symmetrize, \
@@ -189,17 +189,16 @@ def matching(
 
     node_dict_dwi = parse_closest_ixs(
         glob.glob(f"{str(Path(dwi_graph_path).parent.parent)}"
-                  f"/dwi/*/nodes/*.json"), dwi_mat.shape[0])[1]
+                  f"/nodes/*.json"), dwi_mat.shape[0])[1]
 
     node_dict_func = parse_closest_ixs(
         glob.glob(f"{str(Path(func_graph_path).parent.parent)}"
-                  f"/func/*/nodes/*.json"), func_mat.shape[0])[1]
+                  f"/nodes/*.json"), func_mat.shape[0])[1]
 
     G_dwi = nx.from_numpy_array(dwi_mat)
     nx.set_edge_attributes(G_dwi, 'structural',
                             nx.get_edge_attributes(G_dwi, 'weight').values())
     nx.set_node_attributes(G_dwi, dict(node_dict_dwi), name='dwi')
-
     #G_dwi.nodes(data=True)
 
     G_func = nx.from_numpy_array(func_mat)
@@ -223,8 +222,8 @@ def matching(
     dwi_name = dwi_graph_path.split("/rawgraph_"
                                           )[-1].split(".npy")[0]
     func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-    name = f"{atlas}_mplx_Layer-1_{dwi_name.split('/')[-1].split('_mplx')[0]}_" \
-           f"Layer-2_{func_name.split('/')[-1].split('_mplx')[0]}"
+    name = f"{atlas}_mplx_Layer-1_{dwi_name.split('/')[-1].split('_mplx')[0][0:60]}_" \
+           f"Layer-2_{func_name.split('/')[-1].split('_mplx')[0][0:60]}"
 
     dwi_opt, func_opt, best_mi = optimize_mutual_info(
         nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
@@ -248,7 +247,7 @@ def matching(
 
     np.save(dwi_name, dwi_mat_final)
     np.save(func_name, func_mat_final)
-    return mG_nx, mG, out_dwi_mat, out_func_mat
+    return mG_nx, mG, dwi_name, func_name
 
 
 def build_multigraphs(est_path_iterlist):
@@ -315,7 +314,7 @@ def build_multigraphs(est_path_iterlist):
             [
                 i
                 for i in raw_est_path_iterlist
-                if "dwi-" in i
+                if "dwi" in i
             ]
         )
     )
@@ -324,7 +323,7 @@ def build_multigraphs(est_path_iterlist):
             [
                 i
                 for i in raw_est_path_iterlist
-                if "func-" in i
+                if "func" in i
             ]
         )
     )
@@ -415,15 +414,15 @@ def build_multigraphs(est_path_iterlist):
                 [
                     mG_nx,
                     mG,
-                    out_dwi_mat,
-                    out_func_mat
+                    matched_dwi_path,
+                    matched_func_path
                 ] = matching(
                     paths,
                     atlas,
                     namer_dir,
                 )
         multigraph_list_all.append((mG_nx, mG))
-        graph_path_list_all.append((out_dwi_mat, out_func_mat))
+        graph_path_list_all.append((matched_dwi_path, matched_func_path))
 
     return (
         multigraph_list_all,

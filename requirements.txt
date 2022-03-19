@@ -1,4 +1,5 @@
 matplotlib>=3.0.0
+pickle5>=0.0.12
 dill>=0.3.2
 statsmodels>=0.11.1
 Sphinx>=1.4.8

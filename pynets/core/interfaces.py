@@ -411,3 +411,4 @@ class CombineOutputs(SimpleInterface):
 
     def _list_outputs(self):
         return {"combination_complete": getattr(self, "_combination_complete")}
+
