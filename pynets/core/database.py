@@ -137,16 +137,17 @@ def iter_dict(d, elements, nodes):
                 nodes[k] = v
             elif k == 'data':
                 data_array = np.load(v)
-                new_entry = ce()
+                new_entry = ConnectomeEnsemble()
                 new_entry.subject_id = elements[0]
                 new_entry.session = elements[1]
                 new_entry.modality = elements[2]
                 new_entry.embed_meta = elements[3]
-                new_entry.signal_meta = (elements[4])[0]
-            if elements[2] == 'func':
-                new_entry.hpass_meta = (elements[4])[1]
-            elif elements[2] == 'dwi':
-                new_entry.minlength_meta = (elements[4])[1]
+                if elements[2] == 'func':
+                    new_entry.signal_meta = (elements[4])[0]
+                    new_entry.hpass_meta = (elements[4])[1]
+                elif elements[2] == 'dwi':
+                    new_entry.traversal_meta = (elements[4])[0]
+                    new_entry.minlength_meta = (elements[4])[1]
                 new_entry.model_meta = (elements[4])[2]
                 new_entry.granularity_meta = (elements[4])[3]
                 new_entry.net_meta = (elements[4])[4]
@@ -163,16 +164,17 @@ def iter_dict(d, elements, nodes):
             else:
                 elements.append(k)
                 elements.append(v)
-                new_entry = ce()
+                new_entry = ConnectomeEnsemble()
                 new_entry.subject_id = elements[0]
                 new_entry.session = elements[1]
                 new_entry.modality = elements[2]
                 new_entry.embed_meta = elements[3]
-                new_entry.signal_meta = (elements[4])[0]
-            if elements[2] == 'func':
-                new_entry.hpass_meta = (elements[4])[1]
-            elif elements[2] == 'dwi':
-                new_entry.minlength_meta = (elements[4])[1]
+                if elements[2] == 'func':
+                    new_entry.signal_meta = (elements[4])[0]
+                    new_entry.hpass_meta = (elements[4])[1]
+                elif elements[2] == 'dwi':
+                    new_entry.traversal_meta = (elements[4])[0]
+                    new_entry.minlength_meta = (elements[4])[1]
                 new_entry.model_meta = (elements[4])[2]
                 new_entry.granularity_meta = (elements[4])[3]
                 new_entry.net_meta = (elements[4])[4]

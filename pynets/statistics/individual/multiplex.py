@@ -112,7 +112,7 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
     graph_dir = f"{namer_dir}/mplx_graphs"
     if not os.path.isdir(graph_dir):
         os.mkdir(graph_dir)
-    mG_path = f"{graph_dir}/{name[:200]}_mG.pkl"
+    mG_path = f"{graph_dir}/{name}.pkl"
     nx.write_gpickle(mg, mG_path, protocol=2)
 
     return mG_path
@@ -219,11 +219,32 @@ def matching(
 
     [G_dwi, G_func] = multigraph_lcc_intersection([G_dwi, G_func])
 
-    dwi_name = dwi_graph_path.split("/rawgraph_"
-                                          )[-1].split(".npy")[0]
-    func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-    name = f"{atlas}_mplx_Layer-1_{dwi_name.split('/')[-1].split('_mplx')[0][0:60]}_" \
-           f"Layer-2_{func_name.split('/')[-1].split('_mplx')[0][0:60]}"
+    def writeJSON(metadata_str, outputdir):
+        import json
+        import uuid
+        modality = metadata_str.split('modality-')[1].split('_')[0]
+        metadata_list = [i for i in
+                         metadata_str.split('modality-'
+                                            )[1].split('_') if '-' in i]
+        hash = str(uuid.uuid4())
+        filename = f"{outputdir}/sidecar_modality-{modality}_{hash}.json"
+        metadata_dict = {}
+        for meta in metadata_list:
+            k, v = meta.split('-')
+            metadata_dict[k] = v
+        with open(filename, 'w+') as jsonfile:
+            json.dump(metadata_dict, jsonfile, indent=4)
+        jsonfile.close()
+        return hash
+
+    dwi_name = dwi_graph_path.split("/")[-1].split(".npy")[0]
+    func_name = func_graph_path.split("/")[-1].split(".npy")[0]
+
+    dwi_hash = writeJSON(dwi_name, namer_dir)
+    func_hash = writeJSON(func_name, namer_dir)
+
+    name = f"{atlas}_mplx_layer1-dwi_ensemble-{dwi_hash}_" \
+           f"layer2-func_ensemble-{func_hash}"
 
     dwi_opt, func_opt, best_mi = optimize_mutual_info(
         nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
@@ -235,19 +256,22 @@ def matching(
 
     G_multi = nx.OrderedMultiGraph(nx.compose(G_dwi_final, G_func_final))
 
+    out_name = f"{name}_matchthr-{list(dwi_opt.keys())[0]}_" \
+               f"{list(func_opt.keys())[0]}"
     mG = build_mx_multigraph(
         nx.to_numpy_array(G_func_final),
         nx.to_numpy_array(G_dwi_final),
-        f"{name}_matchthr-{list(dwi_opt.keys())[0]}_{list(func_opt.keys())[0]}",
+        out_name,
         namer_dir)
 
-    mG_nx = f"{namer_dir}/{name}_dwiThr-{list(dwi_opt.keys())[0]}_" \
-            f"funcThr-{list(func_opt.keys())[0]}.gpickle"
+    mG_nx = f"{namer_dir}/{out_name}.gpickle"
     nx.write_gpickle(G_multi, mG_nx)
 
-    np.save(dwi_name, dwi_mat_final)
-    np.save(func_name, func_mat_final)
-    return mG_nx, mG, dwi_name, func_name
+    dwi_file_out = f"{namer_dir}/{dwi_name}.npy"
+    func_file_out = f"{namer_dir}/{func_name}.npy"
+    np.save(dwi_file_out, dwi_mat_final)
+    np.save(func_file_out, func_mat_final)
+    return mG_nx, mG, dwi_file_out, func_file_out
 
 
 def build_multigraphs(est_path_iterlist):
@@ -347,7 +371,7 @@ def build_multigraphs(est_path_iterlist):
         Path(
             os.path.dirname(
                 est_path_iterlist_dwi[0])).parent.parent.parent)
-    namer_dir = f"{dir_path}/graphs_multilayer"
+    namer_dir = f"{dir_path}/dwi-func"
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 
@@ -414,15 +438,15 @@ def build_multigraphs(est_path_iterlist):
                 [
                     mG_nx,
                     mG,
-                    matched_dwi_path,
-                    matched_func_path
+                    out_dwi_mat,
+                    out_func_mat
                 ] = matching(
                     paths,
                     atlas,
                     namer_dir,
                 )
         multigraph_list_all.append((mG_nx, mG))
-        graph_path_list_all.append((matched_dwi_path, matched_func_path))
+        graph_path_list_all.append((out_dwi_mat, out_func_mat))
 
     return (
         multigraph_list_all,

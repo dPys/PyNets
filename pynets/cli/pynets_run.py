@@ -800,12 +800,11 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         import psutil
-        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 0.5
         procmem = [int(psutil.cpu_count()),
                    [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
-        procmem[1] = procmem[1] - 1
     if args.thr is None:
         thr = float(1.0)
     else:
