@@ -344,8 +344,8 @@ def build_asetomes(est_path_iterlist):
     from pathlib import Path
     import os
     import numpy as np
-    from pynets.core.utils import prune_suffices, flatten
-    from pynets.core.utils import load_runconfig
+    from pynets.statistics.individual.spectral import _ase_embed
+    from pynets.core.utils import prune_suffices, flatten, load_runconfig
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
@@ -427,8 +427,8 @@ def build_masetome(est_path_iterlist):
     from pathlib import Path
     import os
     import numpy as np
-    from pynets.core.utils import prune_suffices
-    from pynets.core.utils import load_runconfig
+    from pynets.statistics.individual.spectral import _mase_embed
+    from pynets.core.utils import prune_suffices, load_runconfig
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
@@ -509,8 +509,8 @@ def build_omnetome(est_path_iterlist):
     from pathlib import Path
     import sys
     import numpy as np
-    from pynets.core.utils import flatten
-    from pynets.core.utils import load_runconfig
+    from pynets.statistics.individual.spectral import _omni_embed
+    from pynets.core.utils import flatten, load_runconfig
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
