@@ -495,7 +495,7 @@ def track_ensemble(
                         print(f"\n{Fore.RED}No streamlines generated in "
                               f"waymask vacinity\n")
                         print(Style.RESET_ALL)
-                        freturn None
+                        return None
 
                 if len(out_streams) < min_streams:
                     ix += 1
