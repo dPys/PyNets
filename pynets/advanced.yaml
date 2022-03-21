@@ -53,7 +53,7 @@ tracking:
     min_streams: # To prevent infinite loops searching for streamlines that are spatially excluded.
         - 25
     seeding_mask_thr:
-        - 0.0075
+        - 0.001
     track_timeout:
         - 7200 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
@@ -275,7 +275,7 @@ resource_dict: # Nipype workflow resource settings
       - 'register_node':
         - (4, 8)
       - 'reg_nodes_node':
-        - (2, 4)
+        - (4, 8)
       - 'RegisterParcellation2MNIFunc_node':
         - (2, 4)
       - 'get_fa_node':

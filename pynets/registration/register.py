@@ -1039,7 +1039,7 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
-        csf_thr = 0.80
+        csf_thr = 0.95
         wm_thr = 0.05
         gm_thr = 0.05
 

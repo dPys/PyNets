@@ -675,8 +675,8 @@ def build_workflow(args, retval):
         hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     # Set Arguments to global variables
-    ID = [i.replace('sub-sub-', 'sub-').replace('ses-ses-', 'ses-') for i in
-          args.id]
+    ID = [i.replace('sub-sub-', 'sub-').replace('ses-ses-', 'ses-').replace(
+        'sub-sub', 'sub-').replace('ses-ses', 'ses-') for i in args.id]
     outdir = f"{args.output_dir}/pynets"
     os.makedirs(outdir, exist_ok=True)
     func_file = args.func
@@ -687,7 +687,7 @@ def build_workflow(args, retval):
     graph = args.g
 
     if graph is not None:
-        include_str_matches = ['ventral']
+        #include_str_matches = ['ventral']
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []

@@ -495,7 +495,7 @@ def track_ensemble(
                         print(f"\n{Fore.RED}No streamlines generated in "
                               f"waymask vacinity\n")
                         print(Style.RESET_ALL)
-                        #return None
+                        freturn None
 
                 if len(out_streams) < min_streams:
                     ix += 1
@@ -506,7 +506,7 @@ def track_ensemble(
                     if ix > 5:
                         print(f"\n{Fore.RED}No streamlines generated\n")
                         print(Style.RESET_ALL)
-                        #return None
+                        return None
                     continue
                 else:
                     ix -= 1
@@ -533,17 +533,17 @@ def track_ensemble(
                         f"out: {time.time() - start}")
                     print(Style.RESET_ALL)
                     memory.clear(warn=False)
-                    #return None
+                    return None
 
     except RuntimeError as e:
         print(f"\n{Fore.RED}Error: Tracking failed due to:\n{e}\n")
         print(Style.RESET_ALL)
         memory.clear(warn=False)
-        #return None
-
-    memory.clear(warn=False)
+        return None
 
     print("Tracking Complete: ", str(time.time() - start))
+
+    memory.clear(warn=False)
 
     del parallel, all_combs
     gc.collect()
@@ -554,7 +554,7 @@ def track_ensemble(
     else:
         print(f"\n{Fore.RED}No streamlines generated!")
         print(Style.RESET_ALL)
-        #return None
+        return None
 
 
 def run_tracking(step_curv_combinations, recon_shelved,
