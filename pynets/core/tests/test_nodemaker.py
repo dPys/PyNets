@@ -101,11 +101,11 @@ def test_nodemaker_tools_parlistfile_RSN():
 
     start_time = time.time()
 
-    parcel_list = nodemaker.gen_img_list(parlistfile)
+    parcels_4d_img = nodemaker.three_to_four_parcellation(parlistfile)
 
-    [net_coords, net_parcel_list, net_labels, subnet] = \
+    [net_coords, net_parcels_4d_img, net_labels, subnet] = \
         nodemaker.get_node_membership(subnet, template, coords, labels,
-                                      parc, parcel_list
+                                      parc, parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -118,7 +118,7 @@ def test_nodemaker_tools_parlistfile_RSN():
 
     start_time = time.time()
     [net_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
-        net_parcel_list
+        net_parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -144,7 +144,7 @@ def test_nodemaker_tools_parlistfile_RSN():
     assert coords is not None
     assert net_coords is not None
     assert net_labels is not None
-    assert net_parcel_list is not None
+    assert net_parcels_4d_img is not None
     assert out_path is not None
     assert net_parcels_map_nifti is not None
     assert parcel_list_exp is not None
@@ -163,7 +163,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     )
     subnet = "Default"
     parc = False
-    parcel_list = None
+    parcels_4d_img = None
     start_time = time.time()
     [coords, _, _, labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
     print(
@@ -177,7 +177,7 @@ def test_nodemaker_tools_nilearn_coords_RSN(atlas):
 
     start_time = time.time()
     [net_coords, _, net_labels, subnet] = nodemaker.get_node_membership(
-        subnet, template, coords, labels, parc, parcel_list
+        subnet, template, coords, labels, parc, parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -219,11 +219,11 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     subnet = "Default"
     ID = "002"
-    perc_overlap = 0.10
+    perc_overlap = 0.75
     parc = True
 
     start_time = time.time()
-    [coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
+    coords = nodemaker.get_names_and_coords_of_parcels(parlistfile)[0]
     print(
         "%s%s%s"
         % (
@@ -237,10 +237,10 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
                                         ].tolist()
 
     start_time = time.time()
-    parcel_list = nodemaker.gen_img_list(parlistfile)
-    [net_coords, net_parcel_list, net_labels, subnet] = \
+    parcels_4d_img = nodemaker.three_to_four_parcellation(parlistfile)
+    [net_coords, net_parcels_4d_img, net_labels, subnet] = \
         nodemaker.get_node_membership(
-        subnet, template, coords, labels, parc, parcel_list
+        subnet, template, coords, labels, parc, parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -255,11 +255,11 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     [
         net_coords_masked,
         net_labels_masked,
-        net_parcel_list_masked,
+        net_parcels_4d_img_masked,
     ] = nodemaker.parcel_masker(
         roi,
         net_coords,
-        net_parcel_list,
+        net_parcels_4d_img,
         net_labels,
         dir_path,
         ID,
@@ -277,7 +277,7 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
 
     start_time = time.time()
     [net_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
-        net_parcel_list_masked
+        net_parcels_4d_img_masked
     )
     print(
         "%s%s%s"
@@ -304,10 +304,10 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     assert coords is not None
     assert net_coords is not None
     assert net_labels is not None
-    assert net_parcel_list is not None
+    assert net_parcels_4d_img is not None
     assert net_coords_masked is not None
     assert net_labels_masked is not None
-    assert net_parcel_list_masked is not None
+    assert net_parcels_4d_img_masked is not None
     assert out_path is not None
     assert net_parcels_map_nifti is not None
     assert parcel_list_exp is not None
@@ -332,7 +332,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
 
     subnet = "Default"
     parc = False
-    parcel_list = None
+    parcels_4d_img = None
     error = 2
     start_time = time.time()
     [coords, _, _, labels] = nodemaker.fetch_nilearn_atlas_coords(atlas)
@@ -348,7 +348,7 @@ def test_nodemaker_tools_masking_coords_RSN(atlas):
 
     start_time = time.time()
     [net_coords, _, net_labels, subnet] = nodemaker.get_node_membership(
-        subnet, template, coords, labels, parc, parcel_list
+        subnet, template, coords, labels, parc, parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -413,7 +413,7 @@ def test_nodemaker_tools_parlistfile_WB():
 
     start_time = time.time()
 
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
+    WB_parcel_list = nodemaker.three_to_four_parcellation(parlistfile)
     [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
         WB_parcel_list
     )
@@ -494,7 +494,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
 
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
+    WB_parcel_list = nodemaker.three_to_four_parcellation(parlistfile)
 
     start_time = time.time()
     [
@@ -518,7 +518,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     )
 
     start_time = time.time()
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
+    WB_parcel_list = nodemaker.three_to_four_parcellation(parlistfile)
     [WB_parcels_map_nifti, parcel_list_exp] = nodemaker.create_parcel_atlas(
         WB_parcel_list
     )
@@ -532,7 +532,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     )
 
     start_time = time.time()
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
+    WB_parcel_list = nodemaker.three_to_four_parcellation(parlistfile)
     [
         WB_net_parcels_map_nifti_masked,
         WB_coords_masked,
@@ -553,8 +553,8 @@ def test_nodemaker_tools_masking_parlistfile_WB():
         vox_size="2mm",
     )
 
-    WB_parcel_list = nodemaker.gen_img_list(parlistfile)
-    [_, _, WB_parcel_list_masked] = nodemaker.parcel_masker(
+    WB_parcel_list = nodemaker.three_to_four_parcellation(parlistfile)
+    WB_parcel_list_masked = nodemaker.parcel_masker(
         roi,
         WB_coords,
         WB_parcel_list,
@@ -563,7 +563,7 @@ def test_nodemaker_tools_masking_parlistfile_WB():
         ID,
         perc_overlap,
         vox_size="2mm",
-    )
+    )[2]
     print(
         "%s%s%s"
         % (
@@ -648,10 +648,10 @@ def test_create_spherical_roi_volumes():
     template_mask = pkg_resources.resource_filename(
         "pynets", "templates/standard/MNI152_T1_brain_mask_2mm.nii.gz"
     )
-    [parcel_list, _, _, _] = nodemaker.create_spherical_roi_volumes(
+    parcels_4d_img = nodemaker.create_spherical_roi_volumes(
         node_size, [(0, 0, 0), (5, 5, 5)], template_mask
-    )
-    assert len([i for i in parcel_list]) > 0
+    )[0]
+    assert parcels_4d_img.shape[-1] == 2
 
 
 def test_get_sphere():

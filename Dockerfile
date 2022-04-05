@@ -86,9 +86,9 @@ RUN apt-get update -qq \
     && rm -r fsl* \
     && chmod 777 -R /usr/share/fsl/5.0/bin \
     && chmod 777 -R /usr/lib/fsl/5.0 \
-    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=3G          0  0" >> /etc/fstab \
+    && echo "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=2G          0  0" >> /etc/fstab \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
-    && head -c 3G </dev/urandom > /tmp/3G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
+    && head -c 2G </dev/urandom > /tmp/3G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -116,6 +116,8 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda install -yq python=3.8 \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
+    && git config --global url."https://".insteadOf git:// \
+    && git config --global http.postBuffer 1048576000 \
     && pip install numpy requests psutil sqlalchemy importlib-metadata>=0.12 pytest pingouin>=0.3.7 imbalanced-learn>=0.8.0 \
     && pip install --upgrade pyopenssl \
     && git clone https://github.com/dPys/multinetx.git /home/neuro/multinetx \
@@ -129,7 +131,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         openblas \
         graph-tool \
     # Install pynets
-    && git config --global http.postBuffer 1048576000 \
     && pip install --upgrade --force-reinstall numpy \
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
@@ -187,7 +188,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     chmod -R 777 /outputs \
     && mkdir /working && \
     chmod -R 777 /working \
-    && rm -f /tmp/3G_heap.txt
+    && rm -f /tmp/2G_heap.txt
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH

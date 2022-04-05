@@ -7,7 +7,6 @@ Copyright (C) 2017
 import warnings
 warnings.filterwarnings("ignore")
 
-
 def get_parser():
     """Parse command-line inputs"""
     import argparse
@@ -464,9 +463,10 @@ def get_parser():
         choices=["0", "1", "2"],
         help="Include this flag to perform multiplex graph analysis across "
              "structural-functional connectome modalities. Options include "
-             "level (1) Create multiplex graphs using motif-matched adaptive "
-             "thresholding; (2) Additionally perform multiplex graph embedding"
-             " and analysis. Default is (0) which is no multiplex analysis.\n",
+             "level (1) Create multiplex graphs using mutual information and "
+             "adaptive thresholding; (2) Additionally perform multiplex graph "
+             "embedding and analysis. Default is (0) which is no multiplex "
+             "analysis.\n",
     )
     parser.add_argument(
         "-embed",
@@ -675,7 +675,8 @@ def build_workflow(args, retval):
         hardcoded_params['tracking']["roi_neighborhood_tol"][0]
 
     # Set Arguments to global variables
-    ID = args.id
+    ID = [i.replace('sub-sub-', 'sub-').replace('ses-ses-', 'ses-').replace(
+        'sub-sub', 'sub-').replace('ses-ses', 'ses-') for i in args.id]
     outdir = f"{args.output_dir}/pynets"
     os.makedirs(outdir, exist_ok=True)
     func_file = args.func
@@ -686,7 +687,7 @@ def build_workflow(args, retval):
     graph = args.g
 
     if graph is not None:
-        include_str_matches = ['ventral']
+        #include_str_matches = ['ventral']
         if len(graph) > 1:
             multi_subject_graph = graph
             multi_subject_multigraph = []
@@ -799,12 +800,11 @@ def build_workflow(args, retval):
     resources = args.pm
     if resources == "auto":
         import psutil
-        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 1
+        vmem = int(list(psutil.virtual_memory())[4]/1000000000) - 0.5
         procmem = [int(psutil.cpu_count()),
                    [vmem if vmem > 8 else int(8)][0]]
     else:
         procmem = list(eval(str(resources)))
-        procmem[1] = procmem[1] - 1
     if args.thr is None:
         thr = float(1.0)
     else:

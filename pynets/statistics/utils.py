@@ -3,11 +3,11 @@
 """
 Copyright (C) 2017
 """
-import matplotlib
 import pandas as pd
+import numpy as np
+import matplotlib
 import os
 import glob
-import numpy as np
 import itertools
 import warnings
 from collections import OrderedDict
@@ -542,9 +542,9 @@ def get_ixs_from_node_dict(node_dict):
             for i in range(len(node_dict)):
                 node_dict_revised[i] = {}
                 node_dict_revised[i]['label'] = ast.literal_eval(
-                    node_dict[i]['label'].replace('\n', ','))[0]
+                    node_dict[i]['label'].replace('\n', ','))
                 node_dict_revised[i]['index'] = ast.literal_eval(
-                    node_dict[i]['label'].replace('\n', ','))[1]
+                    node_dict[i]['index'].replace('\n', ','))
             ixs_corr = [int(k['index']) for k in
                         node_dict_revised.values()]
         elif all(isinstance(v, tuple) for v in
@@ -626,7 +626,7 @@ def retrieve_indices_from_parcellation(node_files, emb_shape, template,
         import glob
         template_parcs = glob.glob(f"{dir_path}/parcellations/parcellation_"
                                   f"space-*.nii.gz")
-        if len(template_parcs) > 1:
+        if len(template_parcs) > 0:
             sorted_template_parcs = sorted(template_parcs,
                                        key=os.path.getmtime)
             template_parc = sorted_template_parcs[0]
@@ -1102,6 +1102,7 @@ def bias_variance_decomp(estimator, X, y, loss='0-1_loss', num_rounds=200,
         avg_var = np.sum((main_predictions - all_pred)**2) / all_pred.size
 
     return avg_expected_loss, avg_bias, avg_var
+
 
 def make_subject_dict(
         modalities, base_dir, thr_type, mets, embedding_types, template,

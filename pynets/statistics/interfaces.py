@@ -292,9 +292,12 @@ class NetworkAnalysis(BaseInterface):
                             if "weight" in i.__code__.co_varnames
                             else i for i in metric_list_global
                         ]
-                    print(
-                        f"\n\nGlobal Topographic Metrics:"
-                        f"\n{metric_list_global_names}\n")
+                    if len(metric_list_global) > 0:
+                        print(
+                            f"\n\nGlobal Topographic Metrics:"
+                            f"\n{metric_list_global_names}\n")
+                    else:
+                        print("No global topographic metrics selected!")
                 else:
                     print("No global topographic metrics selected!")
                     metric_list_global = []
@@ -313,12 +316,16 @@ class NetworkAnalysis(BaseInterface):
                 metric_dict_nodal = yaml.load(stream, Loader=yaml.FullLoader)
                 metric_list_nodal = metric_dict_nodal["metric_list_nodal"]
                 if metric_list_nodal is not None:
-                    print(
-                        f"\nNodal Topographic Metrics:"
-                        f"\n{metric_list_nodal}\n\n")
+                    if len(metric_list_nodal) > 0:
+                        print(
+                            f"\nNodal Topographic Metrics:"
+                            f"\n{metric_list_nodal}\n\n")
+                    else:
+                        print("No local topographic metrics selected!")
                 else:
                     print("No nodal topographic metrics selected!")
                     metric_list_nodal = []
+                    metric_list_nodal_names = []
             except FileNotFoundError as e:
                 import sys
                 print(e, "Failed to parse local.yaml")

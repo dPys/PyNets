@@ -859,8 +859,8 @@ class DmriReg(object):
         from pynets.core.utils import load_runconfig
         from nilearn.image import resample_to_img
         from nipype.utils.filemanip import fname_presuffix, copyfile
-        from pynets.core.nodemaker import gen_img_list
-        from nilearn.image import math_img
+        from pynets.core.nodemaker import three_to_four_parcellation
+        from nilearn.image import math_img, index_img
 
         hardcoded_params = load_runconfig()
         tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
@@ -909,10 +909,10 @@ class DmriReg(object):
                             self.input_mni_brain),
                         interpolation='nearest').to_filename(self.mni_roi_ref)
 
-        roi_parcels = [i for j, i in enumerate(gen_img_list(self.mni_roi_ref))]
+        roi_parcels = three_to_four_parcellation(self.mni_roi_ref)
 
-        ventricle_roi = math_img("img1 + img2", img1=roi_parcels[2],
-                                 img2=roi_parcels[13])
+        ventricle_roi = math_img("img1 + img2", img1=index_img(roi_parcels, 2),
+                                 img2=index_img(roi_parcels, 13))
 
         self.mni_vent_loc = fname_presuffix(
             self.mni_vent_loc, suffix="_tmp",
@@ -1039,14 +1039,9 @@ class DmriReg(object):
         )
         time.sleep(0.5)
 
-        if tiss_class == 'wb' or tiss_class == 'cmc':
-            csf_thr = 0.50
-            wm_thr = 0.15
-            gm_thr = 0.10
-        else:
-            csf_thr = 0.99
-            wm_thr = 0.10
-            gm_thr = 0.075
+        csf_thr = 0.95
+        wm_thr = 0.05
+        gm_thr = 0.05
 
         # Threshold WM to binary in dwi space
         nib.save(math_img(f"img > {wm_thr}",

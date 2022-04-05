@@ -48,27 +48,24 @@ def get_sphere(coords, r, vox_dims, dims):
      Frontiers in Neuroinformatics.
     """
     r = float(r)
-    xx, yy, zz = [slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1)
-                  for i in range(len(coords))]
-    cube = np.vstack([row.ravel() for row in np.mgrid[xx, yy, zz]])
-    sphere = cube[:, np.sum(
-        np.dot(np.diag(vox_dims), cube) ** 2, 0) ** 0.5 <= r]
-    sphere = np.round(sphere.T + coords)
-    neighbors = sphere[(np.min(sphere, 1) >= 0) & (
+    cube = np.vstack([row.ravel() for row in np.mgrid[[
+        slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1)
+                  for i in range(len(coords))]]])
+    sphere = np.round(cube[:, np.sum(
+        np.dot(np.diag(vox_dims), cube) ** 2, 0) ** 0.5 <= r].T + coords)
+    return sphere[(np.min(sphere, 1) >= 0) & (
         np.max(np.subtract(sphere, dims), 1) <= -1), :].astype(int)
 
-    return neighbors
 
-
-def create_parcel_atlas(parcel_list, label_intensities=None):
+def create_parcel_atlas(parcels_4d_img, label_intensities=None):
     """
     Create a 3D Nifti1Image atlas parcellation of consecutive integer
     intensities from an input list of ROI's.
 
     Parameters
     ----------
-    parcel_list : list
-        List of 3D boolean numpy arrays or binarized Nifti1Images
+    parcels_4d_img : Nifti1Image
+        4D image stack of boolean numpy arrays or binarized Nifti1Images
         corresponding to ROI masks.
 
     Returns
@@ -81,23 +78,22 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
         to ROI masks, prepended with a background image of zeros.
     """
     import gc
-    import types
-    from nilearn.image import new_img_like, iter_img
-    from nibabel.funcs import concat_images
+    from nilearn.image import new_img_like, index_img
 
-    if isinstance(parcel_list, types.GeneratorType):
-        parcel_list = [i for i in parcel_list]
-
-    template_image = parcel_list[0]
-    template_affine = template_image.affine
-    template_shape = template_image.shape
-    parcel_list = iter_img([new_img_like(
-        template_image, np.zeros(template_shape, dtype=bool))
-                            ] + parcel_list)
-    template_image.uncache()
-    concatted_parcels = concat_images(parcel_list)
-    del parcel_list
-    gc.collect()
+    for ix in range(parcels_4d_img.shape[-1]):
+        if ix == 0:
+            template_image = index_img(parcels_4d_img, ix)
+            template_affine = template_image.affine
+            template_shape = template_image.shape
+            template_image.uncache()
+            concatted_parcels = np.asarray(new_img_like(
+                template_image, np.zeros(template_shape, dtype=bool)
+            ).dataobj)[:, :, :, np.newaxis]
+        concatted_parcels = np.append(
+            concatted_parcels, np.asarray(index_img(parcels_4d_img,
+                                                    ix).dataobj)[:, :, :,
+                               np.newaxis], axis=3)
+        gc.collect()
 
     if label_intensities is not None:
         parcel_values = np.array([0] + label_intensities).astype("float16")
@@ -107,7 +103,7 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
 
     parcel_sum = np.sum(
         parcel_values *
-        np.asarray(concatted_parcels.dataobj, dtype=np.float16),
+        concatted_parcels,
         axis=3,
         dtype=np.uint16)
 
@@ -123,6 +119,7 @@ def create_parcel_atlas(parcel_list, label_intensities=None):
     del outs
     gc.collect()
 
+    template_affine[3, 3] = 1
     return nib.Nifti1Image(parcel_sum, affine=template_affine), parcel_values
 
 
@@ -300,7 +297,7 @@ def get_node_membership(
         coords,
         labels,
         parc,
-        parcel_list,
+        parcels_4d,
         perc_overlap=0.75,
         error=4):
     """
@@ -324,7 +321,7 @@ def get_node_membership(
         List of string labels corresponding to ROI nodes.
     parc : bool
         Indicates whether to use parcels instead of coordinates as ROI nodes.
-    parcel_list : list
+    parcels_4d : list
         List of 3D boolean numpy arrays or binarized Nifti1Images
         corresponding to ROI masks.
     perc_overlap : float
@@ -369,9 +366,9 @@ def get_node_membership(
     import pandas as pd
     import sys
     import tempfile
-    from nilearn.image import resample_to_img, index_img, iter_img
+    from nilearn.image import resample_to_img, index_img
     from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm, \
-        create_parcel_atlas, gen_img_list
+        create_parcel_atlas, three_to_four_parcellation
 
     if sys.platform.startswith('win') is False:
         try:
@@ -394,21 +391,19 @@ def get_node_membership(
     z_vox = np.diagonal(bna_aff[:3, 0:3])[2]
 
     if parc is True:
-        if isinstance(parcel_list, str):
-            parcel_list_img = nib.load(parcel_list)
-            parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                                range(parcel_list_img.shape[-1])])
-            parcel_atlas = create_parcel_atlas(parcel_list)[0]
-            del parcel_list
-            gc.collect()
+        if isinstance(parcels_4d, str):
+            parcels_4d_img = nib.load(parcels_4d)
+            parcel_atlas = create_parcel_atlas(parcels_4d_img)[0]
         else:
-            parcel_atlas = create_parcel_atlas(parcel_list)[0]
+            parcels_4d_img = parcels_4d
+            parcel_atlas = create_parcel_atlas(parcels_4d_img)[0]
+
         parcel_atlas_img_res = resample_to_img(
             parcel_atlas, template_img, interpolation="nearest"
         )
         par_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz').name
         nib.save(parcel_atlas_img_res, par_tmp)
-        parcel_list_res = gen_img_list(par_tmp)
+        parcel_list_res = three_to_four_parcellation(par_tmp)
     else:
         parcel_list_res = None
 
@@ -557,11 +552,11 @@ def get_node_membership(
         coords_mm = list(set(list(tuple(x) for x in coords_mm)))
     else:
         i = 0
-        RSN_parcels = []
         coords_with_parc = []
         net_labels = []
-        for parcel in parcel_list_res:
-            parcel_vol = np.asarray(parcel.dataobj).astype('bool')
+        for p_ix in range(parcel_list_res.shape[-1]):
+            parcel_vol = np.asarray(index_img(parcel_list_res,
+                                              p_ix).dataobj).astype('bool')
 
             # Count number of unique voxels where overlap of parcel and mask
             # occurs
@@ -593,11 +588,17 @@ def get_node_membership(
                     f"{100 * overlap:.2f}% of parcel {labels[i]} falls within"
                     f" {str(subnet)} mask..."
                 )
-                RSN_parcels.append(parcel)
+                if p_ix == 0:
+                    RSN_parcels = parcel_vol[:, :, :, np.newaxis]
+                RSN_parcels = np.append(
+                    RSN_parcels,
+                    parcel_vol[:, :, :, np.newaxis], axis=3)
                 coords_with_parc.append(coords[i])
                 net_labels.append(labels[i])
             i += 1
         coords_mm = list(set(list(tuple(x) for x in coords_with_parc)))
+        RSN_parcels = np.delete(RSN_parcels, 0, 3)
+        par_aff = parcel_list_res.affine
 
     rsn_img.uncache()
     template_img.uncache()
@@ -608,12 +609,15 @@ def get_node_membership(
             f" {subnet} subnet."
         )
 
-    if RSN_parcels:
-        assert len(coords_mm) == len(net_labels) == len(RSN_parcels)
+    if type(RSN_parcels) is np.ndarray:
+        assert len(coords_mm) == len(net_labels) == RSN_parcels.shape[-1]
+        RSN_parcellation = nib.Nifti1Image(RSN_parcels.astype('int16'),
+                                      affine=par_aff)
     else:
         assert len(coords_mm) == len(net_labels)
+        RSN_parcellation = None
 
-    return coords_mm, RSN_parcels, net_labels, subnet
+    return coords_mm, RSN_parcellation, net_labels, subnet
 
 
 def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
@@ -648,7 +652,7 @@ def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
 def parcel_masker(
         roi,
         coords,
-        parcel_list,
+        parcels_4d,
         labels,
         dir_path,
         ID,
@@ -666,7 +670,7 @@ def parcel_masker(
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
         parcellation node.
-    parcel_list : list
+    parcels_4d : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding
          to ROI masks.
     labels : list
@@ -694,7 +698,6 @@ def parcel_masker(
         ROI mask.
     """
     from nilearn.image import resample_to_img, math_img, index_img, iter_img
-    import types
     from pynets.core.utils import load_runconfig
     import pkg_resources
     import sys
@@ -730,27 +733,23 @@ def parcel_masker(
         interpolation='nearest'
     ).get_fdata().astype('bool')
 
-    if isinstance(parcel_list, types.GeneratorType):
-        parcel_list = iter_img([resample_to_img(i, template_img,
-                                       interpolation='nearest')
-                       for i in parcel_list])
-    elif isinstance(parcel_list, str):
-        parcel_list_img = resample_to_img(nib.load(parcel_list),
-                                          template_img,
-                                          interpolation='nearest')
-        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                       range(parcel_list_img.shape[-1])])
+    if isinstance(parcels_4d, nib.Nifti1Image):
+        parcels_4d_img = resample_to_img(parcels_4d, template_img,
+                                         interpolation='nearest')
+    elif isinstance(parcels_4d, str):
+        parcels_4d_img = resample_to_img(nib.load(parcels_4d),
+                                         template_img,
+                                         interpolation='nearest')
 
     i = 0
     indices = []
-    parcel_list_adj = []
-    for parcel in parcel_list:
+    for ix in range(parcels_4d_img.shape[-1]):
         # Count number of unique voxels where overlap of parcel and mask occurs
         overlap_count = len(
             np.unique(
                 np.where(
                     (mask_data.astype("uint16") == 1)
-                    & (np.asarray(parcel.dataobj
+                    & (np.asarray(index_img(parcels_4d_img, ix).dataobj
                                   ).astype('bool').astype("uint16") == 1)
                 )
             )
@@ -760,12 +759,11 @@ def parcel_masker(
         total_count = len(
             np.unique(
                 np.where(
-                    (np.asarray(parcel.dataobj
+                    (np.asarray(index_img(parcels_4d_img, ix).dataobj
                                 ).astype('bool').astype("uint16") == 1)
                 )
             )
         )
-
         # Calculate % overlap
         if overlap_count > 0:
             overlap = float(overlap_count / total_count)
@@ -785,7 +783,6 @@ def parcel_masker(
         else:
             indices.append(i)
         i += 1
-        parcel_list_adj.append(parcel)
 
     labels_adj = list(labels)
     coords_adj = list(tuple(x) for x in coords)
@@ -793,14 +790,20 @@ def parcel_masker(
     try:
         for ix in sorted(indices, reverse=True):
             print(f"{'Removing: '}{labels_adj[ix]}{' at '}{coords_adj[ix]}")
-            del labels_adj[ix], coords_adj[ix], parcel_list_adj[ix]
+            del labels_adj[ix], coords_adj[ix]
+
+        parcel_list_adj = np.asarray(parcels_4d_img.dataobj)
+        if len(indices) > 0:
+            parcel_list_adj = np.delete(parcel_list_adj,
+                                        np.array(indices).astype('int'), 3)
+
     except RuntimeError as e:
         print(e,
               "Restrictive masking. No parcels remain after masking with"
               " brain mask/roi..."
               )
 
-    del parcel_list
+    parcels_4d_img.uncache()
 
     if not coords_adj:
         raise ValueError(
@@ -808,9 +811,10 @@ def parcel_masker(
             " remaining parcels"
         )
 
-    assert len(coords_adj) == len(labels_adj) == len(parcel_list_adj)
+    assert len(coords_adj) == len(labels_adj) == parcel_list_adj.shape[-1]
 
-    return coords_adj, labels_adj, iter_img(parcel_list_adj)
+    return coords_adj, labels_adj, nib.Nifti1Image(
+        parcel_list_adj, affine=parcels_4d_img.affine)
 
 
 def coords_masker(roi, coords, labels, error, vox_size='2mm'):
@@ -984,10 +988,10 @@ def get_names_and_coords_of_parcels(parcellation, background_label=0):
            label_intensities
 
 
-def gen_img_list(parcellation):
+def three_to_four_parcellation(parcellation):
     """
-    Return list of boolean nifti masks where each masks corresponds to a unique
-    atlas label for the provided atlas parcellation. Path string to
+    Return 4d Nifti1Image of boolean nifti masks where each masks corresponds
+    to a unique atlas label for the provided atlas parcellation. Path string to
     Nifti1Image is input.
 
     Parameters
@@ -1001,33 +1005,27 @@ def gen_img_list(parcellation):
         List of binarized Nifti1Images corresponding to ROI masks for each
         unique atlas label.
     """
-    import sys
     import gc
-    from nilearn.image import iter_img
     import os.path as op
-    from nilearn.image import new_img_like
 
-    if not op.isfile(parcellation):
-        raise ValueError(
-            "\nUser-specified atlas input not found! Check that the"
-            " file(s) specified with the -a flag exist(s)")
-
-    bna_img = nib.load(parcellation, mmap=True)
+    if isinstance(parcellation, nib.Nifti1Image):
+        bna_img = parcellation
+    else:
+        bna_img = nib.load(parcellation, mmap=True)
+    parc_aff = bna_img.affine
     bna_data = np.around(bna_img.get_fdata(caching='fill',
                                            dtype=np.float16).astype('uint16'))
 
     # Get array of unique parcel indices
     uniq_indices = np.unique(bna_data)
-
-    # Number of parcels:
     par_max = len(uniq_indices) - 1
-    img_stack = np.array([bna_data == uniq_indices[idx] for idx in
-                          range(1, par_max + 1)])
+
+    img_stack = np.moveaxis(np.array([bna_data == uniq_indices[idx] for idx in
+                            range(1, par_max + 1)]), 0, -1)
     del bna_data, uniq_indices
     gc.collect()
 
-    return iter_img([new_img_like(bna_img, img_stack[idy]) for idy in
-                     range(par_max)])
+    return nib.Nifti1Image(img_stack.astype('int16'), affine=parc_aff)
 
 
 def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
@@ -1052,23 +1050,33 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
     """
     import gc
     from nilearn.image.resampling import coord_transform
-    from nilearn.image import new_img_like, reorder_img, iter_img
+    from nilearn.image import new_img_like, reorder_img, iter_img, \
+        concat_imgs, index_img
 
     labels_img = reorder_img(nib.load(parcellation))
     labels_data = labels_img.get_fdata()
     labels_affine = labels_img.affine
 
+    parcels_4d_img = three_to_four_parcellation(labels_img)
+
     # Grab number of unique values in 3d image
     unique_labels = set(np.unique(labels_data)) - set([background_label])
     x, y, z = coord_transform(0, 0, 0, np.linalg.inv(labels_affine))
 
-    new_labs = []
     if label_names is not None:
         new_lab_names = []
 
-    ix = 0
-    for lab in unique_labels:
+    for ix, lab in enumerate(unique_labels):
         cur_dat = labels_data == lab
+
+        if ix == 0:
+            template_image = index_img(parcels_4d_img, ix)
+            template_affine = template_image.affine
+            template_shape = template_image.shape
+            template_image.uncache()
+            new_labs = np.asarray(new_img_like(
+                template_image, np.zeros(template_shape, dtype=bool)
+            ).dataobj)[:, :, :, np.newaxis]
 
         # Grab hemispheres separately
         left_hemi = labels_data.copy() == lab
@@ -1082,32 +1090,35 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
             right_lab = np.copy(cur_dat)
             left_lab[int(x):] = 0
             right_lab[:int(x)] = 0
-            new_labs.append(left_lab)
-            new_labs.append(right_lab)
+            new_labs = np.append(
+                new_labs, np.asarray(left_lab)[:, :, :,
+                                   np.newaxis], axis=3)
+            new_labs = np.append(
+                new_labs, np.asarray(right_lab)[:, :, :,
+                                   np.newaxis], axis=3)
             if label_names is not None:
                 new_lab_names.append(f"{label_names[ix]}_Left")
                 new_lab_names.append(f"{label_names[ix]}_Right")
             del left_lab, right_lab
         else:
-            new_labs.append(cur_dat)
+            new_labs = np.append(
+                new_labs, np.asarray(cur_dat)[:, :, :,
+                                   np.newaxis], axis=3)
             if label_names is not None:
                 new_lab_names.append(label_names[ix])
         del left_hemi, right_hemi, cur_dat
         gc.collect()
 
-    del labels_data
-
-    img_list = iter_img([new_img_like(labels_img, i) for i in new_labs])
-
     labels_img.uncache()
-    del new_labs, labels_img
+    del labels_data, labels_img
 
     # Enforce consecutive labelings
-    atlas_img_corr = create_parcel_atlas(img_list)[0]
+    atlas_img_corr = create_parcel_atlas(new_img_like(parcels_4d_img,
+                                                      new_labs))[0]
     nib.save(atlas_img_corr, parcellation)
 
     atlas_img_corr.uncache()
-    del img_list, atlas_img_corr
+    del new_labs, atlas_img_corr
     gc.collect()
 
     return parcellation, label_names
@@ -1204,9 +1215,7 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
     out_path : str
         File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
     """
-    import gc
-    from nilearn.image import concat_imgs
-    from pynets.core.nodemaker import gen_img_list
+    from pynets.core.nodemaker import three_to_four_parcellation
     import os.path as op
 
     if not op.isfile(parcellation):
@@ -1214,26 +1223,17 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
             "\nUser-specified atlas input not found! Check that "
             "the file(s) specified with the -a flag exist(s)")
 
-    img_list = gen_img_list(parcellation)
     print(
         f"\nExtracting parcels associated with {subnet} "
         f"subnet locations...\n")
-    net_parcels = [i for j, i in enumerate(img_list) if j in labels]
-    net_parcels_concatted = concat_imgs(net_parcels)
-    net_parcels_sum = np.sum(
-        (np.array(range(len(net_parcels))) + 1)
-        * np.asarray(net_parcels_concatted.dataobj),
-        axis=3,
-        dtype=np.uint16,
-    )
+    net_parcels_sum = create_parcel_atlas(
+        three_to_four_parcellation(parcellation))
     parcellation_name = \
         op.basename(parcellation).split(op.splitext(parcellation)[1])[0]
     out_path = f"{dir_path}" \
                f"/{parcellation_name}_" \
                f"{subnet}_parcels.nii.gz"
-    nib.save(nib.Nifti1Image(net_parcels_sum, affine=np.eye(4)), out_path)
-    del net_parcels_concatted, img_list
-    gc.collect()
+    nib.save(net_parcels_sum[0], out_path)
 
     return out_path
 
@@ -1390,7 +1390,7 @@ def parcel_naming(coords, vox_size):
 
 
 def get_node_attributes(node_files, emb_shape,
-                                    atlas='BrainnetomeAtlasFan2016'):
+                        atlas='BrainnetomeAtlasFan2016'):
     import ast
     import re
     from pynets.statistics.utils import parse_closest_ixs
@@ -1416,7 +1416,7 @@ def get_node_attributes(node_files, emb_shape,
 def node_gen_masking(
     roi,
     coords,
-    parcel_list,
+    parcels_4d,
     labels,
     dir_path,
     ID,
@@ -1439,7 +1439,7 @@ def node_gen_masking(
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
         parcellation node.
-    parcel_list : list
+    parcels_4d : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding
          to ROI masks.
     labels : list
@@ -1486,20 +1486,19 @@ def node_gen_masking(
         Path to directory containing subject derivative data for given run.
     """
     import gc
-    from nilearn.image import index_img, iter_img
     from pynets.core.nodemaker import parcel_masker, create_parcel_atlas
 
-    if isinstance(parcel_list, str):
-        parcel_list_img = nib.load(parcel_list)
-        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                                range(parcel_list_img.shape[-1])])
+    if isinstance(parcels_4d, str):
+        parcels_4d_img = nib.load(parcels_4d)
+    else:
+        parcels_4d_img = parcels_4d
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
-    [coords, labels, parcel_list_masked] = parcel_masker(
-        roi, coords, parcel_list, labels, dir_path, ID, perc_overlap, vox_size,
+    [coords, labels, parcels_4d_masked] = parcel_masker(
+        roi, coords, parcels_4d_img, labels, dir_path, ID, perc_overlap,
+        vox_size,
     )
-    del parcel_list
-    gc.collect()
+    parcels_4d_img.uncache()
 
     if any(isinstance(sub, tuple) for sub in labels):
         label_intensities = [i[1] for i in labels]
@@ -1508,10 +1507,10 @@ def node_gen_masking(
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = create_parcel_atlas(
-        parcel_list_masked, label_intensities)
+    net_parcels_map_nifti = create_parcel_atlas(
+        parcels_4d_masked, label_intensities)[0]
 
-    del parcel_list_masked
+    del parcels_4d_masked
     gc.collect()
 
     assert (
@@ -1524,7 +1523,7 @@ def node_gen_masking(
     return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
 
 
-def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
+def node_gen(coords, parcels_4d, labels, dir_path, ID, parc, atlas,
              parcellation):
     """
     In the case that masking was not applied, this function generate nodes
@@ -1536,7 +1535,7 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
         List of (x, y, z) tuples in mm-space corresponding to a coordinate
         atlas used or which represent the center-of-mass of each
         parcellation node.
-    parcel_list : list
+    parcels_4d : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding
          to ROI masks.
     labels : list
@@ -1575,13 +1574,12 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
         Path to directory containing subject derivative data for given run.
     """
     import gc
-    from nilearn.image import index_img, iter_img
     from pynets.core.nodemaker import create_parcel_atlas
 
-    if isinstance(parcel_list, str):
-        parcel_list_img = nib.load(parcel_list)
-        parcel_list = iter_img([index_img(parcel_list_img, i) for i in
-                                range(parcel_list_img.shape[-1])])
+    if isinstance(parcels_4d, str):
+        parcels_4d_img = nib.load(parcels_4d)
+    else:
+        parcels_4d_img = parcels_4d
 
     if any(isinstance(sub, tuple) for sub in labels):
         label_intensities = [i[1] for i in labels]
@@ -1590,9 +1588,9 @@ def node_gen(coords, parcel_list, labels, dir_path, ID, parc, atlas,
     else:
         label_intensities = labels
 
-    [net_parcels_map_nifti, _] = create_parcel_atlas(parcel_list,
-                                                     label_intensities)
-    del parcel_list
+    net_parcels_map_nifti = create_parcel_atlas(parcels_4d_img,
+                                                label_intensities)[0]
+    parcels_4d_img.uncache()
     gc.collect()
 
     coords = list(tuple(x) for x in coords)
@@ -1684,7 +1682,7 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
 
     Returns
     -------
-    parcel_list : list
+    parcels_4d : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding
          to ROI masks.
     par_max : int
@@ -1699,7 +1697,7 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
     import gc
     from pynets.core.nodemaker import get_sphere, mmToVox
     from nilearn.masking import intersect_masks
-    from nilearn.image import iter_img
+    from nilearn.image import iter_img, concat_imgs
 
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
@@ -1729,8 +1727,7 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
                 ).T
             )
         ] = (i * 1)
-        parcel_list_all.append(
-            nib.Nifti1Image(
+        parcel_list_all.append(nib.Nifti1Image(
                 sphere_vol.astype("bool").astype("uint16"),
                 affine=mask_aff))
         i += 1
@@ -1742,10 +1739,10 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
                 parcel_list_all,
                 threshold=1).dataobj).astype("bool"))
 
-    parcel_list = []
-    for mask in parcel_list_all:
+    parcels_4d = []
+    for mask in iter_img(parcel_list_all):
         non_ovlp = np.asarray(mask.dataobj) * parcel_intersect
-        parcel_list.append(
+        parcels_4d.append(
             nib.Nifti1Image(
                 non_ovlp.astype("bool").astype("uint16"),
                 affine=mask_aff))
@@ -1758,4 +1755,4 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
     else:
         raise ValueError("Number of nodes is zero.")
 
-    return iter_img(parcel_list), par_max, node_radius, parc
+    return concat_imgs(iter_img(parcels_4d)), par_max, node_radius, parc

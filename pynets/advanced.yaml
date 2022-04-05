@@ -27,7 +27,7 @@ tracking:
     tracking_method: # a tracking algorithm for dmri connectome estimation. Options are: local and particle.
         - 'local'
     tracking_samples: # Indicates the number of cumulative streamline samples for each tractogram. *Note that we should keep this relatively low since total streamlines will actually sum cumulatively across a given connectome ensemble (e.g. 100 connectomes x 20,000 = 2 million streamlines!)
-        - 20000
+        - 10000
     DSN: # Experimental option. Direct Streamline Normalization attempts to normalize streamlines (i.e. post-reconstruction) to a morphologically standardized scaling (i.e. range of fiber lengths) specific to the template used. This may help to facilitate group/population analysis.
         - False
     maxcrossing: # Maximum crossing fibers per voxel for probabilistic tractography
@@ -53,7 +53,7 @@ tracking:
     min_streams: # To prevent infinite loops searching for streamlines that are spatially excluded.
         - 25
     seeding_mask_thr:
-        - 0.0075
+        - 0.001
     track_timeout:
         - 7200 # number of seconds until automatic joblib termination for tractography (prevents inefficient loops).
 clustering_local_conn: # If you are running agglomerative-type clustering (e.g. ward, average, single, complete) this setting indicates which spatially constrained local connectivity definition to use. Options are 'allcorr' (all voxels have equal weight), 'scorr' (spatial-connectivity across time-series), and 'tcorr' (temporal-connectivity across time-series).
@@ -83,7 +83,7 @@ graph_analysis_engine: # Either graph_tool / gt or networkx / nx. The former req
 embed:
     - 'ASE'
 #    - 'OMNI'
-#    - 'MASE'
+    - 'MASE'
     - 'eigenvector'
 #    - 'degree'
     - 'betweenness'
@@ -139,22 +139,34 @@ local_atlases:
     - 'sub-colin27_label-L2018_desc-scale3_atlas'
     - 'sub-colin27_label-L2018_desc-scale4_atlas'
     - 'sub-colin27_label-L2018_desc-scale5_atlas'
-    - 'rsn-intersection_res-200'
-    - 'rsn-intersection_res-400'
-    - 'rsn-intersection_res-600'
-    - 'rsn-intersection_res-800'
-    - 'rsn-language_res-200'
-    - 'rsn-language_res-400'
-    - 'rsn-language_res-600'
-    - 'rsn-language_res-800'
-    - 'rsn-union_res-200'
-    - 'rsn-union_res-400'
-    - 'rsn-union_res-600'
-    - 'rsn-union_res-800'
-    - 'rsn-ventral_res-200'
-    - 'rsn-ventral_res-400'
-    - 'rsn-ventral_res-600'
-    - 'rsn-ventral_res-800'
+    - 'net-Cont_scale-200'
+    - 'net-Cont_scale-400'
+    - 'net-Cont_scale-600'
+    - 'net-Cont_scale-800'
+    - 'net-Default_scale-200'
+    - 'net-Default_scale-400'
+    - 'net-Default_scale-600'
+    - 'net-Default_scale-800'
+    - 'net-DorsAttn_scale-200'
+    - 'net-DorsAttn_scale-400'
+    - 'net-DorsAttn_scale-600'
+    - 'net-DorsAttn_scale-800'
+    - 'net-Limbic_scale-200'
+    - 'net-Limbic_scale-400'
+    - 'net-Limbic_scale-600'
+    - 'net-Limbic_scale-800'
+    - 'net-SalVentAttn_scale-200'
+    - 'net-SalVentAttn_scale-400'
+    - 'net-SalVentAttn_scale-600'
+    - 'net-SalVentAttn_scale-800'
+    - 'net-SomMot_scale-200'
+    - 'net-SomMot_scale-400'
+    - 'net-SomMot_scale-600'
+    - 'net-SomMot_scale-800'
+    - 'net-Vis_scale-200'
+    - 'net-Vis_scale-400'
+    - 'net-Vis_scale-600'
+    - 'net-Vis_scale-800'
 labeling_atlases:
     - 'talairach_labels'
     - 'mni_labels'
@@ -233,7 +245,7 @@ resource_dict: # Nipype workflow resource settings
       - 'pass_meta_outs_struct_node':
         - (1, 2)
       - 'fetch_nodes_and_labels_node':
-        - (4, 8)
+        - (8, 14)
       - 'save_nifti_parcels_node':
         - (1, 2)
       - 'gtab_node':
@@ -273,15 +285,15 @@ resource_dict: # Nipype workflow resource settings
       - 'thresh_info_node':
         - (1, 1)
       - 'register_node':
-        - (6, 8)
+        - (4, 8)
       - 'reg_nodes_node':
-        - (2, 4)
+        - (4, 8)
       - 'RegisterParcellation2MNIFunc_node':
         - (2, 4)
       - 'get_fa_node':
         - (1.5, 1.5)
       - 'run_tracking_node':
-        - (4, 10)
+        - (4, 8)
       - 'dsn_node':
         - (1, 1)
       - 'plot_all_node':
@@ -364,7 +376,7 @@ execution_dict: # Nipype workflow global settings
     - 'raise_insufficient':
         - False
     - 'poll_sleep_duration':
-        - 0.1
+        - 0.2
     - 'hash_method':
         - 'timestamp'
     - 'local_hash_check':

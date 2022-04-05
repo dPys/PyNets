@@ -21,7 +21,7 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
 
     """
     import itertools
-    from pynets.core.thresholding import threshold_absolute
+    from pynets.core.thresholding import threshold_proportional
     import pandas as pd
 
     # Functional graph threshold window
@@ -34,8 +34,8 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
 
     all_thr_combos = list(itertools.product(threshes_func, threshes_dwi))
     for thr_func, thr_dwi in all_thr_combos:
-        X = threshold_absolute(dwi_mat, thr_dwi)
-        Y = threshold_absolute(func_mat, thr_func)
+        X = threshold_proportional(dwi_mat, thr_dwi)
+        Y = threshold_proportional(func_mat, thr_func)
         mutual_info_dict[f"func-{round(thr_func, 2)}_" \
                          f"dwi-{round(thr_dwi, 2)}"] = mutual_information_2d(
             X.ravel(), Y.ravel())
@@ -43,13 +43,17 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
     df = pd.DataFrame(mutual_info_dict, index=range(1))
     df = df.loc[:, (df > 0.01).any(axis=0)]
     df = df.T.sort_values(by=0, ascending=False)
+    if len(list(df.index)) == 0:
+        raise ValueError("No connections found in either or both of func or "
+                         "dwi graphs!")
+
     best_thresh_combo = list(df.index)[0]
 
     best_dwi_thr = float(best_thresh_combo.split("-")[1].split('_')[0])
     best_func_thr = float(best_thresh_combo.split("-")[2].split('_')[0])
 
-    return {best_dwi_thr: threshold_absolute(dwi_mat, best_dwi_thr)}, \
-           {best_func_thr: threshold_absolute(func_mat, best_func_thr)}, \
+    return {best_dwi_thr: threshold_proportional(dwi_mat, best_dwi_thr)}, \
+           {best_func_thr: threshold_proportional(func_mat, best_func_thr)}, \
            df.head(1)[0].values[0]
 
 
@@ -90,11 +94,7 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
     """
     import networkx as nx
     import multinetx as mx
-
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import _pickle as pickle
+    import pickle5 as pickle
 
     mg = mx.MultilayerGraph()
     N = dwi_mat.shape[0]
@@ -112,7 +112,7 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
     graph_dir = f"{namer_dir}/mplx_graphs"
     if not os.path.isdir(graph_dir):
         os.mkdir(graph_dir)
-    mG_path = f"{graph_dir}/{name[:200]}_mG.pkl"
+    mG_path = f"{graph_dir}/{name}.pkl"
     nx.write_gpickle(mg, mG_path, protocol=2)
 
     return mG_path
@@ -171,9 +171,9 @@ def matching(
     atlas,
     namer_dir,
 ):
+    import glob
     import networkx as nx
     import numpy as np
-    import glob
     from pynets.core import thresholding
     from pynets.statistics.utils import parse_closest_ixs
     from graspologic.utils import remove_loops, symmetrize, \
@@ -189,17 +189,16 @@ def matching(
 
     node_dict_dwi = parse_closest_ixs(
         glob.glob(f"{str(Path(dwi_graph_path).parent.parent)}"
-                  f"/nodes/*"), dwi_mat.shape[0])[1]
+                  f"/nodes/*.json"), dwi_mat.shape[0])[1]
 
     node_dict_func = parse_closest_ixs(
         glob.glob(f"{str(Path(func_graph_path).parent.parent)}"
-                  f"/nodes/*"), func_mat.shape[0])[1]
+                  f"/nodes/*.json"), func_mat.shape[0])[1]
 
     G_dwi = nx.from_numpy_array(dwi_mat)
     nx.set_edge_attributes(G_dwi, 'structural',
                             nx.get_edge_attributes(G_dwi, 'weight').values())
     nx.set_node_attributes(G_dwi, dict(node_dict_dwi), name='dwi')
-
     #G_dwi.nodes(data=True)
 
     G_func = nx.from_numpy_array(func_mat)
@@ -220,11 +219,32 @@ def matching(
 
     [G_dwi, G_func] = multigraph_lcc_intersection([G_dwi, G_func])
 
-    dwi_name = dwi_graph_path.split("/rawgraph_"
-                                          )[-1].split(".npy")[0]
-    func_name = func_graph_path.split("/rawgraph_")[-1].split(".npy")[0]
-    name = f"{atlas}_mplx_Layer-1_{dwi_name[0:30]}_" \
-           f"Layer-2_{func_name[0:30]}"
+    def writeJSON(metadata_str, outputdir):
+        import json
+        import uuid
+        modality = metadata_str.split('modality-')[1].split('_')[0]
+        metadata_list = [i for i in
+                         metadata_str.split('modality-'
+                                            )[1].split('_') if '-' in i]
+        hash = str(uuid.uuid4())
+        filename = f"{outputdir}/sidecar_modality-{modality}_{hash}.json"
+        metadata_dict = {}
+        for meta in metadata_list:
+            k, v = meta.split('-')
+            metadata_dict[k] = v
+        with open(filename, 'w+') as jsonfile:
+            json.dump(metadata_dict, jsonfile, indent=4)
+        jsonfile.close()
+        return hash
+
+    dwi_name = dwi_graph_path.split("/")[-1].split(".npy")[0]
+    func_name = func_graph_path.split("/")[-1].split(".npy")[0]
+
+    dwi_hash = writeJSON(dwi_name, namer_dir)
+    func_hash = writeJSON(func_name, namer_dir)
+
+    name = f"{atlas}_mplx_layer1-dwi_ensemble-{dwi_hash}_" \
+           f"layer2-func_ensemble-{func_hash}"
 
     dwi_opt, func_opt, best_mi = optimize_mutual_info(
         nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
@@ -236,23 +256,22 @@ def matching(
 
     G_multi = nx.OrderedMultiGraph(nx.compose(G_dwi_final, G_func_final))
 
+    out_name = f"{name}_matchthr-{list(dwi_opt.keys())[0]}_" \
+               f"{list(func_opt.keys())[0]}"
     mG = build_mx_multigraph(
         nx.to_numpy_array(G_func_final),
         nx.to_numpy_array(G_dwi_final),
-        f"{name}_{list(dwi_opt.keys())[0]}_{list(func_opt.keys())[0]}",
+        out_name,
         namer_dir)
 
-    mG_nx = f"{namer_dir}/{name}_dwiThr-{list(dwi_opt.keys())[0]}_" \
-            f"funcThr-{list(func_opt.keys())[0]}.gpickle"
+    mG_nx = f"{namer_dir}/{out_name}.gpickle"
     nx.write_gpickle(G_multi, mG_nx)
 
-    out_dwi_mat = f"{namer_dir}/dwi-{name[0:30]}thr-" \
-                  f"{list(dwi_opt.keys())[0]}.npy"
-    out_func_mat = f"{namer_dir}/func-{name[0:30]}thr-" \
-                   f"{list(func_opt.keys())[0]}.npy"
-    np.save(out_dwi_mat, dwi_mat_final)
-    np.save(out_func_mat, func_mat_final)
-    return mG_nx, mG, out_dwi_mat, out_func_mat
+    dwi_file_out = f"{namer_dir}/{dwi_name}.npy"
+    func_file_out = f"{namer_dir}/{func_name}.npy"
+    np.save(dwi_file_out, dwi_mat_final)
+    np.save(func_file_out, func_mat_final)
+    return mG_nx, mG, dwi_file_out, func_file_out
 
 
 def build_multigraphs(est_path_iterlist):
@@ -287,17 +306,10 @@ def build_multigraphs(est_path_iterlist):
     import itertools
     import numpy as np
     from pathlib import Path
+    from pynets.statistics.individual.multiplex import matching
     from pynets.core.utils import flatten, load_runconfig
 
-    raw_est_path_iterlist = list(
-        set(
-            [
-                os.path.dirname(i) + '/raw' + os.path.basename(i).split(
-                    "_thrtype")[0] + ".npy"
-                for i in list(flatten(est_path_iterlist))
-            ]
-        )
-    )
+    raw_est_path_iterlist = list(flatten(est_path_iterlist))
 
     # Available functional and structural connectivity models
     hardcoded_params = load_runconfig()
@@ -326,7 +338,7 @@ def build_multigraphs(est_path_iterlist):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("model-")[1].split("_")[0] in dwi_models
+                if "dwi" in i
             ]
         )
     )
@@ -335,7 +347,7 @@ def build_multigraphs(est_path_iterlist):
             [
                 i
                 for i in raw_est_path_iterlist
-                if i.split("model-")[1].split("_")[0] in func_models
+                if "func" in i
             ]
         )
     )
@@ -359,7 +371,7 @@ def build_multigraphs(est_path_iterlist):
         Path(
             os.path.dirname(
                 est_path_iterlist_dwi[0])).parent.parent.parent)
-    namer_dir = f"{dir_path}/graphs_multilayer"
+    namer_dir = f"{dir_path}/dwi-func"
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
 

@@ -273,7 +273,8 @@ def track_ensemble(
     gm_in_dwi,
     vent_csf_in_dwi,
     wm_in_dwi,
-    tiss_class
+    tiss_class,
+    BACKEND='threading'
 ):
     """
     Perform native-space ensemble tractography, restricted to a vector of ROI
@@ -359,6 +360,7 @@ def track_ensemble(
     import tempfile
     from joblib import Parallel, delayed, Memory
     import itertools
+    import pickle5 as pickle
     from pynets.dmri.track import run_tracking
     from colorama import Fore, Style
     from pynets.dmri.utils import generate_sl
@@ -371,6 +373,7 @@ def track_ensemble(
 
     warnings.filterwarnings("ignore")
 
+    pickle.HIGHEST_PROTOCOL = 5
     joblib_dir = tempfile.mkdtemp()
     os.makedirs(joblib_dir, exist_ok=True)
 
@@ -456,7 +459,7 @@ def track_ensemble(
     try:
         while float(stream_counter) < float(target_samples) and \
                 float(ix) < 0.50*float(len(all_combs)):
-            with Parallel(n_jobs=nthreads, backend='loky',
+            with Parallel(n_jobs=nthreads, backend=BACKEND,
                           mmap_mode='r+', verbose=0) as parallel:
 
                 out_streams = parallel(
@@ -492,7 +495,7 @@ def track_ensemble(
                         print(f"\n{Fore.RED}No streamlines generated in "
                               f"waymask vacinity\n")
                         print(Style.RESET_ALL)
-                        #return None
+                        return None
 
                 if len(out_streams) < min_streams:
                     ix += 1
@@ -503,7 +506,7 @@ def track_ensemble(
                     if ix > 5:
                         print(f"\n{Fore.RED}No streamlines generated\n")
                         print(Style.RESET_ALL)
-                        #return None
+                        return None
                     continue
                 else:
                     ix -= 1
@@ -530,17 +533,17 @@ def track_ensemble(
                         f"out: {time.time() - start}")
                     print(Style.RESET_ALL)
                     memory.clear(warn=False)
-                    #return None
+                    return None
 
     except RuntimeError as e:
         print(f"\n{Fore.RED}Error: Tracking failed due to:\n{e}\n")
         print(Style.RESET_ALL)
         memory.clear(warn=False)
-        #return None
-
-    memory.clear(warn=False)
+        return None
 
     print("Tracking Complete: ", str(time.time() - start))
+
+    memory.clear(warn=False)
 
     del parallel, all_combs
     gc.collect()
@@ -551,7 +554,7 @@ def track_ensemble(
     else:
         print(f"\n{Fore.RED}No streamlines generated!")
         print(Style.RESET_ALL)
-        #return None
+        return None
 
 
 def run_tracking(step_curv_combinations, recon_shelved,
@@ -632,10 +635,9 @@ def run_tracking(step_curv_combinations, recon_shelved,
         ClosestPeakDirectionGetter,
         DeterministicMaximumDirectionGetter
     )
-    from nilearn.image import index_img
+    from nilearn.image import index_img, math_img
     from pynets.dmri.utils import generate_seeds, random_seeds_from_mask
     from nibabel.streamlines.array_sequence import ArraySequence
-    from nilearn.image import math_img
 
     start_time = time.time()
 

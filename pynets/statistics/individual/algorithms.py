@@ -1135,7 +1135,6 @@ def prune_small_components(G, min_nodes):
 
     # List because it returns a generator
     components = list(nx.connected_components(G_tmp))
-    del G_tmp
 
     components.sort(key=len, reverse=True)
     print(f"{len(components)} connected component(s) detected...")
@@ -1149,7 +1148,7 @@ def prune_small_components(G, min_nodes):
             good_components.append(nx.subgraph(G_tmp, comp))
         c = c + 1
 
-    del components
+    del components, G_tmp
 
     if len(good_components) == 0:
         raise ValueError(f"No components with a minimum of {min_nodes} found")
@@ -1279,7 +1278,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                     net_met_val = float(
                         average_shortest_path_length_for_all(G))
                 except BaseException as e:
-                    print(e, f"WARNING: {net_name} failed for G.")
+                    print(e, f"Warning: {net_name} failed for G.")
                     # np.save(f"/tmp/average_shortest_path_length_
                     # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
@@ -1292,7 +1291,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
             net_met_val = gt.global_clustering(
                 g, weight=g.edge_properties['weight'])[0]
         except BaseException as e:
-            print(e, f"WARNING: {net_name} failed for G.")
+            print(e, f"Warning: {net_name} failed for G.")
             net_met_val = np.nan
     elif "graph_number_of_cliques" in net_name:
         if nx.is_connected(G) is True:
@@ -1302,7 +1301,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                 try:
                     net_met_val = float(subgraph_number_of_cliques_for_all(G))
                 except BaseException as e:
-                    print(e, f"WARNING: {net_name} failed for G.")
+                    print(e, f"Warning: {net_name} failed for G.")
                     # np.save(f"/tmp/graph_num_cliques_
                     # {random.randint(1, 400)}.npy",
                     #         np.array(nx.to_numpy_matrix(H)))
@@ -1314,7 +1313,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
         try:
             net_met_val = float(i(G))
         except BaseException as e:
-            print(e, f"WARNING: {net_name} failed for G.")
+            print(e, f"Warning: {net_name} failed for G.")
             # np.save(f"/tmp/smallworldness{random.randint(1, 400)}.npy",
             #         np.array(nx.to_numpy_matrix(H)))
             net_met_val = np.nan
@@ -1340,7 +1339,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                     degree_pearson_correlation_coefficient(
                         H, weight="weight"))
             except BaseException as e:
-                print(e, f"WARNING: {net_name} failed for G.")
+                print(e, f"Warning: {net_name} failed for G.")
                 # np.save(f"/tmp/degree_assortativity_coefficient_
                 # {random.randint(1, 400)}.npy",
                 #         np.array(nx.to_numpy_matrix(H)))
@@ -1349,7 +1348,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
         try:
             net_met_val = float(i(G))
         except BaseException as e:
-            print(e, f"WARNING: {net_name} failed for G.")
+            print(e, f"Warning: {net_name} failed for G.")
             net_met_val = np.nan
 
     return net_met_val
@@ -1369,13 +1368,13 @@ def iterate_nx_global_measures(G, metric_list_glob):
             try:
                 net_met_val = raw_mets(G, i)
             except BaseException:
-                print(f"{'WARNING: '}{net_met}{' failed for G.'}")
+                print(f"{'Warning: '}{net_met}{' failed for G.'}")
                 # np.save("%s%s%s%s" % ('/tmp/', net_met,
                 # random.randint(1, 400), '.npy'),
                 #         np.array(nx.to_numpy_matrix(G)))
                 net_met_val = np.nan
         except BaseException:
-            print(f"{'WARNING: '}{str(i)}{' is undefined for G'}")
+            print(f"{'Warning: '}{str(i)}{' is undefined for G'}")
             # np.save("%s%s%s%s" % ('/tmp/', net_met, random.randint(1,
             # 400), '.npy'), np.array(nx.to_numpy_matrix(G)))
             net_met_val = np.nan
@@ -1423,7 +1422,7 @@ def community_resolution_selection(G):
             tries = tries + 1
             if tries > 100:
                 print(
-                    "\nWARNING: Louvain community detection failed. "
+                    "\nWarning: Louvain community detection failed. "
                     "Proceeding with single community affiliation vector...")
                 break
     else:
@@ -2177,7 +2176,7 @@ def collect_pandas_df_make(
             except RuntimeWarning:
                 combination_complete = False
                 print(
-                    f"\nWARNING: DATAFRAME CONCATENATION FAILED FOR "
+                    f"\nWarning: DATAFRAME CONCATENATION FAILED FOR "
                     f"{str(ID)}!\n")
                 pass
         else:
