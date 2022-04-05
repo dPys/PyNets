@@ -13,6 +13,7 @@ jobs:
       - run:
           name: Check whether build should be skipped
           command: |
+            git config --global url."https://".insteadOf git://
             if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
               echo "Only docs build"
               circleci step halt
@@ -53,12 +54,13 @@ jobs:
               echo "the command ``git fetch --tags --verbose`` and push"
               echo "them to your fork with ``git push origin --tags``"
             fi
+            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
             # Build docker image
             e=1 && for i in {1..5}; do
               docker build \
                 --cache-from=pynets \
                 --rm=false \
-                -t dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
+                -t dpys/pynets:$HASH \
                 --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
                 --build-arg VCS_REF=`git rev-parse --short HEAD` \
                 --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
@@ -67,7 +69,7 @@ jobs:
             # test if development image should be built
             if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
               echo "building development container"
-              docker tag dpys/pynets pynets:unstable
+              docker tag dpys/pynets pynets:development
               docker build \
                 --rm=false \
                 -t pynets \
@@ -80,7 +82,8 @@ jobs:
             THISVERSION=$( python3 get_version.py )
             THISVERSION=${THISVERSION%.dirty*}
             THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            DOCKERVERSION=$(docker run --rm -it dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` pynets --version)
+            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+            DOCKERVERSION=$(docker run --rm -it dpys/pynets:$HASH pynets --version)
             DOCKERVERSION=${DOCKERVERSION%$'\r'}
             DOCKERVERSION=${DOCKERVERSION#*"v"}
             echo "VERSION: \"$THISVERSION\""
@@ -91,7 +94,8 @@ jobs:
           no_output_timeout: 40m
           command: |
             mkdir -p /tmp/cache
-            docker save debian:stretch-slim dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1` \
+            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+            docker save debian:stretch-slim dpys/pynets:$HASH \
             | pigz -3 > /tmp/cache/docker.tar.gz
 
       - persist_to_workspace:
