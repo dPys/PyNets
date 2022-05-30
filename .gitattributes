@@ -57,20 +57,16 @@ pynets/core/atlases/harvardoxford_cortical_labels.nii.gz filter=lfs diff=lfs mer
 pynets/core/atlases/harvardoxford_subcortical_labels.nii.gz filter=lfs diff=lfs merge=lfs -text
 docs/_static/structural_functional_multiplex.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/yeo7_mosaic.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/graph.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/image18.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/multimodalconnectome.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/glassbrain_mplx.png filter=lfs diff=lfs merge=lfs -text
+docs/_static/glassbrain.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/perspectivism.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/logo.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/structural_adj_mat.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/IMG_5484_accented.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/favicon.ico filter=lfs diff=lfs merge=lfs -text
 docs/_static/image22.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/css filter=lfs diff=lfs merge=lfs -text
+docs/_static/NodeWiseICC.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/link_communities.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/pynets_diffusion.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/OHBM_Poster_2020.pdf filter=lfs diff=lfs merge=lfs -text
+docs/_static/OHBM_2020.png filter=lfs diff=lfs merge=lfs -text
 *.python linguist-detectable=true
 *.js linguist-detectable=true
 *.html linguist-detectable=false
