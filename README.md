@@ -143,7 +143,8 @@ No problem-- you can still run pynets manually:
 ```
 
 ![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
-![Multiplex Glass](docs/_static/glassbrain_mplx.png)
+![Multiplex Glass](docs/_static/glassbrain.png)
 ![Ensemble Connectome](docs/_static/omnetome.png)
 ![Yeo7](docs/_static/yeo7_mosaic.png)
-![Workflow DAG](docs/_static/OHBM_Poster_2020.pdf)
+![ICC](docs/_static/NodeWiseICC.png)
+![Workflow DAG](docs/_static/OHBM_2020.png)
