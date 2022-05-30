@@ -144,7 +144,7 @@ No problem-- you can still run pynets manually:
 
 ![Multiplex Layers](docs/_static/multiplex.png)
 ![Multiplex Glass](docs/_static/glassbrain.png)
-![Ensemble Connectome](docs/_static/Omnetome.png)
+![Ensemble Connectome](docs/_static/Omnetome_mat.png)
 ![Yeo7](docs/_static/yeo7_mosaic.png)
 ![ICC](docs/_static/NodeWiseICC.png)
 ![Workflow DAG](docs/_static/Workflow.png)

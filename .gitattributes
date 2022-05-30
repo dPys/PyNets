@@ -63,7 +63,7 @@ docs/_static/logo.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/IMG_5484_accented.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/favicon.ico filter=lfs diff=lfs merge=lfs -text
 docs/_static/image22.png filter=lfs diff=lfs merge=lfs -text
-docs/_static/Omnetome.png filter=lfs diff=lfs merge=lfs -text
+docs/_static/Omnetome_mat.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/css filter=lfs diff=lfs merge=lfs -text
 docs/_static/NodeWiseICC.png filter=lfs diff=lfs merge=lfs -text
 docs/_static/link_communities.png filter=lfs diff=lfs merge=lfs -text
