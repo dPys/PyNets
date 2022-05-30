@@ -142,9 +142,9 @@ No problem-- you can still run pynets manually:
     -n 'Default' # The resting-state network definition to restrict node-making.
 ```
 
-![Multiplex Layers](docs/_static/structural_functional_multiplex.png)
+![Multiplex Layers](docs/_static/multiplex.png)
 ![Multiplex Glass](docs/_static/glassbrain.png)
-![Ensemble Connectome](docs/_static/omnetome.png)
+![Ensemble Connectome](docs/_static/Omnetome.png)
 ![Yeo7](docs/_static/yeo7_mosaic.png)
 ![ICC](docs/_static/NodeWiseICC.png)
-![Workflow DAG](docs/_static/OHBM_2020.png)
+![Workflow DAG](docs/_static/Workflow.png)
