@@ -1,10 +1,10 @@
-import pickle5 as pickle
 import warnings
 import numpy as np
-from sqlalchemy import create_engine, Column, Float, Integer, String, \
-    Sequence, JSON, BLOB
+import pickle5 as pickle
+from sqlalchemy import create_engine, Column
+from sqlalchemy.types import Integer, Float, Integer, JSON, BLOB, String, DateTime
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, func
 from sqlalchemy.ext.declarative import declarative_base
 
 pickle.HIGHEST_PROTOCOL = 5
@@ -14,31 +14,75 @@ base = declarative_base()
 
 
 class ConnectomeEnsemble(base):
-    __tablename__ = 'connectomes'
+    """
+    A data class to manage the metadata of a connectome ensemble from a single subject.
 
-    id = Column(Integer, Sequence('connectome_id', start=1, increment=1),
-                primary_key=True)
-    subject_id = Column(String)
-    session = Column(String)
-    modality = Column(String)
-    embed_meta = Column(String)
-    net_meta = Column(String)
-    signal_meta = Column(String)
-    hpass_meta = Column(String, nullable=True)
-    minlength_meta = Column(String, nullable=True)
-    model_meta = Column(String)
-    granularity_meta = Column(String)
-    tolerance_meta = Column(String)
-    node_ref = Column(JSON, nullable=True)
-    data = Column(String, nullable=True)
-    data_file_path = Column(String)
-    template = Column(String)
-    thr_type = Column(String)
-    thr = Column(String)
-    node_type = Column(String)
+    Attributes
+    ----------
+    id : int
+        The id of the connectome sample.
+    created_at : datetime
+        Datetime of table creation.
+    updated_at : datetime
+        Datetime of last table update.
+    subject_id : int
+        The id of the subject.
+    session: int
+        The id of the session.
+    modality: str
+        The modality of the connectome sample.
+    embed_meta: str
+        A value for the embedding type hyperparameter.
+    net_meta: str
+        A value for the network type hyperparameter.
+    template: str
+        A value for the template hyperparameter.
+    thr_type: str
+        A value for the threshold type hyperparameter.
+    thr: float
+        A value for the threshold hyperparameter.
+    node_type: str
+        A value for the node type hyperparameter.
+    data_file_path: str
+        The path to the data file.
+    signal_meta: str
+        A value for the signal hyperparameter.
+    minlength_meta: str
+        A value for the minlength hyperparameter.
+    model_meta: str
+        A value for the model hyperparameter.
+    granularity_meta: str
+        A value for the granularity hyperparameter.
+    tolerance_meta: str
+        A value for the tolerance hyperparameter.
+    """
+    __tablename__ = 'connectome_ensemble'
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, autoincrement="auto")
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), nullable=False)
+    subject_id = Column(String(255), nullable=False)
+    session = Column(String(255), nullable=False)
+    modality = Column(String(255), nullable=False)
+    embed_meta = Column(String(255), nullable=False)
+    net_meta = Column(String(255), nullable=False)
+    template = Column(String(255), nullable=False)
+    thr_type = Column(String(255), nullable=False)
+    thr = Column(Float, nullable=True)
+    node_type = Column(String(255), nullable=False)
+    data = Column(BLOB, nullable=True)
+    signal_meta = Column(String(255), nullable=True)
+    minlength_meta = Column(Integer, nullable=True)
+    model_meta = Column(String(255), nullable=False)
+    granularity_meta = Column(Integer, nullable=False)
+    tolerance_meta = Column(Float, nullable=True)
+
+    def __repr__(self):
+        return f"ConnectomeEnsemble\nSubject:{self.subject_id}\nTable Creation:{self.created_at}\nTable Update:{self.updated_at}\nModality:{self.modality}\nEmbedding:{self.embed_meta}\nNetwork:{self.net_meta}\nTemplate:{self.template}\nThreshold Type:{self.thr_type}\nThreshold:{self.thr}\nNode Type:{self.node_type}\nSignal:{self.signal_meta}\nMinlength:{self.minlength_meta}\nModel:{self.model_meta}\nGranularity:{self.granularity_meta}\nTolerance:{self.tolerance_meta}"
 
 
-def connection(output_dir:str):
+def gen_session(output_dir: str):
     DATABASE_URI = f"sqlite:////{output_dir}/pynets.db"
     engine = create_engine(DATABASE_URI)
     base.metadata.create_all(engine)
@@ -47,26 +91,26 @@ def connection(output_dir:str):
     return session
 
 
-def insert_dwi_func(pkl_file_path:str):
+def insert_dwi_func(pkl_file_path: str, session):
     with open(pkl_file_path, "rb") as f:
         sub_dict_clean = pickle.load(f)
     f.close()
 
     elements = []
     nodes = {}
-    return iter_dict(sub_dict_clean, elements, nodes)
+    return iter_dict(sub_dict_clean, elements, nodes, session)
 
 
-def fetch_dwi_func(mod:str, net:str, embedding:str, db_path:str, thrType:str):
+def fetch_dwi_func(mod: str, net: str, embedding: str, db_path: str, thr_type: str):
     ce = ConnectomeEnsemble()
     subject_id_session_modality_embedding_set = set()
     subject_id_session_modality_embedding_dict = {}
-    session = connection(db_path)
-    temp = 'MNI152_T1'
-    thrType = 'MST'
+    session = gen_session(db_path)
+    template = 'MNI152_T1'
+    thr_type = 'MST'
     result = session.query(ce).filter_by(modality=mod, net_meta=net,
                                          embed_meta=embedding,
-                                         template=temp, thr_type=thrType)
+                                         template=template, thr_type=thr_type)
     for row in result:
         subject_id_session_modality_embedding_set.add((row.subject_id,
                                                        row.session,
@@ -83,12 +127,12 @@ def fetch_dwi_func(mod:str, net:str, embedding:str, db_path:str, thrType:str):
         if row.modality == 'dwi':
             tuple_connectome = (str(row.signal_meta), str(row.minlength_meta),
                                 str(row.model_meta),
-            str(row.granularity_meta), str(row.net_meta),
+                                str(row.granularity_meta), str(row.net_meta),
                                 str(row.tolerance_meta))
         elif row.modality == 'func':
             tuple_connectome = (str(row.signal_meta), str(row.minlength_meta),
                                 str(row.model_meta),
-            str(row.granularity_meta), str(row.net_meta),
+                                str(row.granularity_meta), str(row.net_meta),
                                 str(row.tolerance_meta))
         if row.data_file_path == 'NaN':
             tuple_dict[tuple_connectome] = 'NaN'
@@ -133,12 +177,11 @@ def fetch_dwi_func(mod:str, net:str, embedding:str, db_path:str, thrType:str):
     return final_dict
 
 
-def iter_dict(d, elements, nodes, db_path):
-    session = connection(db_path)
+def iter_dict(d, elements, nodes, session):
     for k, v in d.items():
         if isinstance(v, dict):
             elements.append(k)
-            iter_dict(v, elements, nodes)
+            iter_dict(v, elements, nodes, session)
             del elements[-1]
         else:
             if k == 'index' or k == "labels" or k == "coords":
@@ -162,10 +205,10 @@ def iter_dict(d, elements, nodes, db_path):
                 new_entry.tolerance_meta = (elements[4])[5]
                 new_entry.node_ref = nodes
                 new_entry.data = bytearray(data_array)
-                new_entry.data_file_path = v
+                new_entry.data_file_path = elements[5]
                 new_entry.template = 'MNI152_T1'
                 new_entry.thr_type = 'MST'
-                new_entry.thr = '1.0'
+                new_entry.thr = 1.0
                 new_entry.node_type = 'parcels'
                 session.add(new_entry)
                 session.commit()
@@ -190,9 +233,8 @@ def iter_dict(d, elements, nodes, db_path):
                 new_entry.data_file_path = elements[5]
                 new_entry.template = 'MNI152_T1'
                 new_entry.thr_type = 'MST'
-                new_entry.thr = '1.0'
+                new_entry.thr = 1.0
                 new_entry.node_type = 'parcels'
                 session.add(new_entry)
                 session.commit()
                 del elements[-1], elements[-1]
-

@@ -5,10 +5,6 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import os
 import numpy as np
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
 from pathlib import Path
 from pynets.core import thresholding
 import networkx as nx
