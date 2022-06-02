@@ -64,7 +64,7 @@ def s3_client(service="s3"):
         aws_secret_access_key=SECRET)
 
 
-def parse_path(s3_datapath):
+def parse_path(s3_datapath:str):
     """
     Return bucket and prefix from full s3 path.
 
