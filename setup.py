@@ -23,7 +23,7 @@ setup(
     description="A Reproducible Workflow for Structural and Functional "
                 "Connectome Ensemble Learning",
     author="Derek Pisner",
-    author_email='dpisner@utexas.edu',
+    author_email='dpysalexander@gmail.com',
     url='https://github.com/dPys/pynets',
     packages=['pynets'],
     entry_points={

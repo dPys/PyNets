@@ -4,7 +4,7 @@ Credits
 
 Creator
 -------
-Derek Pisner <dpisner@utexas.edu>
+Derek Pisner <dpysalexander@gmail.com>
 
 Testing
 -------

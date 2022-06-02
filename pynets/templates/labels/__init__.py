@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = """Derek Pisner"""
-__email__ = "dpisner@utexas.edu"
+__email__ = "dpysalexander@gmail.com"
 
 import warnings
 

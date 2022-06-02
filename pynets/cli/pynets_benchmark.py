@@ -8,16 +8,6 @@ from pynets.statistics.group.benchmarking import *
 
 
 def main():
-    import sys
-    import os
-    from datetime import datetime
-    from joblib import Parallel, delayed
-    import tempfile
-    import dill
-    from pynets.statistics.utils import make_subject_dict, cleanNullTerms, \
-        get_ensembles_top, get_ensembles_embedding, \
-        build_grid
-    from colorama import Fore, Style
     try:
         import pynets
     except ImportError:
@@ -25,6 +15,17 @@ def main():
             "PyNets not installed! Ensure that you are referencing the correct"
             " site-packages and using Python3.6+"
         )
+    import sys
+    import os
+    from datetime import datetime
+    from joblib import Parallel, delayed
+    import tempfile
+    import pickle5 as pickle
+    from pynets.statistics.utils import make_subject_dict, cleanNullTerms, \
+        get_ensembles_top, get_ensembles_embedding, \
+        build_grid
+    from colorama import Fore, Style
+    pickle.HIGHEST_PROTOCOL = 5
 
     if len(sys.argv) < 1:
         print("\nMissing command-line inputs! See help options with the -h"
@@ -114,17 +115,17 @@ def main():
             else:
                 final_missingness_summary = pd.Series()
             with open(subject_dict_file_path, "wb") as f:
-                dill.dump(sub_dict_clean, f)
+                pickle.dump(sub_dict_clean, f)
             f.close()
             with open(subject_mod_grids_file_path, "wb") as f:
-                dill.dump(modality_grids, f)
+                pickle.dump(modality_grids, f)
             f.close()
         else:
             with open(subject_dict_file_path, 'rb') as f:
-                sub_dict_clean = dill.load(f)
+                sub_dict_clean = pickle.load(f)
             f.close()
             with open(subject_mod_grids_file_path, "rb") as f:
-                modality_grids = dill.load(f)
+                modality_grids = pickle.load(f)
             f.close()
             if os.path.isfile(missingness_summary):
                 final_missingness_summary = pd.read_csv(missingness_summary)

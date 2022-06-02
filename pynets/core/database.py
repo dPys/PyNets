@@ -1,4 +1,4 @@
-import dill
+import pickle5 as pickle
 import warnings
 import numpy as np
 from sqlalchemy import create_engine, Column, Float, Integer, String, \
@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 from sqlalchemy.ext.declarative import declarative_base
 
+pickle.HIGHEST_PROTOCOL = 5
 warnings.filterwarnings("ignore")
 
 base = declarative_base()
@@ -37,7 +38,7 @@ class ConnectomeEnsemble(base):
     node_type = Column(String)
 
 
-def connection(output_dir):
+def connection(output_dir:str):
     DATABASE_URI = f"sqlite:////{output_dir}/pynets.db"
     engine = create_engine(DATABASE_URI)
     base.metadata.create_all(engine)
@@ -46,17 +47,17 @@ def connection(output_dir):
     return session
 
 
-def insert_dwi_func(pkl_file_path):
+def insert_dwi_func(pkl_file_path:str):
     with open(pkl_file_path, "rb") as f:
-        sub_dict_clean = dill.load(f)
+        sub_dict_clean = pickle.load(f)
     f.close()
 
     elements = []
     nodes = {}
-    iter_dict(sub_dict_clean, elements, nodes)
+    return iter_dict(sub_dict_clean, elements, nodes)
 
 
-def fetch_dwi_func(mod, net, embedding, db_path, thrType):
+def fetch_dwi_func(mod:str, net:str, embedding:str, db_path:str, thrType:str):
     ce = ConnectomeEnsemble()
     subject_id_session_modality_embedding_set = set()
     subject_id_session_modality_embedding_dict = {}
