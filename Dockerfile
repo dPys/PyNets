@@ -145,7 +145,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && echo "enabled = true" >> ~/.nipype/nipype.cfg \
     && pip uninstall -y pandas \
     && pip install pandas -U \
-    && conda clean -tipsy \
+    && conda clean --all -y \
     && pip install --upgrade pyopenssl \
     && cd / \
     && rm -rf /home/neuro/PyNets \
@@ -178,7 +178,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	g++ \
 	git-lfs \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
-    && conda clean -tipsy \
+    && conda clean --all -y \
     && rm -rf /tmp/* /var/tmp/* \
     && rm -rf /opt/conda/pkgs \
     && find /opt/conda/ -type f,l -name '*.pyc' -delete \
@@ -191,7 +191,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && rm -f /tmp/2G_heap.txt
 
 # ENV Config
-ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH
+ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":"$PATH"
 
 ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -201,7 +201,7 @@ ENV FSLDIR=/usr/share/fsl/5.0 \
     FSLTCLSH=/usr/bin/tclsh \
     FSLWISH=/usr/bin/wish \
     PATH=$FSLDIR/bin:$PATH
-ENV PATH="/opt/conda/bin":$PATH \
+ENV PATH="/opt/conda/bin":"$PATH" \
     OPENBLAS_NUM_THREADS=4 \
     GOTO_NUM_THREADS=4 \
     OMP_NUM_THREADS=4 \

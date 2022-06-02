@@ -1,4 +1,5 @@
 import dill
+import warnings
 import numpy as np
 from sqlalchemy import create_engine, Column, Float, Integer, String, \
     Sequence, JSON, BLOB
@@ -9,6 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 warnings.filterwarnings("ignore")
 
 base = declarative_base()
+
 
 class ConnectomeEnsemble(base):
     __tablename__ = 'connectomes'
@@ -34,6 +36,7 @@ class ConnectomeEnsemble(base):
     thr = Column(String)
     node_type = Column(String)
 
+
 def connection(output_dir):
     DATABASE_URI = f"sqlite:////{output_dir}/pynets.db"
     engine = create_engine(DATABASE_URI)
@@ -41,6 +44,7 @@ def connection(output_dir):
     session = sessionmaker(bind=engine)
     session = session()
     return session
+
 
 def insert_dwi_func(pkl_file_path):
     with open(pkl_file_path, "rb") as f:
@@ -51,15 +55,17 @@ def insert_dwi_func(pkl_file_path):
     nodes = {}
     iter_dict(sub_dict_clean, elements, nodes)
 
-def fetch_dwi_func(mod, net, embedding, temp, thrType):
+
+def fetch_dwi_func(mod, net, embedding, db_path, thrType):
+    ce = ConnectomeEnsemble()
     subject_id_session_modality_embedding_set = set()
     subject_id_session_modality_embedding_dict = {}
-    session = connection(path)
+    session = connection(db_path)
     temp = 'MNI152_T1'
     thrType = 'MST'
-    result = session.query(ce).filter_by(modality = mod, net_meta = net,
-                                         embed_meta = embedding,
-                                         template = temp, thr_type = thrType)
+    result = session.query(ce).filter_by(modality=mod, net_meta=net,
+                                         embed_meta=embedding,
+                                         template=temp, thr_type=thrType)
     for row in result:
         subject_id_session_modality_embedding_set.add((row.subject_id,
                                                        row.session,
@@ -125,8 +131,9 @@ def fetch_dwi_func(mod, net, embedding, temp, thrType):
 
     return final_dict
 
-def iter_dict(d, elements, nodes):
-    session = connection(path)
+
+def iter_dict(d, elements, nodes, db_path):
+    session = connection(db_path)
     for k, v in d.items():
         if isinstance(v, dict):
             elements.append(k)

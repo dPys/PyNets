@@ -21,8 +21,9 @@ docker pull dpys/pynets
 ```
 
 ## Manual
-A local dependency install of [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9
-An installation of [Python3.8+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter)
+Third-Party Dependencies:
+*[FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9
+*[Python3.8+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
 ```
 [sudo] pip install pynets [--user]
 ```
@@ -48,7 +49,7 @@ Operating Systems
 -----------------
 UNIX/MacOS 64-bit platforms
 
-Windows 10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
+Windows >10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
 
 
 Documentation
