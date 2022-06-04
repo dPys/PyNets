@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -59,12 +57,11 @@ def s3_client(service="s3"):
     except AttributeError:
         return boto3.client(service)
     return boto3.client(
-        service,
-        aws_access_key_id=ACCESS,
-        aws_secret_access_key=SECRET)
+        service, aws_access_key_id=ACCESS, aws_secret_access_key=SECRET
+    )
 
 
-def parse_path(s3_datapath:str):
+def parse_path(s3_datapath: str):
     """
     Return bucket and prefix from full s3 path.
 
@@ -147,7 +144,8 @@ def s3_fetch(client, bucket, remote, local, bpath, mod):
                 print(f"Downloading {bdir}/{data} from {bucket} s3 bucket...")
                 # Download file
                 client.download_file(
-                    bucket, f"{bdir}/{data}", f"{localpath}/{data}")
+                    bucket, f"{bdir}/{data}", f"{localpath}/{data}"
+                )
                 if os.path.exists(f"{localpath}/{data}"):
                     print("Success!")
                 else:
@@ -186,8 +184,9 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
         raise ValueError(
-            "Error: could not locate bucket. Available buckets: " +
-            ", ".join(bkts))
+            "Error: could not locate bucket. Available buckets: "
+            + ", ".join(bkts)
+        )
 
     if info is not None:
         if info == "sub-":
@@ -198,7 +197,8 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
                     print(
                         f"Local directory: {os.path.join(local, info)} already"
                         f" exists. Not pulling s3 data. Delete contents to"
-                        f" re-download data.")
+                        f" re-download data."
+                    )
                     return
             run_str = info.split("/")
 
@@ -265,8 +265,8 @@ def s3_push_data(
     [access_key, secret_key] = get_credentials()
 
     session = Session(
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key)
+        aws_access_key_id=access_key, aws_secret_access_key=secret_key
+    )
 
     s3 = session.resource("s3")
 
@@ -291,8 +291,9 @@ def s3_push_data(
     bkts = [bk["Name"] for bk in client.list_buckets()["Buckets"]]
     if bucket not in bkts:
         sys.exit(
-            "Error: could not locate bucket. Available buckets: " +
-            ", ".join(bkts))
+            "Error: could not locate bucket. Available buckets: "
+            + ", ".join(bkts)
+        )
 
     # List all files and upload
     bucket_boto = s3.Bucket(bucket)

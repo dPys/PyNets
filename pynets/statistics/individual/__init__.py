@@ -3,8 +3,11 @@
 __author__ = """Derek Pisner"""
 __email__ = "dpysalexander@gmail.com"
 
-import matplotlib
 import warnings
 
-matplotlib.use('Agg')
+import matplotlib
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
+
+from . import algorithms, multiplex, spectral

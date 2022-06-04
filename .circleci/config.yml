@@ -1,645 +1,645 @@
 version: 2
 
 jobs:
-  build:
-    environment:
-      TZ: "/usr/share/zoneinfo/America/Chicago"
-      SCRATCH: "/scratch"
-    docker:
-      - image: docker:18.01.0-ce-git
-    working_directory: /tmp/src/pynets
-    steps:
-      - checkout
-      - run:
-          name: Check whether build should be skipped
-          command: |
-            git config --global url."https://".insteadOf git://
-            if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
-              echo "Only docs build"
-              circleci step halt
-            fi
+    build:
+        environment:
+            TZ: "/usr/share/zoneinfo/America/Chicago"
+            SCRATCH: "/scratch"
+        docker:
+            - image: docker:18.01.0-ce-git
+        working_directory: /tmp/src/pynets
+        steps:
+            - checkout
+            - run:
+                  name: Check whether build should be skipped
+                  command: |
+                      git config --global url."https://".insteadOf git://
+                      if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
+                        echo "Only docs build"
+                        circleci step halt
+                      fi
 
-      - run:
-          name: Install parallel gzip and python3
-          command: |
-            apk add --no-cache pigz python3-dev
-      - restore_cache:
-          keys:
-            - docker-v0-{{ .Branch }}-{{ .Revision }}
-            - docker-v0-{{ .Branch }}-
-            - docker-v0-master-
-            - docker-v0-
-          paths:
-            - /tmp/cache/docker.tar.gz
-      - setup_remote_docker
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
-      - run:
-          name: Build Docker image
-          no_output_timeout: 60m
-          command: |
-            # Get version, update files.
-            THISVERSION=$( python3 get_version.py )
-            if [[ ${THISVERSION:0:2} == "0+" ]] ; then
-              echo "WARNING: latest git tag could not be found"
-              echo "Please, make sure you fetch all tags from upstream with"
-              echo "the command ``git fetch --tags --verbose`` and push"
-              echo "them to your fork with ``git push origin --tags``"
-            fi
-            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
-            # Build docker image
-            e=1 && for i in {1..5}; do
-              docker build \
-                --cache-from=pynets \
-                --rm=false \
-                -t dpys/pynets:$HASH \
-                --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-                --build-arg VCS_REF=`git rev-parse --short HEAD` \
-                --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
-              && e=0 && break || sleep 15
-            done && [ "$e" -eq "0" ]
-            # test if development image should be built
-            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
-              echo "building development container"
-              docker tag dpys/pynets pynets:development
-              docker build \
-                --rm=false \
-                -t pynets \
-                -f Dockerfile .
-            fi
+            - run:
+                  name: Install parallel gzip and python3
+                  command: |
+                      apk add --no-cache pigz python3-dev
+            - restore_cache:
+                  keys:
+                      - docker-v0-{{ .Branch }}-{{ .Revision }}
+                      - docker-v0-{{ .Branch }}-
+                      - docker-v0-master-
+                      - docker-v0-
+                  paths:
+                      - /tmp/cache/docker.tar.gz
+            - setup_remote_docker
+            - run:
+                  name: Load Docker image layer cache
+                  no_output_timeout: 30m
+                  command: |
+                      docker info
+                      set +o pipefail
+                      if [ -f /tmp/cache/docker.tar.gz ]; then
+                        pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+                        docker images
+                      fi
+            - run:
+                  name: Build Docker image
+                  no_output_timeout: 60m
+                  command: |
+                      # Get version, update files.
+                      THISVERSION=$( python3 get_version.py )
+                      if [[ ${THISVERSION:0:2} == "0+" ]] ; then
+                        echo "WARNING: latest git tag could not be found"
+                        echo "Please, make sure you fetch all tags from upstream with"
+                        echo "the command ``git fetch --tags --verbose`` and push"
+                        echo "them to your fork with ``git push origin --tags``"
+                      fi
+                      HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+                      # Build docker image
+                      e=1 && for i in {1..5}; do
+                        docker build \
+                          --cache-from=pynets \
+                          --rm=false \
+                          -t dpys/pynets:$HASH \
+                          --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+                          --build-arg VCS_REF=`git rev-parse --short HEAD` \
+                          --build-arg VERSION="${CIRCLE_TAG:-$THISVERSION}" . \
+                        && e=0 && break || sleep 15
+                      done && [ "$e" -eq "0" ]
+                      # test if development image should be built
+                      if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[build[ _]?devel\]' )" != "" ]]; then
+                        echo "building development container"
+                        docker tag dpys/pynets pynets:development
+                        docker build \
+                          --rm=false \
+                          -t pynets \
+                          -f Dockerfile .
+                      fi
 
-      - run:
-          name: Smoke test Docker image
-          command: |
-            THISVERSION=$( python3 get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
-            DOCKERVERSION=$(docker run --rm -it dpys/pynets:$HASH pynets --version)
-            DOCKERVERSION=${DOCKERVERSION%$'\r'}
-            DOCKERVERSION=${DOCKERVERSION#*"v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "DOCKERVERSION: \"${DOCKERVERSION}\""
-            test "$DOCKERVERSION" = "$THISVERSION"
-      - run:
-          name: Docker save
-          no_output_timeout: 40m
-          command: |
-            mkdir -p /tmp/cache
-            HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
-            docker save debian:stretch-slim dpys/pynets:$HASH \
-            | pigz -3 > /tmp/cache/docker.tar.gz
+            - run:
+                  name: Smoke test Docker image
+                  command: |
+                      THISVERSION=$( python3 get_version.py )
+                      THISVERSION=${THISVERSION%.dirty*}
+                      THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+                      HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+                      DOCKERVERSION=$(docker run --rm -it dpys/pynets:$HASH pynets --version)
+                      DOCKERVERSION=${DOCKERVERSION%$'\r'}
+                      DOCKERVERSION=${DOCKERVERSION#*"v"}
+                      echo "VERSION: \"$THISVERSION\""
+                      echo "DOCKERVERSION: \"${DOCKERVERSION}\""
+                      test "$DOCKERVERSION" = "$THISVERSION"
+            - run:
+                  name: Docker save
+                  no_output_timeout: 40m
+                  command: |
+                      mkdir -p /tmp/cache
+                      HASH=`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+                      docker save debian:stretch-slim dpys/pynets:$HASH \
+                      | pigz -3 > /tmp/cache/docker.tar.gz
 
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/pynets
+            - persist_to_workspace:
+                  root: /tmp
+                  paths:
+                      - src/pynets
 
-  build_docs:
-    docker:
-      - image: python:3.8.4
-    working_directory: /tmp/src/pynets
-    environment:
-      - FSLOUTPUTTYPE: 'NIFTI'
-    steps:
-      - checkout
-      - run:
-          name: Check whether build should be skipped
-          command: |
-            if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?docs\]' )" != "" ]]; then
-              echo "Skipping doc building job"
-              circleci step halt
-            fi
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
-      - run:
-          name: Install graphviz
-          command: |
-              apt-get update
-              apt-get install -y sudo graphviz
-      - run:
-          name: Install FSL
-          no_output_timeout: 40m
-          command: |
-            sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
-            sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-            sudo apt-get update -qq
-            sudo chmod 777 /usr/local
-            sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
-            sudo chmod 777 -R /usr/local/fsl/bin
-      - run:
-          name: Update PATH and Define Environment Variable at Runtime
-          command: |
-             echo '# Path to FSL' >> $BASH_ENV
-             echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
-             echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
-             echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
-             echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
-             echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
-             echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
-             echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
-             echo 'export FSLDIR PATH' >> $BASH_ENV
-             source $BASH_ENV
-      - run:
-          name: Install Requirements (may contain pinned versions)
-          command: python -m pip install -r requirements.txt
-#      - run:
-#          name: Install Optional Requirements (may contain pinned versions)
-#          command: python -m pip install -r optional-requirements.txt
-      - run:
-          name: Install pynets
-          command: python setup.py install
-      - run:
-          name: Build documentation
-          command: make SPHINXOPTS="-W" -C docs html
-      - store_artifacts:
-          path: /tmp/src/pynets/docs/_build/html
+    build_docs:
+        docker:
+            - image: python:3.8.4
+        working_directory: /tmp/src/pynets
+        environment:
+            - FSLOUTPUTTYPE: "NIFTI"
+        steps:
+            - checkout
+            - run:
+                  name: Check whether build should be skipped
+                  command: |
+                      if [[ "$( git log --format=oneline -n 1 $CIRCLE_SHA1 | grep -i -E '\[skip[ _]?docs\]' )" != "" ]]; then
+                        echo "Skipping doc building job"
+                        circleci step halt
+                      fi
+            - run:
+                  name: Check Python version and upgrade pip
+                  command: |
+                      python -m pip install -U pip
+                      python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel
+            - run:
+                  name: Install graphviz
+                  command: |
+                      apt-get update
+                      apt-get install -y sudo graphviz
+            - run:
+                  name: Install FSL
+                  no_output_timeout: 40m
+                  command: |
+                      sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
+                      sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
+                      sudo apt-get update -qq
+                      sudo chmod 777 /usr/local
+                      sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
+                      sudo chmod 777 -R /usr/local/fsl/bin
+            - run:
+                  name: Update PATH and Define Environment Variable at Runtime
+                  command: |
+                      echo '# Path to FSL' >> $BASH_ENV
+                      echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
+                      echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
+                      echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
+                      echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
+                      echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
+                      echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
+                      echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
+                      echo 'export FSLDIR PATH' >> $BASH_ENV
+                      source $BASH_ENV
+            - run:
+                  name: Install Requirements (may contain pinned versions)
+                  command: python -m pip install -r requirements.txt
+            #      - run:
+            #          name: Install Optional Requirements (may contain pinned versions)
+            #          command: python -m pip install -r optional-requirements.txt
+            - run:
+                  name: Install pynets
+                  command: python setup.py install
+            - run:
+                  name: Build documentation
+                  command: make SPHINXOPTS="-W" -C docs html
+            - store_artifacts:
+                  path: /tmp/src/pynets/docs/_build/html
 
-  get_data:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    steps:
-      - run:
-          name: Download OSF test data
-          command: |
-            mkdir -p /tmp/src/pynets/data
-            wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
-      - run:
-          name: Switch to Python v3.8
-          no_output_timeout: 30m
-          command: |
-            pyenv local --unset
-            pyenv uninstall -f 3.8.0 || true
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update -qq
-            sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
-            sudo apt-get clean
-            pyenv install -f 3.8.0 || true
-            eval "$(pyenv init -)"
-            pyenv global 3.8.0
-            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            which python
-            python -m pip install -U pip
-            python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions dipy
-      - run:
-          name: Download dipy data
-          command: |
-            mkdir -p ~/.dipy
-            dipy_fetch stanford_hardi --out_dir ~/.dipy
-            dipy_fetch stanford_t1 --out_dir ~/.dipy
-            dipy_fetch stanford_pve_maps --out_dir ~/.dipy
-            dipy_fetch tissue_data --out_dir ~/.dipy
-      - persist_to_workspace:
-          root: /tmp/src/pynets
-          paths:
-            - data/*
-      - save_cache:
-          key: dipy_data
-          paths:
-            - ~/.dipy
+    get_data:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        steps:
+            - run:
+                  name: Download OSF test data
+                  command: |
+                      mkdir -p /tmp/src/pynets/data
+                      wget --retry-connrefused --waitretry=5 --read-timeout=60 --timeout=60 -t 0 -O examples.tar.gz "https://osf.io/vgxs9/download" && tar -xvzf examples.tar.gz -C /tmp/src/pynets/data
+            - run:
+                  name: Switch to Python v3.8
+                  no_output_timeout: 30m
+                  command: |
+                      pyenv local --unset
+                      pyenv uninstall -f 3.8.0 || true
+                      sudo add-apt-repository ppa:deadsnakes/ppa
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+                      sudo apt-get update -qq
+                      sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+                      sudo apt-get clean
+                      pyenv install -f 3.8.0 || true
+                      eval "$(pyenv init -)"
+                      pyenv global 3.8.0
+                      echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+                      echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+                      source $BASH_ENV
+            - run:
+                  name: Check Python version and upgrade pip
+                  command: |
+                      which python
+                      python -m pip install -U pip
+                      python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions dipy
+            - run:
+                  name: Download dipy data
+                  command: |
+                      mkdir -p ~/.dipy
+                      dipy_fetch stanford_hardi --out_dir ~/.dipy
+                      dipy_fetch stanford_t1 --out_dir ~/.dipy
+                      dipy_fetch stanford_pve_maps --out_dir ~/.dipy
+                      dipy_fetch tissue_data --out_dir ~/.dipy
+            - persist_to_workspace:
+                  root: /tmp/src/pynets
+                  paths:
+                      - data/*
+            - save_cache:
+                  key: dipy_data
+                  paths:
+                      - ~/.dipy
 
-  unit_and_integration_tests:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    environment:
-      - FSLDIR: /usr/local/fsl
-      - FSLOUTPUTTYPE: 'NIFTI'
-      - PYTHONUNBUFFERED: 1
-      - DEBIAN_FRONTEND: noninteractive
-    resource_class: large
-    parallelism: 4
-    steps:
-      - checkout
-      - restore_cache:
-          key: dipy_data
-      - attach_workspace:
-          at: /tmp/src/pynets
-      - run:
-          name: Switch to Python v3.8
-          no_output_timeout: 30m
-          command: |
-            pyenv local --unset
-            pyenv uninstall -f 3.8.0 || true
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update -qq
-            sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
-            sudo apt-get clean
-            pyenv install -f 3.8.0 || true
-            eval "$(pyenv init -)"
-            pyenv global 3.8.0
-            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            which python
-            python -m pip install -U pip
-            python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
-      - run:
-          name: Install pytest
-          command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked
-      - run:
-          name: Install system dependencies and LFS
-          no_output_timeout: 30m
-          command: |
-            sudo apt-get update -qq
-            sudo add-apt-repository universe
-            sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 libncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-            curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-            sudo apt-get update -qq
-            sudo apt-get install -y openssh-client openssl openssh-server git-lfs
-            mkdir -p ~/.ssh
-            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-            ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
-            git lfs pull
-      - run:
-          name: Install Requirements
-          no_output_timeout: 30m
-          command: |
-            python -m pip install -r requirements.txt
-      - run:
-          name: Install pynets
-          no_output_timeout: 30m
-          command: |
-            python setup.py install
-      - run:
-          name: Dependency cleanup and configurations
-          no_output_timeout: 30m
-          command: |
-            python -c "from matplotlib import font_manager"
-            sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
-            mkdir -p ~/.nipype
-            mkdir -p ~/.nilearn
-            echo "[monitoring]" > ~/.nipype/nipype.cfg
-            echo "enabled = true" >> ~/.nipype/nipype.cfg
-      - run:
-          name: Install FSL
-          no_output_timeout: 40m
-          command: |
-            sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
-            sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
-            sudo apt-get update -qq
-            sudo chmod 777 /usr/local
-            sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
-            sudo chmod 777 -R /usr/local/fsl/bin
-      - run:
-          name: Install graph_tool
-          no_output_timeout: 30m
-          command: |
-            echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
-            curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
-            sudo apt-get update -qq
-            sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
-            sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.8.0/lib/python3.8/site-packages/graph_tool
-            python -c "import graph_tool.all as gt"
-      - run:
-          name: Update PATH and Define Environment Variable at Runtime
-          command: |
-             echo '# Path to FSL' >> $BASH_ENV
-             echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
-             echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
-             echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
-             echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
-             echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
-             echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
-             echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
-             echo 'export FSLDIR PATH' >> $BASH_ENV
-             source $BASH_ENV
-      - run:
-          name: Run unit and integration tests
-          no_output_timeout: 6h
-          command: |
-            set -e
-            TEST_FILES=$(circleci tests glob "pynets/*/tests/test_*.py" | circleci tests split --split-by=timings)
-            mkdir test-results
-            export PYTHONUNBUFFERED=1
-            ulimit -s unlimited
-            python -m pytest --circleci-parallelize --junitxml="test-results/junit.xml" $TEST_FILES
-            sudo chmod 777 -R /usr/lib/python3/dist-packages
-      - save_cache:
-          key: unit&integrationtests-{{ arch}}
-          paths:
-            - ~/test_cache
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
+    unit_and_integration_tests:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        environment:
+            - FSLDIR: /usr/local/fsl
+            - FSLOUTPUTTYPE: NIFTI
+            - PYTHONUNBUFFERED: 1
+            - DEBIAN_FRONTEND: noninteractive
+        resource_class: large
+        parallelism: 4
+        steps:
+            - checkout
+            - restore_cache:
+                  key: dipy_data
+            - attach_workspace:
+                  at: /tmp/src/pynets
+            - run:
+                  name: Switch to Python v3.8
+                  no_output_timeout: 30m
+                  command: |
+                      pyenv local --unset
+                      pyenv uninstall -f 3.8.0 || true
+                      sudo add-apt-repository ppa:deadsnakes/ppa
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+                      sudo apt-get update -qq
+                      sudo apt-get install -yq make build-essential software-properties-common curl libbz2-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev tk-dev liblzma-dev
+                      sudo apt-get clean
+                      pyenv install -f 3.8.0 || true
+                      eval "$(pyenv init -)"
+                      pyenv global 3.8.0
+                      echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+                      echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+                      source $BASH_ENV
+            - run:
+                  name: Check Python version and upgrade pip
+                  command: |
+                      which python
+                      python -m pip install -U pip
+                      python -m pip install --upgrade setuptools numpy pytess perlcompat scipy matplotlib wheel importlib-metadata typing-extensions
+            - run:
+                  name: Install pytest
+                  command: python -m pip install pytest pytest-cov pytest-sugar pytest-circleci-parallelized pytest-split pytest-xdist[psutil] pytest-timeout pytest-forked
+            - run:
+                  name: Install system dependencies and LFS
+                  no_output_timeout: 30m
+                  command: |
+                      sudo apt-get update -qq
+                      sudo add-apt-repository universe
+                      sudo apt-get install -y tcl-dev apt-transport-https ca-certificates gnupg-agent graphviz sqlite3 dc libquadmath0 zip unzip libglu1 zlib1g-dev libssl-dev libreadline-dev wget libncursesw5-dev xz-utils libffi-dev libfreetype6-dev pkg-config libgsl0-dev g++ git libgomp1 libpng-dev libgl1-mesa-glx libxtst6 libgtk2.0-bin libxft2 libncurses5 libxmu-dev bzip2 gsl-bin libglu1-mesa-dev libglib2.0-0 libglw1-mesa
+                      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                      curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+                      sudo apt-get update -qq
+                      sudo apt-get install -y openssh-client openssl openssh-server git-lfs
+                      mkdir -p ~/.ssh
+                      ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+                      ssh git@github.com git-lfs-authenticate "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}" download
+                      git lfs pull
+            - run:
+                  name: Install Requirements
+                  no_output_timeout: 30m
+                  command: |
+                      python -m pip install -r requirements.txt
+            - run:
+                  name: Install pynets
+                  no_output_timeout: 30m
+                  command: |
+                      python setup.py install
+            - run:
+                  name: Dependency cleanup and configurations
+                  no_output_timeout: 30m
+                  command: |
+                      python -c "from matplotlib import font_manager"
+                      sed -i 's/\(backend *: \).*$/\1Agg/g' $( python -c "import matplotlib; print(matplotlib.matplotlib_fname())" )
+                      mkdir -p ~/.nipype
+                      mkdir -p ~/.nilearn
+                      echo "[monitoring]" > ~/.nipype/nipype.cfg
+                      echo "enabled = true" >> ~/.nipype/nipype.cfg
+            - run:
+                  name: Install FSL
+                  no_output_timeout: 40m
+                  command: |
+                      sudo sh -c 'echo `curl -sSL "http://neuro.debian.net/lists/focal.us-ca.full"` >> /etc/apt/sources.list.d/neurodebian.sources.list'
+                      sudo apt-key add docker/files/neurodebian.gpg && (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true)
+                      sudo apt-get update -qq
+                      sudo chmod 777 /usr/local
+                      sudo curl -sSL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos7_64.tar.gz | sudo tar xz -C /usr/local --exclude='fsl/doc' --exclude='fsl/data/first' --exclude='fsl/data/atlases' --exclude='fsl/data/possum' --exclude='fsl/src' --exclude='fsl/extras/src' --exclude='fsl/bin/fslview*' --exclude='fsl/bin/FSLeyes' --exclude='fsl/bin/*_gpu*' --exclude='fsl/bin/*_cuda*'
+                      sudo chmod 777 -R /usr/local/fsl/bin
+            - run:
+                  name: Install graph_tool
+                  no_output_timeout: 30m
+                  command: |
+                      echo "deb [ arch=amd64 ] https://downloads.skewed.de/apt focal main" | sudo tee -a /etc/apt/sources.list
+                      curl -fsSL https://keys.openpgp.org/vks/v1/by-fingerprint/793CEFE14DBC851A2BFB1222612DEFB798507F25 | sudo apt-key add -
+                      sudo apt-get update -qq
+                      sudo apt-get install --allow-unauthenticated -y libatlas-base-dev python3-graph-tool
+                      sudo ln -sf /usr/lib/python3/dist-packages/graph_tool /opt/circleci/.pyenv/versions/3.8.0/lib/python3.8/site-packages/graph_tool
+                      python -c "import graph_tool.all as gt"
+            - run:
+                  name: Update PATH and Define Environment Variable at Runtime
+                  command: |
+                      echo '# Path to FSL' >> $BASH_ENV
+                      echo 'FSLDIR=/usr/local/fsl' >> $BASH_ENV
+                      echo 'FSLOUTPUTTYPE=NIFTI_GZ' >> $BASH_ENV
+                      echo "PATH=/usr/local/fsl/bin:"$PATH"" >> $BASH_ENV
+                      echo 'FSLMULTIFILEQUIT=TRUE' >> $BASH_ENV
+                      echo "LD_LIBRARY_PATH="/usr/local/fsl":$LD_LIBRARY_PATH" >> $BASH_ENV
+                      echo 'FSLTCLSH=/usr/bin/tclsh' >> $BASH_ENV
+                      echo 'FSLWISH=/usr/bin/wish' >> $BASH_ENV
+                      echo 'export FSLDIR PATH' >> $BASH_ENV
+                      source $BASH_ENV
+            - run:
+                  name: Run unit and integration tests
+                  no_output_timeout: 6h
+                  command: |
+                      set -e
+                      TEST_FILES=$(circleci tests glob "pynets/*/tests/test_*.py" | circleci tests split --split-by=timings)
+                      mkdir test-results
+                      export PYTHONUNBUFFERED=1
+                      ulimit -s unlimited
+                      python -m pytest --circleci-parallelize --junitxml="test-results/junit.xml" $TEST_FILES
+                      sudo chmod 777 -R /usr/lib/python3/dist-packages
+            - save_cache:
+                  key: unit&integrationtests-{{ arch}}
+                  paths:
+                      - ~/test_cache
+            - store_test_results:
+                  path: test-results
+            - store_artifacts:
+                  path: test-results
 
-  deploy_docker_patches:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    steps:
-      - restore_cache:
-          keys:
-            - docker-v0-{{ .Branch }}-{{ .Revision }}
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
-      - run:
-          name: Deploy to Docker Hub
-          no_output_timeout: 40m
-          command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag dpys/pynets dpys/pynets:${CIRCLE_BRANCH#docker/}
-              docker push dpys/pynets:${CIRCLE_BRANCH#docker/}
-            fi
+    deploy_docker_patches:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        steps:
+            - restore_cache:
+                  keys:
+                      - docker-v0-{{ .Branch }}-{{ .Revision }}
+            - run:
+                  name: Load Docker image layer cache
+                  no_output_timeout: 30m
+                  command: |
+                      docker info
+                      set +o pipefail
+                      if [ -f /tmp/cache/docker.tar.gz ]; then
+                        sudo apt update && sudo apt -y install pigz
+                        pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+                        docker images
+                      fi
+            - run:
+                  name: Deploy to Docker Hub
+                  no_output_timeout: 40m
+                  command: |
+                      if [[ -n "$DOCKER_PASS" ]]; then
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker tag dpys/pynets dpys/pynets:${CIRCLE_BRANCH#docker/}
+                        docker push dpys/pynets:${CIRCLE_BRANCH#docker/}
+                      fi
 
-  deploy_docker:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    steps:
-      - checkout:
-          path: /home/circleci/src/pynets
-      - run:
-          name: Check whether build should be skipped
-          command: |
-            cd /home/circleci/src/pynets
-            if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
-              echo "Only docs build"
-              circleci step halt
-            fi
-      - restore_cache:
-          keys:
-            - docker-v0-{{ .Branch }}-{{ .Revision }}
-      - run:
-          name: Load Docker image layer cache
-          no_output_timeout: 30m
-          command: |
-            docker info
-            set +o pipefail
-            if [ -f /tmp/cache/docker.tar.gz ]; then
-              sudo apt update && sudo apt -y install pigz
-              pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
-              docker images
-            fi
-      - run:
-          name: Deploy to Docker Hub
-          no_output_timeout: 40m
-          command: |
-            if [[ -n "$DOCKER_PASS" ]]; then
-              docker login -u $DOCKER_USER -p $DOCKER_PASS
-              docker tag dpys/pynets dpys/pynets:unstable
-              docker push dpys/pynets:unstable
-              if [[ -n "$CIRCLE_TAG" ]]; then
-                docker push dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
-                docker tag dpys/pynets dpys/pynets:$CIRCLE_TAG
-                docker push dpys/pynets:$CIRCLE_TAG
-              fi
-            fi
+    deploy_docker:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        steps:
+            - checkout:
+                  path: /home/circleci/src/pynets
+            - run:
+                  name: Check whether build should be skipped
+                  command: |
+                      cd /home/circleci/src/pynets
+                      if [[ "$( git log --format='format:%s' -n 1 $CIRCLE_SHA1 | grep -i -E '^docs?(\(\w+\))?:' )" != "" ]]; then
+                        echo "Only docs build"
+                        circleci step halt
+                      fi
+            - restore_cache:
+                  keys:
+                      - docker-v0-{{ .Branch }}-{{ .Revision }}
+            - run:
+                  name: Load Docker image layer cache
+                  no_output_timeout: 30m
+                  command: |
+                      docker info
+                      set +o pipefail
+                      if [ -f /tmp/cache/docker.tar.gz ]; then
+                        sudo apt update && sudo apt -y install pigz
+                        pigz -d --stdout /tmp/cache/docker.tar.gz | docker load
+                        docker images
+                      fi
+            - run:
+                  name: Deploy to Docker Hub
+                  no_output_timeout: 40m
+                  command: |
+                      if [[ -n "$DOCKER_PASS" ]]; then
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker tag dpys/pynets dpys/pynets:unstable
+                        docker push dpys/pynets:unstable
+                        if [[ -n "$CIRCLE_TAG" ]]; then
+                          docker push dpys/pynets:`git ls-remote git://github.com/dpys/pynets.git | grep development | cut -f1`
+                          docker tag dpys/pynets dpys/pynets:$CIRCLE_TAG
+                          docker push dpys/pynets:$CIRCLE_TAG
+                        fi
+                      fi
 
-  test_deploy_pypi:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    environment:
-      - FSLDIR: /usr/local/fsl
-      - FSLOUTPUTTYPE: 'NIFTI'
-      - PYTHONUNBUFFERED: 1
-      - DEBIAN_FRONTEND: noninteractive
-    steps:
-      - checkout
-      - restore_cache:
-          key: unit&integrationtests-{{ arch}}
-      - attach_workspace:
-          at: /tmp/src/pynets
-      - run:
-          name: Switch to Python v3.8
-          no_output_timeout: 30m
-          command: |
-            pyenv local --unset
-            pyenv uninstall -f 3.8.0 || true
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
-            sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
-            sudo apt-get update -qq
-            sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev python-tk python3-tk tk-dev
-            sudo apt-get clean
-            pyenv install -f 3.8.0 || true
-            eval "$(pyenv init -)"
-            pyenv global 3.8.0
-            echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
-            echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Check Python version and upgrade pip
-          command: |
-            python -m pip install -U pip
-            python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel virtualenv
-      - run:
-          name: Build pynets
-          command: |
-            pyenv local 3.8.0
-            pip install --upgrade "pip>=19.1"
-            pip install setuptools_rust twine
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            virtualenv --python=python build
-            source build/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
-            echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
-            python setup.py sdist
-            pip wheel --no-deps -w dist/ .
-      - store_artifacts:
-          path: /tmp/src/pynets/build
-      - run:
-          name: Check sdist distribution
-          command: |
-            pyenv local 3.8.0
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            twine check dist/pynets*.tar.gz
-            virtualenv --python=python sdist
-            source sdist/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
-            pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
-            pip install dist/pynets*.tar.gz
-            which pynets | grep sdist\\/bin
-            INSTALLED_VERSION=$(pynets --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "$THISVERSION"
-      - run:
-          name: Check wheel distribution
-          command: |
-            pyenv local 3.8.0
-            THISVERSION=$( python get_version.py )
-            THISVERSION=${THISVERSION%.dirty*}
-            THISVERSION=${CIRCLE_TAG:-$THISVERSION}
-            twine check dist/pynets*.whl
-            virtualenv --python=python wheel
-            source wheel/bin/activate
-            pip install --upgrade "pip>=19.1" numpy
-            pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
-            pip install dist/pynets*.whl
-            which pynets | grep wheel\\/bin
-            INSTALLED_VERSION=$(pynets --version)
-            INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
-            INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
-            echo "VERSION: \"$THISVERSION\""
-            echo "INSTALLED: \"$INSTALLED_VERSION\""
-            test "$INSTALLED_VERSION" = "$THISVERSION"
-      - store_artifacts:
-          path: /tmp/src/pynets/dist
+    test_deploy_pypi:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        environment:
+            - FSLDIR: /usr/local/fsl
+            - FSLOUTPUTTYPE: "NIFTI"
+            - PYTHONUNBUFFERED: 1
+            - DEBIAN_FRONTEND: noninteractive
+        steps:
+            - checkout
+            - restore_cache:
+                  key: unit&integrationtests-{{ arch}}
+            - attach_workspace:
+                  at: /tmp/src/pynets
+            - run:
+                  name: Switch to Python v3.8
+                  no_output_timeout: 30m
+                  command: |
+                      pyenv local --unset
+                      pyenv uninstall -f 3.8.0 || true
+                      sudo add-apt-repository ppa:deadsnakes/ppa
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 5DC22404A6F9F1CA
+                      sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 78BD65473CB3BD13
+                      sudo apt-get update -qq
+                      sudo apt-get install -y make build-essential software-properties-common libbz2-dev llvm libncurses5-dev libncursesw5-dev liblzma-dev libatlas-base-dev python-tk python3-tk tk-dev
+                      sudo apt-get clean
+                      pyenv install -f 3.8.0 || true
+                      eval "$(pyenv init -)"
+                      pyenv global 3.8.0
+                      echo "export PATH=/opt/circleci/.pyenv/bin:"$PATH"" >> $BASH_ENV
+                      echo "export PATH=/opt/circleci/.pyenv/libexec:"$PATH"" >> $BASH_ENV
+                      source $BASH_ENV
+            - run:
+                  name: Check Python version and upgrade pip
+                  command: |
+                      python -m pip install -U pip
+                      python -m pip install --upgrade pip setuptools numpy pytess perlcompat scipy matplotlib wheel virtualenv
+            - run:
+                  name: Build pynets
+                  command: |
+                      pyenv local 3.8.0
+                      pip install --upgrade "pip>=19.1"
+                      pip install setuptools_rust twine
+                      THISVERSION=$( python get_version.py )
+                      THISVERSION=${THISVERSION%.dirty*}
+                      THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+                      virtualenv --python=python build
+                      source build/bin/activate
+                      pip install --upgrade "pip>=19.1" numpy
+                      echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
+                      python setup.py sdist
+                      pip wheel --no-deps -w dist/ .
+            - store_artifacts:
+                  path: /tmp/src/pynets/build
+            - run:
+                  name: Check sdist distribution
+                  command: |
+                      pyenv local 3.8.0
+                      THISVERSION=$( python get_version.py )
+                      THISVERSION=${THISVERSION%.dirty*}
+                      THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+                      twine check dist/pynets*.tar.gz
+                      virtualenv --python=python sdist
+                      source sdist/bin/activate
+                      pip install --upgrade "pip>=19.1" numpy
+                      pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
+                      pip install dist/pynets*.tar.gz
+                      which pynets | grep sdist\\/bin
+                      INSTALLED_VERSION=$(pynets --version)
+                      INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+                      INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
+                      echo "VERSION: \"$THISVERSION\""
+                      echo "INSTALLED: \"$INSTALLED_VERSION\""
+                      test "$INSTALLED_VERSION" = "$THISVERSION"
+            - run:
+                  name: Check wheel distribution
+                  command: |
+                      pyenv local 3.8.0
+                      THISVERSION=$( python get_version.py )
+                      THISVERSION=${THISVERSION%.dirty*}
+                      THISVERSION=${CIRCLE_TAG:-$THISVERSION}
+                      twine check dist/pynets*.whl
+                      virtualenv --python=python wheel
+                      source wheel/bin/activate
+                      pip install --upgrade "pip>=19.1" numpy
+                      pip install git+https://github.com/dPys/nilearn.git@enh/parc_conn
+                      pip install dist/pynets*.whl
+                      which pynets | grep wheel\\/bin
+                      INSTALLED_VERSION=$(pynets --version)
+                      INSTALLED_VERSION=${INSTALLED_VERSION%$'\r'}
+                      INSTALLED_VERSION=${INSTALLED_VERSION#*"PyNets v"}
+                      echo "VERSION: \"$THISVERSION\""
+                      echo "INSTALLED: \"$INSTALLED_VERSION\""
+                      test "$INSTALLED_VERSION" = "$THISVERSION"
+            - store_artifacts:
+                  path: /tmp/src/pynets/dist
 
-  deploy_pypi:
-    machine:
-      image: ubuntu-2004:202010-01
-    working_directory: /tmp/src/pynets
-    steps:
-      - checkout
-      - run:
-          name: Build pynets
-          command: |
-            sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
-            sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
-            pyenv local 3.8.0
-            THISVERSION=$( python get_version.py )
-            echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
-            docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.8 -c "pip install numpy && python setup.py sdist"
-            docker run --rm=false -e PLAT='manylinux1_x86_64' -e PKGNAME='pynets' -v `pwd`:/io \
-                quay.io/pypa/manylinux1_x86_64 /io/.circleci/pypi_wheel/build-wheels.sh
-      - run:
-          name: Upload packages to PyPI
-          command: |
-            pyenv local 3.8.0
-            pip install twine
-            INSTALLED_VERSION=$(pynets --version)
-            THISVERSION=$( python get_version.py )
-            if [[ "$INSTALLED_VERSION" != "$THISVERSION" ]]; then twine upload dist/pynets*; fi
+    deploy_pypi:
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/src/pynets
+        steps:
+            - checkout
+            - run:
+                  name: Build pynets
+                  command: |
+                      sudo setfacl -d -m group:$(id -gn):rwx /tmp/src/pynets
+                      sudo setfacl -m group:$(id -gn):rwx /tmp/src/pynets
+                      pyenv local 3.8.0
+                      THISVERSION=$( python get_version.py )
+                      echo "${CIRCLE_TAG:-$THISVERSION}" > pynets/VERSION
+                      docker run --rm=false --entrypoint=/bin/bash -v `pwd`:/io -w /io python:3.8 -c "pip install numpy && python setup.py sdist"
+                      docker run --rm=false -e PLAT='manylinux1_x86_64' -e PKGNAME='pynets' -v `pwd`:/io \
+                          quay.io/pypa/manylinux1_x86_64 /io/.circleci/pypi_wheel/build-wheels.sh
+            - run:
+                  name: Upload packages to PyPI
+                  command: |
+                      pyenv local 3.8.0
+                      pip install twine
+                      INSTALLED_VERSION=$(pynets --version)
+                      THISVERSION=$( python get_version.py )
+                      if [[ "$INSTALLED_VERSION" != "$THISVERSION" ]]; then twine upload dist/pynets*; fi
 
-  deployable:
-    docker:
-      - image: busybox:latest
-    steps:
-      - run: echo Deploying!
+    deployable:
+        docker:
+            - image: busybox:latest
+        steps:
+            - run: echo Deploying!
 
 workflows:
-  version: 2
-  build_test_deploy:
-    jobs:
-      - get_data:
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
+    version: 2
+    build_test_deploy:
+        jobs:
+            - get_data:
+                  filters:
+                      branches:
+                          ignore:
+                              - /docs?\/.*/
+                              - /licenses?\/.*/
+                              - /docker\/.*/
+                      tags:
+                          only: /.*/
 
-      - unit_and_integration_tests:
-          requires:
-            - get_data
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
-      - build:
-          requires:
-            - get_data
-            - unit_and_integration_tests
-          filters:
-            branches:
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
+            - unit_and_integration_tests:
+                  requires:
+                      - get_data
+                  filters:
+                      branches:
+                          ignore:
+                              - /docs?\/.*/
+                              - /licenses?\/.*/
+                              - /docker\/.*/
+                      tags:
+                          only: /.*/
+            - build:
+                  requires:
+                      - get_data
+                      - unit_and_integration_tests
+                  filters:
+                      branches:
+                          ignore:
+                              - /docs?\/.*/
+                              - /licenses?\/.*/
+                              - /docker\/.*/
+                      tags:
+                          only: /.*/
 
-      - build_docs:
-          requires:
-            - get_data
-            - unit_and_integration_tests
-            - build
-          filters:
-            branches:
-              only: master
-              ignore:
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
+            - build_docs:
+                  requires:
+                      - get_data
+                      - unit_and_integration_tests
+                      - build
+                  filters:
+                      branches:
+                          only: master
+                          ignore:
+                              - /licenses?\/.*/
+                              - /docker\/.*/
+                      tags:
+                          only: /.*/
 
-      - test_deploy_pypi:
-          requires:
-            - build_docs
-          filters:
-            branches:
-              only: master
-              ignore:
-                - /docs?\/.*/
-                - /licenses?\/.*/
-                - /docker\/.*/
-            tags:
-              only: /.*/
+            - test_deploy_pypi:
+                  requires:
+                      - build_docs
+                  filters:
+                      branches:
+                          only: master
+                          ignore:
+                              - /docs?\/.*/
+                              - /licenses?\/.*/
+                              - /docker\/.*/
+                      tags:
+                          only: /.*/
 
-      - deployable:
-          requires:
-            - test_deploy_pypi
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
+            - deployable:
+                  requires:
+                      - test_deploy_pypi
+                  filters:
+                      branches:
+                          only: master
+                      tags:
+                          only: /.*/
 
-      - deploy_docker:
-          requires:
-            - deployable
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /.*/
+            - deploy_docker:
+                  requires:
+                      - deployable
+                  filters:
+                      branches:
+                          only: master
+                      tags:
+                          only: /.*/
 
-      - deploy_pypi:
-          requires:
-            - deployable
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
+            - deploy_pypi:
+                  requires:
+                      - deployable
+                  filters:
+                      branches:
+                          ignore: /.*/
+                      tags:
+                          only: /.*/

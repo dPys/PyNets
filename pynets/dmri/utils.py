@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
@@ -7,19 +5,19 @@ Copyright (C) 2017
 import matplotlib
 import warnings
 import sys
-if sys.platform.startswith('win') is False:
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
 import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
 def normalize_gradients(
-    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1,
-    b_scale=True
+    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True
 ):
     """
     Normalize b-vectors and b-values.
@@ -57,17 +55,20 @@ def normalize_gradients(
     # Check for bval-bvec discrepancy.
     if not np.all(b0s == b0_vecs):
         if bvals.shape[0] == bvecs.shape[0]:
-            print(UserWarning(
-                "Inconsistent B0 locations in bvals and bvecs "
-                "(%d, %d low-b, respectively)..."
-                % (b0s.sum(), b0_vecs.sum())
-            ))
+            print(
+                UserWarning(
+                    "Inconsistent B0 locations in bvals and bvecs "
+                    "(%d, %d low-b, respectively)..."
+                    % (b0s.sum(), b0_vecs.sum())
+                )
+            )
             # Ensure b0s have (0, 0, 0) vectors
             bvecs[b0s, :3] = np.zeros(3)
         else:
             raise ValueError(
                 f"Inconsistent number of bvals ({bvals.shape[0]}) and bvecs "
-                f"({bvecs.shape[0]}).")
+                f"({bvecs.shape[0]})."
+            )
 
     # Rescale b-vals if requested
     if b_scale:
@@ -139,7 +140,7 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
 
     mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
     if mask.ndim != 3:
-        raise ValueError('mask cannot be more than 3d')
+        raise ValueError("mask cannot be more than 3d")
 
     # Randomize the voxels
     np.random.seed(random_seed)
@@ -150,23 +151,32 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
 
     # Unravel_index accepts > 1 index value as of numpy v1.6 :-)
     # TODO: PR this into Dipy
-    where = list(map(tuple,
-                     np.dstack(np.unravel_index(indices[mask[indices]==1],
-                                                shape))[-1, :]))
+    where = list(
+        map(
+            tuple,
+            np.dstack(np.unravel_index(indices[mask[indices] == 1], shape))[
+                -1, :
+            ],
+        )
+    )
 
     num_voxels = len(where)
     seeds_per_voxel = seeds_count // num_voxels + 1
 
     def sample_rand_seed(s, i, random_seed):
         if random_seed is not None:
-            s_random_seed = hash((np.sum(s) + 1) * i + random_seed) \
-                            % (2 ** 32 - 1)
+            s_random_seed = hash((np.sum(s) + 1) * i + random_seed) % (
+                2 ** 32 - 1
+            )
             np.random.seed(s_random_seed)
-        return s + np.random.random(3) - .5
+        return s + np.random.random(3) - 0.5
 
-    seeds = np.asarray([[sample_rand_seed(s, i, random_seed) for s in
-                         where] for i in
-             range(1, seeds_per_voxel + 1)])[-1, :][:seeds_count]
+    seeds = np.asarray(
+        [
+            [sample_rand_seed(s, i, random_seed) for s in where]
+            for i in range(1, seeds_per_voxel + 1)
+        ]
+    )[-1, :][:seeds_count]
 
     # Apply the spatial transform
     if seeds.any():
@@ -192,7 +202,7 @@ def generate_seeds(seeds):
     """
 
     for seed in seeds:
-        yield seed.astype('float32')
+        yield seed.astype("float32")
 
 
 def extract_b0(in_file, b0_ixs, out_path=None):
@@ -215,8 +225,7 @@ def extract_b0(in_file, b0_ixs, out_path=None):
 
     """
     if out_path is None:
-        out_path = fname_presuffix(in_file, suffix="_b0.nii.gz",
-                                   use_ext=False)
+        out_path = fname_presuffix(in_file, suffix="_b0.nii.gz", use_ext=False)
 
     img = nib.load(in_file)
 
@@ -224,17 +233,21 @@ def extract_b0(in_file, b0_ixs, out_path=None):
     hdr.set_data_shape(img.shape)
     hdr.set_xyzt_units("mm")
     nib.Nifti1Image(
-        np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs],
-        img.affine,
-        hdr).to_filename(out_path)
+        np.asarray(img.dataobj, dtype=np.float32)[..., b0_ixs], img.affine, hdr
+    ).to_filename(out_path)
 
     img.uncache()
     return out_path
 
 
-def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
-                                     affine=np.eye(4),
-                                     sphere='repulsion724'):
+def evaluate_streamline_plausibility(
+    dwi_data,
+    gtab,
+    mask_data,
+    streamlines,
+    affine=np.eye(4),
+    sphere="repulsion724",
+):
     """
     Linear Fascicle Evaluation (LiFE) takes any connectome and uses a
     forward modelling approach to predict diffusion measurements in the
@@ -265,21 +278,17 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     import dipy.tracking.life as life
     import dipy.core.optimize as opt
     from dipy.tracking._utils import _mapping_to_voxel
+
     # from dipy.data import get_sphere
     from dipy.tracking import utils
     from dipy.tracking.streamline import Streamlines
 
     original_count = len(streamlines)
 
-    streamlines_long = nib.streamlines. \
-        array_sequence.ArraySequence(
-            [
-                s
-                for s in streamlines
-                if len(s) >= float(10)
-            ]
-        )
-    print('Removing streamlines with negative voxel indices...')
+    streamlines_long = nib.streamlines.array_sequence.ArraySequence(
+        [s for s in streamlines if len(s) >= float(10)]
+    )
+    print("Removing streamlines with negative voxel indices...")
     # Remove any streamlines with negative voxel indices
     lin_T, offset = _mapping_to_voxel(np.eye(4))
     streamlines_positive = []
@@ -293,40 +302,45 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     # Filter resulting streamlines by those that stay entirely
     # inside the ROI of interest
     mask_data = np.array(mask_data, dtype=bool, copy=False)
-    streamlines_in_brain = Streamlines(utils.target(
-        streamlines_positive, np.eye(4),
-        mask_data, include=True
-    ))
+    streamlines_in_brain = Streamlines(
+        utils.target(streamlines_positive, np.eye(4), mask_data, include=True)
+    )
     streamlines_in_brain = [i for i in streamlines_in_brain]
     del streamlines_positive
-    print('Fitting fiber model...')
+    print("Fitting fiber model...")
 
     # ! Remember this 4d masking function !
-    data_in_mask = np.nan_to_num(np.broadcast_to(mask_data[..., None],
-                                                 dwi_data.shape
-                                                 ).astype('bool') * dwi_data)
+    data_in_mask = np.nan_to_num(
+        np.broadcast_to(mask_data[..., None], dwi_data.shape).astype("bool")
+        * dwi_data
+    )
     # ! Remember this 4d masking function !
 
     fiber_model = life.FiberModel(gtab)
-    fiber_fit = fiber_model.fit(data_in_mask, streamlines_in_brain,
-                                affine=affine,
-                                sphere=False)
+    fiber_fit = fiber_model.fit(
+        data_in_mask, streamlines_in_brain, affine=affine, sphere=False
+    )
     # sphere = get_sphere(sphere)
     # fiber_fit = fiber_model.fit(data_in_mask, streamlines_in_brain,
     #                             affine=affine,
     #                             sphere=sphere)
-    streamlines = list(np.array(streamlines_in_brain)[
-        np.where(fiber_fit.beta > 0)[0]])
+    streamlines = list(
+        np.array(streamlines_in_brain)[np.where(fiber_fit.beta > 0)[0]]
+    )
     pruned_count = len(streamlines)
     if pruned_count == 0:
-        print(UserWarning('\nWarning LiFE skipped due to implausible values '
-                          'detected in model betas. This does not '
-                          'necessarily invalidate the '
-                          'tractography. Rather it could indicate that '
-                          'you\'ve sampled too few streamlines, or that the '
-                          'sampling scheme is simply incompatible with the '
-                          'LiFE model. Is your acquisition hemispheric? '
-                          'Also check the gradient table for errors. \n'))
+        print(
+            UserWarning(
+                "\nWarning LiFE skipped due to implausible values "
+                "detected in model betas. This does not "
+                "necessarily invalidate the "
+                "tractography. Rather it could indicate that "
+                "you've sampled too few streamlines, or that the "
+                "sampling scheme is simply incompatible with the "
+                "LiFE model. Is your acquisition hemispheric? "
+                "Also check the gradient table for errors. \n"
+            )
+        )
         return streamlines_in_brain
     else:
         del streamlines_in_brain
@@ -335,17 +349,16 @@ def evaluate_streamline_plausibility(dwi_data, gtab, mask_data, streamlines,
     model_error = model_predict - fiber_fit.data
     model_rmse = np.sqrt(np.mean(model_error[:, 10:] ** 2, -1))
     beta_baseline = np.zeros(fiber_fit.beta.shape[0])
-    pred_weighted = np.reshape(opt.spdot(fiber_fit.life_matrix,
-                                         beta_baseline),
-                               (fiber_fit.vox_coords.shape[0],
-                                np.sum(~gtab.b0s_mask)))
-    mean_pred = np.empty((fiber_fit.vox_coords.shape[0],
-                          gtab.bvals.shape[0]))
+    pred_weighted = np.reshape(
+        opt.spdot(fiber_fit.life_matrix, beta_baseline),
+        (fiber_fit.vox_coords.shape[0], np.sum(~gtab.b0s_mask)),
+    )
+    mean_pred = np.empty((fiber_fit.vox_coords.shape[0], gtab.bvals.shape[0]))
     S0 = fiber_fit.b0_signal
     mean_pred[..., gtab.b0s_mask] = S0[:, None]
-    mean_pred[..., ~gtab.b0s_mask] = (pred_weighted +
-                                      fiber_fit.mean_signal
-                                      [:, None]) * S0[:, None]
+    mean_pred[..., ~gtab.b0s_mask] = (
+        pred_weighted + fiber_fit.mean_signal[:, None]
+    ) * S0[:, None]
     mean_error = mean_pred - fiber_fit.data
     mean_rmse = np.sqrt(np.mean(mean_error ** 2, -1))
     print(f"Original # Streamlines: {original_count}")

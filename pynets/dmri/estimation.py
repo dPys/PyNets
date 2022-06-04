@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -9,11 +7,12 @@ import matplotlib
 import warnings
 import numpy as np
 import sys
-if sys.platform.startswith('win') is False:
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
 import nibabel as nib
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -63,14 +62,10 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     #     FA >= 0.2, (np.logical_and(
     #         FA >= 0.08, MD >= 0.0011)))
     # FA_MD[np.isnan(FA_MD)] = 0
-    FA = np.nan_to_num(np.asarray(FA.astype('float32')))
+    FA = np.nan_to_num(np.asarray(FA.astype("float32")))
 
     fa_path = f"{os.path.dirname(B0_mask)}{'/tensor_fa.nii.gz'}"
-    nib.save(
-        nib.Nifti1Image(
-            FA,
-            nodif_B0_img.affine),
-        fa_path)
+    nib.save(nib.Nifti1Image(FA, nodif_B0_img.affine), fa_path)
 
     # md_path = f"{os.path.dirname(B0_mask)}{'/tensor_md.nii.gz'}"
     # nib.save(
@@ -128,13 +123,15 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
     dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
 
     gtab_hemisphere = HemiSphere(
-        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
+    )
 
     try:
         assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
     except BaseException:
         gtab_hemisphere = Sphere(
-            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)])
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
+        )
 
     img = nib.load(dwi_file)
     aff = img.affine
@@ -151,13 +148,12 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
             dwi_data = np.delete(dwi_data, b0, 3)
 
         anisomap = anisotropic_power(
-            sf_to_sh(
-                dwi_data,
-                gtab_hemisphere,
-                sh_order=2))
+            sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2)
+        )
         anisomap[np.isnan(anisomap)] = 0
-        masked_data = anisomap * \
-            np.asarray(nodif_B0_img.dataobj).astype("bool")
+        masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype(
+            "bool"
+        )
         img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
@@ -201,11 +197,10 @@ def tens_mod_est(gtab, data, B0_mask):
 
     print("Reconstructing tensors...")
     model = TensorModel(gtab)
-    mod = model.fit(data,
-                    np.nan_to_num(
-                        np.asarray(
-                            nib.load(B0_mask).dataobj)
-                    ).astype("bool"))
+    mod = model.fit(
+        data,
+        np.nan_to_num(np.asarray(nib.load(B0_mask).dataobj)).astype("bool"),
+    )
     mod_odf = mod.odf(get_sphere("repulsion724"))
     return mod_odf, model
 
@@ -242,8 +237,10 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
 
     print("Reconstructing using CSA...")
     model = CsaOdfModel(gtab, sh_order=sh_order)
-    csa_mod = model.fit(data, np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool")).shm_coeff
+    csa_mod = model.fit(
+        data,
+        np.nan_to_num(np.asarray(nib.load(B0_mask).dataobj)).astype("bool"),
+    ).shm_coeff
     # Clip any negative values
     csa_mod = np.clip(csa_mod, 0, np.max(csa_mod, -1)[..., None])
     return csa_mod.astype("float32"), model
@@ -292,8 +289,9 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     )
 
     print("Reconstructing using CSD...")
-    B0_mask_data = np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(nib.load(B0_mask).dataobj)).astype(
+        "bool"
+    )
     response = recursive_response(
         gtab,
         data,
@@ -304,7 +302,7 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
         init_trace=0.0021,
         iter=8,
         convergence=0.001,
-        parallel=False
+        parallel=False,
     )
     # print(f"CSD Reponse: {response}")
     model = ConstrainedSphericalDeconvModel(gtab, response, sh_order=sh_order)
@@ -314,8 +312,16 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     return csd_mod.astype("float32"), model
 
 
-def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
-                 sh_order=8, roi_radii=10):
+def mcsd_mod_est(
+    gtab,
+    data,
+    B0_mask,
+    wm_in_dwi,
+    gm_in_dwi,
+    vent_csf_in_dwi,
+    sh_order=8,
+    roi_radii=10,
+):
     """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -355,15 +361,18 @@ def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
     import dipy.reconst.dti as dti
     from nilearn.image import math_img
     from dipy.core.gradients import unique_bvals_tolerance
-    from dipy.reconst.mcsd import (mask_for_response_msmt,
-                                   response_from_mask_msmt,
-                                   multi_shell_fiber_response,
-                                   MultiShellDeconvModel)
+    from dipy.reconst.mcsd import (
+        mask_for_response_msmt,
+        response_from_mask_msmt,
+        multi_shell_fiber_response,
+        MultiShellDeconvModel,
+    )
 
     print("Reconstructing using MCSD...")
 
-    B0_mask_data = np.nan_to_num(np.asarray(
-        nib.load(B0_mask).dataobj)).astype("bool")
+    B0_mask_data = np.nan_to_num(np.asarray(nib.load(B0_mask).dataobj)).astype(
+        "bool"
+    )
 
     # Load tissue maps and prepare tissue classifier
     gm_mask_img = math_img("img > 0.10", img=gm_in_dwi)
@@ -373,8 +382,9 @@ def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
     wm_data = np.asarray(wm_mask_img.dataobj, dtype=np.float32)
 
     vent_csf_in_dwi_img = math_img("img > 0.50", img=vent_csf_in_dwi)
-    vent_csf_in_dwi_data = np.asarray(vent_csf_in_dwi_img.dataobj,
-                                      dtype=np.float32)
+    vent_csf_in_dwi_data = np.asarray(
+        vent_csf_in_dwi_img.dataobj, dtype=np.float32
+    )
 
     # Fit a simple DTI model
     tenfit = dti.TensorModel(gtab).fit(data)
@@ -387,39 +397,44 @@ def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
     indices_gm = np.where(((FA < 0.2) & (gm_data > 0.10)))
     indices_wm = np.where(((FA >= 0.2) & (wm_data > 0.15)))
 
-    selected_csf = np.zeros(FA.shape, dtype='bool')
-    selected_gm = np.zeros(FA.shape, dtype='bool')
-    selected_wm = np.zeros(FA.shape, dtype='bool')
+    selected_csf = np.zeros(FA.shape, dtype="bool")
+    selected_gm = np.zeros(FA.shape, dtype="bool")
+    selected_wm = np.zeros(FA.shape, dtype="bool")
 
     selected_csf[indices_csf] = True
     selected_gm[indices_gm] = True
     selected_wm[indices_wm] = True
 
     mask_wm, mask_gm, mask_csf = mask_for_response_msmt(
-        gtab, data, roi_radii=roi_radii,
+        gtab,
+        data,
+        roi_radii=roi_radii,
         wm_fa_thr=np.nanmean(FA[selected_wm]),
         gm_fa_thr=np.nanmean(FA[selected_gm]),
         csf_fa_thr=np.nanmean(FA[selected_csf]),
         gm_md_thr=np.nanmean(MD[selected_gm]),
-        csf_md_thr=np.nanmean(MD[selected_csf]))
+        csf_md_thr=np.nanmean(MD[selected_csf]),
+    )
 
-    mask_wm *= wm_data.astype('int64')
-    mask_gm *= gm_data.astype('int64')
-    mask_csf *= vent_csf_in_dwi_data.astype('int64')
+    mask_wm *= wm_data.astype("int64")
+    mask_gm *= gm_data.astype("int64")
+    mask_csf *= vent_csf_in_dwi_data.astype("int64")
 
     # nvoxels_wm = np.sum(mask_wm)
     # nvoxels_gm = np.sum(mask_gm)
     # nvoxels_csf = np.sum(mask_csf)
 
     response_wm, response_gm, response_csf = response_from_mask_msmt(
-        gtab, data, mask_wm, mask_gm, mask_csf)
+        gtab, data, mask_wm, mask_gm, mask_csf
+    )
 
-    response_mcsd = multi_shell_fiber_response(sh_order=8,
-                                               bvals=unique_bvals_tolerance(
-                                                   gtab.bvals),
-                                               wm_rf=response_wm,
-                                               gm_rf=response_gm,
-                                               csf_rf=response_csf)
+    response_mcsd = multi_shell_fiber_response(
+        sh_order=8,
+        bvals=unique_bvals_tolerance(gtab.bvals),
+        wm_rf=response_wm,
+        gm_rf=response_gm,
+        csf_rf=response_csf,
+    )
 
     model = MultiShellDeconvModel(gtab, response_mcsd, sh_order=sh_order)
     mcsd_mod = model.fit(data, B0_mask_data).shm_coeff
@@ -429,7 +444,7 @@ def mcsd_mod_est(gtab, data, B0_mask, wm_in_dwi, gm_in_dwi, vent_csf_in_dwi,
     return mcsd_mod.astype("float32"), model
 
 
-def sfm_mod_est(gtab, data, B0_mask, BACKEND='loky'):
+def sfm_mod_est(gtab, data, B0_mask, BACKEND="loky"):
     """
     Estimate a Sparse Fascicle Model (SFM) from dwi data.
 
@@ -471,11 +486,17 @@ def sfm_mod_est(gtab, data, B0_mask, BACKEND='loky'):
     nthreads = hardcoded_params["omp_threads"][0]
 
     model = sfm.SparseFascicleModel(
-        gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001)
+        gtab, sphere=sphere, l1_ratio=0.5, alpha=0.001
+    )
 
-    sf_mod = model.fit(data, mask=np.nan_to_num(np.asarray(nib.load(
-        B0_mask).dataobj)).astype("bool"), num_processes=nthreads,
-        parallel_backend=BACKEND)
+    sf_mod = model.fit(
+        data,
+        mask=np.nan_to_num(np.asarray(nib.load(B0_mask).dataobj)).astype(
+            "bool"
+        ),
+        num_processes=nthreads,
+        parallel_backend=BACKEND,
+    )
     sf_odf = sf_mod.odf(sphere)
     sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])
     return sf_odf.astype("float32"), model
@@ -515,7 +536,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         csd_mod_est,
         sfm_mod_est,
         tens_mod_est,
-        mcsd_mod_est
+        mcsd_mod_est,
     )
 
     if conn_model == "csa" or conn_model == "CSA":
@@ -527,8 +548,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         [mod_fit, mod] = csd_mod_est(gtab, dwi_data, B0_mask)
     elif conn_model == "sfm" or conn_model == "SFM":
         [mod_fit, mod] = sfm_mod_est(gtab, dwi_data, B0_mask)
-    elif conn_model == "ten" or conn_model == "tensor" or \
-            conn_model == "TEN":
+    elif conn_model == "ten" or conn_model == "tensor" or conn_model == "TEN":
         [mod_fit, mod] = tens_mod_est(gtab, dwi_data, B0_mask)
     else:
         raise ValueError(
@@ -565,7 +585,7 @@ def streams2graph(
     traversal,
     warped_fa,
     min_length,
-    error_margin
+    error_margin,
 ):
     """
     Use tracked streamlines as a basis for estimating a structural connectome.
@@ -719,21 +739,25 @@ def streams2graph(
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
-    fa_wei = hardcoded_params[
-        "StructuralNetworkWeighting"]["fa_weighting"][0]
-    fiber_density = hardcoded_params[
-        "StructuralNetworkWeighting"]["fiber_density"][0]
-    overlap_thr = hardcoded_params[
-        "StructuralNetworkWeighting"]["overlap_thr"][0]
-    roi_neighborhood_tol = \
-        hardcoded_params['tracking']["roi_neighborhood_tol"][0]
+    fa_wei = hardcoded_params["StructuralNetworkWeighting"]["fa_weighting"][0]
+    fiber_density = hardcoded_params["StructuralNetworkWeighting"][
+        "fiber_density"
+    ][0]
+    overlap_thr = hardcoded_params["StructuralNetworkWeighting"][
+        "overlap_thr"
+    ][0]
+    roi_neighborhood_tol = hardcoded_params["tracking"][
+        "roi_neighborhood_tol"
+    ][0]
 
     start = time.time()
 
     if float(roi_neighborhood_tol) <= float(error_margin):
-        raise ValueError('roi_neighborhood_tol preset cannot be less than '
-                         'the value of the structural connectome error'
-                         '_margin parameter.')
+        raise ValueError(
+            "roi_neighborhood_tol preset cannot be less than "
+            "the value of the structural connectome error"
+            "_margin parameter."
+        )
     else:
         print(f"Using fiber-roi intersection tolerance: {error_margin}...")
 
@@ -755,7 +779,7 @@ def streams2graph(
                     streams,
                     fa_img,
                     to_origin=Origin.NIFTI,
-                    to_space=Space.VOXMM
+                    to_space=Space.VOXMM,
                 ).streamlines
             )
         ]
@@ -773,8 +797,7 @@ def streams2graph(
                 neg_vox = True
 
         if neg_vox is True:
-            print(UserWarning("Negative voxel indices detected! "
-                              "Check FOV"))
+            print(UserWarning("Negative voxel indices detected! " "Check FOV"))
 
         streamlines = streams_filtered
         del streams_filtered
@@ -794,7 +817,8 @@ def streams2graph(
         if fa_wei is True:
             fa_weights = values_from_volume(
                 np.asarray(fa_img.dataobj, dtype=np.float32),
-                streamlines, np.eye(4)
+                streamlines,
+                np.eye(4),
             )
             global_fa_weights = list(utils.flatten(fa_weights))
             min_global_fa_wei = min([i for i in global_fa_weights if i > 0])
@@ -822,12 +846,13 @@ def streams2graph(
         g = nx.Graph(ecount=0, vcount=mx)
         edge_dict = defaultdict(int)
         node_dict = dict(
-            zip(np.unique(atlas_data.astype("uint16"))[1:], np.arange(mx) + 1))
+            zip(np.unique(atlas_data.astype("uint16"))[1:], np.arange(mx) + 1)
+        )
 
         # Add empty vertices with label volume attributes
         for node in range(1, mx + 1):
-            g.add_node(node, roi_volume=np.sum(
-                atlas_data.astype("uint16") == node)
+            g.add_node(
+                node, roi_volume=np.sum(atlas_data.astype("uint16") == node)
             )
 
         # Build graph
@@ -838,7 +863,7 @@ def streams2graph(
         print(f"Quantifying fiber-ROI intersection for {atlas}:")
         for ix, s in enumerate(sl):
             # Percent counter
-            pcN = int(round(100*float(ix / total_streamlines)))
+            pcN = int(round(100 * float(ix / total_streamlines)))
             if pcN % 10 == 0 and ix > 0 and pcN > pc:
                 pc = pcN
                 print(f"{pcN}%")
@@ -850,10 +875,16 @@ def streams2graph(
                 continue
             vox_coords = _to_voxel_coordinates(s, lin_T, offset)
 
-            [i, j, k] = np.vstack(np.array([
-                nodemaker.get_sphere(coord, error_margin, roi_zooms, roi_shape)
-                for coord in vox_coords
-            ])).T
+            [i, j, k] = np.vstack(
+                np.array(
+                    [
+                        nodemaker.get_sphere(
+                            coord, error_margin, roi_zooms, roi_shape
+                        )
+                        for coord in vox_coords
+                    ]
+                )
+            ).T
 
             # get labels for label_volume
             lab_arr = atlas_data[i, j, k]
@@ -868,7 +899,8 @@ def streams2graph(
                         print(
                             f"Label {lab} missing from parcellation. Check "
                             f"registration and ensure valid input "
-                            f"parcellation file.")
+                            f"parcellation file."
+                        )
 
             for edge in combinations(endlabels, 2):
                 # Get fiber lengths along edge
@@ -876,24 +908,28 @@ def streams2graph(
                     if not (edge[0], edge[1]) in fiberlengths.keys():
                         fiberlengths[(edge[0], edge[1])] = [len(vox_coords)]
                     else:
-                        fiberlengths[(edge[0],
-                                      edge[1])].append(len(vox_coords))
+                        fiberlengths[(edge[0], edge[1])].append(
+                            len(vox_coords)
+                        )
 
                 # Get FA values along edge
                 if fa_wei is True:
                     if not (edge[0], edge[1]) in fa_weights_dict.keys():
-                        fa_weights_dict[(edge[0],
-                                         edge[1])] = [fa_weights_norm[ix]]
+                        fa_weights_dict[(edge[0], edge[1])] = [
+                            fa_weights_norm[ix]
+                        ]
                     else:
-                        fa_weights_dict[(edge[0],
-                                         edge[1])].append(fa_weights_norm[ix])
+                        fa_weights_dict[(edge[0], edge[1])].append(
+                            fa_weights_norm[ix]
+                        )
 
-                edge_dict[tuple(sorted(tuple([int(node) for node in
-                                              edge])))] += 1
+                edge_dict[
+                    tuple(sorted(tuple([int(node) for node in edge])))
+                ] += 1
 
-            g.add_weighted_edges_from([(k[0],
-                                        k[1], count) for
-                                       k, count in edge_dict.items()])
+            g.add_weighted_edges_from(
+                [(k[0], k[1], count) for k, count in edge_dict.items()]
+            )
 
             del lab_arr, endlabels
             gc.collect()
@@ -913,32 +949,41 @@ def streams2graph(
             for u, v, d in g.edges(data=True):
                 total_fibers += len(d)
                 if u != u_start:
-                    total_volume += g.nodes[int(u)]['roi_volume']
+                    total_volume += g.nodes[int(u)]["roi_volume"]
                 u_start = u
 
             ix = 0
             for u, v, d in g.edges(data=True):
-                if d['weight'] > 0:
-                    fiber_density = (float(((float(d['weight']) /
-                                             float(total_fibers)) /
-                                            float(np.nanmean(fiberlengths[
-                                                                 (u, v)]))) *
-                                           ((2.0 * float(total_volume)) /
-                                            (g.nodes[int(u)]['roi_volume'] +
-                                               g.nodes[int(v)]['roi_volume']))
-                                           )) * 1000
+                if d["weight"] > 0:
+                    fiber_density = (
+                        float(
+                            (
+                                (float(d["weight"]) / float(total_fibers))
+                                / float(np.nanmean(fiberlengths[(u, v)]))
+                            )
+                            * (
+                                (2.0 * float(total_volume))
+                                / (
+                                    g.nodes[int(u)]["roi_volume"]
+                                    + g.nodes[int(v)]["roi_volume"]
+                                )
+                            )
+                        )
+                    ) * 1000
                 else:
                     fiber_density = 0
                 g.edges[u, v].update({"fiber_density": fiber_density})
                 ix += 1
 
         if fa_wei is True:
-            print("Re-weighting edges by mean FA along each edge's associated "
-                  "bundles...")
+            print(
+                "Re-weighting edges by mean FA along each edge's associated "
+                "bundles..."
+            )
             # Add FA attributes for each edge
             ix = 0
             for u, v, d in g.edges(data=True):
-                if d['weight'] > 0:
+                if d["weight"] > 0:
                     edge_average_fa = np.nanmean(fa_weights_dict[(u, v)])
                 else:
                     edge_average_fa = np.nan
@@ -948,21 +993,23 @@ def streams2graph(
         # Summarize weights
         if fa_wei is True and fiber_density is True:
             for u, v, d in g.edges(data=True):
-                g.edges[u, v].update({"final_weight":
-                                      (d['fa_weight'])*d['fiber_density']})
+                g.edges[u, v].update(
+                    {"final_weight": (d["fa_weight"]) * d["fiber_density"]}
+                )
         elif fiber_density is True and fa_wei is False:
             for u, v, d in g.edges(data=True):
-                g.edges[u, v].update({"final_weight": d['fiber_density']})
+                g.edges[u, v].update({"final_weight": d["fiber_density"]})
         elif fa_wei is True and fiber_density is False:
             for u, v, d in g.edges(data=True):
-                g.edges[u, v].update({"final_weight":
-                                      d['fa_weight']*d['weight']})
+                g.edges[u, v].update(
+                    {"final_weight": d["fa_weight"] * d["weight"]}
+                )
         else:
             for u, v, d in g.edges(data=True):
-                g.edges[u, v].update({"final_weight": d['weight']})
+                g.edges[u, v].update({"final_weight": d["weight"]})
 
         # Convert weighted graph to numpy matrix
-        conn_matrix_raw = nx.to_numpy_array(g, weight='final_weight')
+        conn_matrix_raw = nx.to_numpy_array(g, weight="final_weight")
 
         # Enforce symmetry
         conn_matrix = np.maximum(conn_matrix_raw, conn_matrix_raw.T)
@@ -974,8 +1021,12 @@ def streams2graph(
             for j in bad_idxs:
                 del labels[j], coords[j]
     else:
-        print(UserWarning('No valid streamlines detected. '
-                          'Proceeding with an empty graph...'))
+        print(
+            UserWarning(
+                "No valid streamlines detected. "
+                "Proceeding with an empty graph..."
+            )
+        )
         mx = len(np.unique(atlas_data.astype("uint16"))) - 1
         conn_matrix = np.zeros((mx, mx))
 
@@ -986,8 +1037,9 @@ def streams2graph(
     else:
         atlas_name = f"{atlas}_stage-rawgraph"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name, indices=None)
+    utils.save_coords_and_labels_to_json(
+        coords, labels, dir_path, atlas_name, indices=None
+    )
 
     coords = np.array(coords)
     labels = np.array(labels)
@@ -1009,7 +1061,7 @@ def streams2graph(
             parc,
             traversal,
             min_length,
-            error_margin
+            error_margin,
         ),
     )
 
@@ -1037,5 +1089,5 @@ def streams2graph(
         binary,
         traversal,
         min_length,
-        error_margin
+        error_margin,
     )

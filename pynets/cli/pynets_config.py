@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -12,18 +11,18 @@ yaml.preserve_quotes = True
 
 
 def load_runconfig():
-    with open(pkg_resources.resource_filename("pynets",
-                                              "advanced.yaml"),
-              mode='r+') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "advanced.yaml"), mode="r+"
+    ) as stream:
         advanced_params = yaml.load(stream, Loader=yaml.FullLoader)
     stream.close()
     return advanced_params
 
 
 def save_runconfig(advanced_params):
-    with open(pkg_resources.resource_filename("pynets",
-                                              "advanced.yaml"),
-              mode='w+') as stream:
+    with open(
+        pkg_resources.resource_filename("pynets", "advanced.yaml"), mode="w+"
+    ) as stream:
         yaml.dump(advanced_params, stream)
     stream.close()
     return

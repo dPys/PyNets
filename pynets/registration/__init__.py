@@ -1,10 +1,15 @@
-# -*- coding: utf-8 -*-
-
-__author__ = """Derek Pisner"""
+"""Implementation of the registration modules"""
+__author__ = "Derek Pisner"
 __email__ = "dpysalexander@gmail.com"
 
-import matplotlib
 import warnings
 
-matplotlib.use('Agg')
+import matplotlib
+import pickle5 as pickle
+
+pickle.HIGHEST_PROTOCOL = 5
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
+
+from . import utils, register, interfaces

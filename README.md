@@ -1,5 +1,5 @@
-PyNets®
-=======
+# PyNets®
+
 [![CircleCI](https://circleci.com/gh/dPys/PyNets.svg?style=svg)](https://circleci.com/gh/dPys/PyNets)
 [![codecov](https://codecov.io/gh/dPys/PyNets/branch/master/graph/badge.svg)](https://codecov.io/gh/dPys/PyNets?branch=master)
 [![PyPI - Version](https://img.shields.io/pypi/v/omniduct.svg)](https://pypi.org/project/pynets/)
@@ -9,25 +9,30 @@ PyNets®
 [![Docker](https://badgen.net/badge/icon/docker?icon=docker&label)](https://https://docker.com/)
 [![brainlife.io/app](https://img.shields.io/badge/brainlife.io-app-green.svg)](https://brainlife.io/app/6041f75166d5ce1daf6efb55)
 
-About
------
+## About
+
 PyNets is a tool for sampling and analyzing varieties of individual structural and functional connectomes. Using decision-tree learning, along with extensive bagging and boosting, PyNets is the first application of its kind to facilitate fully-reproducible, parametric sampling of connectome ensembles from neuroimaging data. As a post-processing workflow, PyNets is intended for any preprocessed fMRI or dMRI data in native anatomical space such that it supports normative-referenced connectotyping at the individual-level. Towards these ends, it comprehensively integrates best-practice tractography and functional connectivity analysis methods based open-source libraries such as Dipy and Nilearn, though it is powered primarily through NetworkX and the Nipype workflow engine. PyNets can now also be deployed as a BIDS application, where it takes BIDS derivatives and makes BIDS derivatives.
 
-Install
--------
+## Install
+
 ## Dockerhub (preferred):
+
 ```
 docker pull dpys/pynets
 ```
 
 ## Manual
+
 Third-Party Dependencies:
-*[FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9
-*[Python3.8+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
+_[FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) version >=5.0.9
+_[Python3.8+](https://www.python.org/download/releases/3.0/) with GUI programming enabled (See [tkinter](https://docs.python.org/3/library/tkinter.html#module-tkinter))
+
 ```
 [sudo] pip install pynets [--user]
 ```
+
 or
+
 ```
 # Install git-lfs
 1. brew install git-lfs (macOS) or [sudo] apt-get install git-lfs (linux) or skip to step 2 (Windows)
@@ -39,26 +44,26 @@ cd PyNets
 [sudo] python setup.py install [--user]
 ```
 
-Hardware Requirements
----------------------
+## Hardware Requirements
+
 4+ vCPU's, 8+ GB RSS memory, and at least 10 GB of free disk space though
 storage needs can vary considerably depending on the size of the input data
 and the type of analysis that you wish to run.
 
-Operating Systems
------------------
+## Operating Systems
+
 UNIX/MacOS 64-bit platforms
 
 Windows >10 with [WSL2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2)
 
+## Documentation
 
-Documentation
--------------
 Explore official installation instructions, user-guide, API, and examples: <https://pynets.readthedocs.io/en/latest/>
 
-Citing
-------
+## Citing
+
 A manuscript is in preparation, but for now, please cite all uses with the following entry:
+
 ```
 @misc{PyNets,
     title = {PyNets: A Reproducible Workflow for Structural and Functional Connectome Ensemble Learning},
@@ -71,12 +76,13 @@ A manuscript is in preparation, but for now, please cite all uses with the follo
 ```
 
 Data already preprocessed with BIDS apps like fmriprep, CPAC, dmriprep? If your BIDS derivatives can be queried with pybids, then you should be able to run them with the user-friendly `pynets_bids` CLI!
+
 ```
    pynets_bids '/hnu/fMRIprep/fmriprep' '/Users/dPys/outputs/pynets' participant func --participant_label 0025427 0025428 --session_label 1 2 -config pynets/config/bids_config.json
 
 ```
-*Note: If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`. Similarly, if you preprocessed your data using CPAC, then you will want to be sure that an ALFF image exists. PyNets does NOT currently accept template-normalized BOLD or DWI data. See the usage docs for more information on compatible file types.
 
+\*Note: If you preprocessed your BOLD data using fMRIprep, then you will need to have specified either `T1w` or `anat` in the list of fmriprep `--output-spaces`. Similarly, if you preprocessed your data using CPAC, then you will want to be sure that an ALFF image exists. PyNets does NOT currently accept template-normalized BOLD or DWI data. See the usage docs for more information on compatible file types.
 
 where the `-config` flag specifies that path to a .json configuration spec that includes at least one of many possible connectome recipes to apply to your data. Pre-built configuration files are available (see: <https://github.com/dPys/PyNets/tree/master/pynets/config>), and an example is shown here (with commented descriptions):
 
@@ -121,6 +127,7 @@ where the `-config` flag specifies that path to a .json configuration spec that 
 
 Data not in BIDS format and/or preprocessed using in-house tools?
 No problem-- you can still run pynets manually:
+
 ```
     pynets -id '002_1' '/Users/dPys/outputs/pynets' \ # where `-id` is an arbitrary subject identifier and the first path is an arbitrary output directory to store derivatives of the workflow.
     -func '/Users/dPys/PyNets/tests/examples/sub-002/ses-1/func/BOLD_PREPROCESSED_IN_ANAT_NATIVE.nii.gz' \ # The fMRI BOLD image data.

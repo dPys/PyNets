@@ -90,16 +90,16 @@ RUN apt-get update -qq \
     && echo "GRUB_CMDLINE_LINUX_DEFAULT="rootflags=uquota,pquota"" >> /etc/default/grub \
     && head -c 2G </dev/urandom > /tmp/3G_heap.txt # Here, we create a tmpfs heap, which gets reflected in /etc/fstab. We will delete it after creating the next run-layer so that the extra tmpfs storage stay available as free disk space.
 
-ENV FSLDIR=/usr/share/fsl/5.0 \
-    FSLOUTPUTTYPE=NIFTI_GZ \
-    FSLMULTIFILEQUIT=TRUE \
-    POSSUMDIR=/usr/share/fsl/5.0 \
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
-    FSLTCLSH=/usr/bin/tclsh \
-    FSLWISH=/usr/bin/wish \
-    PATH=$FSLDIR/bin:$PATH
-ENV PATH="/opt/conda/bin":$PATH
-ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":$PATH
+ENV FSLDIR="/usr/share/fsl/5.0"
+ENV FSLOUTPUTTYPE="NIFTI_GZ"
+ENV FSLMULTIFILEQUIT="TRUE"
+ENV POSSUMDIR="/usr/share/fsl/5.0"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"/usr/lib/fsl/5.0"
+ENV FSLTCLSH="/usr/bin/tclsh"
+ENV FSLWISH="/usr/bin/wish"
+ENV PATH="$FSLDIR"/bin:"$PATH"
+ENV PATH="/opt/conda/bin":"$PATH"
+ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":"$PATH"
 
 WORKDIR /home/neuro
 
@@ -192,20 +192,19 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 
 # ENV Config
 ENV PATH="/opt/conda/lib/python3.8/site-packages/pynets/cli":"$PATH"
-
-ENV FSLDIR=/usr/share/fsl/5.0 \
-    FSLOUTPUTTYPE=NIFTI_GZ \
-    FSLMULTIFILEQUIT=TRUE \
-    POSSUMDIR=/usr/share/fsl/5.0 \
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/fsl/5.0 \
-    FSLTCLSH=/usr/bin/tclsh \
-    FSLWISH=/usr/bin/wish \
-    PATH=$FSLDIR/bin:$PATH
-ENV PATH="/opt/conda/bin":"$PATH" \
-    OPENBLAS_NUM_THREADS=4 \
-    GOTO_NUM_THREADS=4 \
-    OMP_NUM_THREADS=4 \
-    QT_QPA_PLATFORM=offscreen
+ENV FSLDIR="/usr/share/fsl/5.0"
+ENV FSLOUTPUTTYPE="NIFTI_GZ"
+ENV FSLMULTIFILEQUIT="TRUE"
+ENV POSSUMDIR="/usr/share/fsl/5.0"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"/usr/lib/fsl/5.0"
+ENV FSLTCLSH="/usr/bin/tclsh"
+ENV FSLWISH="/usr/bin/wish"
+ENV PATH="$FSLDIR"/bin:"$PATH"
+ENV PATH="/opt/conda/bin":"$PATH"
+ENV OPENBLAS_NUM_THREADS=4
+ENV GOTO_NUM_THREADS=4
+ENV OMP_NUM_THREADS=4
+ENV QT_QPA_PLATFORM=offscreen
 
 EXPOSE 22
 

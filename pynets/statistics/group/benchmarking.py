@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -9,7 +7,8 @@ import os
 import pandas as pd
 import numpy as np
 import warnings
-from sklearn.neighbors import DistanceMetric
+
+# from sklearn.neighbors import DistanceMetric
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
@@ -23,16 +22,13 @@ from sklearn.preprocessing import StandardScaler
 from pynets.statistics.utils import mahalanobis_distances
 from pynets.core.utils import flatten
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
 def discr_stat(
-        X,
-        Y,
-        dissimilarity='mahalanobis',
-        remove_isolates=True,
-        return_rdfs=True):
+    X, Y, dissimilarity="mahalanobis", remove_isolates=True, return_rdfs=True
+):
     """
     Computes the discriminability statistic.
 
@@ -134,8 +130,10 @@ def _discr_rdf(dissimilarities, labels):
         idx[i] = False
         Dii = di[idx]
 
-        rdf = [1 - ((Dij < d).sum() + 0.5 * (Dij == d).sum()) /
-               Dij.size for d in Dii]
+        rdf = [
+            1 - ((Dij < d).sum() + 0.5 * (Dij == d).sum()) / Dij.size
+            for d in Dii
+        ]
         rdfs.append(rdf)
 
     out = np.full((len(rdfs), max(map(len, rdfs))), np.nan)
@@ -145,9 +143,20 @@ def _discr_rdf(dissimilarities, labels):
     return out
 
 
-def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
-                              final_missingness_summary, icc_tmps_dir, icc,
-                              mets, ids, template):
+def benchmark_reproducibility(
+    base_dir,
+    comb,
+    modality,
+    alg,
+    par_dict,
+    disc,
+    final_missingness_summary,
+    icc_tmps_dir,
+    icc,
+    mets,
+    ids,
+    template,
+):
     import gc
     import json
     import glob
@@ -155,26 +164,34 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     import ast
     import matplotlib
     from pynets.statistics.utils import gen_sub_vec
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
 
     df_summary = pd.DataFrame(
-        columns=['grid', 'modality', 'embedding',
-                 'discriminability'])
+        columns=["grid", "modality", "embedding", "discriminability"]
+    )
     print(comb)
     df_summary.at[0, "modality"] = modality
     df_summary.at[0, "embedding"] = alg
 
-    if modality == 'func':
+    if modality == "func":
         try:
             signal, hpass, model, granularity, parcellation, smooth = comb
         except BaseException:
             print(f"Missing {comb}...")
             signal, hpass, model, granularity, parcellation = comb
-            smooth = '0'
+            smooth = "0"
         # comb_tuple = (parcellation, signal, hpass, model, granularity, smooth)
         comb_tuple = comb
     else:
-        traversal, minlength, model, granularity, parcellation, error_margin = comb
+        (
+            traversal,
+            minlength,
+            model,
+            granularity,
+            parcellation,
+            error_margin,
+        ) = comb
         # comb_tuple = (parcellation, traversal, minlength, model, granularity, error_margin)
         comb_tuple = comb
 
@@ -191,47 +208,67 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
     # icc
     if icc is True:
         from pynets.statistics.utils import parse_closest_ixs
+
         try:
             import pingouin as pg
         except ImportError:
-            print(
-                "Cannot evaluate ICC. pingouin"
-                " must be installed!")
+            print("Cannot evaluate ICC. pingouin" " must be installed!")
         dfs = []
         coords_frames = []
         labels_frames = []
         for ses in [str(i) for i in range(1, 11)]:
             for ID in ids:
                 if ses in par_dict[ID].keys():
-                    if comb_tuple in par_dict[ID][str(ses)][modality][alg
-                                                                      ].keys():
-                        if 'data' in par_dict[ID][str(ses)][modality][alg][
-                                comb_tuple].keys():
-                            if par_dict[ID][str(ses)][modality][alg][
-                                    comb_tuple]['data'] is not None:
-                                if isinstance(par_dict[ID][str(ses)][
-                                        modality][alg][comb_tuple][
-                                        'data'], str):
+                    if (
+                        comb_tuple
+                        in par_dict[ID][str(ses)][modality][alg].keys()
+                    ):
+                        if (
+                            "data"
+                            in par_dict[ID][str(ses)][modality][alg][
+                                comb_tuple
+                            ].keys()
+                        ):
+                            if (
+                                par_dict[ID][str(ses)][modality][alg][
+                                    comb_tuple
+                                ]["data"]
+                                is not None
+                            ):
+                                if isinstance(
+                                    par_dict[ID][str(ses)][modality][alg][
+                                        comb_tuple
+                                    ]["data"],
+                                    str,
+                                ):
                                     data_path = par_dict[ID][str(ses)][
-                                        modality][alg][comb_tuple]['data']
-                                    parent_dir = Path(os.path.dirname(
-                                        par_dict[ID][str(ses)][modality][alg][
-                                            comb_tuple]['data'])).parent
+                                        modality
+                                    ][alg][comb_tuple]["data"]
+                                    parent_dir = Path(
+                                        os.path.dirname(
+                                            par_dict[ID][str(ses)][modality][
+                                                alg
+                                            ][comb_tuple]["data"]
+                                        )
+                                    ).parent
                                     if os.path.isfile(data_path):
                                         try:
-                                            if data_path.endswith('.npy'):
+                                            if data_path.endswith(".npy"):
                                                 emb_data = np.load(data_path)
-                                            elif data_path.endswith('.csv'):
+                                            elif data_path.endswith(".csv"):
                                                 emb_data = np.array(
                                                     pd.read_csv(data_path)
                                                 ).reshape(-1, 1)
                                             else:
                                                 emb_data = np.nan
                                             node_files = glob.glob(
-                                                f"{parent_dir}/nodes/*.json")
+                                                f"{parent_dir}/nodes/*.json"
+                                            )
                                         except:
-                                            print(f"Failed to load data from "
-                                                  f"{data_path}..")
+                                            print(
+                                                f"Failed to load data from "
+                                                f"{data_path}.."
+                                            )
                                             continue
                                     else:
                                         continue
@@ -239,109 +276,139 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                                     node_files = glob.glob(
                                         f"{base_dir}/pynets/sub-{ID}/ses-"
                                         f"{ses}/{modality}/subnet-"
-                                        f"{parcellation}_granularity-{granularity}/nodes/*.json")
+                                        f"{parcellation}_granularity-{granularity}/nodes/*.json"
+                                    )
                                     emb_data = par_dict[ID][str(ses)][
-                                        modality][alg][comb_tuple]['data']
+                                        modality
+                                    ][alg][comb_tuple]["data"]
 
                                 emb_shape = emb_data.shape[0]
 
                                 if len(node_files) > 0:
                                     ixs, node_dict = parse_closest_ixs(
-                                        node_files, emb_shape,
-                                        template=template)
+                                        node_files,
+                                        emb_shape,
+                                        template=template,
+                                    )
                                     if len(ixs) != emb_shape:
                                         ixs, node_dict = parse_closest_ixs(
-                                            node_files, emb_shape)
+                                            node_files, emb_shape
+                                        )
                                     if isinstance(node_dict, dict):
                                         try:
-                                            coords = [node_dict[i]['coord']
-                                                      for i
-                                                      in node_dict.keys()]
+                                            coords = [
+                                                node_dict[i]["coord"]
+                                                for i in node_dict.keys()
+                                            ]
                                             try:
-                                                labels = [node_dict[i][
-                                                    'label'][
-                                                    'BrainnetomeAtlas'
-                                                    'Fan2016'] for i in
-                                                    node_dict.keys()]
+                                                labels = [
+                                                    node_dict[i]["label"][
+                                                        "BrainnetomeAtlas"
+                                                        "Fan2016"
+                                                    ]
+                                                    for i in node_dict.keys()
+                                                ]
                                             except:
-                                                labels = [node_dict[i][
-                                                    'label'] for i in
-                                                    node_dict.keys()]
+                                                labels = [
+                                                    node_dict[i]["label"]
+                                                    for i in node_dict.keys()
+                                                ]
                                         except ValueError:
                                             print(comb)
                                     elif isinstance(node_dict[0], list):
                                         try:
-                                            coords = \
-                                                [node_dict[i]['coord'] for i
-                                                 in range(len(node_dict))]
+                                            coords = [
+                                                node_dict[i]["coord"]
+                                                for i in range(len(node_dict))
+                                            ]
                                             try:
-                                                labels = \
-                                                    [node_dict[i]['label']
-                                                     ['BrainnetomeAtlas' \
-                                                      'Fan2016'] for i
-                                                     in range(len(node_dict))]
+                                                labels = [
+                                                    node_dict[i]["label"][
+                                                        "BrainnetomeAtlas"
+                                                        "Fan2016"
+                                                    ]
+                                                    for i in range(
+                                                        len(node_dict)
+                                                    )
+                                                ]
                                             except:
-                                                labels = [node_dict[i][
-                                                    'label'] for i in
-                                                    node_dict.keys()]
+                                                labels = [
+                                                    node_dict[i]["label"]
+                                                    for i in node_dict.keys()
+                                                ]
                                         except ValueError:
                                             print(comb)
                                     else:
-                                        print(f"Failed to parse coords/"
-                                              f"labels from {node_files}. "
-                                              f"Skipping...")
+                                        print(
+                                            f"Failed to parse coords/"
+                                            f"labels from {node_files}. "
+                                            f"Skipping..."
+                                        )
                                         continue
                                     df_coords = pd.DataFrame(
-                                        [str(tuple(x)) for x in
-                                         coords]).T
+                                        [str(tuple(x)) for x in coords]
+                                    ).T
                                     df_coords.columns = [
                                         f"subnet-{parcellation}_granularity-"
                                         f"{granularity}_{i}"
-                                        for i in ixs]
+                                        for i in ixs
+                                    ]
                                     # labels = [
                                     #     list(i['label'])[7] for i
                                     #     in
                                     #     node_dict]
-                                    df_labels = pd.DataFrame(
-                                        labels).T
+                                    df_labels = pd.DataFrame(labels).T
                                     df_labels.columns = [
                                         f"subnet-{parcellation}_granularity-"
                                         f"{granularity}_{i}"
-                                        for i in ixs]
+                                        for i in ixs
+                                    ]
                                     coords_frames.append(df_coords)
                                     labels_frames.append(df_labels)
                                 else:
-                                    print(f"No node files detected for "
-                                          f"{comb_tuple} and {ID}-{ses}...")
-                                    ixs = [i for i in par_dict[ID][str(ses)][
-                                        modality][alg][
-                                        comb_tuple]['index'] if i is not None]
+                                    print(
+                                        f"No node files detected for "
+                                        f"{comb_tuple} and {ID}-{ses}..."
+                                    )
+                                    ixs = [
+                                        i
+                                        for i in par_dict[ID][str(ses)][
+                                            modality
+                                        ][alg][comb_tuple]["index"]
+                                        if i is not None
+                                    ]
                                     coords_frames.append(pd.Series())
                                     labels_frames.append(pd.Series())
 
                                 if len(ixs) == emb_shape:
-                                    df_pref = pd.DataFrame(emb_data.T,
-                                                           columns=[
-                                                               f"{alg}_{i}_rsn"
-                                                               f"-{parcellation}_granularity-"
-                                                               f"{granularity}"
-                                                               for i in ixs])
-                                    df_pref['id'] = ID
-                                    df_pref['ses'] = ses
+                                    df_pref = pd.DataFrame(
+                                        emb_data.T,
+                                        columns=[
+                                            f"{alg}_{i}_rsn"
+                                            f"-{parcellation}_granularity-"
+                                            f"{granularity}"
+                                            for i in ixs
+                                        ],
+                                    )
+                                    df_pref["id"] = ID
+                                    df_pref["ses"] = ses
                                     df_pref.replace(0, np.nan, inplace=True)
-                                    df_pref.reset_index(drop=True,
-                                                        inplace=True)
+                                    df_pref.reset_index(
+                                        drop=True, inplace=True
+                                    )
                                     dfs.append(df_pref)
                                 else:
                                     print(
                                         f"Embedding shape {emb_shape} for "
                                         f"{comb_tuple} does not correspond to "
                                         f"{len(ixs)} indices found for "
-                                        f"{ID}-{ses}. Skipping...")
+                                        f"{ID}-{ses}. Skipping..."
+                                    )
                                     continue
                         else:
                             print(
-                                f"data not found in {comb_tuple}. Skipping...")
+                                f"data not found in {comb_tuple}. Skipping..."
+                            )
                             continue
                 else:
                     continue
@@ -357,17 +424,19 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             nodes = False
 
         df_long = pd.concat(dfs, axis=0)
-        df_long = df_long.dropna(axis='columns', thresh=0.75 * len(df_long))
-        df_long = df_long.dropna(axis='rows', how='all')
+        df_long = df_long.dropna(axis="columns", thresh=0.75 * len(df_long))
+        df_long = df_long.dropna(axis="rows", how="all")
 
-        dict_sum = df_summary.drop(columns=['grid', 'modality', 'embedding',
-                                            'discriminability']).to_dict()
+        dict_sum = df_summary.drop(
+            columns=["grid", "modality", "embedding", "discriminability"]
+        ).to_dict()
 
-        for lp in [i for i in df_long.columns if 'ses' not in i and 'id' not
-                                                 in i]:
-            ix = int(lp.split(f"{alg}_")[1].split('_')[0])
+        for lp in [
+            i for i in df_long.columns if "ses" not in i and "id" not in i
+        ]:
+            ix = int(lp.split(f"{alg}_")[1].split("_")[0])
             parcellation = lp.split(f"{alg}_{ix}_")[1]
-            df_long_clean = df_long[['id', 'ses', lp]]
+            df_long_clean = df_long[["id", "ses", lp]]
             # df_long_clean = df_long[['id', 'ses', lp]].loc[(df_long[['id',
             # 'ses', lp]]['id'].duplicated() == True) & (df_long[['id', 'ses',
             # lp]]['ses'].duplicated() == True) & (df_long[['id', 'ses',
@@ -379,22 +448,33 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             #     lambda x: x.sample(g.size().min()).reset_index(drop=True))
             #     ).reset_index(drop=True)
             try:
-                c_icc = pg.intraclass_corr(data=df_long_clean, targets='id',
-                                           raters='ses', ratings=lp,
-                                           nan_policy='omit').round(3)
+                c_icc = pg.intraclass_corr(
+                    data=df_long_clean,
+                    targets="id",
+                    raters="ses",
+                    ratings=lp,
+                    nan_policy="omit",
+                ).round(3)
                 c_icc = c_icc.set_index("Type")
                 c_icc3 = c_icc.drop(
-                    index=['ICC1', 'ICC2', 'ICC1k', 'ICC2k', 'ICC3'])
-                icc_val = c_icc3['ICC'].values[0]
+                    index=["ICC1", "ICC2", "ICC1k", "ICC2k", "ICC3"]
+                )
+                icc_val = c_icc3["ICC"].values[0]
                 if nodes is True:
-                    coord_in = np.array(ast.literal_eval(
-                        coords_frames_icc[f"{parcellation}_"
-                                          f"{ix}"].mode().values[0]),
-                        dtype=np.dtype("O"))
+                    coord_in = np.array(
+                        ast.literal_eval(
+                            coords_frames_icc[f"{parcellation}_" f"{ix}"]
+                            .mode()
+                            .values[0]
+                        ),
+                        dtype=np.dtype("O"),
+                    )
                     label_in = np.array(
-                        labels_frames_icc[f"{parcellation}_"
-                                          f"{ix}"].mode().values[0],
-                        dtype=np.dtype("O"))
+                        labels_frames_icc[f"{parcellation}_" f"{ix}"]
+                        .mode()
+                        .values[0],
+                        dtype=np.dtype("O"),
+                    )
                 else:
                     coord_in = np.nan
                     label_in = np.nan
@@ -403,23 +483,29 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
             except BaseException:
                 print(f"FAILED for {lp}...")
                 # print(df_long)
-                #df_summary.at[0, f"{lp}_icc"] = np.nan
+                # df_summary.at[0, f"{lp}_icc"] = np.nan
                 coord_in = np.nan
                 label_in = np.nan
 
             dict_sum[f"{lp}_coord"] = coord_in
             dict_sum[f"{lp}_label"] = label_in
 
-        df_summary = pd.concat([df_summary,
-                                pd.DataFrame(pd.Series(dict_sum).T).T], axis=1)
+        df_summary = pd.concat(
+            [df_summary, pd.DataFrame(pd.Series(dict_sum).T).T], axis=1
+        )
 
         print(df_summary)
 
-        tup_name = str(comb_tuple).replace('\', \'', '_').replace('(',
-                                                                  '').replace(
-            ')', '').replace('\'', '')
-        df_summary.to_csv(f"{icc_tmps_dir}/{alg}_{tup_name}.csv",
-                          index=False, header=True)
+        tup_name = (
+            str(comb_tuple)
+            .replace("', '", "_")
+            .replace("(", "")
+            .replace(")", "")
+            .replace("'", "")
+        )
+        df_summary.to_csv(
+            f"{icc_tmps_dir}/{alg}_{tup_name}.csv", index=False, header=True
+        )
         del df_long
 
     # discriminability
@@ -427,8 +513,9 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         vect_all = []
         for ID in ids:
             try:
-                out = gen_sub_vec(base_dir, par_dict, ID, modality, alg,
-                                  comb_tuple)
+                out = gen_sub_vec(
+                    base_dir, par_dict, ID, modality, alg, comb_tuple
+                )
             except BaseException:
                 print(f"{ID} {modality} {alg} {comb_tuple} failed...")
                 continue
@@ -437,25 +524,28 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
         # ## TODO: Remove the .iloc below to include global efficiency.
         # vect_all = [pd.DataFrame(i).iloc[1:] for i in vect_all if i is not
         #             None and not np.isnan(np.array(i)).all()]
-        vect_all = [pd.DataFrame(i) for i in vect_all if i is not
-                    None and not np.isnan(np.array(i)).all()]
+        vect_all = [
+            pd.DataFrame(i)
+            for i in vect_all
+            if i is not None and not np.isnan(np.array(i)).all()
+        ]
 
         if len(vect_all) > 0:
             if len(vect_all) > 0:
                 X_top = pd.concat(vect_all, axis=0, join="outer")
-                X_top = np.array(X_top.dropna(axis='columns',
-                                              thresh=0.50 * len(X_top)))
+                X_top = np.array(
+                    X_top.dropna(axis="columns", thresh=0.50 * len(X_top))
+                )
             else:
-                print('Empty dataframe!')
+                print("Empty dataframe!")
                 return df_summary
 
             shapes = []
             for ix, i in enumerate(vect_all):
                 shapes.append(i.shape[0] * [list(ids)[ix]])
             Y = np.array(list(flatten(shapes)))
-            if alg == 'topology':
-                imp = IterativeImputer(max_iter=50,
-                                       random_state=42)
+            if alg == "topology":
+                imp = IterativeImputer(max_iter=50, random_state=42)
             else:
                 imp = SimpleImputer()
             X_top = imp.fit_transform(X_top)
@@ -468,7 +558,7 @@ def benchmark_reproducibility(base_dir, comb, modality, alg, par_dict, disc,
                 print("\n")
                 del discr_stat_val
             except BaseException:
-                print('Discriminability calculation failed...')
+                print("Discriminability calculation failed...")
                 return df_summary
             # print(rdf)
         del vect_all

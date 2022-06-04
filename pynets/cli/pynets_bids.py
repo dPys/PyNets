@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -10,12 +9,8 @@ from pynets.core.utils import as_list, merge_dicts
 
 
 def sweep_directory(
-        derivatives_path,
-        modality,
-        space,
-        subj=None,
-        sesh=None,
-        run=None):
+    derivatives_path, modality, space, subj=None, sesh=None, run=None
+):
     """
     Given a BIDS derivatives directory containing preprocessed functional MRI
     or diffusion MRI data (e.g. fMRIprep or dMRIprep), crawls the outputs and
@@ -58,12 +53,12 @@ def sweep_directory(
     if space is None:
         if modality == "dwi":
             spaces = layout.get_spaces(
-                suffix="dwi", extension=[
-                    ".nii", ".nii.gz"])
+                suffix="dwi", extension=[".nii", ".nii.gz"]
+            )
         elif modality == "func":
             spaces = layout.get_spaces(
-                suffix="bold", extension=[
-                    ".nii", ".nii.gz"])
+                suffix="bold", extension=[".nii", ".nii.gz"]
+            )
         if spaces:
             spaces = sorted(spaces)
             space = spaces[0]
@@ -72,7 +67,8 @@ def sweep_directory(
                 print(
                     f"No space was provided, but multiple spaces were "
                     f"detected: {space_list}. Selecting the first (ordered"
-                    f" lexicographically): {space}")
+                    f" lexicographically): {space}"
+                )
 
     for sub in subjs:
         all_seshs = layout.get_sessions(subject=sub)
@@ -115,8 +111,10 @@ def sweep_directory(
             # make a query to find the desired files from the BIDSLayout
             anat = layout.get(**anat_query)
             anat = [
-                i for i in anat if "MNI" not in i.filename and "space" not in
-                                   i.filename]
+                i
+                for i in anat
+                if "MNI" not in i.filename and "space" not in i.filename
+            ]
             if len(anat) > 1 and run is not None:
                 anat = [i for i in anat if f"run-{run}" in i.filename]
 
@@ -138,25 +136,30 @@ def sweep_directory(
             if len(mask) > 1 and run is not None:
                 mask = [i for i in mask if f"run-{run}" in i.filename]
             mask = [
-                i for i in mask if "MNI" not in i.filename and "space" not in
-                                   i.filename]
+                i
+                for i in mask
+                if "MNI" not in i.filename and "space" not in i.filename
+            ]
 
             if modality == "dwi":
                 dwi = layout.get(
                     **merge_dicts(
                         mod_query,
-                        {"extension": [".nii", ".nii.gz"],
-                         },
+                        {
+                            "extension": [".nii", ".nii.gz"],
+                        },
                     )
                 )
                 if len(dwi) > 1 and run is not None:
                     dwi = [i for i in dwi if f"run-{run}" in i.filename]
                 bval = layout.get(
-                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"]}))
+                    **merge_dicts(mod_query, {"extension": ["bval", "bvals"]})
+                )
                 if len(bval) > 1 and run is not None:
                     bval = [i for i in bval if f"run-{run}" in i.filename]
                 bvec = layout.get(
-                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"]}))
+                    **merge_dicts(mod_query, {"extension": ["bvec", "bvecs"]})
+                )
                 if len(bvec) > 1 and run is not None:
                     bvec = [i for i in bvec if f"run-{run}" in i.filename]
 
@@ -188,21 +191,25 @@ def sweep_directory(
                     func = [i for i in func if f"run-{run}" in i.filename]
                 if len(func) > 1 and space is not None:
                     if "MNI" in [i.filename for i in func]:
-                        raise ValueError('MNI-space BOLD images are not '
-                                         'currently supported, but are all '
-                                         'that are currently detected. '
-                                         'Is a T1w/anat-coregistered '
-                                         'preprocessed BOLD image available? '
-                                         'See documentation for more details.')
+                        raise ValueError(
+                            "MNI-space BOLD images are not "
+                            "currently supported, but are all "
+                            "that are currently detected. "
+                            "Is a T1w/anat-coregistered "
+                            "preprocessed BOLD image available? "
+                            "See documentation for more details."
+                        )
                     else:
                         func = [i for i in func if space in i.filename]
 
                 conf = layout.get(
-                    **merge_dicts(mod_query, {"extension":
-                                              [".tsv", ".tsv.gz"]})
+                    **merge_dicts(
+                        mod_query, {"extension": [".tsv", ".tsv.gz"]}
+                    )
                 )
-                conf = [i for i in conf if "confounds_regressors" in
-                        i.filename]
+                conf = [
+                    i for i in conf if "confounds_regressors" in i.filename
+                ]
                 if len(conf) > 1 and run is not None:
                     conf = [i for i in conf if f"run-{run}" in i.filename]
 
@@ -249,7 +256,8 @@ def sweep_directory(
             return funcs, confs, None, None, None, anats, masks, subjs, seshs
     else:
         raise ValueError(
-            "Incorrect modality passed. Choices are 'func' and 'dwi'.")
+            "Incorrect modality passed. Choices are 'func' and 'dwi'."
+        )
 
 
 def get_bids_parser():
@@ -260,8 +268,9 @@ def get_bids_parser():
     # Primary inputs
     parser = argparse.ArgumentParser(
         description="PyNets BIDS CLI: A Fully-Automated Workflow for "
-                    "Reproducible Ensemble Sampling of Functional and "
-                    "Structural Connectomes")
+        "Reproducible Ensemble Sampling of Functional and "
+        "Structural Connectomes"
+    )
     parser.add_argument(
         "bids_dir",
         help="""The directory with the input dataset formatted according to
@@ -270,7 +279,8 @@ def get_bids_parser():
     )
     parser.add_argument(
         "output_dir",
-        help="""The directory to store pynets derivatives locally.""")
+        help="""The directory to store pynets derivatives locally.""",
+    )
     parser.add_argument(
         "analysis_level",
         choices=["participant", "group"],
@@ -279,11 +289,9 @@ def get_bids_parser():
     parser.add_argument(
         "modality",
         nargs="+",
-        choices=[
-            "dwi",
-            "func"],
+        choices=["dwi", "func"],
         help="Specify data modality to process from bids directory. "
-             "Options are `dwi` and `func`.",
+        "Options are `dwi` and `func`.",
     )
     parser.add_argument(
         "--participant_label",
@@ -319,8 +327,8 @@ def get_bids_parser():
         "--push_location",
         action="store",
         help="Name of folder on s3 to push output data to, "
-             "if the folder does not exist, it will be created. "
-             "Format the location as `s3://<bucket>/<path>`",
+        "if the folder does not exist, it will be created. "
+        "Format the location as `s3://<bucket>/<path>`",
         default=None,
     )
 
@@ -331,10 +339,10 @@ def get_bids_parser():
         default=None,
         nargs="+",
         help="Optionally specify a path to a parcellation/atlas Nifti1Image "
-             "file in MNI152 space. Labels should be spatially distinct across"
-             " hemispheres and ordered with consecutive integers with a value "
-             "of 0 as the background label. If specifying a list of paths to "
-             "multiple user atlases, separate them by space.\n",
+        "file in MNI152 space. Labels should be spatially distinct across"
+        " hemispheres and ordered with consecutive integers with a value "
+        "of 0 as the background label. If specifying a list of paths to "
+        "multiple user atlases, separate them by space.\n",
     )
     parser.add_argument(
         "-cm",
@@ -342,26 +350,26 @@ def get_bids_parser():
         default=None,
         nargs="+",
         help="Optionally specify the path to a Nifti1Image mask file to "
-             "constrained functional clustering. If specifying a list of "
-             "paths to multiple cluster masks, separate them by space.\n",
+        "constrained functional clustering. If specifying a list of "
+        "paths to multiple cluster masks, separate them by space.\n",
     )
     parser.add_argument(
         "-roi",
         metavar="Path to binarized Region-of-Interest (ROI) Nifti1Image in "
-                "template MNI space",
+        "template MNI space",
         default=None,
         nargs="+",
         help="Optionally specify a binarized ROI mask in template MNI space "
-             "and retain only those nodes of a parcellation contained within "
-             "that mask for connectome estimation.\n",
+        "and retain only those nodes of a parcellation contained within "
+        "that mask for connectome estimation.\n",
     )
     parser.add_argument(
         "-ref",
         metavar="Atlas reference file path",
         default=None,
         help="Specify the path to the atlas reference .txt file that maps "
-             "labels to intensities corresponding to the atlas parcellation "
-             "file specified with the -ua flag.\n",
+        "labels to intensities corresponding to the atlas parcellation "
+        "file specified with the -ua flag.\n",
     )
     parser.add_argument(
         "-way",
@@ -369,8 +377,8 @@ def get_bids_parser():
         default=None,
         nargs="+",
         help="Optionally specify a binarized ROI mask in template MNI-space "
-             "to constrain tractography in the case of dmri connectome "
-             "estimation.\n",
+        "to constrain tractography in the case of dmri connectome "
+        "estimation.\n",
     )
 
     # Debug/Runtime settings
@@ -379,17 +387,17 @@ def get_bids_parser():
         metavar="Optional path to a config.json file with runtime settings.",
         default=None,
         help="Including this flag will override the bids_config.json template "
-             "in the base directory of pynets. See the template ad "
-             "`pynets -h` for available settings.\n",
+        "in the base directory of pynets. See the template ad "
+        "`pynets -h` for available settings.\n",
     )
     parser.add_argument(
         "-pm",
         metavar="Cores,memory",
         default="auto",
         help="Number of cores to use, number of GB of memory to use for "
-             "single subject run, entered as two integers seperated by comma. "
-             "Otherwise, default is `auto`, which uses all resources "
-             "detected on the current compute node.\n",
+        "single subject run, entered as two integers seperated by comma. "
+        "Otherwise, default is `auto`, which uses all resources "
+        "detected on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -407,26 +415,27 @@ def get_bids_parser():
             "LegacyMultiProc",
         ],
         help="Include this flag to specify a workflow plugin other than the "
-             "default MultiProc.\n",
+        "default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
         default=False,
         action="store_true",
-        help="Verbose print for debugging.\n")
+        help="Verbose print for debugging.\n",
+    )
     parser.add_argument(
         "-clean",
         default=False,
         action="store_true",
         help="Clean up temporary runtime directory after workflow "
-             "termination.\n",
+        "termination.\n",
     )
     parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
         help="Specify the path to a working directory for pynets to run. "
-             "Default is /tmp/work.\n",
+        "Default is /tmp/work.\n",
     )
     return parser
 
@@ -456,8 +465,10 @@ def main():
         )
 
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h"
-              " flag.\n")
+        print(
+            "\nMissing command-line inputs! See help options with the -h"
+            " flag.\n"
+        )
         sys.exit(1)
 
     print(f"{Fore.LIGHTBLUE_EX}\nBIDS API\n")
@@ -469,7 +480,7 @@ def main():
     print(Style.RESET_ALL)
 
     modalities = ["func", "dwi"]
-    space = 'T1w'
+    space = "T1w"
 
     bids_args = get_bids_parser().parse_args()
     participant_label = bids_args.participant_label
@@ -492,15 +503,17 @@ def main():
         raise ValueError(
             "Error: You have indicated a participant analysis level run, but"
             " not specified a participant "
-            "label!")
+            "label!"
+        )
 
     if bids_config:
         with open(bids_config, "r") as stream:
             arg_dict = json.load(stream)
     else:
         with open(
-            pkg_resources.resource_filename("pynets",
-                                            "config/bids_config.json"),
+            pkg_resources.resource_filename(
+                "pynets", "config/bids_config.json"
+            ),
             "r",
         ) as stream:
             arg_dict = json.load(stream)
@@ -562,10 +575,12 @@ def main():
             if (not creds) and bids_args.push_location:
                 raise AttributeError(
                     """No AWS credentials found, but `--push_location` flag
-                     called. Pushing will most likely fail.""")
+                     called. Pushing will most likely fail."""
+                )
             else:
                 output_dir = as_directory(
-                    f"{home}/.pynets/output", remove=False)
+                    f"{home}/.pynets/output", remove=False
+                )
 
             # Get S3 input data if needed
             if analysis_level == "participant":
@@ -577,7 +592,8 @@ def main():
                     elif ses is None:
                         info = "sub-" + partic
                     cloud.s3_get_data(
-                        buck, remo, bids_dir, modality, info=info)
+                        buck, remo, bids_dir, modality, info=info
+                    )
             elif analysis_level == "group":
                 if len(session_label) > 1 and session_label[0] != "None":
                     for ses in session_label:
@@ -598,25 +614,29 @@ def main():
             s3_r = session.resource("s3")
             s3_c = cloud.s3_client(service="s3")
             sec_dir = as_directory(
-                home + "/.pynets/secondary_files", remove=False)
+                home + "/.pynets/secondary_files", remove=False
+            )
             for s3_obj in [i for i in sec_s3_objs if i is not None]:
                 buck, remo = cloud.parse_path(s3_obj)
                 s3_c.download_file(
-                    buck, remo, f"{sec_dir}/{os.path.basename(s3_obj)}")
+                    buck, remo, f"{sec_dir}/{os.path.basename(s3_obj)}"
+                )
 
             if isinstance(bids_args.ua, list):
                 local_ua = bids_args.ua.copy()
                 for i in local_ua:
                     if i.startswith("s3://"):
-                        local_ua[local_ua.index(
-                            i)] = f"{sec_dir}/{os.path.basename(i)}"
+                        local_ua[
+                            local_ua.index(i)
+                        ] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.ua = local_ua
             if isinstance(bids_args.cm, list):
                 local_cm = bids_args.cm.copy()
                 for i in bids_args.cm:
                     if i.startswith("s3://"):
-                        local_cm[local_cm.index(
-                            i)] = f"{sec_dir}/{os.path.basename(i)}"
+                        local_cm[
+                            local_cm.index(i)
+                        ] = f"{sec_dir}/{os.path.basename(i)}"
                 bids_args.cm = local_cm
             if isinstance(bids_args.roi, list):
                 local_roi = bids_args.roi.copy()
@@ -637,8 +657,9 @@ def main():
 
             if bids_args.ref:
                 if bids_args.ref.startswith("s3://"):
-                    bids_args.ref = f"{sec_dir}/" \
-                                    f"{os.path.basename(bids_args.ref)}"
+                    bids_args.ref = (
+                        f"{sec_dir}/" f"{os.path.basename(bids_args.ref)}"
+                    )
     else:
         output_dir = bids_args.output_dir
         if output_dir is None:
@@ -667,20 +688,38 @@ def main():
                     modality=mod_,
                     space=space,
                     sesh=session_label,
-                    run=run
+                    run=run,
                 )
                 if mod_ == "func":
                     if i == 0:
-                        funcs, confs, _, _, _, anats, masks, subjs, seshs =\
-                            outs
+                        (
+                            funcs,
+                            confs,
+                            _,
+                            _,
+                            _,
+                            anats,
+                            masks,
+                            subjs,
+                            seshs,
+                        ) = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
                 elif mod_ == "dwi":
                     if i == 0:
-                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs =\
-                            outs
+                        (
+                            _,
+                            _,
+                            dwis,
+                            bvals,
+                            bvecs,
+                            anats,
+                            masks,
+                            subjs,
+                            seshs,
+                        ) = outs
                     else:
                         _, _, dwis, bvals, bvecs, _, _, _, _ = outs
                     intermodal_dict["dwis"].append(dwis)
@@ -698,7 +737,7 @@ def main():
                 modality=modality[0],
                 space=space,
                 sesh=session_label,
-                run=run
+                run=run,
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     elif analysis_level == "participant":
@@ -711,20 +750,38 @@ def main():
                     space=space,
                     subj=participant_label,
                     sesh=session_label,
-                    run=run
+                    run=run,
                 )
                 if mod_ == "func":
                     if i == 0:
-                        funcs, confs, _, _, _, anats, masks, subjs, seshs =\
-                            outs
+                        (
+                            funcs,
+                            confs,
+                            _,
+                            _,
+                            _,
+                            anats,
+                            masks,
+                            subjs,
+                            seshs,
+                        ) = outs
                     else:
                         funcs, confs, _, _, _, _, _, _, _ = outs
                     intermodal_dict["funcs"].append(funcs)
                     intermodal_dict["confs"].append(confs)
                 elif mod_ == "dwi":
                     if i == 0:
-                        _, _, dwis, bvals, bvecs, anats, masks, subjs, seshs =\
-                            outs
+                        (
+                            _,
+                            _,
+                            dwis,
+                            bvals,
+                            bvecs,
+                            anats,
+                            masks,
+                            subjs,
+                            seshs,
+                        ) = outs
                     else:
                         _, _, dwis, bvals, bvecs, _, _, _, _ = outs
                     intermodal_dict["dwis"].append(dwis)
@@ -743,7 +800,7 @@ def main():
                 space=space,
                 subj=participant_label,
                 sesh=session_label,
-                run=run
+                run=run,
             )
             funcs, confs, dwis, bvals, bvecs, anats, masks, subjs, seshs = outs
     else:
@@ -861,6 +918,8 @@ if __name__ == "__main__":
     import warnings
 
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_" \
-               "importlib.BuiltinImporter'>)"
+    __spec__ = (
+        "ModuleSpec(name='builtins', loader=<class '_frozen_"
+        "importlib.BuiltinImporter'>)"
+    )
     main()

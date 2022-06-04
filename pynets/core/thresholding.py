@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -9,7 +7,7 @@ import warnings
 import numpy as np
 import networkx as nx
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -225,7 +223,8 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
             )
             if float(thr) >= float(density):
                 conn_matrix = thresholding.threshold_absolute(
-                    conn_matrix, work_thr)
+                    conn_matrix, work_thr
+                )
                 break
             i = i + 1
     else:
@@ -480,19 +479,22 @@ def disparity_filter(G, weight="weight"):
             k_in = G.in_degree(u)
 
             if k_out > 1:
-                sum_w_out = sum(np.absolute(G[u][v][weight])
-                                for v in G.successors(u))
+                sum_w_out = sum(
+                    np.absolute(G[u][v][weight]) for v in G.successors(u)
+                )
                 for v in G.successors(u):
                     w = G[u][v][weight]
                     p_ij_out = float(np.absolute(w)) / sum_w_out
                     alpha_ij_out = (
                         1
                         - (k_out - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_out - 2), 0,
-                                         p_ij_out)[0]
+                        * integrate.quad(
+                            lambda x: (1 - x) ** (k_out - 2), 0, p_ij_out
+                        )[0]
                     )
                     N.add_edge(
-                        u, v, weight=w, alpha_out=float(f"{alpha_ij_out:.4f}"))
+                        u, v, weight=w, alpha_out=float(f"{alpha_ij_out:.4f}")
+                    )
 
             elif k_out == 1 and G.in_degree(list(G.successors(u))[0]) == 1:
                 # we need to keep the connection as it is the only way to
@@ -504,19 +506,22 @@ def disparity_filter(G, weight="weight"):
                 # is built already from the tail
 
             if k_in > 1:
-                sum_w_in = sum(np.absolute(G[v][u][weight])
-                               for v in G.predecessors(u))
+                sum_w_in = sum(
+                    np.absolute(G[v][u][weight]) for v in G.predecessors(u)
+                )
                 for v in G.predecessors(u):
                     w = G[v][u][weight]
                     p_ij_in = float(np.absolute(w)) / sum_w_in
                     alpha_ij_in = (
                         1
                         - (k_in - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k_in - 2), 0,
-                                         p_ij_in)[0]
+                        * integrate.quad(
+                            lambda x: (1 - x) ** (k_in - 2), 0, p_ij_in
+                        )[0]
                     )
                     N.add_edge(
-                        v, u, weight=w, alpha_in=float(f"{alpha_ij_in:.4f}"))
+                        v, u, weight=w, alpha_in=float(f"{alpha_ij_in:.4f}")
+                    )
         return N
 
     else:  # undirected case
@@ -531,8 +536,9 @@ def disparity_filter(G, weight="weight"):
                     alpha_ij = (
                         1
                         - (k - 1)
-                        * integrate.quad(lambda x: (1 - x) ** (k - 2), 0,
-                                         p_ij)[0]
+                        * integrate.quad(
+                            lambda x: (1 - x) ** (k - 2), 0, p_ij
+                        )[0]
                     )
                     B.add_edge(u, v, weight=w, alpha=float(f"{alpha_ij:.4f}"))
             else:
@@ -665,7 +671,8 @@ def knn(conn_matrix, k):
     gra.add_nodes_from(nodes)
     for i in nodes:
         line = np.ma.masked_array(
-            conn_matrix[i, :], mask=np.isnan(conn_matrix[i]))
+            conn_matrix[i, :], mask=np.isnan(conn_matrix[i])
+        )
         line.mask[i] = True
         for _ in range(k):
             node = np.argmax(line)
@@ -714,7 +721,7 @@ def local_thresholding_prop(conn_matrix, thr):
     conn_matrix = np.nan_to_num(conn_matrix)
 
     if np.sum(conn_matrix) == 0:
-        print(UserWarning('Empty connectivity matrix detected!'))
+        print(UserWarning("Empty connectivity matrix detected!"))
         return conn_matrix
 
     G = nx.from_numpy_matrix(np.abs(conn_matrix))
@@ -738,7 +745,8 @@ def local_thresholding_prop(conn_matrix, thr):
         print(
             f"Warning: The minimum spanning tree already has: {len_edges} "
             f"edges, select more edges. Local Threshold "
-            f"will be applied by just retaining the Minimum Spanning Tree")
+            f"will be applied by just retaining the Minimum Spanning Tree"
+        )
         conn_matrix_thr = nx.to_numpy_array(G)
         return conn_matrix_thr
 
@@ -747,8 +755,10 @@ def local_thresholding_prop(conn_matrix, thr):
     while (
         len_edges < edgenum
         and k <= np.shape(conn_matrix)[0]
-        and (len(len_edge_list[-fail_tol:]) -
-             len(set(len_edge_list[-fail_tol:])))
+        and (
+            len(len_edge_list[-fail_tol:])
+            - len(set(len_edge_list[-fail_tol:]))
+        )
         < (fail_tol - 1)
     ) and nx.is_connected(min_t) is True:
         # print(k)
@@ -792,16 +802,16 @@ def local_thresholding_prop(conn_matrix, thr):
         return conn_matrix_thr
 
     except ValueError as e:
-        print(e, f"MST thresholding failed. Check raw graph output manually "
-                 f"for debugging.")
+        print(
+            e,
+            f"MST thresholding failed. Check raw graph output manually "
+            f"for debugging.",
+        )
 
 
 def perform_thresholding(
-        conn_matrix,
-        thr,
-        min_span_tree,
-        dens_thresh,
-        disp_filt):
+    conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
+):
     """
 
     References
@@ -830,20 +840,25 @@ def perform_thresholding(
         thr_type = "MST"
         edge_threshold = f"{str(thr_perc)}%"
         conn_matrix_thr = thresholding.local_thresholding_prop(
-            conn_matrix, thr)
+            conn_matrix, thr
+        )
     elif disp_filt is True:
 
         thr_type = "DISPARITY"
         edge_threshold = f"{str(thr_perc)}%"
         G1 = thresholding.disparity_filter(
-            nx.from_numpy_array(np.abs(conn_matrix)))
+            nx.from_numpy_array(np.abs(conn_matrix))
+        )
         print(f"Computing edge disparity significance with alpha = {thr}")
         print(
             f"Filtered graph: nodes = {G1.number_of_nodes()}, "
             f"edges = {G1.number_of_edges()}"
         )
-        conn_matrix_bin = thresholding.binarize(nx.to_numpy_array(
-            G1, nodelist=sorted(G1.nodes()), dtype=np.float64))
+        conn_matrix_bin = thresholding.binarize(
+            nx.to_numpy_array(
+                G1, nodelist=sorted(G1.nodes()), dtype=np.float64
+            )
+        )
         # Enforce original dimensionality by padding with zeros.
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
     else:
@@ -859,7 +874,8 @@ def perform_thresholding(
             edge_threshold = None
             print(f"\nThresholding to achieve density of: {thr_perc}% ...\n")
             conn_matrix_thr = thresholding.density_thresholding(
-                conn_matrix, float(thr))
+                conn_matrix, float(thr)
+            )
     return thr_type, edge_threshold, conn_matrix_thr
 
 
@@ -1016,12 +1032,15 @@ def thresh_func(
     from pynets.core import utils, thresholding
 
     if np.count_nonzero(conn_matrix) == 0:
-        print(UserWarning("Raw connectivity matrix contains only"
-                          " zeros."))
+        print(UserWarning("Raw connectivity matrix contains only" " zeros."))
 
-    [thr_type, edge_threshold, conn_matrix_thr] = \
-        thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [
+        thr_type,
+        edge_threshold,
+        conn_matrix_thr,
+    ] = thresholding.perform_thresholding(
+        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
+    )
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print("Warning: Fragmented graph")
@@ -1053,8 +1072,9 @@ def thresh_func(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name, indices=None)
+    utils.save_coords_and_labels_to_json(
+        coords, labels, dir_path, atlas_name, indices=None
+    )
 
     return (
         edge_threshold,
@@ -1248,12 +1268,15 @@ def thresh_struct(
         node_radius = "parc"
 
     if np.count_nonzero(conn_matrix) == 0:
-        print(UserWarning("Raw connectivity matrix contains only"
-                          " zeros."))
+        print(UserWarning("Raw connectivity matrix contains only" " zeros."))
 
-    [thr_type, edge_threshold, conn_matrix_thr] = \
-        thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [
+        thr_type,
+        edge_threshold,
+        conn_matrix_thr,
+    ] = thresholding.perform_thresholding(
+        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
+    )
 
     if not nx.is_connected(nx.from_numpy_matrix(conn_matrix_thr)):
         print("Warning: Fragmented graph")
@@ -1272,7 +1295,7 @@ def thresh_struct(
         parc,
         traversal,
         min_length,
-        error_margin
+        error_margin,
     )
 
     utils.save_mat(conn_matrix_thr, est_path)
@@ -1286,8 +1309,9 @@ def thresh_struct(
     else:
         atlas_name = f"{atlas}_stage-post_thr"
 
-    utils.save_coords_and_labels_to_json(coords, labels, dir_path,
-                                         atlas_name, indices=None)
+    utils.save_coords_and_labels_to_json(
+        coords, labels, dir_path, atlas_name, indices=None
+    )
 
     return (
         edge_threshold,
@@ -1311,23 +1335,23 @@ def thresh_struct(
         streams,
         traversal,
         min_length,
-        error_margin
+        error_margin,
     )
 
 
 def thresh_raw_graph(
-        conn_matrix,
-        thr,
-        min_span_tree,
-        dens_thresh,
-        disp_filt,
-        est_path):
+    conn_matrix, thr, min_span_tree, dens_thresh, disp_filt, est_path
+):
     from pynets.core import thresholding
 
-    if 'rawgraph' in est_path:
-        est_path = est_path.replace('rawgraph', 'graph')
+    if "rawgraph" in est_path:
+        est_path = est_path.replace("rawgraph", "graph")
 
-    [thr_type, edge_threshold, conn_matrix_thr] = \
-        thresholding.perform_thresholding(
-        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt)
+    [
+        thr_type,
+        edge_threshold,
+        conn_matrix_thr,
+    ] = thresholding.perform_thresholding(
+        conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
+    )
     return thr_type, edge_threshold, conn_matrix_thr, thr, est_path

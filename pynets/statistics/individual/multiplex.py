@@ -1,28 +1,26 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2018
-@author: Derek Pisner & James Kunert-Graf
+@author: Derek Pisner
 """
-import matplotlib
-import numpy as np
-import warnings
 import os
-import gc
+import warnings
 from pathlib import Path
 
-matplotlib.use('Agg')
+import matplotlib
+import numpy as np
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
 def optimize_mutual_info(dwi_mat, func_mat, bins=20):
-    """
-
-    """
+    """ """
     import itertools
-    from pynets.core.thresholding import threshold_proportional
+
     import pandas as pd
+
+    from pynets.core.thresholding import threshold_proportional
 
     # Functional graph threshold window
     threshes_dwi = np.linspace(dwi_mat.min(), dwi_mat.max(), bins)
@@ -36,25 +34,28 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
     for thr_func, thr_dwi in all_thr_combos:
         X = threshold_proportional(dwi_mat, thr_dwi)
         Y = threshold_proportional(func_mat, thr_func)
-        mutual_info_dict[f"func-{round(thr_func, 2)}_" \
-                         f"dwi-{round(thr_dwi, 2)}"] = mutual_information_2d(
-            X.ravel(), Y.ravel())
+        mutual_info_dict[
+            f"func-{round(thr_func, 2)}_" f"dwi-{round(thr_dwi, 2)}"
+        ] = mutual_information_2d(X.ravel(), Y.ravel())
 
     df = pd.DataFrame(mutual_info_dict, index=range(1))
     df = df.loc[:, (df > 0.01).any(axis=0)]
     df = df.T.sort_values(by=0, ascending=False)
     if len(list(df.index)) == 0:
-        raise ValueError("No connections found in either or both of func or "
-                         "dwi graphs!")
+        raise ValueError(
+            "No connections found in either or both of func or " "dwi graphs!"
+        )
 
     best_thresh_combo = list(df.index)[0]
 
-    best_dwi_thr = float(best_thresh_combo.split("-")[1].split('_')[0])
-    best_func_thr = float(best_thresh_combo.split("-")[2].split('_')[0])
+    best_dwi_thr = float(best_thresh_combo.split("-")[1].split("_")[0])
+    best_func_thr = float(best_thresh_combo.split("-")[2].split("_")[0])
 
-    return {best_dwi_thr: threshold_proportional(dwi_mat, best_dwi_thr)}, \
-           {best_func_thr: threshold_proportional(func_mat, best_func_thr)}, \
-           df.head(1)[0].values[0]
+    return (
+        {best_dwi_thr: threshold_proportional(dwi_mat, best_dwi_thr)},
+        {best_func_thr: threshold_proportional(func_mat, best_func_thr)},
+        df.head(1)[0].values[0],
+    )
 
 
 def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
@@ -92,14 +93,13 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
       http://journals.aps.org/pre/abstract/10.1103/PhysRevE.88.032807
 
     """
-    import networkx as nx
     import multinetx as mx
-    import pickle5 as pickle
+    import networkx as nx
 
     mg = mx.MultilayerGraph()
     N = dwi_mat.shape[0]
     adj_block = mx.lil_matrix(np.zeros((N * 2, N * 2)))
-    adj_block[0:N, N: 2 * N] = np.identity(N)
+    adj_block[0:N, N : 2 * N] = np.identity(N)
     adj_block += adj_block.T
     G_dwi = nx.from_numpy_matrix(dwi_mat)
     G_func = nx.from_numpy_matrix(func_mat)
@@ -138,12 +138,13 @@ def mutual_information_2d(x, y, sigma=1, normalized=True):
         the computed similariy measure
     """
     from scipy import ndimage
+
     bins = (256, 256)
 
     jh = np.histogram2d(x, y, bins=bins)[0]
 
     # smooth the jh with a gaussian filter of given sigma
-    ndimage.gaussian_filter(jh, sigma=sigma, mode='constant', output=jh)
+    ndimage.gaussian_filter(jh, sigma=sigma, mode="constant", output=jh)
 
     # compute marginal histograms
     jh = jh + np.finfo(float).eps
@@ -157,11 +158,16 @@ def mutual_information_2d(x, y, sigma=1, normalized=True):
     # "A normalized entropy measure of 3-D medical image alignment".
     # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
     if normalized:
-        mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
-                / np.sum(jh * np.log(jh))) - 1
+        mi = (
+            (np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2)))
+            / np.sum(jh * np.log(jh))
+        ) - 1
     else:
-        mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1))
-               - np.sum(s2 * np.log(s2)))
+        mi = (
+            np.sum(jh * np.log(jh))
+            - np.sum(s1 * np.log(s1))
+            - np.sum(s2 * np.log(s2))
+        )
 
     return mi
 
@@ -172,12 +178,17 @@ def matching(
     namer_dir,
 ):
     import glob
+
     import networkx as nx
     import numpy as np
+    from graspologic.utils import (
+        multigraph_lcc_intersection,
+        remove_loops,
+        symmetrize,
+    )
+
     from pynets.core import thresholding
     from pynets.statistics.utils import parse_closest_ixs
-    from graspologic.utils import remove_loops, symmetrize, \
-        multigraph_lcc_intersection
 
     [dwi_graph_path, func_graph_path] = paths
     dwi_mat = np.load(dwi_graph_path)
@@ -188,24 +199,32 @@ def matching(
     func_mat = thresholding.standardize(func_mat)
 
     node_dict_dwi = parse_closest_ixs(
-        glob.glob(f"{str(Path(dwi_graph_path).parent.parent)}"
-                  f"/nodes/*.json"), dwi_mat.shape[0])[1]
+        glob.glob(
+            f"{str(Path(dwi_graph_path).parent.parent)}" f"/nodes/*.json"
+        ),
+        dwi_mat.shape[0],
+    )[1]
 
     node_dict_func = parse_closest_ixs(
-        glob.glob(f"{str(Path(func_graph_path).parent.parent)}"
-                  f"/nodes/*.json"), func_mat.shape[0])[1]
+        glob.glob(
+            f"{str(Path(func_graph_path).parent.parent)}" f"/nodes/*.json"
+        ),
+        func_mat.shape[0],
+    )[1]
 
     G_dwi = nx.from_numpy_array(dwi_mat)
-    nx.set_edge_attributes(G_dwi, 'structural',
-                            nx.get_edge_attributes(G_dwi, 'weight').values())
-    nx.set_node_attributes(G_dwi, dict(node_dict_dwi), name='dwi')
-    #G_dwi.nodes(data=True)
+    nx.set_edge_attributes(
+        G_dwi, "structural", nx.get_edge_attributes(G_dwi, "weight").values()
+    )
+    nx.set_node_attributes(G_dwi, dict(node_dict_dwi), name="dwi")
+    # G_dwi.nodes(data=True)
 
     G_func = nx.from_numpy_array(func_mat)
-    nx.set_edge_attributes(G_func, 'functional',
-                           nx.get_edge_attributes(G_func, 'weight').values())
-    nx.set_node_attributes(G_func, dict(node_dict_func), name='func')
-    #G_func.nodes(data=True)
+    nx.set_edge_attributes(
+        G_func, "functional", nx.get_edge_attributes(G_func, "weight").values()
+    )
+    nx.set_node_attributes(G_func, dict(node_dict_func), name="func")
+    # G_func.nodes(data=True)
 
     R = G_dwi.copy()
     R.remove_nodes_from(n for n in G_dwi if n not in G_func)
@@ -222,17 +241,20 @@ def matching(
     def writeJSON(metadata_str, outputdir):
         import json
         import uuid
-        modality = metadata_str.split('modality-')[1].split('_')[0]
-        metadata_list = [i for i in
-                         metadata_str.split('modality-'
-                                            )[1].split('_') if '-' in i]
+
+        modality = metadata_str.split("modality-")[1].split("_")[0]
+        metadata_list = [
+            i
+            for i in metadata_str.split("modality-")[1].split("_")
+            if "-" in i
+        ]
         hash = str(uuid.uuid4())
         filename = f"{outputdir}/sidecar_modality-{modality}_{hash}.json"
         metadata_dict = {}
         for meta in metadata_list:
-            k, v = meta.split('-')
+            k, v = meta.split("-")
             metadata_dict[k] = v
-        with open(filename, 'w+') as jsonfile:
+        with open(filename, "w+") as jsonfile:
             json.dump(metadata_dict, jsonfile, indent=4)
         jsonfile.close()
         return hash
@@ -243,11 +265,14 @@ def matching(
     dwi_hash = writeJSON(dwi_name, namer_dir)
     func_hash = writeJSON(func_name, namer_dir)
 
-    name = f"{atlas}_mplx_layer1-dwi_ensemble-{dwi_hash}_" \
-           f"layer2-func_ensemble-{func_hash}"
+    name = (
+        f"{atlas}_mplx_layer1-dwi_ensemble-{dwi_hash}_"
+        f"layer2-func_ensemble-{func_hash}"
+    )
 
     dwi_opt, func_opt, best_mi = optimize_mutual_info(
-        nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50)
+        nx.to_numpy_array(G_dwi), nx.to_numpy_array(G_func), bins=50
+    )
 
     func_mat_final = list(func_opt.values())[0]
     dwi_mat_final = list(dwi_opt.values())[0]
@@ -256,13 +281,16 @@ def matching(
 
     G_multi = nx.OrderedMultiGraph(nx.compose(G_dwi_final, G_func_final))
 
-    out_name = f"{name}_matchthr-{list(dwi_opt.keys())[0]}_" \
-               f"{list(func_opt.keys())[0]}"
+    out_name = (
+        f"{name}_matchthr-{list(dwi_opt.keys())[0]}_"
+        f"{list(func_opt.keys())[0]}"
+    )
     mG = build_mx_multigraph(
         nx.to_numpy_array(G_func_final),
         nx.to_numpy_array(G_dwi_final),
         out_name,
-        namer_dir)
+        namer_dir,
+    )
 
     mG_nx = f"{namer_dir}/{out_name}.gpickle"
     nx.write_gpickle(G_multi, mG_nx)
@@ -302,75 +330,55 @@ def build_multigraphs(est_path_iterlist):
       Journal of Nonlinear Science. https://doi.org/10.1007/s00332-017-9436-8
 
     """
-    import os
     import itertools
-    import numpy as np
+    import os
     from pathlib import Path
+
+    import numpy as np
+
+    from pynets.core.utils import flatten
     from pynets.statistics.individual.multiplex import matching
-    from pynets.core.utils import flatten, load_runconfig
 
     raw_est_path_iterlist = list(flatten(est_path_iterlist))
 
-    # Available functional and structural connectivity models
-    hardcoded_params = load_runconfig()
-    try:
-        func_models = hardcoded_params["available_models"]["func_models"]
-    except KeyError:
-        print(
-            "ERROR: available functional models not sucessfully extracted"
-            " from advanced.yaml"
-        )
-    try:
-        dwi_models = hardcoded_params["available_models"][
-            "dwi_models"]
-    except KeyError:
-        print(
-            "ERROR: available structural models not sucessfully extracted"
-            " from advanced.yaml"
-        )
-
-    atlases = list(set([x.split("/")[-3].split("/")[0]
-                        for x in raw_est_path_iterlist]))
+    atlases = list(
+        set([x.split("/")[-3].split("/")[0] for x in raw_est_path_iterlist])
+    )
     parcel_dict_func = dict.fromkeys(atlases)
     parcel_dict_dwi = dict.fromkeys(atlases)
     est_path_iterlist_dwi = list(
-        set(
-            [
-                i
-                for i in raw_est_path_iterlist
-                if "dwi" in i
-            ]
-        )
+        set([i for i in raw_est_path_iterlist if "dwi" in i])
     )
     est_path_iterlist_func = list(
-        set(
-            [
-                i
-                for i in raw_est_path_iterlist
-                if "func" in i
-            ]
-        )
+        set([i for i in raw_est_path_iterlist if "func" in i])
     )
 
     if "_subnet" in ";".join(est_path_iterlist_func):
         func_subnets = list(
-            set([i.split("_subnet-")[1].split("_")[0] for i in
-                 est_path_iterlist_func])
+            set(
+                [
+                    i.split("_subnet-")[1].split("_")[0]
+                    for i in est_path_iterlist_func
+                ]
+            )
         )
     else:
         func_subnets = []
     if "_subnet" in ";".join(est_path_iterlist_dwi):
         dwi_subnets = list(
-            set([i.split("_subnet-")[1].split("_")[0] for i in
-                 est_path_iterlist_dwi])
+            set(
+                [
+                    i.split("_subnet-")[1].split("_")[0]
+                    for i in est_path_iterlist_dwi
+                ]
+            )
         )
     else:
         dwi_subnets = []
 
     dir_path = str(
-        Path(
-            os.path.dirname(
-                est_path_iterlist_dwi[0])).parent.parent.parent)
+        Path(os.path.dirname(est_path_iterlist_dwi[0])).parent.parent.parent
+    )
     namer_dir = f"{dir_path}/dwi-func"
     if not os.path.isdir(namer_dir):
         os.mkdir(namer_dir)
@@ -417,30 +425,30 @@ def build_multigraphs(est_path_iterlist):
             parcel_dict[atlas] = {}
             subnets = np.intersect1d(dwi_subnets, func_subnets).tolist()
             for subnet in subnets:
-                parcel_dict[atlas][subnet] = list(set(itertools.product(
-                    parcel_dict_dwi[atlas][subnet],
-                    parcel_dict_func[atlas][subnet])))
+                parcel_dict[atlas][subnet] = list(
+                    set(
+                        itertools.product(
+                            parcel_dict_dwi[atlas][subnet],
+                            parcel_dict_func[atlas][subnet],
+                        )
+                    )
+                )
                 for paths in list(parcel_dict[atlas][subnet]):
-                    [
-                        mG_nx,
-                        mG,
-                        out_dwi_mat,
-                        out_func_mat
-                    ] = matching(
+                    [mG_nx, mG, out_dwi_mat, out_func_mat] = matching(
                         paths,
                         atlas,
                         namer_dir,
                     )
         else:
-            parcel_dict[atlas] = list(set(itertools.product(
-                parcel_dict_dwi[atlas], parcel_dict_func[atlas])))
+            parcel_dict[atlas] = list(
+                set(
+                    itertools.product(
+                        parcel_dict_dwi[atlas], parcel_dict_func[atlas]
+                    )
+                )
+            )
             for paths in list(parcel_dict[atlas]):
-                [
-                    mG_nx,
-                    mG,
-                    out_dwi_mat,
-                    out_func_mat
-                ] = matching(
+                [mG_nx, mG, out_dwi_mat, out_func_mat] = matching(
                     paths,
                     atlas,
                     namer_dir,

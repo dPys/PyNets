@@ -1,19 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-import matplotlib
-import warnings
-import numpy as np
 import sys
-if sys.platform.startswith('win') is False:
+import warnings
+
+import matplotlib
+import numpy as np
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
-import nibabel as nib
+
 from pathlib import Path
 
-matplotlib.use('Agg')
+import nibabel as nib
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -48,13 +50,26 @@ def get_sphere(coords, r, vox_dims, dims):
      Frontiers in Neuroinformatics.
     """
     r = float(r)
-    cube = np.vstack([row.ravel() for row in np.mgrid[[
-        slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1)
-                  for i in range(len(coords))]]])
-    sphere = np.round(cube[:, np.sum(
-        np.dot(np.diag(vox_dims), cube) ** 2, 0) ** 0.5 <= r].T + coords)
-    return sphere[(np.min(sphere, 1) >= 0) & (
-        np.max(np.subtract(sphere, dims), 1) <= -1), :].astype(int)
+    cube = np.vstack(
+        [
+            row.ravel()
+            for row in np.mgrid[
+                [
+                    slice(-r / vox_dims[i], r / vox_dims[i] + 0.01, 1)
+                    for i in range(len(coords))
+                ]
+            ]
+        ]
+    )
+    sphere = np.round(
+        cube[:, np.sum(np.dot(np.diag(vox_dims), cube) ** 2, 0) ** 0.5 <= r].T
+        + coords
+    )
+    return sphere[
+        (np.min(sphere, 1) >= 0)
+        & (np.max(np.subtract(sphere, dims), 1) <= -1),
+        :,
+    ].astype(int)
 
 
 def create_parcel_atlas(parcels_4d_img, label_intensities=None):
@@ -78,7 +93,8 @@ def create_parcel_atlas(parcels_4d_img, label_intensities=None):
         to ROI masks, prepended with a background image of zeros.
     """
     import gc
-    from nilearn.image import new_img_like, index_img
+
+    from nilearn.image import index_img, new_img_like
 
     for ix in range(parcels_4d_img.shape[-1]):
         if ix == 0:
@@ -86,26 +102,30 @@ def create_parcel_atlas(parcels_4d_img, label_intensities=None):
             template_affine = template_image.affine
             template_shape = template_image.shape
             template_image.uncache()
-            concatted_parcels = np.asarray(new_img_like(
-                template_image, np.zeros(template_shape, dtype=bool)
-            ).dataobj)[:, :, :, np.newaxis]
+            concatted_parcels = np.asarray(
+                new_img_like(
+                    template_image, np.zeros(template_shape, dtype=bool)
+                ).dataobj
+            )[:, :, :, np.newaxis]
         concatted_parcels = np.append(
-            concatted_parcels, np.asarray(index_img(parcels_4d_img,
-                                                    ix).dataobj)[:, :, :,
-                               np.newaxis], axis=3)
+            concatted_parcels,
+            np.asarray(index_img(parcels_4d_img, ix).dataobj)[
+                :, :, :, np.newaxis
+            ],
+            axis=3,
+        )
         gc.collect()
 
     if label_intensities is not None:
         parcel_values = np.array([0] + label_intensities).astype("float16")
     else:
-        parcel_values = np.array(range(concatted_parcels.shape[-1])
-                                 ).astype("float16")
+        parcel_values = np.array(range(concatted_parcels.shape[-1])).astype(
+            "float16"
+        )
 
     parcel_sum = np.sum(
-        parcel_values *
-        concatted_parcels,
-        axis=3,
-        dtype=np.uint16)
+        parcel_values * concatted_parcels, axis=3, dtype=np.uint16
+    )
 
     del concatted_parcels
     gc.collect()
@@ -162,11 +182,13 @@ def fetch_nilearn_atlas_coords(atlas):
     except BaseException:
         networks_list = None
     try:
-        labels = np.array([s.strip("b'")
-                           for s in atlas.labels.astype("U")]).tolist()
+        labels = np.array(
+            [s.strip("b'") for s in atlas.labels.astype("U")]
+        ).tolist()
     except BaseException:
-        labels = np.arange(
-            len(coords) + 1)[np.arange(len(coords) + 1) != 0].tolist()
+        labels = np.arange(len(coords) + 1)[
+            np.arange(len(coords) + 1) != 0
+        ].tolist()
 
     if len(coords) <= 1:
         raise ValueError(
@@ -212,27 +234,32 @@ def nilearn_atlas_helper(atlas, parc):
         )
     elif atlas == "atlas_pauli_2017":
         if parc is False:
-            atlas_fetch_obj = getattr(
-                datasets, f"fetch_{atlas}", "version")("prob")
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "version")(
+                "prob"
+            )
         else:
-            atlas_fetch_obj = getattr(
-                datasets, f"fetch_{atlas}", "version")("det")
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "version")(
+                "det"
+            )
     elif "atlas_talairach" in atlas:
         if atlas == "atlas_talairach_lobe":
             atlas = "atlas_talairach"
             print("Fetching level: lobe...")
-            atlas_fetch_obj = getattr(
-                datasets, f"fetch_{atlas}", "level")("lobe")
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "level")(
+                "lobe"
+            )
         elif atlas == "atlas_talairach_gyrus":
             atlas = "atlas_talairach"
             print("Fetching level: gyrus...")
-            atlas_fetch_obj = getattr(
-                datasets, f"fetch_{atlas}", "level")("gyrus")
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "level")(
+                "gyrus"
+            )
         elif atlas == "atlas_talairach_ba":
             atlas = "atlas_talairach"
             print("Fetching level: ba...")
-            atlas_fetch_obj = getattr(
-                datasets, f"fetch_{atlas}", "level")("ba")
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "level")(
+                "ba"
+            )
     else:
         atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}")()
     if len(list(atlas_fetch_obj.keys())) > 0:
@@ -249,8 +276,9 @@ def nilearn_atlas_helper(atlas, parc):
             raise ValueError("No labels found.")
         if "networks" in list(atlas_fetch_obj.keys()):
             try:
-                networks_list = [i.decode("utf-8")
-                                 for i in atlas_fetch_obj.networks]
+                networks_list = [
+                    i.decode("utf-8") for i in atlas_fetch_obj.networks
+                ]
             except BaseException:
                 networks_list = [i for i in atlas_fetch_obj.networks]
         else:
@@ -292,14 +320,15 @@ def VoxTomm(img_affine, voxcoords):
 
 
 def get_node_membership(
-        subnet,
-        infile,
-        coords,
-        labels,
-        parc,
-        parcels_4d,
-        perc_overlap=0.75,
-        error=4):
+    subnet,
+    infile,
+    coords,
+    labels,
+    parc,
+    parcels_4d,
+    perc_overlap=0.75,
+    error=4,
+):
     """
     Evaluate the affinity of any arbitrary list of coordinate or parcel nodes
     for a user-specified subnet based on Yeo-7 or Yeo-17 definitions.
@@ -362,27 +391,39 @@ def get_node_membership(
       29:3095-3114, 2018.
     """
     import gc
-    import pkg_resources
-    import pandas as pd
     import sys
     import tempfile
-    from nilearn.image import resample_to_img, index_img
-    from pynets.core.nodemaker import get_sphere, mmToVox, VoxTomm, \
-        create_parcel_atlas, three_to_four_parcellation
 
-    if sys.platform.startswith('win') is False:
+    import pandas as pd
+    import pkg_resources
+    from nilearn.image import index_img, resample_to_img
+
+    from pynets.core.nodemaker import (
+        VoxTomm,
+        create_parcel_atlas,
+        get_sphere,
+        mmToVox,
+        three_to_four_parcellation,
+    )
+
+    if sys.platform.startswith("win") is False:
         try:
             template_img = nib.load(infile)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load MNI reference. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI reference. Do you have git-lfs "
+                f"installed?",
+            )
     else:
         try:
             template_img = nib.load(infile)
         except ImportError as e:
-            print(e, f"\nCannot load MNI reference. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI reference. Do you have git-lfs "
+                f"installed?",
+            )
 
     bna_aff = template_img.affine
 
@@ -401,7 +442,7 @@ def get_node_membership(
         parcel_atlas_img_res = resample_to_img(
             parcel_atlas, template_img, interpolation="nearest"
         )
-        par_tmp = tempfile.NamedTemporaryFile(mode='w+', suffix='.nii.gz').name
+        par_tmp = tempfile.NamedTemporaryFile(mode="w+", suffix=".nii.gz").name
         nib.save(parcel_atlas_img_res, par_tmp)
         parcel_list_res = three_to_four_parcellation(par_tmp)
     else:
@@ -473,42 +514,45 @@ def get_node_membership(
         raise ValueError(
             f"subnet: {str(subnet)} not found!\nSee valid subnet names "
             f"using the `--help` flag with "
-            f"`pynets`")
+            f"`pynets`"
+        )
 
     # Create membership dictionary
     dict_df = pd.read_csv(
         nets_ref_txt,
         sep="\t",
         header=None,
-        names=[
-            "Index",
-            "Region",
-            "X",
-            "Y",
-            "Z"])
+        names=["Index", "Region", "X", "Y", "Z"],
+    )
     dict_df.Region.unique().tolist()
     ref_dict = {v: k for v, k in enumerate(dict_df.Region.unique().tolist())}
 
-    if sys.platform.startswith('win') is False:
+    if sys.platform.startswith("win") is False:
         try:
             rsn_img = nib.load(par_file)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load subnet reference image. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load subnet reference image. Do you have git-lfs "
+                f"installed?",
+            )
     else:
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
-            print(e, f"\nCannot load subnet reference image. "
-                     f"Do you have git-lfs installed?")
+            print(
+                e,
+                f"\nCannot load subnet reference image. "
+                f"Do you have git-lfs installed?",
+            )
 
     rsn_img_res = resample_to_img(
         rsn_img, template_img, interpolation="nearest"
     )
 
-    RSNmask = np.asarray(rsn_img_res.dataobj)[:, :, :,
-              list(ref_dict.keys())[list(ref_dict.values()).index(subnet)]]
+    RSNmask = np.asarray(rsn_img_res.dataobj)[
+        :, :, :, list(ref_dict.keys())[list(ref_dict.values()).index(subnet)]
+    ]
 
     coords_vox = []
     for i in coords:
@@ -555,8 +599,9 @@ def get_node_membership(
         coords_with_parc = []
         net_labels = []
         for p_ix in range(parcel_list_res.shape[-1]):
-            parcel_vol = np.asarray(index_img(parcel_list_res,
-                                              p_ix).dataobj).astype('bool')
+            parcel_vol = np.asarray(
+                index_img(parcel_list_res, p_ix).dataobj
+            ).astype("bool")
 
             # Count number of unique voxels where overlap of parcel and mask
             # occurs
@@ -571,9 +616,8 @@ def get_node_membership(
 
             # Count number of total unique voxels within the parcel
             total_count = len(
-                np.unique(
-                    np.where(
-                        (parcel_vol.astype("uint16") == 1))))
+                np.unique(np.where((parcel_vol.astype("uint16") == 1)))
+            )
 
             # Calculate % overlap
             if overlap_count > 0:
@@ -591,8 +635,8 @@ def get_node_membership(
                 if p_ix == 0:
                     RSN_parcels = parcel_vol[:, :, :, np.newaxis]
                 RSN_parcels = np.append(
-                    RSN_parcels,
-                    parcel_vol[:, :, :, np.newaxis], axis=3)
+                    RSN_parcels, parcel_vol[:, :, :, np.newaxis], axis=3
+                )
                 coords_with_parc.append(coords[i])
                 net_labels.append(labels[i])
             i += 1
@@ -611,8 +655,9 @@ def get_node_membership(
 
     if type(RSN_parcels) is np.ndarray:
         assert len(coords_mm) == len(net_labels) == RSN_parcels.shape[-1]
-        RSN_parcellation = nib.Nifti1Image(RSN_parcels.astype('int16'),
-                                      affine=par_aff)
+        RSN_parcellation = nib.Nifti1Image(
+            RSN_parcels.astype("int16"), affine=par_aff
+        )
     else:
         assert len(coords_mm) == len(net_labels)
         RSN_parcellation = None
@@ -622,6 +667,7 @@ def get_node_membership(
 
 def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
     import os
+
     import nibabel as nib
     import numpy as np
     from nipype.utils.filemanip import fname_presuffix
@@ -636,12 +682,12 @@ def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
         parlist_img_data[np.where(parlist_img_data == int(val))] = 0
 
     parcellation = fname_presuffix(
-        parcellation, suffix="_pruned",
-        newpath=os.path.dirname(parcellation))
+        parcellation, suffix="_pruned", newpath=os.path.dirname(parcellation)
+    )
     nib.save(
-        nib.Nifti1Image(parlist_img_data,
-                        affine=parcellation_img.affine),
-        parcellation)
+        nib.Nifti1Image(parlist_img_data, affine=parcellation_img.affine),
+        parcellation,
+    )
 
     print(f"{len(np.unique(parlist_img_data))} parcels remaining")
     if enf_hemi is True:
@@ -650,14 +696,8 @@ def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
 
 
 def parcel_masker(
-        roi,
-        coords,
-        parcels_4d,
-        labels,
-        dir_path,
-        ID,
-        perc_overlap,
-        vox_size):
+    roi, coords, parcels_4d, labels, dir_path, ID, perc_overlap, vox_size
+):
     """
     Evaluate the affinity of any arbitrary list of parcel nodes for a
     user-specified ROI mask.
@@ -697,49 +737,60 @@ def parcel_masker(
         corresponding to ROI masks with a spatial affinity to the specified
         ROI mask.
     """
-    from nilearn.image import resample_to_img, math_img, index_img, iter_img
-    from pynets.core.utils import load_runconfig
-    import pkg_resources
     import sys
+
+    import pkg_resources
+    from nilearn.image import index_img, iter_img, math_img, resample_to_img
+
+    from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
-    if sys.platform.startswith('win') is False:
+    if sys.platform.startswith("win") is False:
         try:
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
-            print(e, f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
 
-    mask_data = resample_to_img(
-        math_img("img > 0", img=nib.load(roi)), template_img,
-        interpolation='nearest'
-    ).get_fdata().astype('bool')
+    mask_data = (
+        resample_to_img(
+            math_img("img > 0", img=nib.load(roi)),
+            template_img,
+            interpolation="nearest",
+        )
+        .get_fdata()
+        .astype("bool")
+    )
 
     if isinstance(parcels_4d, nib.Nifti1Image):
-        parcels_4d_img = resample_to_img(parcels_4d, template_img,
-                                         interpolation='nearest')
+        parcels_4d_img = resample_to_img(
+            parcels_4d, template_img, interpolation="nearest"
+        )
     elif isinstance(parcels_4d, str):
-        parcels_4d_img = resample_to_img(nib.load(parcels_4d),
-                                         template_img,
-                                         interpolation='nearest')
+        parcels_4d_img = resample_to_img(
+            nib.load(parcels_4d), template_img, interpolation="nearest"
+        )
 
     i = 0
     indices = []
@@ -749,8 +800,12 @@ def parcel_masker(
             np.unique(
                 np.where(
                     (mask_data.astype("uint16") == 1)
-                    & (np.asarray(index_img(parcels_4d_img, ix).dataobj
-                                  ).astype('bool').astype("uint16") == 1)
+                    & (
+                        np.asarray(index_img(parcels_4d_img, ix).dataobj)
+                        .astype("bool")
+                        .astype("uint16")
+                        == 1
+                    )
                 )
             )
         )
@@ -759,8 +814,12 @@ def parcel_masker(
         total_count = len(
             np.unique(
                 np.where(
-                    (np.asarray(index_img(parcels_4d_img, ix).dataobj
-                                ).astype('bool').astype("uint16") == 1)
+                    (
+                        np.asarray(index_img(parcels_4d_img, ix).dataobj)
+                        .astype("bool")
+                        .astype("uint16")
+                        == 1
+                    )
                 )
             )
         )
@@ -768,9 +827,7 @@ def parcel_masker(
         if overlap_count > 0:
             overlap = float(overlap_count / total_count)
         else:
-            print(
-                f"No overlap of parcel {labels[i]} with roi"
-                f" mask...")
+            print(f"No overlap of parcel {labels[i]} with roi" f" mask...")
             indices.append(i)
             i += 1
             continue
@@ -794,14 +851,16 @@ def parcel_masker(
 
         parcel_list_adj = np.asarray(parcels_4d_img.dataobj)
         if len(indices) > 0:
-            parcel_list_adj = np.delete(parcel_list_adj,
-                                        np.array(indices).astype('int'), 3)
+            parcel_list_adj = np.delete(
+                parcel_list_adj, np.array(indices).astype("int"), 3
+            )
 
     except RuntimeError as e:
-        print(e,
-              "Restrictive masking. No parcels remain after masking with"
-              " brain mask/roi..."
-              )
+        print(
+            e,
+            "Restrictive masking. No parcels remain after masking with"
+            " brain mask/roi...",
+        )
 
     parcels_4d_img.uncache()
 
@@ -813,11 +872,14 @@ def parcel_masker(
 
     assert len(coords_adj) == len(labels_adj) == parcel_list_adj.shape[-1]
 
-    return coords_adj, labels_adj, nib.Nifti1Image(
-        parcel_list_adj, affine=parcels_4d_img.affine)
+    return (
+        coords_adj,
+        labels_adj,
+        nib.Nifti1Image(parcel_list_adj, affine=parcels_4d_img.affine),
+    )
 
 
-def coords_masker(roi, coords, labels, error, vox_size='2mm'):
+def coords_masker(roi, coords, labels, error, vox_size="2mm"):
     """
     Evaluate the affinity of any arbitrary list of coordinate nodes for a
     user-specified ROI mask.
@@ -846,45 +908,51 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
         Filtered list of string labels corresponding to ROI nodes with a
         spatial affinity for the specified ROI mask.
     """
-    import nibabel as nib
-    from nilearn.image import math_img, resample_to_img
-    from pynets.core.nodemaker import mmToVox
-    import pkg_resources
     import sys
+
+    import nibabel as nib
+    import pkg_resources
+    from nilearn.image import math_img, resample_to_img
+
+    from pynets.core.nodemaker import mmToVox
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
-    if sys.platform.startswith('win') is False:
+    if sys.platform.startswith("win") is False:
         try:
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
-            print(e, f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
 
     mask_img_res = resample_to_img(
-        math_img("img > 0", img=nib.load(roi)), template_img,
-        interpolation='nearest'
+        math_img("img > 0", img=nib.load(roi)),
+        template_img,
+        interpolation="nearest",
     )
 
-    mask_data = mask_img_res.get_fdata().astype('bool')
+    mask_data = mask_img_res.get_fdata().astype("bool")
     mask_aff = mask_img_res.affine
     mask_img_res.uncache()
 
@@ -932,10 +1000,11 @@ def coords_masker(roi, coords, labels, error, vox_size='2mm'):
             print(f"{'Removing: '}{labels[ix]}{' at '}{coords[ix]}")
             del labels[ix], coords[ix]
     except RuntimeError as e:
-        print(e,
-              "Restrictive masking. No coords remain after masking with"
-              " brain mask/roi..."
-              )
+        print(
+            e,
+            "Restrictive masking. No coords remain after masking with"
+            " brain mask/roi...",
+        )
 
     if len(coords) <= 1:
         raise ValueError(
@@ -971,21 +1040,29 @@ def get_names_and_coords_of_parcels(parcellation, background_label=0):
         A list of integer label intensity values from the parcellation.
     """
     import matplotlib
+
     matplotlib.use("agg")
     import os.path as op
+
     from nilearn.plotting import find_parcellation_cut_coords
+
     if not op.isfile(parcellation):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -a flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)"
+        )
 
     [coords, label_intensities] = find_parcellation_cut_coords(
         parcellation, background_label, return_label_names=True
     )
     print(f"Parcel intensities:\n{label_intensities}")
 
-    return coords, parcellation.split("/")[-1].split(".")[0], len(coords), \
-           label_intensities
+    return (
+        coords,
+        parcellation.split("/")[-1].split(".")[0],
+        len(coords),
+        label_intensities,
+    )
 
 
 def three_to_four_parcellation(parcellation):
@@ -1013,23 +1090,30 @@ def three_to_four_parcellation(parcellation):
     else:
         bna_img = nib.load(parcellation, mmap=True)
     parc_aff = bna_img.affine
-    bna_data = np.around(bna_img.get_fdata(caching='fill',
-                                           dtype=np.float16).astype('uint16'))
+    bna_data = np.around(
+        bna_img.get_fdata(caching="fill", dtype=np.float16).astype("uint16")
+    )
 
     # Get array of unique parcel indices
     uniq_indices = np.unique(bna_data)
     par_max = len(uniq_indices) - 1
 
-    img_stack = np.moveaxis(np.array([bna_data == uniq_indices[idx] for idx in
-                            range(1, par_max + 1)]), 0, -1)
+    img_stack = np.moveaxis(
+        np.array(
+            [bna_data == uniq_indices[idx] for idx in range(1, par_max + 1)]
+        ),
+        0,
+        -1,
+    )
     del bna_data, uniq_indices
     gc.collect()
 
-    return nib.Nifti1Image(img_stack.astype('int16'), affine=parc_aff)
+    return nib.Nifti1Image(img_stack.astype("int16"), affine=parc_aff)
 
 
-def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
-                                            background_label=0):
+def enforce_hem_distinct_consecutive_labels(
+    parcellation, label_names=None, background_label=0
+):
     """
     Check for hemispherically distinct and consecutive labels and rebuild
     parcellation.
@@ -1049,9 +1133,15 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
         List of string label names corresponding to ROI nodes.
     """
     import gc
+
+    from nilearn.image import (
+        concat_imgs,
+        index_img,
+        iter_img,
+        new_img_like,
+        reorder_img,
+    )
     from nilearn.image.resampling import coord_transform
-    from nilearn.image import new_img_like, reorder_img, iter_img, \
-        concat_imgs, index_img
 
     labels_img = reorder_img(nib.load(parcellation))
     labels_data = labels_img.get_fdata()
@@ -1074,36 +1164,38 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
             template_affine = template_image.affine
             template_shape = template_image.shape
             template_image.uncache()
-            new_labs = np.asarray(new_img_like(
-                template_image, np.zeros(template_shape, dtype=bool)
-            ).dataobj)[:, :, :, np.newaxis]
+            new_labs = np.asarray(
+                new_img_like(
+                    template_image, np.zeros(template_shape, dtype=bool)
+                ).dataobj
+            )[:, :, :, np.newaxis]
 
         # Grab hemispheres separately
         left_hemi = labels_data.copy() == lab
         right_hemi = labels_data.copy() == lab
-        left_hemi[int(x):] = 0
-        right_hemi[:int(x)] = 0
+        left_hemi[int(x) :] = 0
+        right_hemi[: int(x)] = 0
 
         # Two connected components in both hemispheres
         if not np.all(left_hemi == False) or np.all(right_hemi == False):
             left_lab = np.copy(cur_dat)
             right_lab = np.copy(cur_dat)
-            left_lab[int(x):] = 0
-            right_lab[:int(x)] = 0
+            left_lab[int(x) :] = 0
+            right_lab[: int(x)] = 0
             new_labs = np.append(
-                new_labs, np.asarray(left_lab)[:, :, :,
-                                   np.newaxis], axis=3)
+                new_labs, np.asarray(left_lab)[:, :, :, np.newaxis], axis=3
+            )
             new_labs = np.append(
-                new_labs, np.asarray(right_lab)[:, :, :,
-                                   np.newaxis], axis=3)
+                new_labs, np.asarray(right_lab)[:, :, :, np.newaxis], axis=3
+            )
             if label_names is not None:
                 new_lab_names.append(f"{label_names[ix]}_Left")
                 new_lab_names.append(f"{label_names[ix]}_Right")
             del left_lab, right_lab
         else:
             new_labs = np.append(
-                new_labs, np.asarray(cur_dat)[:, :, :,
-                                   np.newaxis], axis=3)
+                new_labs, np.asarray(cur_dat)[:, :, :, np.newaxis], axis=3
+            )
             if label_names is not None:
                 new_lab_names.append(label_names[ix])
         del left_hemi, right_hemi, cur_dat
@@ -1113,8 +1205,9 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
     del labels_data, labels_img
 
     # Enforce consecutive labelings
-    atlas_img_corr = create_parcel_atlas(new_img_like(parcels_4d_img,
-                                                      new_labs))[0]
+    atlas_img_corr = create_parcel_atlas(
+        new_img_like(parcels_4d_img, new_labs)
+    )[0]
     nib.save(atlas_img_corr, parcellation)
 
     atlas_img_corr.uncache()
@@ -1124,17 +1217,24 @@ def enforce_hem_distinct_consecutive_labels(parcellation, label_names=None,
     return parcellation, label_names
 
 
-def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
-                                                    labels):
+def drop_coords_labels_from_restricted_parcellation(
+    parcellation, coords, labels
+):
     # from pynets.core.utils import missing_elements
     import os
+
     from nipype.utils.filemanip import fname_presuffix
 
-    print('Checking parcellation for consistency...')
+    print("Checking parcellation for consistency...")
 
     parcellation_img = nib.load(parcellation)
-    intensities = [i for i in list(np.unique(
-        np.asarray(parcellation_img.dataobj).astype("int"))) if i != 0]
+    intensities = [
+        i
+        for i in list(
+            np.unique(np.asarray(parcellation_img.dataobj).astype("int"))
+        )
+        if i != 0
+    ]
 
     # Correct coords and labels
     # bad_idxs = missing_elements(intensities)
@@ -1143,10 +1243,15 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
         label_intensities = [i[1] for i in labels]
         bad_idxs = []
         if len(label_intensities) != len(intensities):
-            print('Inconsistent number of intensities and labels. '
-                  'Correcting parcellation...')
-            diff = [i for i in list(set(label_intensities) - set(intensities))
-                    if str(i) != '0']
+            print(
+                "Inconsistent number of intensities and labels. "
+                "Correcting parcellation..."
+            )
+            diff = [
+                i
+                for i in list(set(label_intensities) - set(intensities))
+                if str(i) != "0"
+            ]
             for val in diff:
                 bad_idxs.append(label_intensities.index(val))
             if len(bad_idxs) > 0:
@@ -1158,33 +1263,45 @@ def drop_coords_labels_from_restricted_parcellation(parcellation, coords,
                     print(f"Removing: {(labels[j], coords[j])}...")
                     del labels[j], coords[j]
 
-            diff = [i for i in list(set(intensities) -
-                                    set(label_intensities)) if str(i) != '0']
+            diff = [
+                i
+                for i in list(set(intensities) - set(label_intensities))
+                if str(i) != "0"
+            ]
             parlist_img_data = parcellation_img.get_fdata()
             for val in diff:
                 print(f"Removing: {str(val)}...")
                 parlist_img_data[np.where(parlist_img_data == float(val))] = 0
 
             parcellation = fname_presuffix(
-                parcellation, suffix="_mod",
-                newpath=os.path.dirname(parcellation))
+                parcellation,
+                suffix="_mod",
+                newpath=os.path.dirname(parcellation),
+            )
             nib.save(
-                nib.Nifti1Image(parlist_img_data,
-                                affine=parcellation_img.affine),
-                parcellation)
+                nib.Nifti1Image(
+                    parlist_img_data, affine=parcellation_img.affine
+                ),
+                parcellation,
+            )
 
-            intensity_count = len([i for i in np.unique(
-                parlist_img_data.astype("int")) if str(i) != '0'])
+            intensity_count = len(
+                [
+                    i
+                    for i in np.unique(parlist_img_data.astype("int"))
+                    if str(i) != "0"
+                ]
+            )
         else:
             intensity_count = len(intensities)
     else:
-        print('Warning: Labels do not include intensity values!')
+        print("Warning: Labels do not include intensity values!")
         intensity_count = len(intensities)
 
     try:
         assert len(coords) == len(labels) == intensity_count
     except ValueError as e:
-        print(e, 'Failed!')
+        print(e, "Failed!")
         print(f"# Coords: {len(coords)}")
         print(f"# Labels: {len(labels)}")
         print(f"# Intensities: {intensity_count}")
@@ -1215,24 +1332,29 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
     out_path : str
         File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
     """
-    from pynets.core.nodemaker import three_to_four_parcellation
     import os.path as op
+
+    from pynets.core.nodemaker import three_to_four_parcellation
 
     if not op.isfile(parcellation):
         raise ValueError(
             "\nUser-specified atlas input not found! Check that "
-            "the file(s) specified with the -a flag exist(s)")
+            "the file(s) specified with the -a flag exist(s)"
+        )
 
     print(
         f"\nExtracting parcels associated with {subnet} "
-        f"subnet locations...\n")
+        f"subnet locations...\n"
+    )
     net_parcels_sum = create_parcel_atlas(
-        three_to_four_parcellation(parcellation))
-    parcellation_name = \
-        op.basename(parcellation).split(op.splitext(parcellation)[1])[0]
-    out_path = f"{dir_path}" \
-               f"/{parcellation_name}_" \
-               f"{subnet}_parcels.nii.gz"
+        three_to_four_parcellation(parcellation)
+    )
+    parcellation_name = op.basename(parcellation).split(
+        op.splitext(parcellation)[1]
+    )[0]
+    out_path = (
+        f"{dir_path}" f"/{parcellation_name}_" f"{subnet}_parcels.nii.gz"
+    )
     nib.save(net_parcels_sum[0], out_path)
 
     return out_path
@@ -1274,44 +1396,47 @@ def parcel_naming(coords, vox_size):
 
     """
     import sys
-    import pkg_resources
-    import pandas as pd
-    import nibabel as nib
     from collections import defaultdict
+
+    import nibabel as nib
+    import pandas as pd
+    import pkg_resources
     from nilearn.image import resample_to_img
+
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
     try:
         labeling_atlases = hardcoded_params["labeling_atlases"]
     except KeyError as e:
-        print(e,
-              "No labeling atlases listed in advanced.yaml"
-              )
+        print(e, "No labeling atlases listed in advanced.yaml")
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     template_brain = pkg_resources.resource_filename(
         "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
-    if sys.platform.startswith('win') is False:
+    if sys.platform.startswith("win") is False:
         try:
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
-            print(e, f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                e,
+                f"\nCannot load MNI template. Do you have git-lfs "
+                f"installed?",
+            )
 
     coords_vox = []
     for i in coords:
@@ -1320,37 +1445,41 @@ def parcel_naming(coords, vox_size):
         tuple(map(lambda y: isinstance(y, float) and int(round(y, 0)), x))
         for x in coords_vox
     )
-    coords_vox_dups = list(set([ele for ele in coords_vox if
-                           coords_vox.count(ele) > 1]))
+    coords_vox_dups = list(
+        set([ele for ele in coords_vox if coords_vox.count(ele) > 1])
+    )
     if len(coords_vox_dups) > 1:
-        raise ValueError('There should be no duplicate nodes in a '
-                         'parcellation!')
+        raise ValueError(
+            "There should be no duplicate nodes in a " "parcellation!"
+        )
 
     label_img_dict = defaultdict()
     for label_atlas in labeling_atlases:
         label_img_dict[label_atlas] = {}
-        label_path = pkg_resources.resource_filename("pynets",
-                                                     f"/templates/labels/"
-                                                     f"{label_atlas}.txt")
-        label_img_path = pkg_resources.resource_filename("pynets",
-                                                         f"/templates/atlases/"
-                                                         f"{label_atlas}"
-                                                         f".nii.gz")
-        label_img_res = resample_to_img(
-            nib.load(label_img_path), template_img,
-            interpolation="nearest", copy=False
+        label_path = pkg_resources.resource_filename(
+            "pynets", f"/templates/labels/" f"{label_atlas}.txt"
         )
-        label_img_dict[label_atlas]['affine'] = label_img_res.affine
-        label_img_dict[label_atlas]['data'] = np.asarray(
-            label_img_res.dataobj, dtype='uint8')
-        df = pd.read_csv(label_path, sep=' ', names=['region_index', 'label'])
-        if df['label'].isna().all():
-            df = pd.read_csv(label_path, names=['label'])
-            df = df[(df.label != 'Background')]
-            df['region_index'] = np.arange(1, len(df) + 1)
-        df = df[~((df.label == 'Background') & (df.region_index == 0))]
-        df = df[~((df.label == 'Unknown') & (df.region_index == 0))]
-        label_img_dict[label_atlas]['reference'] = df
+        label_img_path = pkg_resources.resource_filename(
+            "pynets", f"/templates/atlases/" f"{label_atlas}" f".nii.gz"
+        )
+        label_img_res = resample_to_img(
+            nib.load(label_img_path),
+            template_img,
+            interpolation="nearest",
+            copy=False,
+        )
+        label_img_dict[label_atlas]["affine"] = label_img_res.affine
+        label_img_dict[label_atlas]["data"] = np.asarray(
+            label_img_res.dataobj, dtype="uint8"
+        )
+        df = pd.read_csv(label_path, sep=" ", names=["region_index", "label"])
+        if df["label"].isna().all():
+            df = pd.read_csv(label_path, names=["label"])
+            df = df[(df.label != "Background")]
+            df["region_index"] = np.arange(1, len(df) + 1)
+        df = df[~((df.label == "Background") & (df.region_index == 0))]
+        df = df[~((df.label == "Unknown") & (df.region_index == 0))]
+        label_img_dict[label_atlas]["reference"] = df
 
     # Create a consensus labeling dictionary
     label_dict = defaultdict()
@@ -1358,28 +1487,26 @@ def parcel_naming(coords, vox_size):
         label_dict[coord] = {}
         for label_atlas in label_img_dict.keys():
             label_dict[coord][label_atlas] = {}
-            label_dict[coord][label_atlas]['intensity'] = label_img_dict[
-                label_atlas]['data'][coord]
-            df_ref = label_img_dict[label_atlas]['reference']
+            label_dict[coord][label_atlas]["intensity"] = label_img_dict[
+                label_atlas
+            ]["data"][coord]
+            df_ref = label_img_dict[label_atlas]["reference"]
             try:
-                label_dict[
-                    coord][
-                    label_atlas][
-                    'label'] = df_ref.loc[
-                    df_ref[
-                        'region_index'] ==
-                    int(label_dict[coord][label_atlas][
-                        'intensity'])]['label'].values[0]
+                label_dict[coord][label_atlas]["label"] = df_ref.loc[
+                    df_ref["region_index"]
+                    == int(label_dict[coord][label_atlas]["intensity"])
+                ]["label"].values[0]
             except BaseException:
-                label_dict[coord][label_atlas]['label'] = "Unlabeled"
+                label_dict[coord][label_atlas]["label"] = "Unlabeled"
 
     new_labels = []
     for coord in label_dict.keys():
         coord_dict = {}
-        for atlas, i in list(zip(label_dict[coord].keys(),
-                                 label_dict[coord].values())):
+        for atlas, i in list(
+            zip(label_dict[coord].keys(), label_dict[coord].values())
+        ):
             try:
-                coord_dict[atlas] = i['label']
+                coord_dict[atlas] = i["label"]
             except BaseException:
                 continue
         new_labels.append(coord_dict)
@@ -1389,26 +1516,24 @@ def parcel_naming(coords, vox_size):
     return new_labels
 
 
-def get_node_attributes(node_files, emb_shape,
-                        atlas='BrainnetomeAtlasFan2016'):
+def get_node_attributes(
+    node_files, emb_shape, atlas="BrainnetomeAtlasFan2016"
+):
     import ast
     import re
+
     from pynets.statistics.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
-    coords = [(i['coord']) for
-              i in node_dict.values()]
-    if isinstance(node_dict[0]['label'], str):
+    coords = [(i["coord"]) for i in node_dict.values()]
+    if isinstance(node_dict[0]["label"], str):
         labels = [
-            ast.literal_eval(
-                re.search('({.+})',
-                          i['label']).group(0))[
-                atlas] for i in
-            node_dict.values()]
+            ast.literal_eval(re.search("({.+})", i["label"]).group(0))[atlas]
+            for i in node_dict.values()
+        ]
     else:
-        labels = [i['label'][atlas] for i in
-                  node_dict.values()]
+        labels = [i["label"][atlas] for i in node_dict.values()]
 
     return coords, labels, ixs
 
@@ -1425,7 +1550,7 @@ def node_gen_masking(
     parcellation,
     vox_size,
     perc_overlap=0.10,
-    error=2
+    error=2,
 ):
     """
     In the case that masking was applied, this function generate nodes based
@@ -1486,7 +1611,8 @@ def node_gen_masking(
         Path to directory containing subject derivative data for given run.
     """
     import gc
-    from pynets.core.nodemaker import parcel_masker, create_parcel_atlas
+
+    from pynets.core.nodemaker import create_parcel_atlas, parcel_masker
 
     if isinstance(parcels_4d, str):
         parcels_4d_img = nib.load(parcels_4d)
@@ -1495,7 +1621,13 @@ def node_gen_masking(
 
     # For parcel masking, specify overlap thresh and error cushion in mm voxels
     [coords, labels, parcels_4d_masked] = parcel_masker(
-        roi, coords, parcels_4d_img, labels, dir_path, ID, perc_overlap,
+        roi,
+        coords,
+        parcels_4d_img,
+        labels,
+        dir_path,
+        ID,
+        perc_overlap,
         vox_size,
     )
     parcels_4d_img.uncache()
@@ -1508,7 +1640,8 @@ def node_gen_masking(
         label_intensities = labels
 
     net_parcels_map_nifti = create_parcel_atlas(
-        parcels_4d_masked, label_intensities)[0]
+        parcels_4d_masked, label_intensities
+    )[0]
 
     del parcels_4d_masked
     gc.collect()
@@ -1516,15 +1649,21 @@ def node_gen_masking(
     assert (
         len(coords)
         == len(labels)
-        == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
-                                     ) if i != 0])
+        == len(
+            [
+                i
+                for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj))
+                if i != 0
+            ]
+        )
     )
 
     return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
 
 
-def node_gen(coords, parcels_4d, labels, dir_path, ID, parc, atlas,
-             parcellation):
+def node_gen(
+    coords, parcels_4d, labels, dir_path, ID, parc, atlas, parcellation
+):
     """
     In the case that masking was not applied, this function generate nodes
     based on atlas definitions established by fetch_nodes_and_labels.
@@ -1574,6 +1713,7 @@ def node_gen(coords, parcels_4d, labels, dir_path, ID, parc, atlas,
         Path to directory containing subject derivative data for given run.
     """
     import gc
+
     from pynets.core.nodemaker import create_parcel_atlas
 
     if isinstance(parcels_4d, str):
@@ -1588,8 +1728,9 @@ def node_gen(coords, parcels_4d, labels, dir_path, ID, parc, atlas,
     else:
         label_intensities = labels
 
-    net_parcels_map_nifti = create_parcel_atlas(parcels_4d_img,
-                                                label_intensities)[0]
+    net_parcels_map_nifti = create_parcel_atlas(
+        parcels_4d_img, label_intensities
+    )[0]
     parcels_4d_img.uncache()
     gc.collect()
 
@@ -1598,8 +1739,13 @@ def node_gen(coords, parcels_4d, labels, dir_path, ID, parc, atlas,
     assert (
         len(coords)
         == len(labels)
-        == len([i for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj)
-                                     ) if i != 0])
+        == len(
+            [
+                i
+                for i in np.unique(np.asarray(net_parcels_map_nifti.dataobj))
+                if i != 0
+            ]
+        )
     )
 
     return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
@@ -1627,12 +1773,14 @@ def mask_roi(dir_path, roi, mask, img_file):
         reduced to the spatial intersection with the input brain mask.
     """
     import os.path as op
-    from nilearn import masking
-    from nilearn.masking import intersect_masks
-    from nilearn.image import math_img, resample_img
 
-    img_mask_path = f"{dir_path}/{op.basename(img_file).split('.')[0]}" \
-                    f"_mask.nii.gz"
+    from nilearn import masking
+    from nilearn.image import math_img, resample_img
+    from nilearn.masking import intersect_masks
+
+    img_mask_path = (
+        f"{dir_path}/{op.basename(img_file).split('.')[0]}" f"_mask.nii.gz"
+    )
     nib.save(masking.compute_epi_mask(img_file), img_mask_path)
 
     if roi and mask:
@@ -1654,8 +1802,9 @@ def mask_roi(dir_path, roi, mask, img_file):
             connected=False,
         )
 
-        roi_red_path = f"{dir_path}/{op.basename(roi).split('.')[0]}" \
-                       f"_mask.nii.gz"
+        roi_red_path = (
+            f"{dir_path}/{op.basename(roi).split('.')[0]}" f"_mask.nii.gz"
+        )
         nib.save(masked_roi_img, roi_red_path)
         roi = roi_red_path
 
@@ -1695,9 +1844,11 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
         coordinates at their center-of-mass.
     """
     import gc
-    from pynets.core.nodemaker import get_sphere, mmToVox
+
+    from nilearn.image import concat_imgs, iter_img
     from nilearn.masking import intersect_masks
-    from nilearn.image import iter_img, concat_imgs
+
+    from pynets.core.nodemaker import get_sphere, mmToVox
 
     mask_img = nib.load(template_mask)
     mask_aff = mask_img.affine
@@ -1722,30 +1873,37 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
         sphere_vol[
             tuple(
                 get_sphere(
-                    coord, node_radius, (np.abs(x_vox), y_vox, z_vox),
-                    mask_shape
+                    coord,
+                    node_radius,
+                    (np.abs(x_vox), y_vox, z_vox),
+                    mask_shape,
                 ).T
             )
-        ] = (i * 1)
-        parcel_list_all.append(nib.Nifti1Image(
-                sphere_vol.astype("bool").astype("uint16"),
-                affine=mask_aff))
+        ] = (
+            i * 1
+        )
+        parcel_list_all.append(
+            nib.Nifti1Image(
+                sphere_vol.astype("bool").astype("uint16"), affine=mask_aff
+            )
+        )
         i += 1
 
     # remove the intersection
     parcel_intersect = np.invert(
         np.asarray(
-            intersect_masks(
-                parcel_list_all,
-                threshold=1).dataobj).astype("bool"))
+            intersect_masks(parcel_list_all, threshold=1).dataobj
+        ).astype("bool")
+    )
 
     parcels_4d = []
     for mask in iter_img(parcel_list_all):
         non_ovlp = np.asarray(mask.dataobj) * parcel_intersect
         parcels_4d.append(
             nib.Nifti1Image(
-                non_ovlp.astype("bool").astype("uint16"),
-                affine=mask_aff))
+                non_ovlp.astype("bool").astype("uint16"), affine=mask_aff
+            )
+        )
     del parcel_list_all
     gc.collect()
 

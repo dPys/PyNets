@@ -9,13 +9,14 @@ import os
 import nibabel as nib
 import warnings
 import sys
-if sys.platform.startswith('win') is False:
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
 import numpy as np
 from pynets.registration import utils as regutils
 from nilearn.image import math_img
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
@@ -54,7 +55,7 @@ def direct_streamline_norm(
     traversal,
     min_length,
     t1w_brain,
-    run_dsn=False
+    run_dsn=False,
 ):
     """
     A Function to perform normalization of streamlines tracked in native
@@ -217,12 +218,8 @@ def direct_streamline_norm(
         if not op.isdir(namer_dir):
             os.mkdir(namer_dir)
 
-        atlas_img = nib.load(labels_im_file)
-
         # Run SyN and normalize streamlines
         fa_img = nib.load(fa_path)
-
-        atlas_t1w_img = nib.load(atlas_t1w)
         t1w_brain_img = nib.load(t1w_brain)
         brain_mask = np.asarray(t1w_brain_img.dataobj).astype("bool")
 
@@ -230,8 +227,10 @@ def direct_streamline_norm(
             namer_dir,
             "/streamlines_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
-                    else ""),
+            "%s"
+            % (
+                op.basename(roi).split(".")[0] + "_" if roi is not None else ""
+            ),
             conn_model,
             "%s"
             % (
@@ -256,8 +255,10 @@ def direct_streamline_norm(
             namer_dir,
             "/density_map_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
-            "%s" % (op.basename(roi).split(".")[0] + "_" if roi is not None
-                    else ""),
+            "%s"
+            % (
+                op.basename(roi).split(".")[0] + "_" if roi is not None else ""
+            ),
             conn_model,
             "%s"
             % (
@@ -278,7 +279,7 @@ def direct_streamline_norm(
             ".nii.gz",
         )
 
-        streams_warp_png = '/tmp/dsn.png'
+        streams_warp_png = "/tmp/dsn.png"
 
         # SyN FA->Template
         [mapping, affine_map, warped_fa] = regutils.wm_syn(
@@ -300,14 +301,17 @@ def direct_streamline_norm(
         warped_fa_shape = warped_fa_img.shape
 
         streams_in_curr_grid = transform_streamlines(
-            streamlines, affine_map.affine_inv)
+            streamlines, affine_map.affine_inv
+        )
 
-        streams_final_filt = regutils.warp_streamlines(t1w_brain_img.affine,
-                                                       fa_img.affine,
-                                                       mapping,
-                                                       warped_fa_img,
-                                                       streams_in_curr_grid,
-                                                       brain_mask)
+        streams_final_filt = regutils.warp_streamlines(
+            t1w_brain_img.affine,
+            fa_img.affine,
+            mapping,
+            warped_fa_img,
+            streams_in_curr_grid,
+            brain_mask,
+        )
 
         # Remove streamlines with negative voxel indices
         lin_T, offset = _mapping_to_voxel(np.eye(4))
@@ -331,15 +335,17 @@ def direct_streamline_norm(
         warped_fa_img.uncache()
 
         # DSN QC plotting
-        show_template_bundles(streams_final_filt_final, atlas_t1w,
-        streams_warp_png)
+        show_template_bundles(
+            streams_final_filt_final, atlas_t1w, streams_warp_png
+        )
 
         nib.save(
             nib.Nifti1Image(
                 density_map(
                     streams_final_filt_final,
                     affine=np.eye(4),
-                    vol_dims=warped_fa_shape),
+                    vol_dims=warped_fa_shape,
+                ),
                 warped_fa_affine,
             ),
             density_t1w,
@@ -364,7 +370,8 @@ def direct_streamline_norm(
     else:
         print(
             "Skipping Direct Streamline Normalization (DSN). Will proceed to "
-            "define fiber connectivity in native diffusion space...")
+            "define fiber connectivity in native diffusion space..."
+        )
         streams_t1w = streams
         warped_fa = fa_path
         atlas_for_streams = labels_im_file
@@ -392,7 +399,7 @@ def direct_streamline_norm(
         atlas_for_streams,
         traversal,
         warped_fa,
-        min_length
+        min_length,
     )
 
 
@@ -415,24 +422,71 @@ class DmriReg(object):
       algorithm. IEEE Trans Med Imaging. 2001 Jan;20(1):45–57.
       doi:10.1109/42.906424.
     """
-    __slots__ = ('simple', 'ap_path', 'fa_path', 'B0_mask', 't1w',
-                 'vox_size', 'template_name', 't1w_name', 'dwi_name',
-                 'basedir_path', 'tmp_path', 'reg_path', 'reg_path_mat',
-                 'reg_path_warp', 'reg_path_img', 't12mni_xfm_init',
-                 't12mni_xfm', 'mni2t1_xfm', 'mni2t1w_warp', 'warp_t1w2mni',
-                 't1w2dwi', 't1_aligned_mni', 't1w_brain', 't1w_head',
-                 't1w_brain_mask', 't1w_brain_mask_in_dwi', 'dwi2t1w_xfm',
-                 't1w2dwi_xfm', 't1w2dwi_bbr_xfm', 'dwi2t1w_bbr_xfm',
-                 't1wtissue2dwi_xfm', 'temp2dwi_xfm', 'map_name', 'wm_mask',
-                 'wm_mask_thr', 'wm_edge', 'csf_mask', 'gm_mask',
-                 'xfm_roi2mni_init', 'csf_mask_dwi', 'gm_in_dwi', 'wm_in_dwi',
-                 'csf_mask_dwi_bin', 'gm_in_dwi_bin', 'wm_in_dwi_bin',
-                 'vent_mask_dwi', 'vent_csf_in_dwi', 'mni_vent_loc',
-                 'vent_mask_mni', 'vent_mask_t1w', 'input_mni',
-                 'input_mni_brain', 'input_mni_mask', 'mni_atlas',
-                 'mni_roi_ref', 'wm_gm_int_in_dwi', 'wm_gm_int_in_dwi_bin',
-                 'corpuscallosum', 'corpuscallosum_mask_t1w',
-                 'corpuscallosum_dwi', 'fa_template_res', 'fa_template_t1w')
+
+    __slots__ = (
+        "simple",
+        "ap_path",
+        "fa_path",
+        "B0_mask",
+        "t1w",
+        "vox_size",
+        "template_name",
+        "t1w_name",
+        "dwi_name",
+        "basedir_path",
+        "tmp_path",
+        "reg_path",
+        "reg_path_mat",
+        "reg_path_warp",
+        "reg_path_img",
+        "t12mni_xfm_init",
+        "t12mni_xfm",
+        "mni2t1_xfm",
+        "mni2t1w_warp",
+        "warp_t1w2mni",
+        "t1w2dwi",
+        "t1_aligned_mni",
+        "t1w_brain",
+        "t1w_head",
+        "t1w_brain_mask",
+        "t1w_brain_mask_in_dwi",
+        "dwi2t1w_xfm",
+        "t1w2dwi_xfm",
+        "t1w2dwi_bbr_xfm",
+        "dwi2t1w_bbr_xfm",
+        "t1wtissue2dwi_xfm",
+        "temp2dwi_xfm",
+        "map_name",
+        "wm_mask",
+        "wm_mask_thr",
+        "wm_edge",
+        "csf_mask",
+        "gm_mask",
+        "xfm_roi2mni_init",
+        "csf_mask_dwi",
+        "gm_in_dwi",
+        "wm_in_dwi",
+        "csf_mask_dwi_bin",
+        "gm_in_dwi_bin",
+        "wm_in_dwi_bin",
+        "vent_mask_dwi",
+        "vent_csf_in_dwi",
+        "mni_vent_loc",
+        "vent_mask_mni",
+        "vent_mask_t1w",
+        "input_mni",
+        "input_mni_brain",
+        "input_mni_mask",
+        "mni_atlas",
+        "mni_roi_ref",
+        "wm_gm_int_in_dwi",
+        "wm_gm_int_in_dwi_bin",
+        "corpuscallosum",
+        "corpuscallosum_mask_t1w",
+        "corpuscallosum_dwi",
+        "fa_template_res",
+        "fa_template_t1w",
+    )
 
     def __init__(
         self,
@@ -468,15 +522,18 @@ class DmriReg(object):
         self.mni2t1_xfm = f"{self.reg_path_mat}{'/xfm_mni2t1.mat'}"
         self.mni2t1w_warp = f"{self.reg_path_warp}{'/mni2t1w_warp.nii.gz'}"
         self.warp_t1w2mni = f"{self.reg_path_warp}{'/t1w2mni_warp.nii.gz'}"
-        self.t1w2dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                       f"{'_in_dwi.nii.gz'}"
+        self.t1w2dwi = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_in_dwi.nii.gz'}"
+        )
         self.t1_aligned_mni = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
         )
-        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                         f"{'_brain.nii.gz'}"
-        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                        f"{'_head.nii.gz'}"
+        self.t1w_brain = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_brain.nii.gz'}"
+        )
+        self.t1w_head = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_head.nii.gz'}"
+        )
         self.t1w_brain_mask = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_brain_mask.nii.gz'}"
         )
@@ -488,30 +545,38 @@ class DmriReg(object):
         self.t1w2dwi_xfm = f"{self.reg_path_mat}{'/t1w2dwi_xfm.mat'}"
         self.t1w2dwi_bbr_xfm = f"{self.reg_path_mat}{'/t1w2dwi_bbr_xfm.mat'}"
         self.dwi2t1w_bbr_xfm = f"{self.reg_path_mat}{'/dwi2t1w_bbr_xfm.mat'}"
-        self.t1wtissue2dwi_xfm = f"{self.reg_path_mat}" \
-                                 f"{'/t1wtissue2dwi_xfm.mat'}"
+        self.t1wtissue2dwi_xfm = (
+            f"{self.reg_path_mat}" f"{'/t1wtissue2dwi_xfm.mat'}"
+        )
         self.temp2dwi_xfm = (
             f"{self.reg_path_mat}{'/'}{self.dwi_name}{'_xfm_temp2dwi.mat'}"
         )
         self.map_name = f"{self.t1w_name}{'_seg'}"
-        self.wm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                       f"{'_wm.nii.gz'}"
-        self.wm_mask_thr = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                           f"{'_wm_thr.nii.gz'}"
-        self.wm_edge = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                       f"{'_wm_edge.nii.gz'}"
-        self.csf_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                        f"{'_csf.nii.gz'}"
-        self.gm_mask = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                       f"{'_gm.nii.gz'}"
+        self.wm_mask = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_wm.nii.gz'}"
+        )
+        self.wm_mask_thr = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_wm_thr.nii.gz'}"
+        )
+        self.wm_edge = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_wm_edge.nii.gz'}"
+        )
+        self.csf_mask = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_csf.nii.gz'}"
+        )
+        self.gm_mask = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_gm.nii.gz'}"
+        )
         self.xfm_roi2mni_init = f"{self.reg_path_mat}{'/roi_2_mni.mat'}"
         self.csf_mask_dwi = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_csf_mask_dwi.nii.gz'}"
         )
-        self.gm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                         f"{'_gm_in_dwi.nii.gz'}"
-        self.wm_in_dwi = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                         f"{'_wm_in_dwi.nii.gz'}"
+        self.gm_in_dwi = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_gm_in_dwi.nii.gz'}"
+        )
+        self.wm_in_dwi = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_wm_in_dwi.nii.gz'}"
+        )
         self.csf_mask_dwi_bin = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
             f"{'_csf_mask_dwi_bin.nii.gz'}"
@@ -535,19 +600,22 @@ class DmriReg(object):
         self.vent_mask_mni = f"{self.reg_path_img}{'/vent_mask_mni.nii.gz'}"
         self.vent_mask_t1w = f"{self.reg_path_img}{'/vent_mask_t1w.nii.gz'}"
         self.input_mni = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-                      f"{vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.template_name}_" f"{vox_size}.nii.gz",
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-                      f"brain_{vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.template_name}_"
+            f"brain_{vox_size}.nii.gz",
         )
         self.input_mni_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-            f"brain_mask_{vox_size}.nii.gz")
+            "pynets",
+            f"templates/standard/{self.template_name}_"
+            f"brain_mask_{vox_size}.nii.gz",
+        )
         self.mni_atlas = pkg_resources.resource_filename(
-            "pynets", f"templates/atlases/HarvardOxford-sub-prob-"
-                      f"{vox_size}.nii.gz"
+            "pynets",
+            f"templates/atlases/HarvardOxford-sub-prob-" f"{vox_size}.nii.gz",
         )
         self.mni_roi_ref = (
             f"{self.reg_path_img}/HarvardOxford_rois_in-"
@@ -566,12 +634,15 @@ class DmriReg(object):
         self.corpuscallosum_mask_t1w = (
             f"{self.reg_path_img}{'/CorpusCallosum_t1wmask.nii.gz'}"
         )
-        self.corpuscallosum_dwi = f"{self.reg_path_img}" \
-                                  f"{'/CorpusCallosum_dwi.nii.gz'}"
-        self.fa_template_res = f"{self.reg_path_img}" \
-            f"{'/FA_template_res.nii.gz'}"
-        self.fa_template_t1w = f"{self.reg_path_img}" \
-            f"{'/FA_template_T1w.nii.gz'}"
+        self.corpuscallosum_dwi = (
+            f"{self.reg_path_img}" f"{'/CorpusCallosum_dwi.nii.gz'}"
+        )
+        self.fa_template_res = (
+            f"{self.reg_path_img}" f"{'/FA_template_res.nii.gz'}"
+        )
+        self.fa_template_t1w = (
+            f"{self.reg_path_img}" f"{'/FA_template_T1w.nii.gz'}"
+        )
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [
@@ -590,6 +661,7 @@ class DmriReg(object):
 
         if op.isfile(self.t1w_brain) is False:
             import shutil
+
             shutil.copyfile(self.t1w, self.t1w_head)
             [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
                 self.t1w_head, self.t1w_brain, mask
@@ -614,14 +686,23 @@ class DmriReg(object):
         ):
             print("Existing segmentations detected...")
             wm_mask = regutils.orient_reslice(
-                wm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                wm_mask_existing,
+                self.basedir_path,
+                self.vox_size,
+                overwrite=False,
+            )
             gm_mask = regutils.orient_reslice(
-                gm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                gm_mask_existing,
+                self.basedir_path,
+                self.vox_size,
+                overwrite=False,
+            )
             csf_mask = regutils.orient_reslice(
-                csf_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                csf_mask_existing,
+                self.basedir_path,
+                self.vox_size,
+                overwrite=False,
+            )
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -629,18 +710,21 @@ class DmriReg(object):
                 gm_mask = maps["gm_prob"]
                 csf_mask = maps["csf_prob"]
             except RuntimeError as e:
-                print(e,
-                      "Segmentation failed. Does the input anatomical image "
-                      "still contained skull?"
-                      )
+                print(
+                    e,
+                    "Segmentation failed. Does the input anatomical image "
+                    "still contained skull?",
+                )
 
         # Threshold WM to binary in dwi space
-        math_img("img > 0.10", img=nib.load(wm_mask)
-                 ).to_filename(self.wm_mask_thr)
+        math_img("img > 0.10", img=nib.load(wm_mask)).to_filename(
+            self.wm_mask_thr
+        )
 
         # Extract wm edge
-        self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
-                                               self.wm_edge)
+        self.wm_edge = regutils.get_wm_contour(
+            wm_mask, self.wm_mask_thr, self.wm_edge
+        )
         time.sleep(0.5)
         shutil.copyfile(wm_mask, self.wm_mask)
         shutil.copyfile(gm_mask, self.gm_mask)
@@ -690,8 +774,9 @@ class DmriReg(object):
                 )
                 time.sleep(0.5)
                 # Get mat from MNI -> T1
-                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
-                                                      self.mni2t1_xfm)
+                self.mni2t1_xfm = regutils.invert_xfm(
+                    self.t12mni_xfm_init, self.mni2t1_xfm
+                )
                 time.sleep(0.5)
             except BaseException:
                 # Falling back to linear registration
@@ -710,8 +795,9 @@ class DmriReg(object):
                 )
                 time.sleep(0.5)
                 # Get mat from MNI -> T1
-                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm,
-                                                      self.mni2t1_xfm)
+                self.mni2t1_xfm = regutils.invert_xfm(
+                    self.t12mni_xfm, self.mni2t1_xfm
+                )
                 time.sleep(0.5)
         else:
             # Falling back to linear registration
@@ -730,8 +816,9 @@ class DmriReg(object):
             )
             time.sleep(0.5)
             # Get mat from MNI -> T1
-            self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
-                                                  self.t12mni_xfm)
+            self.t12mni_xfm = regutils.invert_xfm(
+                self.mni2t1_xfm, self.t12mni_xfm
+            )
             time.sleep(0.5)
 
     def t1w2dwi_align(self):
@@ -743,13 +830,13 @@ class DmriReg(object):
         """
         import time
 
-        self.ap_path = regutils.apply_mask_to_image(self.ap_path,
-                                                    self.B0_mask,
-                                                    self.ap_path)
+        self.ap_path = regutils.apply_mask_to_image(
+            self.ap_path, self.B0_mask, self.ap_path
+        )
 
-        self.fa_path = regutils.apply_mask_to_image(self.fa_path,
-                                                    self.B0_mask,
-                                                    self.fa_path)
+        self.fa_path = regutils.apply_mask_to_image(
+            self.fa_path, self.B0_mask, self.fa_path
+        )
 
         # Align T1w-->DWI
         regutils.align(
@@ -765,8 +852,9 @@ class DmriReg(object):
             sch=None,
         )
         time.sleep(0.5)
-        self.dwi2t1w_xfm = regutils.invert_xfm(self.t1w2dwi_xfm,
-                                               self.dwi2t1w_xfm)
+        self.dwi2t1w_xfm = regutils.invert_xfm(
+            self.t1w2dwi_xfm, self.dwi2t1w_xfm
+        )
         time.sleep(0.5)
         if self.simple is False:
             # Flirt bbr
@@ -788,7 +876,8 @@ class DmriReg(object):
                 )
                 time.sleep(0.5)
                 self.t1w2dwi_bbr_xfm = regutils.invert_xfm(
-                    self.dwi2t1w_bbr_xfm, self.t1w2dwi_bbr_xfm)
+                    self.dwi2t1w_bbr_xfm, self.t1w2dwi_bbr_xfm
+                )
                 time.sleep(0.5)
                 # Apply the alignment
                 regutils.align(
@@ -838,9 +927,9 @@ class DmriReg(object):
             )
             time.sleep(0.5)
 
-        self.t1w2dwi = regutils.apply_mask_to_image(self.t1w2dwi,
-                                                    self.B0_mask,
-                                                    self.t1w2dwi)
+        self.t1w2dwi = regutils.apply_mask_to_image(
+            self.t1w2dwi, self.B0_mask, self.t1w2dwi
+        )
         return
 
     def tissue2dwi_align(self):
@@ -863,19 +952,21 @@ class DmriReg(object):
         from nilearn.image import math_img, index_img
 
         hardcoded_params = load_runconfig()
-        tiss_class = hardcoded_params['tracking']["tissue_classifier"][0]
+        tiss_class = hardcoded_params["tracking"]["tissue_classifier"][0]
 
         fa_template_path = pkg_resources.resource_filename(
             "pynets", f"templates/standard/FA_{self.vox_size}.nii.gz"
         )
 
-        if sys.platform.startswith('win') is False:
+        if sys.platform.startswith("win") is False:
             try:
                 fa_template_img = nib.load(fa_template_path)
             except indexed_gzip.ZranError as e:
-                print(e,
-                      f"\nCannot load FA template. Do you have git-lfs "
-                      f"installed?")
+                print(
+                    e,
+                    f"\nCannot load FA template. Do you have git-lfs "
+                    f"installed?",
+                )
         else:
             try:
                 fa_template_img = nib.load(fa_template_path)
@@ -884,39 +975,45 @@ class DmriReg(object):
 
         mni_template_img = nib.load(self.input_mni_brain)
 
-        if not np.allclose(fa_template_img.affine, mni_template_img.affine) \
-            or not \
-            np.allclose(fa_template_img.shape, mni_template_img.shape):
-            fa_template_img_res = resample_to_img(fa_template_img,
-                                                  mni_template_img)
-            nib.save(
-                fa_template_img_res,
-                self.fa_template_res)
+        if not np.allclose(
+            fa_template_img.affine, mni_template_img.affine
+        ) or not np.allclose(fa_template_img.shape, mni_template_img.shape):
+            fa_template_img_res = resample_to_img(
+                fa_template_img, mni_template_img
+            )
+            nib.save(fa_template_img_res, self.fa_template_res)
         else:
             self.fa_template_res = fname_presuffix(
-                fa_template_path, suffix="_tmp",
-                newpath=op.dirname(self.reg_path_img)
+                fa_template_path,
+                suffix="_tmp",
+                newpath=op.dirname(self.reg_path_img),
             )
             copyfile(
                 fa_template_path,
                 self.fa_template_res,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
         # Register Lateral Ventricles and Corpus Callosum rois to t1w
-        resample_to_img(nib.load(self.mni_atlas),
-                        nib.load(
-                            self.input_mni_brain),
-                        interpolation='nearest').to_filename(self.mni_roi_ref)
+        resample_to_img(
+            nib.load(self.mni_atlas),
+            nib.load(self.input_mni_brain),
+            interpolation="nearest",
+        ).to_filename(self.mni_roi_ref)
 
         roi_parcels = three_to_four_parcellation(self.mni_roi_ref)
 
-        ventricle_roi = math_img("img1 + img2", img1=index_img(roi_parcels, 2),
-                                 img2=index_img(roi_parcels, 13))
+        ventricle_roi = math_img(
+            "img1 + img2",
+            img1=index_img(roi_parcels, 2),
+            img2=index_img(roi_parcels, 13),
+        )
 
         self.mni_vent_loc = fname_presuffix(
-            self.mni_vent_loc, suffix="_tmp",
-            newpath=op.dirname(self.reg_path_img)
+            self.mni_vent_loc,
+            suffix="_tmp",
+            newpath=op.dirname(self.reg_path_img),
         )
         ventricle_roi.to_filename(self.mni_vent_loc)
         del roi_parcels, ventricle_roi
@@ -956,19 +1053,24 @@ class DmriReg(object):
             )
             time.sleep(0.5)
 
-            if sys.platform.startswith('win') is False:
+            if sys.platform.startswith("win") is False:
                 try:
                     nib.load(self.corpuscallosum)
                 except indexed_gzip.ZranError as e:
-                    print(e,
-                          f"\nCannot load Corpus Callosum ROI. "
-                          f"Do you have git-lfs installed?")
+                    print(
+                        e,
+                        f"\nCannot load Corpus Callosum ROI. "
+                        f"Do you have git-lfs installed?",
+                    )
             else:
                 try:
                     nib.load(self.corpuscallosum)
                 except ImportError as e:
-                    print(e, f"\nCannot load Corpus Callosum ROI. "
-                          f"Do you have git-lfs installed?")
+                    print(
+                        e,
+                        f"\nCannot load Corpus Callosum ROI. "
+                        f"Do you have git-lfs installed?",
+                    )
 
             regutils.apply_warp(
                 self.t1w_brain,
@@ -983,7 +1085,8 @@ class DmriReg(object):
                 self.vent_mask_mni,
                 self.t1w_brain,
                 self.mni2t1_xfm,
-                self.vent_mask_t1w)
+                self.vent_mask_t1w,
+            )
             time.sleep(0.5)
             regutils.applyxfm(
                 self.corpuscallosum,
@@ -998,7 +1101,8 @@ class DmriReg(object):
             self.t1w_brain,
             self.fa_template_res,
             self.mni2t1_xfm,
-            self.fa_template_t1w)
+            self.fa_template_t1w,
+        )
         time.sleep(0.5)
 
         # Applyxfm tissue maps to dwi space
@@ -1014,13 +1118,15 @@ class DmriReg(object):
             self.ap_path,
             self.vent_mask_t1w,
             self.t1wtissue2dwi_xfm,
-            self.vent_mask_dwi)
+            self.vent_mask_dwi,
+        )
         time.sleep(0.5)
         regutils.applyxfm(
             self.ap_path,
             self.csf_mask,
             self.t1wtissue2dwi_xfm,
-            self.csf_mask_dwi)
+            self.csf_mask_dwi,
+        )
         time.sleep(0.5)
         regutils.applyxfm(
             self.ap_path, self.gm_mask, self.t1wtissue2dwi_xfm, self.gm_in_dwi
@@ -1044,56 +1150,62 @@ class DmriReg(object):
         gm_thr = 0.05
 
         # Threshold WM to binary in dwi space
-        nib.save(math_img(f"img > {wm_thr}",
-                          img=nib.load(self.wm_in_dwi)),
-                 self.wm_in_dwi_bin)
+        nib.save(
+            math_img(f"img > {wm_thr}", img=nib.load(self.wm_in_dwi)),
+            self.wm_in_dwi_bin,
+        )
 
         # Threshold GM to binary in dwi space
-        nib.save(math_img(f"img > {gm_thr}",
-                          img=nib.load(self.gm_in_dwi)),
-                 self.gm_in_dwi_bin)
+        nib.save(
+            math_img(f"img > {gm_thr}", img=nib.load(self.gm_in_dwi)),
+            self.gm_in_dwi_bin,
+        )
 
         # Threshold CSF to binary in dwi space
-        nib.save(math_img(f"img > {csf_thr}",
-                          img=nib.load(self.csf_mask_dwi)),
-                 self.csf_mask_dwi_bin)
+        nib.save(
+            math_img(f"img > {csf_thr}", img=nib.load(self.csf_mask_dwi)),
+            self.csf_mask_dwi_bin,
+        )
 
         # Threshold WM to binary in dwi space
-        self.wm_in_dwi = regutils.apply_mask_to_image(self.wm_in_dwi,
-                                                      self.wm_in_dwi_bin,
-                                                      self.wm_in_dwi)
+        self.wm_in_dwi = regutils.apply_mask_to_image(
+            self.wm_in_dwi, self.wm_in_dwi_bin, self.wm_in_dwi
+        )
 
         # Threshold GM to binary in dwi space
-        self.gm_in_dwi = regutils.apply_mask_to_image(self.gm_in_dwi,
-                                                      self.gm_in_dwi_bin,
-                                                      self.gm_in_dwi)
+        self.gm_in_dwi = regutils.apply_mask_to_image(
+            self.gm_in_dwi, self.gm_in_dwi_bin, self.gm_in_dwi
+        )
 
         # Threshold CSF to binary in dwi space
-        self.csf_mask = regutils.apply_mask_to_image(self.csf_mask_dwi,
-                                                     self.csf_mask_dwi_bin,
-                                                     self.csf_mask_dwi)
+        self.csf_mask = regutils.apply_mask_to_image(
+            self.csf_mask_dwi, self.csf_mask_dwi_bin, self.csf_mask_dwi
+        )
 
         # Create ventricular CSF mask
         print("Creating Ventricular CSF mask...")
-        math_img("(img1 + img2) > 0.0001",
-                 img1=nib.load(self.csf_mask_dwi),
-                 img2=nib.load(self.vent_mask_dwi)).to_filename(
-            self.vent_csf_in_dwi)
+        math_img(
+            "(img1 + img2) > 0.0001",
+            img1=nib.load(self.csf_mask_dwi),
+            img2=nib.load(self.vent_mask_dwi),
+        ).to_filename(self.vent_csf_in_dwi)
 
         print("Creating Corpus Callosum mask...")
-        math_img("(img1*img2 - img3) > 0.0001",
-                 img1=nib.load(self.corpuscallosum_dwi),
-                 img2=nib.load(self.wm_in_dwi_bin),
-                 img3=nib.load(self.vent_csf_in_dwi)).to_filename(
-            self.corpuscallosum_dwi)
+        math_img(
+            "(img1*img2 - img3) > 0.0001",
+            img1=nib.load(self.corpuscallosum_dwi),
+            img2=nib.load(self.wm_in_dwi_bin),
+            img3=nib.load(self.vent_csf_in_dwi),
+        ).to_filename(self.corpuscallosum_dwi)
 
         # Create GM-WM interface image
-        math_img("((img1*img2 + img3)*img4) > 0.0001",
-                 img1=nib.load(self.gm_in_dwi_bin),
-                 img2=nib.load(self.wm_in_dwi_bin),
-                 img3=nib.load(self.corpuscallosum_dwi),
-                 img4=nib.load(self.B0_mask)).to_filename(
-            self.wm_gm_int_in_dwi)
+        math_img(
+            "((img1*img2 + img3)*img4) > 0.0001",
+            img1=nib.load(self.gm_in_dwi_bin),
+            img2=nib.load(self.wm_in_dwi_bin),
+            img3=nib.load(self.corpuscallosum_dwi),
+            img4=nib.load(self.B0_mask),
+        ).to_filename(self.wm_gm_int_in_dwi)
 
         return
 
@@ -1113,22 +1225,43 @@ class FmriReg(object):
       algorithm. IEEE Trans Med Imaging. 2001 Jan;20(1):45–57.
       doi:10.1109/42.906424.
     """
-    __slots__ = ('t1w', 'vox_size', 'template_name', 't1w_name', 'simple',
-                 'basedir_path', 'basedir_path', 'reg_path', 'reg_path_mat',
-                 'reg_path_warp', 'reg_path_img', 't1w2epi_xfm',
-                 't12mni_xfm_init', 't12mni_xfm', 'mni2t1_xfm',
-                 'mni2t1w_warp', 'warp_t1w2mni', 't1_aligned_mni',
-                 't1w_brain', 't1w_head', 't1w_brain_mask', 'map_name',
-                 'gm_mask', 'gm_mask_thr', 'wm_mask', 'wm_mask_thr',
-                 'wm_edge', 'input_mni', 'input_mni_brain', 'input_mni_mask')
+
+    __slots__ = (
+        "t1w",
+        "vox_size",
+        "template_name",
+        "t1w_name",
+        "simple",
+        "basedir_path",
+        "basedir_path",
+        "reg_path",
+        "reg_path_mat",
+        "reg_path_warp",
+        "reg_path_img",
+        "t1w2epi_xfm",
+        "t12mni_xfm_init",
+        "t12mni_xfm",
+        "mni2t1_xfm",
+        "mni2t1w_warp",
+        "warp_t1w2mni",
+        "t1_aligned_mni",
+        "t1w_brain",
+        "t1w_head",
+        "t1w_brain_mask",
+        "map_name",
+        "gm_mask",
+        "gm_mask_thr",
+        "wm_mask",
+        "wm_mask_thr",
+        "wm_edge",
+        "input_mni",
+        "input_mni_brain",
+        "input_mni_mask",
+    )
 
     def __init__(
-            self,
-            basedir_path,
-            anat_file,
-            vox_size,
-            template_name,
-            simple):
+        self, basedir_path, anat_file, vox_size, template_name, simple
+    ):
         import os.path as op
         import pkg_resources
 
@@ -1151,36 +1284,46 @@ class FmriReg(object):
         self.t1_aligned_mni = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}{'_aligned_mni.nii.gz'}"
         )
-        self.t1w_brain = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                         f"{'_brain.nii.gz'}"
-        self.t1w_head = f"{self.reg_path_img}{'/'}{self.t1w_name}" \
-                        f"{'_head.nii.gz'}"
+        self.t1w_brain = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_brain.nii.gz'}"
+        )
+        self.t1w_head = (
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_head.nii.gz'}"
+        )
         self.t1w_brain_mask = (
             f"{self.reg_path_img}{'/'}{self.t1w_name}"
             f"{'_brain_mask.nii.gz'}"
         )
         self.map_name = f"{self.t1w_name}{'_seg'}"
-        self.gm_mask = f"{self.reg_path_img}{'/'}" \
-                       f"{self.t1w_name}{'_gm.nii.gz'}"
-        self.gm_mask_thr = f"{self.reg_path_img}{'/'}" \
-                           f"{self.t1w_name}{'_gm_thr.nii.gz'}"
-        self.wm_mask = f"{self.reg_path_img}{'/'}" \
-                       f"{self.t1w_name}{'_wm.nii.gz'}"
-        self.wm_mask_thr = f"{self.reg_path_img}{'/'}" \
-                           f"{self.t1w_name}{'_wm_thr.nii.gz'}"
-        self.wm_edge = f"{self.reg_path_img}{'/'}" \
-                       f"{self.t1w_name}{'_wm_edge.nii.gz'}"
+        self.gm_mask = (
+            f"{self.reg_path_img}{'/'}" f"{self.t1w_name}{'_gm.nii.gz'}"
+        )
+        self.gm_mask_thr = (
+            f"{self.reg_path_img}{'/'}" f"{self.t1w_name}{'_gm_thr.nii.gz'}"
+        )
+        self.wm_mask = (
+            f"{self.reg_path_img}{'/'}" f"{self.t1w_name}{'_wm.nii.gz'}"
+        )
+        self.wm_mask_thr = (
+            f"{self.reg_path_img}{'/'}" f"{self.t1w_name}{'_wm_thr.nii.gz'}"
+        )
+        self.wm_edge = (
+            f"{self.reg_path_img}{'/'}" f"{self.t1w_name}{'_wm_edge.nii.gz'}"
+        )
         self.input_mni = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-                      f"{vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.template_name}_" f"{vox_size}.nii.gz",
         )
         self.input_mni_brain = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-                      f"brain_{vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.template_name}_"
+            f"brain_{vox_size}.nii.gz",
         )
         self.input_mni_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.template_name}_"
-            f"brain_mask_{vox_size}.nii.gz")
+            "pynets",
+            f"templates/standard/{self.template_name}_"
+            f"brain_mask_{vox_size}.nii.gz",
+        )
 
         # Create empty tmp directories that do not yet exist
         reg_dirs = [
@@ -1198,6 +1341,7 @@ class FmriReg(object):
 
         if op.isfile(self.t1w_brain) is False:
             import shutil
+
             shutil.copyfile(self.t1w, self.t1w_head)
             [self.t1w_brain, self.t1w_brain_mask] = regutils.gen_mask(
                 self.t1w_head, self.t1w_brain, mask
@@ -1218,11 +1362,17 @@ class FmriReg(object):
         ):
             print("Existing segmentations detected...")
             gm_mask = regutils.orient_reslice(
-                gm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                gm_mask_existing,
+                self.basedir_path,
+                self.vox_size,
+                overwrite=False,
+            )
             wm_mask = regutils.orient_reslice(
-                wm_mask_existing, self.basedir_path, self.vox_size,
-                overwrite=False)
+                wm_mask_existing,
+                self.basedir_path,
+                self.vox_size,
+                overwrite=False,
+            )
         else:
             try:
                 maps = regutils.segment_t1w(self.t1w_brain, self.map_name)
@@ -1230,28 +1380,33 @@ class FmriReg(object):
                 wm_mask = maps["wm_prob"]
             except RuntimeError as e:
                 import sys
-                print(e,
-                      "Segmentation failed. Does the input anatomical image "
-                      "still contained skull?"
-                      )
+
+                print(
+                    e,
+                    "Segmentation failed. Does the input anatomical image "
+                    "still contained skull?",
+                )
 
         # Threshold GM to binary in func space
         math_img("img > 0.01", img=nib.load(gm_mask)).to_filename(
-            self.gm_mask_thr)
-        self.gm_mask = regutils.apply_mask_to_image(gm_mask,
-                                                    self.gm_mask_thr,
-                                                    self.gm_mask)
+            self.gm_mask_thr
+        )
+        self.gm_mask = regutils.apply_mask_to_image(
+            gm_mask, self.gm_mask_thr, self.gm_mask
+        )
 
         # Threshold WM to binary in dwi space
         math_img("img > 0.50", img=nib.load(wm_mask)).to_filename(
-            self.wm_mask_thr)
+            self.wm_mask_thr
+        )
 
-        self.wm_mask = regutils.apply_mask_to_image(wm_mask,
-                                                    self.wm_mask_thr,
-                                                    self.wm_mask)
+        self.wm_mask = regutils.apply_mask_to_image(
+            wm_mask, self.wm_mask_thr, self.wm_mask
+        )
         # Extract wm edge
-        self.wm_edge = regutils.get_wm_contour(wm_mask, self.wm_mask_thr,
-                                               self.wm_edge)
+        self.wm_edge = regutils.get_wm_contour(
+            wm_mask, self.wm_mask_thr, self.wm_edge
+        )
 
         return
 
@@ -1297,8 +1452,9 @@ class FmriReg(object):
                 )
                 time.sleep(0.5)
                 # Get mat from MNI -> T1w
-                self.mni2t1_xfm = regutils.invert_xfm(self.t12mni_xfm_init,
-                                                      self.mni2t1_xfm)
+                self.mni2t1_xfm = regutils.invert_xfm(
+                    self.t12mni_xfm_init, self.mni2t1_xfm
+                )
 
             except BaseException:
                 # Falling back to linear registration
@@ -1317,8 +1473,9 @@ class FmriReg(object):
                 )
                 time.sleep(0.5)
                 # Get mat from MNI -> T1w
-                self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
-                                                      self.t12mni_xfm)
+                self.t12mni_xfm = regutils.invert_xfm(
+                    self.mni2t1_xfm, self.t12mni_xfm
+                )
         else:
             # Falling back to linear registration
             regutils.align(
@@ -1336,6 +1493,7 @@ class FmriReg(object):
             )
             time.sleep(0.5)
             # Get mat from MNI -> T1w
-            self.t12mni_xfm = regutils.invert_xfm(self.mni2t1_xfm,
-                                                  self.t12mni_xfm)
+            self.t12mni_xfm = regutils.invert_xfm(
+                self.mni2t1_xfm, self.t12mni_xfm
+            )
         return

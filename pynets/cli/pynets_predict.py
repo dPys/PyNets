@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -16,18 +15,19 @@ def get_parser():
     # Parse args
     parser = argparse.ArgumentParser(
         description="PyNets: A Fully-Automated Workflow for Reproducible"
-                    " Functional and Structural Connectome Ensemble Learning")
+        " Functional and Structural Connectome Ensemble Learning"
+    )
     parser.add_argument(
         "-basedir",
         metavar="Output directory",
         help="Specify the path to the base output directory with group-level"
-             " pynets derivatives.\n",
+        " pynets derivatives.\n",
     )
     parser.add_argument(
         "-pheno",
         metavar="Phenotype Data",
         help="Path to a .csv or .pkl dataframe to define nuisance covariates and "
-             "target variables\n",
+        "target variables\n",
     )
     parser.add_argument(
         "-modality",
@@ -35,8 +35,8 @@ def get_parser():
         default="func",
         choices=["dwi", "func"],
         help="Specify data modality from which to collect data. Options are"
-             " `dwi` and `func`. Currently, only one can be specified at a "
-             "time. Default is functional",
+        " `dwi` and `func`. Currently, only one can be specified at a "
+        "time. Default is functional",
     )
     parser.add_argument(
         "-session_label",
@@ -53,8 +53,15 @@ def get_parser():
         metavar="Embedding type",
         default="topology",
         nargs="+",
-        choices=["ASE", "OMNI", "MASE", "eigenvector", "betweenness",
-                 "clustering", "degree"],
+        choices=[
+            "ASE",
+            "OMNI",
+            "MASE",
+            "eigenvector",
+            "betweenness",
+            "clustering",
+            "degree",
+        ],
         help="Specify the embedding method of interest.\n",
     )
     parser.add_argument(
@@ -63,7 +70,7 @@ def get_parser():
         default="age",
         nargs="+",
         help="Specify the target outcome variables of interest, "
-             "separated by space.\n",
+        "separated by space.\n",
     )
     parser.add_argument(
         "-dc",
@@ -94,65 +101,55 @@ def get_parser():
         default=False,
         action="store_true",
         help="Optionally use this flag if you wish to make random predictions"
-             " with a dummy regressor.\n",
+        " with a dummy regressor.\n",
     )
     parser.add_argument(
         "-stack",
         default=False,
         action="store_true",
         help="Optionally use this flag if you wish to stack multiple "
-             "estimators.\n",
+        "estimators.\n",
     )
     parser.add_argument(
         "-sp",
         metavar="Miscellaneous Columns to Drop",
         nargs="+",
         help="Specify feature column header prefixes of shared feature spaces,"
-             " separated by space. Only applicable if `-stack` flag is"
-             " also used\n",
+        " separated by space. Only applicable if `-stack` flag is"
+        " also used\n",
     )
     parser.add_argument(
         "-search",
         default="grid",
         nargs=1,
-        choices=[
-            "grid",
-            "random"],
+        choices=["grid", "random"],
         help="Specify the GridSearchCV method to use. Default is `grid`.\n",
     )
     parser.add_argument(
         "-thrtype",
         default="MST",
         nargs=1,
-        choices=[
-            "MST",
-            "PROP",
-            "DISP"],
+        choices=["MST", "PROP", "DISP"],
         help="Specify the thresholding method used when sampling the "
-             "connectome ensemble. Default is MST.\n",
+        "connectome ensemble. Default is MST.\n",
     )
     parser.add_argument(
         "-temp",
         metavar="MNI Template",
         default="any",
         nargs=1,
-        choices=[
-            "colin27",
-            "MNI152_T1",
-            "CN200",
-            "any"
-        ],
+        choices=["colin27", "MNI152_T1", "CN200", "any"],
         help="Include this flag to specify a specific template"
-             "if multiple were used to sample the connectome ensemble.\n",
+        "if multiple were used to sample the connectome ensemble.\n",
     )
     parser.add_argument(
         "-pm",
         metavar="Cores,memory",
         default="auto",
         help="Number of cores to use, number of GB of memory to use for single"
-             " subject run, entered as two integers seperated by comma. "
-             "Otherwise, default is `auto`, which uses all resources detected"
-             " on the current compute node.\n",
+        " subject run, entered as two integers seperated by comma. "
+        "Otherwise, default is `auto`, which uses all resources detected"
+        " on the current compute node.\n",
     )
     parser.add_argument(
         "-plug",
@@ -170,19 +167,20 @@ def get_parser():
             "LegacyMultiProc",
         ],
         help="Include this flag to specify a workflow plugin other than the"
-             " default MultiProc.\n",
+        " default MultiProc.\n",
     )
     parser.add_argument(
         "-v",
         default=False,
         action="store_true",
-        help="Verbose print for debugging.\n")
+        help="Verbose print for debugging.\n",
+    )
     parser.add_argument(
         "-work",
         metavar="Working directory",
         default="/tmp/work",
         help="Specify the path to a working directory for pynets to run."
-             " Default is /tmp/work.\n",
+        " Default is /tmp/work.\n",
     )
     parser.add_argument("--version", action="version", version=verstr)
     return parser
@@ -194,9 +192,13 @@ def main():
     import os
     import sys
     import dill
-    from pynets.statistics.utils import make_feature_space_dict, \
-        make_subject_dict, cleanNullTerms
+    from pynets.statistics.utils import (
+        make_feature_space_dict,
+        make_subject_dict,
+        cleanNullTerms,
+    )
     from pynets.core.utils import mergedicts
+
     try:
         import pynets
     except ImportError:
@@ -206,8 +208,10 @@ def main():
         )
 
     if len(sys.argv) < 1:
-        print("\nMissing command-line inputs! See help options with the -h"
-              " flag.\n")
+        print(
+            "\nMissing command-line inputs! See help options with the -h"
+            " flag.\n"
+        )
         sys.exit(1)
 
     args = {}
@@ -267,12 +271,24 @@ def main():
     print(f"data_file = {data_file}")
     print(f"drop_cols = {drop_cols}")
     print(f"nuisance_cols = {nuisance_cols}")
-    #sys.exit(0)
+    # sys.exit(0)
 
-    hyperparams_func = ["parcellation", "granularity", "model", "hpass",
-                        "signal", "tol"]
-    hyperparams_dwi = ["parcellation", "granularity", "model", "traversal",
-                       "minlength", "tol"]
+    hyperparams_func = [
+        "parcellation",
+        "granularity",
+        "model",
+        "hpass",
+        "signal",
+        "tol",
+    ]
+    hyperparams_dwi = [
+        "parcellation",
+        "granularity",
+        "model",
+        "traversal",
+        "minlength",
+        "tol",
+    ]
 
     subject_dict_file_path = (
         f"{base_dir}/pynets_subject_dict_{modality}_"
@@ -292,40 +308,49 @@ def main():
 
     # Load in data
     if data_file.endswith(".csv"):
-        df = pd.read_csv(
-            data_file,
-            index_col=False
-        )
+        df = pd.read_csv(data_file, index_col=False)
     elif data_file.endswith(".pkl"):
         df = pd.read_pickle(data_file)
     else:
         raise ValueError("File format not recognized for phenotype data.")
 
-    if 'tuning_set' in data_file or 'dysphoric' in data_file:
+    if "tuning_set" in data_file or "dysphoric" in data_file:
         for ID in df["participant_id"]:
             if len(ID) == 1:
-                df.loc[df.participant_id == ID, "participant_id"] = "s00" +\
-                                                                    str(ID)
+                df.loc[
+                    df.participant_id == ID, "participant_id"
+                ] = "s00" + str(ID)
             if len(ID) == 2:
-                df.loc[df.participant_id == ID, "participant_id"] = "s0" + \
-                                                                    str(ID)
+                df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(
+                    ID
+                )
 
-    #df = df.loc[df["usable_mri"] == True]
+    # df = df.loc[df["usable_mri"] == True]
     df_subs = df.copy()
-    df_subs.participant_id = [f"sub-{i}_ses-1" for i in
-                              df_subs.participant_id.values.tolist() if
-                              'sub-' not in i]
+    df_subs.participant_id = [
+        f"sub-{i}_ses-1"
+        for i in df_subs.participant_id.values.tolist()
+        if "sub-" not in i
+    ]
 
     if not os.path.isfile(subject_dict_file_path) or not os.path.isfile(
         subject_mod_grids_file_path
     ):
         subject_dict, modality_grids, missingness_frames = make_subject_dict(
-            [modality], base_dir, thr_type, mets, embedding_types, template,
-            sessions, parcellations, IDS=list(df_subs["participant_id"].values)
+            [modality],
+            base_dir,
+            thr_type,
+            mets,
+            embedding_types,
+            template,
+            sessions,
+            parcellations,
+            IDS=list(df_subs["participant_id"].values),
         )
         sub_dict_clean = cleanNullTerms(subject_dict)
-        missingness_frames = [i for i in missingness_frames if
-                              isinstance(i, pd.DataFrame)]
+        missingness_frames = [
+            i for i in missingness_frames if isinstance(i, pd.DataFrame)
+        ]
         if len(missingness_frames) != 0:
             if len(missingness_frames) > 1:
                 final_missingness_summary = pd.concat(missingness_frames)
@@ -369,26 +394,35 @@ def main():
                     continue
 
                 if modality not in sub_dict_clean[ID][str(sessions[0])].keys():
-                    print(f"Modality: {modality} not found for ID {ID}, "
-                          f"ses-{sessions[0]}...")
+                    print(
+                        f"Modality: {modality} not found for ID {ID}, "
+                        f"ses-{sessions[0]}..."
+                    )
                     continue
 
-                if embedding_type not in \
-                    sub_dict_clean[ID][str(sessions[0])][modality].keys():
+                if (
+                    embedding_type
+                    not in sub_dict_clean[ID][str(sessions[0])][
+                        modality
+                    ].keys()
+                ):
                     print(
                         f"Modality: {modality} not found for ID {ID}, "
                         f"ses-{sessions[0]}, {embedding_type}..."
                     )
                     continue
 
-                if grid_param in \
-                    list(sub_dict_clean[ID][str(sessions[0])][modality][
-                             embedding_type].keys()):
+                if grid_param in list(
+                    sub_dict_clean[ID][str(sessions[0])][modality][
+                        embedding_type
+                    ].keys()
+                ):
                     grid_finds.append(grid_param)
-            if len(grid_finds) < grid_thr*len(df["participant_id"]):
+            if len(grid_finds) < grid_thr * len(df["participant_id"]):
                 print(
                     f"Less than {100*grid_thr}% of {grid_param} found. "
-                    f"Removing from grid...")
+                    f"Removing from grid..."
+                )
                 continue
             else:
                 good_grids.append(grid_param)
@@ -397,12 +431,15 @@ def main():
 
     ml_dfs_dict = {}
     ml_dfs_dict[modality] = {}
-    dict_file_path = f"{base_dir}/pynets_ml_dict_{modality}_" \
-                     f"{'_'.join(parcellations)}_{embedding_type}_" \
-                     f"{template}_" \
-                     f"{thr_type}.pkl"
-    if not os.path.isfile(dict_file_path) or not \
-            os.path.isfile(dict_file_path):
+    dict_file_path = (
+        f"{base_dir}/pynets_ml_dict_{modality}_"
+        f"{'_'.join(parcellations)}_{embedding_type}_"
+        f"{template}_"
+        f"{thr_type}.pkl"
+    )
+    if not os.path.isfile(dict_file_path) or not os.path.isfile(
+        dict_file_path
+    ):
         ml_dfs = {}
         ml_dfs = make_feature_space_dict(
             base_dir,
@@ -413,7 +450,7 @@ def main():
             sessions[0],
             modality_grids,
             embedding_type,
-            mets
+            mets,
         )
 
         with open(dict_file_path, "wb") as f:
@@ -443,8 +480,8 @@ def main():
         try:
             df = ml_dfs[modality][embedding_type][recipe]
             df.reset_index(inplace=True)
-            if 'index' in df.columns:
-                df = df.drop(columns=['index'])
+            if "index" in df.columns:
+                df = df.drop(columns=["index"])
             out_dict[str(recipe)] = df.to_json()
         except:
             print(f"{recipe} recipe not found...")
@@ -488,8 +525,10 @@ if __name__ == "__main__":
     except:
         pass
     warnings.filterwarnings("ignore")
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_" \
-               "frozen_importlib.BuiltinImporter'>)"
+    __spec__ = (
+        "ModuleSpec(name='builtins', loader=<class '_"
+        "frozen_importlib.BuiltinImporter'>)"
+    )
     args = main()
 
     with Manager() as mgr:

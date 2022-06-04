@@ -1,32 +1,28 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Fri Nov 10 15:44:46 2017
+Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
+@author: Derek Pisner
 """
-import matplotlib
-import numpy as np
-import networkx as nx
-import warnings
-import sys
-import time
 import gc
 import os
 import os.path as op
+import time
+import warnings
+import matplotlib
+import networkx as nx
+import numpy as np
 import yaml
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
 from nipype.interfaces.base import (
     BaseInterface,
     BaseInterfaceInputSpec,
-    TraitedSpec,
     File,
+    TraitedSpec,
     traits,
 )
-from pathlib import Path
-from pynets.core import utils, thresholding
 
-matplotlib.use('Agg')
+from pynets.core import thresholding, utils
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -60,13 +56,19 @@ class CleanGraphs(object):
 
     """
 
+    __slots__ = [
+        "est_path",
+        "prune",
+        "norm",
+        "out_fmt",
+        "in_mat",
+        "in_mat_raw",
+        "G",
+    ]
+
     def __init__(
-            self,
-            est_path,
-            prune,
-            norm,
-            out_fmt="gpickle",
-            remove_self_loops=True):
+        self, est_path, prune, norm, out_fmt="gpickle", remove_self_loops=True
+    ):
         import graspologic.utils as gu
 
         self.est_path = est_path
@@ -81,10 +83,8 @@ class CleanGraphs(object):
         # De-diagnal and remove nan's and inf's, ensure edge weights are
         # positive
         self.in_mat = np.array(
-            np.array(
-                thresholding.autofix(
-                    np.array(np.abs(
-                        self.in_mat_raw)))))
+            np.array(thresholding.autofix(np.array(np.abs(self.in_mat_raw))))
+        )
 
         # Remove self-loops and ensure symmetry
         if remove_self_loops is True:
@@ -92,8 +92,9 @@ class CleanGraphs(object):
         else:
             self.in_mat = gu.symmetrize(self.in_mat)
 
-        self.in_mat[np.where(np.isnan(self.in_mat) |
-                             np.isinf(self.in_mat))] = 0
+        self.in_mat[
+            np.where(np.isnan(self.in_mat) | np.isinf(self.in_mat))
+        ] = 0
 
         # Create nx graph
         self.G = nx.from_numpy_array(self.in_mat)
@@ -116,15 +117,13 @@ class CleanGraphs(object):
         # Apply PTR simple-all
         elif self.norm == 4:
             self.in_mat = gu.ptr.pass_to_ranks(
-                np.nan_to_num(
-                    self.in_mat),
-                method="simple-all")
+                np.nan_to_num(self.in_mat), method="simple-all"
+            )
         # Apply PTR zero-boost
         elif self.norm == 5:
             self.in_mat = gu.ptr.pass_to_ranks(
-                np.nan_to_num(
-                    self.in_mat),
-                method="zero-boost")
+                np.nan_to_num(self.in_mat), method="zero-boost"
+            )
         # Apply standardization [0, 1]
         elif self.norm == 6:
             self.in_mat = thresholding.standardize(np.nan_to_num(self.in_mat))
@@ -142,8 +141,12 @@ class CleanGraphs(object):
 
     def prune_graph(self):
         import graspologic.utils as gu
-        from pynets.statistics.individual.algorithms import defragment, \
-            prune_small_components, most_important
+
+        from pynets.statistics.individual.algorithms import (
+            defragment,
+            most_important,
+            prune_small_components,
+        )
 
         hardcoded_params = utils.load_runconfig()
 
@@ -158,38 +161,49 @@ class CleanGraphs(object):
 
         if int(self.prune) == 1:
             try:
-                self.G = prune_small_components(self.G,
-                                                min_nodes=hardcoded_params[
-                                                    "min_nodes"][0])
+                self.G = prune_small_components(
+                    self.G, min_nodes=hardcoded_params["min_nodes"][0]
+                )
             except BaseException:
-                print(UserWarning(f"Warning: pruning {self.est_path} "
-                                  f"failed..."))
+                print(
+                    UserWarning(
+                        f"Warning: pruning {self.est_path} " f"failed..."
+                    )
+                )
         elif int(self.prune) == 2:
             try:
-                hub_detection_method = \
-                hardcoded_params["hub_detection_method"][0]
-                print(f"Filtering for hubs on the basis of "
-                      f"{hub_detection_method}...\n")
-                self.G = most_important(self.G,
-                                        method=hub_detection_method)[0]
+                hub_detection_method = hardcoded_params[
+                    "hub_detection_method"
+                ][0]
+                print(
+                    f"Filtering for hubs on the basis of "
+                    f"{hub_detection_method}...\n"
+                )
+                self.G = most_important(self.G, method=hub_detection_method)[0]
             except FileNotFoundError as e:
-                import sys
                 print(e, "Failed to parse advanced.yaml")
 
         elif int(self.prune) == 3:
-            print("Pruning all but the largest connected "
-                  "component subgraph...")
+            print(
+                "Pruning all but the largest connected "
+                "component subgraph..."
+            )
             self.G = gu.largest_connected_component(self.G)
         else:
             print("No graph defragmentation applied...")
 
         self.G = nx.from_numpy_array(self.in_mat)
 
-        if nx.is_empty(self.G) is True or \
-            (np.abs(self.in_mat) < 0.0000001).all() or \
-                self.G.number_of_edges() == 0:
-            print(UserWarning(f"Warning: {self.est_path} "
-                              f"empty after pruning!"))
+        if (
+            nx.is_empty(self.G) is True
+            or (np.abs(self.in_mat) < 0.0000001).all()
+            or self.G.number_of_edges() == 0
+        ):
+            print(
+                UserWarning(
+                    f"Warning: {self.est_path} " f"empty after pruning!"
+                )
+            )
             return self.in_mat, None
 
         # Saved pruned
@@ -245,14 +259,15 @@ class NetworkAnalysis(BaseInterface):
     def _run_interface(self, runtime):
         # import random
         import pkg_resources
+
         from pynets.statistics.individual import algorithms
         from pynets.statistics.utils import save_netmets
 
         # Load netstats config and parse graph algorithms as objects
         with open(
-            pkg_resources.resource_filename("pynets",
-                                            "statistics/individual/"
-                                            "global.yaml"),
+            pkg_resources.resource_filename(
+                "pynets", "statistics/individual/" "global.yaml"
+            ),
             "r",
         ) as stream:
             try:
@@ -272,14 +287,14 @@ class NetworkAnalysis(BaseInterface):
                 metric_list_global = metric_dict_global["metric_list_global"]
                 if metric_list_global is not None:
                     metric_list_global = [
-                                             getattr(nx.algorithms, i)
-                                             for i in metric_list_global
-                                             if i in nx_algs
-                                         ] + [
-                                             getattr(algorithms, i)
-                                             for i in metric_list_global
-                                             if i in pynets_algs
-                                         ]
+                        getattr(nx.algorithms, i)
+                        for i in metric_list_global
+                        if i in nx_algs
+                    ] + [
+                        getattr(algorithms, i)
+                        for i in metric_list_global
+                        if i in pynets_algs
+                    ]
                     metric_list_global_names = [
                         str(i).split("<function ")[1].split(" at")[0]
                         for i in metric_list_global
@@ -290,26 +305,26 @@ class NetworkAnalysis(BaseInterface):
                         metric_list_global = [
                             partial(i, weight="weight")
                             if "weight" in i.__code__.co_varnames
-                            else i for i in metric_list_global
+                            else i
+                            for i in metric_list_global
                         ]
                     if len(metric_list_global) > 0:
                         print(
                             f"\n\nGlobal Topographic Metrics:"
-                            f"\n{metric_list_global_names}\n")
+                            f"\n{metric_list_global_names}\n"
+                        )
                     else:
                         print("No global topographic metrics selected!")
                 else:
                     print("No global topographic metrics selected!")
                     metric_list_global = []
-                    metric_list_global_names = []
             except FileNotFoundError as e:
-                import sys
                 print(e, "Failed to parse global.yaml")
 
         with open(
-            pkg_resources.resource_filename("pynets",
-                                            "statistics/individual/"
-                                            "local.yaml"),
+            pkg_resources.resource_filename(
+                "pynets", "statistics/individual/" "local.yaml"
+            ),
             "r",
         ) as stream:
             try:
@@ -319,21 +334,21 @@ class NetworkAnalysis(BaseInterface):
                     if len(metric_list_nodal) > 0:
                         print(
                             f"\nNodal Topographic Metrics:"
-                            f"\n{metric_list_nodal}\n\n")
+                            f"\n{metric_list_nodal}\n\n"
+                        )
                     else:
                         print("No local topographic metrics selected!")
                 else:
                     print("No nodal topographic metrics selected!")
                     metric_list_nodal = []
-                    metric_list_nodal_names = []
             except FileNotFoundError as e:
-                import sys
                 print(e, "Failed to parse local.yaml")
 
         if os.path.isfile(self.inputs.est_path):
 
-            cg = CleanGraphs(self.inputs.est_path, self.inputs.prune,
-                             self.inputs.norm)
+            cg = CleanGraphs(
+                self.inputs.est_path, self.inputs.prune, self.inputs.norm
+            )
 
             tmp_graph_path = None
             if float(self.inputs.prune) >= 1:
@@ -343,15 +358,21 @@ class NetworkAnalysis(BaseInterface):
                 try:
                     cg.normalize_graph()
                 except ValueError as e:
-                    print(e, f"Graph normalization failed for "
-                             f"{self.inputs.est_path}.")
+                    print(
+                        e,
+                        f"Graph normalization failed for "
+                        f"{self.inputs.est_path}.",
+                    )
 
             if self.inputs.binary is True:
                 try:
                     in_mat, G = cg.binarize_graph()
                 except ValueError as e:
-                    print(e, f"Graph binarization failed for "
-                             f"{self.inputs.est_path}.")
+                    print(
+                        e,
+                        f"Graph binarization failed for "
+                        f"{self.inputs.est_path}.",
+                    )
                     in_mat = np.zeros(1, 1)
                     G = nx.Graph()
             else:
@@ -362,44 +383,64 @@ class NetworkAnalysis(BaseInterface):
             dir_path = op.dirname(op.realpath(self.inputs.est_path))
 
             # Deal with empty graphs
-            if nx.is_empty(G) is True or (np.abs(in_mat) < 0.0000001).all() \
-                or G.number_of_edges() == 0 or len(G) < 3:
+            if (
+                nx.is_empty(G) is True
+                or (np.abs(in_mat) < 0.0000001).all()
+                or G.number_of_edges() == 0
+                or len(G) < 3
+            ):
                 out_path_neat = save_netmets(
-                    dir_path, self.inputs.est_path, [""], [np.nan])
-                print(UserWarning(f"Warning: Empty graph detected for "
-                                  f"{self.inputs.ID}: "
-                                  f"{self.inputs.est_path}..."))
+                    dir_path, self.inputs.est_path, [""], [np.nan]
+                )
+                print(
+                    UserWarning(
+                        f"Warning: Empty graph detected for "
+                        f"{self.inputs.ID}: "
+                        f"{self.inputs.est_path}..."
+                    )
+                )
             else:
                 try:
                     in_mat_len, G_len = cg.create_length_matrix()
                 except ValueError as e:
-                    print(e, f"Failed to create length matrix for "
-                             f"{self.inputs.est_path}.")
+                    print(
+                        e,
+                        f"Failed to create length matrix for "
+                        f"{self.inputs.est_path}.",
+                    )
                     G_len = None
 
                 if len(metric_list_global) > 0:
                     # Iteratively run functions from above metric list that
                     # generate single scalar output
-                    net_met_val_list_final, metric_list_names = \
-                        algorithms.iterate_nx_global_measures(
-                            G, metric_list_global)
+                    (
+                        net_met_val_list_final,
+                        metric_list_names,
+                    ) = algorithms.iterate_nx_global_measures(
+                        G, metric_list_global
+                    )
 
                     # Run miscellaneous functions that generate multiple
                     # outputs Calculate modularity using the Louvain algorithm
                     if "louvain_modularity" in metric_list_global:
                         try:
                             start_time = time.time()
-                            net_met_val_list_final, metric_list_names, ci = \
-                                algorithms.get_community(
-                                    G, net_met_val_list_final,
-                                              metric_list_names)
+                            (
+                                net_met_val_list_final,
+                                metric_list_names,
+                                ci,
+                            ) = algorithms.get_community(
+                                G, net_met_val_list_final, metric_list_names
+                            )
                             print(
                                 f"{np.round(time.time() - start_time, 3)}"
-                                f"{'s'}")
+                                f"{'s'}"
+                            )
                         except BaseException:
                             print(
                                 "Louvain modularity calculation is undefined "
-                                "for G")
+                                "for G"
+                            )
                             # np.save("%s%s%s" % ('/tmp/community_failure',
                             # random.randint(1, 400), '.npy'),
                             #         np.array(nx.to_numpy_matrix(G)))
@@ -420,29 +461,43 @@ class NetworkAnalysis(BaseInterface):
                                 raise KeyError(
                                     "Participation coefficient cannot be "
                                     "calculated for G in the absence of a "
-                                    "community affiliation vector")
+                                    "community affiliation vector"
+                                )
                             start_time = time.time()
-                            metric_list_names, net_met_val_list_final = \
-                                algorithms.get_participation(in_mat, ci,
-                                                  metric_list_names,
-                                                  net_met_val_list_final)
+                            (
+                                metric_list_names,
+                                net_met_val_list_final,
+                            ) = algorithms.get_participation(
+                                in_mat,
+                                ci,
+                                metric_list_names,
+                                net_met_val_list_final,
+                            )
                             print(
                                 f"{np.round(time.time() - start_time, 3)}"
-                                f"{'s'}")
+                                f"{'s'}"
+                            )
                         except BaseException:
                             print(
                                 "Participation coefficient cannot be "
-                                "calculated for G")
+                                "calculated for G"
+                            )
                             # np.save("%s%s%s" % ('/tmp/partic_coeff_failure',
                             # random.randint(1, 400), '.npy'), in_mat)
                             pass
                     else:
-                        if not ci and "participation_coefficient" in \
-                            metric_list_nodal:
-                            print(UserWarning(
-                                "Skipping participation coefficient "
-                                "because community affiliation is "
-                                "empty for G..."))
+                        if (
+                            not ci
+                            and "participation_coefficient"
+                            in metric_list_nodal
+                        ):
+                            print(
+                                UserWarning(
+                                    "Skipping participation coefficient "
+                                    "because community affiliation is "
+                                    "empty for G..."
+                                )
+                            )
 
                     # Diversity Coefficient by louvain community
                     if ci and "diversity_coefficient" in metric_list_nodal:
@@ -451,29 +506,42 @@ class NetworkAnalysis(BaseInterface):
                                 raise KeyError(
                                     "Diversity coefficient cannot be "
                                     "calculated for G in the absence of a "
-                                    "community affiliation vector")
+                                    "community affiliation vector"
+                                )
                             start_time = time.time()
-                            metric_list_names, net_met_val_list_final = \
-                                algorithms.get_diversity(in_mat, ci,
-                                                         metric_list_names,
-                                              net_met_val_list_final
-                                              )
+                            (
+                                metric_list_names,
+                                net_met_val_list_final,
+                            ) = algorithms.get_diversity(
+                                in_mat,
+                                ci,
+                                metric_list_names,
+                                net_met_val_list_final,
+                            )
                             print(
                                 f"{np.round(time.time() - start_time, 3)}"
-                                f"{'s'}")
+                                f"{'s'}"
+                            )
                         except BaseException:
                             print(
                                 "Diversity coefficient cannot be calculated "
-                                "for G")
+                                "for G"
+                            )
                             # np.save("%s%s%s" % ('/tmp/div_coeff_failure',
                             # random.randint(1, 400), '.npy'), in_mat)
                             pass
                     else:
-                        if not ci and "diversity_coefficient" in \
-                            metric_list_nodal:
-                            print(UserWarning("Skipping diversity coefficient "
-                                              "because community affiliation"
-                                              " is empty for G..."))
+                        if (
+                            not ci
+                            and "diversity_coefficient" in metric_list_nodal
+                        ):
+                            print(
+                                UserWarning(
+                                    "Skipping diversity coefficient "
+                                    "because community affiliation"
+                                    " is empty for G..."
+                                )
+                            )
 
                     # # Link communities
                     # if "link_communities" in metric_list_nodal:
@@ -497,48 +565,70 @@ class NetworkAnalysis(BaseInterface):
                     #         pass
 
                     # Betweenness Centrality
-                    if "betweenness_centrality" in metric_list_nodal and \
-                        G_len is not None:
+                    if (
+                        "betweenness_centrality" in metric_list_nodal
+                        and G_len is not None
+                    ):
                         try:
                             start_time = time.time()
-                            metric_list_names, net_met_val_list_final = \
-                                algorithms.get_betweenness_centrality(
-                                    G_len, metric_list_names,
-                                    net_met_val_list_final)
+                            (
+                                metric_list_names,
+                                net_met_val_list_final,
+                            ) = algorithms.get_betweenness_centrality(
+                                G_len,
+                                metric_list_names,
+                                net_met_val_list_final,
+                            )
                             print(
                                 f"{np.round(time.time() - start_time, 3)}"
-                                f"{'s'}")
+                                f"{'s'}"
+                            )
                         except BaseException:
                             print(
                                 "Betweenness centrality cannot be calculated "
-                                "for G")
+                                "for G"
+                            )
                             # np.save("%s%s%s" % ('/tmp/betw_cent_failure',
                             # random.randint(1, 400), '.npy'),
                             #         np.array(nx.to_numpy_matrix(G_len)))
                             pass
                     else:
-                        if G_len is None and "betweenness_centrality" in \
-                            metric_list_nodal:
+                        if (
+                            G_len is None
+                            and "betweenness_centrality" in metric_list_nodal
+                        ):
                             print(
-                                UserWarning("Skipping betweenness centrality "
-                                            "because length matrix is empty "
-                                            "for G..."))
+                                UserWarning(
+                                    "Skipping betweenness centrality "
+                                    "because length matrix is empty "
+                                    "for G..."
+                                )
+                            )
 
-                    for i in ["local_efficiency", "local_clustering",
-                              "degree_centrality",
-                              "eigen_centrality",
-                              "communicability_centrality",
-                              "rich_club_coefficient"]:
+                    for i in [
+                        "local_efficiency",
+                        "local_clustering",
+                        "degree_centrality",
+                        "eigen_centrality",
+                        "communicability_centrality",
+                        "rich_club_coefficient",
+                    ]:
                         if i in metric_list_nodal:
                             routine = getattr(algorithms, f"get_{i}")
                             try:
                                 start_time = time.time()
-                                metric_list_names, net_met_val_list_final = \
-                                    routine(G, metric_list_names,
-                                        net_met_val_list_final)
+                                (
+                                    metric_list_names,
+                                    net_met_val_list_final,
+                                ) = routine(
+                                    G,
+                                    metric_list_names,
+                                    net_met_val_list_final,
+                                )
                                 print(
                                     f"{np.round(time.time() - start_time, 3)}"
-                                    f"{'s'}")
+                                    f"{'s'}"
+                                )
                             except BaseException:
                                 print(f"{i} cannot be calculated for G")
                                 # np.save("%s%s%s" % (f"/tmp/local_{i}_failure",
@@ -548,28 +638,43 @@ class NetworkAnalysis(BaseInterface):
 
                 if len(metric_list_nodal) > 0 or len(metric_list_global) > 0:
                     out_path_neat = save_netmets(
-                        dir_path, self.inputs.est_path, metric_list_names,
-                        net_met_val_list_final
+                        dir_path,
+                        self.inputs.est_path,
+                        metric_list_names,
+                        net_met_val_list_final,
                     )
                     # Cleanup
                     if tmp_graph_path:
                         if os.path.isfile(tmp_graph_path):
                             os.remove(tmp_graph_path)
 
-                    del net_met_val_list_final, metric_list_names, \
-                        metric_list_global
+                    del (
+                        net_met_val_list_final,
+                        metric_list_names,
+                        metric_list_global,
+                    )
                     gc.collect()
                 else:
                     out_path_neat = save_netmets(
-                        dir_path, self.inputs.est_path, [""], [np.nan],
+                        dir_path,
+                        self.inputs.est_path,
+                        [""],
+                        [np.nan],
                     )
         else:
-            print(UserWarning(f"Warning: Empty graph detected for "
-                              f"{self.inputs.ID}: "
-                              f"{self.inputs.est_path}..."))
+            print(
+                UserWarning(
+                    f"Warning: Empty graph detected for "
+                    f"{self.inputs.ID}: "
+                    f"{self.inputs.est_path}..."
+                )
+            )
             dir_path = op.dirname(op.realpath(self.inputs.est_path))
             out_path_neat = save_netmets(
-                dir_path, self.inputs.est_path, [""], [np.nan],
+                dir_path,
+                self.inputs.est_path,
+                [""],
+                [np.nan],
             )
 
         setattr(self, "_outpath", out_path_neat)
