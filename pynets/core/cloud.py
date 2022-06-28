@@ -2,9 +2,11 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-from configparser import ConfigParser
 import os
 import sys
+import typing
+from configparser import ConfigParser
+
 import boto3
 
 
@@ -24,7 +26,7 @@ def get_credentials():
     # add option to pass profile name
     try:
         config = ConfigParser()
-        config.read(os.getenv("HOME") + "/.aws/credentials")
+        config.read(f"{os.getenv('HOME')}/.aws/credentials")
         return (
             config.get("default", "aws_access_key_id"),
             config.get("default", "aws_secret_access_key"),
@@ -37,7 +39,7 @@ def get_credentials():
     return ACCESS, SECRET
 
 
-def s3_client(service="s3"):
+def s3_client(service: str = "s3"):
     """
     create an s3 client.
 
@@ -83,7 +85,7 @@ def parse_path(s3_datapath: str):
     return bucket, prefix
 
 
-def get_matching_s3_objects(bucket, prefix="", suffix=""):
+def get_matching_s3_objects(bucket: str, prefix: str = "", suffix: str = ""):
     """
     Generate objects in an S3 bucket.
 
@@ -128,11 +130,31 @@ def get_matching_s3_objects(bucket, prefix="", suffix=""):
             kwargs["ContinuationToken"] = resp["NextContinuationToken"]
         except KeyError:
             break
+    return
 
 
-def s3_fetch(client, bucket, remote, local, bpath, mod):
-    # go through all folders inside of remote directory and download relevant
-    # files
+def s3_fetch(
+    client: str, bucket: str, remote: str, local: str, bpath: str, mod: str
+):
+    """
+    Crawl folders inside of remote directory and download relevant files.
+
+    Parameters
+    ----------
+    client : boto3.client
+        s3 client.
+    bucket : str
+        s3 bucket.
+    remote : str
+        Remote directory.
+    local : str
+        Local directory.
+    bpath : str
+        Path to bucket.
+    mod : str
+        Modifier for file name.
+
+    """
     for obj in bpath:
         bdir, data = os.path.split(obj)
         localpath = os.path.join(local, bdir.replace(f"{remote}/", ""))
@@ -155,7 +177,14 @@ def s3_fetch(client, bucket, remote, local, bpath, mod):
     return
 
 
-def s3_get_data(bucket, remote, local, modality, info=None, force=False):
+def s3_get_data(
+    bucket: str,
+    remote: str,
+    local: str,
+    modality: str,
+    info: typing.Optional[str],
+    force: typing.Optional[str],
+):
     """
     Given a local and s3 directory, copies files/subdirectories in that
     directory.
@@ -175,6 +204,7 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
     force : bool, optional
         Whether to overwrite the local directory containing the s3 files if it
         already exists, by default False
+
     """
 
     # get client with credentials if they exist
@@ -235,7 +265,13 @@ def s3_get_data(bucket, remote, local, modality, info=None, force=False):
 
 
 def s3_push_data(
-    bucket, remote, outDir, modality, subject=None, session=None, creds=True
+    bucket: str,
+    remote: str,
+    outDir: str,
+    modality: str,
+    subject: typing.Optional[str],
+    session: typing.Optional[str],
+    creds: object = True,
 ):
     """Pushes data to a specified S3 bucket
 
@@ -249,17 +285,19 @@ def s3_push_data(
          directory specified in the path as its own directory
          (/remote[0]/modifier/remote[1]/...)
     outDir : str
-        Path of local directory being pushed to the s3 bucket
+        Path of local directory being pushed to the s3 bucket.
     subject : str
-        subject we're pushing with
+        Subject we're pushing with.
     session : str
-        session we're pushing with
+        Session we're pushing with.
     creds : bool, optional
         Whether s3 credentials are being provided, may fail to push big files
-        if False, by default True
+        if False. Default is True
+
     """
-    import re
     import hashlib
+    import re
+
     from boto3.session import Session
 
     [access_key, secret_key] = get_credentials()
@@ -328,3 +366,4 @@ def s3_push_data(
                     uri,
                     ExtraArgs={"ACL": "public-read"},
                 )
+    return

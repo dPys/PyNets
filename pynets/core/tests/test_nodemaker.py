@@ -5,19 +5,18 @@ Created on Wed Dec 27 16:19:14 2017
 """
 import pytest
 import matplotlib
-matplotlib.use('agg', force=True)
+
+matplotlib.use("agg", force=True)
 import matplotlib.pyplot as plt
+
 plt.ioff()
-plt.rcParams['figure.dpi'] = 100
+plt.rcParams["figure.dpi"] = 100
 import numpy as np
 import time
 import nibabel as nib
 import os
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
+import pickle5 as pickle
 import logging
 import pkg_resources
 import tempfile
@@ -44,8 +43,9 @@ logger.setLevel(50)
 )
 def test_nilearn_atlas_helper(atlas):
     parc = False
-    [labels, networks_list, parlistfile] = \
-        nodemaker.nilearn_atlas_helper(atlas, parc)
+    [labels, networks_list, parlistfile] = nodemaker.nilearn_atlas_helper(
+        atlas, parc
+    )
     print(labels)
     print(networks_list)
     print(parlistfile)
@@ -96,16 +96,21 @@ def test_nodemaker_tools_parlistfile_RSN():
         )
     )
 
-    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0
-                                        ].tolist()
+    labels = np.arange(len(coords) + 1)[
+        np.arange(len(coords) + 1) != 0
+    ].tolist()
 
     start_time = time.time()
 
     parcels_4d_img = nodemaker.three_to_four_parcellation(parlistfile)
 
-    [net_coords, net_parcels_4d_img, net_labels, subnet] = \
-        nodemaker.get_node_membership(subnet, template, coords, labels,
-                                      parc, parcels_4d_img
+    [
+        net_coords,
+        net_parcels_4d_img,
+        net_labels,
+        subnet,
+    ] = nodemaker.get_node_membership(
+        subnet, template, coords, labels, parc, parcels_4d_img
     )
     print(
         "%s%s%s"
@@ -130,8 +135,9 @@ def test_nodemaker_tools_parlistfile_RSN():
     )
 
     start_time = time.time()
-    out_path = nodemaker.gen_network_parcels(parlistfile, subnet, net_labels,
-                                             dir_path)
+    out_path = nodemaker.gen_network_parcels(
+        parlistfile, subnet, net_labels, dir_path
+    )
     print(
         "%s%s%s"
         % (
@@ -151,8 +157,9 @@ def test_nodemaker_tools_parlistfile_RSN():
     assert subnet is not None
 
 
-@pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",
-                                   "coords_power_2011"])
+@pytest.mark.parametrize(
+    "atlas", ["coords_dosenbach_2010", "coords_power_2011"]
+)
 def test_nodemaker_tools_nilearn_coords_RSN(atlas):
     """
     Test nodemaker_tools_nilearn_coords_RSN functionality
@@ -233,13 +240,18 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
         )
     )
 
-    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0
-                                        ].tolist()
+    labels = np.arange(len(coords) + 1)[
+        np.arange(len(coords) + 1) != 0
+    ].tolist()
 
     start_time = time.time()
     parcels_4d_img = nodemaker.three_to_four_parcellation(parlistfile)
-    [net_coords, net_parcels_4d_img, net_labels, subnet] = \
-        nodemaker.get_node_membership(
+    [
+        net_coords,
+        net_parcels_4d_img,
+        net_labels,
+        subnet,
+    ] = nodemaker.get_node_membership(
         subnet, template, coords, labels, parc, parcels_4d_img
     )
     print(
@@ -315,15 +327,16 @@ def test_nodemaker_tools_masking_parlistfile_RSN():
     tmp.cleanup()
 
 
-@pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",
-                                   "coords_power_2011"])
+@pytest.mark.parametrize(
+    "atlas", ["coords_dosenbach_2010", "coords_power_2011"]
+)
 def test_nodemaker_tools_masking_coords_RSN(atlas):
     """
     Test nodemaker_tools_masking_coords_RSN functionality
     """
     # Set example inputs
     template = pkg_resources.resource_filename(
-        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
+        "pynets", "templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     dir_path = str(tempfile.TemporaryDirectory().name)
     os.makedirs(dir_path, exist_ok=True)
@@ -396,7 +409,8 @@ def test_nodemaker_tools_parlistfile_WB():
 
     start_time = time.time()
     [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(
-        parlistfile)
+        parlistfile
+    )
     print(
         "%s%s%s"
         % (
@@ -434,8 +448,9 @@ def test_nodemaker_tools_parlistfile_WB():
     assert parcel_list_exp is not None
 
 
-@pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",
-                                   "coords_power_2011"])
+@pytest.mark.parametrize(
+    "atlas", ["coords_dosenbach_2010", "coords_power_2011"]
+)
 def test_nodemaker_tools_nilearn_coords_WB(atlas):
     """
     Test nodemaker_tools_nilearn_coords_WB functionality
@@ -477,7 +492,8 @@ def test_nodemaker_tools_masking_parlistfile_WB():
 
     start_time = time.time()
     [WB_coords, _, _, _] = nodemaker.get_names_and_coords_of_parcels(
-        parlistfile)
+        parlistfile
+    )
     print(
         "%s%s%s"
         % (
@@ -505,8 +521,14 @@ def test_nodemaker_tools_masking_parlistfile_WB():
         _,
         dir_path,
     ] = nodemaker.node_gen(
-        WB_coords, WB_parcel_list, WB_labels, dir_path, ID, parc, atlas,
-        parlistfile
+        WB_coords,
+        WB_parcel_list,
+        WB_labels,
+        dir_path,
+        ID,
+        parc,
+        atlas,
+        parlistfile,
     )
     print(
         "%s%s%s"
@@ -596,8 +618,9 @@ def test_nodemaker_tools_masking_parlistfile_WB():
     assert WB_coords_masked is not None
 
 
-@pytest.mark.parametrize("atlas", ["coords_dosenbach_2010",
-                                   "coords_power_2011"])
+@pytest.mark.parametrize(
+    "atlas", ["coords_dosenbach_2010", "coords_power_2011"]
+)
 def test_nodemaker_tools_masking_coords_WB(atlas):
     """
     Test nodemaker_tools_masking_coords_WB functionality
@@ -659,17 +682,17 @@ def test_get_sphere():
     Test get_sphere functionality
     """
     img_file = pkg_resources.resource_filename(
-        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
+        "pynets", "templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     img = nib.load(img_file)
     r = 4
     vox_dims = (2.0, 2.0, 2.0)
-    coords = [[0, 0, 0], [-5, -5, -5], [5, 5, 5], [-10, -10, -10],
-              [10, 10, 10]]
+    coords = [[0, 0, 0], [-5, -5, -5], [5, 5, 5], [-10, -10, -10], [10, 10, 10]]
     neighbors = []
     for coord in coords:
-        neighbors.append(nodemaker.get_sphere(coord, r, vox_dims,
-                                              img.shape[0:3]))
+        neighbors.append(
+            nodemaker.get_sphere(coord, r, vox_dims, img.shape[0:3])
+        )
     neighbors = [i for i in neighbors if len(i) > 0]
     assert len(neighbors) == 3
 
@@ -678,8 +701,7 @@ def test_parcel_naming():
     """
     Test parcel_namiing functionality
     """
-    coords = [(0, 0, 0), (-5, -5, -5), (5, 5, 5), (-10, -10, -10),
-              (10, 10, 10)]
+    coords = [(0, 0, 0), (-5, -5, -5), (5, 5, 5), (-10, -10, -10), (10, 10, 10)]
     labels = nodemaker.parcel_naming(coords, vox_size="2mm")
     assert len(coords) == len(labels)
 
@@ -694,7 +716,8 @@ def test_enforce_hem_distinct_consecutive_labels():
     parlistfile = f"{dir_path}/{os.path.basename(parlistfile)}"
 
     parcellation = nodemaker.enforce_hem_distinct_consecutive_labels(
-        parlistfile)[0]
+        parlistfile
+    )[0]
     parcellation_img = nib.load(parcellation)
     parcels_parcellation = len(np.unique(parcellation_img.get_fdata())) - 1
     assert parcels_parcellation == 354
@@ -712,12 +735,16 @@ def test_drop_coords_labels_from_restricted_parcellation():
     shutil.copy2(parlistfile, f"{dir_path}/{os.path.basename(parlistfile)}")
     parlistfile = f"{dir_path}/{os.path.basename(parlistfile)}"
 
-    [coords, _, _, label_intensities] = \
-        nodemaker.get_names_and_coords_of_parcels(parlistfile
-    )
+    [
+        coords,
+        _,
+        _,
+        label_intensities,
+    ] = nodemaker.get_names_and_coords_of_parcels(parlistfile)
 
-    labels = np.arange(len(coords) + 1)[np.arange(len(coords) + 1) != 0
-                                        ].tolist()
+    labels = np.arange(len(coords) + 1)[
+        np.arange(len(coords) + 1) != 0
+    ].tolist()
     labs = list(zip(labels, label_intensities))
     [
         parcellation_okay,
@@ -738,8 +765,10 @@ def test_drop_coords_labels_from_restricted_parcellation():
     parlist_img_data = parlist_img.get_fdata()
     parlist_img_data[np.where(parlist_img_data == 10)] = 0
     par_tmp = tempfile.NamedTemporaryFile(mode="w+", suffix=".nii.gz")
-    nib.save(nib.Nifti1Image(parlist_img_data, affine=parlist_img.affine),
-             par_tmp.name)
+    nib.save(
+        nib.Nifti1Image(parlist_img_data, affine=parlist_img.affine),
+        par_tmp.name,
+    )
     [
         parcellation_okay,
         cleaned_coords,
@@ -800,8 +829,9 @@ def test_drop_bad_ixs():
     parlistfile = f"{dir_path}/{os.path.basename(parlistfile)}"
     unique_parcels = np.unique(nib.load(parlistfile).get_fdata())
     total_parcels = len(unique_parcels)
-    pruned_parc = nodemaker.drop_badixs_from_parcellation(parlistfile, [3, 4],
-                                                          False)
+    pruned_parc = nodemaker.drop_badixs_from_parcellation(
+        parlistfile, [3, 4], False
+    )
     unique_pruned_parcels = np.unique(nib.load(pruned_parc).get_fdata())
     total_pruned_parcels = len(unique_pruned_parcels)
 

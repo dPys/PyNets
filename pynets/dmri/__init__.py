@@ -12,4 +12,4 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import estimation, interfaces, track, utils
+from pynets.dmri import estimation, interfaces, track, utils

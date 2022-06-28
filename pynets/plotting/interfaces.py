@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
@@ -8,8 +6,6 @@ import matplotlib
 import warnings
 import numpy as np
 import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
     traits,
@@ -17,7 +13,10 @@ from nipype.interfaces.base import (
     Directory,
 )
 
-matplotlib.use('Agg')
+if sys.platform.startswith("win") is False:
+    import indexed_gzip
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -92,7 +91,7 @@ class PlotStruct(SimpleInterface):
                 self.inputs.track_type,
                 self.inputs.traversal,
                 self.inputs.min_length,
-                self.inputs.error_margin
+                self.inputs.error_margin,
             )
 
         self._results["out"] = "None"

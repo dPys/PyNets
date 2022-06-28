@@ -5,36 +5,46 @@ Copyright (C) 2017
 import matplotlib
 import warnings
 import os
+import typing
 import sys
 import os.path as op
-if sys.platform.startswith('win') is False:
+from pathlib import Path
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
 import nibabel as nib
 import numpy as np
+import pandas as pd
 import time
 import logging
 import threading
 import traceback
 import signal
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 log = logging.getLogger(__name__)
 
 
-def get_file():
+def get_file() -> str:
     """Get a file's base directory path."""
     base_path = str(__file__)
     return base_path
 
 
-def checkConsecutive(l):
-    n = len(l) - 1
-    return sum(np.diff(sorted(l)) == 1) >= n
+def checkConsecutive(lst: list) -> int:
+    """
+    Check if a list is consecutive.
+    """
+    n = len(lst) - 1
+    return sum(np.diff(sorted(lst)) == 1) >= n
 
 
-def prune_suffices(res):
+def prune_suffices(res: str) -> str:
+    """
+    Remove file suffixes from a file name.
+    """
     import re
 
     if "reor-RAS" in str(res):
@@ -48,7 +58,7 @@ def prune_suffices(res):
     return res
 
 
-def do_dir_path(atlas, outdir):
+def do_dir_path(atlas: str, outdir: str) -> str:
     """
     Creates an atlas subdirectory from the base directory of the given
     subject's input file.
@@ -77,13 +87,14 @@ def do_dir_path(atlas, outdir):
     if not op.exists(dir_path) and atlas is not None:
         os.makedirs(dir_path, exist_ok=True)
     elif atlas is None:
-        raise ValueError("cannot create directory for a null "
-                         "atlas!")
+        raise ValueError("cannot create directory for a null " "atlas!")
 
     return dir_path
 
 
-def as_directory(dir_, remove=False, return_as_path=False):
+def as_directory(
+    dir_: str, remove: bool = False, return_as_path: bool = False
+) -> str:
     """
     Convenience function to make a directory while returning it.
 
@@ -111,25 +122,25 @@ def as_directory(dir_, remove=False, return_as_path=False):
     p.mkdir(parents=True, exist_ok=True)
 
     if return_as_path:
-        return p
+        return str(p)
 
     return str(p)
 
 
 def create_est_path_func(
-    ID,
-    subnet,
-    conn_model,
-    thr,
-    roi,
-    dir_path,
-    node_radius,
-    smooth,
-    thr_type,
-    hpass,
-    parc,
-    signal,
-):
+    ID: str,
+    subnet: str,
+    conn_model: str,
+    thr: float,
+    roi: str,
+    dir_path: str,
+    node_radius: int,
+    smooth: int,
+    thr_type: str,
+    hpass: float,
+    parc: bool,
+    signal: str,
+) -> str:
     """
     Name the thresholded functional connectivity matrix file based on
     relevant graph-generating parameters.
@@ -182,9 +193,7 @@ def create_est_path_func(
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -197,33 +206,38 @@ def create_est_path_func(
         smooth = 0
 
     subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
-    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
-        else ""
-    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
-        ((node_radius is not None) and (node_radius != 'parc')) \
+    roi_suff = (
+        f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None else ""
+    )
+    nodetype_suff = (
+        f"_nodetype-spheres-{node_radius}mm"
+        if ((node_radius is not None) and (node_radius != "parc"))
         else "_nodetype-parc"
+    )
 
-    return f"{namer_dir}/graph_sub-{ID}_modality-func{subnet_suff}" \
-           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
-           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
-           f"signal-{signal}_thrtype-{thr_type}_thr-{thr}.npy"
+    return (
+        f"{namer_dir}/graph_sub-{ID}_modality-func{subnet_suff}"
+        f"{roi_suff}_model-{conn_model}_template-{template_name}"
+        f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_"
+        f"signal-{signal}_thrtype-{thr_type}_thr-{thr}.npy"
+    )
 
 
 def create_est_path_diff(
-    ID,
-    subnet,
-    conn_model,
-    thr,
-    roi,
-    dir_path,
-    node_radius,
-    track_type,
-    thr_type,
-    parc,
-    traversal,
-    min_length,
-    error_margin,
-):
+    ID: str,
+    subnet: str,
+    conn_model: str,
+    thr: float,
+    roi: str,
+    dir_path: str,
+    node_radius: int,
+    track_type: str,
+    thr_type: str,
+    parc: bool,
+    traversal: str,
+    min_length: int,
+    error_margin: int,
+) -> str:
     """
     Name the thresholded structural connectivity matrix file based on
     relevant graph-generating parameters.
@@ -275,40 +289,43 @@ def create_est_path_diff(
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
     subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
-    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
-        else ""
-    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
-        ((node_radius is not None) and (node_radius != 'parc')) \
+    roi_suff = (
+        f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None else ""
+    )
+    nodetype_suff = (
+        f"_nodetype-spheres-{node_radius}mm"
+        if ((node_radius is not None) and (node_radius != "parc"))
         else "_nodetype-parc"
+    )
 
-    return f"{namer_dir}/graph_sub-{ID}_modality-dwi{subnet_suff}" \
-           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
-           f"{nodetype_suff}_tracktype-{track_type}_" \
-           f"traversal-{traversal}_minlength-{min_length}_" \
-           f"tol-{error_margin}_thrtype-{thr_type}_thr-{thr}.npy"
+    return (
+        f"{namer_dir}/graph_sub-{ID}_modality-dwi{subnet_suff}"
+        f"{roi_suff}_model-{conn_model}_template-{template_name}"
+        f"{nodetype_suff}_tracktype-{track_type}_"
+        f"traversal-{traversal}_minlength-{min_length}_"
+        f"tol-{error_margin}_thrtype-{thr_type}_thr-{thr}.npy"
+    )
 
 
 def create_raw_path_func(
-    ID,
-    subnet,
-    conn_model,
-    roi,
-    dir_path,
-    node_radius,
-    smooth,
-    hpass,
-    parc,
-    signal,
-):
+    ID: str,
+    subnet: str,
+    conn_model: str,
+    roi: str,
+    dir_path: str,
+    node_radius: int,
+    smooth: int,
+    hpass: float,
+    parc: bool,
+    signal: str,
+) -> str:
     """
     Name the raw functional connectivity matrix file based on relevant
     graph-generating parameters.
@@ -356,9 +373,7 @@ def create_raw_path_func(
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
@@ -371,31 +386,36 @@ def create_raw_path_func(
         smooth = 0
 
     subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
-    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
-        else ""
-    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
-        ((node_radius is not None) and (node_radius != 'parc')) \
+    roi_suff = (
+        f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None else ""
+    )
+    nodetype_suff = (
+        f"_nodetype-spheres-{node_radius}mm"
+        if ((node_radius is not None) and (node_radius != "parc"))
         else "_nodetype-parc"
+    )
 
-    return f"{namer_dir}/rawgraph_sub-{ID}_modality-func{subnet_suff}" \
-           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
-           f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_" \
-           f"signal-{signal}.npy"
+    return (
+        f"{namer_dir}/rawgraph_sub-{ID}_modality-func{subnet_suff}"
+        f"{roi_suff}_model-{conn_model}_template-{template_name}"
+        f"{nodetype_suff}_tol-{smooth}fwhm_hpass-{hpass}Hz_"
+        f"signal-{signal}.npy"
+    )
 
 
 def create_raw_path_diff(
-    ID,
-    subnet,
-    conn_model,
-    roi,
-    dir_path,
-    node_radius,
-    track_type,
-    parc,
-    traversal,
-    min_length,
-    error_margin
-):
+    ID: str,
+    subnet: str,
+    conn_model: str,
+    roi: str,
+    dir_path: str,
+    node_radius: int,
+    track_type: str,
+    parc: bool,
+    traversal: str,
+    min_length: int,
+    error_margin: int,
+) -> str:
     """
     Name the raw structural connectivity matrix file based on relevant
     graph-generating parameters.
@@ -442,29 +462,32 @@ def create_raw_path_diff(
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     namer_dir = f"{dir_path}/graphs"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
     subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
-    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
-        else ""
-    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
-        ((node_radius is not None) and (node_radius != 'parc')) \
+    roi_suff = (
+        f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None else ""
+    )
+    nodetype_suff = (
+        f"_nodetype-spheres-{node_radius}mm"
+        if ((node_radius is not None) and (node_radius != "parc"))
         else "_nodetype-parc"
+    )
 
-    return f"{namer_dir}/rawgraph_sub-{ID}_modality-dwi{subnet_suff}" \
-           f"{roi_suff}_model-{conn_model}_template-{template_name}" \
-           f"{nodetype_suff}_tracktype-{track_type}_" \
-           f"traversal-{traversal}_minlength-{min_length}_" \
-           f"tol-{error_margin}.npy"
+    return (
+        f"{namer_dir}/rawgraph_sub-{ID}_modality-dwi{subnet_suff}"
+        f"{roi_suff}_model-{conn_model}_template-{template_name}"
+        f"{nodetype_suff}_tracktype-{track_type}_"
+        f"traversal-{traversal}_minlength-{min_length}_"
+        f"tol-{error_margin}.npy"
+    )
 
 
-def create_csv_path(dir_path, est_path):
+def create_csv_path(dir_path: str, est_path: str) -> str:
     """
 
     Create a csv path to save graph metrics.
@@ -489,11 +512,13 @@ def create_csv_path(dir_path, est_path):
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
 
-    return f"{namer_dir}/metrics_" \
-           f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
+    return (
+        f"{namer_dir}/metrics_"
+        f"{est_path.split('/')[-1].split('.npy')[0]}.csv"
+    )
 
 
-def load_mat(est_path):
+def load_mat(est_path: str) -> np.ndarray:
     """
     Load an adjacency matrix using any of a variety of methods.
 
@@ -531,24 +556,30 @@ def load_mat(est_path):
         raise ValueError("\nFile format not supported!")
 
     G.graph["ecount"] = nx.number_of_edges(G)
-    G = nx.convert_node_labels_to_integers(G, first_label=1)
 
-    return nx.to_numpy_matrix(G, weight="weight")
+    return nx.to_numpy_matrix(
+        nx.convert_node_labels_to_integers(G, first_label=1), weight="weight"
+    )
 
 
 def load_mat_ext(
-    est_path,
-    ID,
-    subnet,
-    conn_model,
-    roi,
-    prune,
-    norm,
-    binary,
-    min_span_tree,
-    dens_thresh,
-    disp_filt,
-):
+    est_path: str,
+    ID: str,
+    subnet: str,
+    conn_model: str,
+    roi: str,
+    prune: bool,
+    norm: int,
+    binary: bool,
+    min_span_tree: bool,
+    dens_thresh: bool,
+    disp_filt: bool,
+) -> typing.Tuple[
+    np.ndarray, str, str, str, str, str, int, int, bool, bool, bool, bool
+]:
+    """
+    Load an adjacency matrix using any of a variety of methods.
+    """
 
     return (
         load_mat(est_path),
@@ -566,7 +597,9 @@ def load_mat_ext(
     )
 
 
-def save_mat(conn_matrix, est_path, fmt=None):
+def save_mat(
+    conn_matrix: np.ndarray, est_path: str, fmt: typing.Union[None, str] = "npy"
+) -> None:
     """
     Save an adjacency matrix using any of a variety of methods.
 
@@ -610,8 +643,8 @@ def save_mat(conn_matrix, est_path, fmt=None):
         if os.path.isfile(f"{est_path.split('.npy')[0]}{'.txt'}"):
             os.remove(f"{est_path.split('.npy')[0]}{'.txt'}")
         np.savetxt(
-            f"{est_path.split('.npy')[0]}{'.txt'}",
-            nx.to_numpy_matrix(G))
+            f"{est_path.split('.npy')[0]}{'.txt'}", nx.to_numpy_matrix(G)
+        )
     elif fmt == "npy":
         if os.path.isfile(est_path):
             os.remove(est_path)
@@ -623,20 +656,19 @@ def save_mat(conn_matrix, est_path, fmt=None):
             G,
             f"{est_path.split('.npy')[0]}.ssv",
             delimiter=" ",
-            encoding="utf-8")
+            encoding="utf-8",
+        )
     else:
         raise ValueError("\nFile format not supported!")
 
     return
 
 
-def mergedicts(dict1, dict2):
+def mergedicts(dict1: dict, dict2: dict) -> typing.Tuple[str, dict]:
     for k in set(dict1.keys()).union(dict2.keys()):
         if k in dict1 and k in dict2:
-            if isinstance(dict1[k], dict) and \
-                    isinstance(dict2[k], dict):
-                yield k, dict(mergedicts(dict1[k],
-                                          dict2[k]))
+            if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
+                yield k, dict(mergedicts(dict1[k], dict2[k]))
             else:
                 yield k, dict2[k]
         elif k in dict1:
@@ -646,23 +678,70 @@ def mergedicts(dict1, dict2):
 
 
 def save_mat_thresholded(
-    conn_matrix,
-    est_path_orig,
-    thr_type,
-    ID,
-    subnet,
-    thr,
-    conn_model,
-    roi,
-    prune,
-    norm,
-    binary,
-):
+    conn_matrix: np.ndarray,
+    est_path_orig: str,
+    thr_type: str,
+    ID: str,
+    subnet: str,
+    thr: float,
+    conn_model: str,
+    roi: str,
+    prune: bool,
+    norm: int,
+    binary: bool,
+) -> typing.Tuple[str, str, str, float, str, str, int, int, bool]:
+    """
+    Save an adjacency matrix using any of a variety of methods.
+
+    Parameters
+    ----------
+    conn_matrix : array
+        Adjacency matrix stored as an m x n array of nodes and edges.
+    est_path : str
+        File path to .npy file containing graph.
+    thr_type : str
+        Type of thresholding to use.
+    thr : float
+        Threshold value.
+    conn_model : str
+        Connectivity model to use.
+    roi : str
+        ROI to use.
+    prune : bool
+        Pruning method to use.
+    norm : int
+        Normalization method to use.
+    binary : bool
+        Whether to save the graph as a binary file.
+
+    Returns
+    -------
+    est_path : str
+        File path to .npy file containing graph.
+    ID : str
+        ID of the subject.
+    subnet : str
+        Subnet to use.
+    thr : float
+        Threshold value.
+    conn_model : str
+        Connectivity model to use.
+    roi : str
+        ROI to use.
+    prune : bool
+        Pruning method to use.
+    norm : int
+        Normalization method to use.
+    binary : bool
+        Whether to save the graph as a binary file.
+
+    """
     import numpy as np
     from nipype.utils.filemanip import fname_presuffix
 
-    est_path = fname_presuffix(est_path_orig,
-                               suffix=f"_thrtype-{thr_type}_thr-{thr}")
+    est_path = fname_presuffix(
+        est_path_orig, suffix=f"_thrtype-{thr_type}_thr-{thr}"
+    )
 
     if (np.abs(conn_matrix) < 0.0000001).all():
         print(UserWarning(f"Empty graph detected for: {est_path}"))
@@ -673,16 +752,16 @@ def save_mat_thresholded(
 
 
 def pass_meta_outs(
-    conn_model_iterlist,
-    est_path_iterlist,
-    network_iterlist,
-    thr_iterlist,
-    prune_iterlist,
-    ID_iterlist,
-    roi_iterlist,
-    norm_iterlist,
-    binary_iterlist,
-):
+    conn_model_iterlist: list,
+    est_path_iterlist: list,
+    network_iterlist: list,
+    thr_iterlist: list,
+    prune_iterlist: list,
+    ID_iterlist: list,
+    roi_iterlist: list,
+    norm_iterlist: list,
+    binary_iterlist: list,
+) -> typing.Tuple[list, list, list, list, list, list, list, list, list]:
     """
     Passes lists of iterable parameters as metadata.
 
@@ -749,6 +828,7 @@ def pass_meta_outs(
     multimodal_iterlist : list
         List of booleans indicating whether multiple modalities of input data
         have been specified.
+
     """
 
     return (
@@ -765,15 +845,16 @@ def pass_meta_outs(
 
 
 def pass_meta_ins(
-        conn_model,
-        est_path,
-        subnet,
-        thr,
-        prune,
-        ID,
-        roi,
-        norm,
-        binary):
+    conn_model: str,
+    est_path: str,
+    subnet: str,
+    thr: float,
+    prune: bool,
+    ID: str,
+    roi: str,
+    norm: int,
+    binary: bool,
+) -> typing.Tuple[str, str, str, float, bool, str, str, int, bool]:
     """
     Passes parameters as metadata.
 
@@ -881,7 +962,7 @@ def pass_meta_ins_multi(
     roi_struct,
     norm_struct,
     binary_struct,
-):
+) -> typing.Tuple[list, list, list, list, list, list, list, list, list]:
     """
     Passes multimodal iterable parameters as metadata.
 
@@ -1010,7 +1091,7 @@ def pass_meta_ins_multi(
     )
 
 
-def collectpandasjoin(net_mets_csv):
+def collectpandasjoin(net_mets_csv: str) -> str:
     """
     Passes csv pandas dataframe as metadata.
 
@@ -1029,23 +1110,37 @@ def collectpandasjoin(net_mets_csv):
     return net_mets_csv_out
 
 
-def flatten(l):
+def flatten(nested_list: typing.Any):
     """
     Flatten list of lists.
     """
     import collections
 
-    for el in l:
-        if isinstance(
-                el, collections.Iterable) and not isinstance(
-                el, (str, bytes)):
+    for el in nested_list:
+        if isinstance(el, collections.Iterable) and not isinstance(
+            el, (str, bytes)
+        ):
             for ell in flatten(el):
                 yield ell
         else:
             yield el
 
 
-def decompress_nifti(infile):
+def decompress_nifti(infile: str) -> str:
+    """
+    Decompress Nifti1Image file.
+
+    Parameters
+    ----------
+    infile : str
+        File path to Nifti1Image file.
+
+    Returns
+    -------
+    outfile : str
+        File path to decompressed Nifti1Image file.
+
+    """
     from nipype.utils.filemanip import split_filename
     import gzip
     import os
@@ -1059,7 +1154,7 @@ def decompress_nifti(infile):
 
     with gzip.open(infile, "rb") as in_file:
         with open(os.path.abspath(base + ext), "wb") as out_file:
-            shutil.copyfileobj(in_file, out_file, 128*1024)
+            shutil.copyfileobj(in_file, out_file, 128 * 1024)
 
     sleep(5)
     # in_file.close()
@@ -1069,8 +1164,14 @@ def decompress_nifti(infile):
 
 
 def collect_pandas_df(
-    subnet, ID, net_mets_csv_list, plot_switch, multi_nets, multimodal, embed
-):
+    subnet: str,
+    ID: str,
+    net_mets_csv_list: list,
+    plot_switch: bool,
+    multi_nets: list,
+    multimodal: bool,
+    embed: bool,
+) -> bool:
     """
     API for summarizing independent lists of pickled pandas dataframes of
      graph metrics for each modality, RSN, and roi.
@@ -1091,6 +1192,8 @@ def collect_pandas_df(
     multimodal : bool
         Indicates whether multiple modalities of input data have been
         specified.
+    embed : bool
+        Indicates whether omnibus embedding of graph population was performed.
 
     Returns
     -------
@@ -1098,7 +1201,6 @@ def collect_pandas_df(
         If True, then collect_pandas_df completed successfully.
 
     """
-    from pathlib import Path
     from pynets.statistics.individual.algorithms import collect_pandas_df_make
     from pynets.core.utils import load_runconfig
 
@@ -1107,18 +1209,19 @@ def collect_pandas_df(
     try:
         func_models = hardcoded_params["available_models"]["func_models"]
     except KeyError as e:
-        print(e,
-              "available functional models not sucessfully extracted"
-              " from advanced.yaml"
-              )
+        print(
+            e,
+            "available functional models not sucessfully extracted"
+            " from advanced.yaml",
+        )
     try:
-        dwi_models = hardcoded_params["available_models"][
-            "dwi_models"]
+        dwi_models = hardcoded_params["available_models"]["dwi_models"]
     except KeyError as e:
-        print(e,
-              "available structural models not sucessfully extracted"
-              " from advanced.yaml"
-              )
+        print(
+            e,
+            "available structural models not sucessfully extracted"
+            " from advanced.yaml",
+        )
 
     net_mets_csv_list = list(flatten(net_mets_csv_list))
 
@@ -1134,8 +1237,7 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("model-")[1].split("_")[0] in
-                            dwi_models
+                            if i.split("model-")[1].split("_")[0] in dwi_models
                         ]
                     )
                 )
@@ -1147,8 +1249,7 @@ def collect_pandas_df(
                         [
                             i
                             for i in net_mets_csv_list
-                            if i.split("model-")[1].split("_")[0] in
-                            func_models
+                            if i.split("model-")[1].split("_")[0] in func_models
                         ]
                     )
                 )
@@ -1194,8 +1295,10 @@ def collect_pandas_df(
                 net_mets_csv_list_func, ID, subnet, plot_switch, embed
             )
 
-            if combination_complete_dwi is \
-                    True and combination_complete_func is True:
+            if (
+                combination_complete_dwi is True
+                and combination_complete_func is True
+            ):
                 combination_complete = True
             else:
                 combination_complete = False
@@ -1207,7 +1310,7 @@ def collect_pandas_df(
     return combination_complete
 
 
-def check_est_path_existence(est_path_list):
+def check_est_path_existence(est_path_list: list) -> typing.Tuple[list, list]:
     """
     Checks for the existence of each graph estimated and saved to disk.
 
@@ -1242,13 +1345,17 @@ def check_est_path_existence(est_path_list):
     return est_path_list_ex, bad_ixs
 
 
-def load_runconfig(location=None):
-    import time
+def load_runconfig(location: str = "default"):
+    """
+    Loads the advanced.yaml file.
+    """
+
+    # import time
     import psutil
     import yaml
     import pkg_resources
 
-    if not location:
+    if location == "default":
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
     # asynchronous config parsing
@@ -1257,27 +1364,46 @@ def load_runconfig(location=None):
             return [location == f for f in proc.open_files()]
         except psutil.NoSuchProcess as e:
             # Catches race condition
+            print(e)
             return [False]
         except psutil.AccessDenied as e:
             # If we're not root/admin sometimes we can't query processes
+            print(e)
             return [False]
 
-    while sum(list(flatten([proc_access(location, p) for p in
-         psutil.process_iter(attrs=['name']) if ('python' in p.info['name'])
-                                                and p.is_running() and
-                                                p.username() != 'root']))
-              ) > 0:
+    while (
+        sum(
+            list(
+                flatten(
+                    [
+                        proc_access(location, p)
+                        for p in psutil.process_iter(attrs=["name"])
+                        if p.is_running()
+                        and (p.username() != "root")
+                        and (p.info is not None)
+                        and ("python" in p.info["name"])
+                    ]
+                )
+            )
+        )
+        > 0
+    ):
         time.sleep(1)
 
-    with open(location, mode='r') as f:
+    with open(location, mode="r") as f:
         stream = f.read()
     f.close()
 
     return yaml.load(stream, Loader=yaml.FullLoader)
 
 
-def save_coords_and_labels_to_json(coords, labels, dir_path,
-                                   subnet='all_nodes', indices=None):
+def save_coords_and_labels_to_json(
+    coords: list,
+    labels: list,
+    dir_path: str,
+    subnet: str = "all_nodes",
+    indices: typing.Union[list, None] = None,
+):
     """
     Save coordinates and labels to json.
 
@@ -1292,6 +1418,8 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         Path to directory containing subject derivative data for given run.
     subnet : str
         Restricted sub-subnet name.
+    indices : list
+        List of indices to be saved.
 
     Returns
     -------
@@ -1326,33 +1454,60 @@ def save_coords_and_labels_to_json(coords, labels, dir_path,
         node_dict = {}
         if consensus_labs is True and isinstance(node, tuple):
             lab, ix = node
-            node_dict['index'] = str(ix)
-            node_dict['label'] = str(lab)
+            node_dict["index"] = str(ix)
+            node_dict["label"] = str(lab)
         elif indices is not None:
-            node_dict['index'] = str(indices[i])
-            node_dict['label'] = str(node)
+            node_dict["index"] = str(indices[i])
+            node_dict["label"] = str(node)
         else:
-            node_dict['index'] = str(i)
-            node_dict['label'] = str(node)
-        node_dict['coord'] = coords[i]
+            node_dict["index"] = str(i)
+            node_dict["label"] = str(node)
+        node_dict["coord"] = coords[i]
         node_list.append(node_dict)
         i += 1
 
-    nodes_path = f"{namer_dir}/nodes-{prune_suffices(subnet)}_" \
-                 f"count-{len(labels)}.json"
+    nodes_path = (
+        f"{namer_dir}/nodes-{prune_suffices(subnet)}_"
+        f"count-{len(labels)}.json"
+    )
 
-    with open(nodes_path, 'w') as f:
+    with open(nodes_path, "w") as f:
         json.dump(node_list, f)
 
     return nodes_path
 
 
-def missing_elements(L):
-    start, end = L[0], L[-1]
-    return sorted(set(range(start, end + 1)).difference(L))
+def missing_elements(lst: list) -> list:
+    """
+    Finds missing elements in a list.
+    """
+    start, end = lst[0], lst[-1]
+    return sorted(set(range(start, end + 1)).difference(lst))
 
 
-def get_template_tf(template_name, vox_size):
+def get_template_tf(
+    template_name: str, vox_size: str
+) -> typing.Tuple[str, str, Path]:
+    """
+    Fetch template using TemplateFlow.
+
+    Parameters
+    ----------
+    template_name : str
+        Name of template to fetch.
+    vox_size : int
+        Voxel size of template.
+
+    Returns
+    -------
+    template : str
+        Template path.
+    template_mask : str
+        Template mask path.
+    templateflow_dir : Path
+        Path to templateflow directory.
+
+    """
     from pathlib import Path
     from templateflow.api import get as get_template
 
@@ -1390,8 +1545,13 @@ def get_template_tf(template_name, vox_size):
     return template, template_mask, templateflow_home
 
 
-def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
-                           vox_size):
+def save_nifti_parcels_map(
+    ID: str,
+    dir_path: str,
+    subnet: str,
+    net_parcels_map_nifti: str,
+    vox_size: str,
+) -> str:
     """
     This function takes a Nifti1Image parcellation object resulting from some
     form of masking and saves it to disk.
@@ -1428,9 +1588,7 @@ def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
     try:
         template_name = hardcoded_params["template"][0]
     except KeyError as e:
-        print(e,
-              "No template specified in advanced.yaml"
-              )
+        print(e, "No template specified in advanced.yaml")
 
     namer_dir = f"{dir_path}/parcellations"
     if not os.path.isdir(namer_dir):
@@ -1448,19 +1606,20 @@ def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
         "pynets", f"templates/standard/{template_name}_brain_{vox_size}.nii.gz"
     )
 
-    if sys.platform.startswith('win') is False:
+    if sys.platform.startswith("win") is False:
         try:
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
+            )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
-            print(e, f"\nCannot load MNI template. Do you have git-lfs "
-                  f"installed?")
+            print(
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
+            )
 
     net_parcels_map_nifti = resample_to_img(
         net_parcels_map_nifti, template_img, interpolation="nearest"
@@ -1471,16 +1630,16 @@ def save_nifti_parcels_map(ID, dir_path, subnet, net_parcels_map_nifti,
 
 
 def save_ts_to_file(
-    roi,
-    subnet,
-    ID,
-    dir_path,
-    ts_within_nodes,
-    smooth,
-    hpass,
-    node_radius,
-    signal,
-):
+    roi: str,
+    subnet: str,
+    ID: str,
+    dir_path: str,
+    ts_within_nodes: str,
+    smooth: int,
+    hpass: float,
+    node_radius: int,
+    signal: str,
+) -> str:
     """
     This function saves the time-series 4D numpy array to disk as a .npy file.
 
@@ -1531,16 +1690,21 @@ def save_ts_to_file(
         smooth = 0
 
     subnet_suff = f"_rsn-{subnet}" if subnet is not None else ""
-    roi_suff = f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None \
-        else ""
-    nodetype_suff = f"_nodetype-spheres-{node_radius}mm" if \
-        ((node_radius is not None) and (node_radius != 'parc')) \
+    roi_suff = (
+        f"_roi-{op.basename(roi).split('.')[0]}" if roi is not None else ""
+    )
+    nodetype_suff = (
+        f"_nodetype-spheres-{node_radius}mm"
+        if ((node_radius is not None) and (node_radius != "parc"))
         else "_nodetype-parc"
+    )
 
-    out_path_ts = f"{namer_dir}/nodetimeseries_sub-{ID}_" \
-                  f"modality-func{subnet_suff}" \
-                  f"{roi_suff}{nodetype_suff}_tol-{smooth}fwhm_hpass-" \
-                  f"{hpass}Hz_signal-{signal}.npy"
+    out_path_ts = (
+        f"{namer_dir}/nodetimeseries_sub-{ID}_"
+        f"modality-func{subnet_suff}"
+        f"{roi_suff}{nodetype_suff}_tol-{smooth}fwhm_hpass-"
+        f"{hpass}Hz_signal-{signal}.npy"
+    )
 
     np.save(out_path_ts, ts_within_nodes)
     return out_path_ts
@@ -1557,7 +1721,7 @@ def as_list(x):
         return x
 
 
-def merge_dicts(x, y):
+def merge_dicts(x: dict, y: dict) -> dict:
     """
     A function to merge two dictionaries, making it easier for us to make
     modality specific queries for dwi images (since they have variable
@@ -1568,7 +1732,7 @@ def merge_dicts(x, y):
     return z
 
 
-def timeout(seconds):
+def timeout(seconds: int):
     """
     Timeout function for hung calculations.
     """
@@ -1599,20 +1763,52 @@ def timeout(seconds):
     return decorator
 
 
-def filter_cols_from_targets(df, targets):
-    base = r'^{}'
-    expr = '(?=.*{})'
+def filter_cols_from_targets(df: pd.DataFrame, targets: list) -> list:
+    """
+    A function to filter a dataframe based on a list of targets.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A dataframe to filter.
+    targets : list
+        A list of targets to filter the dataframe by.
+
+    Returns
+    -------
+    out : list
+        A list of columns that match the targets.
+
+    """
+    base = r"^{}"
+    expr = "(?=.*{})"
     out = df.columns[
         df.columns.str.contains(
-            base.format(
-                ''.join(
-                    expr.format(w) for w in
-                    targets)))]
+            base.format("".join(expr.format(w) for w in targets))
+        )
+    ]
 
     return out
 
 
-def build_args_from_config(modality, arg_dict):
+def build_args_from_config(modality: str, arg_dict: dict) -> dict:
+    """
+    A function to build the arguments for a given modality.
+
+    Parameters
+    ----------
+    modality : str
+        The modality to build the arguments for.
+    arg_dict : dict
+        A dictionary of arguments compiled from the advanced
+        configuration settings.
+
+    Returns
+    -------
+    args : dict
+        A dictionary of arguments to be passed to the workflows.
+
+    """
     import ast
     from pynets.core.utils import load_runconfig
 
@@ -1623,18 +1819,19 @@ def build_args_from_config(modality, arg_dict):
     try:
         func_models = hardcoded_params["available_models"]["func_models"]
     except KeyError as e:
-        print(e,
-              "available functional models not successfully extracted"
-              " from advanced.yaml"
-              )
+        print(
+            e,
+            "available functional models not successfully extracted"
+            " from advanced.yaml",
+        )
     try:
-        dwi_models = hardcoded_params["available_models"][
-            "dwi_models"]
+        dwi_models = hardcoded_params["available_models"]["dwi_models"]
     except KeyError as e:
-        print(e,
-              "available structural models not successfully extracted"
-              " from advanced.yaml"
-              )
+        print(
+            e,
+            "available structural models not successfully extracted"
+            " from advanced.yaml",
+        )
 
     arg_list = []
     for mod_ in modalities:
@@ -1651,11 +1848,13 @@ def build_args_from_config(modality, arg_dict):
                 args_dict_all.update(d)
                 continue
             if len(modality) == 1:
-                if any(x in d["mod"] for x in
-                       func_models) and ("dwi" in modality):
+                if any(x in d["mod"] for x in func_models) and (
+                    "dwi" in modality
+                ):
                     del d["mod"]
-                elif any(x in d["mod"] for x in
-                         dwi_models) and ("func" in modality):
+                elif any(x in d["mod"] for x in dwi_models) and (
+                    "func" in modality
+                ):
                     del d["mod"]
             else:
                 if any(x in d["mod"] for x in func_models) or any(
@@ -1676,28 +1875,68 @@ def build_args_from_config(modality, arg_dict):
     return args_dict_all
 
 
-def check_template_loads(template, template_mask, template_name):
+def check_template_loads(template: str, template_mask: str, template_name: str):
+    """
+    Verify the integrity of the template and mask.
+
+    Parameters
+    ----------
+    template : str
+        Path to template image.
+    template_mask : str
+        Path to template mask.
+    template_name : str
+        Name of template.
+
+    Returns
+    -------
+    template : str
+        Path to template image.
+    template_mask : str
+        Path to template mask.
+
+    """
     import sys
-    if sys.platform.startswith('win') is False:
+
+    if sys.platform.startswith("win") is False:
         try:
             nib.load(template)
             nib.load(template_mask)
-            return print('Local template detected...')
+            return print("Local template detected...")
         except indexed_gzip.ZranError as e:
-            print(e,
-                  f"\nCannot load template {template_name} image or template "
-                  f"mask. Do you have git-lfs installed?")
+            print(
+                e,
+                f"\nCannot load template {template_name} image or template "
+                f"mask. Do you have git-lfs installed?",
+            )
     else:
         try:
             nib.load(template)
             nib.load(template_mask)
-            return print('Local template detected...')
+            return print("Local template detected...")
         except ImportError as e:
-            print(e, f"\nCannot load template {template_name} image or "
-                     f"template mask. Do you have git-lfs installed?")
+            print(
+                e,
+                f"\nCannot load template {template_name} image or "
+                f"template mask. Do you have git-lfs installed?",
+            )
 
 
-def save_4d_to_3d(in_file):
+def save_4d_to_3d(in_file: str):
+    """
+    Save a 4D nifti file to a list of 3d nifti files.
+
+    Parameters
+    ----------
+    in_file : str
+        Path to 4D nifti.
+
+    Returns
+    -------
+    out_files : str
+        Path to 3D nifti.
+
+    """
     from nipype.utils.filemanip import fname_presuffix
 
     files_3d = nib.four_to_three(nib.load(in_file))
@@ -1710,12 +1949,28 @@ def save_4d_to_3d(in_file):
     return out_files
 
 
-def save_3d_to_4d(in_files):
+def save_3d_to_4d(in_files: list):
+    """
+    Save a list of 3d nifti files to a 4d nifti file.
+
+    Parameters
+    ----------
+    in_files : str
+        Path to 3D nifti.
+
+    Returns
+    -------
+    out_file : str
+        Path to 4D nifti.
+    """
     from nipype.utils.filemanip import fname_presuffix
     from nilearn.image import concat_imgs
 
-    img_4d = concat_imgs([nib.load(img_3d) for img_3d in in_files],
-                         auto_resample=True, ensure_ndim=4)
+    img_4d = concat_imgs(
+        [nib.load(img_3d) for img_3d in in_files],
+        auto_resample=True,
+        ensure_ndim=4,
+    )
     out_file = fname_presuffix(in_files[0], suffix="_merged")
     img_4d.affine[3][3] = len(in_files)
     img_4d.to_filename(out_file)
@@ -1723,7 +1978,15 @@ def save_3d_to_4d(in_files):
     return out_file
 
 
-def kill_process_family(parent_pid):
+def kill_process_family(parent_pid: int) -> None:
+    """
+    Kill all processes in the same process group as the parent.
+
+    Parameters
+    ----------
+    parent_pid : int
+        Parent process ID.
+    """
     import os
     import psutil
     import signal
@@ -1739,25 +2002,37 @@ def kill_process_family(parent_pid):
     return
 
 
-def dumpstacks(signal, frame):
+def dumpstacks() -> None:
+    """
+    Dump stacks of all threads.
+    """
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
     for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" %
-                    (id2name.get(threadId, ""), threadId))
+        code.append(
+            "\n# Thread: %s(%d)" % (id2name.get(threadId, ""), threadId)
+        )
         for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' %
-                        (filename, lineno, name))
+            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
             if line:
                 code.append("  %s" % (line.strip()))
     print("\n".join(code))
+    return
 
 
-class watchdog(object):
+class WatchDog(object):
+    """
+    Watchdog class.
+    """
+
+    def __init__(self):
+        return
+
     def run(self):
         self.shutdown = threading.Event()
-        watchdog_thread = threading.Thread(target=self._watchdog,
-                                           name="watchdog")
+        watchdog_thread = threading.Thread(
+            target=self._watchdog, name="watchdog"
+        )
         try:
             watchdog_thread.start()
             self._run()
@@ -1778,12 +2053,14 @@ class watchdog(object):
             if last_progress_delay < watchdog_timeout:
                 continue
             signal.signal(signal.SIGQUIT, dumpstacks)
-            print(f"WATCHDOG: No progress in {last_progress_delay} "
-                  f"seconds...")
+            print(
+                f"WATCHDOG: No progress in {last_progress_delay} " f"seconds..."
+            )
             time.sleep(1)
             os.kill(0, 9)
 
     def _run(self):
         from pynets.cli.pynets_run import main
+
         while self.last_progress_time == time.time():
             main()

@@ -1,18 +1,17 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
 import matplotlib
 import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
 import nibabel as nib
 import numpy as np
 import warnings
 
-matplotlib.use('Agg')
+if sys.platform.startswith("win") is False:
+    import indexed_gzip
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -36,6 +35,7 @@ def indx_1dto3d(idx, sz):
         y-coordinate of 3D matrix coordinates.
     z : int
         z-coordinate of 3D matrix coordinates.
+
     """
 
     x = np.divide(idx, np.prod(sz[1:3]))
@@ -60,6 +60,7 @@ def indx_3dto1d(idx, sz):
     -------
     idx1 : array
         A 1D numpy coordinate vector.
+
     """
 
     if np.linalg.matrix_rank(idx) == 1:
@@ -69,8 +70,14 @@ def indx_3dto1d(idx, sz):
     return idx1
 
 
-def ncut(W, nbEigenValues, offset=0.5, maxiterations=100,
-         eigsErrorTolerence=1e-6, eps=2.2204e-16):
+def ncut(
+    W,
+    nbEigenValues,
+    offset=0.5,
+    maxiterations=100,
+    eigsErrorTolerence=1e-6,
+    eps=2.2204e-16,
+):
     """
     This function performs the first step of normalized cut spectral
     clustering. The normalized LaPlacian is calculated on the similarity
@@ -124,8 +131,11 @@ def ncut(W, nbEigenValues, offset=0.5, maxiterations=100,
     # Perform the eigen decomposition
     eigen_val, eigen_vec = sps.linalg.eigsh(
         Dinvsqrt * ((W + sps.spdiags(dr, [0], m, m, "csc")) * Dinvsqrt),
-        nbEigenValues, maxiter=maxiterations, tol=eigsErrorTolerence,
-        which="LA")
+        nbEigenValues,
+        maxiter=maxiterations,
+        tol=eigsErrorTolerence,
+        which="LA",
+    )
 
     norm_ones = np.linalg.norm(np.ones((m, 1)))
 
@@ -141,8 +151,9 @@ def ncut(W, nbEigenValues, offset=0.5, maxiterations=100,
     eigen_vec = Dinvsqrt * np.array(eigen_vec)
 
     for i in range(0, np.shape(eigen_vec)[1]):
-        eigen_vec[:, i] = (eigen_vec[:, i] / np.linalg.norm(
-            eigen_vec[:, i])) * norm_ones
+        eigen_vec[:, i] = (
+            eigen_vec[:, i] / np.linalg.norm(eigen_vec[:, i])
+        ) * norm_ones
         if eigen_vec[0, i] != 0:
             eigen_vec[:, i] = -1 * eigen_vec[:, i] * np.sign(eigen_vec[0, i])
 
@@ -204,11 +215,16 @@ def discretisation(eigen_vec, eps=2.2204e-16):
     # normalize the eigenvectors
     [n, k] = np.shape(eigen_vec)
 
-    eigen_vec = np.divide(eigen_vec, np.reshape(np.kron(
-        np.ones(
-            (1, k)), np.sqrt(
-            np.multiply(
-                eigen_vec, eigen_vec).sum(1))), eigen_vec.shape))
+    eigen_vec = np.divide(
+        eigen_vec,
+        np.reshape(
+            np.kron(
+                np.ones((1, k)),
+                np.sqrt(np.multiply(eigen_vec, eigen_vec).sum(1)),
+            ),
+            eigen_vec.shape,
+        ),
+    )
 
     svd_restarts = 0
     exitLoop = 0
@@ -246,22 +262,23 @@ def discretisation(eigen_vec, eps=2.2204e-16):
             # values to 0
             j = np.reshape(np.asarray(tDiscrete.argmax(1)), n)
             eigenvec_discrete = sps.csc_matrix(
-                (np.ones(
-                    len(j)), (list(
-                        range(
-                            0, n)), np.array(j))), shape=(
-                    n, k))
+                (np.ones(len(j)), (list(range(0, n)), np.array(j))),
+                shape=(n, k),
+            )
 
             # Calculate a rotation to bring the discrete eigenvectors cluster
             # to the original eigenvectors and catch a SVD convergence error
             # and restart
             try:
                 [U, S, Vh] = sp.linalg.svd(
-                    eigenvec_discrete.transpose() * eigen_vec)
+                    eigenvec_discrete.transpose() * eigen_vec
+                )
             except sp.linalg.LinAlgError as e:
                 # Catch exception and go back to the beginning of the loop
-                print(e, "SVD did not converge. "
-                         "Randomizing and trying again...")
+                print(
+                    e,
+                    "SVD did not converge. " "Randomizing and trying again...",
+                )
                 break
 
             # Test for convergence
@@ -274,6 +291,8 @@ def discretisation(eigen_vec, eps=2.2204e-16):
                 # Otherwise calculate rotation and continue
                 lastObjectiveValue = NcutValue
                 R = np.matrix(Vh).transpose() * np.matrix(U).transpose()
+            gc.collect()
+        gc.collect()
 
     if exitLoop == 0:
         raise ValueError("SVD did not converge after 30 retries")
@@ -337,15 +356,13 @@ def parcellate_ncut(W, k, mask_img):
     mask_aff = mask_img.get_affine()
     mask_hdr = mask_img.get_header()
     imdat[imdat > 0] = 1
-    imdat[imdat > 0] = np.short(b[0: int(np.sum(imdat))].flatten())
+    imdat[imdat > 0] = np.short(b[0 : int(np.sum(imdat))].flatten())
 
     del a, b, W
     mask_img.uncache()
     gc.collect()
 
-    return nib.Nifti1Image(
-        imdat.astype("uint16"), mask_aff, mask_hdr
-    )
+    return nib.Nifti1Image(imdat.astype("uint16"), mask_aff, mask_hdr)
 
 
 def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
@@ -390,8 +407,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         sorted(
             sorted(
                 sorted(
-                    [list(x) for x in list(set(product({-1, 0, 1},
-                                                       repeat=3)))],
+                    [list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
                     key=lambda k: (k[0]),
                 ),
                 key=lambda k: (k[1]),
@@ -405,9 +421,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(
-        np.asarray(
-            clust_mask_img.dataobj).astype("bool"),
-        np.prod(msz))
+        np.asarray(clust_mask_img.dataobj).astype("bool"), np.prod(msz)
+    )
 
     # Determine the 1D coordinates of the non-zero
     # elements of the mask
@@ -419,6 +434,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
     func_img.uncache()
     del func_data
+    gc.collect()
 
     # Mask the datset to only the in-mask voxels
     imdat = imdat[iv, :]
@@ -436,6 +452,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     # Set values with no variance to zero
     imdat[imdat_s == 0] = 0
     del imdat_s, imdat_sz, imdat_m
+    gc.collect()
 
     imdat[np.isnan(imdat)] = 0
 
@@ -449,8 +466,9 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix(
-        (vndx + 1, (iv, np.zeros(m))), shape=(np.prod(msz), 1),
-        dtype=np.float32
+        (vndx + 1, (iv, np.zeros(m))),
+        shape=(np.prod(msz), 1),
+        dtype=np.float32,
     )
 
     sparse_i = []
@@ -464,7 +482,7 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         # Convert index into 3D and calculate neighbors, then convert resulting
         # 3D indices into 1D
         ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
-        ndx1d = ndx1d[ndx1d<msk.shape[0]]
+        ndx1d = ndx1d[ndx1d < msk.shape[0]]
 
         # Convert 1D indices into masked versions
         ondx1d = msk[ndx1d].todense()
@@ -507,6 +525,8 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
         sparse_i = np.append(sparse_i, ondx1d, 0)
         sparse_j = np.append(sparse_j, (ondx1d[nndx]) * np.ones(len(ondx1d)))
         sparse_w = np.append(sparse_w, R[nndx, :], 1)
+
+        gc.collect()
 
     # Ensure that the weight vector is the correct shape
     sparse_w = np.reshape(sparse_w, np.prod(np.shape(sparse_w)))
@@ -578,8 +598,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         sorted(
             sorted(
                 sorted(
-                    [list(x) for x in list(set(product({-1, 0, 1},
-                                                       repeat=3)))],
+                    [list(x) for x in list(set(product({-1, 0, 1}, repeat=3)))],
                     key=lambda k: (k[0]),
                 ),
                 key=lambda k: (k[1]),
@@ -593,9 +612,8 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
     # Convert the 3D mask array into a 1D vector
     mskdat = np.reshape(
-        np.asarray(
-            clust_mask_img.dataobj).astype("bool"),
-        np.prod(msz))
+        np.asarray(clust_mask_img.dataobj).astype("bool"), np.prod(msz)
+    )
 
     # Determine the 1D coordinates of the non-zero elements of the mask
     iv = np.nonzero(mskdat)[0]
@@ -608,6 +626,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     imdat = np.reshape(func_data, (np.prod(sz[:3]), sz[3]))
     func_img.uncache()
     del func_data
+    gc.collect()
 
     # Construct a sparse matrix from the mask
     msk = csc_matrix(
@@ -629,7 +648,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         # Calculate the voxels that are in the 3D neighborhood of the center
         # voxel
         ndx1d = indx_3dto1d(indx_1dto3d(iv[i], sz[:-1]) + neighbors, sz[:-1])
-        ndx1d = ndx1d[ndx1d<msk.shape[0]]
+        ndx1d = ndx1d[ndx1d < msk.shape[0]]
 
         # Restrict the neigborhood using the mask
         ondx1d = msk[ndx1d].todense()
@@ -672,9 +691,11 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
         nzndx = np.nonzero(R)[0]
         if len(nzndx) > 0:
             sparse_i = np.append(sparse_i, ondx1d[nzndx] - 1, 0)
-            sparse_j = np.append(sparse_j,
-                                 (ondx1d[nndx] - 1) * np.ones(len(nzndx)))
+            sparse_j = np.append(
+                sparse_j, (ondx1d[nndx] - 1) * np.ones(len(nzndx))
+            )
             sparse_w = np.append(sparse_w, R[nzndx], 0)
+        gc.collect()
 
     # Concatenate the i, j and w_ij into a single vector
     outlist = sparse_i
@@ -702,6 +723,7 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
 
 
 def ensemble_parcellate(infiles, k):
+    import gc
     from sklearn.feature_extraction import image
 
     # Read in the files, convert them to similarity matrices, and then average
@@ -722,6 +744,7 @@ def ensemble_parcellate(infiles, k):
         else:
             W = W + conn
         del img_data, shape, conn
+        gc.collect()
 
     # compute the average
     out_img = parcellate_ncut(W / len(infiles), k, img)
@@ -750,9 +773,21 @@ def proportional(k, voxels_list):
                 return res
 
 
-def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
-               num_conn_comps, _clust_mask_corr_img, _standardize,
-               _detrending, k, _local_conn, conf, _dir_path, _conn_comps):
+def parcellate(
+    func_boot_img,
+    local_corr,
+    clust_type,
+    _local_conn_mat_path,
+    num_conn_comps,
+    _clust_mask_corr_img,
+    _standardize,
+    _detrending,
+    k,
+    _local_conn,
+    conf,
+    _dir_path,
+    _conn_comps,
+):
     """
     API for performing any of a variety of clustering routines available
     through NiLearn.
@@ -762,6 +797,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
     import numpy as np
     from nilearn.regions import Parcellations
     from pynets.fmri.estimation import fill_confound_nans
+
     # from joblib import Memory
     import tempfile
 
@@ -811,14 +847,11 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             from nipype.utils.filemanip import fname_presuffix, copyfile
 
             out_name_conf = fname_presuffix(
-                conf, suffix=f"_tmp{random.randint(1, 1000)}",
-                newpath=cache_dir
-            )
-            copyfile(
                 conf,
-                out_name_conf,
-                copy=True,
-                use_hardlink=False)
+                suffix=f"_tmp{random.randint(1, 1000)}",
+                newpath=cache_dir,
+            )
+            copyfile(conf, out_name_conf, copy=True, use_hardlink=False)
 
             confounds = pd.read_csv(out_name_conf, sep="\t")
             if confounds.isnull().values.any():
@@ -841,28 +874,21 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 return None
         _clust_est.labels_img_.set_data_dtype(np.uint16)
         print(
-            f"{clust_type}{k}"
-            f"{(' clusters: %.2fs' % (time.time() - start))}"
+            f"{clust_type}{k}" f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
         return _clust_est.labels_img_
 
     elif clust_type == "ncut":
-        out_img = parcellate_ncut(
-            _local_conn, k, _clust_mask_corr_img
-        )
+        out_img = parcellate_ncut(_local_conn, k, _clust_mask_corr_img)
         out_img.set_data_dtype(np.uint16)
         print(
-            f"{clust_type}{k}"
-            f"{(' clusters: %.2fs' % (time.time() - start))}"
+            f"{clust_type}{k}" f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
         return out_img
 
-    elif (
-        clust_type == "rena"
-        or clust_type == "kmeans"
-        and num_conn_comps > 1
-    ):
+    elif clust_type == "rena" or clust_type == "kmeans" and num_conn_comps > 1:
+        import gc
         from pynets.core import nodemaker
         from nilearn.regions import Parcellations
         from nilearn.image import iter_img, new_img_like
@@ -871,8 +897,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         mask_img_list = []
         mask_voxels_dict = dict()
         for i, mask_img in enumerate(iter_img(_conn_comps)):
-            mask_voxels_dict[i] = np.int(
-                np.sum(np.asarray(mask_img.dataobj)))
+            mask_voxels_dict[i] = np.int(np.sum(np.asarray(mask_img.dataobj)))
             mask_img_list.append(mask_img)
 
         # Allocate k across connected components using Hagenbach-Bischoff
@@ -883,7 +908,8 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
         print(
             f"Building {len(mask_img_list)} separate atlases with "
             f"voxel-proportional k clusters for each "
-            f"connected component...")
+            f"connected component..."
+        )
         for i, mask_img in enumerate(iter_img(mask_img_list)):
             if k_list[i] < 5:
                 print(f"Only {k_list[i]} voxels in component. Discarding...")
@@ -898,7 +924,7 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 random_state=i,
                 memory=None,
                 memory_level=0,
-                n_jobs=1
+                n_jobs=1,
             )
 
             if conf is not None:
@@ -907,19 +933,15 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 from nipype.utils.filemanip import fname_presuffix, copyfile
 
                 out_name_conf = fname_presuffix(
-                    conf, suffix=f"_tmp{random.randint(1, 1000)}",
-                    newpath=cache_dir
-                )
-                copyfile(
                     conf,
-                    out_name_conf,
-                    copy=True,
-                    use_hardlink=False)
+                    suffix=f"_tmp{random.randint(1, 1000)}",
+                    newpath=cache_dir,
+                )
+                copyfile(conf, out_name_conf, copy=True, use_hardlink=False)
 
                 confounds = pd.read_csv(out_name_conf, sep="\t")
                 if confounds.isnull().values.any():
-                    conf_corr = fill_confound_nans(
-                        confounds, _dir_path)
+                    conf_corr = fill_confound_nans(confounds, _dir_path)
                     try:
                         _clust_est.fit(func_boot_img, confounds=conf_corr)
                     except UserWarning:
@@ -935,14 +957,13 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 except UserWarning:
                     continue
             conn_comp_atlases.append(_clust_est.labels_img_)
+            gc.collect()
 
         # Then combine the multiple atlases, corresponding to each
         # connected component, into a single atlas
         atlas_of_atlases = []
         for atlas in iter_img(conn_comp_atlases):
-            bna_data = np.around(
-                np.asarray(
-                    atlas.dataobj)).astype("uint16")
+            bna_data = np.around(np.asarray(atlas.dataobj)).astype("uint16")
 
             # Get an array of unique parcels
             bna_data_for_coords_uniq = np.unique(bna_data)
@@ -952,7 +973,8 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
             img_stack = []
             for idx in range(1, par_max + 1):
                 roi_img = bna_data == bna_data_for_coords_uniq[idx].astype(
-                    "uint16")
+                    "uint16"
+                )
                 img_stack.append(roi_img.astype("uint16"))
             img_stack = np.array(img_stack)
 
@@ -961,16 +983,22 @@ def parcellate(func_boot_img, local_corr, clust_type, _local_conn_mat_path,
                 img_list.append(new_img_like(atlas, img_stack[idy]))
             atlas_of_atlases.append(img_list)
             del img_list, img_stack, bna_data
+            gc.collect()
 
         super_atlas_ward = nodemaker.create_parcel_atlas(
-            list(flatten(atlas_of_atlases)))[0]
+            list(flatten(atlas_of_atlases))
+        )[0]
         super_atlas_ward.set_data_dtype(np.uint16)
-        del atlas_of_atlases, conn_comp_atlases, mask_img_list, \
-            mask_voxels_dict
+        del (
+            atlas_of_atlases,
+            conn_comp_atlases,
+            mask_img_list,
+            mask_voxels_dict,
+        )
+        gc.collect()
 
         print(
-            f"{clust_type}{k}"
-            f"{(' clusters: %.2fs' % (time.time() - start))}"
+            f"{clust_type}{k}" f"{(' clusters: %.2fs' % (time.time() - start))}"
         )
 
         # memory.clear(warn=False)

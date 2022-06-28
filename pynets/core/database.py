@@ -2,14 +2,19 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
+from dataclasses import dataclass
 import warnings
+
 import numpy as np
 import pickle5 as pickle
+import sqlalchemy as sa
+import json
 from sqlalchemy import Column, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql import func, select
 from sqlalchemy.types import BLOB, JSON, DateTime, Float, Integer, String
+
 from pynets.core.utils import load_runconfig
 
 pickle.HIGHEST_PROTOCOL = 5
@@ -18,6 +23,7 @@ warnings.filterwarnings("ignore")
 base = declarative_base()
 
 
+@dataclass
 class ConnectomeEnsemble(base):
     """
     A data class to manage the metadata of a connectome ensemble from a single subject.
@@ -114,13 +120,13 @@ class ConnectomeEnsemble(base):
             f"Model:{self.model_meta}\n"
             f"Granularity:{self.granularity_meta}\n"
             f"Smooth:{self.smooth_meta}\n"
-            f"Error Margin:{self.smooth_meta}\n"
+            f"Error Margin:{self.error_margin_meta}\n"
         )
 
 
-def gen_session(output_dir: str):
+def gen_session(output_dir: str) -> Session:
     hardcoded_params = load_runconfig()
-    RDBMS = hardcoded_params["sql_config"]["RDBMS"][0]
+    RDBMS = hardcoded_params["sql_config"]["RDBMS"]
     DATABASE_URI = f"{RDBMS}:////{output_dir}/pynets.db"
     engine = create_engine(DATABASE_URI)
     base.metadata.create_all(engine)
@@ -129,7 +135,7 @@ def gen_session(output_dir: str):
     return session
 
 
-def insert_dwi_func(pkl_file_path: str, session):
+def insert_dwi_func(pkl_file_path: str, session: Session) -> dict:
     with open(pkl_file_path, "rb") as f:
         sub_dict_clean = pickle.load(f)
     f.close()
@@ -148,7 +154,7 @@ def fetch_dwi_func(
     thr_type: str,
     thr: float,
     template: str,
-):
+) -> dict:
     ce = ConnectomeEnsemble()
     subject_id_session_modality_embedding_set = set()
     subject_id_session_modality_embedding_dict = {}
@@ -236,6 +242,61 @@ def fetch_dwi_func(
         final_dict.update(subject_id_dict)
 
     return final_dict
+
+
+# class EnsembleReaderWriter(object):
+
+#     def __init__(self):
+#         self.ce =
+
+#     def to_dict(self):
+#         return {
+#             "subject_id": self.ce.subject_id,
+#             "session": self.ce.session,
+#             "modality": self.ce.modality,
+#             "embed": self.ce.embed_meta,
+#             "parcellation": self.ce.parcellation_meta,
+#             "subnet": self.ce.subnet_meta,
+#             "template": self.ce.template,
+#             "thr_type": self.ce.thr_type,
+#             "thr": self.ce.thr,
+#             "node_type": self.ce.node_type,
+#             "signal": self.ce.signal_meta,
+#             "traversal": self.ce.traversal_meta,
+#             "minlength": self.ce.minlength_meta,
+#             "hpass": self.ce.hpass_meta,
+#             "model": self.model_meta,
+#             "granularity": self.granularity_meta,
+#             "smooth": self.smooth_meta,
+#             "error_margin": self.error_margin_meta,
+#         }
+
+#     def from_dict(self, d):
+#         self.subject_id = d["subject_id"]
+#         self.session = d["session"]
+#         self.modality = d["modality"]
+#         self.embed_meta = d["embed"]
+#         self.parcellation_meta = d["parcellation"]
+#         self.subnet_meta = d["subnet"]
+#         self.template = d["template"]
+#         self.thr_type = d["thr_type"]
+#         self.thr = d["thr"]
+#         self.node_type = d["node_type"]
+#         self.signal_meta = d["signal"]
+#         self.traversal_meta = d["traversal"]
+#         self.minlength_meta = d["minlength"]
+#         self.hpass_meta = d["hpass"]
+#         self.model_meta = d["model"]
+#         self.granularity_meta = d["granularity"]
+#         self.smooth_meta = d["smooth"]
+#         self.error_margin_meta = d["error_margin"]
+
+
+#     def to_json(self):
+#         return json.dumps(self.to_dict())
+
+#     def from_json(self, json_str):
+#         return json.loads(json_str)
 
 
 def iter_dict(d, elements, nodes, session):

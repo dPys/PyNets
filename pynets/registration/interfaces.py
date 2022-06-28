@@ -8,8 +8,6 @@ import matplotlib
 import warnings
 import numpy as np
 import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
 import nibabel as nib
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
@@ -20,6 +18,9 @@ from nipype.interfaces.base import (
     Directory,
 )
 
+if sys.platform.startswith('win') is False:
+    import indexed_gzip
+    
 matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 

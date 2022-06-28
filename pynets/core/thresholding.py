@@ -2,6 +2,7 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import typing
 import matplotlib
 import warnings
 import numpy as np
@@ -11,7 +12,9 @@ matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
-def threshold_absolute(W, thr, copy=True):
+def threshold_absolute(
+    W: np.ndarray, thr: float, copy: bool = True
+) -> np.ndarray:
     """
     This function thresholds the connectivity matrix by absolute weight
     magnitude. All weights below the given threshold, and all weights
@@ -46,7 +49,9 @@ def threshold_absolute(W, thr, copy=True):
     return W
 
 
-def threshold_proportional(W, p, copy=True):
+def threshold_proportional(
+    W: np.ndarray, p: float, copy: bool = True
+) -> np.ndarray:
     """
     This function "thresholds" the connectivity matrix by preserving a
     proportion p (0<p<1) of the strongest weights. All other weights, and
@@ -106,15 +111,15 @@ def threshold_proportional(W, p, copy=True):
     else:
         ud = 1
     ind = np.where(W)
-    I = np.argsort(W[ind])[::-1]
+    sorted_ix = np.argsort(W[ind])[::-1]
     en = int(round((n * n - n) * p / ud))
-    W[(ind[0][I][en:], ind[1][I][en:])] = 0
+    W[(ind[0][sorted_ix][en:], ind[1][sorted_ix][en:])] = 0
     if ud == 2:
         W[:, :] = W + W.T
     return W
 
 
-def normalize(W):
+def normalize(W: np.ndarray) -> np.ndarray:
     """
     Normalizes an input weighted connection matrix.
 
@@ -138,7 +143,7 @@ def normalize(W):
     return W
 
 
-def standardize(W):
+def standardize(W: np.ndarray) -> np.ndarray:
     """
     Normalizes an input weighted connection matrix [0, 1]
 
@@ -162,7 +167,12 @@ def standardize(W):
     return W
 
 
-def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
+def density_thresholding(
+    conn_matrix: np.ndarray,
+    thr: float,
+    max_iters: int = 10000,
+    interval: float = 0.01,
+) -> np.ndarray:
     """
     Iteratively apply an absolute threshold to achieve a target density.
 
@@ -237,7 +247,7 @@ def density_thresholding(conn_matrix, thr, max_iters=10000, interval=0.01):
 
 
 # Calculate density
-def est_density(in_mat):
+def est_density(in_mat: np.ndarray) -> float:
     """
     Calculates the density of a given undirected graph.
 
@@ -255,7 +265,7 @@ def est_density(in_mat):
     return nx.density(nx.from_numpy_matrix(in_mat))
 
 
-def thr2prob(W, copy=True):
+def thr2prob(W: np.ndarray, copy: bool = True) -> np.ndarray:
     """
     Thresholds the near-zero ranks of a ranked graph.
 
@@ -281,7 +291,7 @@ def thr2prob(W, copy=True):
     return W
 
 
-def binarize(W, copy=True):
+def binarize(W: np.ndarray, copy: bool = True) -> np.ndarray:
     """
     Binarizes an input weighted connection matrix.  If copy is not set, this
     function will *modify W in place.*
@@ -311,7 +321,7 @@ def binarize(W, copy=True):
     return W
 
 
-def invert(W, copy=False):
+def invert(W: np.ndarray, copy: bool = False) -> np.ndarray:
     """
     Inverts elementwise the weights in an input connection matrix.
     In other words, change the from the matrix of internode strengths to the
@@ -345,7 +355,7 @@ def invert(W, copy=False):
     return W
 
 
-def weight_conversion(W, wcm, copy=True):
+def weight_conversion(W: np.ndarray, wcm: str, copy: bool = True) -> np.ndarray:
     """
     W_bin = weight_conversion(W, 'binarize');
     W_nrm = weight_conversion(W, 'normalize');
@@ -401,7 +411,7 @@ def weight_conversion(W, wcm, copy=True):
         return invert(W, copy)
 
 
-def autofix(W, copy=True):
+def autofix(W: np.ndarray, copy: bool = True) -> np.ndarray:
     """
     Fix a bunch of common problems. More specifically, remove Inf and NaN,
     ensure exact binariness and symmetry (i.e. remove floating point
@@ -444,7 +454,7 @@ def autofix(W, copy=True):
     return np.nan_to_num(W)
 
 
-def disparity_filter(G, weight="weight"):
+def disparity_filter(G: nx.Graph, weight: str = "weight") -> nx.Graph:
     """
     Compute significance scores (alpha) for weighted edges in G as defined in
     Serrano et al. 2009.
@@ -536,9 +546,9 @@ def disparity_filter(G, weight="weight"):
                     alpha_ij = (
                         1
                         - (k - 1)
-                        * integrate.quad(
-                            lambda x: (1 - x) ** (k - 2), 0, p_ij
-                        )[0]
+                        * integrate.quad(lambda x: (1 - x) ** (k - 2), 0, p_ij)[
+                            0
+                        ]
                     )
                     B.add_edge(u, v, weight=w, alpha=float(f"{alpha_ij:.4f}"))
             else:
@@ -546,7 +556,12 @@ def disparity_filter(G, weight="weight"):
         return B
 
 
-def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
+def disparity_filter_alpha_cut(
+    G: nx.Graph,
+    weight: str = "weight",
+    alpha_t: float = 0.4,
+    cut_mode: str = "or",
+):
     """
     Compute significance scores (alpha) for weighted edges in G as defined in
     Serrano et al. 2009.
@@ -618,7 +633,7 @@ def disparity_filter_alpha_cut(G, weight="weight", alpha_t=0.4, cut_mode="or"):
         return B
 
 
-def weight_to_distance(G):
+def weight_to_distance(G: nx.Graph) -> nx.Graph:
     """
     Inverts all the edge weights so they become equivalent to distance measure.
     With a weight, the higher the value the stronger the connection. With a
@@ -649,7 +664,7 @@ def weight_to_distance(G):
     return G
 
 
-def knn(conn_matrix, k):
+def knn(conn_matrix: np.ndarray, k: int) -> nx.Graph:
     """
     Creates a k-nearest neighbour graph.
 
@@ -684,7 +699,7 @@ def knn(conn_matrix, k):
     return gra
 
 
-def local_thresholding_prop(conn_matrix, thr):
+def local_thresholding_prop(conn_matrix: np.ndarray, thr: float):
     """
     Threshold the adjacency matrix by building from the minimum spanning tree
     (MST) and adding successive N-nearest neighbour degree graphs to achieve
@@ -756,8 +771,7 @@ def local_thresholding_prop(conn_matrix, thr):
         len_edges < edgenum
         and k <= np.shape(conn_matrix)[0]
         and (
-            len(len_edge_list[-fail_tol:])
-            - len(set(len_edge_list[-fail_tol:]))
+            len(len_edge_list[-fail_tol:]) - len(set(len_edge_list[-fail_tol:]))
         )
         < (fail_tol - 1)
     ) and nx.is_connected(min_t) is True:
@@ -799,19 +813,22 @@ def local_thresholding_prop(conn_matrix, thr):
 
     try:
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
-        return conn_matrix_thr
 
     except ValueError as e:
         print(
-            e,
-            f"MST thresholding failed. Check raw graph output manually "
-            f"for debugging.",
+            f"{e} MST thresholding failed. Check raw graph output manually for debugging."
         )
+
+    return conn_matrix_thr
 
 
 def perform_thresholding(
-    conn_matrix, thr, min_span_tree, dens_thresh, disp_filt
-):
+    conn_matrix: np.ndarray,
+    thr: float,
+    min_span_tree: bool,
+    dens_thresh: bool,
+    disp_filt: bool,
+) -> typing.Tuple[str, typing.Optional[str], np.ndarray]:
     """
 
     References
@@ -839,9 +856,7 @@ def perform_thresholding(
             )
         thr_type = "MST"
         edge_threshold = f"{str(thr_perc)}%"
-        conn_matrix_thr = thresholding.local_thresholding_prop(
-            conn_matrix, thr
-        )
+        conn_matrix_thr = thresholding.local_thresholding_prop(conn_matrix, thr)
     elif disp_filt is True:
 
         thr_type = "DISPARITY"
@@ -855,9 +870,7 @@ def perform_thresholding(
             f"edges = {G1.number_of_edges()}"
         )
         conn_matrix_bin = thresholding.binarize(
-            nx.to_numpy_array(
-                G1, nodelist=sorted(G1.nodes()), dtype=np.float64
-            )
+            nx.to_numpy_array(G1, nodelist=sorted(G1.nodes()), dtype=np.float64)
         )
         # Enforce original dimensionality by padding with zeros.
         conn_matrix_thr = np.multiply(conn_matrix, conn_matrix_bin)
@@ -1340,8 +1353,45 @@ def thresh_struct(
 
 
 def thresh_raw_graph(
-    conn_matrix, thr, min_span_tree, dens_thresh, disp_filt, est_path
+    conn_matrix: np.ndarray,
+    thr: float,
+    min_span_tree: bool,
+    dens_thresh: bool,
+    disp_filt: bool,
+    est_path: str,
 ):
+    """
+    Thresholds a raw connectivity matrix and saves the thresholded matrix.
+
+    Parameters
+    ----------
+    conn_matrix : np.ndarray
+        Raw connectivity matrix.
+    thr : float
+        Threshold value.
+    min_span_tree : bool
+        Minimum spanning tree.
+    dens_thresh : bool
+        Density threshold.
+    disp_filt : bool
+        Disparity filter.
+    est_path : str
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array.
+
+    Returns
+    -------
+    thr_type : str
+        The thresholding method used.
+    edge_threshold : str
+        The string percentage representation of thr.
+    conn_matrix_thr : np.ndarray
+        Thresholded connectivity matrix.
+    thr : float
+        The value, between 0 and 1, used to threshold the graph using the chosen thresholding method.
+    est_path : str
+        File path to the thresholded graph, conn_matrix_thr, saved as a numpy array.
+
+    """
     from pynets.core import thresholding
 
     if "rawgraph" in est_path:

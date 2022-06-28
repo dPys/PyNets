@@ -22,7 +22,6 @@ RUN apt-get update -qq \
         lib32ncurses5 \
         libxmu-dev \
 #        vim \
-        wget \
         libgl1-mesa-glx \
         graphviz \
         libpng-dev \
@@ -80,7 +79,7 @@ RUN apt-get update -qq \
     (apt-key adv --refresh-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || true) && \
     apt-get update -qq && apt-get install --no-install-recommends -y fsl-5.0-core && \
     apt-get clean && cd /tmp \
-    && wget https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
+    && curl -s https://fsl.fmrib.ox.ac.uk/fsldownloads/patches/fsl-5.0.10-python3.tar.gz \
     && tar -zxvf fsl-5.0.10-python3.tar.gz \
     && cp fsl/bin/* /usr/share/fsl/5.0/bin \
     && rm -r fsl* \
@@ -168,7 +167,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && apt-get purge -y --auto-remove \
 	git \
 	gcc \
-	wget \
 	curl \
 #	openssl \
 	build-essential \

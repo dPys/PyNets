@@ -5,20 +5,25 @@ Copyright (C) 2017
 import matplotlib
 import warnings
 import sys
-
-if sys.platform.startswith("win") is False:
-    import indexed_gzip
+import typing
 import nibabel as nib
 import numpy as np
 from nipype.utils.filemanip import fname_presuffix
+
+if sys.platform.startswith("win") is False:
+    import indexed_gzip
 
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
 def normalize_gradients(
-    bvecs, bvals, b0_threshold, bvec_norm_epsilon=0.1, b_scale=True
-):
+    bvecs: np.ndarray,
+    bvals: np.ndarray,
+    b0_threshold: float,
+    bvec_norm_epsilon: float = 0.1,
+    b_scale: bool = True,
+) -> typing.Tuple[np.ndarray, np.ndarray]:
     """
     Normalize b-vectors and b-values.
 
@@ -86,7 +91,7 @@ def normalize_gradients(
     return bvecs, bvals.astype("uint16")
 
 
-def generate_sl(streamlines):
+def generate_sl(streamlines: nib.streamlines.ArraySequence):
     """
     Helper function that takes a sequence and returns a generator
 
@@ -94,16 +99,23 @@ def generate_sl(streamlines):
     ----------
     streamlines : sequence
         Usually, this would be a list of 2D arrays, representing streamlines
+
     Returns
     -------
     generator
+
     """
 
     for sl in streamlines:
         yield sl.astype("float32")
 
 
-def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
+def random_seeds_from_mask(
+    mask: np.ndarray,
+    seeds_count: int,
+    affine: np.ndarray = np.eye(4),
+    random_seed: int = 1,
+):
     """Create randomly placed seeds for fiber tracking from a binary mask.
     Seeds points are placed randomly distributed in voxels of ``mask``
     which are ``True``.
@@ -116,26 +128,23 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
     ----------
     mask : binary 3d array_like
         A binary array specifying where to place the seeds for fiber tracking.
+    seeds_count : int
+        The number of seeds to generate. If ``seed_count_per_voxel`` is True,
+        specifies the number of seeds to place in each voxel. Otherwise,
+        specifies the total number of seeds to place in the mask.
     affine : array, (4, 4)
         The mapping between voxel indices and the point space for seeds.
         The voxel_to_rasmm matrix, typically from a NIFTI file.
         A seed point at the center the voxel ``[i, j, k]``
         will be represented as ``[x, y, z]`` where
         ``[x, y, z, 1] == np.dot(affine, [i, j, k , 1])``.
-    seeds_count : int
-        The number of seeds to generate. If ``seed_count_per_voxel`` is True,
-        specifies the number of seeds to place in each voxel. Otherwise,
-        specifies the total number of seeds to place in the mask.
     random_seed : int
         The seed for the random seed generator (numpy.random.seed).
 
-    See Also
-    --------
-    seeds_from_mask
-    Raises
-    ------
-    ValueError
-        When ``mask`` is not a three-dimensional array
+    Returns
+    -------
+    seeds : array, (seeds_count, 3)
+
     """
 
     mask = np.array(mask, dtype=bool, copy=False, ndmin=3)
@@ -187,7 +196,7 @@ def random_seeds_from_mask(mask, seeds_count, affine=np.eye(4), random_seed=1):
     return seeds
 
 
-def generate_seeds(seeds):
+def generate_seeds(seeds: list):
     """
     Helper function that takes a sequence and returns a generator
 
@@ -205,7 +214,9 @@ def generate_seeds(seeds):
         yield seed.astype("float32")
 
 
-def extract_b0(in_file, b0_ixs, out_path=None):
+def extract_b0(
+    in_file: str, b0_ixs: list, out_path: typing.Optional[str] = None
+) -> str:
     """
     Extract the *b0* volumes from a DWI dataset.
 
@@ -241,13 +252,13 @@ def extract_b0(in_file, b0_ixs, out_path=None):
 
 
 def evaluate_streamline_plausibility(
-    dwi_data,
-    gtab,
-    mask_data,
-    streamlines,
-    affine=np.eye(4),
-    sphere="repulsion724",
-):
+    dwi_data: np.ndarray,
+    gtab: object,
+    mask_data: np.ndarray,
+    streamlines: nib.streamlines.ArraySequence,
+    affine: np.ndarray = np.eye(4),
+    sphere: str = "repulsion724",
+) -> list:
     """
     Linear Fascicle Evaluation (LiFE) takes any connectome and uses a
     forward modelling approach to predict diffusion measurements in the

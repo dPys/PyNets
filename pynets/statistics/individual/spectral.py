@@ -3,6 +3,8 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 @author: Derek Pisner
 """
+import typing
+import numpy as np
 import matplotlib
 from pathlib import Path
 import warnings
@@ -12,14 +14,14 @@ warnings.filterwarnings("ignore")
 
 
 def _omni_embed(
-    pop_array,
-    atlas,
-    graph_path_list,
-    subgraph_name="all_nodes",
-    n_components=None,
-    prune=0,
-    norm=1,
-):
+    pop_array: np.ndarray,
+    atlas: str,
+    graph_path_list: list,
+    subgraph_name: str = "all_nodes",
+    n_components: typing.Optional[int] = None,
+    prune: int = 0,
+    norm: int = 1,
+) -> str:
     """
     Omnibus embedding of arbitrary number of input graphs with matched vertex
     sets.
@@ -45,6 +47,15 @@ def _omni_embed(
     graph_path_list : list
         List of file paths to graphs in pop_array.
     subgraph_name : str
+        The granularity of nodes that defines the subgraph.
+    n_components : int, optional
+        The number of components to use in the embedding. If None, then
+        the number of components is determined by the number of graphs
+        in pop_array.
+    prune : int, optional
+        The method of pruning nodes from each graph in pop_array.
+    norm : int, optional
+        The normalization method to use.
 
     Returns
     -------
@@ -152,8 +163,12 @@ def _omni_embed(
 
 
 def _mase_embed(
-    pop_array, atlas, graph_path, subgraph_name="all_nodes", n_components=2
-):
+    pop_array: list,
+    atlas: str,
+    graph_path: str,
+    subgraph_name: str = "all_nodes",
+    n_components: int = 2,
+) -> str:
     """
     Multiple Adjacency Spectral Embedding (MASE) embeds arbitrary number of
     input graphs with matched vertex sets.
@@ -180,12 +195,23 @@ def _mase_embed(
     pop_array : list of nx.Graph or ndarray, or ndarray
         If list of nx.Graph, each Graph must contain same number of nodes.
         If list of ndarray, each array must have shape (n_vertices,
-        n_vertices). If ndarray, then array must have shape (n_graphs,
-        n_vertices, n_vertices).
+        n_vertices).
+        If ndarray, then array must have shape (n_graphs, n_vertices,
+        n_vertices).
     atlas : str
+        The name of an atlas (indicating the node definition).
     graph_path : str
+        File path to the graph.
     subgraph_name : str
-    n_components : int
+        The granularity of nodes that defines the subgraph.
+    n_components : int, optional
+        The number of components to use in the embedding. If None, then
+        the number of components is determined by the number of graphs
+        in pop_array.
+    prune : int, optional
+        The method of pruning nodes from each graph in pop_array.
+    norm : int, optional
+        The normalization method to use.
 
     Returns
     -------
@@ -244,16 +270,15 @@ def _mase_embed(
 
 
 def _ase_embed(
-    mat,
-    atlas,
-    graph_path,
-    subgraph_name="all_nodes",
-    n_components=None,
-    prune=0,
-    norm=1,
-):
+    mat: np.ndarray,
+    atlas: str,
+    graph_path: str,
+    subgraph_name: str = "all_nodes",
+    n_components: typing.Optional[int] = None,
+    prune: int = 0,
+    norm: int = 1,
+) -> str:
     """
-
     Class for computing the adjacency spectral embedding of a graph.
 
     The adjacency spectral embedding (ASE) is a k-dimensional Euclidean
@@ -268,7 +293,17 @@ def _ase_embed(
     atlas : str
         The name of an atlas (indicating the node definition).
     graph_path : str
+        File path to the graph.
     subgraph_name : str
+        The granularity of nodes that defines the subgraph.
+    n_components : int, optional
+        The number of components to use in the embedding. If None, then
+        the number of components is determined by the number of graphs
+        in pop_array.
+    prune : int, optional
+        The method of pruning nodes from each graph in pop_array.
+    norm : int, optional
+        The normalization method to use.
 
     Returns
     -------
@@ -352,7 +387,7 @@ def _ase_embed(
     return out_path
 
 
-def build_asetomes(est_path_iterlist):
+def build_asetomes(est_path_iterlist: list) -> list:
     """
     Embeds single graphs using the ASE algorithm.
 
@@ -437,7 +472,7 @@ def build_asetomes(est_path_iterlist):
     return out_paths
 
 
-def build_masetome(est_path_iterlist):
+def build_masetome(est_path_iterlist: list) -> list:
     """
     Embeds structural-functional graph pairs into a common invariant subspace.
 
@@ -523,7 +558,7 @@ def build_masetome(est_path_iterlist):
     return out_paths
 
 
-def build_omnetome(est_path_iterlist):
+def build_omnetome(est_path_iterlist: list) -> typing.Union[list, list]:
     """
     Embeds ensemble population of graphs into an embedded ensemble feature
     vector.

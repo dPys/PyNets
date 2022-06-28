@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
@@ -12,8 +10,14 @@ warnings.filterwarnings("ignore")
 matplotlib.use("agg")
 
 
-def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
-                  dpi_resolution=300):
+def plot_conn_mat(
+    conn_matrix: np.ndarray,
+    labels: list,
+    out_path_fig: str,
+    cmap: matplotlib.colors.LinearSegmentedColormap,
+    binarized: bool = False,
+    dpi_resolution: int = 300,
+):
     """
     Plot a connectivity matrix.
 
@@ -25,13 +29,18 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
         List of string labels corresponding to ROI nodes.
     out_path_fig : str
         File path to save the connectivity matrix image as a .png figure.
+    cmap : matplotlib.colors.LinearSegmentedColormap
+        Colormap to use for plotting.
     """
     import warnings
+
     warnings.filterwarnings("ignore")
     import matplotlib
     import mplcyberpunk
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
     from matplotlib import pyplot as plt
+
     plt.style.use("cyberpunk")
     from matplotlib import pyplot as plt
     from nilearn.plotting import plot_matrix
@@ -69,8 +78,8 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
 
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
-    for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
-        plt.rcParams[param] = '#000000'
+    for param in ["figure.facecolor", "axes.facecolor", "savefig.facecolor"]:
+        plt.rcParams[param] = "#000000"
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
     return
@@ -78,12 +87,13 @@ def plot_conn_mat(conn_matrix, labels, out_path_fig, cmap, binarized=False,
 
 # noinspection PyUnresolvedReferences
 def plot_community_conn_mat(
-        conn_matrix,
-        labels,
-        out_path_fig_comm,
-        community_aff,
-        cmap,
-        dpi_resolution=300):
+    conn_matrix: np.ndarray,
+    labels: list,
+    out_path_fig_comm: str,
+    community_aff: str,
+    cmap: matplotlib.colors.LinearSegmentedColormap,
+    dpi_resolution: int = 300,
+):
     """
     Plot a community-parcellated connectivity matrix.
 
@@ -98,12 +108,15 @@ def plot_community_conn_mat(
         as a .png figure.
     community_aff : array
         Community-affiliation vector.
+
     """
     import warnings
+
     warnings.filterwarnings("ignore")
     import matplotlib
     import mplcyberpunk
     from matplotlib import pyplot as plt
+
     matplotlib.use("agg")
     plt.style.use("cyberpunk")
     import matplotlib.patches as patches
@@ -118,8 +131,8 @@ def plot_community_conn_mat(
     conn_matrix_plt = np.nan_to_num(np.multiply(conn_matrix, conn_matrix_bin))
 
     sorting_array = sorted(
-        range(len(community_aff)),
-        key=lambda k: community_aff[k])
+        range(len(community_aff)), key=lambda k: community_aff[k]
+    )
     sorted_conn_matrix = conn_matrix[sorting_array, :]
     sorted_conn_matrix = sorted_conn_matrix[:, sorting_array]
     rois_num = sorted_conn_matrix.shape[0]
@@ -182,8 +195,8 @@ def plot_community_conn_mat(
 
     plt.axes().yaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
     plt.axes().xaxis.set_major_locator(mticker.MultipleLocator(tick_interval))
-    for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']:
-        plt.rcParams[param] = '#000000'
+    for param in ["figure.facecolor", "axes.facecolor", "savefig.facecolor"]:
+        plt.rcParams[param] = "#000000"
     plt.savefig(out_path_fig_comm, dpi=dpi_resolution)
     plt.close()
     return
@@ -243,57 +256,29 @@ def plot_conn_mat_func(
     signal : str
         The name of a valid function used to reduce the time-series region
         extraction.
+
     """
     import matplotlib
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
     import networkx as nx
     import os.path as op
 
-    out_path_fig = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (dir_path,
-         "/adjacency_",
-         ID,
-         "_modality-func_",
-         "%s" % ("%s%s%s" % ("subnet-",
-                             subnet,
-                             "_") if subnet is not None else ""),
-         "%s" % ("%s%s%s" % ("roi-",
-                             op.basename(roi).split(".")[0],
-                             "_") if roi is not None else ""),
-         "model-",
-         conn_model,
-         "_",
-         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                             node_radius,
-                             "mm_") if (
-             (node_radius != "parc") and (
-                 node_radius is not None)) else "nodetype-parc_"),
-         "%s" % ("%s%s%s" % ("tol-",
-                             smooth,
-                             "fwhm_") if float(smooth) > 0 else ""),
-         "%s" % ("%s%s%s" % ("hpass-",
-                             hpass,
-                             "Hz_") if hpass is not None else ""),
-         "%s" % ("%s%s%s" % ("extract-",
-                             signal,
-                             "") if signal is not None else ""),
-         "_thr-",
-         thr,
-         ".png",
-         )
+    out_path_fig = f"{dir_path}/adjacency_{ID}_modality-func_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '')}_{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '')}_{('%s%s%s' % ('extract-', signal, '') if signal is not None else '')}_thr-{thr}.png"
 
     hardcoded_params = load_runconfig()
     try:
-        cmap_name = hardcoded_params["plotting"]["functional"][
-            "adjacency"]["color_theme"][0]
+        cmap_name = hardcoded_params["plotting"]["functional"]["adjacency"][
+            "color_theme"
+        ][0]
     except KeyError as e:
-        print(e,
-              "Plotting configuration not successfully extracted from"
-              " advanced.yaml"
-              )
+        print(
+            e,
+            "Plotting configuration not successfully extracted from"
+            " advanced.yaml",
+        )
 
     plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
@@ -301,45 +286,20 @@ def plot_conn_mat_func(
 
     # Plot community adj. matrix
     try:
-        from pynets.statistics.individual.algorithms import \
-            community_resolution_selection
+        from pynets.statistics.individual.algorithms import (
+            community_resolution_selection,
+        )
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = \
-            community_resolution_selection(G)
-        out_path_fig_comm = \
-            "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-            (dir_path,
-             "/adjacency-communities_",
-             ID,
-             "_modality-func_",
-             "%s" % ("%s%s%s" % ("subnet-",
-                                 subnet,
-                                 "_") if subnet is not None else ""),
-             "%s" % ("%s%s%s" % ("roi-",
-                                 op.basename(roi).split(".")[0],
-                                 "_") if roi is not None else ""),
-             "model-",
-             conn_model,
-             "_",
-             "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                 node_radius,
-                                 "mm_") if (
-                 (node_radius != "parc") and (
-                     node_radius is not None)) else "nodetype-parc_"),
-             "%s" % ("%s%s%s" % ("tol-",
-                                 smooth,
-                                 "fwhm_") if float(smooth) > 0 else ""),
-             "%s" % ("%s%s%s" % ("hpass-",
-                                 hpass,
-                                 "Hz_") if hpass is not None else ""),
-             "%s" % ("%s%s%s" % ("extract-",
-                                 signal,
-                                 "") if signal is not None else ""),
-             "_thr-",
-             thr,
-             ".png",
-             )
+        (
+            _,
+            node_comm_aff_mat,
+            resolution,
+            num_comms,
+        ) = community_resolution_selection(G)
+
+        out_path_fig_comm = f"{dir_path}/adjacency-communities_{ID}_modality-func_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '')}_{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '')}_{('%s%s%s' % ('extract-', signal, '') if signal is not None else '')}_thr-{thr}.png"
+
         plot_community_conn_mat(
             conn_matrix,
             labels,
@@ -370,7 +330,7 @@ def plot_conn_mat_struct(
     track_type,
     traversal,
     min_length,
-    error_margin
+    error_margin,
 ):
     """
     API for selecting among various structural connectivity matrix plotting
@@ -411,57 +371,30 @@ def plot_conn_mat_struct(
         (probabilistic).
     min_length : int
         Minimum fiber length threshold in mm to restrict tracking.
+
     """
     import matplotlib
-    matplotlib.use('Agg')
+
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from pynets.core.utils import load_runconfig
     from pynets.plotting import adjacency
     import networkx as nx
     import os.path as op
 
-    out_path_fig = \
-        "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % \
-        (dir_path,
-         "/adjacency_",
-         ID,
-         "_modality-dwi_",
-         "%s" % ("%s%s%s" % ("subnet-",
-                             subnet,
-                             "_") if subnet is not None else ""),
-         "%s" % ("%s%s%s" % ("roi-",
-                             op.basename(roi).split(".")[0],
-                             "_") if roi is not None else ""),
-         "model-",
-         conn_model,
-         "_",
-         "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                             node_radius,
-                             "mm_") if (
-             (node_radius != "parc") and (
-                 node_radius is not None)) else "nodetype-parc_"),
-         "_tracktype-",
-         track_type,
-         "_traversal-",
-         traversal,
-         "_minlength-",
-         min_length,
-         "_tol-",
-         error_margin,
-         "_thr-",
-         thr,
-         ".png",
-         )
+    out_path_fig = f"{dir_path}/adjacency-{ID}_modality-dwi_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', error_margin, 'fwhm_') if float(error_margin) > 0 else '')}_{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '')}_{('%s%s%s' % ('tracktype-', track_type, '') if track_type is not None else '')}_{('%s%s%s' % ('traversal-', traversal, '') if traversal is not None else '')}_{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
 
     hardcoded_params = load_runconfig()
     try:
-        cmap_name = hardcoded_params["plotting"]["structural"][
-            "adjacency"]["color_theme"][0]
+        cmap_name = hardcoded_params["plotting"]["structural"]["adjacency"][
+            "color_theme"
+        ][0]
     except KeyError as e:
-        print(e,
-              "Plotting configuration not successfully extracted from"
-              " advanced.yaml"
-              )
+        print(
+            e,
+            "Plotting configuration not successfully extracted from"
+            " advanced.yaml",
+        )
 
     adjacency.plot_conn_mat(
         conn_matrix, labels, out_path_fig, cmap=plt.get_cmap(cmap_name)
@@ -469,44 +402,24 @@ def plot_conn_mat_struct(
 
     # Plot community adj. matrix
     try:
-        from pynets.statistics.individual.algorithms import \
-            community_resolution_selection
+        from pynets.statistics.individual.algorithms import (
+            community_resolution_selection,
+        )
 
         G = nx.from_numpy_matrix(np.abs(conn_matrix))
-        _, node_comm_aff_mat, resolution, num_comms = \
-            community_resolution_selection(G)
-        out_path_fig_comm = \
-            "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" \
-            % (dir_path,
-               "/adjacency-communities_",
-               ID,
-               "_modality-dwi_",
-               "%s" % ("%s%s%s" % ("subnet-",
-                                   subnet,
-                                   "_") if subnet is not None else ""),
-               "%s" % ("%s%s%s" % ("roi-",
-                                   op.basename(roi).split(".")[0],
-                                   "_") if roi is not None else ""),
-               "model-",
-               conn_model,
-               "_",
-               "%s" % ("%s%s%s" % ("nodetype-spheres-",
-                                   node_radius,
-                                   "mm_") if (
-                   (node_radius != "parc") and (
-                       node_radius is not None)) else "nodetype-parc_"),
-               "_tracktype-",
-               track_type,
-               "_traversal-",
-               traversal,
-               "_minlength-",
-               min_length,
-               "_tol-",
-               error_margin,
-               "_thr-",
-               thr,
-               ".png",
-               )
+        (
+            _,
+            node_comm_aff_mat,
+            resolution,
+            num_comms,
+        ) = community_resolution_selection(G)
+
+        out_path_fig_comm = (
+            f"{dir_path}/adjacency-communities_{ID}_modality-dwi_"
+            f"{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_model-{conn_model}_"
+            f"{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', error_margin, 'fwhm_') if float(error_margin) > 0 else '')}_{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '')}_{('%s%s%s' % ('tracktype-', track_type, '') if track_type is not None else '')}_{('%s%s%s' % ('traversal-', traversal, '') if traversal is not None else '')}_{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
+        )
+
         adjacency.plot_community_conn_mat(
             conn_matrix,
             labels,

@@ -2,7 +2,10 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
+import os
 import sys
+import glob
+import typing
 import warnings
 
 import matplotlib
@@ -19,7 +22,7 @@ matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
-def get_sphere(coords, r, vox_dims, dims):
+def get_sphere(coords: list, r: float, vox_dims: tuple, dims: tuple) -> list:
     """
     Return all points within r mm of coords. Generates a cube and then
     discards all points outside sphere.
@@ -29,7 +32,7 @@ def get_sphere(coords, r, vox_dims, dims):
     coords : list
         List of (x, y, z) tuples corresponding to a coordinate atlas used or
         which represent the center-of-mass of each parcellation node.
-    r : int
+    r : float
         Radius for sphere.
     vox_dims : array/tuple
         1D vector (x, y, z) of mm voxel resolution for sphere.
@@ -48,6 +51,7 @@ def get_sphere(coords, r, vox_dims, dims):
     .. [1] Tor D., W. (2011). NeuroSynth: a new platform for large-scale
      automated synthesis of human functional neuroimaging data.
      Frontiers in Neuroinformatics.
+
     """
     r = float(r)
     cube = np.vstack(
@@ -66,13 +70,15 @@ def get_sphere(coords, r, vox_dims, dims):
         + coords
     )
     return sphere[
-        (np.min(sphere, 1) >= 0)
-        & (np.max(np.subtract(sphere, dims), 1) <= -1),
+        (np.min(sphere, 1) >= 0) & (np.max(np.subtract(sphere, dims), 1) <= -1),
         :,
     ].astype(int)
 
 
-def create_parcel_atlas(parcels_4d_img, label_intensities=None):
+def create_parcel_atlas(
+    parcels_4d_img: nib.Nifti1Image,
+    label_intensities: typing.Union[list, None] = None,
+) -> typing.Tuple[nib.Nifti1Image, np.ndarray]:
     """
     Create a 3D Nifti1Image atlas parcellation of consecutive integer
     intensities from an input list of ROI's.
@@ -82,6 +88,8 @@ def create_parcel_atlas(parcels_4d_img, label_intensities=None):
     parcels_4d_img : Nifti1Image
         4D image stack of boolean numpy arrays or binarized Nifti1Images
         corresponding to ROI masks.
+    label_intensities : list
+        List of integer intensities to assign to each ROI.
 
     Returns
     -------
@@ -91,6 +99,7 @@ def create_parcel_atlas(parcels_4d_img, label_intensities=None):
     parcel_list_exp : list
         List of 3D boolean numpy arrays or binarized Nifti1Images corresponding
         to ROI masks, prepended with a background image of zeros.
+
     """
     import gc
 
@@ -143,7 +152,9 @@ def create_parcel_atlas(parcels_4d_img, label_intensities=None):
     return nib.Nifti1Image(parcel_sum, affine=template_affine), parcel_values
 
 
-def fetch_nilearn_atlas_coords(atlas):
+def fetch_nilearn_atlas_coords(
+    atlas: str,
+) -> typing.Tuple[np.ndarray, str, typing.Optional[list], typing.Optional[str]]:
     """
     Meta-API for nilearn's coordinate atlas fetching API to retrieve any
     publically-available coordinate atlas by string name.
@@ -165,6 +176,7 @@ def fetch_nilearn_atlas_coords(atlas):
         uniquely for a given atlas.
     labels : list
         List of string labels corresponding to atlas nodes.
+
     """
     from nilearn import datasets
 
@@ -201,7 +213,9 @@ def fetch_nilearn_atlas_coords(atlas):
     return coords, atlas_name, networks_list, labels
 
 
-def nilearn_atlas_helper(atlas, parc):
+def nilearn_atlas_helper(
+    atlas: str, parc: bool
+) -> typing.Tuple[list, typing.Optional[list], typing.Optional[str]]:
     """
     Meta-API for nilearn's parcellation-based atlas fetching API to retrieve
     any publically-available parcellation-based atlas by string name.
@@ -225,6 +239,7 @@ def nilearn_atlas_helper(atlas, parc):
         uniquely for a given atlas.
     parcellation : str
         File path to atlas parcellation Nifti1Image in MNI template space.
+
     """
     from nilearn import datasets
 
@@ -257,9 +272,7 @@ def nilearn_atlas_helper(atlas, parc):
         elif atlas == "atlas_talairach_ba":
             atlas = "atlas_talairach"
             print("Fetching level: ba...")
-            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "level")(
-                "ba"
-            )
+            atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "level")("ba")
     else:
         atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}")()
     if len(list(atlas_fetch_obj.keys())) > 0:
@@ -289,7 +302,7 @@ def nilearn_atlas_helper(atlas, parc):
     return labels, networks_list, parcellation
 
 
-def mmToVox(img_affine, mmcoords):
+def mmToVox(img_affine: np.ndarray, mmcoords: list) -> np.ndarray:
     """
     Function to convert a list of mm coordinates to voxel coordinates.
 
@@ -300,11 +313,12 @@ def mmToVox(img_affine, mmcoords):
         coordinates inhabit.
     mmcoords : list
         List of [x, y, z] or (x, y, z) coordinates in mm-space.
+
     """
     return nib.affines.apply_affine(np.linalg.inv(img_affine), mmcoords)
 
 
-def VoxTomm(img_affine, voxcoords):
+def VoxTomm(img_affine: np.ndarray, voxcoords: list) -> np.ndarray:
     """
     Function to convert a list of voxel coordinates to mm coordinates.
 
@@ -315,20 +329,21 @@ def VoxTomm(img_affine, voxcoords):
         coordinates inhabit.
     voxcoords : list
         List of [x, y, z] or (x, y, z) coordinates in voxel-space.
+
     """
     return nib.affines.apply_affine(img_affine, voxcoords)
 
 
 def get_node_membership(
-    subnet,
-    infile,
-    coords,
-    labels,
-    parc,
-    parcels_4d,
-    perc_overlap=0.75,
-    error=4,
-):
+    subnet: str,
+    infile: str,
+    coords: list,
+    labels: list,
+    parc: bool,
+    parcels_4d: list,
+    perc_overlap: float = 0.75,
+    error: int = 4,
+) -> typing.Tuple[list, typing.Optional[nib.Nifti1Image], list, str]:
     """
     Evaluate the affinity of any arbitrary list of coordinate or parcel nodes
     for a user-specified subnet based on Yeo-7 or Yeo-17 definitions.
@@ -389,8 +404,8 @@ def get_node_membership(
       Eickhoff SB, Yeo BTT. Local-Global parcellation of the human cerebral
       cortex from intrinsic functional connectivity MRI, Cerebral Cortex,
       29:3095-3114, 2018.
+
     """
-    import gc
     import sys
     import tempfile
 
@@ -411,18 +426,14 @@ def get_node_membership(
             template_img = nib.load(infile)
         except indexed_gzip.ZranError as e:
             print(
-                e,
-                f"\nCannot load MNI reference. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI reference. Do you have git-lfs installed?",
             )
     else:
         try:
             template_img = nib.load(infile)
         except ImportError as e:
             print(
-                e,
-                f"\nCannot load MNI reference. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI reference. Do you have git-lfs installed?",
             )
 
     bna_aff = template_img.affine
@@ -532,18 +543,14 @@ def get_node_membership(
             rsn_img = nib.load(par_file)
         except indexed_gzip.ZranError as e:
             print(
-                e,
-                f"\nCannot load subnet reference image. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load subnet reference image. Do you have git-lfs installed?",
             )
     else:
         try:
             rsn_img = nib.load(par_file)
         except ImportError as e:
             print(
-                e,
-                f"\nCannot load subnet reference image. "
-                f"Do you have git-lfs installed?",
+                f"{e}\nCannot load subnet reference image. Do you have git-lfs installed?",
             )
 
     rsn_img_res = resample_to_img(
@@ -665,7 +672,26 @@ def get_node_membership(
     return coords_mm, RSN_parcellation, net_labels, subnet
 
 
-def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
+def drop_badixs_from_parcellation(
+    parcellation: str, bad_idxs: list, enf_hemi: bool = True
+) -> str:
+    """
+    Drop parcels from a parcellation based on a list of indices.
+
+    Arguments
+    ---------
+    parcellation : str
+        Path to parcellation file.
+    bad_idxs : list
+        List of indices to drop from the parcellation.
+    enf_hemi : bool
+
+    Returns
+    -------
+    parcellation : str
+        Path to pruned parcellation file.
+
+    """
     import os
 
     import nibabel as nib
@@ -696,8 +722,15 @@ def drop_badixs_from_parcellation(parcellation, bad_idxs, enf_hemi=True):
 
 
 def parcel_masker(
-    roi, coords, parcels_4d, labels, dir_path, ID, perc_overlap, vox_size
-):
+    roi: str,
+    coords: list,
+    parcels_4d: list,
+    labels: list,
+    dir_path: str,
+    ID: str,
+    perc_overlap: float,
+    vox_size: str,
+) -> typing.Tuple[list, list, nib.Nifti1Image]:
     """
     Evaluate the affinity of any arbitrary list of parcel nodes for a
     user-specified ROI mask.
@@ -723,6 +756,8 @@ def parcel_masker(
         Value 0-1 indicating a threshold of spatial overlap to use as a
         spatial error cushion in the case of evaluating ROI-mask membership
         from a given list of parcel masks.
+    vox_size : str
+        Voxel resolution (`1mm` or `2mm` stored as strings with units).
 
     Returns
     -------
@@ -736,11 +771,12 @@ def parcel_masker(
         Filtered list of 3D boolean numpy arrays or binarized Nifti1Images
         corresponding to ROI masks with a spatial affinity to the specified
         ROI mask.
+
     """
     import sys
 
     import pkg_resources
-    from nilearn.image import index_img, iter_img, math_img, resample_to_img
+    from nilearn.image import index_img, math_img, resample_to_img
 
     from pynets.core.utils import load_runconfig
 
@@ -759,18 +795,14 @@ def parcel_masker(
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
 
     mask_data = (
@@ -879,7 +911,9 @@ def parcel_masker(
     )
 
 
-def coords_masker(roi, coords, labels, error, vox_size="2mm"):
+def coords_masker(
+    roi: str, coords: list, labels: list, error: int, vox_size: str = "2mm"
+) -> typing.Tuple[list, list]:
     """
     Evaluate the affinity of any arbitrary list of coordinate nodes for a
     user-specified ROI mask.
@@ -907,6 +941,7 @@ def coords_masker(roi, coords, labels, error, vox_size="2mm"):
     labels : list
         Filtered list of string labels corresponding to ROI nodes with a
         spatial affinity for the specified ROI mask.
+
     """
     import sys
 
@@ -932,18 +967,14 @@ def coords_masker(roi, coords, labels, error, vox_size="2mm"):
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
 
     mask_img_res = resample_to_img(
@@ -1017,7 +1048,9 @@ def coords_masker(roi, coords, labels, error, vox_size="2mm"):
     return coords, labels
 
 
-def get_names_and_coords_of_parcels(parcellation, background_label=0):
+def get_names_and_coords_of_parcels(
+    parcellation: str, background_label: int = 0
+) -> typing.Tuple[list, str, int, list]:
     """
     Return list of coordinates and max label intensity for a 3D atlas
     parcellation image.
@@ -1038,6 +1071,7 @@ def get_names_and_coords_of_parcels(parcellation, background_label=0):
         The maximum label intensity in the parcellation image.
     label_intensities : list
         A list of integer label intensity values from the parcellation.
+
     """
     import matplotlib
 
@@ -1065,7 +1099,7 @@ def get_names_and_coords_of_parcels(parcellation, background_label=0):
     )
 
 
-def three_to_four_parcellation(parcellation):
+def three_to_four_parcellation(parcellation: str) -> nib.Nifti1Image:
     """
     Return 4d Nifti1Image of boolean nifti masks where each masks corresponds
     to a unique atlas label for the provided atlas parcellation. Path string to
@@ -1081,9 +1115,9 @@ def three_to_four_parcellation(parcellation):
     img_list : Iterator of NiftiImages
         List of binarized Nifti1Images corresponding to ROI masks for each
         unique atlas label.
+
     """
     import gc
-    import os.path as op
 
     if isinstance(parcellation, nib.Nifti1Image):
         bna_img = parcellation
@@ -1112,8 +1146,10 @@ def three_to_four_parcellation(parcellation):
 
 
 def enforce_hem_distinct_consecutive_labels(
-    parcellation, label_names=None, background_label=0
-):
+    parcellation: str,
+    label_names: typing.Union[list, None] = None,
+    background_label: int = 0,
+) -> typing.Tuple[str, typing.Optional[list]]:
     """
     Check for hemispherically distinct and consecutive labels and rebuild
     parcellation.
@@ -1131,13 +1167,12 @@ def enforce_hem_distinct_consecutive_labels(
         File path to atlas parcellation Nifti1Image in MNI template space.
     label_names : list
         List of string label names corresponding to ROI nodes.
+
     """
     import gc
 
     from nilearn.image import (
-        concat_imgs,
         index_img,
-        iter_img,
         new_img_like,
         reorder_img,
     )
@@ -1161,7 +1196,6 @@ def enforce_hem_distinct_consecutive_labels(
 
         if ix == 0:
             template_image = index_img(parcels_4d_img, ix)
-            template_affine = template_image.affine
             template_shape = template_image.shape
             template_image.uncache()
             new_labs = np.asarray(
@@ -1177,7 +1211,7 @@ def enforce_hem_distinct_consecutive_labels(
         right_hemi[: int(x)] = 0
 
         # Two connected components in both hemispheres
-        if not np.all(left_hemi == False) or np.all(right_hemi == False):
+        if not np.all(left_hemi is False) or np.all(right_hemi is False):
             left_lab = np.copy(cur_dat)
             right_lab = np.copy(cur_dat)
             left_lab[int(x) :] = 0
@@ -1218,8 +1252,30 @@ def enforce_hem_distinct_consecutive_labels(
 
 
 def drop_coords_labels_from_restricted_parcellation(
-    parcellation, coords, labels
-):
+    parcellation: str, coords: list, labels: list
+) -> typing.Tuple[str, list, list]:
+    """
+    Drop coordinates and labels from restricted parcellation.
+
+    Parameters
+    ----------
+    parcellation : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    coords : list
+        List of coordinates to drop.
+    labels : list
+        List of labels to drop.
+
+    Returns
+    -------
+    parcellation : str
+        File path to atlas parcellation Nifti1Image in MNI template space.
+    coords : list
+        List of coordinates to drop.
+    labels : list
+        List of labels to drop.
+
+    """
     # from pynets.core.utils import missing_elements
     import os
 
@@ -1309,7 +1365,9 @@ def drop_coords_labels_from_restricted_parcellation(
     return parcellation, coords, labels
 
 
-def gen_network_parcels(parcellation, subnet, labels, dir_path):
+def gen_network_parcels(
+    parcellation: str, subnet: str, labels: list, dir_path: str
+) -> str:
     """
     Return a modified verion of an atlas parcellation label, where labels have
     been filtered based on their spatial affinity for a specified subnet
@@ -1331,6 +1389,7 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
     -------
     out_path : str
         File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
+
     """
     import os.path as op
 
@@ -1352,15 +1411,13 @@ def gen_network_parcels(parcellation, subnet, labels, dir_path):
     parcellation_name = op.basename(parcellation).split(
         op.splitext(parcellation)[1]
     )[0]
-    out_path = (
-        f"{dir_path}" f"/{parcellation_name}_" f"{subnet}_parcels.nii.gz"
-    )
+    out_path = f"{dir_path}" f"/{parcellation_name}_" f"{subnet}_parcels.nii.gz"
     nib.save(net_parcels_sum[0], out_path)
 
     return out_path
 
 
-def parcel_naming(coords, vox_size):
+def parcel_naming(coords: list, vox_size: str) -> list:
     """
     Perform Automated-Anatomical Labeling of each coordinate from a list of a
     voxel coordinates. This was adapted from a function of the same
@@ -1424,18 +1481,14 @@ def parcel_naming(coords, vox_size):
             template_img = nib.load(template_brain)
         except indexed_gzip.ZranError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
     else:
         try:
             template_img = nib.load(template_brain)
         except ImportError as e:
             print(
-                e,
-                f"\nCannot load MNI template. Do you have git-lfs "
-                f"installed?",
+                f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
 
     coords_vox = []
@@ -1516,13 +1569,290 @@ def parcel_naming(coords, vox_size):
     return new_labels
 
 
+def get_ixs_from_node_dict(node_dict: dict) -> typing.Tuple[list, dict]:
+    """
+    Get the indices of the nodes in the node dict.
+
+    Parameters
+    ----------
+    node_dict : dict
+        A dictionary of nodes.
+
+    Returns
+    -------
+    ixs : list
+        A list of indices.
+    node_dict : dict
+        A dictionary of nodes.
+
+    """
+    import ast
+
+    if isinstance(node_dict, list):
+        if all(v is None for v in [i["label"] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                (
+                    node_dict_revised[i]["label"],
+                    node_dict_revised[i]["index"],
+                ) = ast.literal_eval(node_dict[i]["index"].replace("\n", ","))
+            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
+        elif all(isinstance(v, str) for v in [i["label"] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]["label"] = ast.literal_eval(
+                    node_dict[i]["label"].replace("\n", ",")
+                )
+                node_dict_revised[i]["index"] = ast.literal_eval(
+                    node_dict[i]["index"].replace("\n", ",")
+                )
+            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
+        elif all(isinstance(v, tuple) for v in [i["label"] for i in node_dict]):
+            node_dict_revised = {}
+            for i in range(len(node_dict)):
+                node_dict_revised[i] = {}
+                node_dict_revised[i]["label"] = node_dict[i]["label"][0]
+                node_dict_revised[i]["index"] = node_dict[i]["label"][1]
+            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
+        else:
+            ixs_corr = [int(i["index"]) for i in node_dict]
+            node_dict_revised = node_dict
+    else:
+        ixs_corr = [int(i["index"]) for i in node_dict.values()]
+        node_dict_revised = node_dict
+
+    for i in range(len(node_dict)):
+        node_dict_revised[i]["coord"] = node_dict[i]["coord"]
+    return ixs_corr, node_dict_revised
+
+
+def node_files_search(
+    node_files: list, emb_shape: int
+) -> typing.Tuple[list, dict]:
+    """
+    Search for node files.
+
+    Parameters
+    ----------
+    node_files : list
+        A list of node files.
+    emb_shape : int
+        The shape of the embedding.
+
+    Returns
+    -------
+    node_files : list
+        A list of node files.
+    node_dict : dict
+        A dictionary of nodes.
+
+    """
+    import gc
+    import json
+
+    if len(node_files) == 1:
+        with open(node_files[0], "r+") as f:
+            node_dict = json.load(f)
+        f.close()
+        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
+    else:
+        node_files = sorted(node_files, key=os.path.getmtime)
+        try:
+            with open(node_files[0], "r+") as f:
+                node_dict = json.load(f)
+            f.close()
+            j = 0
+        except BaseException:
+            with open(node_files[1], "r+") as f:
+                node_dict = json.load(f)
+            f.close()
+            j = 1
+
+        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
+
+        while len(ixs_corr) != emb_shape and j < len(node_files):
+            try:
+                with open(node_files[j], "r+") as f:
+                    node_dict = json.load(f)
+                f.close()
+            except BaseException:
+                j += 1
+                continue
+            ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
+            j += 1
+    del f
+    gc.collect()
+
+    return ixs_corr, node_dict_revised
+
+
+def retrieve_indices_from_parcellation(
+    node_files: list, emb_shape: int, template: str, vox_size="2mm"
+) -> typing.Tuple[list, dict]:
+    """
+    Retrieve indices from parcellation.
+
+    Parameters
+    ----------
+    node_files : list
+        A list of node files.
+    emb_shape : int
+        The shape of the embedding.
+    template : str
+        The template used for the parcellation.
+    vox_size : str, optional
+        The voxel size. The default is "2mm".
+
+    Returns
+    -------
+    ixs_corr : list
+        A list of indices.
+    node_dict : dict
+        A dictionary of nodes.
+
+    """
+    dir_path = str(Path(node_files[0]).parent.parent)
+    if template == "any":
+        import glob
+
+        template_parcs = glob.glob(
+            f"{dir_path}/parcellations/parcellation_" f"space-*.nii.gz"
+        )
+        if len(template_parcs) > 0:
+            sorted_template_parcs = sorted(template_parcs, key=os.path.getmtime)
+            template_parc = sorted_template_parcs[0]
+        else:
+            template_parc = [0]
+    else:
+        template_parc = (
+            f"{dir_path}/parcellations/parcellation_space-" f"{template}.nii.gz"
+        )
+    node_file = make_node_dict_from_parcellation(
+        template_parc, dir_path, vox_size
+    )
+    if os.path.isfile(template_parc):
+        ixs_corr, node_dict = node_files_search([node_file], emb_shape)
+        return ixs_corr, node_dict
+    else:
+        return [], {}
+
+
+def make_node_dict_from_parcellation(
+    parcellation: str, dir_path: str, vox_size="2mm"
+) -> str:
+    """
+    Make a node dictionary from a parcellation.
+
+    Parameters
+    ----------
+    parcellation : str
+        The parcellation.
+    dir_path : str
+        The directory path.
+    vox_size : str, optional
+        The voxel size. The default is "2mm".
+
+    Returns
+    -------
+    node_file : str
+        The node file.
+
+    """
+    from pynets.core.utils import save_coords_and_labels_to_json
+
+    coords, _, _, label_intensities = get_names_and_coords_of_parcels(
+        parcellation
+    )
+    labels = parcel_naming(coords, vox_size)
+    node_file = save_coords_and_labels_to_json(
+        coords, labels, dir_path, subnet="regen", indices=label_intensities
+    )
+    return node_file
+
+
+def parse_closest_ixs(
+    node_files: list,
+    emb_shape: int,
+    vox_size: str = "2mm",
+    template: str = "any",
+) -> typing.Tuple[list, dict]:
+    """
+    Parse closest indices.
+
+    Parameters
+    ----------
+    node_files : list
+        A list of node files.
+    emb_shape : int
+        The shape of the embedding.
+    vox_size : str, optional
+        The voxel size. The default is "2mm".
+    template : str, optional
+        The template used for the parcellation. The default is "any".
+
+    Returns
+    -------
+    ixs_corr : list
+        A list of indices.
+    node_dict : dict
+        A dictionary of nodes.
+
+    """
+    if len(node_files) > 0:
+        node_files_named = [i for i in node_files if f"{emb_shape}" in i]
+        if len(node_files_named) > 0:
+            node_files_named = sorted(node_files_named, key=os.path.getmtime)
+            ixs_corr, node_dict = node_files_search(node_files_named, emb_shape)
+        else:
+            ixs_corr, node_dict = node_files_search(node_files, emb_shape)
+
+        if len(ixs_corr) != emb_shape:
+            ixs_corr, node_dict = retrieve_indices_from_parcellation(
+                node_files, emb_shape, template, vox_size
+            )
+        return ixs_corr, node_dict
+    else:
+        print(
+            UserWarning(
+                "Node files empty. Attempting to retrieve manually "
+                "from parcellations..."
+            )
+        )
+        ixs_corr, node_dict = retrieve_indices_from_parcellation(
+            node_files, emb_shape, template, vox_size
+        )
+        return ixs_corr, node_dict
+
+
 def get_node_attributes(
-    node_files, emb_shape, atlas="BrainnetomeAtlasFan2016"
-):
+    node_files: list, emb_shape: int, atlas: str = "BrainnetomeAtlasFan2016"
+) -> typing.Tuple[list, list, list]:
+    """
+    Get node attributes.
+
+    Parameters
+    ----------
+    node_files : list
+        A list of node files.
+    emb_shape : int
+        The shape of the embedding.
+    atlas : str, optional
+        The atlas. The default is "BrainnetomeAtlasFan2016".
+
+    Returns
+    -------
+    node_attributes : list
+        A list of node attributes.
+    node_labels : list
+        A list of node labels.
+    node_labels_intensities : list
+        A list of node labels intensities.
+
+    """
     import ast
     import re
-
-    from pynets.statistics.utils import parse_closest_ixs
 
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
@@ -1538,20 +1868,41 @@ def get_node_attributes(
     return coords, labels, ixs
 
 
-def node_gen_masking(
-    roi,
-    coords,
-    parcels_4d,
-    labels,
-    dir_path,
-    ID,
-    parc,
-    atlas,
-    parcellation,
-    vox_size,
-    perc_overlap=0.10,
-    error=2,
+def get_index_labels(
+    base_dir, ID, ses, modality, parcellation, granularity, emb_shape
 ):
+    from pynets.core.nodemaker import parse_closest_ixs
+
+    node_files = glob.glob(
+        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
+        f"{parcellation}_granularity-{granularity}/nodes/*.json"
+    )
+
+    if len(node_files) > 0:
+        ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
+    else:
+        return [None]
+
+    if emb_shape == len(ixs):
+        return ixs
+    else:
+        return [None]
+
+
+def node_gen_masking(
+    roi: str,
+    coords: list,
+    parcels_4d: list,
+    labels: list,
+    dir_path: str,
+    ID: str,
+    parc: bool,
+    atlas: str,
+    parcellation: str,
+    vox_size: str,
+    perc_overlap: float = 0.10,
+    error: int = 2,
+) -> typing.Tuple[nib.Nifti1Image, list, list, str, str, str]:
     """
     In the case that masking was applied, this function generate nodes based
     on atlas definitions established by fetch_nodes_and_labels.
@@ -1609,6 +1960,7 @@ def node_gen_masking(
         File path to atlas parcellation Nifti1Image in MNI template space.
     dir_path : str
         Path to directory containing subject derivative data for given run.
+
     """
     import gc
 
@@ -1662,8 +2014,15 @@ def node_gen_masking(
 
 
 def node_gen(
-    coords, parcels_4d, labels, dir_path, ID, parc, atlas, parcellation
-):
+    coords: list,
+    parcels_4d: list,
+    labels: list,
+    dir_path: str,
+    ID: str,
+    parc: bool,
+    atlas: str,
+    parcellation: str,
+) -> typing.Tuple[nib.Nifti1Image, list, list, str, str, str]:
     """
     In the case that masking was not applied, this function generate nodes
     based on atlas definitions established by fetch_nodes_and_labels.
@@ -1711,6 +2070,7 @@ def node_gen(
         File path to atlas parcellation Nifti1Image in MNI template space.
     dir_path : str
         Path to directory containing subject derivative data for given run.
+
     """
     import gc
 
@@ -1751,7 +2111,7 @@ def node_gen(
     return net_parcels_map_nifti, coords, labels, atlas, parcellation, dir_path
 
 
-def mask_roi(dir_path, roi, mask, img_file):
+def mask_roi(dir_path: str, roi: str, mask: str, img_file: str) -> str:
     """
     Create derivative ROI based on intersection of roi and brain mask.
 
@@ -1771,6 +2131,7 @@ def mask_roi(dir_path, roi, mask, img_file):
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file,
         reduced to the spatial intersection with the input brain mask.
+
     """
     import os.path as op
 
@@ -1811,7 +2172,9 @@ def mask_roi(dir_path, roi, mask, img_file):
     return roi
 
 
-def create_spherical_roi_volumes(node_radius, coords, template_mask):
+def create_spherical_roi_volumes(
+    node_radius: int, coords: list, template_mask: str
+) -> typing.Tuple[nib.Nifti1Image, int, int, bool]:
     """
     Create volume ROI mask of spheres from a given set of coordinates and
     radius.
@@ -1842,6 +2205,7 @@ def create_spherical_roi_volumes(node_radius, coords, template_mask):
     parc : bool
         Indicates whether to use the raw parcels as ROI nodes instead of
         coordinates at their center-of-mass.
+
     """
     import gc
 

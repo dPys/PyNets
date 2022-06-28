@@ -12,6 +12,6 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import interfaces, utils
-from .group import benchmarking, prediction
-from .individual import multiplex, algorithms, spectral
+from pynets.statistics import interfaces, utils
+from pynets.statistics.group import benchmarking, prediction
+from pynets.statistics.individual import algorithms, multiplex, spectral

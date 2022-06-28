@@ -14,7 +14,9 @@ matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
-def optimize_mutual_info(dwi_mat, func_mat, bins=20):
+def optimize_mutual_info(
+    dwi_mat: np.ndarray, func_mat: np.ndarray, bins: int = 20
+):
     """ """
     import itertools
 
@@ -58,7 +60,9 @@ def optimize_mutual_info(dwi_mat, func_mat, bins=20):
     )
 
 
-def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
+def build_mx_multigraph(
+    func_mat: np.ndarray, dwi_mat: np.ndarray, name: str, namer_dir: str
+):
     """
     It creates a symmetric (undirected) MultilayerGraph object from
     vertex-aligned structural and functional connectivity matrices.
@@ -118,7 +122,9 @@ def build_mx_multigraph(func_mat, dwi_mat, name, namer_dir):
     return mG_path
 
 
-def mutual_information_2d(x, y, sigma=1, normalized=True):
+def mutual_information_2d(
+    x: np.ndarray, y: np.ndarray, sigma: int = 1, normalized: bool = True
+):
     """
     Computes (normalized) mutual information between two 2D variate from a
     joint histogram.
@@ -173,12 +179,11 @@ def mutual_information_2d(x, y, sigma=1, normalized=True):
 
 
 def matching(
-    paths,
-    atlas,
-    namer_dir,
+    paths: list,
+    atlas: str,
+    namer_dir: str,
 ):
     import glob
-
     import networkx as nx
     import numpy as np
     from graspologic.utils import (
@@ -186,9 +191,8 @@ def matching(
         remove_loops,
         symmetrize,
     )
-
     from pynets.core import thresholding
-    from pynets.statistics.utils import parse_closest_ixs
+    from pynets.core.nodemaker import parse_closest_ixs
 
     [dwi_graph_path, func_graph_path] = paths
     dwi_mat = np.load(dwi_graph_path)
@@ -302,7 +306,7 @@ def matching(
     return mG_nx, mG, dwi_file_out, func_file_out
 
 
-def build_multigraphs(est_path_iterlist):
+def build_multigraphs(est_path_iterlist: list):
     """
     Constructs a multimodal multigraph for each available resolution of
     vertices.

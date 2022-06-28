@@ -12,4 +12,4 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import utils, register, interfaces
+from pynets.registration import utils, register, interfaces

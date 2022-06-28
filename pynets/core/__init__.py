@@ -12,12 +12,12 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import (
+from pynets.core import (
     cloud,
+    database,
     interfaces,
     nodemaker,
     thresholding,
     utils,
     workflows,
-    database,
 )

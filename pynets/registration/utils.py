@@ -6,6 +6,7 @@ Copyright (C) 2017
 """
 import matplotlib
 import os
+import typing
 import numpy as np
 import sys
 import gc
@@ -13,7 +14,7 @@ import nibabel as nib
 from nipype.utils.filemanip import fname_presuffix
 import warnings
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 try:
     FSLDIR = os.environ["FSLDIR"]
@@ -22,7 +23,29 @@ except KeyError as e:
     sys.exit(1)
 
 
-def gen_mask(t1w_head, t1w_brain, mask):
+def gen_mask(
+    t1w_head: str, t1w_brain: str, mask: str
+) -> typing.Tuple[str, str]:
+    """
+    Generates a brain mask from a T1w image.
+
+    Parameters
+    ----------
+    t1w_head : str
+        Path to T1w head image.
+    t1w_brain : str
+        Path to T1w brain image.
+    mask : str
+        Path to mask image.
+
+    Returns
+    -------
+    t1w_brain : str
+        Path to T1w brain image.
+    t1w_brain_mask : str
+        Path to T1w brain mask image.
+
+    """
     import os.path as op
     from nilearn.image import math_img
 
@@ -35,11 +58,7 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
         print(f"Using {mask}...")
         mask_img = nib.load(mask)
-        nib.save(
-            resample_to_img(
-                mask_img,
-                img),
-            t1w_brain_mask)
+        nib.save(resample_to_img(mask_img, img), t1w_brain_mask)
     else:
         # Perform skull-stripping if mask not provided.
         img = nib.load(t1w_head)
@@ -47,13 +66,14 @@ def gen_mask(t1w_head, t1w_brain, mask):
         try:
             t1w_brain_mask = deep_skull_strip(t1w_data, t1w_brain_mask, img)
         except RuntimeError as e:
-            print(e, 'Deepbrain extraction failed...')
+            print(e, "Deepbrain extraction failed...")
 
         del t1w_data
 
     # Threshold T1w brain to binary in anat space
-    math_img("img > 0.0001", img=nib.load(t1w_brain_mask)
-             ).to_filename(t1w_brain_mask)
+    math_img("img > 0.0001", img=nib.load(t1w_brain_mask)).to_filename(
+        t1w_brain_mask
+    )
 
     t1w_brain = apply_mask_to_image(t1w_head, t1w_brain_mask, t1w_brain)
 
@@ -65,12 +85,13 @@ def gen_mask(t1w_head, t1w_brain, mask):
 
 def deep_skull_strip(t1w_data, t1w_brain_mask, img):
     import tensorflow as tf
+
     if tf.__version__ > "2.0.0":
         import tensorflow.compat.v1 as tf
     from deepbrain import Extractor
     import logging
 
-    print('Stripping skull and extracting brain...')
+    print("Stripping skull and extracting brain...")
     logger = tf.get_logger()
     logger.setLevel(logging.ERROR)
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -78,8 +99,7 @@ def deep_skull_strip(t1w_data, t1w_brain_mask, img):
     prob = ext.run(t1w_data)
     mask = prob > 0.5
     nib.save(
-        nib.Nifti1Image(mask, affine=img.affine,
-                        header=img.header),
+        nib.Nifti1Image(mask, affine=img.affine, header=img.header),
         t1w_brain_mask,
     )
     img.uncache()
@@ -132,7 +152,7 @@ def atlas2t1w2dwi_align(
     )
 
     parcellation_res_template = nib.Nifti1Image(
-        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        np.asarray(parcellation_res_template.dataobj).astype("uint16"),
         affine=parcellation_res_template.affine,
         header=parcellation_res_template.header,
     )
@@ -152,30 +172,56 @@ def atlas2t1w2dwi_align(
             time.sleep(0.5)
 
             # Apply linear transformation from template to dwi space
-            applyxfm(ap_path, aligned_atlas_skull, t1w2dwi_xfm,
-                              dwi_aligned_atlas, interp="nearestneighbour")
+            applyxfm(
+                ap_path,
+                aligned_atlas_skull,
+                t1w2dwi_xfm,
+                dwi_aligned_atlas,
+                interp="nearestneighbour",
+            )
             time.sleep(0.5)
         except BaseException:
             print(
                 "Warning: Atlas is not in correct dimensions, or input is low"
-                " quality,\nusing linear template registration.")
+                " quality,\nusing linear template registration."
+            )
 
-            applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
-                              aligned_atlas_skull, interp="nearestneighbour")
+            applyxfm(
+                t1w_brain,
+                aligned_atlas_t1mni,
+                mni2t1_xfm,
+                aligned_atlas_skull,
+                interp="nearestneighbour",
+            )
             time.sleep(0.5)
             combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
             time.sleep(0.5)
-            applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
-                              dwi_aligned_atlas, interp="nearestneighbour")
+            applyxfm(
+                ap_path,
+                aligned_atlas_t1mni,
+                mni2dwi_xfm,
+                dwi_aligned_atlas,
+                interp="nearestneighbour",
+            )
             time.sleep(0.5)
     else:
-        applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
-                          aligned_atlas_skull, interp="nearestneighbour")
+        applyxfm(
+            t1w_brain,
+            aligned_atlas_t1mni,
+            mni2t1_xfm,
+            aligned_atlas_skull,
+            interp="nearestneighbour",
+        )
         time.sleep(0.5)
         combine_xfms(mni2t1_xfm, t1w2dwi_xfm, mni2dwi_xfm)
         time.sleep(0.5)
-        applyxfm(ap_path, aligned_atlas_t1mni, mni2dwi_xfm,
-                          dwi_aligned_atlas, interp="nearestneighbour")
+        applyxfm(
+            ap_path,
+            aligned_atlas_t1mni,
+            mni2dwi_xfm,
+            dwi_aligned_atlas,
+            interp="nearestneighbour",
+        )
         time.sleep(0.5)
 
     atlas_img = nib.load(dwi_aligned_atlas)
@@ -184,29 +230,34 @@ def atlas2t1w2dwi_align(
     atlas_mask_img = math_img("img > 0", img=atlas_img)
 
     atlas_img_corr = nib.Nifti1Image(
-        np.asarray(atlas_img.dataobj).astype('uint16'),
+        np.asarray(atlas_img.dataobj).astype("uint16"),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )
 
     # Get the union of masks
     dwi_aligned_atlas_wmgm_int_img = intersect_masks(
-        [wm_gm_mask_img, atlas_mask_img], threshold=0,
-        connected=False
+        [wm_gm_mask_img, atlas_mask_img], threshold=0, connected=False
     )
 
     nib.save(atlas_img_corr, dwi_aligned_atlas)
     nib.save(dwi_aligned_atlas_wmgm_int_img, dwi_aligned_atlas_wmgm_int)
 
-    dwi_aligned_atlas = apply_mask_to_image(dwi_aligned_atlas,
-                                                     B0_mask,
-                                                     dwi_aligned_atlas)
+    dwi_aligned_atlas = apply_mask_to_image(
+        dwi_aligned_atlas, B0_mask, dwi_aligned_atlas
+    )
 
     dwi_aligned_atlas_wmgm_int = apply_mask_to_image(
-        dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int)
+        dwi_aligned_atlas_wmgm_int, B0_mask, dwi_aligned_atlas_wmgm_int
+    )
 
-    unique_a = sorted(set(np.array(
-        np.ndarray.flatten(np.asarray(atlas_img_corr.dataobj)).tolist())))
+    unique_a = sorted(
+        set(
+            np.array(
+                np.ndarray.flatten(np.asarray(atlas_img_corr.dataobj)).tolist()
+            )
+        )
+    )
 
     if not checkConsecutive(unique_a):
         print("Warning! Non-consecutive integers found in parcellation...")
@@ -296,46 +347,33 @@ def waymask2dwi_align(
     template_img = nib.load(template)
 
     waymask_img_res = resample_to_img(
-        waymask_img, template_img,
+        waymask_img,
+        template_img,
     )
     waymask_res = f"{waymask.split('.nii')[0]}_res.nii.gz"
     nib.save(waymask_img_res, waymask_res)
 
     if simple is False:
-        apply_warp(
-            t1w_brain,
-            waymask_res,
-            waymask_in_t1w,
-            warp=mni2t1w_warp)
+        apply_warp(t1w_brain, waymask_res, waymask_in_t1w, warp=mni2t1w_warp)
     else:
-        applyxfm(t1w_brain, waymask_res, mni2t1_xfm,
-                          waymask_in_t1w)
+        applyxfm(t1w_brain, waymask_res, mni2t1_xfm, waymask_in_t1w)
 
     time.sleep(0.5)
     # Apply transform from t1w to native dwi space
-    applyxfm(
-        ap_path,
-        waymask_in_t1w,
-        t1wtissue2dwi_xfm,
-        waymask_in_dwi)
+    applyxfm(ap_path, waymask_in_t1w, t1wtissue2dwi_xfm, waymask_in_dwi)
 
     time.sleep(0.5)
 
-    waymask_in_dwi = apply_mask_to_image(waymask_in_dwi,
-                                                  B0_mask_tmp_path,
-                                                  waymask_in_dwi)
+    waymask_in_dwi = apply_mask_to_image(
+        waymask_in_dwi, B0_mask_tmp_path, waymask_in_dwi
+    )
 
     return waymask_in_dwi
 
 
 def roi2t1w_align(
-        roi,
-        t1w_brain,
-        mni2t1_xfm,
-        mni2t1w_warp,
-        roi_in_t1w,
-        template,
-        simple):
+    roi, t1w_brain, mni2t1_xfm, mni2t1w_warp, roi_in_t1w, template, simple
+):
     """
     A function to perform alignment of a roi from MNI space --> T1w.
     """
@@ -354,11 +392,9 @@ def roi2t1w_align(
     # Apply warp or transformer resulting from the inverse
     # MNI->T1w created earlier
     if simple is False:
-        apply_warp(t1w_brain, roi_res, roi_in_t1w,
-                            warp=mni2t1w_warp)
+        apply_warp(t1w_brain, roi_res, roi_in_t1w, warp=mni2t1w_warp)
     else:
-        applyxfm(t1w_brain, roi_res, mni2t1_xfm,
-                          roi_in_t1w)
+        applyxfm(t1w_brain, roi_res, mni2t1_xfm, roi_in_t1w)
 
     time.sleep(0.5)
 
@@ -374,7 +410,7 @@ def RegisterParcellation2MNIFunc_align(
     aligned_atlas_t1w,
     aligned_atlas_mni,
     t1w2mni_warp,
-    simple
+    simple,
 ):
     """
     A function to perform atlas alignment from T1w atlas --> MNI.
@@ -390,7 +426,7 @@ def RegisterParcellation2MNIFunc_align(
     )
 
     parcellation_res_template = nib.Nifti1Image(
-        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        np.asarray(parcellation_res_template.dataobj).astype("uint16"),
         affine=parcellation_res_template.affine,
         header=parcellation_res_template.header,
     )
@@ -410,7 +446,8 @@ def RegisterParcellation2MNIFunc_align(
         except BaseException:
             print(
                 "Warning: Atlas is not in correct dimensions, or input is "
-                "low quality,\nusing linear template registration.")
+                "low quality,\nusing linear template registration."
+            )
 
             align(
                 aligned_atlas_t1w,
@@ -452,13 +489,14 @@ def atlas2t1w_align(
     aligned_atlas_skull,
     aligned_atlas_gm,
     simple,
-    gm_fail_tol=5
+    gm_fail_tol=5,
 ):
     """
     A function to perform atlas alignment from atlas --> T1w.
     """
     import time
     from nilearn.image import resample_to_img
+
     # from pynets.core.utils import checkConsecutive
 
     template_img = nib.load(t1_aligned_mni)
@@ -474,7 +512,7 @@ def atlas2t1w_align(
     )
 
     parcellation_res_template = nib.Nifti1Image(
-        np.asarray(parcellation_res_template.dataobj).astype('uint16'),
+        np.asarray(parcellation_res_template.dataobj).astype("uint16"),
         affine=parcellation_res_template.affine,
         header=parcellation_res_template.header,
     )
@@ -495,27 +533,38 @@ def atlas2t1w_align(
         except BaseException:
             print(
                 "Warning: Atlas is not in correct dimensions, or input is low "
-                "quality,\nusing linear template registration.")
+                "quality,\nusing linear template registration."
+            )
 
-            applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
-                              aligned_atlas_skull, interp="nearestneighbour")
+            applyxfm(
+                t1w_brain,
+                aligned_atlas_t1mni,
+                mni2t1_xfm,
+                aligned_atlas_skull,
+                interp="nearestneighbour",
+            )
             time.sleep(0.5)
     else:
-        applyxfm(t1w_brain, aligned_atlas_t1mni, mni2t1_xfm,
-                          aligned_atlas_skull, interp="nearestneighbour")
+        applyxfm(
+            t1w_brain,
+            aligned_atlas_t1mni,
+            mni2t1_xfm,
+            aligned_atlas_skull,
+            interp="nearestneighbour",
+        )
         time.sleep(0.5)
 
     # aligned_atlas_gm = apply_mask_to_image(aligned_atlas_skull,
     #                                                 gm_mask,
     #                                                 aligned_atlas_gm)
-    aligned_atlas_gm = apply_mask_to_image(aligned_atlas_skull,
-                                                    t1w_brain_mask,
-                                                    aligned_atlas_gm)
+    aligned_atlas_gm = apply_mask_to_image(
+        aligned_atlas_skull, t1w_brain_mask, aligned_atlas_gm
+    )
 
     atlas_img = nib.load(aligned_atlas_gm)
 
     atlas_img_corr = nib.Nifti1Image(
-        np.asarray(atlas_img.dataobj).astype('uint16'),
+        np.asarray(atlas_img.dataobj).astype("uint16"),
         affine=atlas_img.affine,
         header=atlas_img.header,
     )
@@ -571,25 +620,32 @@ def segment_t1w(t1w, basename, nclass=3, beta=0.1, max_iter=100):
 
     t1w_img = nib.load(t1w)
     hmrf = TissueClassifierHMRF()
-    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta,
-                        max_iter=max_iter)[2]
+    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta, max_iter=max_iter)[
+        2
+    ]
 
     new_img_like(t1w_img, PVE[..., 2]).to_filename(
-        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}")
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}"
+    )
 
     new_img_like(t1w_img, PVE[..., 1]).to_filename(
-        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_1.nii.gz'}")
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_1.nii.gz'}"
+    )
 
     new_img_like(t1w_img, PVE[..., 0]).to_filename(
-        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_2.nii.gz'}")
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_2.nii.gz'}"
+    )
 
-    out = {} # the outputs
-    out["wm_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
-                     f"pve_0.nii.gz"
-    out["gm_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
-                     f"pve_1.nii.gz"
-    out["csf_prob"] = f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" \
-                      f"pve_2.nii.gz"
+    out = {}  # the outputs
+    out["wm_prob"] = (
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" f"pve_0.nii.gz"
+    )
+    out["gm_prob"] = (
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" f"pve_1.nii.gz"
+    )
+    out["csf_prob"] = (
+        f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_" f"pve_2.nii.gz"
+    )
 
     del PVE
     t1w_img.uncache()
@@ -673,14 +729,8 @@ def align(
 
 
 def align_nonlinear(
-        inp,
-        ref,
-        xfm,
-        out,
-        warp,
-        ref_mask=None,
-        in_mask=None,
-        config=None):
+    inp, ref, xfm, out, warp, ref_mask=None, in_mask=None, config=None
+):
     """
     Aligns two images using nonlinear registration and stores the transform
     between them.
@@ -709,8 +759,10 @@ def align_nonlinear(
         arguments.
 
     """
-    cmd = f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} " \
-          f"--cout={warp} --warpres=8,8,8"
+    cmd = (
+        f"fnirt --in={inp} --ref={ref} --aff={xfm} --iout={out} "
+        f"--cout={warp} --warpres=8,8,8"
+    )
     if ref_mask is not None:
         cmd += f" --refmask={ref_mask}"
     if in_mask is not None:
@@ -744,22 +796,18 @@ def applyxfm(ref, inp, xfm, aligned, interp="trilinear", dof=6):
         Number of degrees of freedom to use in the alignment.
 
     """
-    cmd = f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp" \
-          f" {interp} -dof {dof} -applyxfm"
+    cmd = (
+        f"flirt -in {inp} -ref {ref} -out {aligned} -init {xfm} -interp"
+        f" {interp} -dof {dof} -applyxfm"
+    )
     print(cmd)
     os.system(cmd)
     return
 
 
 def apply_warp(
-        ref,
-        inp,
-        out,
-        warp=None,
-        xfm=None,
-        mask=None,
-        interp=None,
-        sup=False):
+    ref, inp, out, warp=None, xfm=None, mask=None, interp=None, sup=False
+):
     """
     Applies a warp to a Nifti1Image which transforms the image to the
     reference space used in generating the warp.
@@ -850,6 +898,7 @@ def combine_xfms(xfm1, xfm2, xfmout):
 
 def invert_xfm(in_mat, out_mat):
     import os
+
     cmd = f"convert_xfm -omat {out_mat} -inverse {in_mat}"
     print(cmd)
     os.system(cmd)
@@ -869,6 +918,7 @@ def apply_mask_to_image(input, mask, output):
 
 def get_wm_contour(wm_map, mask, wm_edge):
     import os
+
     cmd = f"fslmaths {wm_map} -edge -bin -mas {mask} {wm_edge}"
     print(cmd)
     os.system(cmd)
@@ -904,9 +954,7 @@ def warp_streamlines(
         sum(d, s)
         for d, s in zip(
             values_from_volume(
-                mapping.get_forward_field(),
-                streams_in_curr_grid,
-                ref_grid_aff
+                mapping.get_forward_field(), streams_in_curr_grid, ref_grid_aff
             ),
             streams_in_curr_grid,
         )
@@ -929,8 +977,9 @@ def warp_streamlines(
     return streams_final_filt
 
 
-def rescale_affine_to_center(input_affine, voxel_dims=[1, 1, 1],
-                             target_center_coords=None):
+def rescale_affine_to_center(
+    input_affine, voxel_dims=[1, 1, 1], target_center_coords=None
+):
     """
     This function uses a generic approach to rescaling an affine to arbitrary
     voxel dimensions. It allows for affines with off-diagonal elements by
@@ -971,7 +1020,7 @@ def rescale_affine_to_center(input_affine, voxel_dims=[1, 1, 1],
     return target_affine
 
 
-def wm_syn(t1w_brain, ap_path, working_dir):
+def wm_syn(t1w_brain: str, ap_path: str, working_dir: str):
     """
     A function to perform SyN registration
 
@@ -1008,7 +1057,8 @@ def wm_syn(t1w_brain, ap_path, working_dir):
     moving_affine = ap_img.affine
 
     affine_map = transform_origins(
-        static, static_affine, moving, moving_affine)
+        static, static_affine, moving, moving_affine
+    )
 
     nbins = 32
     sampling_prop = None
@@ -1018,15 +1068,13 @@ def wm_syn(t1w_brain, ap_path, working_dir):
     sigmas = [3.0, 1.0, 0.0]
     factors = [4, 2, 1]
     affine_reg = AffineRegistration(
-        metric=metric, level_iters=level_iters,
-        sigmas=sigmas, factors=factors
+        metric=metric, level_iters=level_iters, sigmas=sigmas, factors=factors
     )
     transform = TranslationTransform3D()
 
     params0 = None
     translation = affine_reg.optimize(
-        static, moving, transform, params0,
-        static_affine, moving_affine
+        static, moving, transform, params0, static_affine, moving_affine
     )
     transform = RigidTransform3D()
 
@@ -1059,30 +1107,22 @@ def wm_syn(t1w_brain, ap_path, working_dir):
     level_iters = [10, 10, 5]
 
     # Refine fit
-    static = np.asarray(t1w_brain_img.dataobj,
-                        dtype=np.float32)
+    static = np.asarray(t1w_brain_img.dataobj, dtype=np.float32)
     static_affine = t1w_brain_img.affine
-    moving = np.asarray(ap_img.dataobj,
-                        dtype=np.float32)
+    moving = np.asarray(ap_img.dataobj, dtype=np.float32)
     moving_affine = ap_img.affine
 
-    sdr = SymmetricDiffeomorphicRegistration(
-        metric, level_iters)
+    sdr = SymmetricDiffeomorphicRegistration(metric, level_iters)
 
     mapping = sdr.optimize(
-        static, moving, static_affine, moving_affine,
-        affine_opt.affine
+        static, moving, static_affine, moving_affine, affine_opt.affine
     )
     warped_moving = mapping.transform(moving)
 
     # Save warped FA image
     run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
     warped_dw = f"{working_dir}/warped_dw_{run_uuid}.nii.gz"
-    nib.save(
-        nib.Nifti1Image(
-            warped_moving,
-            affine=static_affine),
-        warped_dw)
+    nib.save(nib.Nifti1Image(warped_moving, affine=static_affine), warped_dw)
 
     # # We show the registration result with:
     # regtools.overlay_slices(static, warped_moving, None, 0,
@@ -1101,11 +1141,9 @@ def wm_syn(t1w_brain, ap_path, working_dir):
     return mapping, affine_map, warped_dw
 
 
-def median(in_file):
+def median(in_file: str) -> str:
     """Average a 4D dataset across the last dimension using median."""
-    out_file = fname_presuffix(
-        in_file, suffix="_mean.nii.gz",
-        use_ext=False)
+    out_file = fname_presuffix(in_file, suffix="_mean.nii.gz", use_ext=False)
 
     img = nib.load(in_file)
     if img.dataobj.ndim == 3:
@@ -1114,23 +1152,22 @@ def median(in_file):
         nib.squeeze_image(img).to_filename(out_file)
         return out_file
 
-    median_data = np.median(
-        img.get_fdata(dtype="float32"), axis=-1)
+    median_data = np.median(img.get_fdata(dtype="float32"), axis=-1)
 
     hdr = img.header.copy()
     hdr.set_xyzt_units("mm")
     hdr.set_data_dtype(np.float32)
-    nib.Nifti1Image(median_data, img.affine,
-                    hdr).to_filename(out_file)
+    nib.Nifti1Image(median_data, img.affine, hdr).to_filename(out_file)
     return out_file
 
 
 def orient_reslice(
-        infile,
-        outdir,
-        vox_size,
-        bvecs=None,
-        overwrite=True):
+    infile: str,
+    outdir: str,
+    vox_size: str,
+    bvecs: typing.Optional[str] = None,
+    overwrite: bool = True,
+):
     """
     An API to reorient any image to RAS+ and resample
     any image to a given voxel resolution.
@@ -1159,8 +1196,11 @@ def orient_reslice(
 
     """
     import time
-    from pynets.registration.utils import reorient_img, reorient_dwi, \
-        match_target_vox_res
+    from pynets.registration.utils import (
+        reorient_img,
+        reorient_dwi,
+        match_target_vox_res,
+    )
 
     img = nib.load(infile)
     vols = img.shape[-1]
@@ -1171,7 +1211,8 @@ def orient_reslice(
         # Check orientation
         if ("reor-RAS" not in infile) or (overwrite is True):
             [infile, bvecs] = reorient_dwi(
-                infile, bvecs, outdir, overwrite=overwrite)
+                infile, bvecs, outdir, overwrite=overwrite
+            )
             time.sleep(0.25)
         # Check dimensions
         if ("res-" not in infile) or (overwrite is True):
@@ -1219,8 +1260,8 @@ def orient_reslice(
         return outfile, bvecs
 
 
-def normalize_xform(img):
-    """ Set identical, valid qform and sform matrices in an image
+def normalize_xform(img: nib.Nifti1Image) -> nib.Nifti1Image:
+    """Set identical, valid qform and sform matrices in an image
     Selects the best available affine (sform > qform > shape-based), and
     coerces it to be qform-compatible (no shears).
     The resulting image represents this same affine as both qform and sform,
@@ -1248,11 +1289,7 @@ def normalize_xform(img):
     ):
         return img
 
-    new_img = img.__class__(
-        np.asarray(
-            img.dataobj),
-        xform,
-        img.header)
+    new_img = img.__class__(np.asarray(img.dataobj), xform, img.header)
 
     # Unconditionally set sform/qform
     new_img.set_sform(xform, xform_code)
@@ -1261,7 +1298,9 @@ def normalize_xform(img):
     return new_img
 
 
-def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
+def reorient_dwi(
+    dwi_prep: str, bvecs: str, out_dir: str, overwrite: bool = True
+):
     """
     A function to reorient any dwi image and associated bvecs to RAS+.
 
@@ -1326,10 +1365,8 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
                 raise ValueError("Unrecognized bvec format")
 
             output_array = np.zeros_like(bvec_array)
-            for this_axnum, (axnum, flip) in enumerate(
-                transform_orientation):
-                output_array[this_axnum] = bvec_array[int(axnum)
-                                           ] * float(flip)
+            for this_axnum, (axnum, flip) in enumerate(transform_orientation):
+                output_array[this_axnum] = bvec_array[int(axnum)] * float(flip)
             np.savetxt(out_bvec_fname, output_array, fmt="%.8f ")
     else:
         out_fname = (
@@ -1352,7 +1389,9 @@ def reorient_dwi(dwi_prep, bvecs, out_dir, overwrite=True):
     return out_fname, out_bvec_fname
 
 
-def reorient_img(img, out_dir, overwrite=True):
+def reorient_img(
+    img: nib.Nifti1Image, out_dir: str, overwrite: bool = True
+) -> str:
     """
     A function to reorient any non-dwi image to RAS+.
 
@@ -1397,8 +1436,13 @@ def reorient_img(img, out_dir, overwrite=True):
     return out_name
 
 
-def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
-                         remove_orig=True):
+def match_target_vox_res(
+    img_file: str,
+    vox_size: str,
+    out_dir: str,
+    overwrite: bool = True,
+    remove_orig: bool = True,
+) -> str:
     """
     A function to resample an image to a given isotropic voxel
     resolution.
@@ -1442,16 +1486,12 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
             pass
         else:
             import gc
-            print(f"Reslicing image {img_file} "
-                  f"to {vox_size}...")
+
+            print(f"Reslicing image {img_file} " f"to {vox_size}...")
             data2, affine2 = reslice(
                 img.get_fdata(dtype=np.float32), img.affine, zooms, new_zooms
             )
-            nib.save(
-                nib.Nifti1Image(
-                    data2,
-                    affine=affine2),
-                img_file_res)
+            nib.save(nib.Nifti1Image(data2, affine=affine2), img_file_res)
             img_file = img_file_res
             del data2
             gc.collect()
@@ -1460,7 +1500,8 @@ def match_target_vox_res(img_file, vox_size, out_dir, overwrite=True,
             f"{out_dir}/"
             f"{os.path.basename(img_file).split('.nii')[0]}_"
             f"nores-{vox_size}"
-            f".nii.gz")
+            f".nii.gz"
+        )
         if overwrite is False and os.path.isfile(img_file_nores):
             img_file = img_file_nores
             pass

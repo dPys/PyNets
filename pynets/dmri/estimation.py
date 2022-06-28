@@ -2,21 +2,25 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-import os
 import matplotlib
+import typing
 import warnings
+import gc
+import os
 import numpy as np
 import sys
+import nibabel as nib
 
 if sys.platform.startswith("win") is False:
     import indexed_gzip
-import nibabel as nib
 
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
-def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
+def tens_mod_fa_est(
+    gtab_file: str, dwi_file: str, B0_mask: str
+) -> typing.Tuple[str, str, str, str]:
     """
     Estimate a tensor FA image to use for registrations.
 
@@ -42,7 +46,6 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     fa_md_path : str
         File path to FA/MD mask Nifti1Image.
     """
-    import os
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
     from dipy.reconst.dti import fractional_anisotropy, mean_diffusivity
@@ -81,7 +84,9 @@ def tens_mod_fa_est(gtab_file, dwi_file, B0_mask):
     return fa_path, B0_mask, gtab_file, dwi_file
 
 
-def create_anisopowermap(gtab_file, dwi_file, B0_mask):
+def create_anisopowermap(
+    gtab_file: str, dwi_file: str, B0_mask: str
+) -> typing.Tuple[str, str, str, str]:
     """
     Estimate an anisotropic power map image to use for registrations.
 
@@ -112,7 +117,6 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
       Investigation of Best Practices. PLoS ONE.
 
     """
-    import os
     from dipy.io import load_pickle
     from dipy.reconst.shm import anisotropic_power
     from dipy.core.sphere import HemiSphere, Sphere
@@ -120,17 +124,17 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
 
     gtab = load_pickle(gtab_file)
 
-    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
+    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask is False)]
 
     gtab_hemisphere = HemiSphere(
-        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)]
     )
 
     try:
         assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
     except BaseException:
         gtab_hemisphere = Sphere(
-            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)]
         )
 
     img = nib.load(dwi_file)
@@ -151,19 +155,20 @@ def create_anisopowermap(gtab_file, dwi_file, B0_mask):
             sf_to_sh(dwi_data, gtab_hemisphere, sh_order=2)
         )
         anisomap[np.isnan(anisomap)] = 0
-        masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype(
-            "bool"
-        )
+        masked_data = anisomap * np.asarray(nodif_B0_img.dataobj).astype("bool")
         img = nib.Nifti1Image(masked_data.astype(np.float32), aff)
         img.to_filename(anisopwr_path)
         nodif_B0_img.uncache()
         del anisomap
         img.uncache()
+        gc.collect()
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
 
-def tens_mod_est(gtab, data, B0_mask):
+def tens_mod_est(
+    gtab: object, data: np.ndarray, B0_mask: str
+) -> typing.Tuple[object, object]:
     """
     Estimate a tensor ODF model from dwi data.
 
@@ -205,7 +210,9 @@ def tens_mod_est(gtab, data, B0_mask):
     return mod_odf, model
 
 
-def csa_mod_est(gtab, data, B0_mask, sh_order=8):
+def csa_mod_est(
+    gtab: object, data: np.ndarray, B0_mask: str, sh_order: int = 8
+) -> typing.Tuple[np.ndarray, object]:
     """
     Estimate a Constant Solid Angle (CSA) model from dwi data.
 
@@ -246,7 +253,9 @@ def csa_mod_est(gtab, data, B0_mask, sh_order=8):
     return csa_mod.astype("float32"), model
 
 
-def csd_mod_est(gtab, data, B0_mask, sh_order=8):
+def csd_mod_est(
+    gtab: object, data: np.ndarray, B0_mask: str, sh_order: int = 8
+) -> typing.Tuple[np.ndarray, object]:
     """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -309,19 +318,20 @@ def csd_mod_est(gtab, data, B0_mask, sh_order=8):
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     csd_mod = np.clip(csd_mod, 0, np.max(csd_mod, -1)[..., None])
     del response, B0_mask_data
+    gc.collect()
     return csd_mod.astype("float32"), model
 
 
 def mcsd_mod_est(
-    gtab,
-    data,
-    B0_mask,
-    wm_in_dwi,
-    gm_in_dwi,
-    vent_csf_in_dwi,
-    sh_order=8,
-    roi_radii=10,
-):
+    gtab: object,
+    data: np.ndarray,
+    B0_mask: str,
+    wm_in_dwi: str,
+    gm_in_dwi: str,
+    vent_csf_in_dwi: str,
+    sh_order: int = 8,
+    roi_radii: int = 10,
+) -> typing.Tuple[np.ndarray, object]:
     """
     Estimate a Constrained Spherical Deconvolution (CSD) model from dwi data.
 
@@ -441,10 +451,13 @@ def mcsd_mod_est(
 
     mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
     del response_mcsd, B0_mask_data
+    gc.collect()
     return mcsd_mod.astype("float32"), model
 
 
-def sfm_mod_est(gtab, data, B0_mask, BACKEND="loky"):
+def sfm_mod_est(
+    gtab: object, data: np.ndarray, B0_mask: str, BACKEND: str = "loky"
+) -> typing.Tuple[np.ndarray, object]:
     """
     Estimate a Sparse Fascicle Model (SFM) from dwi data.
 
@@ -502,7 +515,9 @@ def sfm_mod_est(gtab, data, B0_mask, BACKEND="loky"):
     return sf_odf.astype("float32"), model
 
 
-def reconstruction(conn_model, gtab, dwi_data, B0_mask):
+def reconstruction(
+    conn_model: str, gtab: object, dwi_data: np.ndarray, B0_mask: str
+) -> typing.Tuple[typing.Union[np.ndarray, object], object]:
     """
     Estimate a tensor model from dwi data.
 
@@ -557,7 +572,7 @@ def reconstruction(conn_model, gtab, dwi_data, B0_mask):
         )
 
     del dwi_data
-
+    gc.collect()
     return mod_fit, mod
 
 
@@ -743,12 +758,12 @@ def streams2graph(
     fiber_density = hardcoded_params["StructuralNetworkWeighting"][
         "fiber_density"
     ][0]
-    overlap_thr = hardcoded_params["StructuralNetworkWeighting"][
-        "overlap_thr"
-    ][0]
-    roi_neighborhood_tol = hardcoded_params["tracking"][
-        "roi_neighborhood_tol"
-    ][0]
+    overlap_thr = hardcoded_params["StructuralNetworkWeighting"]["overlap_thr"][
+        0
+    ]
+    roi_neighborhood_tol = hardcoded_params["tracking"]["roi_neighborhood_tol"][
+        0
+    ]
 
     start = time.time()
 
@@ -799,16 +814,14 @@ def streams2graph(
         if neg_vox is True:
             print(UserWarning("Negative voxel indices detected! " "Check FOV"))
 
-        streamlines = streams_filtered
-        del streams_filtered
         # from fury import actor, window, colormap
         # renderer = window.Renderer()
         # template_actor = actor.contour_from_roi(roi_img.get_fdata(),
         #                                         color=(50, 50, 50),
         #                                         opacity=1)
         # renderer.add(template_actor)
-        # lines_actor = actor.line(streamlines,
-        #                                colormap.line_colors(streamlines))
+        # lines_actor = actor.line(streams_filtered,
+        #                                colormap.line_colors(streams_filtered))
         # renderer.add(lines_actor)
         # window.show(renderer)
         #
@@ -817,11 +830,13 @@ def streams2graph(
         if fa_wei is True:
             fa_weights = values_from_volume(
                 np.asarray(fa_img.dataobj, dtype=np.float32),
-                streamlines,
+                streams_filtered,
                 np.eye(4),
             )
             global_fa_weights = list(utils.flatten(fa_weights))
-            min_global_fa_wei = min([i for i in global_fa_weights if i > 0])
+            min_global_fa_wei = min(
+                [i for i in global_fa_weights if float(i) > 0]
+            )
             max_global_fa_wei = max(global_fa_weights)
             fa_weights_norm = []
             # Here we normalize by global FA
@@ -829,14 +844,14 @@ def streams2graph(
                 fa_weights_norm.append(
                     np.nanmean(
                         (val_list - min_global_fa_wei)
-                        / (max_global_fa_wei - min_global_fa_wei)
+                        / (float(max_global_fa_wei) - float(min_global_fa_wei))
                     )
                 )
 
         # Make streamlines into generators to keep memory at a minimum
-        total_streamlines = len(streamlines)
-        sl = [generate_sl(i) for i in streamlines]
-        del streamlines
+        total_streamlines = len(streams_filtered)
+        sl = [generate_sl(i) for i in streams_filtered]
+        del streams_filtered
         gc.collect()
 
         # Instantiate empty networkX graph object & dictionary and create
@@ -908,9 +923,7 @@ def streams2graph(
                     if not (edge[0], edge[1]) in fiberlengths.keys():
                         fiberlengths[(edge[0], edge[1])] = [len(vox_coords)]
                     else:
-                        fiberlengths[(edge[0], edge[1])].append(
-                            len(vox_coords)
-                        )
+                        fiberlengths[(edge[0], edge[1])].append(len(vox_coords))
 
                 # Get FA values along edge
                 if fa_wei is True:

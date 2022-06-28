@@ -13,31 +13,34 @@ from copy import deepcopy
 from collections import OrderedDict
 from argparse import ArgumentParser
 from pathlib import Path
-from pynets.core.cloud import get_credentials
-from pynets.core.cloud import get_matching_s3_objects
-from pynets.core.cloud import s3_client
+from pynets.core.cloud import (
+    get_credentials,
+    get_matching_s3_objects,
+    s3_client,
+)
 
 
 def batch_submit(
-    bucket,
-    dataset,
-    push_dir,
-    modality,
-    participant_label,
-    session_label,
-    parcellation,
-    cluster_mask,
-    roi,
-    ref,
-    way,
-    plugin,
-    resources,
-    working_dir,
-    verbose,
-    jobdir,
-    credentials,
+    bucket: str,
+    dataset: str,
+    push_dir: str,
+    modality: str,
+    participant_label: str,
+    session_label: str,
+    parcellation: str,
+    cluster_mask: str,
+    roi: str,
+    ref: str,
+    way: str,
+    plugin: str,
+    resources: str,
+    working_dir: str,
+    verbose: bool,
+    jobdir: str,
+    credentials: str,
 ):
-    """Searches through an S3 bucket, gets all subject-ids, creates json
+    """
+    Searches through an S3 bucket, gets all subject-ids, creates json
     files for each, submits batch jobs, and returns list of job ids to query
     status upon later.
 
@@ -45,13 +48,20 @@ def batch_submit(
     __________
     bucket : str
         s3 bucket
-    dataset,
-    push_dir,
-    modality,
-    participant_label,
-    session_label,
-    parcellation,
-    cluster_mask,
+    dataset : str
+        The directory where the dataset is stored on the S3 bucket.
+    push_dir : str
+        The directory where the dataset is stored on the local machine.
+    modality : str
+        The modality of the data.
+    participant_label : str
+        The label of the participant.
+    session_label : str
+        The label of the session.
+    parcellation : str
+        The parcellation to use.
+    cluster_mask : str
+        The cluster mask to use.
     roi : str
         File path to binarized/boolean region-of-interest Nifti1Image file
     ref : str
@@ -59,7 +69,7 @@ def batch_submit(
     way : str
         File path to tractography constraint mask array in native diffusion
         space.
-    plugin: plugin name or object
+    plugin: str
         Plugin to use for execution. You can create your own plugins for
         execution.
     resources : str
@@ -73,6 +83,7 @@ def batch_submit(
         Verbose print for debugging
     jobdir : str
         Directory of batch jobs to generate/check up on credentials
+
     """
 
     print(f"Getting list from s3://{bucket}/{dataset}/...")
@@ -106,10 +117,12 @@ def batch_submit(
 
     print("Submitting jobs to the queue...")
     submit_jobs(jobs, jobdir)
+    return
 
 
-def crawl_bucket(bucket, path, jobdir):
-    """Gets subject list for a given s3 bucket and path
+def crawl_bucket(bucket: str, path: str, jobdir: str) -> OrderedDict:
+    """
+    Gets subject list for a given s3 bucket and path
 
     Parameters
     ----------
@@ -124,6 +137,7 @@ def crawl_bucket(bucket, path, jobdir):
     -------
     OrderedDict
         dictionary containing all subjects and sessions from the path location
+
     """
     from pynets.core.utils import flatten
 
@@ -181,24 +195,67 @@ def crawl_bucket(bucket, path, jobdir):
 
 
 def create_json(
-    bucket,
-    dataset,
-    push_dir,
-    modality,
-    seshs,
-    parcellation,
-    cluster_mask,
-    roi,
-    ref,
-    way,
-    plugin,
-    resources,
-    working_dir,
-    verbose,
-    jobdir,
-    credentials,
-):
-    """Creates the json files for each of the jobs"""
+    bucket: str,
+    dataset: str,
+    push_dir: str,
+    modality: str,
+    seshs: OrderedDict,
+    parcellation: str,
+    cluster_mask: str,
+    roi: str,
+    ref: str,
+    way: str,
+    plugin: str,
+    resources: str,
+    working_dir: str,
+    verbose: bool,
+    jobdir: str,
+    credentials: str,
+) -> list:
+    """
+    Creates the json files for each of the jobs
+
+    Parameters
+    ----------
+    bucket : str
+        s3 bucket name.
+    dataset : str
+        The directory where the dataset is stored on the S3 bucket.
+    push_dir : str
+        The directory where the dataset is stored on the local machine.
+    modality : str
+        The modality of the data.
+    seshs : OrderedDict
+        dictionary containing all subjects and sessions from the path location.
+    parcellation : str
+        The parcellation to use.
+    cluster_mask : str
+        The cluster mask to use.
+    roi : str
+        File path to binarized/boolean region-of-interest Nifti1Image file.
+    ref : str
+        File path to reference Nifti1Image to use as the target for alignment.
+    way : str
+        File path to tractography constraint mask array in native diffusion
+        space.
+    plugin: str
+        Plugin to use for execution. You can create your own plugins for
+        execution.
+    resources : str
+        Maximum number of cores and GB of memory, stated as two integers
+        seperated by comma. Otherwise, default is `auto`, which uses all
+        available resources detected on the compute node(s) used for
+        execution.
+    working_dir : str
+        Path to the working directory to perform SyN and save outputs.
+    verbose : bool
+        Verbose print for debugging.
+    jobdir : str
+        Directory of batch jobs to generate/check up on credentials.
+    credentials : str
+        Path to the credentials file to use for AWS authentication.
+
+    """
     from pathlib import Path
 
     jobsjson = f"{jobdir}/jobs.json"
@@ -207,6 +264,8 @@ def create_json(
     out = subprocess.check_output(f"mkdir -p {jobdir}", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/jobs/", shell=True)
     out = subprocess.check_output(f"mkdir -p {jobdir}/ids/", shell=True)
+
+    print(out)
 
     with open(
         "%s%s"
@@ -309,8 +368,9 @@ def create_json(
     return jobs
 
 
-def submit_jobs(jobs, jobdir):
-    """Give list of jobs to submit, submits them to AWS Batch
+def submit_jobs(jobs: list, jobdir: str):
+    """
+    Give list of jobs to submit, submits them to AWS Batch
 
     Parameters
     ----------
@@ -319,10 +379,6 @@ def submit_jobs(jobs, jobdir):
     jobdir : str
         Directory of batch jobs to generate/check up on
 
-    Returns
-    -------
-    int
-        0
     """
 
     batch = s3_client(service="batch")
@@ -345,15 +401,17 @@ def submit_jobs(jobs, jobdir):
     return 0
 
 
-def kill_jobs(jobdir, reason='"Killing job"'):
-    """Given a list of jobs, kills them all
+def kill_jobs(jobdir: str, reason: str = "Killing job"):
+    """
+    Given a list of jobs, kills them all
 
     Parameters
     ----------
     jobdir : str
         Directory of batch jobs to generate/check up on
     reason : str, optional
-        Task you want to perform on the jobs, by default '"Killing job"'
+        Task you want to perform on the jobs, by default `Killing job`
+
     """
 
     print(f"Cancelling/Terminating jobs in {jobdir}/ids/...")
@@ -374,6 +432,7 @@ def kill_jobs(jobdir, reason='"Killing job"'):
     for jid in jids:
         print(f"Terminating job {jid}")
         batch.terminate_job(jobId=jid, reason=reason)
+    return
 
 
 def main():

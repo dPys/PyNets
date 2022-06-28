@@ -27,7 +27,11 @@ warnings.filterwarnings("ignore")
 
 
 def discr_stat(
-    X, Y, dissimilarity="mahalanobis", remove_isolates=True, return_rdfs=True
+    X: np.ndarray,
+    Y: np.ndarray,
+    dissimilarity: str = "mahalanobis",
+    remove_isolates: bool = True,
+    return_rdfs: bool = True,
 ):
     """
     Computes the discriminability statistic.
@@ -98,7 +102,7 @@ def discr_stat(
         return stat
 
 
-def _discr_rdf(dissimilarities, labels):
+def _discr_rdf(dissimilarities: np.ndarray, labels: np.ndarray) -> np.ndarray:
     """
     A function for computing the int_consist density function of a dataset.
 
@@ -278,9 +282,9 @@ def benchmark_reproducibility(
                                         f"{ses}/{modality}/subnet-"
                                         f"{parcellation}_granularity-{granularity}/nodes/*.json"
                                     )
-                                    emb_data = par_dict[ID][str(ses)][
-                                        modality
-                                    ][alg][comb_tuple]["data"]
+                                    emb_data = par_dict[ID][str(ses)][modality][
+                                        alg
+                                    ][comb_tuple]["data"]
 
                                 emb_shape = emb_data.shape[0]
 
@@ -393,9 +397,7 @@ def benchmark_reproducibility(
                                     df_pref["id"] = ID
                                     df_pref["ses"] = ses
                                     df_pref.replace(0, np.nan, inplace=True)
-                                    df_pref.reset_index(
-                                        drop=True, inplace=True
-                                    )
+                                    df_pref.reset_index(drop=True, inplace=True)
                                     dfs.append(df_pref)
                                 else:
                                     print(

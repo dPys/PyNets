@@ -19,6 +19,8 @@ def main():
     import tempfile
     from datetime import datetime
 
+    import numpy as np
+    import pandas as pd
     import pickle5 as pickle
     from colorama import Fore, Style
     from joblib import Parallel, delayed

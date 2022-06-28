@@ -11,6 +11,9 @@ yaml.preserve_quotes = True
 
 
 def load_runconfig():
+    """
+    Load the run configuration from a file.
+    """
     with open(
         pkg_resources.resource_filename("pynets", "advanced.yaml"), mode="r+"
     ) as stream:
@@ -19,7 +22,10 @@ def load_runconfig():
     return advanced_params
 
 
-def save_runconfig(advanced_params):
+def save_runconfig(advanced_params: str):
+    """
+    Save the run configuration to a file.
+    """
     with open(
         pkg_resources.resource_filename("pynets", "advanced.yaml"), mode="w+"
     ) as stream:
@@ -29,6 +35,9 @@ def save_runconfig(advanced_params):
 
 
 def nested_replace(d, key, new_value):
+    """
+    Replace a nested key in a dictionary.
+    """
     for k, v in d.items():
         if isinstance(v, dict):
             nested_replace(v, key, new_value)

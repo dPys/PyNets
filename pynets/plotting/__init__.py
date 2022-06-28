@@ -12,4 +12,4 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import adjacency, brain, connectogram, interfaces
+from pynets.plotting import adjacency, brain, interfaces

@@ -147,7 +147,6 @@ class FetchNodesLabels(SimpleInterface):
                 networks_list,
                 labels,
             ] = nodemaker.fetch_nilearn_atlas_coords(self.inputs.atlas)
-            parcels_4d = None
             par_max = None
             atlas = self.inputs.atlas
             parcellation = None

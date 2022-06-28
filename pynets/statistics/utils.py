@@ -6,6 +6,7 @@ Copyright (C) 2017
 import glob
 import itertools
 import os
+import typing
 import warnings
 from collections import OrderedDict
 
@@ -13,7 +14,6 @@ import matplotlib
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.ensemble import IsolationForest
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import SimpleImputer
@@ -21,13 +21,16 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import r2_score
 
 matplotlib.use("Agg")
 warnings.simplefilter("ignore")
 
 
-def mahalanobis_distances(X, y=None):
+def mahalanobis_distances(
+    X: np.ndarray, y: typing.Optional[np.ndarray] = None
+) -> np.ndarray:
     """
     Compute the Mahalanobis distances between the training samples and the
     test samples.
@@ -75,66 +78,103 @@ def mahalanobis_distances(X, y=None):
     return np.sqrt(sq_mahal_dist)
 
 
-class ReduceVIF(BaseEstimator, TransformerMixin):
-    def __init__(self, thresh=10.0):
-        self.thresh = thresh
+def slice_by_corr(X, r_min=0):
+    # Create correlation matrix
+    corr_matrix = X.corr().abs()
 
-    def fit(self, X, y=None):
-        self.X = X
-        self.y = y
-        return self
+    # Select upper triangle of correlation matrix
+    upper = corr_matrix.where(
+        np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool)
+    )
 
-    def transform(self, X):
-        return ReduceVIF.calculate_vif(X, self.thresh)
+    # Find features with correlation greater than r_min
+    return X[[column for column in upper.columns if any(upper[column] > r_min)]]
 
-    @staticmethod
-    def calculate_vif(X, thresh=10.0):
-        from statsmodels.stats.outliers_influence import (
-            variance_inflation_factor,
-        )
 
-        dropped = True
-        vif_cols = []
-        while dropped:
-            # Loop repeatedly until we find that all columns within our dataset
-            # have a VIF value less than the threshold
-            variables = X.columns
-            dropped = False
-            vif = []
-            new_vif = 0
-            for var in X.columns:
-                new_vif = variance_inflation_factor(
-                    X[variables].values, X.columns.get_loc(var)
-                )
-                vif.append(new_vif)
-                if np.isinf(new_vif):
-                    break
-            max_vif = max(vif)
-            if max_vif > thresh:
-                maxloc = vif.index(max_vif)
-                print(f"Dropping {X.columns[maxloc]} with vif={max_vif}")
-                vif_cols.append(X.columns.tolist()[maxloc])
-                X = X.drop([X.columns.tolist()[maxloc]], axis=1)
-                dropped = True
-        return X, vif_cols
+def variance_inflation_factor(X, exog_idx):
+    clf = LinearRegression(fit_intercept=True)
+    sub_X = np.delete(np.nan_to_num(X), exog_idx, axis=1)
+    sub_y = X[:, exog_idx][np.newaxis].T
+    sub_clf = clf.fit(sub_X, sub_y)
+    return 1 / (1 - r2_score(sub_y, sub_clf.predict(sub_X)))
 
 
 def preprocess_x_y(
-    X,
-    y,
-    nuisance_cols,
-    nodrop_columns=[],
-    var_thr=0.85,
-    remove_multi=True,
-    remove_outliers=True,
-    standardize=True,
-    std_dev=3,
-    vif_thr=10,
-    missingness_thr=0.50,
-    zero_thr=0.50,
-    oversample=False,
-):
+    X: typing.Union[np.ndarray, pd.DataFrame],
+    y: typing.Union[np.ndarray, pd.DataFrame],
+    nuisance_cols: list,
+    nodrop_columns: list = [],
+    var_thr: float = 0.95,
+    remove_multi: bool = True,
+    remove_outliers: bool = True,
+    standardize: bool = True,
+    standard_method: str = "ss",
+    std_dev: int = 3,
+    vif_thr: int = 10,
+    missingness_thr: float = 0.50,
+    zero_thr: float = 0.50,
+    oversample: bool = False,
+) -> typing.Tuple[
+    typing.Union[np.ndarray, pd.DataFrame],
+    typing.Union[np.ndarray, pd.DataFrame],
+]:
+    """
+
+    Parameters
+    ----------
+    X : np.ndarray or pd.DataFrame
+        Data matrix.
+    y : np.ndarray or pd.DataFrame
+        Target vector.
+    nuisance_cols : list
+        List of nuisance columns to remove.
+    nodrop_columns : list, optional
+        List of columns in X to retain regardless of other constraints,
+        by default [].
+    var_thr : float, optional
+        A threshold for invariance above which a column in X will be dropped,
+        by default 0.95.
+    remove_multi : bool, optional
+        Whether to drop columns of X on the basis of multicollinearity,
+        by default True.
+    remove_outliers : bool, optional
+        Whether to drop rows of X if they have meet the criteria of the detection method,
+        by default True.
+    outlier_removal_method : str, optional
+        The method to use for outlier removal, by default `IF` (isolation forest).
+        Other options are `LOF` (local outlier factor), `NB` (naive bayes), and
+        `LR` (linear regression).
+    standardize : bool, optional
+        Whether to standardize the values for each column of X, by default True.
+    standard_method : str, optional
+        The method to use for standardization. Options are `ss` for StandardScaler and `mm`
+        for MinMaxScaler. Default is `ss`.
+    std_dev : int, optional
+        Number of standard deviations used to establish what counts as an outlier,
+        by default 3.
+    vif_thr : int, optional
+        Variable Inflation Factor threshold. VIF=10 is considered liberal,
+        whereas VIF=5 is considered conservative. Default is 10.
+    missingness_thr : float, optional
+        Threshold for percentage of rows whose values for a particular column in X can be missing,
+        above which the respective column will be dropped, by default 0.50.
+    zero_thr : float, optional
+        Threshold for percentage of rows whose values for a particular column in X are zero,
+        above which the respective column will be dropped, by default 0.50.
+    oversample : bool, optional
+        Whether to apply an oversampling method to correct for imbalanced classes in `y`,
+        by default False.
+
+    Returns
+    -------
+    X : np.ndarray or pd.DataFrame
+        Preprocessed data matrix.
+    y : np.ndarray or pd.DataFrame
+        Preprocessed target vector.
+
+    """
     from colorama import Fore, Style
+    from pynets.statistics.interfaces import ReduceVIF, DeConfounder
 
     # Replace all near-zero with zeros
     # Drop excessively sparse columns with >zero_thr zeros
@@ -186,9 +226,7 @@ def preprocess_x_y(
     # imp = IterativeImputer(random_state=0, sample_posterior=True)
     # X = pd.DataFrame(imp.fit_transform(X, y), columns=X.columns)
     imp1 = SimpleImputer()
-    X = pd.DataFrame(
-        imp1.fit_transform(X.astype("float32")), columns=X.columns
-    )
+    X = pd.DataFrame(imp1.fit_transform(X.astype("float32")), columns=X.columns)
 
     # Deconfound X by any non-connectome columns present, and then remove them
     if len(nuisance_cols) > 0:
@@ -206,7 +244,12 @@ def preprocess_x_y(
 
     # Standardize X
     if standardize is True:
-        scaler = StandardScaler()
+        if standard_method == "ss":
+            scaler = StandardScaler()
+        elif standard_method == "mm":
+            scaler = MinMaxScaler()
+        else:
+            raise ValueError("standard_method must be either `ss` or `mm`")
         X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     # Remove low-variance columns
@@ -218,11 +261,7 @@ def preprocess_x_y(
                 [
                     sel.get_support(indices=True),
                     np.array(
-                        [
-                            X.columns.get_loc(c)
-                            for c in nodrop_columns
-                            if c in X
-                        ]
+                        [X.columns.get_loc(c) for c in nodrop_columns if c in X]
                     ),
                 ]
             )
@@ -299,39 +338,10 @@ def preprocess_x_y(
     return X, y
 
 
-class DeConfounder(BaseEstimator, TransformerMixin):
-    """A transformer removing the effect of y on X using
-    sklearn.linear_model.LinearRegression.
-
-    References
-    ----------
-    D. Chyzhyk, G. Varoquaux, B. Thirion and M. Milham,
-        "Controlling a confound in predictive models with a test set minimizing
-        its effect," 2018 International Workshop on Pattern Recognition in
-        Neuroimaging (PRNI), Singapore, 2018,
-        pp. 1-4. doi: 10.1109/PRNI.2018.8423961
+def make_param_grids() -> dict:
     """
-
-    def __init__(self, confound_model=LinearRegression()):
-        self.confound_model = confound_model
-
-    def fit(self, X, z):
-        if z.ndim == 1:
-            z = z[:, np.newaxis]
-        confound_model = clone(self.confound_model)
-        confound_model.fit(z, X)
-        self.confound_model_ = confound_model
-
-        return self
-
-    def transform(self, X, z):
-        if z.ndim == 1:
-            z = z[:, np.newaxis]
-        X_confounds = self.confound_model_.predict(z)
-        return X - X_confounds
-
-
-def make_param_grids():
+    Generate a list of parameter grids for GridSearchCV or RandomizedSearchCV.
+    """
     param_space = {}
     param_space["Cs"] = [1e-8, 1e-6, 1e-4, 1e-2, 1e-1, 1]
     param_space["l1_ratios"] = [0, 0.25, 0.50, 0.75, 1]
@@ -339,7 +349,9 @@ def make_param_grids():
     return param_space
 
 
-def get_ensembles_embedding(modality, alg, base_dir):
+def get_ensembles_embedding(
+    modality: str, alg: str, base_dir: str
+) -> typing.Optional[list]:
     if alg == "OMNI" or alg == "ASE":
         ensembles_pre = list(
             set(
@@ -406,9 +418,7 @@ def get_ensembles_top(modality, thr_type, base_dir, drop_thr=0.50):
     if os.path.isfile(topology_file):
         df_top = pd.read_csv(topology_file)
         if "Unnamed: 0" in df_top.columns:
-            df_top.drop(
-                df_top.filter(regex="Unnamed: 0"), axis=1, inplace=True
-            )
+            df_top.drop(df_top.filter(regex="Unnamed: 0"), axis=1, inplace=True)
         df_top = df_top.dropna(subset=["id"])
         # df_top = df_top.rename(
         #     columns=lambda x: re.sub("_partcorr", "_model-partcorr", x)
@@ -547,10 +557,12 @@ def make_feature_space_dict(
     return ml_dfs
 
 
-def build_grid(modality, hyperparam_dict, metaparams, ensembles):
+def build_grid(
+    modality: str, hyperparam_dict: dict, hyperparams: list, ensembles: list
+):
     for ensemble in ensembles:
         try:
-            build_mp_dict(ensemble, modality, hyperparam_dict, metaparams)
+            build_mp_dict(ensemble, modality, hyperparam_dict, hyperparams)
         except BaseException:
             print(f"Failed to parse ensemble {ensemble}...")
 
@@ -571,31 +583,8 @@ def build_grid(modality, hyperparam_dict, metaparams, ensembles):
     return hyperparam_dict, grid
 
 
-def get_index_labels(
-    base_dir, ID, ses, modality, parcellation, granularity, emb_shape
-):
-
-    node_files = glob.glob(
-        f"{base_dir}/pynets/sub-{ID}/ses-{ses}/{modality}/subnet-"
-        f"{parcellation}_granularity-{granularity}/nodes/*.json"
-    )
-
-    if len(node_files) > 0:
-        ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
-    else:
-        return [None]
-
-    if emb_shape == len(ixs):
-        return ixs
-    else:
-        return [None]
-
-
-def save_netmets(
-    dir_path, est_path, metric_list_names, net_met_val_list_final
-):
+def save_netmets(dir_path, est_path, metric_list_names, net_met_val_list_final):
     import os
-
     from pynets.core import utils
 
     # And save results to csv
@@ -615,175 +604,10 @@ def save_netmets(
     return out_path_neat
 
 
-def get_ixs_from_node_dict(node_dict):
-    import ast
-
-    if isinstance(node_dict, list):
-        if all(v is None for v in [i["label"] for i in node_dict]):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                (
-                    node_dict_revised[i]["label"],
-                    node_dict_revised[i]["index"],
-                ) = ast.literal_eval(node_dict[i]["index"].replace("\n", ","))
-            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
-        elif all(isinstance(v, str) for v in [i["label"] for i in node_dict]):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                node_dict_revised[i]["label"] = ast.literal_eval(
-                    node_dict[i]["label"].replace("\n", ",")
-                )
-                node_dict_revised[i]["index"] = ast.literal_eval(
-                    node_dict[i]["index"].replace("\n", ",")
-                )
-            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
-        elif all(
-            isinstance(v, tuple) for v in [i["label"] for i in node_dict]
-        ):
-            node_dict_revised = {}
-            for i in range(len(node_dict)):
-                node_dict_revised[i] = {}
-                node_dict_revised[i]["label"] = node_dict[i]["label"][0]
-                node_dict_revised[i]["index"] = node_dict[i]["label"][1]
-            ixs_corr = [int(k["index"]) for k in node_dict_revised.values()]
-        else:
-            ixs_corr = [int(i["index"]) for i in node_dict]
-            node_dict_revised = node_dict
-    else:
-        ixs_corr = [int(i["index"]) for i in node_dict.values()]
-        node_dict_revised = node_dict
-
-    for i in range(len(node_dict)):
-        node_dict_revised[i]["coord"] = node_dict[i]["coord"]
-    return ixs_corr, node_dict_revised
-
-
-def node_files_search(node_files, emb_shape):
-    import gc
-    import json
-    import os
-
-    if len(node_files) == 1:
-        with open(node_files[0], "r+") as f:
-            node_dict = json.load(f)
-        f.close()
-        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
-    else:
-        node_files = sorted(node_files, key=os.path.getmtime)
-        try:
-            with open(node_files[0], "r+") as f:
-                node_dict = json.load(f)
-            f.close()
-            j = 0
-        except BaseException:
-            with open(node_files[1], "r+") as f:
-                node_dict = json.load(f)
-            f.close()
-            j = 1
-
-        ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
-
-        while len(ixs_corr) != emb_shape and j < len(node_files):
-            try:
-                with open(node_files[j], "r+") as f:
-                    node_dict = json.load(f)
-                f.close()
-            except BaseException:
-                j += 1
-                continue
-            ixs_corr, node_dict_revised = get_ixs_from_node_dict(node_dict)
-            j += 1
-    del f
-    gc.collect()
-
-    return ixs_corr, node_dict_revised
-
-
-def retrieve_indices_from_parcellation(
-    node_files, emb_shape, template, vox_size="2mm"
-):
-    from pathlib import Path
-
-    dir_path = str(Path(node_files[0]).parent.parent)
-    if template == "any":
-        import glob
-
-        template_parcs = glob.glob(
-            f"{dir_path}/parcellations/parcellation_" f"space-*.nii.gz"
-        )
-        if len(template_parcs) > 0:
-            sorted_template_parcs = sorted(
-                template_parcs, key=os.path.getmtime
-            )
-            template_parc = sorted_template_parcs[0]
-        else:
-            template_parc = [0]
-    else:
-        template_parc = (
-            f"{dir_path}/parcellations/parcellation_space-"
-            f"{template}.nii.gz"
-        )
-    node_file = make_node_dict_from_parcellation(
-        template_parc, dir_path, vox_size
-    )
-    if os.path.isfile(template_parc):
-        ixs_corr, node_dict = node_files_search([node_file], emb_shape)
-        return ixs_corr, node_dict
-    else:
-        return [], {}
-
-
-def make_node_dict_from_parcellation(parcellation, dir_path, vox_size="2mm"):
-    from pynets.core.nodemaker import (
-        get_names_and_coords_of_parcels,
-        parcel_naming,
-    )
-    from pynets.core.utils import save_coords_and_labels_to_json
-
-    coords, _, _, label_intensities = get_names_and_coords_of_parcels(
-        parcellation
-    )
-    labels = parcel_naming(coords, vox_size)
-    node_file = save_coords_and_labels_to_json(
-        coords, labels, dir_path, subnet="regen", indices=label_intensities
-    )
-    return node_file
-
-
-def parse_closest_ixs(node_files, emb_shape, vox_size="2mm", template="any"):
-    if len(node_files) > 0:
-        node_files_named = [i for i in node_files if f"{emb_shape}" in i]
-        if len(node_files_named) > 0:
-            node_files_named = sorted(node_files_named, key=os.path.getmtime)
-            ixs_corr, node_dict = node_files_search(
-                node_files_named, emb_shape
-            )
-        else:
-            ixs_corr, node_dict = node_files_search(node_files, emb_shape)
-
-        if len(ixs_corr) != emb_shape:
-            ixs_corr, node_dict = retrieve_indices_from_parcellation(
-                node_files, emb_shape, template, vox_size
-            )
-        return ixs_corr, node_dict
-    else:
-        print(
-            UserWarning(
-                "Node files empty. Attempting to retrieve manually "
-                "from parcellations..."
-            )
-        )
-        ixs_corr, node_dict = retrieve_indices_from_parcellation(
-            node_files, emb_shape, template, vox_size
-        )
-        return ixs_corr, node_dict
-
-
 def flatten_latent_positions(
     base_dir, subject_dict, ID, ses, modality, grid_param, alg
 ):
+    from pynets.core.nodemaker import parse_closest_ixs
 
     if grid_param in subject_dict[ID][str(ses)][modality][alg].keys():
         rsn_dict = subject_dict[ID][str(ses)][modality][alg][grid_param]
@@ -890,7 +714,6 @@ def create_feature_space(
     base_dir, df, grid_param, subject_dict, ses, modality, alg, mets=None
 ):
     from colorama import Fore, Style
-
     from pynets.core.utils import load_runconfig
 
     df_tmps = []
@@ -974,7 +797,10 @@ def create_feature_space(
         return pd.Series(np.nan), grid_param
 
 
-def graph_theory_prep(df, thr_type, drop_thr=0.50):
+def graph_theory_prep(
+    df: pd.DataFrame, thr_type: str, drop_thr: float = 0.50
+) -> typing.Tuple[pd.DataFrame, list]:
+
     from sklearn.impute import KNNImputer
     from sklearn.preprocessing import MinMaxScaler
 
@@ -1007,7 +833,22 @@ def graph_theory_prep(df, thr_type, drop_thr=0.50):
     return df, cols
 
 
-def split_df_to_dfs_by_prefix(df, prefixes=[]):
+def split_df_to_dfs_by_prefix(df: pd.DataFrame, prefixes: list = []) -> list:
+    """
+    Split a dataframe into a list of dataframes based on the prefixes.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Dataframe to split.
+    prefixes : list
+        List of prefixes to split the dataframe by.
+
+    Returns
+    -------
+    dfs : list
+        List of dataframes.
+    """
     from pynets.core.utils import flatten
 
     df_splits = []
@@ -1030,7 +871,9 @@ def split_df_to_dfs_by_prefix(df, prefixes=[]):
     return df_splits
 
 
-def de_outlier(X, y, sd, deoutlier_type="IF"):
+def de_outlier(
+    X: np.ndarray, y: np.ndarray, sd: int, deoutlier_type: str = "IF"
+) -> typing.Tuple[np.ndarray, np.ndarray]:
     """
     Remove any gross outlier row in X whose linear residual
     when regressing y against X is > sd standard deviations
@@ -1079,9 +922,8 @@ def de_outlier(X, y, sd, deoutlier_type="IF"):
     return X[outlier_mask], y[outlier_mask]
 
 
-def get_scorer_ens(scorer_name):
+def get_scorer_ens(scorer_name: str) -> typing.Callable:
     import importlib
-
     import sklearn.metrics
 
     found = False
@@ -1106,7 +948,9 @@ def get_scorer_ens(scorer_name):
     return scoring
 
 
-def _draw_bootstrap_sample(rng, X, y):
+def _draw_bootstrap_sample(
+    rng: np.random.RandomState, X: pd.DataFrame, y: pd.DataFrame
+):
     sample_indices = np.arange(X.shape[0])
     bootstrap_indices = rng.choice(
         sample_indices, size=sample_indices.shape[0], replace=True
@@ -1118,18 +962,16 @@ def _draw_bootstrap_sample(rng, X, y):
 
 
 def bias_variance_decomp(
-    estimator,
-    X,
-    y,
-    loss="0-1_loss",
-    num_rounds=200,
-    random_seed=None,
+    estimator: object,
+    X: np.ndarray,
+    y: np.ndarray,
+    loss: str = "0-1_loss",
+    num_rounds: int = 200,
+    random_seed: typing.Union[int, None] = None,
     **fit_params,
 ):
     """
-    # Nonparametric Permutation Test
-    # Author: Sebastian Raschka <sebastianraschka.com> from mlxtend
-    (soon to be replaced by a formal dependency)
+    Nonparametric Permutation Test for Bias-Variance Decomposition
 
     Parameters
     ----------
@@ -1168,11 +1010,6 @@ def bias_variance_decomp(
         average bias, and average bias (all floats), where the average
         is computed over the data points in the test set.
 
-    Examples
-    -----------
-    For usage examples, please see
-    http://rasbt.github.io/mlxtend/user_guide/evaluate/bias_variance_decomp/
-
     """
     supported = ["0-1_loss", "mse"]
     if loss not in supported:
@@ -1194,36 +1031,12 @@ def bias_variance_decomp(
     all_pred = np.zeros((num_rounds, y_test.shape[0]), dtype=dtype)
 
     for i in range(num_rounds):
-        X_boot, y_boot = _draw_bootstrap_sample(rng, X_train, y_train)
+        X_boot, y_boot = _draw_bootstrap_sample(
+            rng, pd.DataFrame(X_train), pd.DataFrame(y_train)
+        )
 
         # Keras support
-        if estimator.__class__.__name__ in ["Sequential", "Functional"]:
-
-            # reset model
-            for ix, layer in enumerate(estimator.layers):
-                if hasattr(
-                    estimator.layers[ix], "kernel_initializer"
-                ) and hasattr(estimator.layers[ix], "bias_initializer"):
-                    weight_initializer = estimator.layers[
-                        ix
-                    ].kernel_initializer
-                    bias_initializer = estimator.layers[ix].bias_initializer
-
-                    old_weights, old_biases = estimator.layers[
-                        ix
-                    ].get_weights()
-
-                    estimator.layers[ix].set_weights(
-                        [
-                            weight_initializer(shape=old_weights.shape),
-                            bias_initializer(shape=len(old_biases)),
-                        ]
-                    )
-
-            estimator.fit(X_boot, y_boot, **fit_params)
-            pred = estimator.predict(X_test).reshape(1, -1)
-        else:
-            pred = estimator.fit(X_boot, y_boot, **fit_params).predict(X_test)
+        pred = estimator.fit(X_boot, y_boot, **fit_params).predict(X_test)
         all_pred[i] = pred
 
     if loss == "0-1_loss":
@@ -1255,12 +1068,167 @@ def bias_variance_decomp(
         main_predictions = np.mean(all_pred, axis=0)
 
         avg_bias = (
-            np.sum((main_predictions - y_test.values) ** 2)
-            / y_test.values.size
+            np.sum((main_predictions - y_test.values) ** 2) / y_test.values.size
         )
         avg_var = np.sum((main_predictions - all_pred) ** 2) / all_pred.size
 
     return avg_expected_loss, avg_bias, avg_var
+
+
+def make_x_y(
+    input_dict: dict,
+    drop_cols: list,
+    target_var: str,
+    embedding_type: str,
+    grid_param: str,
+) -> typing.Tuple[typing.Optional[pd.DataFrame], typing.Optional[pd.DataFrame]]:
+    import pandas as pd
+    import json
+
+    print(target_var)
+    print(embedding_type)
+    print(grid_param)
+
+    if input_dict is None:
+        return None, None
+
+    if not os.path.isfile(input_dict):
+        return None, None
+
+    with open(input_dict) as data_file:
+        data_loaded = json.load(data_file)
+    data_file.close()
+
+    if data_loaded == "{}":
+        return None, None
+
+    if str(grid_param) in data_loaded.keys():
+        df_all = pd.read_json(data_loaded[str(grid_param)])
+        # if df_all[target_var].isin([np.nan, 1]).all():
+        #     df_all[target_var] = df_all[target_var].replace({np.nan: 0})
+        if df_all is None:
+            return None, None
+        else:
+            df_all = df_all.loc[:, ~df_all.columns.duplicated()]
+            df_all.reset_index(level=0, inplace=True)
+            df_all.rename(columns={"index": "id"}, inplace=True)
+            if (
+                all(
+                    df_all.drop(
+                        columns=[
+                            "id",
+                            "participant_id",
+                        ]
+                    )
+                    .isnull()
+                    .all()
+                )
+                or len(df_all.columns) == 1
+                or (
+                    np.abs(
+                        np.array(
+                            df_all.drop(
+                                columns=[
+                                    "id",
+                                    "participant_id",
+                                ]
+                            )
+                        )
+                    )
+                    < 0.00001
+                ).all()
+            ):
+                return None, None
+            else:
+                df_all.drop(columns=["id", "participant_id"], inplace=True)
+                if len(df_all.columns) < 5:
+                    print(f"Too few columns detected for {grid_param}...")
+                    return None, None
+    else:
+        return None, None
+
+    if len(df_all) < 50:
+        print(
+            "\nToo few cases in feature-space after preprocessing, "
+            "skipping...\n"
+        )
+        return None, None
+    elif len(df_all) > 50:
+        drop_cols = [
+            i
+            for i in drop_cols
+            if (i in df_all.columns)
+            or (i.replace("Behavioral_", "") in df_all.columns)
+            or (f"Behavioral_{i}" in df_all.columns)
+        ]
+
+        return df_all.drop(columns=drop_cols), df_all[target_var].values
+    else:
+        print("\nEmpty/Missing Feature-space...\n")
+        return None, None
+
+
+def concatenate_frames(
+    out_dir,
+    modality,
+    embedding_type,
+    target_var,
+    files_,
+    n_boots,
+    dummy_run,
+    search_method,
+    stack,
+    stack_prefix_list,
+):
+    import pandas as pd
+    import os
+
+    if len(files_) > 1:
+        dfs = []
+        parcellations = []
+        for file_ in files_:
+            df = pd.read_csv(file_, chunksize=100000).read()
+            try:
+                df.drop(df.filter(regex="Unname"), axis=1, inplace=True)
+            except BaseException:
+                pass
+            dfs.append(df)
+            parcellations.append(
+                file_.split("_grid_param_")[1].split("/")[0].split(".")[-2]
+            )
+        try:
+            frame = pd.concat(
+                dfs, axis=0, join="outer", sort=True, ignore_index=False
+            )
+
+            out_path = (
+                f"{out_dir}/final_predictions_modality-{modality}_"
+                f"subnet-{str(list(set(parcellations)))}_"
+                f"gradient-{embedding_type}_outcome-{target_var}_"
+                f"boots-{n_boots}_search-{search_method}"
+            )
+
+            if dummy_run is True:
+                out_path = out_path + "_dummy"
+
+            if stack is True:
+                out_path = out_path + "_stacked-" + str(stack_prefix_list)
+
+            out_path = out_path.replace("['", "").replace("']", "") + ".csv"
+
+            print(f"Saving to {out_path}...")
+            if os.path.isfile(out_path):
+                os.remove(out_path)
+            frame.to_csv(out_path, index=False)
+        except ValueError:
+            print(
+                f"Dataframe concatenation failed for {modality}, "
+                f"{embedding_type}, {target_var}..."
+            )
+
+        return out_path, embedding_type, target_var, modality
+    else:
+        return None, embedding_type, target_var, modality
 
 
 def make_subject_dict(
@@ -1286,15 +1254,15 @@ def make_subject_dict(
 
     hardcoded_params = load_runconfig()
     embedding_methods = hardcoded_params["embed"]
-    # metaparams_func = hardcoded_params["metaparams_func"]
-    # metaparams_dwi = hardcoded_params["metaparams_dwi"]
+    # hyperparams_func = hardcoded_params["hyperparams_func"]
+    # hyperparams_dwi = hardcoded_params["hyperparams_dwi"]
 
     miss_frames_all = []
     subject_dict_all = {}
     modality_grids = {}
     for modality in modalities:
         print(f"MODALITY: {modality}")
-        metaparams = eval(f"metaparams_{modality}")
+        hyperparams = eval(f"hyperparams_{modality}")
         for alg in embedding_types:
             print(f"EMBEDDING TYPE: {alg}")
             for ses_name in sessions:
@@ -1309,9 +1277,7 @@ def make_subject_dict(
 
                 if alg != "topology" and alg in embedding_methods:
                     df_top = None
-                    ensembles = get_ensembles_embedding(
-                        modality, alg, base_dir
-                    )
+                    ensembles = get_ensembles_embedding(modality, alg, base_dir)
                     if ensembles is None:
                         print("No ensembles found.")
                         continue
@@ -1335,7 +1301,7 @@ def make_subject_dict(
                 grid = build_grid(
                     modality,
                     hyperparam_dict,
-                    sorted(list(set(metaparams))),
+                    sorted(list(set(hyperparams))),
                     ensembles,
                 )[1]
 
@@ -1398,7 +1364,7 @@ def make_subject_dict(
                 )
                 gc.collect()
             del alg
-        del metaparams
+        del hyperparams
     del modality
     gc.collect()
 
@@ -1530,10 +1496,9 @@ def dwi_grabber(
     embedding_methods,
 ):
     import gc
-
     from colorama import Fore, Style
-
     from pynets.core.utils import filter_cols_from_targets
+    from pynets.core.nodemaker import get_index_labels
 
     try:
         (
@@ -1711,9 +1676,7 @@ def dwi_grabber(
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict
             ):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple][
-                "index"
-            ] = ixs
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
             # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
             # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
@@ -1838,9 +1801,8 @@ def func_grabber(
     embedding_methods,
 ):
     import gc
-
     from colorama import Fore, Style
-
+    from pynets.core.nodemaker import get_index_labels
     from pynets.core.utils import filter_cols_from_targets
 
     try:
@@ -1852,8 +1814,7 @@ def func_grabber(
         except BaseException:
             print(
                 UserWarning(
-                    f"{Fore.YELLOW}Failed to parse: "
-                    f"{comb}{Style.RESET_ALL}"
+                    f"{Fore.YELLOW}Failed to parse: " f"{comb}{Style.RESET_ALL}"
                 )
             )
             return subject_dict, missingness_frame
@@ -2010,9 +1971,7 @@ def func_grabber(
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple], dict
             ):
                 subject_dict[ID][str(ses)][modality][alg][comb_tuple] = {}
-            subject_dict[ID][str(ses)][modality][alg][comb_tuple][
-                "index"
-            ] = ixs
+            subject_dict[ID][str(ses)][modality][alg][comb_tuple]["index"] = ixs
             # subject_dict[ID][str(ses)][modality][alg][comb_tuple]["labels"]
             # = labels
             subject_dict[ID][str(ses)][modality][alg][comb_tuple][
@@ -2132,21 +2091,25 @@ def func_grabber(
     return subject_dict, missingness_frame
 
 
-def cleanNullTerms(d):
+def cleanNullTerms(d: dict):
+    """
+    Remove null terms from the dictionary.
+    """
     clean = {}
     for k, v in d.items():
         if isinstance(v, dict):
             nested = cleanNullTerms(v)
             if len(nested.keys()) > 0:
                 clean[k] = nested
-        elif (
-            v is not None and v is not np.nan and not isinstance(v, pd.Series)
-        ):
+        elif v is not None and v is not np.nan and not isinstance(v, pd.Series):
             clean[k] = v
     return clean
 
 
 def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
+    """
+    Generate a vector for a given subject, modality, algorithm, and universe.
+    """
     vects = []
     for ses in sub_dict_clean[ID].keys():
         # print(ses)
@@ -2178,18 +2141,23 @@ def gen_sub_vec(base_dir, sub_dict_clean, ID, modality, alg, comb_tuple):
     return out
 
 
-def tuple_insert(tup, pos, ele):
+def tuple_insert(tup: tuple, pos: int, ele: typing.Any) -> tuple:
+    """
+    Extend tuple with additional element.
+    """
     tup = tup[:pos] + (ele,) + tup[pos:]
     return tup
 
 
-def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
+def build_mp_dict(
+    file_renamed: str, modality: str, hyperparam_dict: dict, hyperparams: list
+):
     """
     A function to build a metaparameter dictionary by parsing a given
     file path.
     """
 
-    for hyperparam in metaparams:
+    for hyperparam in hyperparams:
         if (
             hyperparam != "smooth"
             and hyperparam != "hpass"
@@ -2233,7 +2201,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
             if "smooth" not in hyperparam_dict.keys():
                 hyperparam_dict["smooth"] = [str(0)]
             hyperparam_dict["smooth"].append(str(0))
-            metaparams.append("smooth")
+            hyperparams.append("smooth")
         if "hpass-" in file_renamed:
             if "hpass" not in hyperparam_dict.keys():
                 hyperparam_dict["hpass"] = [
@@ -2251,7 +2219,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                         .split("Hz")[0]
                     )
                 )
-            metaparams.append("hpass")
+            hyperparams.append("hpass")
         if "signal-" in file_renamed:
             if "signal" not in hyperparam_dict.keys():
                 hyperparam_dict["signal"] = [
@@ -2261,7 +2229,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 hyperparam_dict["signal"].append(
                     str(file_renamed.split("signal-")[1].split("_")[0])
                 )
-            metaparams.append("signal")
+            hyperparams.append("signal")
 
     elif modality == "dwi":
         if "traversal-" in file_renamed:
@@ -2273,7 +2241,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 hyperparam_dict["traversal"].append(
                     str(file_renamed.split("traversal-")[1].split("_")[0])
                 )
-            metaparams.append("traversal")
+            hyperparams.append("traversal")
         if "minlength-" in file_renamed:
             if "minlength" not in hyperparam_dict.keys():
                 hyperparam_dict["minlength"] = [
@@ -2283,7 +2251,7 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 hyperparam_dict["minlength"].append(
                     str(file_renamed.split("minlength-")[1].split("_")[0])
                 )
-            metaparams.append("minlength")
+            hyperparams.append("minlength")
         if "tol-" in file_renamed:
             if "error_margin" not in hyperparam_dict.keys():
                 hyperparam_dict["error_margin"] = [
@@ -2293,9 +2261,9 @@ def build_mp_dict(file_renamed, modality, hyperparam_dict, metaparams):
                 hyperparam_dict["error_margin"].append(
                     str(file_renamed.split("tol-")[1].split("_")[0])
                 )
-            metaparams.append("error_margin")
+            hyperparams.append("error_margin")
 
     for key in hyperparam_dict:
         hyperparam_dict[key] = list(set(hyperparam_dict[key]))
 
-    return hyperparam_dict, metaparams
+    return hyperparam_dict, hyperparams

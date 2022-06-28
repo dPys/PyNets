@@ -317,9 +317,9 @@ def main():
     if "tuning_set" in data_file or "dysphoric" in data_file:
         for ID in df["participant_id"]:
             if len(ID) == 1:
-                df.loc[
-                    df.participant_id == ID, "participant_id"
-                ] = "s00" + str(ID)
+                df.loc[df.participant_id == ID, "participant_id"] = "s00" + str(
+                    ID
+                )
             if len(ID) == 2:
                 df.loc[df.participant_id == ID, "participant_id"] = "s0" + str(
                     ID
@@ -402,9 +402,7 @@ def main():
 
                 if (
                     embedding_type
-                    not in sub_dict_clean[ID][str(sessions[0])][
-                        modality
-                    ].keys()
+                    not in sub_dict_clean[ID][str(sessions[0])][modality].keys()
                 ):
                     print(
                         f"Modality: {modality} not found for ID {ID}, "
@@ -437,9 +435,7 @@ def main():
         f"{template}_"
         f"{thr_type}.pkl"
     )
-    if not os.path.isfile(dict_file_path) or not os.path.isfile(
-        dict_file_path
-    ):
+    if not os.path.isfile(dict_file_path) or not os.path.isfile(dict_file_path):
         ml_dfs = {}
         ml_dfs = make_feature_space_dict(
             base_dir,
@@ -483,7 +479,7 @@ def main():
             if "index" in df.columns:
                 df = df.drop(columns=["index"])
             out_dict[str(recipe)] = df.to_json()
-        except:
+        except BaseException:
             print(f"{recipe} recipe not found...")
             continue
     out_json_path = f"{base_dir}/{iter}.json"
@@ -516,13 +512,12 @@ if __name__ == "__main__":
     import warnings
     import sys
     import gc
-    import json
     from multiprocessing import set_start_method, Process, Manager
     from pynets.statistics.group.prediction import build_predict_workflow
 
     try:
         set_start_method("forkserver")
-    except:
+    except BaseException:
         pass
     warnings.filterwarnings("ignore")
     __spec__ = (

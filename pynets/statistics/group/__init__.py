@@ -10,4 +10,4 @@ import matplotlib
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import benchmarking, prediction
+from pynets.statistics.group import benchmarking, prediction

@@ -2,7 +2,6 @@
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
 """
-import os
 import matplotlib
 import warnings
 import numpy as np
@@ -189,44 +188,7 @@ class Tracking(SimpleInterface):
             use_hardlink=False,
         )
 
-        streams = "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
-            runtime.cwd,
-            "/streamlines_",
-            "%s"
-            % (
-                self.inputs.subnet + "_"
-                if self.inputs.subnet is not None
-                else ""
-            ),
-            "%s"
-            % (
-                op.basename(self.inputs.roi).split(".")[0] + "_"
-                if self.inputs.roi is not None
-                else ""
-            ),
-            self.inputs.conn_model,
-            "_",
-            target_samples,
-            "_",
-            "%s"
-            % (
-                "%s%s" % (self.inputs.node_radius, "mm_")
-                if (
-                    (self.inputs.node_radius != "parc")
-                    and (self.inputs.node_radius is not None)
-                )
-                else "parc_"
-            ),
-            "curv-",
-            str(self.inputs.curv_thr_list).replace(", ", "_"),
-            "_step-",
-            str(self.inputs.step_list).replace(", ", "_"),
-            "_traversal-",
-            self.inputs.traversal,
-            "_minlength-",
-            self.inputs.min_length,
-            ".trk",
-        )
+        streams = f"{runtime.cwd}/streamlines_{(self.inputs.subnet + '_' if self.inputs.subnet is not None else '')}{op.basename(self.inputs.roi).split('.')[0] + '_' if self.inputs.roi is not None else ''}{self.inputs.conn_model}_{target_samples}_{('%s%s' % (self.inputs.node_radius, 'mm_') if ((self.inputs.node_radius != 'parc') and (self.inputs.node_radius is not None)) else 'parc_')}curv-{str(self.inputs.curv_thr_list).replace(', ', '_')}_step-{str(self.inputs.step_list).replace(', ', '_')}_traversal-{self.inputs.traversal}_minlength-{self.inputs.min_length}.trk"
 
         if os.path.isfile(f"{namer_dir}/{op.basename(streams)}"):
             from dipy.io.streamline import load_tractogram
@@ -275,34 +237,7 @@ class Tracking(SimpleInterface):
         else:
             # Fit diffusion model
             # Save reconstruction to .npy
-            recon_path = "%s%s%s%s%s%s%s%s" % (
-                runtime.cwd,
-                "/reconstruction_",
-                "%s"
-                % (
-                    self.inputs.subnet + "_"
-                    if self.inputs.subnet is not None
-                    else ""
-                ),
-                "%s"
-                % (
-                    op.basename(self.inputs.roi).split(".")[0] + "_"
-                    if self.inputs.roi is not None
-                    else ""
-                ),
-                self.inputs.conn_model,
-                "_",
-                "%s"
-                % (
-                    "%s%s" % (self.inputs.node_radius, "mm")
-                    if (
-                        (self.inputs.node_radius != "parc")
-                        and (self.inputs.node_radius is not None)
-                    )
-                    else "parc"
-                ),
-                ".hdf5",
-            )
+            recon_path = f"{runtime.cwd}/reconstruction_{(self.inputs.subnet + '_' if self.inputs.subnet is not None else '')}{op.basename(self.inputs.roi).split('.')[0] + '_' if self.inputs.roi is not None else ''}{self.inputs.conn_model}_{target_samples}_{('%s%s' % (self.inputs.node_radius, 'mm_') if ((self.inputs.node_radius != 'parc') and (self.inputs.node_radius is not None)) else 'parc_')}curv-{str(self.inputs.curv_thr_list).replace(', ', '_')}_step-{str(self.inputs.step_list).replace(', ', '_')}_traversal-{self.inputs.traversal}_minlength-{self.inputs.min_length}.hdf5"
 
             gtab_file_tmp_path = fname_presuffix(
                 self.inputs.gtab_file, suffix="_tmp", newpath=runtime.cwd
@@ -342,6 +277,7 @@ class Tracking(SimpleInterface):
                 )
                 time.sleep(2)
                 del model
+                gc.collect()
             elif os.path.getsize(f"{namer_dir}/{op.basename(recon_path)}") > 0:
                 print(
                     f"Found existing reconstruction with "
@@ -379,8 +315,11 @@ class Tracking(SimpleInterface):
                 )
                 time.sleep(5)
                 del model
+                gc.collect()
+
             dwi_img.uncache()
             del dwi_data
+            gc.collect()
 
             # Load atlas wm-gm interface reduced version for seeding
             labels_im_file_tmp_path_wm_gm_int = fname_presuffix(
@@ -572,6 +511,7 @@ class Tracking(SimpleInterface):
                             "streamlines in the tractogram!"
                         )
                     del dwi_data, mask_data
+                    gc.collect()
 
                 # Save streamlines to trk
                 stf = StatefulTractogram(
@@ -585,6 +525,7 @@ class Tracking(SimpleInterface):
                 )
 
                 del stf
+                gc.collect()
 
                 copyfile(
                     streams,
@@ -772,8 +713,9 @@ class MakeGtabBmask(SimpleInterface):
 
         # Extract and Combine all b0s collected, make mean b0
         print("Extracting b0's...")
-        all_b0s_file = extract_b0(dwi_file_tmp_path, b0_thr_ixs, all_b0s_file)
-        med_b0_file = median(all_b0s_file)
+        med_b0_file = median(
+            extract_b0(dwi_file_tmp_path, b0_thr_ixs, all_b0s_file)
+        )
 
         # TODO replace with bet and median_otsu with deep-learning classifier.
 

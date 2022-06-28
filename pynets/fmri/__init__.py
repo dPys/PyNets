@@ -12,4 +12,4 @@ pickle.HIGHEST_PROTOCOL = 5
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import clustering, estimation, interfaces
+from pynets.fmri import clustering, estimation, interfaces

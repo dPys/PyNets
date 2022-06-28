@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Nov 10 15:44:46 2017
 Copyright (C) 2017
@@ -8,8 +6,7 @@ import matplotlib
 import numpy as np
 import warnings
 import sys
-if sys.platform.startswith('win') is False:
-    import indexed_gzip
+import typing
 import nibabel as nib
 from nipype.interfaces.base import (
     BaseInterfaceInputSpec,
@@ -20,7 +17,10 @@ from nipype.interfaces.base import (
     Directory,
 )
 
-matplotlib.use('Agg')
+if sys.platform.startswith("win") is False:
+    import indexed_gzip
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -29,27 +29,45 @@ class TimeseriesExtraction(object):
     Class for implementing various time-series extracting routines.
     """
 
-    __slots__ = ('net_parcels_nii_path', 'node_radius', 'conf', 'func_file',
-                 'roi', 'dir_path', 'ID', 'subnet', 'smooth', 'mask',
-                 'hpass', 'signal', 'ts_within_nodes',
-                 '_mask_img', '_mask_path', '_func_img', '_t_r',
-                 '_detrending', '_net_parcels_nii_temp_path',
-                 '_net_parcels_map_nifti', '_parcel_masker', 'low_pass')
+    __slots__ = (
+        "net_parcels_nii_path",
+        "node_radius",
+        "conf",
+        "func_file",
+        "roi",
+        "dir_path",
+        "ID",
+        "subnet",
+        "smooth",
+        "mask",
+        "hpass",
+        "signal",
+        "ts_within_nodes",
+        "_mask_img",
+        "_mask_path",
+        "_func_img",
+        "_t_r",
+        "_detrending",
+        "_net_parcels_nii_temp_path",
+        "_net_parcels_map_nifti",
+        "_parcel_masker",
+        "low_pass",
+    )
 
     def __init__(
         self,
-        net_parcels_nii_path,
-        node_radius,
-        conf,
-        func_file,
-        roi,
-        dir_path,
-        ID,
-        subnet,
-        smooth,
-        hpass,
-        mask,
-        signal,
+        net_parcels_nii_path: str,
+        node_radius: float,
+        conf: str,
+        func_file: str,
+        roi: str,
+        dir_path: str,
+        ID: str,
+        subnet: str,
+        smooth: int,
+        hpass: float,
+        mask: str,
+        signal: str,
     ):
         self.net_parcels_nii_path = net_parcels_nii_path
         self.node_radius = node_radius
@@ -74,18 +92,20 @@ class TimeseriesExtraction(object):
         self._parcel_masker = None
 
         from pynets.core.utils import load_runconfig
+
         hardcoded_params = load_runconfig()
         try:
             self.low_pass = hardcoded_params["low_pass"][0]
         except KeyError as e:
-            print(e,
-                  "ERROR: Plotting configuration not successfully "
-                  "extracted from advanced.yaml"
-                  )
+            print(
+                e,
+                "ERROR: Plotting configuration not successfully "
+                "extracted from advanced.yaml",
+            )
 
-    def prepare_inputs(self, num_std_dev=1.5):
+    def prepare_inputs(self, num_std_dev: float = 1.5):
         """Helper function to creating temporary nii's and prepare inputs from
-         time-series extraction"""
+        time-series extraction"""
         import os.path as op
         import nibabel as nib
         from nilearn.image import math_img, index_img, resample_to_img
@@ -95,14 +115,16 @@ class TimeseriesExtraction(object):
             raise FileNotFoundError(
                 "\nFunctional data input not found! Check that the"
                 " file(s) specified with the -i "
-                "flag exist(s)")
+                "flag exist(s)"
+            )
 
         if self.conf:
             if not op.isfile(self.conf):
                 raise FileNotFoundError(
                     "\nConfound regressor file not found! Check "
                     "that the file(s) specified with the -conf flag "
-                    "exist(s)")
+                    "exist(s)"
+                )
 
         self._func_img = nib.load(self.func_file)
         self._func_img.set_data_dtype(np.float32)
@@ -117,8 +139,9 @@ class TimeseriesExtraction(object):
         )
         hdr = self._func_img.header
 
-        self._net_parcels_map_nifti = nib.load(self.net_parcels_nii_path,
-                                               mmap=True)
+        self._net_parcels_map_nifti = nib.load(
+            self.net_parcels_nii_path, mmap=True
+        )
         self._net_parcels_map_nifti.set_data_dtype(np.int16)
 
         if self.hpass:
@@ -146,17 +169,20 @@ class TimeseriesExtraction(object):
             self._mask_img = intersect_masks(
                 [
                     math_img(f"img > {func_int_thr}", img=func_vol_img),
-                    math_img("img > 0.0001",
-                             img=resample_to_img(nib.load(self.mask),
-                                                 func_vol_img))
+                    math_img(
+                        "img > 0.0001",
+                        img=resample_to_img(nib.load(self.mask), func_vol_img),
+                    ),
                 ],
                 threshold=1,
                 connected=False,
             )
             self._mask_img.set_data_dtype(np.uint16)
         else:
-            print("Warning: Proceeding to extract time-series without a "
-                  "brain mask...")
+            print(
+                "Warning: Proceeding to extract time-series without a "
+                "brain mask..."
+            )
             self._mask_img = None
 
         if self.smooth:
@@ -193,7 +219,7 @@ class TimeseriesExtraction(object):
             resampling_target="labels",
             dtype="auto",
             mask_img=self._mask_img,
-            strategy=self.signal
+            strategy=self.signal,
         )
 
         if self.conf is not None:
@@ -201,13 +227,22 @@ class TimeseriesExtraction(object):
 
             confounds = pd.read_csv(self.conf, sep="\t")
 
-            cols = [i for i in confounds.columns if 'motion_outlier' in i
-                    or i == 'framewise_displacement'
-                    or i == 'white_matter' or i == 'csf'
-                    or i == 'std_dvars' or i == 'rot_z'
-                    or i == 'rot_y' or i == 'rot_x' or i == 'trans_z'
-                    or i == 'trans_y' or i == 'trans_x'
-                    or 'non_steady_state_outlier' in i]
+            cols = [
+                i
+                for i in confounds.columns
+                if "motion_outlier" in i
+                or i == "framewise_displacement"
+                or i == "white_matter"
+                or i == "csf"
+                or i == "std_dvars"
+                or i == "rot_z"
+                or i == "rot_y"
+                or i == "rot_x"
+                or i == "trans_z"
+                or i == "trans_y"
+                or i == "trans_x"
+                or "non_steady_state_outlier" in i
+            ]
 
             if len(confounds.index) == self._func_img.shape[-1]:
                 if confounds.isnull().values.any():
@@ -215,34 +250,44 @@ class TimeseriesExtraction(object):
                     conf_corr_df = pd.read_csv(conf_corr, sep="\t")
                     cols = [i for i in cols if i in conf_corr_df.columns]
                     self.ts_within_nodes = self._parcel_masker.fit_transform(
-                        self._func_img.slicer[:,:,:,5:],
-                        confounds=conf_corr_df.loc[5:][cols].values
+                        self._func_img.slicer[:, :, :, 5:],
+                        confounds=conf_corr_df.loc[5:][cols].values,
                     )
                     os.remove(conf_corr)
                 else:
                     self.ts_within_nodes = self._parcel_masker.fit_transform(
-                        self._func_img.slicer[:,:,:,5:],
-                        confounds=pd.read_csv(self.conf,
-                                              sep="\t").loc[5:][cols].values
+                        self._func_img.slicer[:, :, :, 5:],
+                        confounds=pd.read_csv(self.conf, sep="\t")
+                        .loc[5:][cols]
+                        .values,
                     )
             else:
                 from nilearn.image import high_variance_confounds
-                print(f"Shape of confounds ({len(confounds.index)}) does not"
-                      f" equal the number of volumes "
-                      f"({self._func_img.shape[-1]}) in the time-series")
+
+                print(
+                    f"Shape of confounds ({len(confounds.index)}) does not"
+                    f" equal the number of volumes "
+                    f"({self._func_img.shape[-1]}) in the time-series"
+                )
                 self.ts_within_nodes = self._parcel_masker.fit_transform(
-                    self._func_img.slicer[:,:,:,5:],
+                    self._func_img.slicer[:, :, :, 5:],
                     confounds=pd.DataFrame(
-                        high_variance_confounds(
-                            self._func_img,
-                            percentile=1)).loc[5:].values)
+                        high_variance_confounds(self._func_img, percentile=1)
+                    )
+                    .loc[5:]
+                    .values,
+                )
         else:
             from nilearn.image import high_variance_confounds
+
             self.ts_within_nodes = self._parcel_masker.fit_transform(
-                self._func_img.slicer[:,:,:,5:],
+                self._func_img.slicer[:, :, :, 5:],
                 confounds=pd.DataFrame(
-                    high_variance_confounds(self._func_img,
-                                            percentile=1)).loc[5:].values)
+                    high_variance_confounds(self._func_img, percentile=1)
+                )
+                .loc[5:]
+                .values,
+            )
 
         self._func_img.uncache()
 
@@ -286,23 +331,42 @@ class NiParcellate(object):
     """
     Class for implementing various clustering routines.
     """
-    __slots__ = ('func_file', 'clust_mask', 'k', 'clust_type', 'conf',
-                 'local_corr', 'parcellation', 'atlas', '_detrending',
-                 '_standardize', '_func_img', 'mask', '_mask_img',
-                 '_local_conn_mat_path', '_dir_path', '_local_conn',
-                 '_clust_mask_corr_img', '_func_img_data',
-                 '_masked_fmri_vol', '_conn_comps', 'num_conn_comps', 'outdir')
+
+    __slots__ = (
+        "func_file",
+        "clust_mask",
+        "k",
+        "clust_type",
+        "conf",
+        "local_corr",
+        "parcellation",
+        "atlas",
+        "_detrending",
+        "_standardize",
+        "_func_img",
+        "mask",
+        "_mask_img",
+        "_local_conn_mat_path",
+        "_dir_path",
+        "_local_conn",
+        "_clust_mask_corr_img",
+        "_func_img_data",
+        "_masked_fmri_vol",
+        "_conn_comps",
+        "num_conn_comps",
+        "outdir",
+    )
 
     def __init__(
         self,
-        func_file,
-        clust_mask,
-        k,
-        clust_type,
-        local_corr,
-        outdir,
-        conf=None,
-        mask=None,
+        func_file: str,
+        clust_mask: str,
+        k: int,
+        clust_type: str,
+        local_corr: str,
+        outdir: str,
+        conf: typing.Optional[str] = None,
+        mask: typing.Optional[str] = None,
     ):
         """
         Parameters
@@ -360,7 +424,6 @@ class NiParcellate(object):
         self._mask_img = None
         self._local_conn_mat_path = None
         self._dir_path = None
-        _clust_est = None
         self._local_conn = None
         self._clust_mask_corr_img = None
         self._func_img_data = None
@@ -369,7 +432,7 @@ class NiParcellate(object):
         self.num_conn_comps = None
         self.outdir = outdir
 
-    def create_clean_mask(self, num_std_dev=1.5):
+    def create_clean_mask(self, num_std_dev: float = 1.5):
         """
         Create a subject-refined version of the clustering mask.
         """
@@ -385,9 +448,11 @@ class NiParcellate(object):
             f" {str(self.k)} for {str(self.atlas)}...\n"
         )
         self._dir_path = utils.do_dir_path(self.atlas, self.outdir)
-        self.parcellation = f"{self._dir_path}/{mask_name}_" \
-                            f"clust-{self.clust_type}" \
-                            f"_k{str(self.k)}.nii.gz"
+        self.parcellation = (
+            f"{self._dir_path}/{mask_name}_"
+            f"clust-{self.clust_type}"
+            f"_k{str(self.k)}.nii.gz"
+        )
 
         # Load clustering mask
         self._func_img.set_data_dtype(np.float32)
@@ -438,8 +503,10 @@ class NiParcellate(object):
                 connected=False,
             )
             self._clust_mask_corr_img.set_data_dtype(np.uint16)
-        nib.save(self._clust_mask_corr_img,
-                 f"{self._dir_path}{'/'}{mask_name}{'.nii.gz'}")
+        nib.save(
+            self._clust_mask_corr_img,
+            f"{self._dir_path}{'/'}{mask_name}{'.nii.gz'}",
+        )
 
         del func_data
         func_vol_img.uncache()
@@ -447,7 +514,9 @@ class NiParcellate(object):
 
         return self.atlas
 
-    def create_local_clustering(self, overwrite, r_thresh, min_region_size=80):
+    def create_local_clustering(
+        self, overwrite: bool, r_thresh: float, min_region_size: int = 80
+    ):
         """
         API for performing any of a variety of clustering routines available
          through NiLearn.
@@ -476,7 +545,8 @@ class NiParcellate(object):
         print(
             f"Detected {self.num_conn_comps} connected components in "
             f"clustering mask with a mininimum region "
-            f"size of {min_region_size}")
+            f"size of {min_region_size}"
+        )
         if (
             self.clust_type == "complete"
             or self.clust_type == "average"
@@ -485,7 +555,8 @@ class NiParcellate(object):
             if self.num_conn_comps > 1:
                 raise ValueError(
                     "Clustering method unstable with spatial constrainsts "
-                    "applied to multiple connected components.")
+                    "applied to multiple connected components."
+                )
 
         if (
             self.clust_type == "ward" and self.num_conn_comps > 1
@@ -494,7 +565,8 @@ class NiParcellate(object):
                 raise ValueError(
                     "k must minimally be greater than the total number of "
                     "connected components in "
-                    "the mask in the case of agglomerative clustering.")
+                    "the mask in the case of agglomerative clustering."
+                )
 
             if self.local_corr == "tcorr" or self.local_corr == "scorr":
                 self._local_conn_mat_path = (
@@ -503,7 +575,8 @@ class NiParcellate(object):
                 )
 
                 if (not op.isfile(self._local_conn_mat_path)) or (
-                        overwrite is True):
+                    overwrite is True
+                ):
                     from pynets.fmri.clustering import (
                         make_local_connectivity_tcorr,
                         make_local_connectivity_scorr,
@@ -511,15 +584,20 @@ class NiParcellate(object):
 
                     if self.local_corr == "tcorr":
                         self._local_conn = make_local_connectivity_tcorr(
-                            self._func_img, self._clust_mask_corr_img,
-                            thresh=r_thresh)
+                            self._func_img,
+                            self._clust_mask_corr_img,
+                            thresh=r_thresh,
+                        )
                     elif self.local_corr == "scorr":
                         self._local_conn = make_local_connectivity_scorr(
-                            self._func_img, self._clust_mask_corr_img,
-                            thresh=r_thresh)
+                            self._func_img,
+                            self._clust_mask_corr_img,
+                            thresh=r_thresh,
+                        )
                     else:
                         raise ValueError(
-                            "Local connectivity type not available")
+                            "Local connectivity type not available"
+                        )
                     print(
                         f"Saving spatially constrained connectivity structure"
                         f" to: {self._local_conn_mat_path}"
@@ -532,19 +610,21 @@ class NiParcellate(object):
                     raise ValueError(
                         "Must select either `tcorr` or `scorr` local "
                         "connectivity option if you are using "
-                        "`ncut` clustering method")
+                        "`ncut` clustering method"
+                    )
 
                 self._local_conn = "auto"
             else:
                 raise ValueError(
                     "Local connectivity method not recognized. Only tcorr,"
                     " scorr, and auto are currently "
-                    "supported")
+                    "supported"
+                )
         else:
             self._local_conn = "auto"
         return
 
-    def prep_boot(self, blocklength=1):
+    def prep_boot(self, blocklength: int = 1):
         from nilearn.masking import apply_mask
 
         ts_data = apply_mask(self._func_img, self._clust_mask_corr_img)
@@ -607,21 +687,19 @@ class IndividualClustering(SimpleInterface):
         import pkg_resources
         import shutil
         import tempfile
+
         resource_tracker.warnings = None
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
-                      f"{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_brain_"
+            f"{self.inputs.vox_size}.nii.gz",
         )
 
         template_tmp_path = fname_presuffix(
             template, suffix="_tmp", newpath=runtime.cwd
         )
-        copyfile(
-            template,
-            template_tmp_path,
-            copy=True,
-            use_hardlink=False)
+        copyfile(template, template_tmp_path, copy=True, use_hardlink=False)
 
         hardcoded_params = load_runconfig()
 
@@ -633,9 +711,10 @@ class IndividualClustering(SimpleInterface):
         clust_mask_temp_path = orient_reslice(
             self.inputs.clust_mask, runtime.cwd, self.inputs.vox_size
         )
-        cm_suf = os.path.basename(self.inputs.clust_mask).split('.nii')[0]
-        clust_mask_in_t1w_path = f"{runtime.cwd}/clust_mask-" \
-                                 f"{cm_suf}_in_t1w.nii.gz"
+        cm_suf = os.path.basename(self.inputs.clust_mask).split(".nii")[0]
+        clust_mask_in_t1w_path = (
+            f"{runtime.cwd}/clust_mask-" f"{cm_suf}_in_t1w.nii.gz"
+        )
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -644,7 +723,8 @@ class IndividualClustering(SimpleInterface):
             self.inputs.t1w_brain,
             t1w_brain_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         mni2t1w_warp_tmp_path = fname_presuffix(
             self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
@@ -663,7 +743,8 @@ class IndividualClustering(SimpleInterface):
             self.inputs.mni2t1_xfm,
             mni2t1_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         clust_mask_in_t1w = regutils.roi2t1w_align(
             clust_mask_temp_path,
@@ -681,10 +762,8 @@ class IndividualClustering(SimpleInterface):
                 self.inputs.mask, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.mask,
-                out_name_mask,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.mask, out_name_mask, copy=True, use_hardlink=False
+            )
         else:
             out_name_mask = None
 
@@ -695,7 +774,8 @@ class IndividualClustering(SimpleInterface):
             self.inputs.func_file,
             out_name_func_file,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
         out_name_func_file = decompress_nifti(out_name_func_file)
 
         if self.inputs.conf:
@@ -703,10 +783,8 @@ class IndividualClustering(SimpleInterface):
                 self.inputs.conf, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.conf,
-                out_name_conf,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.conf, out_name_conf, copy=True, use_hardlink=False
+            )
         else:
             out_name_conf = None
 
@@ -729,6 +807,7 @@ class IndividualClustering(SimpleInterface):
                 import random
                 from joblib import Memory
                 from joblib.externals.loky import get_reusable_executor
+
                 print(
                     f"Performing circular block bootstrapping with {c_boot}"
                     f" iterations..."
@@ -740,38 +819,56 @@ class IndividualClustering(SimpleInterface):
                 ts_data = memory.cache(ts_data)
 
                 def create_bs_imgs(ts_data, block_size, clust_mask_corr_img):
-                    import nibabel as nib
                     from nilearn.masking import unmask
                     from pynets.fmri.estimation import timeseries_bootstrap
+
                     boot_series = timeseries_bootstrap(
-                        ts_data.func, block_size)[0].astype('float32')
+                        ts_data.func, block_size
+                    )[0].astype("float32")
                     return unmask(boot_series, clust_mask_corr_img)
 
-                def run_bs_iteration(i, ts_data, work_dir, local_corr,
-                                     clust_type, _local_conn_mat_path,
-                                     num_conn_comps, _clust_mask_corr_img,
-                                     _standardize, _detrending, k,
-                                     _local_conn, conf, _dir_path,
-                                     _conn_comps):
-                    import os
-                    import time
+                def run_bs_iteration(
+                    i,
+                    ts_data,
+                    work_dir,
+                    local_corr,
+                    clust_type,
+                    _local_conn_mat_path,
+                    num_conn_comps,
+                    _clust_mask_corr_img,
+                    _standardize,
+                    _detrending,
+                    k,
+                    _local_conn,
+                    conf,
+                    _dir_path,
+                    _conn_comps,
+                ):
                     import gc
                     from pynets.fmri.clustering import parcellate
+
                     print(f"\nBootstrapped iteration: {i}")
                     out_path = f"{work_dir}/boot_parc_tmp_{str(i)}.nii.gz"
 
-                    boot_img = create_bs_imgs(ts_data, block_size,
-                                              _clust_mask_corr_img)
+                    boot_img = create_bs_imgs(
+                        ts_data, block_size, _clust_mask_corr_img
+                    )
                     try:
-                        parcellation = parcellate(boot_img, local_corr,
-                                                  clust_type,
-                                                  _local_conn_mat_path,
-                                                  num_conn_comps,
-                                                  _clust_mask_corr_img,
-                                                  _standardize,
-                                                  _detrending, k, _local_conn,
-                                                  conf, _dir_path,
-                                                  _conn_comps)
+                        parcellation = parcellate(
+                            boot_img,
+                            local_corr,
+                            clust_type,
+                            _local_conn_mat_path,
+                            num_conn_comps,
+                            _clust_mask_corr_img,
+                            _standardize,
+                            _detrending,
+                            k,
+                            _local_conn,
+                            conf,
+                            _dir_path,
+                            _conn_comps,
+                        )
                         parcellation.to_filename(out_path)
                         parcellation.uncache()
                         boot_img.uncache()
@@ -787,34 +884,50 @@ class IndividualClustering(SimpleInterface):
                 counter = 0
                 boot_parcellations = []
                 while float(counter) < float(c_boot):
-                    with Parallel(n_jobs=nthreads, max_nbytes='8000M',
-                                  backend='loky', mmap_mode='r+',
-                                  temp_folder=cache_dir,
-                                  verbose=10) as parallel:
+                    with Parallel(
+                        n_jobs=nthreads,
+                        max_nbytes="8000M",
+                        backend="loky",
+                        mmap_mode="r+",
+                        temp_folder=cache_dir,
+                        verbose=10,
+                    ) as parallel:
                         iter_bootedparcels = parallel(
                             delayed(run_bs_iteration)(
-                                i, ts_data, runtime.cwd, nip.local_corr,
-                                nip.clust_type, nip._local_conn_mat_path,
-                                nip.num_conn_comps, nip._clust_mask_corr_img,
-                                nip._standardize, nip._detrending, nip.k,
-                                nip._local_conn, nip.conf, nip._dir_path,
-                                nip._conn_comps) for i in
-                            range(c_boot))
+                                i,
+                                ts_data,
+                                runtime.cwd,
+                                nip.local_corr,
+                                nip.clust_type,
+                                nip._local_conn_mat_path,
+                                nip.num_conn_comps,
+                                nip._clust_mask_corr_img,
+                                nip._standardize,
+                                nip._detrending,
+                                nip.k,
+                                nip._local_conn,
+                                nip.conf,
+                                nip._dir_path,
+                                nip._conn_comps,
+                            )
+                            for i in range(c_boot)
+                        )
 
-                        boot_parcellations.extend([i for i in
-                                                   iter_bootedparcels if
-                                                   i is not None])
+                        boot_parcellations.extend(
+                            [i for i in iter_bootedparcels if i is not None]
+                        )
                         counter = len(boot_parcellations)
                         del iter_bootedparcels
                         gc.collect()
 
-                print('Bootstrapped samples complete:')
+                print("Bootstrapped samples complete:")
                 print(boot_parcellations)
-                print("Creating spatially-constrained consensus "
-                      "parcellation...")
+                print(
+                    "Creating spatially-constrained consensus "
+                    "parcellation..."
+                )
                 consensus_parcellation = clustering.ensemble_parcellate(
-                    boot_parcellations,
-                    int(self.inputs.k)
+                    boot_parcellations, int(self.inputs.k)
                 )
                 nib.save(consensus_parcellation, nip.parcellation)
                 memory.clear(warn=False)
@@ -828,21 +941,24 @@ class IndividualClustering(SimpleInterface):
                         if os.path.isfile(i):
                             os.system(f"rm -f {i} &")
             else:
-                print(
-                    "Creating spatially-constrained parcellation...")
+                print("Creating spatially-constrained parcellation...")
                 out_path = f"{runtime.cwd}/{atlas}_{str(self.inputs.k)}.nii.gz"
                 func_img = nib.load(out_name_func_file)
-                parcellation = clustering.parcellate(func_img,
-                                                     self.inputs.local_corr,
-                                                     self.inputs.clust_type,
-                                                     nip._local_conn_mat_path,
-                                                     nip.num_conn_comps,
-                                                     nip._clust_mask_corr_img,
-                                                     nip._standardize,
-                                                     nip._detrending, nip.k,
-                                                     nip._local_conn,
-                                                     nip.conf, nip._dir_path,
-                                                     nip._conn_comps)
+                parcellation = clustering.parcellate(
+                    func_img,
+                    self.inputs.local_corr,
+                    self.inputs.clust_type,
+                    nip._local_conn_mat_path,
+                    nip.num_conn_comps,
+                    nip._clust_mask_corr_img,
+                    nip._standardize,
+                    nip._detrending,
+                    nip.k,
+                    nip._local_conn,
+                    nip.conf,
+                    nip._dir_path,
+                    nip._conn_comps,
+                )
                 parcellation.to_filename(out_path)
 
         else:
@@ -850,18 +966,20 @@ class IndividualClustering(SimpleInterface):
                 "Clustering method not recognized. See: "
                 "https://nilearn.github.io/modules/generated/"
                 "nilearn.regions.Parcellations."
-                "html#nilearn.regions.Parcellations")
+                "html#nilearn.regions.Parcellations"
+            )
 
         # Give it a minute
         ix = 0
         while not os.path.isfile(nip.parcellation) and ix < 60:
-            print('Waiting for clustered parcellation...')
+            print("Waiting for clustered parcellation...")
             time.sleep(1)
             ix += 1
 
         if not os.path.isfile(nip.parcellation):
-            raise FileNotFoundError(f"Parcellation clustering failed for"
-                                    f" {nip.parcellation}")
+            raise FileNotFoundError(
+                f"Parcellation clustering failed for" f" {nip.parcellation}"
+            )
 
         self._results["atlas"] = atlas
         self._results["parcellation"] = nip.parcellation
@@ -876,7 +994,7 @@ class IndividualClustering(SimpleInterface):
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
             template_tmp_path,
-            out_name_func_file
+            out_name_func_file,
         ]
         for j in reg_tmp:
             if j is not None:
@@ -941,8 +1059,10 @@ class ExtractTimeseries(SimpleInterface):
         # Decompressing each image to facilitate more seamless memory mapping
         if self.inputs.net_parcels_nii_path:
             out_name_net_parcels_nii_path = fname_presuffix(
-                self.inputs.net_parcels_nii_path, suffix="_tmp",
-                newpath=runtime.cwd)
+                self.inputs.net_parcels_nii_path,
+                suffix="_tmp",
+                newpath=runtime.cwd,
+            )
             copyfile(
                 self.inputs.net_parcels_nii_path,
                 out_name_net_parcels_nii_path,
@@ -950,7 +1070,8 @@ class ExtractTimeseries(SimpleInterface):
                 use_hardlink=False,
             )
             out_name_net_parcels_nii_path = decompress_nifti(
-                out_name_net_parcels_nii_path)
+                out_name_net_parcels_nii_path
+            )
         else:
             out_name_net_parcels_nii_path = None
 
@@ -959,10 +1080,8 @@ class ExtractTimeseries(SimpleInterface):
                 self.inputs.mask, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.mask,
-                out_name_mask,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.mask, out_name_mask, copy=True, use_hardlink=False
+            )
             out_name_mask = decompress_nifti(out_name_mask)
         else:
             out_name_mask = None
@@ -974,7 +1093,8 @@ class ExtractTimeseries(SimpleInterface):
             self.inputs.func_file,
             out_name_func_file,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
         out_name_func_file = decompress_nifti(out_name_func_file)
 
         if self.inputs.conf:
@@ -982,10 +1102,8 @@ class ExtractTimeseries(SimpleInterface):
                 self.inputs.conf, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.conf,
-                out_name_conf,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.conf, out_name_conf, copy=True, use_hardlink=False
+            )
         else:
             out_name_conf = None
 
@@ -1017,10 +1135,15 @@ class ExtractTimeseries(SimpleInterface):
                 == te.ts_within_nodes.shape[1]
             )
         except AssertionError as e:
-            e.args += ('Coords: ', len(self.inputs.coords),
-                       self.inputs.coords, 'Labels:',
-                       len(self.inputs.labels),
-                       self.inputs.labels, te.ts_within_nodes.shape)
+            e.args += (
+                "Coords: ",
+                len(self.inputs.coords),
+                self.inputs.coords,
+                "Labels:",
+                len(self.inputs.labels),
+                self.inputs.labels,
+                te.ts_within_nodes.shape,
+            )
 
         self._results["ts_within_nodes"] = te.ts_within_nodes
         self._results["node_radius"] = te.node_radius

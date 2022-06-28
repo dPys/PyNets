@@ -8,13 +8,11 @@ import numpy as np
 import nibabel as nib
 import sys
 import tempfile
-if sys.platform.startswith('win') is False:
+
+if sys.platform.startswith("win") is False:
     import indexed_gzip
 from pathlib import Path
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
+import pickle5 as pickle
 from pynets.fmri import clustering
 from pynets.fmri.interfaces import NiParcellate
 import os
@@ -57,12 +55,11 @@ def test_make_local_connectivity_tcorr(fmri_estimation_data):
     Test for make_local_connectivity_tcorr functionality
     """
     print("testing make_local_connectivity_tcorr")
-    mask_file = fmri_estimation_data['mask_file2']
-    func_file = fmri_estimation_data['func_file2']
+    mask_file = fmri_estimation_data["mask_file2"]
+    func_file = fmri_estimation_data["func_file2"]
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
-    W = clustering.make_local_connectivity_tcorr(func_img, mask_img,
-                                                 thresh=0.5)
+    W = clustering.make_local_connectivity_tcorr(func_img, mask_img, thresh=0.5)
 
     assert W is not None
 
@@ -76,12 +73,13 @@ def test_make_local_connectivity_scorr(fmri_estimation_data):
     Test for make_local_connectivity_scorr functionality
     """
     print("testing make_local_connectivity_scorr")
-    mask_file = fmri_estimation_data['mask_file2']
-    func_file = fmri_estimation_data['func_file2']
+    mask_file = fmri_estimation_data["mask_file2"]
+    func_file = fmri_estimation_data["func_file2"]
     func_img = nib.load(func_file)
     mask_img = nib.load(mask_file)
-    W = clustering.make_local_connectivity_scorr(func_img, mask_img,
-                                                 thresh=0.50)
+    W = clustering.make_local_connectivity_scorr(
+        func_img, mask_img, thresh=0.50
+    )
 
     assert W is not None
 
@@ -90,13 +88,18 @@ def test_make_local_connectivity_scorr(fmri_estimation_data):
     assert out_img is not None
 
 
-@pytest.mark.parametrize("clust_type", ['rena', 'average',
-                                        'complete', 'ward',
-                                        pytest.param('single',
-                                                     marks=pytest.mark.xfail)])
+@pytest.mark.parametrize(
+    "clust_type",
+    [
+        "rena",
+        "average",
+        "complete",
+        "ward",
+        pytest.param("single", marks=pytest.mark.xfail),
+    ],
+)
 # 1 connected component
-def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data,
-                       clust_type):
+def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data, clust_type):
     """
     Test for ni_parcellate
     """
@@ -107,36 +110,47 @@ def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data,
     tmpdir = str(tmp.name)
     os.makedirs(tmpdir, exist_ok=True)
 
-    if clust_type != 'ncut':
-        local_corr = 'allcorr'
+    if clust_type != "ncut":
+        local_corr = "allcorr"
     else:
-        local_corr = 'tcorr'
-    mask_file = fmri_estimation_data['mask_file']
-    func_file = fmri_estimation_data['func_file']
-    roi_file = random_mni_roi_data['roi_file']
+        local_corr = "tcorr"
+    mask_file = fmri_estimation_data["mask_file"]
+    func_file = fmri_estimation_data["func_file"]
+    roi_file = random_mni_roi_data["roi_file"]
 
-    clust_mask_file = fname_presuffix(mask_file,
-                                      suffix="clust_mask_file",
-                                      use_ext=True)
+    clust_mask_file = fname_presuffix(
+        mask_file, suffix="clust_mask_file", use_ext=True
+    )
     resample_to_img(
         nib.load(roi_file), nib.load(mask_file), interpolation="nearest"
     ).to_filename(clust_mask_file)
     func_img = nib.load(func_file)
-    nip = NiParcellate(func_file=func_file, clust_mask=clust_mask_file,
-                       k=k, clust_type=clust_type, local_corr=local_corr,
-                       outdir=tmpdir)
+    nip = NiParcellate(
+        func_file=func_file,
+        clust_mask=clust_mask_file,
+        k=k,
+        clust_type=clust_type,
+        local_corr=local_corr,
+        outdir=tmpdir,
+    )
     atlas = nip.create_clean_mask()
     nip.create_local_clustering(overwrite=True, r_thresh=0.5)
     out_path = f"{tmpdir}/parc_tmp.nii.gz"
-    parcellation = clustering.parcellate(func_img, local_corr,
-                                         clust_type, nip._local_conn_mat_path,
-                                         nip.num_conn_comps,
-                                         nip._clust_mask_corr_img,
-                                         nip._standardize,
-                                         nip._detrending, nip.k,
-                                         nip._local_conn,
-                                         nip.conf, tmpdir,
-                                         nip._conn_comps)
+    parcellation = clustering.parcellate(
+        func_img,
+        local_corr,
+        clust_type,
+        nip._local_conn_mat_path,
+        nip.num_conn_comps,
+        nip._clust_mask_corr_img,
+        nip._standardize,
+        nip._detrending,
+        nip.k,
+        nip._local_conn,
+        nip.conf,
+        tmpdir,
+        nip._conn_comps,
+    )
 
     nib.save(parcellation, out_path)
     assert out_path is not None
@@ -144,11 +158,16 @@ def test_ni_parcellate(fmri_estimation_data, random_mni_roi_data,
     tmp.cleanup()
 
 
-@pytest.mark.parametrize("clust_type", ['ward', 'ncut', 'rena',
-                                        pytest.param('average',
-                                                     marks=pytest.mark.xfail),
-                                        pytest.param('complete',
-                                                     marks=pytest.mark.xfail)])
+@pytest.mark.parametrize(
+    "clust_type",
+    [
+        "ward",
+        "ncut",
+        "rena",
+        pytest.param("average", marks=pytest.mark.xfail),
+        pytest.param("complete", marks=pytest.mark.xfail),
+    ],
+)
 # >1 connected components
 def test_ni_parcellate_mult_conn_comps(fmri_estimation_data, clust_type):
     """
@@ -159,27 +178,33 @@ def test_ni_parcellate_mult_conn_comps(fmri_estimation_data, clust_type):
     os.makedirs(tmpdir, exist_ok=True)
 
     k = 100
-    if clust_type != 'ncut':
-        local_corr = 'allcorr'
+    if clust_type != "ncut":
+        local_corr = "allcorr"
     else:
-        local_corr = 'tcorr'
+        local_corr = "tcorr"
     clust_mask = pkg_resources.resource_filename(
         "pynets", "templates/rois/triple_net_ICA_overlap_3_sig_bin.nii.gz"
     )
-    mask_file = fmri_estimation_data['mask_file']
-    func_file = fmri_estimation_data['func_file']
+    mask_file = fmri_estimation_data["mask_file"]
+    func_file = fmri_estimation_data["func_file"]
     func_img = nib.load(func_file)
 
-    clust_mask_file = fname_presuffix(mask_file,
-                                suffix="clust_mask_file", use_ext=True)
+    clust_mask_file = fname_presuffix(
+        mask_file, suffix="clust_mask_file", use_ext=True
+    )
     resample_to_img(
         nib.load(clust_mask), nib.load(mask_file), interpolation="nearest"
     ).to_filename(clust_mask_file)
 
-    nip = NiParcellate(func_file=func_file, clust_mask=clust_mask_file,
-                                  k=k, clust_type=clust_type,
-                                  local_corr=local_corr, outdir=tmpdir,
-                                  mask=mask_file)
+    nip = NiParcellate(
+        func_file=func_file,
+        clust_mask=clust_mask_file,
+        k=k,
+        clust_type=clust_type,
+        local_corr=local_corr,
+        outdir=tmpdir,
+        mask=mask_file,
+    )
 
     atlas = nip.create_clean_mask()
 
@@ -189,15 +214,21 @@ def test_ni_parcellate_mult_conn_comps(fmri_estimation_data, clust_type):
     nip.create_local_clustering(overwrite=True, r_thresh=0.4)
     out_path = f"{tmpdir}/parc_tmp.nii.gz"
 
-    parcellation = clustering.parcellate(func_img, local_corr,
-                                         clust_type, nip._local_conn_mat_path,
-                                         nip.num_conn_comps,
-                                         nip._clust_mask_corr_img,
-                                         nip._standardize,
-                                         nip._detrending, nip.k,
-                                         nip._local_conn,
-                                         nip.conf, tmpdir,
-                                         nip._conn_comps)
+    parcellation = clustering.parcellate(
+        func_img,
+        local_corr,
+        clust_type,
+        nip._local_conn_mat_path,
+        nip.num_conn_comps,
+        nip._clust_mask_corr_img,
+        nip._standardize,
+        nip._detrending,
+        nip.k,
+        nip._local_conn,
+        nip.conf,
+        tmpdir,
+        nip._conn_comps,
+    )
 
     nib.save(parcellation, out_path)
     assert atlas is not None

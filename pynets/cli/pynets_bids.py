@@ -4,12 +4,17 @@ Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
 import bids
-
+import typing
 from pynets.core.utils import as_list, merge_dicts
 
 
 def sweep_directory(
-    derivatives_path, modality, space, subj=None, sesh=None, run=None
+    derivatives_path: str,
+    modality: str,
+    space: str,
+    subj: typing.Optional[str],
+    sesh: typing.Optional[str],
+    run: typing.Optional[str],
 ):
     """
     Given a BIDS derivatives directory containing preprocessed functional MRI
@@ -203,13 +208,9 @@ def sweep_directory(
                         func = [i for i in func if space in i.filename]
 
                 conf = layout.get(
-                    **merge_dicts(
-                        mod_query, {"extension": [".tsv", ".tsv.gz"]}
-                    )
+                    **merge_dicts(mod_query, {"extension": [".tsv", ".tsv.gz"]})
                 )
-                conf = [
-                    i for i in conf if "confounds_regressors" in i.filename
-                ]
+                conf = [i for i in conf if "confounds_regressors" in i.filename]
                 if len(conf) > 1 and run is not None:
                     conf = [i for i in conf if f"run-{run}" in i.filename]
 
@@ -491,7 +492,6 @@ def main():
     modality = bids_args.modality
     bids_config = bids_args.config
     analysis_level = bids_args.analysis_level
-    clean = bids_args.clean
 
     if analysis_level == "group" and participant_label is not None:
         raise ValueError(
@@ -591,9 +591,7 @@ def main():
                         info = "sub-" + partic + "/ses-" + ses
                     elif ses is None:
                         info = "sub-" + partic
-                    cloud.s3_get_data(
-                        buck, remo, bids_dir, modality, info=info
-                    )
+                    cloud.s3_get_data(buck, remo, bids_dir, modality, info=info)
             elif analysis_level == "group":
                 if len(session_label) > 1 and session_label[0] != "None":
                     for ses in session_label:
@@ -687,6 +685,7 @@ def main():
                     bids_dir,
                     modality=mod_,
                     space=space,
+                    subj=participant_label,
                     sesh=session_label,
                     run=run,
                 )
@@ -736,6 +735,7 @@ def main():
                 bids_dir,
                 modality=modality[0],
                 space=space,
+                subj=participant_label,
                 sesh=session_label,
                 run=run,
             )
@@ -819,7 +819,7 @@ def main():
     id_list = []
     for i in sorted(list(set(subjs))):
         for ses in sorted(list(set(seshs))):
-            id_list.append(i + "_" + ses)
+            id_list.append(f"{i}_{ses}")
 
     args_dict_all["work"] = bids_args.work
     args_dict_all["output_dir"] = output_dir
@@ -879,14 +879,7 @@ def main():
             p.terminate()
 
         retcode = p.exitcode or retval.get("return_code", 0)
-
         pynets_wf = retval.get("workflow", None)
-        work_dir = retval.get("work_dir")
-        plugin_settings = retval.get("plugin_settings", None)
-        plugin_settings = retval.get("plugin_settings", None)
-        execution_dict = retval.get("execution_dict", None)
-        run_uuid = retval.get("run_uuid", None)
-
         retcode = retcode or int(pynets_wf is None)
         if retcode != 0:
             sys.exit(retcode)

@@ -10,4 +10,4 @@ import matplotlib
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
-from . import algorithms, multiplex, spectral
+from pynets.statistics.individual import algorithms, multiplex, spectral
