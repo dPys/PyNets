@@ -708,6 +708,8 @@ class NetworkAnalysis(BaseInterface):
 
 
 class _MakeDFInputSpec(BaseInterfaceInputSpec):
+    """Input Spec for MakeDF."""
+
     grand_mean_best_estimator = traits.Dict(mandatory=True)
     grand_mean_best_score = traits.Dict(mandatory=True)
     grand_mean_y_predicted = traits.Dict(mandatory=True)
@@ -720,6 +722,8 @@ class _MakeDFInputSpec(BaseInterfaceInputSpec):
 
 
 class _MakeDFOutputSpec(TraitedSpec):
+    """Output Spec for MakeDF."""
+
     df_summary = traits.Any(mandatory=False)
     modality = traits.Str(mandatory=True)
     embedding_type = traits.Str(mandatory=True)
@@ -728,6 +732,7 @@ class _MakeDFOutputSpec(TraitedSpec):
 
 
 class MakeDF(SimpleInterface):
+    """Make a dataframe from the outputs of the Estimate class."""
 
     input_spec = _MakeDFInputSpec
     output_spec = _MakeDFOutputSpec
@@ -871,6 +876,8 @@ class MakeDF(SimpleInterface):
 
 
 class ReduceVIF(BaseEstimator, TransformerMixin):
+    """Reduce Variable Inflation Factor (VIF)"""
+
     def __init__(self, thresh=10.0, nthreads=4, r_min=0, obs=250):
         self.thresh = thresh
         self.nthreads = nthreads
@@ -878,10 +885,31 @@ class ReduceVIF(BaseEstimator, TransformerMixin):
         self.obs = obs
 
     def fit(self, X):
+        """Fit the model to X.
+
+        Parameters
+        ----------
+        X : DataFrame
+            DataFrame to be reduced
+        """
         self.X = X
         return self
 
     def transform(self, X):
+        """Transform X.
+
+        Parameters
+        ----------
+        X : DataFrame
+            DataFrame to be reduced
+
+        Returns
+        -------
+        X:  DataFrame
+            Transformed DataFrame
+        vif_cols: list
+            List of columns with VIF greater than threshold
+        """
         return self.calculate_vif(
             X, self.thresh, self.nthreads, self.r_min, self.obs
         )
@@ -1446,6 +1474,8 @@ class CopyJsonDict(SimpleInterface):
 
 
 class _MakeXYInputSpec(BaseInterfaceInputSpec):
+    """Input interface wrapper MakeXY"""
+
     json_dict = traits.Any(mandatory=True)
     target_var = traits.Str(mandatory=True)
     modality = traits.Str(mandatory=True)
@@ -1454,6 +1484,8 @@ class _MakeXYInputSpec(BaseInterfaceInputSpec):
 
 
 class _MakeXYOutputSpec(TraitedSpec):
+    """Output interface wrapper MakeXY"""
+
     X = traits.Any(mandatory=False)
     Y = traits.Any(mandatory=False)
     embedding_type = traits.Str(mandatory=True)

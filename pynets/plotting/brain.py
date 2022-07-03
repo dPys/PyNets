@@ -392,7 +392,7 @@ def plot_all_func(
     edge_color_override=False,
 ):
     """
-    Plot adjacency matrix, connectogram, and glass brain for functional
+    Plot adjacency matrix and glass brain for functional
     connectome.
 
     Parameters
@@ -463,7 +463,7 @@ def plot_all_func(
     import pickle
     from scipy.spatial import distance
     from pynets.core.utils import load_mat
-    from pynets.plotting import adjacency, connectogram
+    from pynets.plotting import adjacency
 
     ch2better_loc = pkg_resources.resource_filename(
         "pynets", "templates/standard/ch2better.nii.gz"
@@ -518,7 +518,6 @@ def plot_all_func(
                 ]
             )
 
-        connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
         adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
@@ -568,27 +567,6 @@ def plot_all_func(
         if not os.path.isdir(namer_dir):
             os.makedirs(namer_dir, exist_ok=True)
 
-        # Plot connectogram
-        if connectogram is True:
-            if len(conn_matrix) > 20:
-                try:
-                    connectogram.plot_connectogram(
-                        conn_matrix,
-                        conn_model,
-                        atlas,
-                        namer_dir,
-                        ID,
-                        subnet,
-                        labels,
-                    )
-                except RuntimeWarning:
-                    print("\n\n\nWarning: Connectogram plotting failed!")
-            else:
-                print(
-                    "Warning: Cannot plot connectogram for graphs smaller than"
-                    " 20 x 20!"
-                )
-
         # Plot adj. matrix based on determined inputs
         if not node_radius or node_radius == "None":
             node_radius = "parc"
@@ -613,7 +591,7 @@ def plot_all_func(
         if glassbrain is True:
             views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = f"{namer_dir}/glassbrain_{ID}_modality-func_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}{('%s%s%s' % ('roi-', op.basename(roi).split('.')[0], '_') if roi is not None else '')}model-{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '')}{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '')}{('%s%s' % ('extract-', signal) if signal is not None else '')}_thr-{thr}.png"
+            out_path_fig = f"{dir_path}/glassbrain_{ID}_modality-func{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '_')}{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '_')}{('%s%s%s' % ('extract-', signal, '_') if signal is not None else '_')}thr-{thr}.png"
 
             connectome = niplot.plot_connectome(
                 np.zeros(shape=(1, 1)),
@@ -680,8 +658,9 @@ def plot_all_func(
                 ):
                     line.set_lw(edge_size)
                     mod_lines.append(line)
-                connectome.axes[view].ax.lines = mod_lines
-                connectome.axes[view].ax.patches = []
+                connectome.axes[view].ax.lines.clear()
+                connectome.axes[view].ax.lines.extend(mod_lines)
+                connectome.axes[view].ax.patches.clear()
 
             zorder = 10000
             for view in views:
@@ -768,7 +747,7 @@ def plot_all_struct(
     error_margin,
 ):
     """
-    Plot adjacency matrix, connectogram, and glass brain for functional
+    Plot adjacency matrix and glass brain for functional
     connectome.
 
     Parameters
@@ -871,7 +850,6 @@ def plot_all_struct(
         color_theme = hardcoded_params["plotting"]["structural"]["glassbrain"][
             "color_theme"
         ][0]
-        connectogram = hardcoded_params["plotting"]["connectogram"][0]
         glassbrain = hardcoded_params["plotting"]["glassbrain"][0]
         adj = hardcoded_params["plotting"]["adjacency"][0]
         dpi_resolution = hardcoded_params["plotting"]["dpi"][0]
@@ -918,27 +896,6 @@ def plot_all_struct(
         if not os.path.isdir(namer_dir):
             os.makedirs(namer_dir, exist_ok=True)
 
-        # Plot connectogram
-        if connectogram is True:
-            if len(conn_matrix) > 20:
-                try:
-                    connectogram.plot_connectogram(
-                        conn_matrix,
-                        conn_model,
-                        atlas,
-                        namer_dir,
-                        ID,
-                        subnet,
-                        labels,
-                    )
-                except RuntimeWarning:
-                    print("\n\n\nWarning: Connectogram plotting failed!")
-            else:
-                print(
-                    "Warning: Cannot plot connectogram for graphs smaller than"
-                    " 20 x 20!"
-                )
-
         # Plot adj. matrix based on determined inputs
         if not node_radius or node_radius == "None":
             node_radius = "parc"
@@ -964,7 +921,7 @@ def plot_all_struct(
         if glassbrain is True:
             views = ["x", "y", "z"]
             # Plot connectome
-            out_path_fig = f"{namer_dir}/glassbrain_{ID}_modality-dwi_{(subnet if subnet is not None else '')}_{(roi if roi is not None else '')}_model-{conn_model}_{(node_radius if node_radius is not None else '')}_tracktype-{track_type}_{(traversal if traversal is not None else '')}_{(min_length if min_length is not None else '')}_{(error_margin if error_margin is not None else '')}_{(thr if thr is not None else '')}.png"
+            out_path_fig = f"{dir_path}/glassbrain-{ID}_modality-dwi{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc_') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', error_margin, 'mm_') if float(error_margin) > 0 else '_')}{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '_')}{('%s%s%s' % ('tracktype-', track_type, '_') if track_type is not None else '_')}{('%s%s%s' % ('traversal-', traversal, '_') if traversal is not None else '_')}{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
 
             connectome = niplot.plot_connectome(
                 np.zeros(shape=(1, 1)),
@@ -1031,8 +988,9 @@ def plot_all_struct(
                 ):
                     line.set_lw(edge_size * 0.20)
                     mod_lines.append(line)
-                connectome.axes[view].ax.lines = mod_lines
-                connectome.axes[view].ax.patches = []
+                connectome.axes[view].ax.lines.clear()
+                connectome.axes[view].ax.lines.extend(mod_lines)
+                connectome.axes[view].ax.patches.clear()
                 mplcyberpunk.make_lines_glow(
                     connectome.axes[view].ax,
                     n_glow_lines=10,
@@ -1313,7 +1271,9 @@ def plot_all_struct_func(
             ):
                 line.set_lw(edge_size * 0.5)
                 mod_lines.append(line)
-            connectome.axes[view].ax.lines = mod_lines
+            connectome.axes[view].ax.lines.clear()
+            connectome.axes[view].ax.lines.extend(mod_lines)
+            connectome.axes[view].ax.patches.clear()
             mplcyberpunk.make_lines_glow(
                 connectome.axes[view].ax,
                 n_glow_lines=10,
@@ -1356,7 +1316,12 @@ def plot_all_struct_func(
             ):
                 line.set_lw(edge_size)
                 mod_lines.append(line)
-            connectome.axes[view].ax.lines[len(edge_sizes_struct) :] = mod_lines
+
+            connectome.axes[view].ax.lines.clear()
+            connectome.axes[view].ax.lines.extend(mod_lines)
+            # connectome.axes[view].ax.lines[len(edge_sizes_struct) :] = mod_lines
+
+            connectome.axes[view].ax.patches.clear()
             connectome.axes[view].ax.set_axisbelow(True)
 
         zorder = 10000

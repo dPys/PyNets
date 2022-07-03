@@ -22,6 +22,7 @@ Module contents
 ---------------
 
 .. automodule:: pynets
+    :noindex:
     :members:
     :undoc-members:
     :show-inheritance:

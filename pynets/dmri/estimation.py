@@ -45,6 +45,7 @@ def tens_mod_fa_est(
         File path to diffusion weighted Nifti1Image.
     fa_md_path : str
         File path to FA/MD mask Nifti1Image.
+
     """
     from dipy.io import load_pickle
     from dipy.reconst.dti import TensorModel
@@ -456,7 +457,10 @@ def mcsd_mod_est(
 
 
 def sfm_mod_est(
-    gtab: object, data: np.ndarray, B0_mask: str, BACKEND: str = "loky"
+    gtab: object,
+    data: np.ndarray,
+    B0_mask: str,
+    backend: str = "multiprocessing",
 ) -> typing.Tuple[np.ndarray, object]:
     """
     Estimate a Sparse Fascicle Model (SFM) from dwi data.
@@ -489,7 +493,7 @@ def sfm_mod_est(
 
     """
     from dipy.data import get_sphere
-    import dipy.reconst.sfm as sfm
+    from dipy.reconst import sfm
     from pynets.core.utils import load_runconfig
 
     sphere = get_sphere("repulsion724")
@@ -508,7 +512,7 @@ def sfm_mod_est(
             "bool"
         ),
         num_processes=nthreads,
-        parallel_backend=BACKEND,
+        parallel_backend=backend,
     )
     sf_odf = sf_mod.odf(sphere)
     sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])

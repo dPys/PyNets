@@ -266,7 +266,7 @@ def plot_conn_mat_func(
     import networkx as nx
     import os.path as op
 
-    out_path_fig = f"{dir_path}/adjacency_{ID}_modality-func_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '')}_{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '')}_{('%s%s%s' % ('extract-', signal, '') if signal is not None else '')}_thr-{thr}.png"
+    out_path_fig = f"{dir_path}/adjacency_{ID}_modality-func{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '_')}{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '_')}{('%s%s%s' % ('extract-', signal, '_') if signal is not None else '_')}thr-{thr}.png"
 
     hardcoded_params = load_runconfig()
     try:
@@ -298,7 +298,7 @@ def plot_conn_mat_func(
             num_comms,
         ) = community_resolution_selection(G)
 
-        out_path_fig_comm = f"{dir_path}/adjacency-communities_{ID}_modality-func_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '')}_{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '')}_{('%s%s%s' % ('extract-', signal, '') if signal is not None else '')}_thr-{thr}.png"
+        out_path_fig_comm = f"{dir_path}/adjacency-communities_{ID}_modality-func{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', smooth, 'fwhm_') if float(smooth) > 0 else '_')}{('%s%s%s' % ('hpass-', hpass, 'Hz_') if hpass is not None else '_')}{('%s%s%s' % ('extract-', signal, '_') if signal is not None else '_')}thr-{thr}.png"
 
         plot_community_conn_mat(
             conn_matrix,
@@ -382,7 +382,7 @@ def plot_conn_mat_struct(
     import networkx as nx
     import os.path as op
 
-    out_path_fig = f"{dir_path}/adjacency-{ID}_modality-dwi_{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', error_margin, 'fwhm_') if float(error_margin) > 0 else '')}_{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '')}_{('%s%s%s' % ('tracktype-', track_type, '') if track_type is not None else '')}_{('%s%s%s' % ('traversal-', traversal, '') if traversal is not None else '')}_{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
+    out_path_fig = f"{dir_path}/adjacency-{ID}_modality-dwi{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc_') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', error_margin, 'mm_') if float(error_margin) > 0 else '_')}{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '_')}{('%s%s%s' % ('tracktype-', track_type, '_') if track_type is not None else '_')}{('%s%s%s' % ('traversal-', traversal, '_') if traversal is not None else '_')}{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
 
     hardcoded_params = load_runconfig()
     try:
@@ -414,11 +414,7 @@ def plot_conn_mat_struct(
             num_comms,
         ) = community_resolution_selection(G)
 
-        out_path_fig_comm = (
-            f"{dir_path}/adjacency-communities_{ID}_modality-dwi_"
-            f"{('%s%s%s' % ('subnet-', subnet, '_') if subnet is not None else '')}_{roi}_model-{conn_model}_"
-            f"{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc') and (node_radius is not None)) else 'nodetype-parc_')}_{('%s%s%s' % ('tol-', error_margin, 'fwhm_') if float(error_margin) > 0 else '')}_{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '')}_{('%s%s%s' % ('tracktype-', track_type, '') if track_type is not None else '')}_{('%s%s%s' % ('traversal-', traversal, '') if traversal is not None else '')}_{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
-        )
+        out_path_fig_comm = f"{dir_path}/adjacency-communities_{ID}_modality-dwi{('%s%s' % ('_subnet-', subnet) if subnet is not None else '')}{'%s%s' % ('_', op.basename(roi).split('.nii')[0]) if roi is not None else ''}_{conn_model}_{('%s%s%s' % ('nodetype-spheres-', node_radius, 'mm_') if ((node_radius != 'parc_') and (node_radius is not None)) else 'nodetype-parc_')}{('%s%s%s' % ('tol-', error_margin, 'mm_') if float(error_margin) > 0 else '_')}{('%s%s%s' % ('thr-', thr, '_') if thr is not None else '_')}{('%s%s%s' % ('tracktype-', track_type, '_') if track_type is not None else '_')}{('%s%s%s' % ('traversal-', traversal, '_') if traversal is not None else '_')}{('%s%s%s' % ('minlength-', min_length, '') if min_length is not None else '')}.png"
 
         adjacency.plot_community_conn_mat(
             conn_matrix,

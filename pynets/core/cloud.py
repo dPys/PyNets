@@ -282,8 +282,7 @@ def s3_push_data(
     remote : str
         The path to the directory on your S3 bucket containing the data used
         in the pipeline, the string in 'modifier' will be put after the first
-         directory specified in the path as its own directory
-         (/remote[0]/modifier/remote[1]/...)
+        directory specified in the path as its own directory.
     outDir : str
         Path of local directory being pushed to the s3 bucket.
     subject : str

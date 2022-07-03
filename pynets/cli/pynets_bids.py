@@ -20,12 +20,6 @@ def sweep_directory(
     Given a BIDS derivatives directory containing preprocessed functional MRI
     or diffusion MRI data (e.g. fMRIprep or dMRIprep), crawls the outputs and
     prepares necessary inputs for the PyNets pipeline.
-
-    *Note: Since this function searches for derivative file inputs, it does
-     not impose strict BIDS compliance, which can therefore create errors in
-     the case that files are missing or redundant. Please ensure that there
-     redundant files are removed and that BIDS naming conventions are
-     followed closely.
     """
 
     if modality == "dwi":

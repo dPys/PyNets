@@ -36,7 +36,6 @@ pynets.core.workflows module
     :undoc-members:
     :show-inheritance:
 
-
 Module contents
 ---------------
 

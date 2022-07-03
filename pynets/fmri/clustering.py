@@ -986,7 +986,7 @@ def parcellate(
             gc.collect()
 
         super_atlas_ward = nodemaker.create_parcel_atlas(
-            list(flatten(atlas_of_atlases))
+            nib.concat_images(list(flatten(atlas_of_atlases)))
         )[0]
         super_atlas_ward.set_data_dtype(np.uint16)
         del (

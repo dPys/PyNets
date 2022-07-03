@@ -15,7 +15,7 @@ from nilearn.image import math_img
 
 if sys.platform.startswith("win") is False:
     import indexed_gzip
-    
+
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 try:
@@ -228,9 +228,7 @@ def direct_streamline_norm(
             "/streamlines_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
             "%s"
-            % (
-                op.basename(roi).split(".")[0] + "_" if roi is not None else ""
-            ),
+            % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
             conn_model,
             "%s"
             % (
@@ -256,9 +254,7 @@ def direct_streamline_norm(
             "/density_map_t1w_",
             "%s" % (subnet + "_" if subnet is not None else ""),
             "%s"
-            % (
-                op.basename(roi).split(".")[0] + "_" if roi is not None else ""
-            ),
+            % (op.basename(roi).split(".")[0] + "_" if roi is not None else ""),
             conn_model,
             "%s"
             % (
@@ -1291,8 +1287,7 @@ class FmriReg(object):
             f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_head.nii.gz'}"
         )
         self.t1w_brain_mask = (
-            f"{self.reg_path_img}{'/'}{self.t1w_name}"
-            f"{'_brain_mask.nii.gz'}"
+            f"{self.reg_path_img}{'/'}{self.t1w_name}" f"{'_brain_mask.nii.gz'}"
         )
         self.map_name = f"{self.t1w_name}{'_seg'}"
         self.gm_mask = (

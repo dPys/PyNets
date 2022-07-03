@@ -12,6 +12,8 @@ pynets.registration.utils module
     :undoc-members:
     :show-inheritance:
 
+pynets.registration.register module
+-----------------------------------
 .. automodule:: pynets.registration.register
     :undoc-members:
     :show-inheritance:
@@ -23,4 +25,3 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
-

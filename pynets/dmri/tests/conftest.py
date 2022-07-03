@@ -75,7 +75,7 @@ def dmri_estimation_data():
     nib.save(mask_img, B0_mask)
 
     mask_img_small = nib.Nifti1Image(
-        mask[20:50, 55:85, 38:39].astype("float32"), affine=mask_img.affine
+        mask[40:50, 75:85, 38:39].astype("float32"), affine=mask_img.affine
     )
     B0_mask_small = fname_presuffix(
         dwi_file, suffix="_brain_mask_small", use_ext=True
@@ -101,7 +101,7 @@ def dmri_estimation_data():
     save_pickle(gtab_file, gtab)
 
     dwi_data_small = dwi_data.copy()
-    dwi_data_small = dwi_data_small[20:50, 55:85, 38:39]
+    dwi_data_small = dwi_data_small[40:50, 75:85, 38:39]
     dwi_img_small = nib.Nifti1Image(
         dwi_data_small, header=dwi_img.header, affine=dwi_img.affine
     )

@@ -200,8 +200,6 @@ gradients:
 sql_config:
     RDBMS: "sqlite"
 plotting:
-    connectogram:
-        - False
     glassbrain:
         - True
     adjacency:

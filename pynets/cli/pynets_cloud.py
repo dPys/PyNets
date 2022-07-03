@@ -45,7 +45,7 @@ def batch_submit(
     status upon later.
 
     Parameters
-    __________
+    ----------
     bucket : str
         s3 bucket
     dataset : str

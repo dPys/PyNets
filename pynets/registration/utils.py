@@ -620,9 +620,7 @@ def segment_t1w(t1w, basename, nclass=3, beta=0.1, max_iter=100):
 
     t1w_img = nib.load(t1w)
     hmrf = TissueClassifierHMRF()
-    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta, max_iter=max_iter)[
-        2
-    ]
+    PVE = hmrf.classify(t1w_img.get_fdata(), nclass, beta, max_iter=max_iter)[2]
 
     new_img_like(t1w_img, PVE[..., 2]).to_filename(
         f"{os.path.dirname(os.path.abspath(t1w))}/{basename}_{'pve_0.nii.gz'}"
@@ -1056,9 +1054,7 @@ def wm_syn(t1w_brain: str, ap_path: str, working_dir: str):
     moving = np.asarray(ap_img.dataobj, dtype=np.float32)
     moving_affine = ap_img.affine
 
-    affine_map = transform_origins(
-        static, static_affine, moving, moving_affine
-    )
+    affine_map = transform_origins(static, static_affine, moving, moving_affine)
 
     nbins = 32
     sampling_prop = None
