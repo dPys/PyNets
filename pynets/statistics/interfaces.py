@@ -51,7 +51,7 @@ class CleanGraphs(object):
     norm : int
         Indicates method of normalizing resulting graph.
 
-    Attributes
+    Parameters
     ----------
     out_fmt : str
         Format of output graph.

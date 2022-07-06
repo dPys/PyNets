@@ -6,9 +6,10 @@ import matplotlib
 
 matplotlib.use("agg", force=True)
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 
 plt.ioff()
-plt.rcParams["figure.dpi"] = 100
+figure(figsize=(3, 2), dpi=80)
 import tempfile
 import pkg_resources
 import numpy as np

@@ -460,7 +460,7 @@ def get_parser():
         action="store_true",
         help="Optionally use this flag if you wish to apply local thresholding"
         " via the disparity filter approach. -thr values in this case "
-        "correspond to α.\n",
+        "correspond to alpha.\n",
     )
     parser.add_argument(
         "-mplx",
@@ -689,9 +689,9 @@ def build_workflow(args, retval):
     nilearn_coord_atlases = hardcoded_params["nilearn_coord_atlases"]
     nilearn_prob_atlases = hardcoded_params["nilearn_prob_atlases"]
     local_atlases = hardcoded_params["local_atlases"]
-    roi_neighborhood_tol = hardcoded_params["tracking"][
-        "roi_neighborhood_tol"
-    ][0]
+    roi_neighborhood_tol = hardcoded_params["tracking"]["roi_neighborhood_tol"][
+        0
+    ]
 
     # Set Arguments to global variables
     ID = [
@@ -1172,9 +1172,7 @@ def build_workflow(args, retval):
     ):
         multi_thr = True
     elif (
-        (min_thr is not None)
-        or (max_thr is not None)
-        or (step_thr is not None)
+        (min_thr is not None) or (max_thr is not None) or (step_thr is not None)
     ):
         print("ERROR: Missing either min_thr, max_thr, or step_thr flags!")
         retval["return_code"] = 1
@@ -1534,8 +1532,7 @@ def build_workflow(args, retval):
     ):
         if subnet is not None:
             print(
-                f"{Fore.GREEN}Selecting one subnetwork: "
-                f"{Fore.BLUE}{subnet}"
+                f"{Fore.GREEN}Selecting one subnetwork: " f"{Fore.BLUE}{subnet}"
             )
         elif multi_nets is not None:
             subnet = None
@@ -1714,18 +1711,14 @@ def build_workflow(args, retval):
                 print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split(".nii")[
-                            0
-                        ]
+                        cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                         print(f"Cluster atlas: {atlas_clust}")
             else:
                 print(f"{Fore.GREEN}Cluster atlas:")
                 for _clust_mask in clust_mask_list:
                     for _k in k_list:
-                        cl_mask_name = op.basename(_clust_mask).split(".nii")[
-                            0
-                        ]
+                        cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{clust_type}_k{_k}"
                         print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
@@ -1767,17 +1760,13 @@ def build_workflow(args, retval):
             if func_file_list:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split(".nii")[
-                            0
-                        ]
+                        cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
                         print(f"{Fore.BLUE}{atlas_clust}")
             else:
                 for _clust_type in clust_type_list:
                     for _clust_mask in clust_mask_list:
-                        cl_mask_name = op.basename(_clust_mask).split(".nii")[
-                            0
-                        ]
+                        cl_mask_name = op.basename(_clust_mask).split(".nii")[0]
                         atlas_clust = f"{cl_mask_name}_{_clust_type}_k{k}"
                         print(f"{Fore.BLUE}{atlas_clust}")
             clust_mask = None
@@ -1928,9 +1917,7 @@ def build_workflow(args, retval):
             if dwi_file_list:
                 for _ in dwi_file_list:
                     for _atlas in multi_atlas:
-                        if (parc is True) and (
-                            _atlas in nilearn_coord_atlases
-                        ):
+                        if (parc is True) and (_atlas in nilearn_coord_atlases):
                             print(
                                 f"\nERROR: {_atlas} is a coordinate atlas and"
                                 f" must be used with the -spheres flag."
@@ -2949,12 +2936,8 @@ def build_workflow(args, retval):
             wf.get_node(meta_wf.name).get_node(wf_selected)._n_procs = procmem[
                 0
             ]
-            wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[
-                1
-            ]
-            wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[
-                0
-            ]
+            wf.get_node(meta_wf.name).get_node(wf_selected)._mem_gb = procmem[1]
+            wf.get_node(meta_wf.name).get_node(wf_selected).n_procs = procmem[0]
             wf.get_node(meta_wf.name).get_node(wf_selected).mem_gb = procmem[1]
 
         # Fully-automated graph analysis
@@ -2985,9 +2968,9 @@ def build_workflow(args, retval):
         collect_pd_list_net_csv_node._n_procs = runtime_dict[
             "AggregateOutputs"
         ][0]
-        collect_pd_list_net_csv_node._mem_gb = runtime_dict[
-            "AggregateOutputs"
-        ][1]
+        collect_pd_list_net_csv_node._mem_gb = runtime_dict["AggregateOutputs"][
+            1
+        ]
 
         # Combine dataframes across models
         combine_pandas_dfs_node = pe.Node(
@@ -3963,9 +3946,7 @@ def build_workflow(args, retval):
         run_uuid = f"{strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4()}"
         retval["run_uuid"] = run_uuid
 
-        os.makedirs(
-            f"{work_dir}/{ID}_{run_uuid}_{base_dirname}", exist_ok=True
-        )
+        os.makedirs(f"{work_dir}/{ID}_{run_uuid}_{base_dirname}", exist_ok=True)
         wf.base_dir = f"{work_dir}/{ID}_{run_uuid}_{base_dirname}"
 
         if verbose is True:
@@ -4069,9 +4050,7 @@ def build_workflow(args, retval):
             for file_ in [
                 i for i in glob.glob(f"{subj_dir}/dwi/*") if os.path.isfile(i)
             ] + [
-                i
-                for i in glob.glob(f"{subj_dir}/dwi/*/*")
-                if os.path.isfile(i)
+                i for i in glob.glob(f"{subj_dir}/dwi/*/*") if os.path.isfile(i)
             ]:
                 if (
                     ("reor-RAS" in file_)

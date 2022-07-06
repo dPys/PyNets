@@ -28,7 +28,7 @@ class ConnectomeEnsemble(base):
     """
     A data class to manage the metadata of a connectome ensemble from a single subject.
 
-    Attributes
+    Parameters
     ----------
     id : int
         The id of the connectome sample.

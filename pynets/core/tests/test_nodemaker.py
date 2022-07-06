@@ -8,9 +8,10 @@ import matplotlib
 
 matplotlib.use("agg", force=True)
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
 
 plt.ioff()
-plt.rcParams["figure.dpi"] = 100
+figure(figsize=(3, 2), dpi=80)
 import numpy as np
 import time
 import nibabel as nib

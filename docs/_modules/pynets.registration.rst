@@ -9,19 +9,23 @@ pynets.registration.utils module
 
 .. automodule:: pynets.registration.utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 pynets.registration.register module
 -----------------------------------
 .. automodule:: pynets.registration.register
-    :undoc-members:
+    :members:
+    :show-inheritance:
+
+pynets.registration.interfaces module
+-------------------------------------
+.. automodule:: pynets.registration.interfaces
+    :members:
     :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: pynets.registration
-    :members:
-    :undoc-members:
+    :members: utils, register
     :show-inheritance:

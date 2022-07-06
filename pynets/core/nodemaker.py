@@ -1869,8 +1869,39 @@ def get_node_attributes(
 
 
 def get_index_labels(
-    base_dir, ID, ses, modality, parcellation, granularity, emb_shape
-):
+    base_dir: str,
+    ID: str,
+    ses: str,
+    modality: str,
+    parcellation: str,
+    granularity: str,
+    emb_shape: int,
+) -> list:
+    """
+    Get index labels.
+
+    Parameters
+    ----------
+    base_dir : str
+        The base directory.
+    ID : str
+        The ID.
+    ses : str
+        The session.
+    modality : str
+        The modality.
+    parcellation : str
+        The parcellation.
+    granularity : str
+        The granularity.
+    emb_shape : int
+        The shape of the embedding.
+
+    Returns
+    -------
+    ixs_corr : list
+        A list of indices.
+    """
     from pynets.core.nodemaker import parse_closest_ixs
 
     node_files = glob.glob(
