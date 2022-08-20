@@ -18,10 +18,10 @@ from nipype.interfaces.base import (
     Directory,
 )
 
-if sys.platform.startswith('win') is False:
+if sys.platform.startswith("win") is False:
     import indexed_gzip
-    
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
 
 
@@ -89,36 +89,32 @@ class RegisterDWI(SimpleInterface):
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.fa_path,
-            fa_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False
+        )
 
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.ap_path,
-            ap_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False
+        )
 
         B0_mask_tmp_path = fname_presuffix(
             self.inputs.B0_mask, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.B0_mask,
-            B0_mask_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False
+        )
 
         anat_mask_existing = [
             i
-            for i in glob.glob(f"{self.inputs.in_dir}"
-                               f"/*_desc-brain_mask.nii.gz")
+            for i in glob.glob(
+                f"{self.inputs.in_dir}" f"/*_desc-brain_mask.nii.gz"
+            )
             if "MNI" not in i
         ] + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_brain_mask.nii.gz")
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_brain_mask.nii.gz"
+        )
 
         # Copy T1w mask, if provided, else use existing, if detected, else
         # compute a fresh one
@@ -127,15 +123,15 @@ class RegisterDWI(SimpleInterface):
                 self.inputs.mask, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.mask,
-                mask_tmp_path,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False
+            )
         else:
-            if len(anat_mask_existing) > 0 and \
-                    self.inputs.mask is None and \
-                    op.isfile(anat_mask_existing[0]) and \
-                    self.inputs.force_create_mask is False:
+            if (
+                len(anat_mask_existing) > 0
+                and self.inputs.mask is None
+                and op.isfile(anat_mask_existing[0])
+                and self.inputs.force_create_mask is False
+            ):
                 mask_tmp_path = fname_presuffix(
                     anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
@@ -143,7 +139,8 @@ class RegisterDWI(SimpleInterface):
                     anat_mask_existing[0],
                     mask_tmp_path,
                     copy=True,
-                    use_hardlink=False)
+                    use_hardlink=False,
+                )
                 mask_tmp_path = orient_reslice(
                     mask_tmp_path, runtime.cwd, self.inputs.vox_size
                 )
@@ -151,49 +148,45 @@ class RegisterDWI(SimpleInterface):
                 mask_tmp_path = None
 
         gm_mask_existing = glob.glob(
-            f"{self.inputs.in_dir}/*_label-GM_probseg.nii.gz") + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz")
+            f"{self.inputs.in_dir}/*_label-GM_probseg.nii.gz"
+        ) + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz"
+        )
         if len(gm_mask_existing) > 0:
             gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
-                gm_mask_existing[0],
-                gm_mask,
-                copy=True,
-                use_hardlink=False)
-            gm_mask = orient_reslice(
-                gm_mask, runtime.cwd, self.inputs.vox_size
+                gm_mask_existing[0], gm_mask, copy=True, use_hardlink=False
             )
+            gm_mask = orient_reslice(gm_mask, runtime.cwd, self.inputs.vox_size)
         else:
             gm_mask = None
 
         wm_mask_existing = glob.glob(
-            f"{self.inputs.in_dir}/*_label-WM_probseg.nii.gz") + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz")
+            f"{self.inputs.in_dir}/*_label-WM_probseg.nii.gz"
+        ) + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz"
+        )
         if len(wm_mask_existing) > 0:
             wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
-                wm_mask_existing[0],
-                wm_mask,
-                copy=True,
-                use_hardlink=False)
-            wm_mask = orient_reslice(
-                wm_mask, runtime.cwd, self.inputs.vox_size
+                wm_mask_existing[0], wm_mask, copy=True, use_hardlink=False
             )
+            wm_mask = orient_reslice(wm_mask, runtime.cwd, self.inputs.vox_size)
         else:
             wm_mask = None
 
         csf_mask_existing = glob.glob(
             f"{self.inputs.in_dir}/*_label-CSF_probseg.nii.gz"
         ) + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_2.nii.gz")
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_2.nii.gz"
+        )
         if len(csf_mask_existing) > 0:
             csf_mask = fname_presuffix(
-                csf_mask_existing[0], newpath=runtime.cwd)
+                csf_mask_existing[0], newpath=runtime.cwd
+            )
             copyfile(
-                csf_mask_existing[0],
-                csf_mask,
-                copy=True,
-                use_hardlink=False)
+                csf_mask_existing[0], csf_mask, copy=True, use_hardlink=False
+            )
             csf_mask = orient_reslice(
                 csf_mask, runtime.cwd, self.inputs.vox_size
             )
@@ -207,7 +200,8 @@ class RegisterDWI(SimpleInterface):
             self.inputs.anat_file,
             anat_file_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         reg = register.DmriReg(
             basedir_path=runtime.cwd,
@@ -238,8 +232,7 @@ class RegisterDWI(SimpleInterface):
         reg.t1w2mni_align()
         time.sleep(0.5)
 
-        if (self.inputs.overwrite is True) or (
-                op.isfile(reg.t1w2dwi) is False):
+        if (self.inputs.overwrite is True) or (op.isfile(reg.t1w2dwi) is False):
             # Align t1w to dwi
             reg.t1w2dwi_align()
             time.sleep(0.5)
@@ -282,14 +275,12 @@ class RegisterDWI(SimpleInterface):
             reg.vent_mask_dwi,
             reg.vent_mask_t1w,
             reg.corpuscallosum_mask_t1w,
-            reg.corpuscallosum_dwi
+            reg.corpuscallosum_dwi,
         ]
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
-
-        gc.collect()
 
         return runtime
 
@@ -364,25 +355,23 @@ class RegisterAtlasDWI(SimpleInterface):
         import os
         import os.path as op
         from pynets.registration import utils as regutils
-        from pynets.core.nodemaker import \
-            drop_coords_labels_from_restricted_parcellation
+        from pynets.core.nodemaker import (
+            drop_coords_labels_from_restricted_parcellation,
+        )
         from nipype.utils.filemanip import fname_presuffix, copyfile
         import pkg_resources
         from pynets.core import utils
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
-                      f"{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_brain_"
+            f"{self.inputs.vox_size}.nii.gz",
         )
 
         template_tmp_path = fname_presuffix(
             template, suffix="_tmp", newpath=runtime.cwd
         )
-        copyfile(
-            template,
-            template_tmp_path,
-            copy=True,
-            use_hardlink=False)
+        copyfile(template, template_tmp_path, copy=True, use_hardlink=False)
 
         if self.inputs.parcellation is None:
             parcellation_tmp_path = None
@@ -394,7 +383,8 @@ class RegisterAtlasDWI(SimpleInterface):
                 self.inputs.parcellation,
                 parcellation_tmp_path,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
         if self.inputs.parcellation4d is None:
             parcellation4d_tmp_path = None
@@ -413,28 +403,22 @@ class RegisterAtlasDWI(SimpleInterface):
             self.inputs.fa_path, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.fa_path,
-            fa_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.fa_path, fa_tmp_path, copy=True, use_hardlink=False
+        )
 
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.ap_path,
-            ap_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False
+        )
 
         B0_mask_tmp_path = fname_presuffix(
             self.inputs.B0_mask, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.B0_mask,
-            B0_mask_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.B0_mask, B0_mask_tmp_path, copy=True, use_hardlink=False
+        )
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -443,7 +427,8 @@ class RegisterAtlasDWI(SimpleInterface):
             self.inputs.t1w_brain,
             t1w_brain_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         mni2t1w_warp_tmp_path = fname_presuffix(
             self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
@@ -472,7 +457,8 @@ class RegisterAtlasDWI(SimpleInterface):
             self.inputs.mni2t1_xfm,
             mni2t1_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         t1w_brain_mask_tmp_path = fname_presuffix(
             self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
@@ -511,7 +497,8 @@ class RegisterAtlasDWI(SimpleInterface):
             self.inputs.t1w2dwi_xfm,
             t1w2dwi_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         wm_gm_int_in_dwi_tmp_path = fname_presuffix(
             self.inputs.wm_gm_int_in_dwi, suffix="_tmp", newpath=runtime.cwd
@@ -525,9 +512,8 @@ class RegisterAtlasDWI(SimpleInterface):
 
         if self.inputs.subnet or self.inputs.waymask:
             if self.inputs.waymask:
-                wm_suf = os.path.basename(self.inputs.waymask).split('.nii')[0]
-                atlas_name = f"{self.inputs.atlas}_" \
-                             f"{wm_suf}"
+                wm_suf = os.path.basename(self.inputs.waymask).split(".nii")[0]
+                atlas_name = f"{self.inputs.atlas}_" f"{wm_suf}"
             else:
                 atlas_name = f"{self.inputs.atlas}_{self.inputs.subnet}"
         else:
@@ -536,15 +522,17 @@ class RegisterAtlasDWI(SimpleInterface):
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
         os.makedirs(base_dir_tmp, exist_ok=True)
 
-        mni2dwi_xfm = f"{base_dir_tmp}{'/'}{atlas_name}" \
-            f"{'_mni2dwi_xfm.mat'}"
+        mni2dwi_xfm = f"{base_dir_tmp}{'/'}{atlas_name}" f"{'_mni2dwi_xfm.mat'}"
 
-        aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}" \
-                              f"{'_t1w_mni.nii.gz'}"
-        aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}" \
-                              f"{'_t1w_skull.nii.gz'}"
-        dwi_aligned_atlas = f"{base_dir_tmp}{'/'}{atlas_name}" \
-                            f"{'_dwi_track.nii.gz'}"
+        aligned_atlas_t1mni = (
+            f"{base_dir_tmp}{'/'}{atlas_name}" f"{'_t1w_mni.nii.gz'}"
+        )
+        aligned_atlas_skull = (
+            f"{base_dir_tmp}{'/'}{atlas_name}" f"{'_t1w_skull.nii.gz'}"
+        )
+        dwi_aligned_atlas = (
+            f"{base_dir_tmp}{'/'}{atlas_name}" f"{'_dwi_track.nii.gz'}"
+        )
         dwi_aligned_atlas_wmgm_int = (
             f"{base_dir_tmp}{'/'}{atlas_name}{'_dwi_track_wmgm_int.nii.gz'}"
         )
@@ -579,9 +567,13 @@ class RegisterAtlasDWI(SimpleInterface):
         )
 
         # Correct coords and labels
-        [dwi_aligned_atlas, coords, labels] = \
-            drop_coords_labels_from_restricted_parcellation(
-            dwi_aligned_atlas, self.inputs.coords, self.inputs.labels)
+        [
+            dwi_aligned_atlas,
+            coords,
+            labels,
+        ] = drop_coords_labels_from_restricted_parcellation(
+            dwi_aligned_atlas, self.inputs.coords, self.inputs.labels
+        )
 
         if self.inputs.waymask:
             waymask_tmp_path = fname_presuffix(
@@ -591,17 +583,20 @@ class RegisterAtlasDWI(SimpleInterface):
                 self.inputs.waymask,
                 waymask_tmp_path,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             # Align waymask
             waymask_in_t1w = (
                 f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
-                f"in_t1w.nii.gz")
+                f"in_t1w.nii.gz"
+            )
             waymask_in_dwi = (
                 f"{runtime.cwd}/waymask-"
                 f"{os.path.basename(self.inputs.waymask).split('.nii')[0]}_"
-                f"in_dwi.nii.gz")
+                f"in_dwi.nii.gz"
+            )
 
             waymask_in_dwi = regutils.waymask2dwi_align(
                 waymask_tmp_path,
@@ -661,8 +656,7 @@ class RegisterAtlasDWI(SimpleInterface):
         # self._results["wm_in_dwi"] = wm_in_dwi_tmp_path
 
         self._results["wm_in_dwi"] = self.inputs.wm_in_dwi
-        self._results["dwi_aligned_atlas_wmgm_int"] = \
-            dwi_aligned_atlas_wmgm_int
+        self._results["dwi_aligned_atlas_wmgm_int"] = dwi_aligned_atlas_wmgm_int
         self._results["dwi_aligned_atlas"] = dwi_aligned_atlas
         self._results["aligned_atlas_t1w"] = aligned_atlas_t1w
         self._results["node_radius"] = self.inputs.node_radius
@@ -687,16 +681,18 @@ class RegisterAtlasDWI(SimpleInterface):
         if not op.isdir(namer_dir):
             os.mkdir(namer_dir)
 
-        if not os.path.isfile(f"{namer_dir}/"
-                              f"{op.basename(self.inputs.fa_path)}"):
+        if not os.path.isfile(
+            f"{namer_dir}/" f"{op.basename(self.inputs.fa_path)}"
+        ):
             copyfile(
                 self.inputs.fa_path,
                 f"{namer_dir}/{op.basename(self.inputs.fa_path)}",
                 copy=True,
                 use_hardlink=False,
             )
-        if not os.path.isfile(f"{namer_dir}/"
-                              f"{op.basename(self.inputs.ap_path)}"):
+        if not os.path.isfile(
+            f"{namer_dir}/" f"{op.basename(self.inputs.ap_path)}"
+        ):
             copyfile(
                 self.inputs.ap_path,
                 f"{namer_dir}/"
@@ -704,8 +700,9 @@ class RegisterAtlasDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-        if not os.path.isfile(f"{namer_dir}/"
-                              f"{op.basename(self.inputs.B0_mask)}"):
+        if not os.path.isfile(
+            f"{namer_dir}/" f"{op.basename(self.inputs.B0_mask)}"
+        ):
             copyfile(
                 self.inputs.B0_mask,
                 f"{namer_dir}/"
@@ -713,8 +710,9 @@ class RegisterAtlasDWI(SimpleInterface):
                 copy=True,
                 use_hardlink=False,
             )
-        if not os.path.isfile(f"{namer_dir}/"
-                              f"{op.basename(self.inputs.gtab_file)}"):
+        if not os.path.isfile(
+            f"{namer_dir}/" f"{op.basename(self.inputs.gtab_file)}"
+        ):
             copyfile(
                 self.inputs.gtab_file,
                 f"{namer_dir}/{op.basename(self.inputs.gtab_file)}",
@@ -737,14 +735,12 @@ class RegisterAtlasDWI(SimpleInterface):
             t1_aligned_mni_tmp_path,
             t1w2dwi_bbr_xfm_tmp_path,
             t1w2dwi_xfm_tmp_path,
-            t1w_brain_tmp_path
+            t1w_brain_tmp_path,
         ]
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
-
-        gc.collect()
 
         return runtime
 
@@ -795,36 +791,29 @@ class RegisterROIDWI(SimpleInterface):
         import pkg_resources
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
-                      f"{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_brain_"
+            f"{self.inputs.vox_size}.nii.gz",
         )
 
         template_tmp_path = fname_presuffix(
             template, suffix="_tmp", newpath=runtime.cwd
         )
-        copyfile(
-            template,
-            template_tmp_path,
-            copy=True,
-            use_hardlink=False)
+        copyfile(template, template_tmp_path, copy=True, use_hardlink=False)
 
         ap_tmp_path = fname_presuffix(
             self.inputs.ap_path, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.ap_path,
-            ap_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.ap_path, ap_tmp_path, copy=True, use_hardlink=False
+        )
 
         roi_file_tmp_path = fname_presuffix(
             self.inputs.roi, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.roi,
-            roi_file_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.roi, roi_file_tmp_path, copy=True, use_hardlink=False
+        )
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -833,7 +822,8 @@ class RegisterROIDWI(SimpleInterface):
             self.inputs.t1w_brain,
             t1w_brain_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         mni2t1w_warp_tmp_path = fname_presuffix(
             self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
@@ -862,14 +852,19 @@ class RegisterROIDWI(SimpleInterface):
             self.inputs.mni2t1_xfm,
             mni2t1_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
-        roi_in_t1w = f"{runtime.cwd}/waymask-" \
-                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
-                     f"_in_t1w.nii.gz"
-        roi_in_dwi = f"{runtime.cwd}/waymask-" \
-                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
-                     f"_in_dwi.nii.gz"
+        roi_in_t1w = (
+            f"{runtime.cwd}/waymask-"
+            f"{os.path.basename(self.inputs.roi).split('.nii')[0]}"
+            f"_in_t1w.nii.gz"
+        )
+        roi_in_dwi = (
+            f"{runtime.cwd}/waymask-"
+            f"{os.path.basename(self.inputs.roi).split('.nii')[0]}"
+            f"_in_dwi.nii.gz"
+        )
 
         if self.inputs.roi:
             t1w_brain_tmp_path2 = fname_presuffix(
@@ -879,7 +874,8 @@ class RegisterROIDWI(SimpleInterface):
                 self.inputs.t1w_brain,
                 t1w_brain_tmp_path2,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             mni2t1w_warp_tmp_path2 = fname_presuffix(
                 self.inputs.mni2t1w_warp, suffix="2", newpath=runtime.cwd
@@ -888,7 +884,8 @@ class RegisterROIDWI(SimpleInterface):
                 self.inputs.mni2t1w_warp,
                 mni2t1w_warp_tmp_path2,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             # Align roi
             roi_in_dwi = regutils.roi2dwi_align(
@@ -915,14 +912,12 @@ class RegisterROIDWI(SimpleInterface):
             mni2t1_xfm_tmp_path,
             template_tmp_path,
             roi_in_t1w,
-            roi_file_tmp_path
+            roi_file_tmp_path,
         ]
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
-
-        gc.collect()
 
         return runtime
 
@@ -973,12 +968,12 @@ class RegisterFunc(SimpleInterface):
 
         anat_mask_existing = [
             i
-            for i in glob.glob(self.inputs.in_dir +
-                               "/*_desc-brain_mask.nii.gz")
+            for i in glob.glob(self.inputs.in_dir + "/*_desc-brain_mask.nii.gz")
             if "MNI" not in i
         ] + glob.glob(
             f"{runtime.cwd}/../../*/register_node/*/imgs/"
-            f"t1w_brain_mask.nii.gz")
+            f"t1w_brain_mask.nii.gz"
+        )
 
         # Copy T1w mask, if provided, else use existing, if detected, else
         # compute a fresh one
@@ -987,24 +982,24 @@ class RegisterFunc(SimpleInterface):
                 self.inputs.mask, suffix="_tmp", newpath=runtime.cwd
             )
             copyfile(
-                self.inputs.mask,
-                mask_tmp_path,
-                copy=True,
-                use_hardlink=False)
+                self.inputs.mask, mask_tmp_path, copy=True, use_hardlink=False
+            )
         else:
-            if len(anat_mask_existing) > 0 and \
-                self.inputs.mask is None and \
-                op.isfile(anat_mask_existing[0]) \
-                    and self.inputs.force_create_mask is False:
+            if (
+                len(anat_mask_existing) > 0
+                and self.inputs.mask is None
+                and op.isfile(anat_mask_existing[0])
+                and self.inputs.force_create_mask is False
+            ):
                 mask_tmp_path = fname_presuffix(
-                    anat_mask_existing[0], suffix="_tmp",
-                    newpath=runtime.cwd
+                    anat_mask_existing[0], suffix="_tmp", newpath=runtime.cwd
                 )
                 copyfile(
                     anat_mask_existing[0],
                     mask_tmp_path,
                     copy=True,
-                    use_hardlink=False)
+                    use_hardlink=False,
+                )
                 mask_tmp_path = orient_reslice(
                     mask_tmp_path, runtime.cwd, self.inputs.vox_size
                 )
@@ -1012,38 +1007,30 @@ class RegisterFunc(SimpleInterface):
                 mask_tmp_path = None
 
         gm_mask_existing = glob.glob(
-            self.inputs.in_dir +
-            "/*_label-GM_probseg.nii.gz") + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz")
+            self.inputs.in_dir + "/*_label-GM_probseg.nii.gz"
+        ) + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_1.nii.gz"
+        )
         if len(gm_mask_existing) > 0:
-            gm_mask = fname_presuffix(gm_mask_existing[0],
-                                      newpath=runtime.cwd)
+            gm_mask = fname_presuffix(gm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
-                gm_mask_existing[0],
-                gm_mask,
-                copy=True,
-                use_hardlink=False)
-            gm_mask = orient_reslice(
-                gm_mask, runtime.cwd, self.inputs.vox_size
+                gm_mask_existing[0], gm_mask, copy=True, use_hardlink=False
             )
+            gm_mask = orient_reslice(gm_mask, runtime.cwd, self.inputs.vox_size)
         else:
             gm_mask = None
 
         wm_mask_existing = glob.glob(
-            self.inputs.in_dir +
-            "/*_label-WM_probseg.nii.gz") + glob.glob(
-            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz")
+            self.inputs.in_dir + "/*_label-WM_probseg.nii.gz"
+        ) + glob.glob(
+            f"{runtime.cwd}/../../*/register_node/*/imgs/t1w_seg_pve_0.nii.gz"
+        )
         if len(wm_mask_existing) > 0:
-            wm_mask = fname_presuffix(wm_mask_existing[0],
-                                      newpath=runtime.cwd)
+            wm_mask = fname_presuffix(wm_mask_existing[0], newpath=runtime.cwd)
             copyfile(
-                wm_mask_existing[0],
-                wm_mask,
-                copy=True,
-                use_hardlink=False)
-            wm_mask = orient_reslice(
-                wm_mask, runtime.cwd, self.inputs.vox_size
+                wm_mask_existing[0], wm_mask, copy=True, use_hardlink=False
             )
+            wm_mask = orient_reslice(wm_mask, runtime.cwd, self.inputs.vox_size)
         else:
             wm_mask = None
 
@@ -1054,7 +1041,8 @@ class RegisterFunc(SimpleInterface):
             self.inputs.anat_file,
             anat_file_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         reg = register.FmriReg(
             basedir_path=runtime.cwd,
@@ -1092,8 +1080,6 @@ class RegisterFunc(SimpleInterface):
         self._results["gm_mask"] = reg.gm_mask
         self._results["t1w2mni_warp"] = reg.warp_t1w2mni
         self._results["t1w2mni_xfm"] = reg.t12mni_xfm
-
-        gc.collect()
 
         return runtime
 
@@ -1133,31 +1119,27 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
-                      f"{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_brain_"
+            f"{self.inputs.vox_size}.nii.gz",
         )
         template_mask = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_"
-                      f"brain_mask_{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_"
+            f"brain_mask_{self.inputs.vox_size}.nii.gz",
         )
 
         template_tmp_path = fname_presuffix(
             template, suffix="_tmp", newpath=runtime.cwd
         )
-        copyfile(
-            template,
-            template_tmp_path,
-            copy=True,
-            use_hardlink=False)
+        copyfile(template, template_tmp_path, copy=True, use_hardlink=False)
 
         template_mask_tmp_path = fname_presuffix(
             template_mask, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            template_mask,
-            template_mask_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            template_mask, template_mask_tmp_path, copy=True, use_hardlink=False
+        )
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -1166,7 +1148,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             self.inputs.t1w_brain,
             t1w_brain_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         parcellation_tmp_path = fname_presuffix(
             self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
@@ -1175,20 +1158,24 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             self.inputs.parcellation,
             parcellation_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
-        atlas_name = prune_suffices(os.path.basename(self.inputs.parcellation
-                                                     ).split('.nii')[0])
+        atlas_name = prune_suffices(
+            os.path.basename(self.inputs.parcellation).split(".nii")[0]
+        )
 
         base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
 
         os.makedirs(base_dir_tmp, exist_ok=True)
 
-        aligned_atlas_t1w = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                            f"t1w_res.nii.gz"
+        aligned_atlas_t1w = (
+            f"{base_dir_tmp}{'/'}{atlas_name}_" f"t1w_res.nii.gz"
+        )
 
-        aligned_atlas_mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                            f"t1w_mni.nii.gz"
+        aligned_atlas_mni = (
+            f"{base_dir_tmp}{'/'}{atlas_name}_" f"t1w_mni.nii.gz"
+        )
 
         t1w2mni_xfm_tmp_path = fname_presuffix(
             self.inputs.t1w2mni_xfm, suffix="_tmp", newpath=runtime.cwd
@@ -1197,7 +1184,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             self.inputs.t1w2mni_xfm,
             t1w2mni_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         t1w2mni_warp_tmp_path = fname_presuffix(
             self.inputs.t1w2mni_warp, suffix="_tmp", newpath=runtime.cwd
@@ -1206,7 +1194,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             self.inputs.t1w2mni_warp,
             t1w2mni_warp_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         aligned_atlas_mni = regutils.RegisterParcellation2MNIFunc_align(
             parcellation_tmp_path,
@@ -1217,7 +1206,7 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             aligned_atlas_t1w,
             aligned_atlas_mni,
             t1w2mni_warp_tmp_path,
-            self.inputs.simple
+            self.inputs.simple,
         )
         time.sleep(0.5)
 
@@ -1227,7 +1216,8 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             aligned_atlas_t1w,
             f"{out_dir}{atlas_name}_t1w_skull.nii.gz",
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         self._results["aligned_atlas_mni"] = aligned_atlas_mni
 
@@ -1236,15 +1226,13 @@ class RegisterParcellation2MNIFunc(SimpleInterface):
             template_tmp_path,
             t1w2mni_xfm_tmp_path,
             t1w2mni_warp_tmp_path,
-            template_mask_tmp_path
+            template_mask_tmp_path,
         ]
 
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
-
-        gc.collect()
 
         return runtime
 
@@ -1297,8 +1285,9 @@ class RegisterAtlasFunc(SimpleInterface):
         import time
         import glob
         from pynets.registration import utils as regutils
-        from pynets.core.nodemaker import \
-            drop_coords_labels_from_restricted_parcellation
+        from pynets.core.nodemaker import (
+            drop_coords_labels_from_restricted_parcellation,
+        )
         from nipype.utils.filemanip import fname_presuffix, copyfile
 
         if self.inputs.subnet:
@@ -1308,41 +1297,52 @@ class RegisterAtlasFunc(SimpleInterface):
 
         if self.inputs.already_run is True:
             try:
-                aligned_atlas_gm = [i for i in
-                                    glob.glob(f"{self.inputs.dir_path}/"
-                                              f"t1w_clustered_parcellations/"
-                                              f"*.nii.gz") if
-                                    atlas_name.strip('_mni') in i][0]
+                aligned_atlas_gm = [
+                    i
+                    for i in glob.glob(
+                        f"{self.inputs.dir_path}/"
+                        f"t1w_clustered_parcellations/"
+                        f"*.nii.gz"
+                    )
+                    if atlas_name.strip("_mni") in i
+                ][0]
 
                 # Correct coords and labels
-                [aligned_atlas_gm, coords, labels] = \
-                    drop_coords_labels_from_restricted_parcellation(
-                        aligned_atlas_gm, self.inputs.coords,
-                        self.inputs.labels)
+                [
+                    aligned_atlas_gm,
+                    coords,
+                    labels,
+                ] = drop_coords_labels_from_restricted_parcellation(
+                    aligned_atlas_gm, self.inputs.coords, self.inputs.labels
+                )
 
             except FileNotFoundError as e:
-                print(e, 'T1w-space parcellation not found. Did you delete '
-                      'outputs?')
+                print(
+                    e,
+                    "T1w-space parcellation not found. Did you delete "
+                    "outputs?",
+                )
         else:
             if self.inputs.parcellation is None:
                 parcellation_tmp_path = None
             else:
                 parcellation_tmp_path = fname_presuffix(
-                    self.inputs.parcellation, suffix="_tmp",
-                    newpath=runtime.cwd
+                    self.inputs.parcellation, suffix="_tmp", newpath=runtime.cwd
                 )
                 copyfile(
                     self.inputs.parcellation,
                     parcellation_tmp_path,
                     copy=True,
-                    use_hardlink=False)
+                    use_hardlink=False,
+                )
 
             if self.inputs.parcellation4d is None:
                 parcellation4d_tmp_path = None
             else:
                 parcellation4d_tmp_path = fname_presuffix(
-                    self.inputs.parcellation4d, suffix="_tmp",
-                    newpath=runtime.cwd
+                    self.inputs.parcellation4d,
+                    suffix="_tmp",
+                    newpath=runtime.cwd,
                 )
                 copyfile(
                     self.inputs.parcellation4d,
@@ -1358,7 +1358,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 self.inputs.t1w_brain,
                 t1w_brain_tmp_path,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             t1w_brain_mask_tmp_path = fname_presuffix(
                 self.inputs.t1w_brain_mask, suffix="_tmp", newpath=runtime.cwd
@@ -1387,15 +1388,18 @@ class RegisterAtlasFunc(SimpleInterface):
                 self.inputs.gm_mask,
                 gm_mask_tmp_path,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             base_dir_tmp = f"{runtime.cwd}/atlas_{atlas_name}"
             os.makedirs(base_dir_tmp, exist_ok=True)
 
-            aligned_atlas_t1mni = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                                  f"t1w_mni.nii.gz"
-            aligned_atlas_skull = f"{base_dir_tmp}{'/'}{atlas_name}_" \
-                                  f"t1w_skull.nii.gz"
+            aligned_atlas_t1mni = (
+                f"{base_dir_tmp}{'/'}{atlas_name}_" f"t1w_mni.nii.gz"
+            )
+            aligned_atlas_skull = (
+                f"{base_dir_tmp}{'/'}{atlas_name}_" f"t1w_skull.nii.gz"
+            )
             aligned_atlas_gm = f"{base_dir_tmp}{'/'}{atlas_name}{'_gm.nii.gz'}"
 
             if self.inputs.node_radius is not None:
@@ -1408,7 +1412,8 @@ class RegisterAtlasFunc(SimpleInterface):
                 self.inputs.mni2t1_xfm,
                 mni2t1_xfm_tmp_path,
                 copy=True,
-                use_hardlink=False)
+                use_hardlink=False,
+            )
 
             mni2t1w_warp_tmp_path = fname_presuffix(
                 self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
@@ -1438,9 +1443,13 @@ class RegisterAtlasFunc(SimpleInterface):
             time.sleep(0.5)
 
             # Correct coords and labels
-            [aligned_atlas_gm, coords, labels] = \
-                drop_coords_labels_from_restricted_parcellation(
-                aligned_atlas_gm, self.inputs.coords, self.inputs.labels)
+            [
+                aligned_atlas_gm,
+                coords,
+                labels,
+            ] = drop_coords_labels_from_restricted_parcellation(
+                aligned_atlas_gm, self.inputs.coords, self.inputs.labels
+            )
 
             reg_tmp = [
                 parcellation4d_tmp_path,
@@ -1479,14 +1488,17 @@ class RegisterAtlasFunc(SimpleInterface):
         # Use for debugging check
         parcellation_img = nib.load(aligned_atlas_gm)
 
-        intensities = [i for i in list(np.unique(
-            np.asarray(
-                parcellation_img.dataobj).astype("int"))
-        ) if i != 0]
+        intensities = [
+            i
+            for i in list(
+                np.unique(np.asarray(parcellation_img.dataobj).astype("int"))
+            )
+            if i != 0
+        ]
         try:
             assert len(coords) == len(labels) == len(intensities)
         except ValueError as e:
-            print(e, 'Failed!')
+            print(e, "Failed!")
             print(f"# Coords: {len(coords)}")
             print(f"# Labels: {len(labels)}")
             print(f"# Intensities: {len(intensities)}")
@@ -1496,8 +1508,6 @@ class RegisterAtlasFunc(SimpleInterface):
         self._results["labels"] = labels
         self._results["atlas"] = self.inputs.atlas
         self._results["node_radius"] = self.inputs.node_radius
-
-        gc.collect()
 
         return runtime
 
@@ -1537,30 +1547,27 @@ class RegisterROIEPI(SimpleInterface):
         import pkg_resources
 
         template = pkg_resources.resource_filename(
-            "pynets", f"templates/standard/{self.inputs.template_name}_brain_"
-                      f"{self.inputs.vox_size}.nii.gz"
+            "pynets",
+            f"templates/standard/{self.inputs.template_name}_brain_"
+            f"{self.inputs.vox_size}.nii.gz",
         )
         template_tmp_path = fname_presuffix(
             template, suffix="_tmp", newpath=runtime.cwd
         )
-        copyfile(
-            template,
-            template_tmp_path,
-            copy=True,
-            use_hardlink=False)
+        copyfile(template, template_tmp_path, copy=True, use_hardlink=False)
 
         roi_file_tmp_path = fname_presuffix(
             self.inputs.roi, suffix="_tmp", newpath=runtime.cwd
         )
         copyfile(
-            self.inputs.roi,
-            roi_file_tmp_path,
-            copy=True,
-            use_hardlink=False)
+            self.inputs.roi, roi_file_tmp_path, copy=True, use_hardlink=False
+        )
 
-        roi_in_t1w = f"{runtime.cwd}/roi-" \
-                     f"{os.path.basename(self.inputs.roi).split('.nii')[0]}" \
-                     f"_in_t1w.nii.gz"
+        roi_in_t1w = (
+            f"{runtime.cwd}/roi-"
+            f"{os.path.basename(self.inputs.roi).split('.nii')[0]}"
+            f"_in_t1w.nii.gz"
+        )
 
         t1w_brain_tmp_path = fname_presuffix(
             self.inputs.t1w_brain, suffix="_tmp", newpath=runtime.cwd
@@ -1569,7 +1576,8 @@ class RegisterROIEPI(SimpleInterface):
             self.inputs.t1w_brain,
             t1w_brain_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         mni2t1w_warp_tmp_path = fname_presuffix(
             self.inputs.mni2t1w_warp, suffix="_tmp", newpath=runtime.cwd
@@ -1588,7 +1596,8 @@ class RegisterROIEPI(SimpleInterface):
             self.inputs.mni2t1_xfm,
             mni2t1_xfm_tmp_path,
             copy=True,
-            use_hardlink=False)
+            use_hardlink=False,
+        )
 
         if self.inputs.roi:
             # Align roi
@@ -1612,14 +1621,12 @@ class RegisterROIEPI(SimpleInterface):
             mni2t1w_warp_tmp_path,
             mni2t1_xfm_tmp_path,
             roi_file_tmp_path,
-            template_tmp_path
+            template_tmp_path,
         ]
 
         for j in reg_tmp:
             if j is not None:
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
-        gc.collect()
 
         return runtime
-

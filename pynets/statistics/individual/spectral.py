@@ -159,6 +159,7 @@ def _omni_embed(
         )
         if not os.path.exists(out_path):
             open(out_path, "w").close()
+
     return out_path
 
 

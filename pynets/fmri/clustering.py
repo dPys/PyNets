@@ -41,6 +41,7 @@ def indx_1dto3d(idx, sz):
     x = np.divide(idx, np.prod(sz[1:3]))
     y = np.divide(idx - x * np.prod(sz[1:3]), sz[2])
     z = idx - x * np.prod(sz[1:3]) - y * sz[2]
+
     return x, y, z
 
 
@@ -67,6 +68,7 @@ def indx_3dto1d(idx, sz):
         idx1 = idx[0] * np.prod(sz[1:3]) + idx[1] * sz[2] + idx[2]
     else:
         idx1 = idx[:, 0] * np.prod(sz[1:3]) + idx[:, 1] * sz[2] + idx[:, 2]
+
     return idx1
 
 
@@ -551,7 +553,6 @@ def make_local_connectivity_scorr(func_img, clust_mask_img, thresh):
     )
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
-    gc.collect()
 
     return W
 
@@ -717,7 +718,6 @@ def make_local_connectivity_tcorr(func_img, clust_mask_img, thresh):
     )
 
     del imdat, msk, mskdat, outlist, m, sparse_i, sparse_j, sparse_w
-    gc.collect()
 
     return W
 

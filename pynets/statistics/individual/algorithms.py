@@ -171,9 +171,7 @@ def countmotifs(A, N=4):
         for vsub in X:
             # in_matind list of nodes neighboring vsub with a larger index than
             # root v
-            idx = (
-                np.where(np.any(A[(vsub[0] + 1) :, vsub], 1))[0] + vsub[0] + 1
-            )
+            idx = np.where(np.any(A[(vsub[0] + 1) :, vsub], 1))[0] + vsub[0] + 1
             # Only keep node indices not in vsub
             idx = idx[[k not in vsub for k in idx]]
             if len(idx) > 0:
@@ -193,6 +191,7 @@ def countmotifs(A, N=4):
             return_index=True,
         )[1]
     ]
+
     return Counter(
         [
             "".join(np.sort(np.sum(A[x, :][:, x], 1)).astype(int).astype(str))
@@ -218,9 +217,8 @@ def average_shortest_path_length_fast(G, weight="weight"):
         )
     else:
         dist = gt.shortest_distance(g, directed=False)
-    sum_of_all_dists = sum(
-        [sum(i.a[(i.a > 1e-9) & (i.a < 1e9)]) for i in dist]
-    )
+    sum_of_all_dists = sum([sum(i.a[(i.a > 1e-9) & (i.a < 1e9)]) for i in dist])
+
     return sum_of_all_dists / (n * (n - 1))
 
 
@@ -250,8 +248,7 @@ def average_shortest_path_length_for_all(G):
     subgraphs = [sbg for sbg in connected_component_subgraphs if len(sbg) > 1]
 
     return math.fsum(
-        nx.average_shortest_path_length(sg, weight="weight")
-        for sg in subgraphs
+        nx.average_shortest_path_length(sg, weight="weight") for sg in subgraphs
     ) / len(subgraphs)
 
 
@@ -373,6 +370,7 @@ def global_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
     for length in lengths:
         inv = [1 / x for x in length[1].values() if float(x) != float(0)]
         inv_lengths.extend(inv)
+
     return sum(inv_lengths) / (N * (N - 1))
 
 
@@ -452,6 +450,7 @@ def local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
                     )
             except BaseException:
                 efficiencies[node] = np.nan
+
     return efficiencies
 
 
@@ -498,6 +497,7 @@ def average_local_efficiency(G, weight="weight", engine=DEFAULT_ENGINE):
 
     e_loc_vec = np.array(list(eff.values()))
     e_loc_vec = np.array(e_loc_vec[e_loc_vec != 0.0])
+
     return np.nanmean(e_loc_vec)
 
 
@@ -613,6 +613,7 @@ def smallworldness(
                 raise NotImplementedError(
                     f"{reference}' graph type not " f"recognized!"
                 )
+
         return G_rand
 
     # Compute the mean clustering coefficient and average shortest path length
@@ -758,6 +759,7 @@ def create_communities(node_comm_aff_mat, node_num):
         for j in range(len(community)):
             if community[j] == 1:
                 com_assign[j, 0] = i
+
     return com_assign
 
 
@@ -902,6 +904,7 @@ def diversity_coef_sign(W, ci):
         pnm = Snm / np.tile(S, (m, 1)).T
         pnm[np.isnan(pnm)] = 0
         pnm[np.logical_not(pnm)] = 1
+
         return -np.sum(pnm * np.log(pnm), axis=1) / np.log(m)
 
     n = len(W)
@@ -965,8 +968,8 @@ def link_communities(W, type_clustering="single"):
     ) / 2
 
     # Out/in norm squared
-    No = np.sum(W ** 2, axis=1)
-    Ni = np.sum(W ** 2, axis=0)
+    No = np.sum(W**2, axis=1)
+    Ni = np.sum(W**2, axis=0)
 
     # Weighted in/out jaccard
     Jo = np.zeros((n, n))
@@ -1119,6 +1122,7 @@ def link_communities(W, type_clustering="single"):
         M[j, np.unique(Ln[C[i, :] == U[j], :])] = 1
 
     M = M[np.sum(M, axis=1) > 2, :]
+
     return M
 
 
@@ -1348,9 +1352,7 @@ def raw_mets(G, i, engine=DEFAULT_ENGINE):
                 net_met_val = float(i(G))
             except BaseException:
                 try:
-                    net_met_val = float(
-                        average_shortest_path_length_for_all(G)
-                    )
+                    net_met_val = float(average_shortest_path_length_for_all(G))
                 except BaseException as e:
                     print(e, f"Warning: {net_name} failed for G.")
                     # np.save(f"/tmp/average_shortest_path_length_
@@ -1472,6 +1474,7 @@ def iterate_nx_global_measures(G, metric_list_glob):
     metric_list_names = []
     for i in net_met_arr[:, 0]:
         metric_list_names.append(i)
+
     return net_met_val_list, metric_list_names
 
 
@@ -1510,6 +1513,7 @@ def community_resolution_selection(G):
             f"{'Found '}{num_comms}{' communities at resolution: '}"
             f"{resolution}{'...'}"
         )
+
     return dict(zip(G.nodes(), ci)), ci, resolution, num_comms
 
 
@@ -1524,6 +1528,7 @@ def get_community(G, net_met_val_list_final, metric_list_names):
         modularity = np.nan
         print("Louvain modularity is undefined for G")
     net_met_val_list_final.append(modularity)
+
     return net_met_val_list_final, metric_list_names, ci
 
 
@@ -1560,6 +1565,7 @@ def get_participation(in_mat, ci, metric_list_names, net_met_val_list_final):
     for i in pc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(pc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1593,6 +1599,7 @@ def get_diversity(in_mat, ci, metric_list_names, net_met_val_list_final):
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1625,6 +1632,7 @@ def get_local_efficiency(G, metric_list_names, net_met_val_list_final):
     for i in le_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(le_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1648,9 +1656,7 @@ def get_clustering(
         cl_vector = dict(
             zip(
                 list(g.get_vertices()),
-                list(
-                    gt.local_clustering(g, weight=g.ep["weight"]).get_array()
-                ),
+                list(gt.local_clustering(g, weight=g.ep["weight"]).get_array()),
             )
         )
     else:
@@ -1682,6 +1688,7 @@ def get_clustering(
     for i in cl_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(cl_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1716,6 +1723,7 @@ def get_degree_centrality(G, metric_list_names, net_met_val_list_final):
     for i in dc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(dc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1772,6 +1780,7 @@ def get_betweenness_centrality(
     for i in bc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(bc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1829,6 +1838,7 @@ def get_eigen_centrality(
     for i in ec_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(ec_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1865,6 +1875,7 @@ def get_comm_centrality(G, metric_list_names, net_met_val_list_final):
     for i in cc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(cc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -1901,6 +1912,7 @@ def get_rich_club_coeff(
     for i in rc_arr[:, 0]:
         metric_list_names.append(i)
     net_met_val_list_final = net_met_val_list_final + list(rc_arr[:, 1])
+
     return metric_list_names, net_met_val_list_final
 
 
@@ -2333,9 +2345,7 @@ def collect_pandas_df_make(
                         os.remove(net_csv_summary_out_path)
                     except BaseException:
                         pass
-                df_concatted_final.to_csv(
-                    net_csv_summary_out_path, index=False
-                )
+                df_concatted_final.to_csv(net_csv_summary_out_path, index=False)
                 del (
                     result,
                     df_concat,
@@ -2364,7 +2374,5 @@ def collect_pandas_df_make(
         else:
             print(f"\nSingle dataframe for subject {ID}\n")
         combination_complete = True
-
-    gc.collect()
 
     return combination_complete

@@ -2,7 +2,6 @@
 Created on Tue Nov  7 10:40:07 2017
 Copyright (C) 2017
 """
-from dataclasses import dataclass
 import matplotlib
 import warnings
 import sys
@@ -15,6 +14,7 @@ import numpy as np
 import os.path as op
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
+from dataclasses import dataclass
 
 if sys.platform.startswith("win") is False:
     pass

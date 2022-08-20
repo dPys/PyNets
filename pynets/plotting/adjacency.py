@@ -82,6 +82,7 @@ def plot_conn_mat(
         plt.rcParams[param] = "#000000"
     plt.savefig(out_path_fig, dpi=dpi_resolution)
     plt.close()
+
     return
 
 

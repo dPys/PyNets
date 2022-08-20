@@ -48,8 +48,11 @@ def tens_mod_fa_est(
 
     """
     from dipy.io import load_pickle
-    from dipy.reconst.dti import TensorModel
-    from dipy.reconst.dti import fractional_anisotropy, mean_diffusivity
+    from dipy.reconst.dti import (
+        TensorModel,
+        fractional_anisotropy,
+        mean_diffusivity,
+    )
 
     gtab = load_pickle(gtab_file)
 
@@ -162,7 +165,6 @@ def create_anisopowermap(
         nodif_B0_img.uncache()
         del anisomap
         img.uncache()
-        gc.collect()
 
     return anisopwr_path, B0_mask, gtab_file, dwi_file
 
@@ -319,7 +321,7 @@ def csd_mod_est(
     csd_mod = model.fit(data, B0_mask_data).shm_coeff
     csd_mod = np.clip(csd_mod, 0, np.max(csd_mod, -1)[..., None])
     del response, B0_mask_data
-    gc.collect()
+
     return csd_mod.astype("float32"), model
 
 
@@ -452,7 +454,7 @@ def mcsd_mod_est(
 
     mcsd_mod = np.clip(mcsd_mod, 0, np.max(mcsd_mod, -1)[..., None])
     del response_mcsd, B0_mask_data
-    gc.collect()
+
     return mcsd_mod.astype("float32"), model
 
 
@@ -516,6 +518,7 @@ def sfm_mod_est(
     )
     sf_odf = sf_mod.odf(sphere)
     sf_odf = np.clip(sf_odf, 0, np.max(sf_odf, -1)[..., None])
+
     return sf_odf.astype("float32"), model
 
 
@@ -576,7 +579,7 @@ def reconstruction(
         )
 
     del dwi_data
-    gc.collect()
+
     return mod_fit, mod
 
 

@@ -556,7 +556,7 @@ class Tracking(SimpleInterface):
 
                 del streamlines
                 dwi_img.uncache()
-                gc.collect()
+
                 self._results["dm_path"] = dm_path
                 self._results["streams"] = streams
             else:

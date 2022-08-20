@@ -274,7 +274,6 @@ def atlas2t1w2dwi_align(
     atlas_mask_img.uncache()
     wm_gm_img.uncache()
     wm_gm_mask_img.uncache()
-    gc.collect()
 
     return dwi_aligned_atlas_wmgm_int, dwi_aligned_atlas, aligned_atlas_skull
 
@@ -647,7 +646,6 @@ def segment_t1w(t1w, basename, nclass=3, beta=0.1, max_iter=100):
 
     del PVE
     t1w_img.uncache()
-    gc.collect()
 
     return out
 

@@ -175,7 +175,7 @@ def random_seeds_from_mask(
     def sample_rand_seed(s, i, random_seed):
         if random_seed is not None:
             s_random_seed = hash((np.sum(s) + 1) * i + random_seed) % (
-                2 ** 32 - 1
+                2**32 - 1
             )
             np.random.seed(s_random_seed)
         return s + np.random.random(3) - 0.5
@@ -248,6 +248,7 @@ def extract_b0(
     ).to_filename(out_path)
 
     img.uncache()
+
     return out_path
 
 
@@ -371,11 +372,12 @@ def evaluate_streamline_plausibility(
         pred_weighted + fiber_fit.mean_signal[:, None]
     ) * S0[:, None]
     mean_error = mean_pred - fiber_fit.data
-    mean_rmse = np.sqrt(np.mean(mean_error ** 2, -1))
+    mean_rmse = np.sqrt(np.mean(mean_error**2, -1))
     print(f"Original # Streamlines: {original_count}")
     print(f"Final # Streamlines: {pruned_count}")
     print(f"Streamlines removed: {pruned_count - original_count}")
     print(f"Mean RMSE: {np.mean(mean_rmse)}")
     print(f"Mean Model RMSE: {np.mean(model_rmse)}")
     print(f"Mean Reduction RMSE: {np.mean(mean_rmse - model_rmse)}")
+
     return streamlines

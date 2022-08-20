@@ -19,9 +19,7 @@ def optimize_mutual_info(
 ):
     """ """
     import itertools
-
     import pandas as pd
-
     from pynets.core.thresholding import threshold_proportional
 
     # Functional graph threshold window
@@ -248,9 +246,7 @@ def matching(
 
         modality = metadata_str.split("modality-")[1].split("_")[0]
         metadata_list = [
-            i
-            for i in metadata_str.split("modality-")[1].split("_")
-            if "-" in i
+            i for i in metadata_str.split("modality-")[1].split("_") if "-" in i
         ]
         hash = str(uuid.uuid4())
         filename = f"{outputdir}/sidecar_modality-{modality}_{hash}.json"
@@ -303,6 +299,7 @@ def matching(
     func_file_out = f"{namer_dir}/{func_name}.npy"
     np.save(dwi_file_out, dwi_mat_final)
     np.save(func_file_out, func_mat_final)
+
     return mG_nx, mG, dwi_file_out, func_file_out
 
 

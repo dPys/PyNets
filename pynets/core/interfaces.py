@@ -55,14 +55,14 @@ class FetchNodesLabels(SimpleInterface):
     output_spec = _FetchNodesLabelsOutputSpec
 
     def _run_interface(self, runtime):
-        from pynets.core import utils, nodemaker
-        from nipype.utils.filemanip import fname_presuffix, copyfile
         import pandas as pd
         import time
         import textwrap
-        from pathlib import Path
         import os.path as op
         import glob
+        from pynets.core import utils, nodemaker
+        from pathlib import Path
+        from nipype.utils.filemanip import fname_presuffix, copyfile
 
         base_path = utils.get_file()
         # Test if atlas is a nilearn atlas. If so, fetch coords, labels, and/or
@@ -228,11 +228,10 @@ class FetchNodesLabels(SimpleInterface):
                 )
             try:
                 if self.inputs.clustering is False:
-                    [
-                        parcellation,
-                        _,
-                    ] = nodemaker.enforce_hem_distinct_consecutive_labels(
-                        parcellation
+                    parcellation = (
+                        nodemaker.enforce_hem_distinct_consecutive_labels(
+                            parcellation
+                        )[0]
                     )
 
                 # Fetch user-specified atlas coords

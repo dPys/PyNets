@@ -1689,7 +1689,7 @@ def node_files_search(
 
 
 def retrieve_indices_from_parcellation(
-    node_files: list, emb_shape: int, template: str, vox_size="2mm"
+    node_files: list, emb_shape: int, template: str, vox_size: str = "2mm"
 ) -> typing.Tuple[list, dict]:
     """
     Retrieve indices from parcellation.

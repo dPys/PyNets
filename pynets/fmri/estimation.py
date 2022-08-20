@@ -580,4 +580,5 @@ def fill_confound_nans(
         f"{dir_path}/confounds_tmp/confounds_mean_corrected_{run_uuid}.tsv"
     )
     confounds_nonan.to_csv(conf_corr, sep="\t", index=False)
+
     return conf_corr

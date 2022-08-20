@@ -323,7 +323,7 @@ class TimeseriesExtraction(object):
         if self._parcel_masker is not None:
             del self._parcel_masker
             self._net_parcels_map_nifti.uncache()
-        gc.collect()
+
         return
 
 
@@ -622,12 +622,14 @@ class NiParcellate(object):
                 )
         else:
             self._local_conn = "auto"
+
         return
 
     def prep_boot(self, blocklength: int = 1):
         from nilearn.masking import apply_mask
 
         ts_data = apply_mask(self._func_img, self._clust_mask_corr_img)
+
         return ts_data, int(int(np.sqrt(ts_data.shape[0])) * blocklength)
 
 
@@ -1001,8 +1003,6 @@ class IndividualClustering(SimpleInterface):
                 if os.path.isfile(j):
                     os.system(f"rm -f {j} &")
 
-        gc.collect()
-
         return runtime
 
 
@@ -1158,6 +1158,5 @@ class ExtractTimeseries(SimpleInterface):
         self._results["roi"] = self.inputs.roi
 
         del te
-        gc.collect()
 
         return runtime

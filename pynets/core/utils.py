@@ -5,21 +5,37 @@ Copyright (C) 2017
 import matplotlib
 import warnings
 import os
+import re
 import typing
 import sys
-import os.path as op
-from pathlib import Path
-
-if sys.platform.startswith("win") is False:
-    import indexed_gzip
-import nibabel as nib
-import numpy as np
-import pandas as pd
+import ast
 import time
 import logging
 import threading
 import traceback
 import signal
+import psutil
+import shutil
+import collections
+import gzip
+import yaml
+import errno
+import pkg_resources
+import json
+import os.path as op
+import nibabel as nib
+import numpy as np
+import pandas as pd
+import networkx as nx
+from time import sleep
+from pathlib import Path
+from functools import wraps
+from nilearn.image import resample_to_img, concat_imgs
+
+if sys.platform.startswith("win") is False:
+    import indexed_gzip
+from nipype.utils.filemanip import fname_presuffix, split_filename
+
 
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
@@ -45,7 +61,6 @@ def prune_suffices(res: str) -> str:
     """
     Remove file suffixes from a file name.
     """
-    import re
 
     if "reor-RAS" in str(res):
         res = re.sub(r"_reor\-*[A-Z][A-Z][A-Z]", "", str(res))
@@ -111,9 +126,6 @@ def as_directory(
         Directory string.
 
     """
-    import shutil
-    from pathlib import Path
-
     p = Path(dir_).absolute()
 
     if remove:
@@ -186,7 +198,6 @@ def create_est_path_func(
         combinations of hyperparameter characteristics.
 
     """
-    import os
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -282,7 +293,6 @@ def create_est_path_diff(
         File path to .npy file containing graph with thresholding applied.
 
     """
-    import os
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -366,7 +376,6 @@ def create_raw_path_func(
         combinations of hyperparameter characteristics.
 
     """
-    import os
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -455,7 +464,6 @@ def create_raw_path_diff(
         File path to .npy file containing graph with thresholding applied.
 
     """
-    import os
     from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
@@ -505,9 +513,6 @@ def create_csv_path(dir_path: str, est_path: str) -> str:
         File path to .csv with graph metrics.
 
     """
-    import os
-    from pathlib import Path
-
     namer_dir = f"{str(Path(dir_path).parent)}/topology"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
@@ -527,9 +532,6 @@ def load_mat(est_path: str) -> np.ndarray:
     est_path : str
         File path to .npy file containing graph with thresholding applied.
     """
-    import numpy as np
-    import networkx as nx
-    import os.path as op
 
     fmt = op.splitext(est_path)[1]
 
@@ -614,8 +616,6 @@ def save_mat(
          .txt, .ssv, .csv).
 
     """
-    import numpy as np
-    import networkx as nx
     from pynets.core.utils import load_runconfig
 
     if fmt is None:
@@ -736,8 +736,6 @@ def save_mat_thresholded(
         Whether to save the graph as a binary file.
 
     """
-    import numpy as np
-    from nipype.utils.filemanip import fname_presuffix
 
     est_path = fname_presuffix(
         est_path_orig, suffix=f"_thrtype-{thr_type}_thr-{thr}"
@@ -1114,7 +1112,6 @@ def flatten(nested_list: typing.Any):
     """
     Flatten list of lists.
     """
-    import collections
 
     for el in nested_list:
         if isinstance(el, collections.Iterable) and not isinstance(
@@ -1141,13 +1138,8 @@ def decompress_nifti(infile: str) -> str:
         File path to decompressed Nifti1Image file.
 
     """
-    from nipype.utils.filemanip import split_filename
-    import gzip
-    import os
-    import shutil
-    from time import sleep
 
-    _, base, ext = split_filename(infile)
+    base, ext = split_filename(infile)[1:2]
 
     if ext[-3:].lower() == ".gz":
         ext = ext[:-3]
@@ -1350,11 +1342,6 @@ def load_runconfig(location: str = "default"):
     Loads the advanced.yaml file.
     """
 
-    # import time
-    import psutil
-    import yaml
-    import pkg_resources
-
     if location == "default":
         location = pkg_resources.resource_filename("pynets", "advanced.yaml")
 
@@ -1427,10 +1414,6 @@ def save_coords_and_labels_to_json(
         Path to nodes json metadata file.
 
     """
-    import json
-    import os
-    from pynets.core.utils import prune_suffices
-
     namer_dir = f"{dir_path}/nodes"
     if not os.path.isdir(namer_dir):
         os.makedirs(namer_dir, exist_ok=True)
@@ -1508,7 +1491,6 @@ def get_template_tf(
         Path to templateflow directory.
 
     """
-    from pathlib import Path
     from templateflow.api import get as get_template
 
     templateflow_home = Path(
@@ -1578,11 +1560,7 @@ def save_nifti_parcels_map(
         intensities corresponding to ROI membership.
 
     """
-    import os
-    import pkg_resources
-    import sys
     from pynets.core.utils import load_runconfig
-    from nilearn.image import resample_to_img
 
     hardcoded_params = load_runconfig()
     try:
@@ -1677,7 +1655,6 @@ def save_ts_to_file(
         nodes.
 
     """
-    import os
 
     namer_dir = f"{dir_path}/timeseries"
     if not os.path.isdir(namer_dir):
@@ -1736,10 +1713,6 @@ def timeout(seconds: int):
     """
     Timeout function for hung calculations.
     """
-    from functools import wraps
-    import errno
-    import os
-    import signal
 
     class TimeoutWarning(Exception):
         pass
@@ -1809,7 +1782,6 @@ def build_args_from_config(modality: str, arg_dict: dict) -> dict:
         A dictionary of arguments to be passed to the workflows.
 
     """
-    import ast
     from pynets.core.utils import load_runconfig
 
     modalities = ["func", "dwi"]
@@ -1896,7 +1868,6 @@ def check_template_loads(template: str, template_mask: str, template_name: str):
         Path to template mask.
 
     """
-    import sys
 
     if sys.platform.startswith("win") is False:
         try:
@@ -1937,7 +1908,6 @@ def save_4d_to_3d(in_file: str):
         Path to 3D nifti.
 
     """
-    from nipype.utils.filemanip import fname_presuffix
 
     files_3d = nib.four_to_three(nib.load(in_file))
     out_files = []
@@ -1963,8 +1933,6 @@ def save_3d_to_4d(in_files: list):
     out_file : str
         Path to 4D nifti.
     """
-    from nipype.utils.filemanip import fname_presuffix
-    from nilearn.image import concat_imgs
 
     img_4d = concat_imgs(
         [nib.load(img_3d) for img_3d in in_files],
@@ -1986,11 +1954,8 @@ def kill_process_family(parent_pid: int) -> None:
     ----------
     parent_pid : int
         Parent process ID.
-    """
-    import os
-    import psutil
-    import signal
 
+    """
     try:
         parent = psutil.Process(parent_pid)
     except psutil.NoSuchProcess:
