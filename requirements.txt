@@ -19,7 +19,9 @@ dipy>=1.5.0
 pybids>=0.6.4
 colorama>=0.3.9
 python-louvain>=0.13
-graspologic==1.0.1.dev2842527869
+graspologic>=1.0.0
+graspologic-native>=1.1.1
+hyppo>=0.3.2
 sqlalchemy>=1.3.24
 h5py>=2.10.0
 scikit-image>=0.14.2
