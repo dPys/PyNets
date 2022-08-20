@@ -40,8 +40,6 @@ RUN apt-get update -qq \
         pkg-config \
         libgsl0-dev \
         openssl \
-#        openssh-server \
-#        jq \
         gsl-bin \
         libglu1-mesa-dev \
         libglib2.0-0 \
@@ -53,11 +51,6 @@ RUN apt-get update -qq \
         libsqlite3-dev \
         libquadmath0 \
         gcc-multilib \
-    # Configure ssh
-#    && mkdir /var/run/sshd \
-#    && echo 'root:screencast' | chpasswd \
-#    && sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-#    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \
@@ -112,7 +105,7 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
     && conda config --system --prepend channels conda-forge \
     && conda config --system --set auto_update_conda false \
     && conda config --system --set show_channel_urls true \
-    && conda install -yq python=3.8 \
+    && conda install -yq python=3.9 \
     && pip install --upgrade pip \
     && rm -rf Miniconda3-${miniconda_version}-Linux-x86_64.sh \
     && git config --global url."https://".insteadOf git:// \
@@ -130,13 +123,13 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
         openblas \
         graph-tool \
     # Install pynets
-    && pip install --upgrade --force-reinstall numpy \
+    # && pip install --upgrade --force-reinstall numpy \
     && git clone -b development https://github.com/dPys/PyNets /home/neuro/PyNets && \
     cd /home/neuro/PyNets && \
     pip install -r requirements.txt && \
     python setup.py install \
     && pip install certifi -U --ignore-installed \
-    && pip install python-dateutil==2.8.0 \
+    # && pip install python-dateutil==2.8.0 \
 #    && pip install skggm \
     # Create nipype config for resource monitoring
     && mkdir -p ~/.nipype \
@@ -168,7 +161,6 @@ RUN echo "FSLDIR=/usr/share/fsl/5.0" >> /home/neuro/.bashrc && \
 	git \
 	gcc \
 	curl \
-#	openssl \
 	build-essential \
 	ca-certificates \
 	libc6-dev \

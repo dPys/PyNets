@@ -1,17 +1,9 @@
-﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 27 16:19:14 2017
-"""
-import pytest
+﻿import pytest
 import matplotlib
 
 matplotlib.use("agg", force=True)
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
 
-plt.ioff()
-figure(figsize=(3, 2), dpi=80)
 import numpy as np
 import time
 import nibabel as nib
@@ -25,7 +17,10 @@ import shutil
 from pathlib import Path
 from pynets.core import nodemaker
 from nilearn._utils import data_gen
+from matplotlib.pyplot import figure
 
+plt.ioff()
+figure(figsize=(3, 2), dpi=80)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

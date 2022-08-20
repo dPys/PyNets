@@ -1,15 +1,11 @@
-﻿#!/usr/bin/env python
-"""
-Created on Wed Dec 27 16:19:14 2017
-"""
-import os
-from pathlib import Path
+﻿import os
 import pickle5 as pickle
 import pytest
 import logging
 import tempfile
 import pkg_resources
 import networkx as nx
+from pathlib import Path
 from pynets.core import workflows
 from multiprocessing import cpu_count
 

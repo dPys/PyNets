@@ -1,9 +1,4 @@
-﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 27 16:19:14 2017
-"""
-import pytest
+﻿import pytest
 import matplotlib
 
 matplotlib.use("agg", force=True)
@@ -190,7 +185,7 @@ def test_plot_network_clusters(connectivity_data, plot_overlaps):
     """Test plotting subnet clusters"""
 
     from pynets.statistics.individual.algorithms import (
-        community_resolution_selection,
+        community_resolution_selection
     )
 
     temp_file = tempfile.NamedTemporaryFile(

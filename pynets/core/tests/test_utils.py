@@ -1,12 +1,6 @@
-﻿#!/usr/bin/env python
-"""
-Created on Wed Dec 27 16:19:14 2017
-"""
-import numpy as np
+﻿import numpy as np
 import os
 import pkg_resources
-import pickle5 as pickle
-from pathlib import Path
 from pynets.core import utils
 import nibabel as nib
 import sys

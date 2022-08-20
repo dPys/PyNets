@@ -1,14 +1,8 @@
-﻿#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 27 16:19:14 2017
-@authors: Derek Pisner & Ryan Hammonds
-"""
-import pytest
+﻿import pytest
 import os
+import logging
 from pathlib import Path
 from pynets.statistics import utils
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

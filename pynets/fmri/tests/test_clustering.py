@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""
-Created on Wed Dec 27 16:19:14 2017
-"""
 import pytest
 import pkg_resources
 import numpy as np
@@ -11,12 +7,13 @@ import tempfile
 
 if sys.platform.startswith("win") is False:
     import indexed_gzip
-from pathlib import Path
+
 import pickle5 as pickle
-from pynets.fmri import clustering
-from pynets.fmri.interfaces import NiParcellate
 import os
 import logging
+from pathlib import Path
+from pynets.fmri import clustering
+from pynets.fmri.interfaces import NiParcellate
 from nipype.utils.filemanip import fname_presuffix
 from nilearn.image import resample_to_img
 

@@ -1,4 +1,3 @@
-"""Configuration file for pytest for pynets."""
 import os
 import sys
 import pytest

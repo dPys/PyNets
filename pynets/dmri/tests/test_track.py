@@ -1,11 +1,6 @@
-#!/usr/bin/env python
-"""
-Created on Thur July 18 20:19:14 2019
-"""
 import pytest
 import os
 import pickle5 as pickle
-from pathlib import Path
 import pkg_resources
 import nibabel as nib
 import sys
@@ -15,6 +10,8 @@ if sys.platform.startswith("win") is False:
 import numpy as np
 import logging
 import h5py
+
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

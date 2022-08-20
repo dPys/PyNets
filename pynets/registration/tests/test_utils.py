@@ -1,20 +1,15 @@
-#!/usr/bin/env python
-"""
-Created on Monday July 29 16:19:14 2019
-"""
 import pytest
 import numpy as np
-from pynets.registration import utils
 import pkg_resources
 import os
 import nibabel as nib
 import indexed_gzip
-from pathlib import Path
-import pickle5 as pickle
 import warnings
 
 warnings.filterwarnings("ignore")
 import logging
+
+from pynets.registration import utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

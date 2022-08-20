@@ -1,11 +1,4 @@
-﻿#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb 17 11:25:59 2021
-@author: Kaelen Saythongkham
-"""
-
-import os
+﻿import os
 from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,

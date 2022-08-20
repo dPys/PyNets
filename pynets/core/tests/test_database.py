@@ -1,4 +1,3 @@
-# Write a suite of tests for all functions in pynets.core.database.py
 import time
 from pynets.core.database import *
 

@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  pynets:
+    image: pynets:${TAG:-latest}
+    platform: linux/amd64
+    build:
+      context: .
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_REGION=us-east-2
+      - FSLDIR="/usr/share/fsl/5.0"
+      - FSLOUTPUTTYPE="NIFTI_GZ"
+      - FSLMULTIFILEQUIT="TRUE"
+      - POSSUMDIR="/usr/share/fsl/5.0"
+      - LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"/usr/lib/fsl/5.0"
+      - FSLTCLSH="/usr/bin/tclsh"
+      - FSLWISH="/usr/bin/wish"
+      - PATH="$FSLDIR"/bin:"$PATH"
+    volumes:
+      - ./:/working
