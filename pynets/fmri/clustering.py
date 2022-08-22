@@ -1,7 +1,3 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-"""
 import matplotlib
 import sys
 import nibabel as nib
@@ -355,8 +351,8 @@ def parcellate_ncut(W, k, mask_img):
         b[a == unique_a[i]] = i + 1
 
     imdat = mask_img.get_fdata()
-    mask_aff = mask_img.get_affine()
-    mask_hdr = mask_img.get_header()
+    mask_aff = mask_img.affine
+    mask_hdr = mask_img.header
     imdat[imdat > 0] = 1
     imdat[imdat > 0] = np.short(b[0 : int(np.sum(imdat))].flatten())
 

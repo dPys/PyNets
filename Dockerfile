@@ -19,7 +19,6 @@ RUN apt-get update -qq \
         libxtst6 \
         libgtk2.0-bin \
         libxft2 \
-        lib32ncurses5 \
         libxmu-dev \
 #        vim \
         libgl1-mesa-glx \
@@ -49,8 +48,6 @@ RUN apt-get update -qq \
         libopenblas-base \
         sqlite3 \
         libsqlite3-dev \
-        libquadmath0 \
-        gcc-multilib \
     # Add and configure git-lfs
     && apt-get install -y apt-transport-https debian-archive-keyring \
     && apt-get install -y dirmngr --install-recommends \

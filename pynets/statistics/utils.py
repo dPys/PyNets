@@ -1,18 +1,12 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-@author: Derek Pisner
-"""
 import glob
 import itertools
 import os
 import typing
 import warnings
-from collections import OrderedDict
-
 import matplotlib
 import numpy as np
 import pandas as pd
+from collections import OrderedDict
 from scipy import stats
 from sklearn.ensemble import IsolationForest
 from sklearn.feature_selection import VarianceThreshold

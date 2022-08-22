@@ -1,5 +1,5 @@
 lxml>=4.9.1; platform_system == "darwin" and python_version >= "3.8"
-matplotlib>=3.0.0
+matplotlib>=3.5.3
 pickle5>=0.0.11
 statsmodels>=0.11.1
 numpy<=1.23.1
@@ -27,7 +27,7 @@ h5py>=2.10.0
 scikit-image>=0.14.2
 six>=1.12.0
 pyyaml>=6.0
-git+https://github.com/dPys/nilearn.git@enh/parc_conn
+git+https://github.com/dPys/nilearn.git@enh/parc_conn # nilearn>=0.9.1
 git+https://github.com/dPys/deepbrain.git@master
 urllib3>=1.25.4
 mplcyberpunk>=0.1.11

@@ -1,22 +1,32 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-"""
 import os
 import sys
 import glob
+import gc
+import re
+import ast
+import glob
+import json
 import typing
+import tempfile
 import warnings
-
 import matplotlib
+import pkg_resources
+import nibabel as nib
 import numpy as np
+import pandas as pd
+import os.path as op
+from pynets.core.utils import load_runconfig
+from collections import defaultdict
+from pathlib import Path
+from nilearn.plotting import find_parcellation_cut_coords
+from nipype.utils.filemanip import fname_presuffix
+from nilearn import image
+from nilearn import datasets
+from nilearn import masking
+from nilearn.image.resampling import coord_transform
 
 if sys.platform.startswith("win") is False:
     import indexed_gzip
-
-from pathlib import Path
-
-import nibabel as nib
 
 matplotlib.use("Agg")
 warnings.filterwarnings("ignore")
@@ -101,24 +111,21 @@ def create_parcel_atlas(
         to ROI masks, prepended with a background image of zeros.
 
     """
-    import gc
-
-    from nilearn.image import index_img, new_img_like
 
     for ix in range(parcels_4d_img.shape[-1]):
         if ix == 0:
-            template_image = index_img(parcels_4d_img, ix)
+            template_image = image.index_img(parcels_4d_img, ix)
             template_affine = template_image.affine
             template_shape = template_image.shape
             template_image.uncache()
             concatted_parcels = np.asarray(
-                new_img_like(
+                image.new_img_like(
                     template_image, np.zeros(template_shape, dtype=bool)
                 ).dataobj
             )[:, :, :, np.newaxis]
         concatted_parcels = np.append(
             concatted_parcels,
-            np.asarray(index_img(parcels_4d_img, ix).dataobj)[
+            np.asarray(image.index_img(parcels_4d_img, ix).dataobj)[
                 :, :, :, np.newaxis
             ],
             axis=3,
@@ -178,8 +185,6 @@ def fetch_nilearn_atlas_coords(
         List of string labels corresponding to atlas nodes.
 
     """
-    from nilearn import datasets
-
     atlas = getattr(datasets, f"fetch_{atlas}")()
     atlas_name = atlas["description"].splitlines()[0]
     if atlas_name is None:
@@ -241,8 +246,6 @@ def nilearn_atlas_helper(
         File path to atlas parcellation Nifti1Image in MNI template space.
 
     """
-    from nilearn import datasets
-
     if atlas == "atlas_harvard_oxford":
         atlas_fetch_obj = getattr(datasets, f"fetch_{atlas}", "atlas_name")(
             "cort-maxprob-thr0-1mm"
@@ -406,13 +409,6 @@ def get_node_membership(
       29:3095-3114, 2018.
 
     """
-    import sys
-    import tempfile
-
-    import pandas as pd
-    import pkg_resources
-    from nilearn.image import index_img, resample_to_img
-
     from pynets.core.nodemaker import (
         VoxTomm,
         create_parcel_atlas,
@@ -450,7 +446,7 @@ def get_node_membership(
             parcels_4d_img = parcels_4d
             parcel_atlas = create_parcel_atlas(parcels_4d_img)[0]
 
-        parcel_atlas_img_res = resample_to_img(
+        parcel_atlas_img_res = image.resample_to_img(
             parcel_atlas, template_img, interpolation="nearest"
         )
         par_tmp = tempfile.NamedTemporaryFile(mode="w+", suffix=".nii.gz").name
@@ -553,7 +549,7 @@ def get_node_membership(
                 f"{e}\nCannot load subnet reference image. Do you have git-lfs installed?",
             )
 
-    rsn_img_res = resample_to_img(
+    rsn_img_res = image.resample_to_img(
         rsn_img, template_img, interpolation="nearest"
     )
 
@@ -607,7 +603,7 @@ def get_node_membership(
         net_labels = []
         for p_ix in range(parcel_list_res.shape[-1]):
             parcel_vol = np.asarray(
-                index_img(parcel_list_res, p_ix).dataobj
+                image.index_img(parcel_list_res, p_ix).dataobj
             ).astype("bool")
 
             # Count number of unique voxels where overlap of parcel and mask
@@ -692,12 +688,6 @@ def drop_badixs_from_parcellation(
         Path to pruned parcellation file.
 
     """
-    import os
-
-    import nibabel as nib
-    import numpy as np
-    from nipype.utils.filemanip import fname_presuffix
-
     parcellation_img = nib.load(parcellation)
 
     bad_idxs = sorted(list(set(bad_idxs)), reverse=True)
@@ -773,13 +763,6 @@ def parcel_masker(
         ROI mask.
 
     """
-    import sys
-
-    import pkg_resources
-    from nilearn.image import index_img, math_img, resample_to_img
-
-    from pynets.core.utils import load_runconfig
-
     hardcoded_params = load_runconfig()
     try:
         template_name = hardcoded_params["template"][0]
@@ -806,8 +789,8 @@ def parcel_masker(
             )
 
     mask_data = (
-        resample_to_img(
-            math_img("img > 0", img=nib.load(roi)),
+        image.resample_to_img(
+            image.math_img("img > 0", img=nib.load(roi)),
             template_img,
             interpolation="nearest",
         )
@@ -816,11 +799,11 @@ def parcel_masker(
     )
 
     if isinstance(parcels_4d, nib.Nifti1Image):
-        parcels_4d_img = resample_to_img(
+        parcels_4d_img = image.resample_to_img(
             parcels_4d, template_img, interpolation="nearest"
         )
     elif isinstance(parcels_4d, str):
-        parcels_4d_img = resample_to_img(
+        parcels_4d_img = image.resample_to_img(
             nib.load(parcels_4d), template_img, interpolation="nearest"
         )
 
@@ -833,7 +816,7 @@ def parcel_masker(
                 np.where(
                     (mask_data.astype("uint16") == 1)
                     & (
-                        np.asarray(index_img(parcels_4d_img, ix).dataobj)
+                        np.asarray(image.index_img(parcels_4d_img, ix).dataobj)
                         .astype("bool")
                         .astype("uint16")
                         == 1
@@ -847,7 +830,7 @@ def parcel_masker(
             np.unique(
                 np.where(
                     (
-                        np.asarray(index_img(parcels_4d_img, ix).dataobj)
+                        np.asarray(image.index_img(parcels_4d_img, ix).dataobj)
                         .astype("bool")
                         .astype("uint16")
                         == 1
@@ -943,14 +926,7 @@ def coords_masker(
         spatial affinity for the specified ROI mask.
 
     """
-    import sys
-
-    import nibabel as nib
-    import pkg_resources
-    from nilearn.image import math_img, resample_to_img
-
     from pynets.core.nodemaker import mmToVox
-    from pynets.core.utils import load_runconfig
 
     hardcoded_params = load_runconfig()
     try:
@@ -977,8 +953,8 @@ def coords_masker(
                 f"{e}\nCannot load MNI template. Do you have git-lfs installed?",
             )
 
-    mask_img_res = resample_to_img(
-        math_img("img > 0", img=nib.load(roi)),
+    mask_img_res = image.resample_to_img(
+        image.math_img("img > 0", img=nib.load(roi)),
         template_img,
         interpolation="nearest",
     )
@@ -1073,12 +1049,6 @@ def get_names_and_coords_of_parcels(
         A list of integer label intensity values from the parcellation.
 
     """
-    import matplotlib
-
-    matplotlib.use("agg")
-    import os.path as op
-
-    from nilearn.plotting import find_parcellation_cut_coords
 
     if not op.isfile(parcellation):
         raise ValueError(
@@ -1117,8 +1087,6 @@ def three_to_four_parcellation(parcellation: str) -> nib.Nifti1Image:
         unique atlas label.
 
     """
-    import gc
-
     if isinstance(parcellation, nib.Nifti1Image):
         bna_img = parcellation
     else:
@@ -1169,16 +1137,7 @@ def enforce_hem_distinct_consecutive_labels(
         List of string label names corresponding to ROI nodes.
 
     """
-    import gc
-
-    from nilearn.image import (
-        index_img,
-        new_img_like,
-        reorder_img,
-    )
-    from nilearn.image.resampling import coord_transform
-
-    labels_img = reorder_img(nib.load(parcellation))
+    labels_img = image.reorder_img(nib.load(parcellation))
     labels_data = labels_img.get_fdata()
     labels_affine = labels_img.affine
 
@@ -1195,11 +1154,11 @@ def enforce_hem_distinct_consecutive_labels(
         cur_dat = labels_data == lab
 
         if ix == 0:
-            template_image = index_img(parcels_4d_img, ix)
+            template_image = image.index_img(parcels_4d_img, ix)
             template_shape = template_image.shape
             template_image.uncache()
             new_labs = np.asarray(
-                new_img_like(
+                image.new_img_like(
                     template_image, np.zeros(template_shape, dtype=bool)
                 ).dataobj
             )[:, :, :, np.newaxis]
@@ -1240,7 +1199,7 @@ def enforce_hem_distinct_consecutive_labels(
 
     # Enforce consecutive labelings
     atlas_img_corr = create_parcel_atlas(
-        new_img_like(parcels_4d_img, new_labs)
+        image.new_img_like(parcels_4d_img, new_labs)
     )[0]
     nib.save(atlas_img_corr, parcellation)
 
@@ -1276,11 +1235,6 @@ def drop_coords_labels_from_restricted_parcellation(
         List of labels to drop.
 
     """
-    # from pynets.core.utils import missing_elements
-    import os
-
-    from nipype.utils.filemanip import fname_presuffix
-
     print("Checking parcellation for consistency...")
 
     parcellation_img = nib.load(parcellation)
@@ -1391,8 +1345,6 @@ def gen_network_parcels(
         File path to a new, subnetwork-filtered atlas parcellation Nifti1Image.
 
     """
-    import os.path as op
-
     from pynets.core.nodemaker import three_to_four_parcellation
 
     if not op.isfile(parcellation):
@@ -1452,16 +1404,6 @@ def parcel_naming(coords: list, vox_size: str) -> list:
       NeuroImage. 15 (1): 273–289. doi:10.1006/nimg.2001.0978.
 
     """
-    import sys
-    from collections import defaultdict
-
-    import nibabel as nib
-    import pandas as pd
-    import pkg_resources
-    from nilearn.image import resample_to_img
-
-    from pynets.core.utils import load_runconfig
-
     hardcoded_params = load_runconfig()
     try:
         labeling_atlases = hardcoded_params["labeling_atlases"]
@@ -1515,7 +1457,7 @@ def parcel_naming(coords: list, vox_size: str) -> list:
         label_img_path = pkg_resources.resource_filename(
             "pynets", f"/templates/atlases/" f"{label_atlas}" f".nii.gz"
         )
-        label_img_res = resample_to_img(
+        label_img_res = image.resample_to_img(
             nib.load(label_img_path),
             template_img,
             interpolation="nearest",
@@ -1586,8 +1528,6 @@ def get_ixs_from_node_dict(node_dict: dict) -> typing.Tuple[list, dict]:
         A dictionary of nodes.
 
     """
-    import ast
-
     if isinstance(node_dict, list):
         if all(v is None for v in [i["label"] for i in node_dict]):
             node_dict_revised = {}
@@ -1649,9 +1589,6 @@ def node_files_search(
         A dictionary of nodes.
 
     """
-    import gc
-    import json
-
     if len(node_files) == 1:
         with open(node_files[0], "r+") as f:
             node_dict = json.load(f)
@@ -1715,8 +1652,6 @@ def retrieve_indices_from_parcellation(
     """
     dir_path = str(Path(node_files[0]).parent.parent)
     if template == "any":
-        import glob
-
         template_parcs = glob.glob(
             f"{dir_path}/parcellations/parcellation_" f"space-*.nii.gz"
         )
@@ -1851,9 +1786,6 @@ def get_node_attributes(
         A list of node labels intensities.
 
     """
-    import ast
-    import re
-
     ixs, node_dict = parse_closest_ixs(node_files, emb_shape)
 
     coords = [(i["coord"]) for i in node_dict.values()]
@@ -1993,8 +1925,6 @@ def node_gen_masking(
         Path to directory containing subject derivative data for given run.
 
     """
-    import gc
-
     from pynets.core.nodemaker import create_parcel_atlas, parcel_masker
 
     if isinstance(parcels_4d, str):
@@ -2103,8 +2033,6 @@ def node_gen(
         Path to directory containing subject derivative data for given run.
 
     """
-    import gc
-
     from pynets.core.nodemaker import create_parcel_atlas
 
     if isinstance(parcels_4d, str):
@@ -2164,12 +2092,6 @@ def mask_roi(dir_path: str, roi: str, mask: str, img_file: str) -> str:
         reduced to the spatial intersection with the input brain mask.
 
     """
-    import os.path as op
-
-    from nilearn import masking
-    from nilearn.image import math_img, resample_img
-    from nilearn.masking import intersect_masks
-
     img_mask_path = (
         f"{dir_path}/{op.basename(img_file).split('.')[0]}" f"_mask.nii.gz"
     )
@@ -2179,16 +2101,16 @@ def mask_roi(dir_path: str, roi: str, mask: str, img_file: str) -> str:
         print("Refining ROI...")
         _mask_img = nib.load(img_mask_path)
         _roi_img = nib.load(roi)
-        roi_res_img = resample_img(
+        roi_res_img = image.resample_img(
             _roi_img,
             target_affine=_mask_img.affine,
             target_shape=_mask_img.shape,
             interpolation="nearest",
         )
-        masked_roi_img = intersect_masks(
+        masked_roi_img = masking.intersect_masks(
             [
-                math_img("img > 0.0", img=_mask_img),
-                math_img("img > 0.0", img=roi_res_img),
+                image.math_img("img > 0.0", img=_mask_img),
+                image.math_img("img > 0.0", img=roi_res_img),
             ],
             threshold=1,
             connected=False,
@@ -2238,11 +2160,6 @@ def create_spherical_roi_volumes(
         coordinates at their center-of-mass.
 
     """
-    import gc
-
-    from nilearn.image import concat_imgs, iter_img
-    from nilearn.masking import intersect_masks
-
     from pynets.core.nodemaker import get_sphere, mmToVox
 
     mask_img = nib.load(template_mask)
@@ -2287,12 +2204,12 @@ def create_spherical_roi_volumes(
     # remove the intersection
     parcel_intersect = np.invert(
         np.asarray(
-            intersect_masks(parcel_list_all, threshold=1).dataobj
+            masking.intersect_masks(parcel_list_all, threshold=1).dataobj
         ).astype("bool")
     )
 
     parcels_4d = []
-    for mask in iter_img(parcel_list_all):
+    for mask in image.iter_img(parcel_list_all):
         non_ovlp = np.asarray(mask.dataobj) * parcel_intersect
         parcels_4d.append(
             nib.Nifti1Image(
@@ -2308,4 +2225,9 @@ def create_spherical_roi_volumes(
     else:
         raise ValueError("Number of nodes is zero.")
 
-    return concat_imgs(iter_img(parcels_4d)), par_max, node_radius, parc
+    return (
+        image.concat_imgs(image.iter_img(parcels_4d)),
+        par_max,
+        node_radius,
+        parc,
+    )

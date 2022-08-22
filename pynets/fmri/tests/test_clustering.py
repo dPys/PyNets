@@ -174,13 +174,13 @@ def test_ni_parcellate_mult_conn_comps(fmri_estimation_data, clust_type):
     tmpdir = str(tmp.name)
     os.makedirs(tmpdir, exist_ok=True)
 
-    k = 100
+    k = 10
     if clust_type != "ncut":
         local_corr = "allcorr"
     else:
         local_corr = "tcorr"
     clust_mask = pkg_resources.resource_filename(
-        "pynets", "templates/rois/triple_net_ICA_overlap_3_sig_bin.nii.gz"
+        "pynets", "templates/rois/pDMN_3_bin.nii.gz"
     )
     mask_file = fmri_estimation_data["mask_file"]
     func_file = fmri_estimation_data["func_file"]

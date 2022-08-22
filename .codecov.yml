@@ -44,6 +44,7 @@ coverage:
     - "MANIFEST.ini"
     - "Makefile"
     - "Dockerfile"
+    - "docker-compose.yaml"
     - "CONTRIBUTING.rst"
     - "AUTHORS.rst"
     - "docker/*"

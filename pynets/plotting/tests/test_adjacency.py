@@ -3,9 +3,6 @@ import matplotlib
 
 matplotlib.use("agg", force=True)
 import matplotlib.pyplot as plt
-
-plt.ioff()
-figure(figsize=(3, 2), dpi=80)
 import os
 import numpy as np
 import time
@@ -16,6 +13,9 @@ import logging
 from pathlib import Path
 from pynets.plotting import adjacency
 from matplotlib.pyplot import figure
+
+plt.ioff()
+figure(figsize=(3, 2), dpi=80)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(50)

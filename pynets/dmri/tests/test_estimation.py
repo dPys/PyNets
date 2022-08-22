@@ -9,10 +9,7 @@ import tempfile
 import logging
 
 # from inspect import getargspec
-try:
-    import cPickle as pickle
-except ImportError:
-    import _pickle as pickle
+import pickle5 as pickle
 from pathlib import Path
 from pynets.dmri.estimation import (
     create_anisopowermap,
@@ -99,20 +96,6 @@ def test_csd_mod_est(dmri_estimation_data):
     assert model is not None
 
 
-# def test_sfm_mod_est(dmri_estimation_data):
-#     """Test SFM model estimation."""
-
-#     gtab = dmri_estimation_data['gtab']
-#     dwi_file = dmri_estimation_data['dwi_file_small']
-#     dwi_data_small = nib.load(dwi_file).get_fdata()
-#     B0_mask_file = dmri_estimation_data['B0_mask_small']
-
-#     [sf_odf, model] = sfm_mod_est(gtab, dwi_data_small, B0_mask_file)
-
-#     assert sf_odf is not None
-#     assert model is not None
-
-
 @pytest.mark.parametrize("conn_model", ["csa", "csd", "ten"])
 def test_reconstruction(conn_model):
     """
@@ -161,7 +144,7 @@ def test_streams2graph(
     dwi_file = dmri_estimation_data["dwi_file"]
     conn_model = "csd"
     min_length = 10
-    error_margin = 5
+    error_margin = 2
     traversal = "prob"
     track_type = "local"
     min_span_tree = False
@@ -175,9 +158,9 @@ def test_streams2graph(
     disp_filt = False
     node_radius = None
     dens_thresh = False
-    atlas = "whole_brain_cluster_labels_PCA200"
+    atlas = "mni_labels"
     parcellation = pkg_resources.resource_filename(
-        "pynets", "templates/atlases/whole_brain_cluster_labels_PCA200.nii.gz"
+        "pynets", "templates/atlases/mni_labels.nii.gz"
     )
     streams = tractography_estimation_data["trk"]
     B0_mask = dmri_estimation_data["B0_mask"]
@@ -295,3 +278,30 @@ def test_streams2graph(
     )[2]
 
     assert conn_matrix is not None
+
+
+def test_sfm_mod_est(dmri_estimation_data):
+    """Test SFM model estimation."""
+
+    gtab = dmri_estimation_data["gtab"]
+    dwi_file = dmri_estimation_data["dwi_file_small"]
+    dwi_data_small = nib.load(dwi_file).get_fdata()
+
+    B0_mask_file_patch = tempfile.NamedTemporaryFile(
+        mode="w+", suffix=".nii.gz"
+    ).name
+
+    data = dwi_data_small[:10, :10, :10, :50]
+    gtab.b0s_mask = gtab.b0s_mask[:50]
+    gtab.bvals = gtab.bvals[:50]
+    gtab.bvecs = gtab.bvecs[:50]
+    gtab.gradients = gtab.gradients[:50]
+
+    nib.Nifti1Image(np.ones(data.shape[:-1]), affine=np.eye(4)).to_filename(
+        B0_mask_file_patch
+    )
+
+    [sf_odf, model] = sfm_mod_est(gtab, data, B0_mask_file_patch)
+
+    assert sf_odf is not None
+    assert model is not None

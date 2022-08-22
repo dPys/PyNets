@@ -14,7 +14,7 @@ if sys.platform.startswith("win") is False:
     import indexed_gzip
 from nilearn._utils import as_ndarray, data_gen
 from nilearn.plotting import find_parcellation_cut_coords
-
+from pynets.core.utils import load_runconfig
 
 @pytest.fixture(scope="package")
 def random_mni_roi_data():
@@ -138,3 +138,7 @@ def parcellation_data():
         "indices": indices,
     }
     parcels_tmp.close()
+
+@pytest.fixture(scope="package")
+def hardcoded_params():
+    return load_runconfig()

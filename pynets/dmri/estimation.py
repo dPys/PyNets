@@ -1,7 +1,3 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-"""
 import matplotlib
 import typing
 import warnings
@@ -128,17 +124,17 @@ def create_anisopowermap(
 
     gtab = load_pickle(gtab_file)
 
-    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask is False)]
+    dwi_vertices = gtab.bvecs[np.where(gtab.b0s_mask == False)]
 
     gtab_hemisphere = HemiSphere(
-        xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)]
+        xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
     )
 
     try:
         assert len(gtab_hemisphere.vertices) == len(dwi_vertices)
     except BaseException:
         gtab_hemisphere = Sphere(
-            xyz=gtab.bvecs[np.where(gtab.b0s_mask is False)]
+            xyz=gtab.bvecs[np.where(gtab.b0s_mask == False)]
         )
 
     img = nib.load(dwi_file)
@@ -893,7 +889,7 @@ def streams2graph(
             # Map the streamlines coordinates to voxel coordinates and get
             # labels for label_volume
             s = Streamlines(s)
-            if s.data.shape[0] == 0:
+            if s.get_data().shape[0] == 0:
                 continue
             vox_coords = _to_voxel_coordinates(s, lin_T, offset)
 
@@ -951,10 +947,7 @@ def streams2graph(
                 [(k[0], k[1], count) for k, count in edge_dict.items()]
             )
 
-            del lab_arr, endlabels
-            gc.collect()
-
-        del sl
+        del sl, lab_arr, endlabels
         gc.collect()
 
         # Add fiber density attributes for each edge

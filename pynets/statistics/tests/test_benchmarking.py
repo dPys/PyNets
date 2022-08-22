@@ -1,5 +1,4 @@
-﻿import os
-from sklearn.metrics.pairwise import (
+﻿from sklearn.metrics.pairwise import (
     cosine_distances,
     haversine_distances,
     manhattan_distances,
@@ -8,8 +7,6 @@ from sklearn.metrics.pairwise import (
 import numpy as np
 from sklearn.datasets import make_classification
 from statsmodels.stats.weightstats import ttost_paired
-from functools import reduce
-from pathlib import Path
 from pynets.statistics.group import benchmarking
 import pytest
 import logging
@@ -109,7 +106,7 @@ def test_discr_stat():
     d1 = np.array(get_recursively(mega_dict, "n_samples_100"))
     d2 = np.array(get_recursively(mega_dict, "n_samples_1000"))
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.4162766457698946
+    assert ttost_paired(d1, d2, 0, 1)[0] < 0.5
 
     # Test for mean difference based on n informative
     d1 = np.array(
@@ -123,7 +120,7 @@ def test_discr_stat():
         )
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.7244168201421846
+    assert ttost_paired(d1, d2, 0, 1)[0] > 0.5
 
     # Test for mean difference based on n informative
     d1 = np.array(
@@ -135,7 +132,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_informative_5")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9999143618449223
+    assert ttost_paired(d1, d2, 0, 1)[0] > 0.9
 
     # Test for mean difference based on n informative
     d1 = np.array(
@@ -147,7 +144,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_informative_5")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.9999959561894431
+    assert ttost_paired(d1, d2, 0, 1)[0] > 0.9
 
     # Test for mean difference based on n redundant
     d1 = np.array(
@@ -157,7 +154,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_redundant_25")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.6177770457546709
+    assert ttost_paired(d1, d2, 0, 1)[0] > 0.5
 
     # Test for mean difference based on n redundant
     d1 = np.array(
@@ -167,7 +164,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_redundant_49")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.3822229542453291
+    assert ttost_paired(d1, d2, 0, 1)[0] < 0.5
 
     # Test for mean difference based on n redundant
     d1 = np.array(
@@ -177,7 +174,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_redundant_5")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.04145449595382497
+    assert ttost_paired(d1, d2, 0, 1)[0] < 0.05
 
     # Test for mean difference based on n features
     d1 = np.array(
@@ -187,7 +184,7 @@ def test_discr_stat():
         list(NestedDictValues(get_recursively(mega_dict, "n_features_1000")[0]))
     )
     assert ttost_paired(d1, d2, 0, 1)
-    assert ttost_paired(d1, d2, 0, 1)[0] == 0.016759998812705155
+    assert ttost_paired(d1, d2, 0, 1)[0] < 0.05
 
 
 @pytest.mark.parametrize("n_informative", [5, 25, 49])

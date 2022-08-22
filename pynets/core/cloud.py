@@ -7,7 +7,11 @@ import sys
 import typing
 from configparser import ConfigParser
 
-import boto3
+try:
+    import boto3
+except ImportError:
+    print("boto3 is not installed. Please install boto3.")
+    sys.exit(1)
 
 
 def get_credentials():
@@ -22,6 +26,7 @@ def get_credentials():
     ------
     AttributeError
         No AWS credentials are found
+
     """
     # add option to pass profile name
     try:
@@ -52,6 +57,7 @@ def s3_client(service: str = "s3"):
     -------
     boto3.client
         client with proper credentials.
+
     """
 
     try:
@@ -77,6 +83,7 @@ def parse_path(s3_datapath: str):
     -------
     tuple
         bucket and prefix.
+
     """
     bucket_path = str(s3_datapath).split("//")[1]
     parts = bucket_path.split("/")
@@ -97,6 +104,7 @@ def get_matching_s3_objects(bucket: str, prefix: str = "", suffix: str = ""):
         Only fetch objects whose key starts with this prefix, by default ''
     suffix : str, optional
         Only fetch objects whose keys end with this suffix, by default ''
+
     """
     s3 = s3_client(service="s3")
     kwargs = {"Bucket": bucket}

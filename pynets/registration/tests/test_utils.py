@@ -28,7 +28,7 @@ def test_align():
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_" f"2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     out = f"{anat_dir}/highres2standard.nii.gz"
     xfm_out = f"{anat_dir}/highres2standard.mat"
@@ -108,7 +108,7 @@ def test_align_nonlinear():
     anat_dir = f"{base_dir}/003/anat"
     inp = f"{anat_dir}/sub-003_T1w_brain.nii.gz"
     ref = pkg_resources.resource_filename(
-        "pynets", f"templates/" f"MNI152_T1_brain_2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     out = f"{anat_dir}/highres2standard_nonlinear.nii.gz"
     warp = f"{anat_dir}/highres2standard_warp"
@@ -164,7 +164,7 @@ def test_apply_warp():
     )
     anat_dir = f"{base_dir}/003/anat"
     ref = pkg_resources.resource_filename(
-        "pynets", f"templates/MNI152_T1_brain_" f"2mm.nii.gz"
+        "pynets", f"templates/standard/MNI152_T1_brain_2mm.nii.gz"
     )
     inp = f"{anat_dir}/sub-003_T1w.nii.gz"
     out = f"{anat_dir}/highres2standard_test_apply_warp.nii.gz"

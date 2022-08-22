@@ -1,7 +1,3 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-"""
 import matplotlib
 import warnings
 import sys
@@ -5926,6 +5922,8 @@ def raw_graph_workflow(
         "import warnings",
         "import sys",
         "import os",
+        "import pkg_resources",
+        "import gc",
         "import numpy as np",
         "import networkx as nx",
         "import nibabel as nib",

@@ -1,6 +1,3 @@
-"""
-Copyright (C) 2017
-"""
 import matplotlib
 import os
 import typing
@@ -822,7 +819,7 @@ def boot_nested_iteration(
                 best_sub_estimator = [
                     i
                     for i in sub_fitted.named_steps.keys()
-                    if i in list(estimators.keys())[0] and i is not "selector"
+                    if i in list(estimators.keys())[0] and i != "selector"
                 ][0]
                 best_positions, feat_imp_dict = get_feature_imp(
                     X_subspace,

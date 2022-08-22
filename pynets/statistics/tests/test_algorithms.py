@@ -428,8 +428,7 @@ def test_participation_coef_sign(gen_mat_data):
 
 @pytest.mark.parametrize("binarize", [True, False])
 def test_weighted_transitivity(gen_mat_data, binarize):
-    """ Test weighted_transitivity computation
-    """
+    """Test weighted_transitivity computation"""
     from pynets.core.thresholding import binarize
 
     if binarize:
@@ -446,8 +445,7 @@ def test_weighted_transitivity(gen_mat_data, binarize):
 
 @pytest.mark.parametrize("true_metric", [True, False])
 def test_iterate_nx_global_measures(gen_mat_data, true_metric):
-    """ Test iterating over net metric list
-    """
+    """Test iterating over net metric list"""
     from networkx.algorithms import average_shortest_path_length
 
     in_mat = gen_mat_data(asfile=False)["mat_list"][0]
@@ -464,18 +462,21 @@ def test_iterate_nx_global_measures(gen_mat_data, true_metric):
 @pytest.mark.parametrize("sim_num_comms", [1, 5, 10])
 @pytest.mark.parametrize("sim_size", [1, 5, 10])
 def test_community_resolution_selection(sim_num_comms, sim_size):
-    """ Test community resolution selection
+    """Test community resolution selection
     Note: It is impossible to enter or cover the second while loop in
           netstats.community_resolution_selection.
     """
     G = nx.caveman_graph(sim_num_comms, sim_size)
-    node_ci, ci, resolution, num_comms = algorithms.community_resolution_selection(
-        G
-    )
+    (
+        node_ci,
+        ci,
+        resolution,
+        num_comms,
+    ) = algorithms.community_resolution_selection(G)
 
     assert len(node_ci) == len(ci)
-    assert num_comms == sim_num_comms
-    assert resolution is not None
+    assert len(set(ci)) == num_comms
+    assert resolution > 0
 
 
 @pytest.mark.parametrize(
@@ -500,7 +501,10 @@ def test_get_metrics(gen_mat_data, metric, engine):
     net_met_val_list_final = []
 
     if metric == "participation":
-        metric_list_names, net_met_val_list_final = algorithms.get_participation(
+        (
+            metric_list_names,
+            net_met_val_list_final,
+        ) = algorithms.get_participation(
             in_mat, ci, metric_list_names, net_met_val_list_final
         )
         assert (
@@ -524,7 +528,10 @@ def test_get_metrics(gen_mat_data, metric, engine):
             == np.shape(algorithms.diversity_coef_sign(in_mat, ci))[1] + 1
         )
     elif metric == "local_efficiency":
-        metric_list_names, net_met_val_list_final = algorithms.get_local_efficiency(
+        (
+            metric_list_names,
+            net_met_val_list_final,
+        ) = algorithms.get_local_efficiency(
             G, metric_list_names, net_met_val_list_final
         )
         assert (
@@ -536,7 +543,10 @@ def test_get_metrics(gen_mat_data, metric, engine):
             == len(algorithms.local_efficiency(G, engine=engine)) + 1
         )
     elif metric == "comm_centrality":
-        metric_list_names, net_met_val_list_final = algorithms.get_comm_centrality(
+        (
+            metric_list_names,
+            net_met_val_list_final,
+        ) = algorithms.get_comm_centrality(
             G, metric_list_names, net_met_val_list_final
         )
         assert (

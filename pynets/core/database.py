@@ -1,7 +1,3 @@
-"""
-Created on Fri Nov 10 15:44:46 2017
-Copyright (C) 2017
-"""
 from dataclasses import dataclass
 import warnings
 

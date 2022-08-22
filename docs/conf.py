@@ -377,6 +377,6 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 def setup(app):
     app.connect("autodoc-skip-member", autodoc_skip_member)
     app.add_css_file("theme_overrides.css")
-    app.add_javascript(
+    app.add_js_file(
         "https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js"
     )

@@ -1,4 +1,6 @@
 [run]
+concurrency = multiprocessing
+parallel = true
 omit =
 	*__init__*
 	*__pycache__*

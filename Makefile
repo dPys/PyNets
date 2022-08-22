@@ -43,18 +43,20 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## remove test and coverage artifacts
+	coverage erase
 	rm -f .coverage
 	rm -f .test_durations
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
 	flake8 pynets tests
+	black --check .
 
 test: ## run tests quickly with the default Python
 	pytest
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source pynets -m pytest
+	coverage combine
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
@@ -64,9 +66,16 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/modules.rst
 	make clean
 	make SPHINXOPTS="-W" -C docs html
+	# sphinx-build -M latexpdf . _build
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+
+docker_build: ## build a Docker image
+	docker build -t pynets .
+	VERSION=`git rev-parse HEAD | cut -c1-12`
+	docker tag pynets:latest pynets:$VERSION
+	docker push pynets:$VERSION
 
 release: clean ## package and upload a release
 	python setup.py sdist upload

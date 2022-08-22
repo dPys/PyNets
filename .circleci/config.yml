@@ -154,6 +154,9 @@ jobs:
             - run:
                   name: Install Requirements (may contain pinned versions)
                   command: python -m pip install -r requirements.txt
+            - run:
+                  name: Install Optional Requirements (may contain pinned versions)
+                  command: python -m pip install -r optional-requirements.txt
             #      - run:
             #          name: Install Optional Requirements (may contain pinned versions)
             #          command: python -m pip install -r optional-requirements.txt
@@ -162,7 +165,7 @@ jobs:
                   command: python setup.py install
             - run:
                   name: Build documentation
-                  command: make SPHINXOPTS="-W" -C docs html
+                  command: make docs
             - store_artifacts:
                   path: /tmp/src/pynets/docs/_build/html
 
@@ -340,6 +343,19 @@ jobs:
                       ulimit -s unlimited
                       python -m pytest --circleci-parallelize --junitxml="test-results/junit.xml" $TEST_FILES
                       sudo chmod 777 -R /usr/lib/python3/dist-packages
+                      make coverage
+            - run:
+                name: Download and validate Codecov script
+                command: |
+                    curl -fLso codecov https://codecov.io/bash;
+                    VERSION=$(grep -o 'VERSION=\"[0-9\.]*\"' codecov | cut -d'"' -f2);
+                    for i in 1 256 512
+                    do
+                    shasum -a $i -c --ignore-missing <(curl -s "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM")
+                    done
+            - run:
+                name: Upload coverage reports to Codecov
+                command: bash ./codecov
             - save_cache:
                   key: unit&integrationtests-{{ arch}}
                   paths:

@@ -251,6 +251,7 @@ def test_func_all(
     node_radius,
     node_size_list,
     plot_switch,
+    hardcoded_params
 ):
     """
     Test functional connectometry
@@ -290,86 +291,8 @@ def test_func_all(
     extract_strategy = "mean"
     extract_strategy_list = None
 
-    execution_dict = {
-        "stop_on_first_crash": True,
-        "crashfile_format": "txt",
-        "parameterize_dirs": False,
-        "display_variable": ":0",
-        "job_finished_timeout": 120,
-        "matplotlib_backend": "Agg",
-        "use_relative_paths": True,
-        "keep_inputs": True,
-        "remove_unnecessary_outputs": False,
-        "remove_node_directories": False,
-        "raise_insufficient": False,
-        "poll_sleep_duration": 0,
-        "hash_method": "timestamp",
-        "local_hash_check": False,
-    }
-
-    runtime_dict = {
-        "pass_meta_ins_node": (1, 1),
-        "pass_meta_outs_node": (1, 2),
-        "pass_meta_ins_multi_node": (1, 1),
-        "pass_meta_outs_multi_node": (1, 2),
-        "pass_meta_ins_func_node": (1, 1),
-        "pass_meta_outs_func_node": (1, 2),
-        "pass_meta_ins_struct_node": (1, 1),
-        "pass_meta_outs_struct_node": (1, 2),
-        "fetch_nodes_and_labels_node": (4, 8),
-        "save_nifti_parcels_node": (4, 4),
-        "gtab_node": (1, 1),
-        "save_coords_and_labels_node": (1, 1),
-        "orient_reslice_func_node": (2, 4),
-        "orient_reslice_mask_node": (1, 1),
-        "orient_reslice_uatlas_node": (1, 1),
-        "orient_reslice_anat_node": (1, 1),
-        "node_gen_node": (4, 8),
-        "prep_spherical_nodes_node": (4, 8),
-        "get_node_membership_node": (2, 6),
-        "orient_reslice_dwi_node": (2, 4),
-        "get_anisopwr_node": (2, 2),
-        "extract_ts_node": (4, 8),
-        "extract_ts_info_node": (1, 2),
-        "clustering_node": (4, 8),
-        "get_conn_matrix_node": (2, 6),
-        "thresh_func_node": (1, 2),
-        "thresh_diff_node": (1, 2),
-        "thresh_info_node": (1, 1),
-        "register_node": (4, 8),
-        "reg_nodes_node": (2, 4),
-        "RegisterParcellation2MNIFunc_node": (2, 4),
-        "get_fa_node": (2, 2),
-        "run_tracking_node": (4, 8),
-        "dsn_node": (1, 2),
-        "plot_all_node": (1, 2),
-        "streams2graph_node": (4, 6),
-        "build_multigraphs_node": (2, 8),
-        "plot_all_struct_func_node": (1, 2),
-        "mase_embedding_node": (2, 6),
-        "omni_embedding_node": (1, 2),
-        "omni_embedding_node_func": (1, 2),
-        "omni_embedding_node_struct": (1, 2),
-        "ase_embedding_node_func": (1, 2),
-        "ase_embedding_node_struct": (1, 2),
-        "join_iters_node_thr": (1, 4),
-        "join_iters_node_nets": (1, 1),
-        "join_iters_node_atlas": (1, 1),
-        "join_iters_node_ext_ts": (1, 1),
-        "join_iters_extract_ts_node": (1, 1),
-        "join_iters_node": (1, 4),
-        "join_iters_node_g": (1, 4),
-        "join_iters_prep_spheres_node": (1, 1),
-        "join_iters_get_conn_matrix_node": (1, 1),
-        "join_iters_run_track_node": (1, 1),
-        "clust_join_node": (1, 1),
-        "NetworkAnalysis": (1, 4),
-        "AggregateOutputs": (1, 3),
-        "load_mat_node": (1, 1),
-        "load_mat_ext_node": (1, 1),
-        "save_mat_thresholded_node": (1, 1),
-        "CombineOutputs": (1, 1),
-    }
+    execution_dict = hardcoded_params['execution_dict']
+    runtime_dict = hardcoded_params['resource_dict']
 
     if thr_type == "dens_thresh":
         dens_thresh = True

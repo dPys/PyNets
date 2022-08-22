@@ -1,8 +1,3 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-@author: Derek Pisner
-"""
 import gc
 import os
 import os.path as op
@@ -13,7 +8,6 @@ import warnings
 import matplotlib
 import networkx as nx
 import numpy as np
-from joblib import Parallel, delayed
 import yaml
 from nipype.interfaces.base import (
     BaseInterface,
@@ -23,7 +17,7 @@ from nipype.interfaces.base import (
     traits,
     SimpleInterface,
 )
-
+from joblib import Parallel, delayed
 from pynets.core import thresholding, utils
 from pynets.statistics.utils import (
     variance_inflation_factor,

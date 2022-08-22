@@ -1,7 +1,3 @@
-"""
-Created on Tue Nov  7 10:40:07 2017
-Copyright (C) 2017
-"""
 import matplotlib
 import warnings
 import numpy as np
